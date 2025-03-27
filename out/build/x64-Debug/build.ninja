@@ -54,14 +54,14 @@ build CMakeFiles\a.dir\source\Input.cpp.obj: CXX_COMPILER__a_unscanned_Debug F$:
   OBJECT_DIR = CMakeFiles\a.dir
   OBJECT_FILE_DIR = CMakeFiles\a.dir\source
   TARGET_COMPILE_PDB = CMakeFiles\a.dir\
-  TARGET_PDB = F:\Git\SdlWasmEngine\public\main.pdb
+  TARGET_PDB = F:\Git\SdlWasmEngine\Build\main.pdb
 
 build CMakeFiles\a.dir\source\main.cpp.obj: CXX_COMPILER__a_unscanned_Debug F$:\Git\SdlWasmEngine\source\main.cpp || cmake_object_order_depends_target_a
   FLAGS = /DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1   -std=c++11 -O3
   OBJECT_DIR = CMakeFiles\a.dir
   OBJECT_FILE_DIR = CMakeFiles\a.dir\source
   TARGET_COMPILE_PDB = CMakeFiles\a.dir\
-  TARGET_PDB = F:\Git\SdlWasmEngine\public\main.pdb
+  TARGET_PDB = F:\Git\SdlWasmEngine\Build\main.pdb
 
 
 # =============================================================================
@@ -69,9 +69,9 @@ build CMakeFiles\a.dir\source\main.cpp.obj: CXX_COMPILER__a_unscanned_Debug F$:\
 
 
 #############################################
-# Link the executable F:\Git\SdlWasmEngine\public\main.html
+# Link the executable F:\Git\SdlWasmEngine\Build\main.html
 
-build F$:\Git\SdlWasmEngine\public\main.html: CXX_EXECUTABLE_LINKER__a_Debug CMakeFiles\a.dir\source\Input.cpp.obj CMakeFiles\a.dir\source\main.cpp.obj
+build F$:\Git\SdlWasmEngine\Build\main.html: CXX_EXECUTABLE_LINKER__a_Debug CMakeFiles\a.dir\source\Input.cpp.obj CMakeFiles\a.dir\source\main.cpp.obj
   FLAGS = /DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1
   LINK_FLAGS = /machine:x64 /debug /INCREMENTAL /subsystem:console  -s USE_SDL=2 -s USE_SDL_IMAGE=2 -s USE_SDL_MIXER=2 -s SDL2_IMAGE_FORMATS=[png] -s FULL_ES3=1 -s STACK_SIZE=500000 -s ALLOW_MEMORY_GROWTH=1 -s WASM=1 --preload-file F:/Git/SdlWasmEngine/assets@/assets
   LINK_LIBRARIES = kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib
@@ -79,9 +79,9 @@ build F$:\Git\SdlWasmEngine\public\main.html: CXX_EXECUTABLE_LINKER__a_Debug CMa
   POST_BUILD = cd .
   PRE_LINK = cd .
   TARGET_COMPILE_PDB = CMakeFiles\a.dir\
-  TARGET_FILE = F:\Git\SdlWasmEngine\public\main.html
+  TARGET_FILE = F:\Git\SdlWasmEngine\Build\main.html
   TARGET_IMPLIB = main.lib
-  TARGET_PDB = F:\Git\SdlWasmEngine\public\main.pdb
+  TARGET_PDB = F:\Git\SdlWasmEngine\Build\main.pdb
 
 
 #############################################
@@ -109,9 +109,9 @@ build rebuild_cache: phony CMakeFiles\rebuild_cache.util
 # =============================================================================
 # Target aliases.
 
-build a: phony F$:\Git\SdlWasmEngine\public\main.html
+build a: phony F$:\Git\SdlWasmEngine\Build\main.html
 
-build main.html: phony F$:\Git\SdlWasmEngine\public\main.html
+build main.html: phony F$:\Git\SdlWasmEngine\Build\main.html
 
 # =============================================================================
 # Folder targets.
@@ -121,7 +121,7 @@ build main.html: phony F$:\Git\SdlWasmEngine\public\main.html
 #############################################
 # Folder: F:/Git/SdlWasmEngine/out/build/x64-Debug
 
-build all: phony F$:\Git\SdlWasmEngine\public\main.html
+build all: phony F$:\Git\SdlWasmEngine\Build\main.html
 
 # =============================================================================
 # Built-in targets

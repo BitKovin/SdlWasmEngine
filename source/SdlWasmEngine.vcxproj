@@ -143,10 +143,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="EObject.hpp" />
+    <ClCompile Include="Input.cpp" />
     <ClCompile Include="Input.h" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Logger.hpp" />
+    <ClInclude Include="SoundSystem\SoundInstance.hpp" />
+    <ClInclude Include="SoundSystem\SoundManager.hpp" />
     <ClInclude Include="Vector2.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

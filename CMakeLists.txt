@@ -7,7 +7,7 @@ add_definitions(-std=c++11 -O3)
 
 file(GLOB SOURCES source/*.cpp)
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/public")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/Build")
 add_executable(a ${SOURCES})
 
 set_target_properties(a PROPERTIES OUTPUT_NAME "main")  # Unified output name

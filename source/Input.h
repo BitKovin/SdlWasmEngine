@@ -9,10 +9,9 @@
 #include <SDL/SDL_scancode.h>
 #include <SDL/SDL_video.h>
 
+#include "EObject.hpp"
 #include "Vector2.h"
-
-// Forward declaration for your existing Vector2 class.
-class Vector2;
+#include "Logger.hpp"
 
 // Forward declaration for InputAction.
 class InputAction;
@@ -76,9 +75,11 @@ public:
 
     // Add a new input action (or return the existing one if already added).
     static InputAction* AddAction(const std::string& actionName);
+
+    static void RemoveAction(const std::string& actionName);
 };
 
-class InputAction {
+class InputAction : public EObject {
 public:
     std::vector<SDL_Scancode> keys;
     // For joystick buttons, we simply use int indices.
@@ -111,6 +112,15 @@ public:
 
     // Call every frame to update the action state.
     void Update();
+
+protected:
+
+    void OnDispose()
+    {
+        Logger::Log("destroying input action");
+    }
+
+
 };
 
 

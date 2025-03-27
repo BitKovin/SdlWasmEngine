@@ -37,14 +37,6 @@ void Input::Update() {
     GameTime = currentTime / 1000.0;
     lastTime = currentTime;
 
-    // Process SDL events.
-    SDL_Event event;
-    while (SDL_PollEvent(&event)) {
-        if (event.type == SDL_QUIT) {
-            // Signal application exit if needed.
-        }
-    }
-
     UpdateMouse();
     UpdateActions();
 
@@ -158,6 +150,19 @@ InputAction* Input::AddAction(const std::string& actionName) {
     }
     return actions[actionName];
 }
+
+void Input::RemoveAction(const std::string& actionName)
+{
+    InputAction* action = GetAction(actionName);
+
+    if (action == nullptr)
+        return;
+
+    actions.erase(actionName);
+
+    action->Dispose();
+}
+
 
 // ------------------------
 // InputAction Implementation

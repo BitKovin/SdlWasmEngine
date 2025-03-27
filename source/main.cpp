@@ -6,6 +6,8 @@
 #include <AL/al.h>
 #include <AL/alc.h>
 #include "Input.h"
+#include "SoundSystem/SoundInstance.hpp"
+#include "SoundSystem/SoundManager.hpp"
 
 #if DESKTOP
 #else
@@ -17,32 +19,10 @@ SDL_Renderer* renderer = NULL;
 SDL_Texture* texture = NULL;
 SDL_Rect destinationRect = { 0, 0, 0, 0 };
 
-ALCdevice* device;
-ALCcontext* context;
-ALuint buffer, source;
-
-void load_audio(const char* filename) {
-	SDL_AudioSpec wavSpec;
-	Uint32 wavLength;
-	Uint8* wavBuffer;
-
-	if (SDL_LoadWAV(filename, &wavSpec, &wavBuffer, &wavLength) == NULL) {
-		printf("Failed to load WAV file: %s\n", SDL_GetError());
-		return;
-	}
-
-	// Transfer data to OpenAL
-	alGenBuffers(1, &buffer);
-	alBufferData(buffer, AL_FORMAT_STEREO16, wavBuffer, wavLength, wavSpec.freq);
-	SDL_FreeWAV(wavBuffer); // Free after passing to OpenAL
-
-	// Set up OpenAL source
-	alGenSources(1, &source);
-	alSourcei(source, AL_BUFFER, buffer);
-}
+SoundInstance sound;
 
 void play_music() {
-	alSourcePlay(source);
+	
 }
 
 void desktop_render_loop() {
@@ -81,9 +61,7 @@ void emscripten_render_loop() {
 		destinationRect.y += 1;
 
 	if (Input::GetAction("backward")->Holding())
-		destinationRect.y += 1;
-
-	printf("frame\n");
+		destinationRect.y -= 1;
 
 	SDL_RenderClear(renderer);
 	SDL_RenderCopy(renderer, texture, NULL, &destinationRect);
@@ -95,17 +73,14 @@ int main() {
 	IMG_Init(IMG_INIT_PNG);
 
 	// Initialize OpenAL
-	device = alcOpenDevice(NULL);
-	if (!device) {
-		printf("Failed to open OpenAL device.\n");
-		return 1;
-	}
-	context = alcCreateContext(device, NULL);
-	alcMakeContextCurrent(context);
 
+	SoundManager::Initialize();
 
-	// Load audio
-	load_audio("assets/bass_beat.wav");
+	sound = SoundManager::GetSoundFromPath("assets/bass_beat.wav");
+
+	sound.Loop = true;
+
+	sound.Play();
 
 	// Create window
 	window = SDL_CreateWindow("SDL2_image Example",
@@ -131,9 +106,8 @@ int main() {
 		return 1;
 	}
 
-	play_music();
-
 	Input::AddAction("forward")->AddKeyboardKey(SDL_GetScancodeFromKey(SDLK_w));
+	Input::AddAction("backward")->AddKeyboardKey(SDL_GetScancodeFromKey(SDLK_s));
 
 #if DESKTOP
 	desktop_render_loop();
@@ -141,12 +115,7 @@ int main() {
 	emscripten_set_main_loop(emscripten_render_loop, 0, 1);
 #endif
 
-	// Cleanup
-	alDeleteSources(1, &source);
-	alDeleteBuffers(1, &buffer);
-	alcMakeContextCurrent(NULL);
-	alcDestroyContext(context);
-	alcCloseDevice(device);
+;
 
 	SDL_FreeSurface(surface);
 	SDL_DestroyTexture(texture);
