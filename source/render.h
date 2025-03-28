@@ -5,6 +5,10 @@
 
 #include "Shader.hpp"
 
+#include "AssetRegisty.hpp"
+
+#include "ShaderManager.h"
+
 #include "Time.hpp"
 #include "Input.h"
 
@@ -42,15 +46,7 @@ void update_screen_size(int w, int h)
 void init_gl()
 {
     
-    
-    Shader vertex_shader = Shader::FromCode(vertex_shader_source, ShaderType::VertexShader);
-    Shader fragment_shader = Shader::FromCode(fragment_shader_source, ShaderType::PixelShader);
-
-
-    
-    shader_program = new ShaderProgram();
-
-    shader_program->AttachShader(vertex_shader)->AttachShader(fragment_shader)->LinkProgram();
+    shader_program = ShaderManager::GetShaderProgram();
 
     
     // Set up quad vertices
@@ -144,7 +140,7 @@ void main_loop()
 
     // Clear the screen
     glClear(GL_COLOR_BUFFER_BIT);
-
+    glClearDepth(0);
 
     // Use shader program
     shader_program->UseProgram();
@@ -163,7 +159,7 @@ void desktop_render_loop()
 {
     
     SDL_Event event;
-    int quit = 0;
+    int quit = 0;   
 
     while (!quit) {
 

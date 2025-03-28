@@ -227,17 +227,27 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="Entity.cpp" />
     <ClCompile Include="EObject.hpp" />
+    <ClCompile Include="FrameDrawData.cpp" />
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="Input.h" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="StaticMesh.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AssetRegisty.hpp" />
+    <ClInclude Include="Camera.h" />
     <ClInclude Include="gl.h" />
     <ClInclude Include="glm.h" />
+    <ClInclude Include="IDrawMesh.h" />
+    <ClInclude Include="Level.hpp" />
     <ClInclude Include="Logger.hpp" />
+    <ClInclude Include="MathHelper.hpp" />
     <ClInclude Include="render.h" />
     <ClInclude Include="Shader.hpp" />
+    <ClInclude Include="ShaderManager.h" />
     <ClInclude Include="SoundSystem\SoundInstance.hpp" />
     <ClInclude Include="SoundSystem\SoundManager.hpp" />
     <ClInclude Include="Time.hpp" />

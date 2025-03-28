@@ -48,7 +48,7 @@ int main(int argc, char* args[]) {
 
     Time::Init();
 
-    auto sound = SoundManager::GetSoundFromPath("assets/bass_beat.wav");
+    auto sound = SoundManager::GetSoundFromPath("GameData/bass_beat.wav");
 
     sound.Loop = true;
 
@@ -78,7 +78,7 @@ int main(int argc, char* args[]) {
     
     init_gl();
     
-    load_image("assets/happy_hog.png");
+    load_image("GameData/happy_hog.png");
     
     // Set clear color
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);

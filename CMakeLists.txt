@@ -24,7 +24,7 @@ if(JS_ONLY)
         "SHELL:-s STACK_SIZE=500000"
         "SHELL:-s ALLOW_MEMORY_GROWTH=1"
         "SHELL:-s WASM=0"
-        "SHELL:--preload-file ${CMAKE_SOURCE_DIR}/assets@/assets"
+        "SHELL:--preload-file ${CMAKE_SOURCE_DIR}/GameData@/GameData"
     )
 else()
     message(STATUS "Setting compilation target to WASM")
@@ -39,6 +39,6 @@ else()
         "SHELL:-s STACK_SIZE=500000"
         "SHELL:-s ALLOW_MEMORY_GROWTH=1"
         "SHELL:-s WASM=1"
-        "SHELL:--preload-file ${CMAKE_SOURCE_DIR}/assets@/assets"
+        "SHELL:--preload-file ${CMAKE_SOURCE_DIR}/GameData@/GameData"
     )
 endif()

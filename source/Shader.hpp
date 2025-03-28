@@ -31,6 +31,8 @@ public:
     GLuint shaderPointer = 0;
     std::string shaderCode = "";
 
+    ShaderType shaderType = ShaderType::PixelShader;
+
     // Creates a Shader object from source code.
     static Shader FromCode(const char* code, ShaderType shaderType, bool autoCompile = true)
     {
@@ -41,6 +43,9 @@ public:
         const char* cCode = code;
 
         output.shaderPointer = glCreateShader(glShaderType);
+
+        output.shaderType = shaderType;
+
         glShaderSource(output.shaderPointer, 1, &cCode, NULL);
 
         if (autoCompile)
