@@ -26,6 +26,16 @@ int main(int argc, char* args[]) {
     
     int flags = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI;
 
+    Input::AddAction("fullscreen");
+
+#if DESKTOP
+
+    flags |= SDL_WINDOW_RESIZABLE;
+
+    Input::AddAction("fullscreen")->AddKeyboardKey(SDL_GetScancodeFromKey(SDL_KeyCode::SDLK_F11));
+
+#endif // DESKTOP
+
 
     // Create SDL window
     window = SDL_CreateWindow("Image", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600, flags);
@@ -36,6 +46,7 @@ int main(int argc, char* args[]) {
     
     SoundManager::Initialize();
 
+    Time::Init();
 
     auto sound = SoundManager::GetSoundFromPath("assets/bass_beat.wav");
 
@@ -57,7 +68,6 @@ int main(int argc, char* args[]) {
         fprintf(stderr, "OpenGL context could not be created! SDL_Error: %s\n", SDL_GetError());
         
     }
-
 #if DESKTOP
     GLenum glewError = glewInit();
     if (glewError != GLEW_OK) {
@@ -74,8 +84,6 @@ int main(int argc, char* args[]) {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     
     SDL_GL_SetSwapInterval(0);
-
-    //SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
 
     // Run main loop
 #if DESKTOP

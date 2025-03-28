@@ -2,26 +2,30 @@
 #include <SDL2/SDL_stdinc.h>
 #include <SDL2/SDL_timer.h>
 
-class Time
-{
+class Time {
 public:
-	static float DeltaTime;
-
-	static void Update()
-	{
-		Uint64 NOW = SDL_GetPerformanceCounter();
-
-		DeltaTime = (NOW - LAST) / (double)SDL_GetPerformanceFrequency();
-
-		LAST = NOW;
-
-	}
-
+    static double DeltaTime;       // Time between the last two frames in seconds.
 private:
+    static Uint64 lastCounter;     // Stores the previous frame's counter.
+    static double frequency;       // Stores the counter frequency.
 
-	static Uint64 LAST;
+public:
+    // Call this once at the start to initialize the timer.
+    static void Init() {
+        frequency = static_cast<double>(SDL_GetPerformanceFrequency());
+        lastCounter = SDL_GetPerformanceCounter();
+        DeltaTime = 0.0;
+    }
 
+    // Call this every frame to update DeltaTime.
+    static void Update() {
+        Uint64 currentCounter = SDL_GetPerformanceCounter();
+        DeltaTime = (currentCounter - lastCounter) / frequency;
+        lastCounter = currentCounter;
+    }
 };
 
-float Time::DeltaTime = 0;
-Uint64 Time::LAST = Uint64();
+// Define static members
+double Time::DeltaTime = 0.0;
+Uint64 Time::lastCounter = 0;
+double Time::frequency = 0.0;
