@@ -1,5 +1,4 @@
-#ifndef EOBJECT_HPP
-#define EOBJECT_HPP
+#pragma once
 
 class EObject
 {
@@ -21,5 +20,3 @@ protected:
 	}
 
 };
-
-#endif

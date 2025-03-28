@@ -7,7 +7,7 @@
 #include "../Logger.hpp"
 
 #include "SoundInstance.hpp"
-#include <SDL/SDL_audio.h>
+#include <SDL2/SDL_audio.h>
 #include <unordered_map>
 
 using namespace std;

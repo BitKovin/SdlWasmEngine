@@ -1,21 +1,19 @@
 #include "Input.h"
-#include <SDL/SDL.h>
-#include <SDL/SDL_joystick.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_joystick.h>
 #include <algorithm>
 #include <cmath>
-
-// Assuming your Vector2 class has the required operators (+, -, *, /) and a constructor accepting two floats.
-#include "Vector2.h" // Include your Vector2 header here
+#include "glm/glm.hpp"
 
 // Static member definitions for Input.
-Vector2 Input::MousePos;
-Vector2 Input::MouseDelta;
-std::vector<Vector2> Input::MouseDeltas;
+glm::vec2 Input::MousePos;
+glm::vec2 Input::MouseDelta;
+std::vector<glm::vec2> Input::MouseDeltas;
 int Input::MaxDeltas = 10;
 std::unordered_map<std::string, InputAction*> Input::actions;
 bool Input::LockCursor = false;
 float Input::sensitivity = 0.2f;
-Vector2 Input::windowCenter;
+glm::vec2 Input::windowCenter;
 bool Input::PendingCenterCursor = false;
 MouseMoveCalculator* Input::mouseMoveCalculator = nullptr;
 SDL_Window* Input::window = nullptr;
@@ -24,9 +22,9 @@ Uint32 Input::lastTime = 0;
 float Input::deltaTime = 0.f;
 double Input::GameTime = 0.0;
 
-// Helper function to compute distance between two Vector2 points.
-static float Distance(const Vector2& a, const Vector2& b) {
-    Vector2 diff = a - b;
+// Helper function to compute distance between two glm::vec2 points.
+static float Distance(const glm::vec2& a, const glm::vec2& b) {
+    glm::vec2 diff = a - b;
     return std::sqrt(diff.x * diff.x + diff.y * diff.y);
 }
 
@@ -46,7 +44,7 @@ void Input::Update() {
     // Update window center based on current window size.
     int w, h;
     SDL_GetWindowSize(window, &w, &h);
-    windowCenter = Vector2(w / 2.0f, h / 2.0f);
+    windowCenter = glm::vec2(w / 2.0f, h / 2.0f);
 
     // Show or hide the cursor based on LockCursor.
     SDL_ShowCursor(LockCursor ? SDL_DISABLE : SDL_ENABLE);
@@ -63,7 +61,7 @@ void Input::JoystickCamera() {
         float axisX = SDL_JoystickGetAxis(joystick, axisRightX) / 32768.f;
         float axisY = SDL_JoystickGetAxis(joystick, axisRightY) / 32768.f;
         // Multiply by deltaTime and a scale factor (1500) and invert Y.
-        Vector2 stickDelta(axisX, -axisY);
+        glm::vec2 stickDelta(axisX, -axisY);
         MouseDelta = MouseDelta + stickDelta * (deltaTime * 1500.f);
     }
 }
@@ -71,7 +69,7 @@ void Input::JoystickCamera() {
 void Input::UpdateMouse() {
     int x, y;
     SDL_GetMouseState(&x, &y);
-    Vector2 mousePos(static_cast<float>(x), static_cast<float>(y));
+    glm::vec2 mousePos(static_cast<float>(x), static_cast<float>(y));
 
     if (mouseMoveCalculator) {
         MousePos = mousePos;
@@ -82,7 +80,7 @@ void Input::UpdateMouse() {
         return;
     }
 
-    Vector2 delta = mousePos - MousePos;
+    glm::vec2 delta = mousePos - MousePos;
     AddMouseInput(delta);
     JoystickCamera();
     MouseDelta = MouseDelta * sensitivity;
@@ -104,12 +102,12 @@ void Input::UpdateMouse() {
     }
 }
 
-void Input::AddMouseInput(const Vector2& delta) {
+void Input::AddMouseInput(const glm::vec2& delta) {
     if (static_cast<int>(MouseDeltas.size()) > MaxDeltas)
         MouseDeltas.erase(MouseDeltas.begin());
     MouseDeltas.push_back(delta);
 
-    Vector2 sum(0.f, 0.f);
+    glm::vec2 sum(0.f, 0.f);
     for (const auto& d : MouseDeltas)
         sum = sum + d;
     MouseDelta = sum / static_cast<float>(MouseDeltas.size());
@@ -121,7 +119,7 @@ void Input::CenterCursor() {
     if (windowFocused) {
         SDL_WarpMouseInWindow(window, static_cast<int>(windowCenter.x), static_cast<int>(windowCenter.y));
         MousePos = windowCenter;
-        MouseDelta = Vector2(0.f, 0.f);
+        MouseDelta = glm::vec2(0.f, 0.f);
         MouseDeltas.clear();
         PendingCenterCursor = false;
     }

@@ -1,16 +1,15 @@
-#ifndef INPUT_H
-#define INPUT_H
+#pragma once
 
-#include <SDL/SDL.h>
-#include <SDL/SDL_joystick.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_joystick.h>
 #include <unordered_map>
 #include <vector>
 #include <string>
-#include <SDL/SDL_scancode.h>
-#include <SDL/SDL_video.h>
+#include <SDL2/SDL_scancode.h>
+#include <SDL2/SDL_video.h>
+#include "glm/glm.hpp"
 
 #include "EObject.hpp"
-#include "Vector2.h"
 #include "Logger.hpp"
 
 // Forward declaration for InputAction.
@@ -19,15 +18,15 @@ class InputAction;
 // Base class for a custom mouse movement calculator (override GetMouseDelta if desired)
 class MouseMoveCalculator {
 public:
-    virtual Vector2 GetMouseDelta() { return Vector2(); }
+    virtual glm::vec2 GetMouseDelta() { return glm::vec2(); }
 };
 
 class Input {
 public:
     // Mouse tracking
-    static Vector2 MousePos;
-    static Vector2 MouseDelta;
-    static std::vector<Vector2> MouseDeltas;
+    static glm::vec2 MousePos;
+    static glm::vec2 MouseDelta;
+    static std::vector<glm::vec2> MouseDeltas;
     static int MaxDeltas;
 
     // Input actions mapped by a string name
@@ -36,7 +35,7 @@ public:
     // Cursor locking and sensitivity
     static bool LockCursor;
     static float sensitivity;
-    static Vector2 windowCenter;
+    static glm::vec2 windowCenter;
     static bool PendingCenterCursor;
 
     // Optional custom mouse movement calculator
@@ -62,7 +61,7 @@ public:
     static void UpdateMouse();
 
     // Adds the mouse delta to a rolling average.
-    static void AddMouseInput(const Vector2& delta);
+    static void AddMouseInput(const glm::vec2& delta);
 
     // Centers the mouse cursor to the window center.
     static void CenterCursor();
@@ -119,9 +118,4 @@ protected:
     {
         Logger::Log("destroying input action");
     }
-
-
 };
-
-
-#endif // INPUT_H
