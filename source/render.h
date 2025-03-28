@@ -30,6 +30,13 @@ GLuint shader_program;
 GLuint texture;
 GLuint vbo;
 
+
+void update_screen_size(int w, int h)
+{
+    glViewport(0, 0, w, h);
+    SDL_SetWindowSize(window, w, h);
+}
+
 void init_gl()
 {
     
@@ -76,6 +83,8 @@ void init_gl()
 
     Input::AddAction("test")->AddKeyboardKey(SDL_GetScancodeFromKey(SDLK_w));
 
+    update_screen_size(512, 512);
+
 }
 
 void load_image(const char* filename)
@@ -103,7 +112,45 @@ void load_image(const char* filename)
     
 }
 
+void ToggleFullscreen(SDL_Window* Window) 
+{
+    Uint32 FullscreenFlag = SDL_WINDOW_FULLSCREEN_DESKTOP;
+    bool IsFullscreen = SDL_GetWindowFlags(Window) & FullscreenFlag;
+    SDL_SetWindowFullscreen(Window, IsFullscreen ? 0 : FullscreenFlag);
+    SDL_ShowCursor(IsFullscreen);
+}
 
+void main_loop()
+{
+    Time::Update();
+    Input::Update();
+
+
+    if (Input::GetAction("test")->Pressed())
+    {
+        ToggleFullscreen(window);
+    }
+
+    int x, y;
+    SDL_GetWindowSize(window, &x, &y);
+    glViewport(0, 0, x, y);
+
+    // Clear the screen
+    glClear(GL_COLOR_BUFFER_BIT);
+
+
+    // Use shader program
+    glUseProgram(shader_program);
+
+    // Bind texture
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    // Draw the quad
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+
+    // Present the renderer
+    SDL_GL_SwapWindow(window);
+}
 
 void desktop_render_loop()
 {
@@ -113,34 +160,14 @@ void desktop_render_loop()
 
     while (!quit) {
 
-        Time::Update();
-        Input::Update();
-
         // Handle events
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT)
                 quit = 1;
         }
 
-        if (Input::GetAction("test")->Pressed())
-        {
-            printf("frame  %f \n", 1 / Time::DeltaTime);
-        }
-
-        // Clear the screen
-        glClear(GL_COLOR_BUFFER_BIT);
+        main_loop();
         
-        // Use shader program
-        glUseProgram(shader_program);
-        
-        // Bind texture
-        glBindTexture(GL_TEXTURE_2D, texture);
-        
-        // Draw the quad
-        glDrawArrays(GL_TRIANGLES, 0, 6);
-        
-        // Present the renderer
-        SDL_GL_SwapWindow(window);
     }
 }
 
@@ -148,30 +175,22 @@ void desktop_render_loop()
 void emscripten_render_loop()
 {
     
-    Time::Update();
-    Input::Update();
-
-
-    if (Input::GetAction("test")->Pressed())
+    SDL_Event event;
+    while (SDL_PollEvent(&event))
     {
-        printf("frame  %f \n", 1 / Time::DeltaTime);
+        switch (event.type)
+        {
+        case SDL_WINDOWEVENT:
+            if (event.window.event == SDL_WINDOWEVENT_RESIZED)
+            {
+                update_screen_size(event.window.data1, event.window.data2);
+            }
+            break;
+        default:
+            break;
+        }
     }
+
+    main_loop();
     
-
-    // Clear the screen
-	glClear(GL_COLOR_BUFFER_BIT);
-
-	for (int i = 0; i < 10000; i++)
-	{
-		// Use shader program
-		glUseProgram(shader_program);
-
-		// Bind texture
-		glBindTexture(GL_TEXTURE_2D, texture);
-
-		// Draw the quad
-		glDrawArrays(GL_TRIANGLES, 0, 6);
-	}
-    // Present the renderer
-    SDL_GL_SwapWindow(window);
 }

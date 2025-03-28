@@ -35,6 +35,7 @@ else()
         "SHELL:-s USE_SDL_MIXER=2"
         "SHELL:-s SDL2_IMAGE_FORMATS=[png]"
         "SHELL:-s FULL_ES3=1"
+        "SHELL:-s USE_WEBGL2=1"
         "SHELL:-s STACK_SIZE=500000"
         "SHELL:-s ALLOW_MEMORY_GROWTH=1"
         "SHELL:-s WASM=1"

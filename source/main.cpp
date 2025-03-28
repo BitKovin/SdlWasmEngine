@@ -4,13 +4,12 @@
 #include <SDL2/SDL.h>
 //#include <SDL2/SDL_image.h>
 #if DESKTOP
-#include <GL/glew.h>
-#include <SDL2/SDL_opengl.h>
-
 #else
-#include <SDL2/SDL_opengles2.h>
 #include <emscripten.h>
+#include <emscripten/html5.h>
 #endif 
+
+#include "gl.h"
 
 SDL_Window *window;
 
@@ -25,8 +24,11 @@ int main(int argc, char* args[]) {
         return 1;
     }
     
+    int flags = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI;
+
+
     // Create SDL window
-    window = SDL_CreateWindow("Image", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 800, 600, SDL_WINDOW_OPENGL);
+    window = SDL_CreateWindow("Image", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600, flags);
     if (!window) {
         fprintf(stderr, "Window could not be created! SDL_Error: %s\n", SDL_GetError());
         return 1;
@@ -34,7 +36,6 @@ int main(int argc, char* args[]) {
     
     SoundManager::Initialize();
 
-    Input::AddAction("test")->AddKeyboardKey(SDL_GetScancodeFromKey(SDLK_t));
 
     auto sound = SoundManager::GetSoundFromPath("assets/bass_beat.wav");
 
@@ -72,6 +73,8 @@ int main(int argc, char* args[]) {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     
     SDL_GL_SetSwapInterval(0);
+
+    SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
 
     // Run main loop
 #if DESKTOP

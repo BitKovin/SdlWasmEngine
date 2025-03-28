@@ -16,6 +16,9 @@
     <Filter Include="Header Files\SoundSystem">
       <UniqueIdentifier>{a1e22742-e24e-485d-8f47-2cf11ba3b88d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Render">
+      <UniqueIdentifier>{37fed95d-1ba4-4e74-b7ea-268535b9e5a4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -48,6 +51,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="glm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Shader.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="gl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
