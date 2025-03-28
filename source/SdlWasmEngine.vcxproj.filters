@@ -45,6 +45,12 @@
     <ClCompile Include="StaticMesh.hpp">
       <Filter>Header Files</Filter>
     </ClCompile>
+    <ClCompile Include="ShaderManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AssetRegistry.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SoundSystem\SoundInstance.hpp">
@@ -86,7 +92,16 @@
     <ClInclude Include="ShaderManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="AssetRegisty.hpp">
+    <ClInclude Include="AssetRegisty.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VertexData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshHelper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VertexBuffer.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

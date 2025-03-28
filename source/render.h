@@ -5,7 +5,7 @@
 
 #include "Shader.hpp"
 
-#include "AssetRegisty.hpp"
+#include "AssetRegisty.h"
 
 #include "ShaderManager.h"
 

@@ -2,7 +2,7 @@
 
 #include "Shader.hpp"
 
-#include "AssetRegisty.hpp"
+#include "AssetRegisty.h"
 
 class ShaderManager
 {
@@ -35,5 +35,3 @@ public:
         return program;
     }
 };
-
-std::unordered_map<std::string, ShaderProgram*> ShaderManager::shaderProgramCache;

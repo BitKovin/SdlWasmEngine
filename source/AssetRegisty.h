@@ -86,5 +86,3 @@ public:
 private:
 
 };
-
-std::unordered_map<std::string, Shader> AssetRegistry::shaderCache;
