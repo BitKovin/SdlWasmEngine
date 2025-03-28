@@ -1,196 +1,277 @@
-#include <SDL2/SDL_video.h>
-#include <SDL2/SDL_opengl.h>
-#include <SDL2/SDL_image.h>
-#include <stdio.h>
+#pragma once
 
-#include "Time.hpp"
-#include "Input.h"
+#include <string>
+#include <vector>
+#include <utility>
+#include "Logger.hpp"
+#include "gl.h"
 
-const char* vertex_shader_source =
-"attribute vec2 position;\n"
-"attribute vec2 texcoord;\n"
-"varying vec2 v_texcoord;\n"
-"void main() {\n"
-"    v_texcoord = texcoord;\n"
-"    gl_Position = vec4(position, 0.0, 1.0);\n"
-"}\n";
+using namespace std;
 
-const char* fragment_shader_source =
-"precision mediump float;\n"
-"varying vec2 v_texcoord;\n"
-"uniform sampler2D tex;\n"
-"void main() {\n"
-"    gl_FragColor = texture2D(tex, v_texcoord);\n"
-"}\n";
-
-
-
-SDL_GLContext glContext;
-GLuint shader_program;
-GLuint texture;
-GLuint vbo;
-
-
-void update_screen_size(int w, int h)
+enum ShaderType
 {
-    glViewport(0, 0, w, h);
-    SDL_SetWindowSize(window, w, h);
-}
+    VertexShader,
+    PixelShader
+};
 
-void init_gl()
+class Shader
 {
-    
-    // Compile shaders
-    GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertex_shader, 1, &vertex_shader_source, NULL);
-    glCompileShader(vertex_shader);
-    
-    GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragment_shader, 1, &fragment_shader_source, NULL);
-    glCompileShader(fragment_shader);
-    
-    // Link shaders
-    shader_program = glCreateProgram();
-    glAttachShader(shader_program, vertex_shader);
-    glAttachShader(shader_program, fragment_shader);
-    glLinkProgram(shader_program);
-    
-    // Set up quad vertices
-    GLfloat vertices[] = {
-        // Positions    // Texture Coords
-        1.0f,  1.0f,   1.0f, 0.0f, // Top Right
-        1.0f, -1.0f,   1.0f, 1.0f, // Bottom Right
-        -1.0f, -1.0f,   0.0f, 1.0f, // Bottom Left
-        1.0f,  1.0f,   1.0f, 0.0f, // Top Right
-        -1.0f, -1.0f,   0.0f, 1.0f, // Bottom Left
-        -1.0f,  1.0f,   0.0f, 0.0f  // Top Left
-    };
-    
-    // Create VBO
-    glGenBuffers(1, &vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    
-    // Specify vertex attributes
-    GLint posAttrib = glGetAttribLocation(shader_program, "position");
-    glEnableVertexAttribArray(posAttrib);
-    glVertexAttribPointer(posAttrib, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), 0);
-    
-    GLint texAttrib = glGetAttribLocation(shader_program, "texcoord");
-    glEnableVertexAttribArray(texAttrib);
-    glVertexAttribPointer(texAttrib, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (void*)(2 * sizeof(GLfloat)));
-    
+public:
+    Shader() {}
 
-    Input::AddAction("test")->AddKeyboardKey(SDL_GetScancodeFromKey(SDLK_w));
+    GLuint shaderPointer = 0;
+    std::string shaderCode = "";
 
-    update_screen_size(512, 512);
-
-}
-
-void load_image(const char* filename)
-{
-    
-    SDL_Surface *surface = IMG_Load(filename);
-    if (!surface) {
-        printf("Error loading image: %s\n", SDL_GetError());
-    }
-    SDL_Surface *converted_surface = SDL_ConvertSurfaceFormat(surface, SDL_PIXELFORMAT_RGBA32, 0);
-    
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, converted_surface->w, converted_surface->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, converted_surface->pixels);
-    
-    
-    // Set texture parameters (we need all these or these won't work)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    
-    SDL_FreeSurface(converted_surface); 
-    SDL_FreeSurface(surface);
-    
-}
-
-void ToggleFullscreen(SDL_Window* Window) 
-{
-    Uint32 FullscreenFlag = SDL_WINDOW_FULLSCREEN_DESKTOP;
-    bool IsFullscreen = SDL_GetWindowFlags(Window) & FullscreenFlag;
-    SDL_SetWindowFullscreen(Window, IsFullscreen ? 0 : FullscreenFlag);
-    SDL_ShowCursor(IsFullscreen);
-}
-
-void main_loop()
-{
-    Time::Update();
-    Input::Update();
-
-
-    if (Input::GetAction("test")->Pressed())
+    // Creates a Shader object from source code.
+    static Shader FromCode(const char* code, ShaderType shaderType, bool autoCompile = true)
     {
-        ToggleFullscreen(window);
-    }
+        Shader output;
+        GLuint glShaderType = 0;
 
-    int x, y;
-    SDL_GetWindowSize(window, &x, &y);
-    glViewport(0, 0, x, y);
-
-    // Clear the screen
-    glClear(GL_COLOR_BUFFER_BIT);
-
-
-    // Use shader program
-    glUseProgram(shader_program);
-
-    // Bind texture
-    glBindTexture(GL_TEXTURE_2D, texture);
-
-    // Draw the quad
-    glDrawArrays(GL_TRIANGLES, 0, 6);
-
-    // Present the renderer
-    SDL_GL_SwapWindow(window);
-}
-
-void desktop_render_loop()
-{
-    
-    SDL_Event event;
-    int quit = 0;
-
-    while (!quit) {
-
-        // Handle events
-        while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_QUIT)
-                quit = 1;
-        }
-
-        main_loop();
-        
-    }
-}
-
-
-void emscripten_render_loop()
-{
-    
-    SDL_Event event;
-    while (SDL_PollEvent(&event))
-    {
-        switch (event.type)
+        switch (shaderType)
         {
-        case SDL_WINDOWEVENT:
-            if (event.window.event == SDL_WINDOWEVENT_RESIZED)
-            {
-                update_screen_size(event.window.data1, event.window.data2);
-            }
+        case VertexShader:
+            glShaderType = GL_VERTEX_SHADER;
+            break;
+        case PixelShader:
+            glShaderType = GL_FRAGMENT_SHADER;
             break;
         default:
             break;
         }
+
+        output.shaderCode = code;
+        const char* cCode = code;
+
+        GLuint shader = glCreateShader(glShaderType);
+        glShaderSource(shader, 1, &cCode, NULL);
+        output.shaderPointer = shader;
+
+        if (autoCompile)
+            output.CompileShader();
+
+        return output;
     }
 
-    main_loop();
-    
-}
+    // Compiles the shader and logs compile errors if any.
+    void CompileShader()
+    {
+        glCompileShader(shaderPointer);
+
+        GLint success = 0;
+        glGetShaderiv(shaderPointer, GL_COMPILE_STATUS, &success);
+        if (success == GL_FALSE)
+        {
+            GLint logLength = 0;
+            glGetShaderiv(shaderPointer, GL_INFO_LOG_LENGTH, &logLength);
+            std::string infoLog(logLength, ' ');
+            glGetShaderInfoLog(shaderPointer, logLength, &logLength, &infoLog[0]);
+            Logger::Log("Shader compilation failed:\n" + infoLog);
+        }
+    }
+};
+
+class ShaderProgram
+{
+public:
+    GLuint program;
+    std::vector<std::pair<std::string, GLint>> attributes;
+    std::vector<std::pair<std::string, GLint>> uniforms;
+
+    ShaderProgram()
+    {
+        program = glCreateProgram();
+    }
+
+    // Attaches a compiled shader to the program.
+    ShaderProgram* AttachShader(Shader shader)
+    {
+        glAttachShader(program, shader.shaderPointer);
+        return this;
+    }
+
+    // Links the program.
+    ShaderProgram* LinkProgram()
+    {
+        glLinkProgram(program);
+        return this;
+    }
+
+    // Activates the program.
+    void UseProgram()
+    {
+        glUseProgram(program);
+    }
+
+    // Fills the attributes vector by querying the linked program.
+    void FillAttributes()
+    {
+        attributes.clear();
+        GLint attributeCount = 0;
+        glGetProgramiv(program, GL_ACTIVE_ATTRIBUTES, &attributeCount);
+
+        char name[256];
+        for (int i = 0; i < attributeCount; i++)
+        {
+            GLsizei length = 0;
+            GLint size = 0;
+            GLenum type = 0;
+            glGetActiveAttrib(program, i, sizeof(name), &length, &size, &type, name);
+            GLint location = glGetAttribLocation(program, name);
+            attributes.push_back({ string(name), location });
+        }
+    }
+
+    // Fills the uniforms vector by querying the linked program.
+    void FillUniforms()
+    {
+        uniforms.clear();
+        GLint uniformCount = 0;
+        glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &uniformCount);
+
+        char name[256];
+        for (int i = 0; i < uniformCount; i++)
+        {
+            GLsizei length = 0;
+            GLint size = 0;
+            GLenum type = 0;
+            glGetActiveUniform(program, i, sizeof(name), &length, &size, &type, name);
+            GLint location = glGetUniformLocation(program, name);
+            uniforms.push_back({ string(name), location });
+        }
+    }
+
+    // === Uniform setting functions ===
+
+    // Sets a single integer uniform.
+    void SetUniform1i(const std::string& name, int value)
+    {
+        GLint location = glGetUniformLocation(program, name.c_str());
+        if (location == -1)
+        {
+            Logger::Log("Warning: Uniform \"" + name + "\" not found in program " + std::to_string(program) + ".");
+            return;
+        }
+        glUniform1i(location, value);
+    }
+
+    // Sets a single float uniform.
+    void SetUniform1f(const std::string& name, float value)
+    {
+        GLint location = glGetUniformLocation(program, name.c_str());
+        if (location == -1)
+        {
+            Logger::Log("Warning: Uniform \"" + name + "\" not found in program " + std::to_string(program) + ".");
+            return;
+        }
+        glUniform1f(location, value);
+    }
+
+    // Sets a 2-component float uniform (vec2).
+    void SetUniform2f(const std::string& name, float v0, float v1)
+    {
+        GLint location = glGetUniformLocation(program, name.c_str());
+        if (location == -1)
+        {
+            Logger::Log("Warning: Uniform \"" + name + "\" not found in program " + std::to_string(program) + ".");
+            return;
+        }
+        glUniform2f(location, v0, v1);
+    }
+
+    // Sets a 3-component float uniform (vec3).
+    void SetUniform3f(const std::string& name, float v0, float v1, float v2)
+    {
+        GLint location = glGetUniformLocation(program, name.c_str());
+        if (location == -1)
+        {
+            Logger::Log("Warning: Uniform \"" + name + "\" not found in program " + std::to_string(program) + ".");
+            return;
+        }
+        glUniform3f(location, v0, v1, v2);
+    }
+
+    // Sets a 4-component float uniform (vec4).
+    void SetUniform4f(const std::string& name, float v0, float v1, float v2, float v3)
+    {
+        GLint location = glGetUniformLocation(program, name.c_str());
+        if (location == -1)
+        {
+            Logger::Log("Warning: Uniform \"" + name + "\" not found in program " + std::to_string(program) + ".");
+            return;
+        }
+        glUniform4f(location, v0, v1, v2, v3);
+    }
+
+    // Sets a 2-component integer uniform (ivec2).
+    void SetUniform2i(const std::string& name, int v0, int v1)
+    {
+        GLint location = glGetUniformLocation(program, name.c_str());
+        if (location == -1)
+        {
+            Logger::Log("Warning: Uniform \"" + name + "\" not found in program " + std::to_string(program) + ".");
+            return;
+        }
+        glUniform2i(location, v0, v1);
+    }
+
+    // Sets a 3-component integer uniform (ivec3).
+    void SetUniform3i(const std::string& name, int v0, int v1, int v2)
+    {
+        GLint location = glGetUniformLocation(program, name.c_str());
+        if (location == -1)
+        {
+            Logger::Log("Warning: Uniform \"" + name + "\" not found in program " + std::to_string(program) + ".");
+            return;
+        }
+        glUniform3i(location, v0, v1, v2);
+    }
+
+    // Sets a 4-component integer uniform (ivec4).
+    void SetUniform4i(const std::string& name, int v0, int v1, int v2, int v3)
+    {
+        GLint location = glGetUniformLocation(program, name.c_str());
+        if (location == -1)
+        {
+            Logger::Log("Warning: Uniform \"" + name + "\" not found in program " + std::to_string(program) + ".");
+            return;
+        }
+        glUniform4i(location, v0, v1, v2, v3);
+    }
+
+    // Sets a 2x2 float matrix uniform (mat2).
+    void SetUniformMatrix2fv(const std::string& name, const float* mat, GLsizei count = 1, GLboolean transpose = GL_FALSE)
+    {
+        GLint location = glGetUniformLocation(program, name.c_str());
+        if (location == -1)
+        {
+            Logger::Log("Warning: Uniform matrix \"" + name + "\" not found in program " + std::to_string(program) + ".");
+            return;
+        }
+        glUniformMatrix2fv(location, count, transpose, mat);
+    }
+
+    // Sets a 3x3 float matrix uniform (mat3).
+    void SetUniformMatrix3fv(const std::string& name, const float* mat, GLsizei count = 1, GLboolean transpose = GL_FALSE)
+    {
+        GLint location = glGetUniformLocation(program, name.c_str());
+        if (location == -1)
+        {
+            Logger::Log("Warning: Uniform matrix \"" + name + "\" not found in program " + std::to_string(program) + ".");
+            return;
+        }
+        glUniformMatrix3fv(location, count, transpose, mat);
+    }
+
+    // Sets a 4x4 float matrix uniform (mat4).
+    void SetUniformMatrix4fv(const std::string& name, const float* mat, GLsizei count = 1, GLboolean transpose = GL_FALSE)
+    {
+        GLint location = glGetUniformLocation(program, name.c_str());
+        if (location == -1)
+        {
+            Logger::Log("Warning: Uniform matrix \"" + name + "\" not found in program " + std::to_string(program) + ".");
+            return;
+        }
+        glUniformMatrix4fv(location, count, transpose, mat);
+    }
+};

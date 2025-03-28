@@ -57,6 +57,7 @@ int main(int argc, char* args[]) {
         fprintf(stderr, "OpenGL context could not be created! SDL_Error: %s\n", SDL_GetError());
         
     }
+
 #if DESKTOP
     GLenum glewError = glewInit();
     if (glewError != GLEW_OK) {
@@ -74,7 +75,7 @@ int main(int argc, char* args[]) {
     
     SDL_GL_SetSwapInterval(0);
 
-    SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+    //SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
 
     // Run main loop
 #if DESKTOP
