@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include "Logger.hpp"
 #include "gl.h"
+#include "glm.h"
 
 using namespace std;
 
@@ -176,70 +177,61 @@ public:
     }
 
     // === Uniform setting functions with cached locations ===
-
-    void SetUniform1i(const std::string& name, int value)
+    
+        // Set uniform integer
+    void SetUniform(const std::string& name, int value)
     {
         GLint location = GetUniformLocation(name);
         if (location != -1) glUniform1i(location, value);
     }
 
-    void SetUniform1f(const std::string& name, float value)
+    // Set uniform float
+    void SetUniform(const std::string& name, float value)
     {
         GLint location = GetUniformLocation(name);
         if (location != -1) glUniform1f(location, value);
     }
 
-    void SetUniform2f(const std::string& name, float v0, float v1)
+    // Set uniform vec2
+    void SetUniform(const std::string& name, const glm::vec2& value)
     {
         GLint location = GetUniformLocation(name);
-        if (location != -1) glUniform2f(location, v0, v1);
+        if (location != -1) glUniform2f(location, value.x, value.y);
     }
 
-    void SetUniform3f(const std::string& name, float v0, float v1, float v2)
+    // Set uniform vec3
+    void SetUniform(const std::string& name, const glm::vec3& value)
     {
         GLint location = GetUniformLocation(name);
-        if (location != -1) glUniform3f(location, v0, v1, v2);
+        if (location != -1) glUniform3f(location, value.x, value.y, value.z);
     }
 
-    void SetUniform4f(const std::string& name, float v0, float v1, float v2, float v3)
+    // Set uniform vec4
+    void SetUniform(const std::string& name, const glm::vec4& value)
     {
         GLint location = GetUniformLocation(name);
-        if (location != -1) glUniform4f(location, v0, v1, v2, v3);
+        if (location != -1) glUniform4f(location, value.x, value.y, value.z, value.w);
     }
 
-    void SetUniform2i(const std::string& name, int v0, int v1)
+    // Set uniform mat2
+    void SetUniform(const std::string& name, const glm::mat2& value)
     {
         GLint location = GetUniformLocation(name);
-        if (location != -1) glUniform2i(location, v0, v1);
+        if (location != -1) glUniformMatrix2fv(location, 1, GL_FALSE, glm::value_ptr(value));
     }
 
-    void SetUniform3i(const std::string& name, int v0, int v1, int v2)
+    // Set uniform mat3
+    void SetUniform(const std::string& name, const glm::mat3& value)
     {
         GLint location = GetUniformLocation(name);
-        if (location != -1) glUniform3i(location, v0, v1, v2);
+        if (location != -1) glUniformMatrix3fv(location, 1, GL_FALSE, glm::value_ptr(value));
     }
 
-    void SetUniform4i(const std::string& name, int v0, int v1, int v2, int v3)
+    // Set uniform mat4
+    void SetUniform(const std::string& name, const glm::mat4& value)
     {
         GLint location = GetUniformLocation(name);
-        if (location != -1) glUniform4i(location, v0, v1, v2, v3);
+        if (location != -1) glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(value));
     }
 
-    void SetUniformMatrix2fv(const std::string& name, const float* mat, GLsizei count = 1, GLboolean transpose = GL_FALSE)
-    {
-        GLint location = GetUniformLocation(name);
-        if (location != -1) glUniformMatrix2fv(location, count, transpose, mat);
-    }
-
-    void SetUniformMatrix3fv(const std::string& name, const float* mat, GLsizei count = 1, GLboolean transpose = GL_FALSE)
-    {
-        GLint location = GetUniformLocation(name);
-        if (location != -1) glUniformMatrix3fv(location, count, transpose, mat);
-    }
-
-    void SetUniformMatrix4fv(const std::string& name, const float* mat, GLsizei count = 1, GLboolean transpose = GL_FALSE)
-    {
-        GLint location = GetUniformLocation(name);
-        if (location != -1) glUniformMatrix4fv(location, count, transpose, mat);
-    }
 };

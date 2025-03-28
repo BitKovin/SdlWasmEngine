@@ -12,22 +12,7 @@
 #include "Time.hpp"
 #include "Input.h"
 
-const char* vertex_shader_source =
-"attribute vec2 position;\n"
-"attribute vec2 texcoord;\n"
-"varying vec2 v_texcoord;\n"
-"void main() {\n"
-"    v_texcoord = texcoord;\n"
-"    gl_Position = vec4(position, 0.0, 1.0);\n"
-"}\n";
-
-const char* fragment_shader_source =
-"precision mediump float;\n"
-"varying vec2 v_texcoord;\n"
-"uniform sampler2D tex;\n"
-"void main() {\n"
-"    gl_FragColor = texture2D(tex, v_texcoord);\n"
-"}\n";
+#include "Camera.h"
 
 
 
@@ -116,11 +101,35 @@ void ToggleFullscreen(SDL_Window* Window)
     SDL_ShowCursor(IsFullscreen);
 }
 
+void Draw()
+{
+    int x, y;
+    SDL_GetWindowSize(window, &x, &y);
+    glViewport(0, 0, x, y);
+
+    // Clear the screen
+    glClear(GL_COLOR_BUFFER_BIT);
+    glClearDepth(0);
+
+
+
+    // Use shader program
+    shader_program->UseProgram();
+
+    // Bind texture
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    // Draw the quad
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+
+    // Present the renderer
+    SDL_GL_SwapWindow(window);
+}
+
 void main_loop()
 {
     Time::Update();
     Input::Update();
-
 
     if (Input::GetAction("test")->Pressed())
     {
@@ -134,25 +143,10 @@ void main_loop()
         printf("framerate: %f  \n", (1 / Time::DeltaTime));
     }
 
-    int x, y;
-    SDL_GetWindowSize(window, &x, &y);
-    glViewport(0, 0, x, y);
+    Camera::Update(Time::DeltaTime);
 
-    // Clear the screen
-    glClear(GL_COLOR_BUFFER_BIT);
-    glClearDepth(0);
+    Draw();
 
-    // Use shader program
-    shader_program->UseProgram();
-
-    // Bind texture
-    glBindTexture(GL_TEXTURE_2D, texture);
-
-    // Draw the quad
-    glDrawArrays(GL_TRIANGLES, 0, 6);
-
-    // Present the renderer
-    SDL_GL_SwapWindow(window);
 }
 
 void desktop_render_loop()
