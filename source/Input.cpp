@@ -3,7 +3,7 @@
 #include <SDL2/SDL_joystick.h>
 #include <algorithm>
 #include <cmath>
-#include "glm/glm.hpp"
+#include "glm.h"
 
 // Static member definitions for Input.
 glm::vec2 Input::MousePos;
@@ -188,19 +188,19 @@ InputAction* InputAction::RemoveButton(int button) {
     return this;
 }
 
-bool InputAction::Pressed() {
+bool InputAction::Pressed() const {
     return pressed;
 }
 
-bool InputAction::Released() {
+bool InputAction::Released() const {
     return released;
 }
 
-bool InputAction::Holding() {
+bool InputAction::Holding() const {
     return pressing;
 }
 
-bool InputAction::PressedBuffered(float bufferLength) {
+bool InputAction::PressedBuffered(float bufferLength) const {
     return pressedTime + bufferLength >= Input::GameTime;
 }
 

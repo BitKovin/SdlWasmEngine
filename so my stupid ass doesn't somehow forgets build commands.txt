@@ -1,0 +1,5 @@
+emcmake cmake ..
+
+emmake ninja
+
+I know how dumb it looks. My head is too overwelmed rn to remember to basic commands

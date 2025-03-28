@@ -2,10 +2,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_image.h>
+//#include <SDL2/SDL_image.h>
 #if DESKTOP
 #include <GL/glew.h>
 #include <SDL2/SDL_opengl.h>
+
 #else
 #include <SDL2/SDL_opengles2.h>
 #include <emscripten.h>
@@ -17,7 +18,7 @@ SDL_Window *window;
 #include "render.h"
 #include "SoundSystem/SoundManager.hpp"
 
-int main() {
+int main(int argc, char* args[]) {
     // Initialize SDL
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
         fprintf(stderr, "SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
@@ -32,6 +33,8 @@ int main() {
     }
     
     SoundManager::Initialize();
+
+    Input::AddAction("test")->AddKeyboardKey(SDL_GetScancodeFromKey(SDLK_t));
 
     auto sound = SoundManager::GetSoundFromPath("assets/bass_beat.wav");
 
@@ -68,6 +71,8 @@ int main() {
     // Set clear color
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     
+    SDL_GL_SetSwapInterval(0);
+
     // Run main loop
 #if DESKTOP
     desktop_render_loop();

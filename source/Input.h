@@ -7,7 +7,7 @@
 #include <string>
 #include <SDL2/SDL_scancode.h>
 #include <SDL2/SDL_video.h>
-#include "glm/glm.hpp"
+#include "glm.h"
 
 #include "EObject.hpp"
 #include "Logger.hpp"
@@ -87,10 +87,6 @@ public:
     bool RMB = false;
     bool MMB = false;
 
-    bool pressing = false;
-    bool released = false;
-    bool pressed = false;
-
     double pressedTime = 0.0;
 
     InputAction();
@@ -101,18 +97,22 @@ public:
     InputAction* RemoveButton(int button);
 
     // Returns true on the frame the action was pressed.
-    bool Pressed();
+    bool Pressed() const;
     // Returns true on the frame the action was released.
-    bool Released();
+    bool Released() const;
     // Returns true while the action is being held.
-    bool Holding();
+    bool Holding() const;
     // Returns true if the action was pressed within the given buffer time.
-    bool PressedBuffered(float bufferLength = 0.2f);
+    bool PressedBuffered(float bufferLength = 0.2f) const;
 
     // Call every frame to update the action state.
     void Update();
 
 protected:
+
+    bool pressing = false;
+    bool released = false;
+    bool pressed = false;
 
     void OnDispose()
     {

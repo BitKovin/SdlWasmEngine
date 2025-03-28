@@ -1,6 +1,5 @@
 #include <SDL2/SDL_video.h>
 #include <SDL2/SDL_opengl.h>
-#include <GLES2/gl2.h>
 #include <SDL2/SDL_image.h>
 #include <stdio.h>
 
@@ -111,12 +110,23 @@ void desktop_render_loop()
     
     SDL_Event event;
     int quit = 0;
+
     while (!quit) {
+
+        Time::Update();
+        Input::Update();
+
         // Handle events
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT)
                 quit = 1;
         }
+
+        if (Input::GetAction("test")->Pressed())
+        {
+            printf("frame  %f \n", 1 / Time::DeltaTime);
+        }
+
         // Clear the screen
         glClear(GL_COLOR_BUFFER_BIT);
         
@@ -146,9 +156,6 @@ void emscripten_render_loop()
     {
         printf("frame  %f \n", 1 / Time::DeltaTime);
     }
-
-    
-
     
 
     // Clear the screen
