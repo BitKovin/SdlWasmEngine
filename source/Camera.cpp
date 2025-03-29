@@ -3,6 +3,8 @@
 #include <cmath>
 #include <limits>
 #include "MathHelper.hpp"
+#include <SDL2/SDL_video.h>
+
 
     // Define static members (one definition per static member)
     float Camera::AspectRatio = 1.7777f;
@@ -78,6 +80,7 @@
         else {
             rotation += vec3(0.0001f, 0.0001f, 0.0f);
         }
+
         StupidCameraFix();
         view = CalculateView();
         projection = perspective(radians(FOV), AspectRatio, 0.05f, FarPlane);

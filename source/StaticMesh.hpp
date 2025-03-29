@@ -5,9 +5,12 @@
 #include "ShaderManager.h"
 
 #include "IDrawMesh.h"
-#include "Camera.h"
 
-#include "MeshHelper.h"
+#include "VertexData.h"
+
+#include "MathHelper.hpp"
+
+//#include "MeshHelper.h"
 
 using namespace std;
 
@@ -15,36 +18,41 @@ class StaticMesh : IDrawMesh
 {
 public:
 
+	VertexArrayObject* vao = nullptr;
 
 	StaticMesh()
 	{
-		//buffer = GenerateCubeBuffer();
+
 	}
 	~StaticMesh()
 	{
 
 	}
 
-	void DrawForward(mat4x4 viewProjection)
+	void DrawForward(mat4x4 view, mat4x4 projection, GLuint texture)
 	{
 
-		ShaderProgram* shader = nullptr;// ShaderManager::GetShaderProgram();
+		ShaderProgram* shader_program = ShaderManager::GetShaderProgram();
 
-		shader->UseProgram();
+		shader_program->UseProgram();
 
+		shader_program->SetTexture("u_texture", texture);
 
 		vec3 pos = vec3(0, 0, 2);
 
-		vec3 rot = vec3();
+		vec3 rot = vec3(0);
 
 		mat4x4 world = scale(vec3(1)) * MathHelper::GetRotationMatrix(rot) * translate(pos);
 
-		shader->SetUniform("view", Camera::finalizedView);
-		shader->SetUniform("projection", Camera::finalizedProjection);
+		shader_program->SetUniform("view", view);
+		shader_program->SetUniform("projection", projection);
 
-		shader->SetUniform("world", world);
+		shader_program->SetUniform("world", world);
 
-		//SetupVertexAttributes();
+
+		vao->Bind();
+
+		glDrawElements(GL_TRIANGLES, vao->IndexCount, GL_UNSIGNED_INT, 0);
 
 	}
 

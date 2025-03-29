@@ -13,9 +13,68 @@
 
 SDL_Window *window;
 
+void update_screen_size(int w, int h)
+{
+    glViewport(0, 0, w, h);
+    SDL_SetWindowSize(window, w, h);
+}
 
 #include "render.h"
 #include "SoundSystem/SoundManager.hpp"
+
+#include "EngineMain.h"
+
+
+EngineMain* engine = nullptr;
+
+SDL_GLContext glContext;
+
+
+
+
+
+void desktop_render_loop()
+{
+
+    SDL_Event event;
+    int quit = 0;
+
+    while (!quit) {
+
+        // Handle events
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_QUIT)
+                quit = 1;
+        }
+
+        engine->MainLoop();
+
+    }
+}
+
+
+void emscripten_render_loop()
+{
+
+    SDL_Event event;
+    while (SDL_PollEvent(&event))
+    {
+        switch (event.type)
+        {
+        case SDL_WINDOWEVENT:
+            if (event.window.event == SDL_WINDOWEVENT_RESIZED)
+            {
+                update_screen_size(event.window.data1, event.window.data2);
+            }
+            break;
+        default:
+            break;
+        }
+    }
+
+    engine->MainLoop();
+
+}
 
 int main(int argc, char* args[]) {
     // Initialize SDL
@@ -43,16 +102,7 @@ int main(int argc, char* args[]) {
         fprintf(stderr, "Window could not be created! SDL_Error: %s\n", SDL_GetError());
         return 1;
     }
-    
-    SoundManager::Initialize();
-
-    Time::Init();
-
-    auto sound = SoundManager::GetSoundFromPath("GameData/bass_beat.wav");
-
-    sound.Loop = true;
-
-    sound.Play();
+   
     
     printf("start\n");
 
@@ -75,22 +125,24 @@ int main(int argc, char* args[]) {
         
     }
 #endif
-    
-    init_gl();
+    //SDL_SetRelativeMouseMode(SDL_TRUE);
+    SDL_SetHintWithPriority(SDL_HINT_MOUSE_RELATIVE_MODE_WARP, "1", SDL_HINT_OVERRIDE);
     
     printf("GL Version={%s}\n", glGetString(GL_VERSION));
     printf("GLSL Version={%s}\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
 
-    Input::AddAction("test")->AddKeyboardKey(SDL_GetScancodeFromKey(SDLK_w));
-
-    update_screen_size(512, 512);
-
-    load_image("GameData/happy_hog.png");
+    Input::AddAction("test")->AddKeyboardKey(SDL_GetScancodeFromKey(SDLK_w));;
     
     // Set clear color
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     
     SDL_GL_SetSwapInterval(0);
+
+    engine = new EngineMain(window);
+
+    EngineMain::MainInstance = engine;
+
+    engine->Init();
 
     // Run main loop
 #if DESKTOP

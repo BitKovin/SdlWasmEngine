@@ -1,6 +1,7 @@
 #pragma once
 
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
 
 #include "Shader.hpp"
 
@@ -53,6 +54,34 @@ public:
         shaderCache[key] = shader;
 
         return shader;
+    }
+
+    static GLuint GetTextureFromFile(const char* filename)
+    {
+
+        GLuint texture;
+
+        SDL_Surface* surface = IMG_Load(filename);
+        if (!surface) {
+            printf("Error loading image: %s\n", SDL_GetError());
+        }
+        SDL_Surface* converted_surface = SDL_ConvertSurfaceFormat(surface, SDL_PIXELFORMAT_RGBA32, 0);
+
+        glGenTextures(1, &texture);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, converted_surface->w, converted_surface->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, converted_surface->pixels);
+
+
+        // Set texture parameters (we need all these or these won't work)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+        SDL_FreeSurface(converted_surface);
+        SDL_FreeSurface(surface);
+
+        return texture;
     }
 
     static std::string ReadFileToString(string filename) {

@@ -87,6 +87,8 @@ public:
     std::vector<GLAttribute> attributes;  // Stores shader attributes.
     std::unordered_map<std::string, GLint> uniformLocations; // Cache for uniform locations.
 
+    bool AllowMissingUniforms = true;
+
     ShaderProgram() {
         glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, (GLint*)&m_maxTextureUnits);
         program = glCreateProgram();
@@ -179,7 +181,9 @@ public:
         if (it != uniformLocations.end())
             return it->second;
 
-        Logger::Log("Warning: Uniform \"" + name + "\" not found in program " + std::to_string(program) + ".");
+        if(AllowMissingUniforms == false)
+            Logger::Log("Warning: Uniform \"" + name + "\" not found in program " + std::to_string(program) + ".");
+
         return -1;
     }
 

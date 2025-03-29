@@ -9,7 +9,7 @@
 glm::vec2 Input::MousePos;
 glm::vec2 Input::MouseDelta;
 std::vector<glm::vec2> Input::MouseDeltas;
-int Input::MaxDeltas = 10;
+int Input::MaxDeltas = 1;
 std::unordered_map<std::string, InputAction*> Input::actions;
 bool Input::LockCursor = false;
 float Input::sensitivity = 0.2f;

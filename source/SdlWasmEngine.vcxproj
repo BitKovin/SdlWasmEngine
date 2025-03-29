@@ -229,6 +229,7 @@
   <ItemGroup>
     <ClCompile Include="AssetRegistry.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="EngineMain.cpp" />
     <ClCompile Include="Entity.cpp" />
     <ClCompile Include="EObject.hpp" />
     <ClCompile Include="FrameDrawData.cpp" />
@@ -236,11 +237,14 @@
     <ClCompile Include="Input.h" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ShaderManager.cpp" />
+    <ClCompile Include="SoundManager.cpp" />
     <ClCompile Include="StaticMesh.hpp" />
+    <ClCompile Include="Time.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AssetRegisty.h" />
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="EngineMain.h" />
     <ClInclude Include="gl.h" />
     <ClInclude Include="glm.h" />
     <ClInclude Include="IDrawMesh.h" />
@@ -254,7 +258,6 @@
     <ClInclude Include="SoundSystem\SoundInstance.hpp" />
     <ClInclude Include="SoundSystem\SoundManager.hpp" />
     <ClInclude Include="Time.hpp" />
-    <ClInclude Include="VertexBuffer.hpp" />
     <ClInclude Include="VertexData.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -11,7 +11,7 @@ public:
 
 	static void Log(std::string message)
 	{
-		printf("%s", message.c_str());
+		printf("%s \n", message.c_str());
 	}
 
 private:

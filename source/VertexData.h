@@ -79,12 +79,18 @@ private:
 
 class VertexArrayObject {
 public:
+
+    int IndexCount = 0;
+
     VertexArrayObject(const VertexBuffer& vb, const IndexBuffer& ib) {
         glGenVertexArrays(1, &m_id);
         glBindVertexArray(m_id);
 
+        IndexCount = ib.GetIndexCount();
+
         vb.Bind();
         ib.Bind();
+
 
         const auto& elements = vb.GetDeclaration().GetElements();
         for (const auto& element : elements) {
