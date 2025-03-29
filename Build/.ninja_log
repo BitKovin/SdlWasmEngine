@@ -1,14 +1,12 @@
 # ninja log v6
-2	516	7649606424010344	CMakeFiles/a.dir/source/SoundSystem/SoundManager.cpp.o	54c02bd9aec63c5d
-519	1149	7649606429179373	main.html	f98e0f712475fecc
-42	387	7649609820354156	CMakeFiles/a.dir/source/Time.cpp.o	eb33cb0fe5dd018d
-36	683	7649609820304172	CMakeFiles/a.dir/source/SoundManager.cpp.o	edaa486840a80862
-19	703	7649609820131715	CMakeFiles/a.dir/source/Entity.cpp.o	1410c77007843997
-24	886	7649609820171734	CMakeFiles/a.dir/source/FrameDrawData.cpp.o	84f52009cb4aaacd
-11	994	7649609820051603	CMakeFiles/a.dir/source/Camera.cpp.o	f39bc11ec13529fc
-6	999	7649609819996495	CMakeFiles/a.dir/source/AssetRegistry.cpp.o	d8a6095b866d6f19
-32	1039	7649609820253702	CMakeFiles/a.dir/source/ShaderManager.cpp.o	862618963dde862f
-15	1077	7649609820091735	CMakeFiles/a.dir/source/EngineMain.cpp.o	7e1f70dbce69ff6b
-28	1129	7649609820213716	CMakeFiles/a.dir/source/Input.cpp.o	3135baeac3d25acd
-47	1408	7649609820409282	CMakeFiles/a.dir/source/main.cpp.o	9e0ff74058706a2c
-1408	2097	7649609834022015	main.html	134e90af80655c56
+33	372	7649612822570537	CMakeFiles/a.dir/source/Time.cpp.o	eb33cb0fe5dd018d
+28	1069	7649612822520539	CMakeFiles/a.dir/source/ShaderManager.cpp.o	862618963dde862f
+16	688	7649612822390629	CMakeFiles/a.dir/source/Entity.cpp.o	1410c77007843997
+20	885	7649612822438727	CMakeFiles/a.dir/source/FrameDrawData.cpp.o	84f52009cb4aaacd
+7	977	7649612822310611	CMakeFiles/a.dir/source/Camera.cpp.o	f39bc11ec13529fc
+2	1040	7649612822260098	CMakeFiles/a.dir/source/AssetRegistry.cpp.o	d8a6095b866d6f19
+11	1125	7649612822350613	CMakeFiles/a.dir/source/EngineMain.cpp.o	7e1f70dbce69ff6b
+24	1162	7649612822478738	CMakeFiles/a.dir/source/Input.cpp.o	3135baeac3d25acd
+38	1445	7649612822620793	CMakeFiles/a.dir/source/main.cpp.o	9e0ff74058706a2c
+5	512	7649615287143738	CMakeFiles/a.dir/source/SoundSystem/SoundManager.cpp.o	54c02bd9aec63c5d
+512	1195	7649615292223251	main.html	e986ad00f8ff5aae

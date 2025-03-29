@@ -86,11 +86,11 @@ build CMakeFiles/a.dir/source/ShaderManager.cpp.o: CXX_COMPILER__a_unscanned_ F$
   OBJECT_DIR = CMakeFiles\a.dir
   OBJECT_FILE_DIR = CMakeFiles\a.dir\source
 
-build CMakeFiles/a.dir/source/SoundManager.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/SdlWasmEngine/source/SoundManager.cpp || cmake_object_order_depends_target_a
-  DEP_FILE = CMakeFiles\a.dir\source\SoundManager.cpp.o.d
+build CMakeFiles/a.dir/source/SoundSystem/SoundManager.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/SdlWasmEngine/source/SoundSystem/SoundManager.cpp || cmake_object_order_depends_target_a
+  DEP_FILE = CMakeFiles\a.dir\source\SoundSystem\SoundManager.cpp.o.d
   FLAGS = -std=c++11 -O3
   OBJECT_DIR = CMakeFiles\a.dir
-  OBJECT_FILE_DIR = CMakeFiles\a.dir\source
+  OBJECT_FILE_DIR = CMakeFiles\a.dir\source\SoundSystem
 
 build CMakeFiles/a.dir/source/Time.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/SdlWasmEngine/source/Time.cpp || cmake_object_order_depends_target_a
   DEP_FILE = CMakeFiles\a.dir\source\Time.cpp.o.d
@@ -112,7 +112,7 @@ build CMakeFiles/a.dir/source/main.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/Sdl
 #############################################
 # Link the executable main.html
 
-build main.html: CXX_EXECUTABLE_LINKER__a_ CMakeFiles/a.dir/source/AssetRegistry.cpp.o CMakeFiles/a.dir/source/Camera.cpp.o CMakeFiles/a.dir/source/EngineMain.cpp.o CMakeFiles/a.dir/source/Entity.cpp.o CMakeFiles/a.dir/source/FrameDrawData.cpp.o CMakeFiles/a.dir/source/Input.cpp.o CMakeFiles/a.dir/source/ShaderManager.cpp.o CMakeFiles/a.dir/source/SoundManager.cpp.o CMakeFiles/a.dir/source/Time.cpp.o CMakeFiles/a.dir/source/main.cpp.o
+build main.html: CXX_EXECUTABLE_LINKER__a_ CMakeFiles/a.dir/source/AssetRegistry.cpp.o CMakeFiles/a.dir/source/Camera.cpp.o CMakeFiles/a.dir/source/EngineMain.cpp.o CMakeFiles/a.dir/source/Entity.cpp.o CMakeFiles/a.dir/source/FrameDrawData.cpp.o CMakeFiles/a.dir/source/Input.cpp.o CMakeFiles/a.dir/source/ShaderManager.cpp.o CMakeFiles/a.dir/source/SoundSystem/SoundManager.cpp.o CMakeFiles/a.dir/source/Time.cpp.o CMakeFiles/a.dir/source/main.cpp.o
   LINK_FLAGS = -s USE_SDL=2 -s USE_SDL_IMAGE=2 -s USE_SDL_MIXER=2 -s SDL2_IMAGE_FORMATS=[png] -s USE_WEBGL2=1 -s MIN_WEBGL_VERSION=2 -s MAX_WEBGL_VERSION=2 -s GL_PREINITIALIZED_CONTEXT=1 -s STACK_SIZE=500000 -s ALLOW_MEMORY_GROWTH=1 -s WASM=1 --preload-file F:/Git/SdlWasmEngine/GameData@/GameData -s GL_SUPPORT_AUTOMATIC_ENABLE_EXTENSIONS=1
   OBJECT_DIR = CMakeFiles\a.dir
   POST_BUILD = cd .

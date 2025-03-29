@@ -57,8 +57,8 @@
     <ClCompile Include="Time.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SoundManager.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="SoundSystem\SoundManager.cpp">
+      <Filter>Header Files\SoundSystem</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -5,7 +5,13 @@ option(JS_ONLY "Compiles to native JS (No WASM)" OFF)
 
 add_definitions(-std=c++11 -O3)
 
-file(GLOB SOURCES source/*.cpp)
+file(GLOB_RECURSE ALL_SOURCES "source/*.cpp")
+set(SOURCES "")
+foreach(source_file IN LISTS ALL_SOURCES)
+    if(NOT source_file MATCHES "source/glm/")
+        list(APPEND SOURCES ${source_file})
+    endif()
+endforeach()
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/Build")
 add_executable(a ${SOURCES})

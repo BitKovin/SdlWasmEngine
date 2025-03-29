@@ -237,7 +237,7 @@
     <ClCompile Include="Input.h" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ShaderManager.cpp" />
-    <ClCompile Include="SoundManager.cpp" />
+    <ClCompile Include="SoundSystem\SoundManager.cpp" />
     <ClCompile Include="StaticMesh.hpp" />
     <ClCompile Include="Time.cpp" />
   </ItemGroup>
