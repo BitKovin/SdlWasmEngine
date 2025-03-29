@@ -118,15 +118,15 @@ private:
 
 // Example usage with your VertexData structure
 struct VertexData {
-    glm::vec3 Position;
-    glm::vec3 Normal;
-    glm::vec2 TextureCoordinate;
-    glm::vec3 Tangent;
-    glm::vec3 BiTangent;
-    glm::vec4 BlendIndices;
-    glm::vec4 BlendWeights;
-    glm::vec3 SmoothNormal;
-    glm::vec4 Color;
+    glm::vec3 Position = vec3();
+    glm::vec3 Normal = vec3();
+    glm::vec2 TextureCoordinate = vec2();
+    glm::vec3 Tangent = vec3();
+    glm::vec3 BiTangent = vec3();
+    glm::vec4 BlendIndices = vec4();
+    glm::vec4 BlendWeights = vec4();
+    glm::vec3 SmoothNormal = vec3();
+    glm::vec4 Color = vec4();
 
     static VertexDeclaration Declaration() {
         return VertexDeclaration({

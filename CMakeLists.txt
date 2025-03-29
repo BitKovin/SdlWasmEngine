@@ -30,15 +30,18 @@ else()
     message(STATUS "Setting compilation target to WASM")
     set(CMAKE_EXECUTABLE_SUFFIX ".html")
     target_link_options(a PRIVATE
-        "SHELL:-s USE_SDL=2"
-        "SHELL:-s USE_SDL_IMAGE=2"
-        "SHELL:-s USE_SDL_MIXER=2"
-        "SHELL:-s SDL2_IMAGE_FORMATS=[png]"
-        "SHELL:-s FULL_ES3=1"
-        "SHELL:-s USE_WEBGL2=1"
-        "SHELL:-s STACK_SIZE=500000"
-        "SHELL:-s ALLOW_MEMORY_GROWTH=1"
-        "SHELL:-s WASM=1"
-        "SHELL:--preload-file ${CMAKE_SOURCE_DIR}/GameData@/GameData"
-    )
+    "SHELL:-s USE_SDL=2"
+    "SHELL:-s USE_SDL_IMAGE=2"
+    "SHELL:-s USE_SDL_MIXER=2"
+    "SHELL:-s SDL2_IMAGE_FORMATS=[png]"
+    "SHELL:-s USE_WEBGL2=1"
+    "SHELL:-s MIN_WEBGL_VERSION=2"
+    "SHELL:-s MAX_WEBGL_VERSION=2"
+    "SHELL:-s GL_PREINITIALIZED_CONTEXT=1"
+    "SHELL:-s STACK_SIZE=500000"
+    "SHELL:-s ALLOW_MEMORY_GROWTH=1"
+    "SHELL:-s WASM=1"
+    "SHELL:--preload-file ${CMAKE_SOURCE_DIR}/GameData@/GameData"
+    "SHELL:-s GL_SUPPORT_AUTOMATIC_ENABLE_EXTENSIONS=1"
+)
 endif()

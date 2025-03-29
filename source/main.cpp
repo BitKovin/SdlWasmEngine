@@ -59,9 +59,9 @@ int main(int argc, char* args[]) {
 #if DESKTOP
 #else
     // Create OpenGL ES context
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
 #endif
     glContext = SDL_GL_CreateContext(window);
     if (!glContext) {
@@ -78,6 +78,13 @@ int main(int argc, char* args[]) {
     
     init_gl();
     
+    printf("GL Version={%s}\n", glGetString(GL_VERSION));
+    printf("GLSL Version={%s}\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
+
+    Input::AddAction("test")->AddKeyboardKey(SDL_GetScancodeFromKey(SDLK_w));
+
+    update_screen_size(512, 512);
+
     load_image("GameData/happy_hog.png");
     
     // Set clear color

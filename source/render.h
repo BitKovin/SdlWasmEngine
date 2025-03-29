@@ -14,6 +14,8 @@
 
 #include "Camera.h"
 
+#include "VertexData.h"
+
 
 
 SDL_GLContext glContext;
@@ -28,44 +30,64 @@ void update_screen_size(int w, int h)
     SDL_SetWindowSize(window, w, h);
 }
 
-void init_gl()
-{
-    
+// Global objects
+VertexArrayObject* vao = nullptr;
+VertexBuffer* vb = nullptr;
+IndexBuffer* ib = nullptr;
+
+void init_gl() {
     shader_program = ShaderManager::GetShaderProgram();
 
-    
-    // Set up quad vertices
-    GLfloat vertices[] = {
-        // Positions    // Texture Coords
-        1.0f,  1.0f,   1.0f, 0.0f, // Top Right
-        1.0f, -1.0f,   1.0f, 1.0f, // Bottom Right
-        -1.0f, -1.0f,   0.0f, 1.0f, // Bottom Left
-        1.0f,  1.0f,   1.0f, 0.0f, // Top Right
-        -1.0f, -1.0f,   0.0f, 1.0f, // Bottom Left
-        -1.0f,  1.0f,   0.0f, 0.0f  // Top Left
-    };
-    
-    // Create VBO
-    glGenBuffers(1, &vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    
-    // Specify vertex attributes
-    GLint posAttrib = glGetAttribLocation(shader_program->program, "position");
-    glEnableVertexAttribArray(posAttrib);
-    glVertexAttribPointer(posAttrib, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), 0);
-    
-    
+    // Fullscreen quad vertices using proper texture coordinates
+    std::vector<VertexData> vertices;
+    vertices.reserve(4);  // Pre-allocate memory
 
-    GLint texAttrib = glGetAttribLocation(shader_program->program, "texcoord");
-    glEnableVertexAttribArray(texAttrib);
-    glVertexAttribPointer(texAttrib, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (void*)(2 * sizeof(GLfloat)));
-    
+    // Top Right
+    VertexData v1;
+    v1.Position = glm::vec3(1.0f, 1.0f, 0.0f);
+    v1.TextureCoordinate = glm::vec2(1.0f, 0.0f);
+    v1.Color = glm::vec4(1.0f);
+    vertices.push_back(v1);
 
-    Input::AddAction("test")->AddKeyboardKey(SDL_GetScancodeFromKey(SDLK_w));
+    // Bottom Right
+    VertexData v2;
+    v2.Position = glm::vec3(1.0f, -1.0f, 0.0f);
+    v2.TextureCoordinate = glm::vec2(1.0f, 1.0f);
+    v2.Color = glm::vec4(1.0f);
+    vertices.push_back(v2);
 
-    update_screen_size(512, 512);
+    // Bottom Left
+    VertexData v3;
+    v3.Position = glm::vec3(-1.0f, -1.0f, 0.0f);
+    v3.TextureCoordinate = glm::vec2(0.0f, 1.0f);
+    v3.Color = glm::vec4(1.0f);
+    vertices.push_back(v3);
 
+    // Top Left
+    VertexData v4;
+    v4.Position = glm::vec3(-1.0f, 1.0f, 0.0f);
+    v4.TextureCoordinate = glm::vec2(0.0f, 0.0f);
+    v4.Color = glm::vec4(1.0f);
+    vertices.push_back(v4);
+
+    std::vector<GLuint> indices = { 0, 1, 2, 0, 2, 3 };
+
+    // Create buffers
+    vb = new VertexBuffer(vertices, VertexData::Declaration());
+    ib = new IndexBuffer(indices);
+    vao = new VertexArrayObject(*vb, *ib);
+
+    // Texture setup
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    // Load your actual texture data here
+    // unsigned char data[] = {...};
+    // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 }
 
 void load_image(const char* filename)
@@ -101,28 +123,26 @@ void ToggleFullscreen(SDL_Window* Window)
     SDL_ShowCursor(IsFullscreen);
 }
 
-void Draw()
-{
+void Draw() {
     int x, y;
     SDL_GetWindowSize(window, &x, &y);
     glViewport(0, 0, x, y);
 
-    // Clear the screen
     glClear(GL_COLOR_BUFFER_BIT);
     glClearDepth(0);
 
-
-
-    // Use shader program
     shader_program->UseProgram();
 
-    // Bind texture
+    // Set texture uniform
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);
+    glUniform1i(glGetUniformLocation(shader_program->program, "u_texture"), 0);
 
-    // Draw the quad
-    glDrawArrays(GL_TRIANGLES, 0, 6);
+    // Draw using VAO
+    vao->Bind();
+    glDrawElements(GL_TRIANGLES, ib->GetIndexCount(), GL_UNSIGNED_INT, 0);
+    VertexArrayObject::Unbind();
 
-    // Present the renderer
     SDL_GL_SwapWindow(window);
 }
 

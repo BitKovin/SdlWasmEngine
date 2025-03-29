@@ -1,7 +1,9 @@
 # ninja log v6
-7	621	7649025132965496	CMakeFiles/a.dir/source/Entity.cpp.o	1410c77007843997
-3256	5577	7649063353261156	main.html	416ca0f754cc3f06
-45	2674	7649063321148226	CMakeFiles/a.dir/source/FrameDrawData.cpp.o	84f52009cb4aaacd
-27	2809	7649063320973039	CMakeFiles/a.dir/source/Camera.cpp.o	f39bc11ec13529fc
-54	3256	7649063321238412	CMakeFiles/a.dir/source/main.cpp.o	9e0ff74058706a2c
-50	3048	7649063321198426	CMakeFiles/a.dir/source/Input.cpp.o	3135baeac3d25acd
+12	688	7649121199048620	CMakeFiles/a.dir/source/Entity.cpp.o	1410c77007843997
+17	851	7649121199091635	CMakeFiles/a.dir/source/FrameDrawData.cpp.o	84f52009cb4aaacd
+8	958	7649121198998266	CMakeFiles/a.dir/source/Camera.cpp.o	f39bc11ec13529fc
+2	977	7649121198938263	CMakeFiles/a.dir/source/AssetRegistry.cpp.o	d8a6095b866d6f19
+25	1008	7649121199176741	CMakeFiles/a.dir/source/ShaderManager.cpp.o	862618963dde862f
+21	1109	7649121199126730	CMakeFiles/a.dir/source/Input.cpp.o	3135baeac3d25acd
+31	1367	7649121199227092	CMakeFiles/a.dir/source/main.cpp.o	9e0ff74058706a2c
+1367	2100	7649121212579275	main.html	742b7afe52202865
