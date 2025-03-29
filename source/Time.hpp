@@ -5,6 +5,8 @@
 class Time {
 public:
     static double DeltaTime;       // Time between the last two frames in seconds.
+    static float DeltaTimeF;       // Time between the last two frames in seconds.
+    static double GameTime;       // Time between the last two frames in seconds.
 private:
     static Uint64 lastCounter;     // Stores the previous frame's counter.
     static double frequency;       // Stores the counter frequency.
@@ -22,5 +24,10 @@ public:
         Uint64 currentCounter = SDL_GetPerformanceCounter();
         DeltaTime = (currentCounter - lastCounter) / frequency;
         lastCounter = currentCounter;
+
+        GameTime += DeltaTime;
+
+        DeltaTimeF = (float)DeltaTime;
+
     }
 };

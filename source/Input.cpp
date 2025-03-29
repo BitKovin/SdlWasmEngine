@@ -5,9 +5,12 @@
 #include <cmath>
 #include "glm.h"
 
+#include "Time.hpp"
+
 // Static member definitions for Input.
 glm::vec2 Input::MousePos;
 glm::vec2 Input::MouseDelta;
+glm::vec2 Input::PendingMouseDelta;
 std::vector<glm::vec2> Input::MouseDeltas;
 int Input::MaxDeltas = 1;
 std::unordered_map<std::string, InputAction*> Input::actions;
@@ -18,9 +21,6 @@ bool Input::PendingCenterCursor = false;
 MouseMoveCalculator* Input::mouseMoveCalculator = nullptr;
 SDL_Window* Input::window = nullptr;
 SDL_Joystick* Input::joystick = nullptr;
-Uint32 Input::lastTime = 0;
-float Input::deltaTime = 0.f;
-double Input::GameTime = 0.0;
 
 // Helper function to compute distance between two glm::vec2 points.
 static float Distance(const glm::vec2& a, const glm::vec2& b) {
@@ -29,11 +29,8 @@ static float Distance(const glm::vec2& a, const glm::vec2& b) {
 }
 
 void Input::Update() {
-    // Calculate delta time.
+    // Calculate delta time. 
     Uint32 currentTime = SDL_GetTicks();
-    deltaTime = (currentTime - lastTime) / 1000.f;
-    GameTime = currentTime / 1000.0;
-    lastTime = currentTime;
 
     UpdateMouse();
     UpdateActions();
@@ -52,7 +49,7 @@ void Input::Update() {
 
 void Input::JoystickCamera() {
     if (joystick) {
-        // Define which axes to use for the right thumbstick.
+        // Define which axes to use for the right thumbstick. 
         // These indices may need adjustment depending on your joystick.
         const int axisRightX = 2;
         const int axisRightY = 3;
@@ -62,7 +59,7 @@ void Input::JoystickCamera() {
         float axisY = SDL_JoystickGetAxis(joystick, axisRightY) / 32768.f;
         // Multiply by deltaTime and a scale factor (1500) and invert Y.
         glm::vec2 stickDelta(axisX, -axisY);
-        MouseDelta = MouseDelta + stickDelta * (deltaTime * 1500.f);
+        MouseDelta = MouseDelta + stickDelta * ((float)Time::DeltaTime * 1500.f);
     }
 }
 
@@ -71,35 +68,19 @@ void Input::UpdateMouse() {
     SDL_GetMouseState(&x, &y);
     glm::vec2 mousePos(static_cast<float>(x), static_cast<float>(y));
 
-    if (mouseMoveCalculator) {
-        MousePos = mousePos;
-        MouseDelta = mouseMoveCalculator->GetMouseDelta();
-        AddMouseInput(MouseDelta);
-        JoystickCamera();
-        MouseDelta = MouseDelta * sensitivity;
-        return;
+    MouseDelta = PendingMouseDelta / 5.0f * sensitivity * -1.0f;
+
+    MousePos = mousePos;
+
+    if (LockCursor)
+    {
+        //SDL_SetRelativeMouseMode(SDL_TRUE);
+    }
+    else
+    {
+        //SDL_SetRelativeMouseMode(SDL_FALSE);
     }
 
-    glm::vec2 delta = mousePos - MousePos;
-    AddMouseInput(delta);
-    JoystickCamera();
-    MouseDelta = MouseDelta * sensitivity;
-
-    // If cursor locking is enabled and the window is focused.
-    Uint32 flags = SDL_GetWindowFlags(window);
-    bool windowActive = (flags & SDL_WINDOW_INPUT_FOCUS) != 0;
-    if (LockCursor && windowActive) {
-        if (Distance(windowCenter, mousePos) > 0.f) {
-            SDL_WarpMouseInWindow(window, static_cast<int>(windowCenter.x), static_cast<int>(windowCenter.y));
-            MousePos = windowCenter;
-        }
-        else {
-            MousePos = mousePos;
-        }
-    }
-    else {
-        MousePos = mousePos;
-    }
 }
 
 void Input::AddMouseInput(const glm::vec2& delta) {
@@ -201,7 +182,7 @@ bool InputAction::Holding() const {
 }
 
 bool InputAction::PressedBuffered(float bufferLength) const {
-    return pressedTime + bufferLength >= Input::GameTime;
+    return pressedTime + bufferLength >= Time::GameTime;
 }
 
 void InputAction::Update() {
@@ -241,7 +222,7 @@ void InputAction::Update() {
 
     if (pressing && !oldPressing) {
         pressed = true;
-        pressedTime = Input::GameTime;
+        pressedTime = Time::GameTime;
     }
     else if (!pressing && oldPressing) {
         released = true;

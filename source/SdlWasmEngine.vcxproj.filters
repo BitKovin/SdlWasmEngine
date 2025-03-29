@@ -16,8 +16,8 @@
     <Filter Include="Header Files\SoundSystem">
       <UniqueIdentifier>{a1e22742-e24e-485d-8f47-2cf11ba3b88d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Render">
-      <UniqueIdentifier>{37fed95d-1ba4-4e74-b7ea-268535b9e5a4}</UniqueIdentifier>
+    <Filter Include="Header Files\Entities">
+      <UniqueIdentifier>{fa5b5d63-c500-4af0-91d2-e343600b5047}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -39,7 +39,7 @@
     <ClCompile Include="Camera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Entity.cpp">
+    <ClCompile Include="Entity.hpp">
       <Filter>Header Files</Filter>
     </ClCompile>
     <ClCompile Include="StaticMesh.hpp">
@@ -59,6 +59,9 @@
     </ClCompile>
     <ClCompile Include="SoundSystem\SoundManager.cpp">
       <Filter>Header Files\SoundSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="Level.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -107,11 +110,14 @@
     <ClInclude Include="VertexData.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MeshHelper.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="EngineMain.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LevelObject.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Entities\Player.hpp">
+      <Filter>Header Files\Entities</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

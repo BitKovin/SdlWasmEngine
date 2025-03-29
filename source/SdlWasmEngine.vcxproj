@@ -132,7 +132,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>DESKTOP</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DESKTOP;WINDOWS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
@@ -147,7 +147,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>DESKTOP</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DESKTOP;WINDOWS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
@@ -181,7 +181,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>DESKTOP</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DESKTOP;WINDOWS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
@@ -196,7 +196,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>DESKTOP</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DESKTOP;WINDOWS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
@@ -230,11 +230,12 @@
     <ClCompile Include="AssetRegistry.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="EngineMain.cpp" />
-    <ClCompile Include="Entity.cpp" />
+    <ClCompile Include="Entity.hpp" />
     <ClCompile Include="EObject.hpp" />
     <ClCompile Include="FrameDrawData.cpp" />
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="Input.h" />
+    <ClCompile Include="Level.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ShaderManager.cpp" />
     <ClCompile Include="SoundSystem\SoundManager.cpp" />
@@ -245,13 +246,14 @@
     <ClInclude Include="AssetRegisty.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="EngineMain.h" />
+    <ClInclude Include="Entities\Player.hpp" />
     <ClInclude Include="gl.h" />
     <ClInclude Include="glm.h" />
     <ClInclude Include="IDrawMesh.h" />
+    <ClInclude Include="LevelObject.hpp" />
     <ClInclude Include="Level.hpp" />
     <ClInclude Include="Logger.hpp" />
     <ClInclude Include="MathHelper.hpp" />
-    <ClInclude Include="MeshHelper.h" />
     <ClInclude Include="render.h" />
     <ClInclude Include="Shader.hpp" />
     <ClInclude Include="ShaderManager.h" />

@@ -32,7 +32,8 @@ private:
     std::vector<Element> m_elements;
 };
 
-class VertexBuffer {
+class VertexBuffer : public EObject
+{
 public:
     template<typename T>
     VertexBuffer(const std::vector<T>& vertices, const VertexDeclaration& declaration, GLenum usage = GL_STATIC_DRAW)
@@ -56,7 +57,8 @@ private:
     size_t m_vertexCount;
 };
 
-class IndexBuffer {
+class IndexBuffer : public EObject
+{
 public:
     IndexBuffer(const std::vector<GLuint>& indices, GLenum usage = GL_STATIC_DRAW)
         : m_indexCount(indices.size()) {
@@ -77,16 +79,23 @@ private:
     size_t m_indexCount;
 };
 
-class VertexArrayObject {
+class VertexArrayObject : public EObject 
+{
 public:
 
     int IndexCount = 0;
 
-    VertexArrayObject(const VertexBuffer& vb, const IndexBuffer& ib) {
+    VertexBuffer* vertexBuffer = nullptr;
+    IndexBuffer* indexBuffer = nullptr;
+
+    VertexArrayObject(VertexBuffer& vb, IndexBuffer& ib) {
         glGenVertexArrays(1, &m_id);
         glBindVertexArray(m_id);
 
         IndexCount = ib.GetIndexCount();
+
+        vertexBuffer = &vb;
+        indexBuffer = &ib;
 
         vb.Bind();
         ib.Bind();

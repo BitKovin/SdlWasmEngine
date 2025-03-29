@@ -26,6 +26,7 @@ public:
     // Mouse tracking
     static glm::vec2 MousePos;
     static glm::vec2 MouseDelta;
+    static glm::vec2 PendingMouseDelta;
     static std::vector<glm::vec2> MouseDeltas;
     static int MaxDeltas;
 
@@ -45,11 +46,6 @@ public:
     static SDL_Window* window;
     // SDL_Joystick pointer (if a joystick is connected)
     static SDL_Joystick* joystick;
-
-    // Timing
-    static Uint32 lastTime;   // Last frame time in ms.
-    static float deltaTime;   // Delta time in seconds.
-    static double GameTime;   // Game time in seconds.
 
     // Must be called every frame to update input state.
     static void Update();

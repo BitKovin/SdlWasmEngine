@@ -10,6 +10,10 @@
 #include "Camera.h"
 #include "Input.h"
 
+#include "Level.hpp"
+
+#include "Entities/Player.hpp"
+
 class EngineMain
 {
 private:
@@ -42,13 +46,8 @@ public:
         SDL_ShowCursor(IsFullscreen);
     }
 
-	void Init()
-	{
-
-        SoundManager::Initialize();
-
-        Time::Init();
-
+    void initDemo()
+    {
         auto sound = SoundManager::GetSoundFromPath("GameData/bass_beat.wav");
 
         sound.Loop = true;
@@ -101,12 +100,36 @@ public:
 
         texture = AssetRegistry::GetTextureFromFile("GameData/cat.png");
 
+
+        Level::Current->AddEntity(new Player);
+
+
+    }
+
+    void InitInputs();
+
+	void Init()
+	{
+
+        SoundManager::Initialize();
+
+        Time::Init();
+
+        Level::OpenLevel();
+
+        initDemo();
+
+        Input::LockCursor = false;
+
+        InitInputs();
+
 	}
 
 	void MainLoop()
 	{
         Time::Update();
         Input::Update();
+
 
         int x, y;
         SDL_GetWindowSize(Window, &x, &y);
@@ -117,6 +140,7 @@ public:
 
         Camera::Update(Time::DeltaTime);
 
+        Input::UpdateMouse();
         GameUpdate();
         Render();
 
@@ -135,6 +159,10 @@ public:
             ToggleFullscreen(Window);
             printf("framerate: %f  \n", (1 / Time::DeltaTime));
         }
+
+
+        Level::Current->Update();
+
 	}
 
 	void Render()
