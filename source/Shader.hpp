@@ -75,13 +75,20 @@ public:
 
 class ShaderProgram
 {
+
+private:
+    std::unordered_map<std::string, GLuint> m_textureUnits;
+    GLuint m_currentUnit = 0;
+    GLuint m_maxTextureUnits = 16; // Will be initialized from GL
+
+
 public:
     GLuint program;
     std::vector<GLAttribute> attributes;  // Stores shader attributes.
     std::unordered_map<std::string, GLint> uniformLocations; // Cache for uniform locations.
 
-    ShaderProgram()
-    {
+    ShaderProgram() {
+        glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, (GLint*)&m_maxTextureUnits);
         program = glCreateProgram();
     }
 
@@ -174,6 +181,29 @@ public:
 
         Logger::Log("Warning: Uniform \"" + name + "\" not found in program " + std::to_string(program) + ".");
         return -1;
+    }
+
+    void SetTexture(const std::string& name, GLuint texture) {
+        GLint location = GetUniformLocation(name);
+        if (location == -1) return;
+
+        // Find or assign texture unit
+        auto it = m_textureUnits.find(name);
+        if (it == m_textureUnits.end()) {
+            if (m_currentUnit >= m_maxTextureUnits) {
+                Logger::Log("Texture unit overflow! Maximum: " +
+                    std::to_string(m_maxTextureUnits));
+                return;
+            }
+            m_textureUnits[name] = m_currentUnit++;
+        }
+
+        GLuint unit = m_textureUnits[name];
+
+        // Bind texture and update uniform
+        glActiveTexture(GL_TEXTURE0 + unit);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glUniform1i(location, unit);
     }
 
     // === Uniform setting functions with cached locations ===

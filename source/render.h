@@ -125,11 +125,9 @@ void Draw() {
 
     shader_program->UseProgram();
 
-    // Set texture uniform
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    shader_program->SetUniform("u_texture", 0);
-    glUniform1i(glGetUniformLocation(shader_program->program, "u_texture"), 0);
+
+    shader_program->SetTexture("u_texture", texture);
+
 
     // Draw using VAO
     vao->Bind();
