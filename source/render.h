@@ -77,14 +77,6 @@ void init_gl() {
     ib = new IndexBuffer(indices);
     vao = new VertexArrayObject(*vb, *ib);
 
-    // Texture setup
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
     // Load your actual texture data here
     // unsigned char data[] = {...};
     // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
@@ -136,6 +128,7 @@ void Draw() {
     // Set texture uniform
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);
+    shader_program->SetUniform("u_texture", 0);
     glUniform1i(glGetUniformLocation(shader_program->program, "u_texture"), 0);
 
     // Draw using VAO
