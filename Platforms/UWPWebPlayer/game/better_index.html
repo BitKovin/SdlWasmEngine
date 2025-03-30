@@ -24,32 +24,29 @@
         }
 
         .focused {
-            border: none; 
+            border: none;
             outline: none;
         }
     </style>
 </head>
 
 <body>
-    <canvas id="canvas" 
-            oncontextmenu="event.preventDefault()" 
-            tabindex="0" 
-            onclick="refocus_myself()"></canvas>
+    <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" tabindex=-1></canvas>
 
     <script type='text/javascript'>
         var Module = {
-            canvas: (function() { return document.getElementById('canvas'); })()
+            canvas: (function () { return document.getElementById('canvas'); })()
         };
     </script>
-    
+
     <script src="main.js"></script>
 
     <script type="text/javascript">
-    function refocus_myself() {
-        var mycanvas = document.getElementById("canvas"); 
-        mycanvas.setAttribute('tabindex', 0); 
-        mycanvas.focus();
-    }
+        function refocus_myself() {
+            var mycanvas = document.getElementById("canvas");
+            mycanvas.setAttribute('tabindex', 0);
+            mycanvas.focus();
+        }
     </script>
 </body>
 </html>

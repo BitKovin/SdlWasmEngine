@@ -19,14 +19,11 @@ namespace GamePlayerApp
         public MainPage()
         {
 
-            Environment.SetEnvironmentVariable("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS", "--disable-frame-rate-limit --disable-gpu-vsync --autoplay-policy=no-user-gesture-required");
+            Environment.SetEnvironmentVariable("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS", "--disable-frame-rate-limit --disable-gpu-vsync --autoplay-policy=no-user-gesture-required --disable-features=ForceSWCompositionWhenDCompIsNotSupported");
 
             CreateWebServer(url).RunAsync();
 
             this.InitializeComponent();
-
-
-
 
             appwindow = Windows.UI.Core.CoreWindow.GetForCurrentThread();
 
@@ -62,6 +59,7 @@ namespace GamePlayerApp
 
             oldKeyDown = keyDown;
 
+            
 
         }
 
@@ -160,6 +158,11 @@ namespace GamePlayerApp
             string projectDirectory = Directory.GetCurrentDirectory();
 
             return Path.Combine(projectDirectory, "game");
+        }
+
+        private void Page_Loaded(object sender, RoutedEventArgs e)
+        {
+
         }
     }
 }

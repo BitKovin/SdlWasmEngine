@@ -47,19 +47,33 @@ void Input::Update() {
     SDL_ShowCursor(LockCursor ? SDL_DISABLE : SDL_ENABLE);
 }
 
-void Input::JoystickCamera() {
-    if (joystick) {
-        // Define which axes to use for the right thumbstick. 
-        // These indices may need adjustment depending on your joystick.
-        const int axisRightX = 2;
-        const int axisRightY = 3;
 
-        // Get normalized axis values (range -1 to 1).
-        float axisX = SDL_JoystickGetAxis(joystick, axisRightX) / 32768.f;
-        float axisY = SDL_JoystickGetAxis(joystick, axisRightY) / 32768.f;
-        // Multiply by deltaTime and a scale factor (1500) and invert Y.
-        glm::vec2 stickDelta(axisX, -axisY);
-        MouseDelta = MouseDelta + stickDelta * ((float)Time::DeltaTime * 1500.f);
+
+void Input::JoystickCamera() {
+
+    if (joystick == nullptr)
+    {
+        int joysticks = SDL_NumJoysticks();
+
+        // If there are joysticks connected, open one up for reading
+        if (joysticks > 0)
+        {
+
+            joystick = SDL_JoystickOpen(0);
+
+            if (joystick == NULL)
+            {
+                printf("There was an error reading from the joystick.\n");
+            }
+        }
+    }
+
+    if (joystick) {
+
+
+        vec2 stickDelta = GetRightStickPosition() * vec2(-1,1);
+
+        MouseDelta = MouseDelta + stickDelta * ((float)Time::DeltaTime * 200.f);
     }
 }
 
@@ -71,6 +85,8 @@ void Input::UpdateMouse() {
     MouseDelta = PendingMouseDelta / 5.0f * sensitivity * -1.0f;
 
     MousePos = mousePos;
+
+    JoystickCamera();
 
     if (LockCursor)
     {
@@ -107,6 +123,54 @@ void Input::CenterCursor() {
     else {
         PendingCenterCursor = true;
     }
+}
+
+vec2 Input::GetLeftStickPosition()
+{
+    if (joystick)
+    {
+        const int axisRightX = 0;
+        const int axisRightY = 1;
+
+        // Get normalized axis values (range -1 to 1).
+        float axisX = SDL_JoystickGetAxis(joystick, axisRightX) / 32768.f;
+        float axisY = SDL_JoystickGetAxis(joystick, axisRightY) / -32768.f;
+
+        if (abs(axisX) < 0.1f)
+            axisX = 0;
+
+        if (abs(axisY) < 0.1f)
+            axisY = 0;
+
+        return vec2(axisX, axisY);
+
+    }
+
+    return vec2();
+}
+
+vec2 Input::GetRightStickPosition()
+{
+    if (joystick)
+    {
+        const int axisRightX = 2;
+        const int axisRightY = 3;
+
+        // Get normalized axis values (range -1 to 1).
+        float axisX = SDL_JoystickGetAxis(joystick, axisRightX) / 32768.f;
+        float axisY = SDL_JoystickGetAxis(joystick, axisRightY) / -32768.f;
+
+        if (abs(axisX) < 0.1f)
+            axisX = 0;
+
+        if (abs(axisY) < 0.1f)
+            axisY = 0;
+
+        return vec2(axisX, axisY);
+
+    }
+
+    return vec2();
 }
 
 void Input::UpdateActions() {

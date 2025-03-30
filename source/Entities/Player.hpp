@@ -19,7 +19,7 @@ public:
 		Camera::rotation.y += Input::MouseDelta.x;
 		Camera::rotation.x -= Input::MouseDelta.y;
 
-		vec2 input = vec2();
+		vec2 input = Input::GetLeftStickPosition();
 
 		if (Input::GetAction("forward")->Holding())
 			input += vec2(0,1);

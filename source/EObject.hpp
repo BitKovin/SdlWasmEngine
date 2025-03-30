@@ -9,7 +9,7 @@ public:
 
 		OnDispose();
 
-		delete this;
+
 	}
 
 protected:

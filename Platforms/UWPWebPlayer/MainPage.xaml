@@ -2,9 +2,9 @@
     x:Class="GamePlayerApp.MainPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:controls="using:Microsoft.UI.Xaml.Controls">
+    xmlns:controls="using:Microsoft.UI.Xaml.Controls" Loaded="Page_Loaded">
 
     <Grid>
-        <controls:WebView2 x:Name="GameWebView" Source="http://localhost:9696/better_index.html"/>
+        <controls:WebView2 x:Name="GameWebView" Source="http://localhost:9696/main.html"/>
     </Grid>
 </Page>

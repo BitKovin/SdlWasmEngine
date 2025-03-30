@@ -14,6 +14,10 @@
 
 #include "Entities/Player.hpp"
 
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+
 class EngineMain
 {
 private:
@@ -119,9 +123,20 @@ public:
 
         initDemo();
 
+        InitInputs();
+
         Input::LockCursor = false;
 
-        InitInputs();
+
+
+        Assimp::Importer importer;
+
+        // Load model (ensure "model.obj" exists or replace with a valid file)
+        const aiScene* scene = importer.ReadFile("GameData/monkey.fbx", aiProcess_Triangulate);
+
+        printf("number of meshes: %i \n", scene->mNumMeshes);
+
+
 
 	}
 

@@ -16,6 +16,7 @@ SDL_Window *window;
 void update_screen_size(int w, int h)
 {
     glViewport(0, 0, w, h);
+
     SDL_SetWindowSize(window, w, h);
 }
 
@@ -142,6 +143,19 @@ void ShutdownDirectInput() {
 
 #endif // WINDOWS
 
+#if DESKTOP == FALSE
+
+//not an error. Visual studio lies to you. Belive me. I'm catboy
+EM_JS(int, canvas_get_width, (), {
+  return canvas.width;
+    });
+
+EM_JS(int, canvas_get_height, (), {
+  return canvas.height;
+    });
+
+#endif // 
+
 
 
 void desktop_render_loop()
@@ -149,8 +163,6 @@ void desktop_render_loop()
 
     SDL_Event event;
     int quit = 0;
-
-
 
     while (!quit) {
 
@@ -182,17 +194,46 @@ void desktop_render_loop()
 void emscripten_render_loop()
 {
 
-    Input::PendingMouseDelta = vec2();
+
+
+    int x, y;
+
+    SDL_GetRelativeMouseState(&x, &y);
+
+
+#if DESKTOP == FALSE
+
+
+
+    int width = canvas_get_width();
+    int height = canvas_get_height();
+
+    update_screen_size(width, height);
+
+    Logger::Log(std::to_string(width) + "  " + std::to_string(height));
+
+#endif // DESKTOP == FALSE
+
+    if (abs(x) > 500 || abs(y) > 500) 
+    {
+        Logger::Log(std::to_string(x) + "  " + std::to_string(x));
+    }
+    else
+    {
+        Input::PendingMouseDelta = vec2(x, y) * 2.0F;
+    }
 
     SDL_Event event;
     while (SDL_PollEvent(&event))
-    {
+	{
         switch (event.type)
         {
+            break;
         case SDL_WINDOWEVENT:
             if (event.window.event == SDL_WINDOWEVENT_RESIZED)
             {
                 update_screen_size(event.window.data1, event.window.data2);
+
             }
             break;
         default:
@@ -202,7 +243,7 @@ void emscripten_render_loop()
         if (event.type == SDL_MOUSEMOTION)
         {
 
-            Input::PendingMouseDelta = vec2(event.motion.xrel, event.motion.yrel);
+            //Input::PendingMouseDelta += vec2(event.motion.xrel, event.motion.yrel);
 
         }
 
@@ -214,7 +255,7 @@ void emscripten_render_loop()
 
 int main(int argc, char* args[]) {
     // Initialize SDL
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_JOYSTICK) < 0) {
         fprintf(stderr, "SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
         return 1;
     }
@@ -265,9 +306,11 @@ int main(int argc, char* args[]) {
         
     }
 #endif
-    //SDL_SetRelativeMouseMode(SDL_TRUE);
+
     SDL_SetHintWithPriority(SDL_HINT_MOUSE_RELATIVE_MODE_WARP, "1", SDL_HINT_OVERRIDE);
+    SDL_SetRelativeMouseMode(SDL_TRUE);
     
+
     printf("GL Version={%s}\n", glGetString(GL_VERSION));
     printf("GLSL Version={%s}\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
 
@@ -277,8 +320,6 @@ int main(int argc, char* args[]) {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     
     SDL_GL_SetSwapInterval(0);
-
-    SDL_SetRelativeMouseMode(SDL_TRUE);
 
     engine = new EngineMain(window);
 
@@ -290,6 +331,14 @@ int main(int argc, char* args[]) {
 #if DESKTOP
     desktop_render_loop();
 #else
+
+
+    EmscriptenFullscreenStrategy strategy;
+    strategy.scaleMode = EMSCRIPTEN_FULLSCREEN_CANVAS_SCALE_STDDEF;
+    strategy.filteringMode = EMSCRIPTEN_FULLSCREEN_FILTERING_DEFAULT;
+    emscripten_enter_soft_fullscreen("canvas", &strategy); //not an error. Visual studio lies to you. Belive me. I'm catboy
+
+
     emscripten_set_main_loop(emscripten_render_loop, 0, 1);
 #endif
     

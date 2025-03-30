@@ -62,6 +62,10 @@ public:
     // Centers the mouse cursor to the window center.
     static void CenterCursor();
 
+    static vec2 GetLeftStickPosition();
+
+    static vec2 GetRightStickPosition();
+
     // Update all registered input actions.
     static void UpdateActions();
 
