@@ -1,7 +1,7 @@
 #pragma once
 
 #include <vector>
-
+#include <tuple>
 #include "EObject.hpp"
 #include "LevelObject.hpp"
 
@@ -9,28 +9,30 @@
 
 using namespace std;
 
+template<typename... Components>
 class Entity : public LevelObject
 {
 public:
+    Entity() = default;
+    Entity(Components&&... components)
+        : m_components(std::forward<Components>(components)...) {}
 
-	vec3 Position = vec3();
+    virtual ~Entity() = default;
+    virtual void Destroy() {}
 
-	vec3 Rotation = vec3();
+    
+    template<typename T>
+    T& get()
+    {
+        return std::get<T>(m_components);
+    }
 
-	Entity()
-	{
-
-	}
-	~Entity()
-	{
-
-	}
-
-	void virtual Destroy()
-	{
-
-	}
+    template<typename T>
+    const T& get() const
+    {
+        return std::get<T>(m_components);
+    }
 
 private:
-
+    std::tuple<Components...> m_components;
 };
