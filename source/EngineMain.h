@@ -18,6 +18,11 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
+#include "skinned_model.hpp"
+#include "animator.hpp"
+
+#include "ShaderManager.h"
+
 class EngineMain
 {
 private:
@@ -112,6 +117,12 @@ public:
 
     void InitInputs();
 
+    roj::SkinnedModel skm;
+
+    roj::Animator animator;
+
+    ShaderProgram* shader;
+
 	void Init()
 	{
 
@@ -125,17 +136,24 @@ public:
 
         InitInputs();
 
-        Input::LockCursor = false;
+        roj::ModelLoader<roj::SkinnedMesh> modelLoader;
+
+
+        modelLoader.load("GameData/dog.glb");
+
+        Logger::Log(modelLoader.getInfoLog());
+
+        skm = modelLoader.get();
 
 
 
-        Assimp::Importer importer;
+        animator = roj::Animator(skm);
 
-        // Load model (ensure "model.obj" exists or replace with a valid file)
-        const aiScene* scene = importer.ReadFile("GameData/monkey.fbx", aiProcess_Triangulate);
+        animator.set("run");
+        animator.play();
 
-        printf("number of meshes: %i \n", scene->mNumMeshes);
 
+        shader = ShaderManager::GetShaderProgram("skeletal");
 
 
 	}
@@ -152,6 +170,9 @@ public:
         float AspectRatio = ((float)x) / ((float)y);
 
         Camera::AspectRatio = AspectRatio;
+
+        if(Input::GetAction("test")->Pressed())
+            animator.play();
 
         Camera::Update(Time::DeltaTime);
 
@@ -175,6 +196,7 @@ public:
             printf("framerate: %f  \n", (1 / Time::DeltaTime));
         }
 
+        animator.update(Time::DeltaTimeF);
 
         Level::Current->Update();
 
@@ -189,7 +211,43 @@ public:
         glClear(GL_COLOR_BUFFER_BIT);
         glClearDepthf(0);
 
-        mesh->DrawForward(Camera::finalizedView, Camera::finalizedProjection, texture);
+
+        shader->UseProgram();
+
+        shader->AllowMissingUniforms = false;
+
+        //shader->SetTexture("u_texture", texture);
+
+        vec3 pos = vec3(0, 0, 0);
+
+        vec3 rot = vec3(0);
+
+        mat4x4 world = scale(vec3(1)) * MathHelper::GetRotationMatrix(rot) * translate(pos);
+
+        shader->SetUniform("view", Camera::finalizedView);
+        shader->SetUniform("projection", Camera::finalizedProjection);
+
+        shader->SetUniform("world", world);
+
+        auto transforms = animator.getBoneMatrices();
+
+        for (int i = 0; i < transforms.size(); ++i)
+            shader->SetUniform("finalBonesMatrices[" + std::to_string(i) + "]", transforms[i]);
+
+        auto boneMatrices = animator.getBoneMatrices();
+
+
+        for (roj::SkinnedMesh& mesh : skm)
+        {
+            auto& indices = mesh.indices;
+            uint32_t VAO = mesh.VAO;
+
+
+            glBindVertexArray(VAO);
+            glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(indices.size()), GL_UNSIGNED_INT, 0);
+            glBindVertexArray(0);
+            glActiveTexture(GL_TEXTURE0);
+        }
 
         SDL_GL_SwapWindow(Window);
 

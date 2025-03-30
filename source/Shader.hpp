@@ -181,6 +181,15 @@ public:
         if (it != uniformLocations.end())
             return it->second;
 
+        GLint location = glGetUniformLocation(program, name.c_str());
+
+        uniformLocations[name] = location;
+
+        if(location>0)
+            return location;
+
+
+
         if(AllowMissingUniforms == false)
             Logger::Log("Warning: Uniform \"" + name + "\" not found in program " + std::to_string(program) + ".");
 

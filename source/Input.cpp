@@ -76,7 +76,7 @@ void Input::JoystickCamera() {
         MouseDelta = MouseDelta + stickDelta * ((float)Time::DeltaTime * 200.f);
     }
 }
-
+ 
 void Input::UpdateMouse() {
     int x, y;
     SDL_GetMouseState(&x, &y);

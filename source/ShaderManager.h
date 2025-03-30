@@ -18,7 +18,7 @@ public:
         auto it = shaderProgramCache.find(key);
         if (it != shaderProgramCache.end())
         {
-            return it->second; // Return cached program
+            return &(it->second); // Return cached program
         }
 
         // Load shaders
@@ -28,6 +28,6 @@ public:
         // Create and link the shader program
         ShaderProgram& program = shaderProgramCache[key];
         program.AttachShader(vertexShader)->AttachShader(pixelShader)->LinkProgram();
-        return program;
+        return &program;
     }
 };

@@ -19,6 +19,12 @@
     <Filter Include="Header Files\Entities">
       <UniqueIdentifier>{fa5b5d63-c500-4af0-91d2-e343600b5047}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\skeletal">
+      <UniqueIdentifier>{eeefabae-25d5-49b0-b511-c0c3e2d595e1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\skeletal">
+      <UniqueIdentifier>{ea9b6bdc-d79e-4427-8603-bd236b5ded48}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -62,6 +68,18 @@
     </ClCompile>
     <ClCompile Include="Level.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="model.cpp">
+      <Filter>Source Files\skeletal</Filter>
+    </ClCompile>
+    <ClCompile Include="skinned_model.cpp">
+      <Filter>Source Files\skeletal</Filter>
+    </ClCompile>
+    <ClCompile Include="animator.cpp">
+      <Filter>Source Files\skeletal</Filter>
+    </ClCompile>
+    <ClCompile Include="utils.cpp">
+      <Filter>Source Files\skeletal</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -118,6 +136,18 @@
     </ClInclude>
     <ClInclude Include="Entities\Player.hpp">
       <Filter>Header Files\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="animator.hpp">
+      <Filter>Header Files\skeletal</Filter>
+    </ClInclude>
+    <ClInclude Include="model.hpp">
+      <Filter>Header Files\skeletal</Filter>
+    </ClInclude>
+    <ClInclude Include="skinned_model.hpp">
+      <Filter>Header Files\skeletal</Filter>
+    </ClInclude>
+    <ClInclude Include="utils.hpp">
+      <Filter>Header Files\skeletal</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

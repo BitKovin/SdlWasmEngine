@@ -227,6 +227,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="animator.cpp" />
     <ClCompile Include="AssetRegistry.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="EngineMain.cpp" />
@@ -237,12 +238,16 @@
     <ClCompile Include="Input.h" />
     <ClCompile Include="Level.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="model.cpp" />
     <ClCompile Include="ShaderManager.cpp" />
+    <ClCompile Include="skinned_model.cpp" />
     <ClCompile Include="SoundSystem\SoundManager.cpp" />
     <ClCompile Include="StaticMesh.hpp" />
     <ClCompile Include="Time.cpp" />
+    <ClCompile Include="utils.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="animator.hpp" />
     <ClInclude Include="AssetRegisty.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="EngineMain.h" />
@@ -254,12 +259,15 @@
     <ClInclude Include="Level.hpp" />
     <ClInclude Include="Logger.hpp" />
     <ClInclude Include="MathHelper.hpp" />
+    <ClInclude Include="model.hpp" />
     <ClInclude Include="render.h" />
     <ClInclude Include="Shader.hpp" />
     <ClInclude Include="ShaderManager.h" />
+    <ClInclude Include="skinned_model.hpp" />
     <ClInclude Include="SoundSystem\SoundInstance.hpp" />
     <ClInclude Include="SoundSystem\SoundManager.hpp" />
     <ClInclude Include="Time.hpp" />
+    <ClInclude Include="utils.hpp" />
     <ClInclude Include="VertexData.h" />
   </ItemGroup>
   <ItemGroup>

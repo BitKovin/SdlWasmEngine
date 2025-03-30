@@ -288,12 +288,18 @@ int main(int argc, char* args[]) {
     printf("start\n");
 
 #if DESKTOP
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 #else
     // Create OpenGL ES context
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
 #endif
+
+
     glContext = SDL_GL_CreateContext(window);
     if (!glContext) {
         fprintf(stderr, "OpenGL context could not be created! SDL_Error: %s\n", SDL_GetError());
@@ -314,7 +320,7 @@ int main(int argc, char* args[]) {
     printf("GL Version={%s}\n", glGetString(GL_VERSION));
     printf("GLSL Version={%s}\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
 
-    Input::AddAction("test")->AddKeyboardKey(SDL_GetScancodeFromKey(SDLK_w));;
+    Input::AddAction("test")->AddKeyboardKey(SDL_GetScancodeFromKey(SDLK_t));;
     
     // Set clear color
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
