@@ -7,7 +7,7 @@
 class ShaderManager
 {
 private:
-    static std::unordered_map<std::string, ShaderProgram*> shaderProgramCache;
+    static std::unordered_map<std::string, ShaderProgram> shaderProgramCache;
 
 public:
     static ShaderProgram* GetShaderProgram(const std::string& vertexShaderName = "default_vertex", const std::string& pixelShaderName = "default_pixel")
@@ -26,12 +26,8 @@ public:
         Shader pixelShader = AssetRegistry::GetShaderByName(pixelShaderName, ShaderType::PixelShader);
 
         // Create and link the shader program
-        ShaderProgram* program = new ShaderProgram();
-        program->AttachShader(vertexShader)->AttachShader(pixelShader)->LinkProgram();
-
-        // Cache the created shader program
-        shaderProgramCache[key] = program;
-
+        ShaderProgram& program = shaderProgramCache[key];
+        program.AttachShader(vertexShader)->AttachShader(pixelShader)->LinkProgram();
         return program;
     }
 };
