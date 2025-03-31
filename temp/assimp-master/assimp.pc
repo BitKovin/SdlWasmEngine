@@ -1,0 +1,9 @@
+libdir=F:/Git/SdlWasmEngine/emscripten/emsdk/upstream/emscripten/cache/sysroot/lib
+includedir=F:/Git/SdlWasmEngine/emscripten/emsdk/upstream/emscripten/cache/sysroot/include
+
+Name: Assimp
+Description: Import various well-known 3D model formats in an uniform manner.
+Version: 5.4.3
+Libs: -L${libdir} -lassimp
+Libs.private:  -lz
+Cflags: -I${includedir}

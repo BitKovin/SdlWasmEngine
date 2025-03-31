@@ -2,6 +2,7 @@
 
 #include "glm.h"
 
+
 int roj::Animator::getKeyTransformIdx(std::vector<float>& timestamps)
 {
     if (timestamps.size() < 2)
