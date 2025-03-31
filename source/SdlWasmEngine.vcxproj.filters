@@ -25,6 +25,9 @@
     <Filter Include="Source Files\skeletal">
       <UniqueIdentifier>{ea9b6bdc-d79e-4427-8603-bd236b5ded48}</UniqueIdentifier>
     </Filter>
+    <Filter Include="binariesToInclude">
+      <UniqueIdentifier>{9d9d1dfb-71c7-4612-8b7c-796966c0a950}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -152,5 +155,13 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />
+    <None Include="glew32.dll" />
+    <None Include="libavif-16.dll" />
+    <None Include="libtiff-5.dll" />
+    <None Include="libwebp-7.dll" />
+    <None Include="libwebpdemux-2.dll" />
+    <None Include="SDL2.dll" />
+    <None Include="SDL2_image.dll" />
+    <None Include="assimp-vc143-mt.dll" />
   </ItemGroup>
 </Project>

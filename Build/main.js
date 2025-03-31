@@ -31,7 +31,7 @@ if (ENVIRONMENT_IS_NODE) {
 
 // --pre-jses are emitted after the Module integration code, so that they can
 // refer to Module (if they choose; they can also define Module)
-// include: C:\Users\Admin\AppData\Local\Temp\tmp5iwtn1zz.js
+// include: C:\Users\Admin\AppData\Local\Temp\tmp9qr8tah5.js
 
   Module['expectedDataFileDownloads'] ??= 0;
   Module['expectedDataFileDownloads']++;
@@ -211,25 +211,25 @@ Module['FS_createPath']("/GameData", "sprite_work", true, true);
     }
 
     }
-    loadPackage({"files": [{"filename": "/GameData/Kingthings_Calligraphica_2.ttf", "start": 0, "end": 29804}, {"filename": "/GameData/Shaders/default_fragment.frag", "start": 29804, "end": 29982}, {"filename": "/GameData/Shaders/default_pixel.frag", "start": 29982, "end": 30251}, {"filename": "/GameData/Shaders/default_vertex.vert", "start": 30251, "end": 30583}, {"filename": "/GameData/Shaders/skeletal.vert", "start": 30583, "end": 31742}, {"filename": "/GameData/bass_beat.ogg", "start": 31742, "end": 398618, "audio": 1}, {"filename": "/GameData/bass_beat.wav", "start": 398618, "end": 6094952, "audio": 1}, {"filename": "/GameData/cat.png", "start": 6094952, "end": 6344390}, {"filename": "/GameData/dog.bin", "start": 6344390, "end": 6410434}, {"filename": "/GameData/dog.dae", "start": 6410434, "end": 6809506}, {"filename": "/GameData/dog.fbx", "start": 6809506, "end": 7723838}, {"filename": "/GameData/dog.glb", "start": 7723838, "end": 7850338}, {"filename": "/GameData/dog.gltf", "start": 7850338, "end": 7941465}, {"filename": "/GameData/happy_hog.png", "start": 7941465, "end": 8858590}, {"filename": "/GameData/hog_sheet.png", "start": 8858590, "end": 10713666}, {"filename": "/GameData/level_1_bg_crop.png", "start": 10713666, "end": 11320845}, {"filename": "/GameData/levels/level_0.json", "start": 11320845, "end": 11320864}, {"filename": "/GameData/mini_hog.ico", "start": 11320864, "end": 11325150}, {"filename": "/GameData/monkey.fbx", "start": 11325150, "end": 11356570}, {"filename": "/GameData/sound_test.ogg", "start": 11356570, "end": 11385678, "audio": 1}, {"filename": "/GameData/sprite_sheet_sticher.py", "start": 11385678, "end": 11386204}, {"filename": "/GameData/sprite_work/h_bleg2.png", "start": 11386204, "end": 11401879}, {"filename": "/GameData/sprite_work/h_bod.png", "start": 11401879, "end": 11616549}, {"filename": "/GameData/sprite_work/h_bod2.png", "start": 11616549, "end": 11694612}, {"filename": "/GameData/sprite_work/h_fleg2.png", "start": 11694612, "end": 11712688}, {"filename": "/GameData/sprite_work/hog_base.png", "start": 11712688, "end": 11985238}, {"filename": "/GameData/sprite_work/soda.png", "start": 11985238, "end": 11986009}, {"filename": "/GameData/title_bg_crop.png", "start": 11986009, "end": 12901117}, {"filename": "/GameData/yummy.ogg", "start": 12901117, "end": 12936708, "audio": 1}], "remote_package_size": 12936708});
+    loadPackage({"files": [{"filename": "/GameData/Kingthings_Calligraphica_2.ttf", "start": 0, "end": 29804}, {"filename": "/GameData/Shaders/default_fragment.frag", "start": 29804, "end": 29982}, {"filename": "/GameData/Shaders/default_pixel.frag", "start": 29982, "end": 30251}, {"filename": "/GameData/Shaders/default_vertex.vert", "start": 30251, "end": 30583}, {"filename": "/GameData/Shaders/skeletal.vert", "start": 30583, "end": 31751}, {"filename": "/GameData/bass_beat.ogg", "start": 31751, "end": 398627, "audio": 1}, {"filename": "/GameData/bass_beat.wav", "start": 398627, "end": 6094961, "audio": 1}, {"filename": "/GameData/cat.png", "start": 6094961, "end": 6344399}, {"filename": "/GameData/dog.bin", "start": 6344399, "end": 6410443}, {"filename": "/GameData/dog.dae", "start": 6410443, "end": 6809515}, {"filename": "/GameData/dog.fbx", "start": 6809515, "end": 7723847}, {"filename": "/GameData/dog.glb", "start": 7723847, "end": 7850347}, {"filename": "/GameData/dog.gltf", "start": 7850347, "end": 7941474}, {"filename": "/GameData/happy_hog.png", "start": 7941474, "end": 8858599}, {"filename": "/GameData/hog_sheet.png", "start": 8858599, "end": 10713675}, {"filename": "/GameData/level_1_bg_crop.png", "start": 10713675, "end": 11320854}, {"filename": "/GameData/levels/level_0.json", "start": 11320854, "end": 11320873}, {"filename": "/GameData/mini_hog.ico", "start": 11320873, "end": 11325159}, {"filename": "/GameData/monkey.fbx", "start": 11325159, "end": 11356579}, {"filename": "/GameData/sound_test.ogg", "start": 11356579, "end": 11385687, "audio": 1}, {"filename": "/GameData/sprite_sheet_sticher.py", "start": 11385687, "end": 11386213}, {"filename": "/GameData/sprite_work/h_bleg2.png", "start": 11386213, "end": 11401888}, {"filename": "/GameData/sprite_work/h_bod.png", "start": 11401888, "end": 11616558}, {"filename": "/GameData/sprite_work/h_bod2.png", "start": 11616558, "end": 11694621}, {"filename": "/GameData/sprite_work/h_fleg2.png", "start": 11694621, "end": 11712697}, {"filename": "/GameData/sprite_work/hog_base.png", "start": 11712697, "end": 11985247}, {"filename": "/GameData/sprite_work/soda.png", "start": 11985247, "end": 11986018}, {"filename": "/GameData/title_bg_crop.png", "start": 11986018, "end": 12901126}, {"filename": "/GameData/yummy.ogg", "start": 12901126, "end": 12936717, "audio": 1}], "remote_package_size": 12936717});
 
   })();
 
-// end include: C:\Users\Admin\AppData\Local\Temp\tmp5iwtn1zz.js
-// include: C:\Users\Admin\AppData\Local\Temp\tmpdxi0b3zo.js
+// end include: C:\Users\Admin\AppData\Local\Temp\tmp9qr8tah5.js
+// include: C:\Users\Admin\AppData\Local\Temp\tmpsroxetxe.js
 
     // All the pre-js content up to here must remain later on, we need to run
     // it.
     if (Module['$ww'] || (typeof ENVIRONMENT_IS_PTHREAD != 'undefined' && ENVIRONMENT_IS_PTHREAD)) Module['preRun'] = [];
     var necessaryPreJSTasks = Module['preRun'].slice();
-  // end include: C:\Users\Admin\AppData\Local\Temp\tmpdxi0b3zo.js
-// include: C:\Users\Admin\AppData\Local\Temp\tmp9kgy_wzs.js
+  // end include: C:\Users\Admin\AppData\Local\Temp\tmpsroxetxe.js
+// include: C:\Users\Admin\AppData\Local\Temp\tmp3x24_jf8.js
 
     if (!Module['preRun']) throw 'Module.preRun should exist because file support used it; did a pre-js delete it?';
     necessaryPreJSTasks.forEach((task) => {
       if (Module['preRun'].indexOf(task) < 0) throw 'All preRun tasks that exist before user pre-js code should remain after; did you replace Module or modify Module.preRun?';
     });
-  // end include: C:\Users\Admin\AppData\Local\Temp\tmp9kgy_wzs.js
+  // end include: C:\Users\Admin\AppData\Local\Temp\tmp3x24_jf8.js
 
 
 // Sometimes an existing Module object exists with properties

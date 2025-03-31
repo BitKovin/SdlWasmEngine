@@ -38,6 +38,6 @@ target_link_libraries(a PRIVATE "${CMAKE_SOURCE_DIR}/libsEms/libassimp.a" "${CMA
     "SHELL:-s ALLOW_MEMORY_GROWTH=1"
     "SHELL:-s NO_DISABLE_EXCEPTION_CATCHING"
     "SHELL:-s WASM=1"
-    "SHELL:--preload-file ${CMAKE_SOURCE_DIR}/GameData@/GameData"
+    "SHELL:--preload-file ${CMAKE_SOURCE_DIR}/source/GameData@/GameData"
     "SHELL:-s GL_SUPPORT_AUTOMATIC_ENABLE_EXTENSIONS=1"
 )

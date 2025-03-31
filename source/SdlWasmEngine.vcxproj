@@ -99,34 +99,34 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <OutDir>$(SolutionDir)..\Build\Windows\$(Configuration)</OutDir>
     <IncludePath>$(SolutionDir)../libraries/;$(IncludePath)</IncludePath>
     <LibraryPath>F:\Git\SdlWasmEngine\Lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <OutDir>$(SolutionDir)..\Build\Windows\$(Configuration)</OutDir>
     <IncludePath>$(SolutionDir)../libraries/;$(IncludePath)</IncludePath>
     <LibraryPath>F:\Git\SdlWasmEngine\Lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='emscripten|Win32'">
-    <OutDir>$(SolutionDir)..\Build\Windows\$(Configuration)</OutDir>
     <IncludePath>$(SolutionDir)../libraries/;$(IncludePath)</IncludePath>
     <LibraryPath>F:\Git\SdlWasmEngine\Lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <OutDir>$(SolutionDir)..\Build\Windows\$(Configuration)</OutDir>
     <IncludePath>$(SolutionDir)../libraries/;$(IncludePath)</IncludePath>
     <LibraryPath>F:\Git\SdlWasmEngine\Lib;$(LibraryPath)</LibraryPath>
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir>$(ShortProjectName)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutDir>$(SolutionDir)..\Build\Windows\$(Configuration)</OutDir>
     <IncludePath>$(SolutionDir)../libraries/;$(IncludePath)</IncludePath>
     <LibraryPath>F:\Git\SdlWasmEngine\Lib;$(LibraryPath)</LibraryPath>
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir>$(ShortProjectName)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='emscripten|x64'">
-    <OutDir>$(SolutionDir)..\Build\Windows\$(Configuration)</OutDir>
     <IncludePath>$(SolutionDir)../libraries/;$(IncludePath)</IncludePath>
     <LibraryPath>F:\Git\SdlWasmEngine\Lib;$(LibraryPath)</LibraryPath>
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir>$(ShortProjectName)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -271,7 +271,31 @@
     <ClInclude Include="VertexData.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="assimp-vc143-mt.dll">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
     <None Include="cpp.hint" />
+    <None Include="glew32.dll">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="libavif-16.dll">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="libtiff-5.dll">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="libwebp-7.dll">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="libwebpdemux-2.dll">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="SDL2.dll">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="SDL2_image.dll">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
