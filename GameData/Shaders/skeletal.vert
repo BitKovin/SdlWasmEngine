@@ -1,8 +1,8 @@
 #version 300 es
 
-layout(location = 0) in vec3 pos;
-layout(location = 1) in vec3 norm;
-layout(location = 2) in vec2 tex;
+layout(location = 0) in vec3 Position;
+layout(location = 1) in vec3 Normal;
+layout(location = 2) in vec2 TextureCoordinate;
 layout(location = 5) in ivec4 boneIds; 
 layout(location = 6) in vec4 weights;
 	
@@ -25,6 +25,7 @@ mat4 GetBoneTransforms()
 		0.0, 0.0, 1.0, 0.0,
 		0.0, 0.0, 0.0, 1.0);
 
+
 	float sum = weights.x + weights.y + weights.z + weights.w;
 
 	if (sum < 0.05f)
@@ -45,6 +46,6 @@ void main()
     mat4 boneTrans = GetBoneTransforms();
 
     mat4 viewModel = view * world;
-    gl_Position = projection * view * world * boneTrans * vec4(pos, 1.0);
-    v_texcoord = tex;
+    gl_Position = projection * view * world * boneTrans * vec4(Position, 1.0);
+    v_texcoord = TextureCoordinate;
 }

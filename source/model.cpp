@@ -6,60 +6,26 @@
 namespace roj
 {
 
-template class ModelLoader<Mesh>;
-
-void Mesh::setup()
-{
-    unsigned int VBO, EBO;
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-    glGenBuffers(1, &EBO);
-
-    glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
-
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
-
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
-
-    glEnableVertexAttribArray(2);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texCoords));
-
-    glEnableVertexAttribArray(3);
-    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, tangent));
-
-    glEnableVertexAttribArray(4);
-    glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, bitangent));
-    
-    glBindVertexArray(0);
-}
-
 template<>
-std::vector<Mesh::Vertex> ModelLoader<Mesh>::getMeshVertices(aiMesh* mesh)
+std::vector<VertexData> ModelLoader<Mesh>::getMeshVertices(aiMesh* mesh)
 {
-    std::vector<Mesh::Vertex> vertices;
+    std::vector<VertexData> vertices;
     for (uint32_t i = 0; i < mesh->mNumVertices; i++)
     {
-        Mesh::Vertex vertex;
-        vertex.position = { mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z };
+        VertexData vertex;
+        vertex.Position = { mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z };
         if (mesh->HasNormals())
         {
-            vertex.normal = { mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z };
+            vertex.Normal = { mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z };
         }
         if (mesh->mTextureCoords[0])
         {
-            vertex.texCoords = { mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y };
-            vertex.tangent = { mesh->mTangents[i].x,   mesh->mTangents[i].y,   mesh->mTangents[i].z };
-            vertex.bitangent = { mesh->mBitangents[i].x, mesh->mBitangents[i].y, mesh->mBitangents[i].z };
+            vertex.TextureCoordinate = { mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y };
+            vertex.Tangent = { mesh->mTangents[i].x,   mesh->mTangents[i].y,   mesh->mTangents[i].z };
+            vertex.BiTangent = { mesh->mBitangents[i].x, mesh->mBitangents[i].y, mesh->mBitangents[i].z };
         }
         else
-            vertex.texCoords = glm::vec2(0.0f, 0.0f);
+            vertex.TextureCoordinate = glm::vec2(0.0f, 0.0f);
 
         vertices.push_back(vertex);
     }
@@ -71,7 +37,7 @@ template<>
 Mesh ModelLoader<Mesh>::processMesh(aiMesh* mesh, const aiScene* scene)
 {
     std::vector<MeshTexture> textures = getMeshTextures(scene->mMaterials[mesh->mMaterialIndex]);
-    std::vector<Mesh::Vertex>  vertices = getMeshVertices(mesh);
+    std::vector<VertexData>  vertices = getMeshVertices(mesh);
     std::vector<uint32_t> indices;
     for (uint32_t i = 0; i < mesh->mNumFaces; i++)
     {
@@ -81,9 +47,7 @@ Mesh ModelLoader<Mesh>::processMesh(aiMesh* mesh, const aiScene* scene)
 
     Mesh m;
 
-    m.vertices = vertices;
-    m.indices = indices;
-    m.textures = textures;
+    m.vertexBuffer = new VertexBuffer(vertices, VertexData::Declaration());
 
     return m;
 }
@@ -119,7 +83,7 @@ bool ModelLoader<Mesh>::load(const std::string& path)
     processNode(scene->mRootNode, scene);
     for (Mesh& mesh : m_model)
     {
-        mesh.setup();
+        mesh.VAO = new VertexArrayObject(*mesh.vertexBuffer, *mesh.indexBuffer);
     }
     return true;
 }

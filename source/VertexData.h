@@ -35,6 +35,7 @@ private:
 class VertexBuffer : public EObject
 {
 public:
+
     template<typename T>
     VertexBuffer(const std::vector<T>& vertices, const VertexDeclaration& declaration, GLenum usage = GL_STATIC_DRAW)
         : m_declaration(declaration), m_vertexCount(vertices.size()) {
@@ -101,17 +102,40 @@ public:
         ib.Bind();
 
 
-        const auto& elements = vb.GetDeclaration().GetElements();
+        const auto& elements = vb.GetDeclaration().GetElements();   
         for (const auto& element : elements) {
             glEnableVertexAttribArray(element.index);
-            glVertexAttribPointer(
-                element.index,
-                element.componentCount,
-                element.type,
-                element.normalized,
-                element.stride,
-                element.offset
-            );
+            // Determine attribute type category
+            const bool isIntegerType =
+                element.type == GL_INT ||
+                element.type == GL_UNSIGNED_INT ||
+                element.type == GL_BYTE ||
+                element.type == GL_UNSIGNED_BYTE ||
+                element.type == GL_SHORT ||
+                element.type == GL_UNSIGNED_SHORT;
+
+
+            if (isIntegerType && !element.normalized) {
+                // Integer attributes (non-normalized)
+                glVertexAttribIPointer(
+                    element.index,
+                    element.componentCount,
+                    element.type,
+                    element.stride,
+                    element.offset
+                );
+            }
+            else {
+                // Normalized integers and floating-point attributes
+                glVertexAttribPointer(
+                    element.index,
+                    element.componentCount,
+                    element.type,
+                    element.normalized,
+                    element.stride,
+                    element.offset
+                );
+            }
             if (element.divisor > 0) {
                 glVertexAttribDivisor(element.index, element.divisor);
             }
@@ -138,7 +162,7 @@ struct VertexData {
     glm::vec2 TextureCoordinate = vec2();
     glm::vec3 Tangent = vec3();
     glm::vec3 BiTangent = vec3();
-    glm::vec4 BlendIndices = vec4();
+    int BlendIndices[4] = {0,0,0,0};
     glm::vec4 BlendWeights = vec4();
     glm::vec3 SmoothNormal = vec3();
     glm::vec4 Color = vec4();
@@ -150,7 +174,7 @@ struct VertexData {
             {2, 2, GL_FLOAT, GL_FALSE, sizeof(VertexData), OFFSET_OF(VertexData, TextureCoordinate), 0},
             {3, 3, GL_FLOAT, GL_FALSE, sizeof(VertexData), OFFSET_OF(VertexData, Tangent), 0},
             {4, 3, GL_FLOAT, GL_FALSE, sizeof(VertexData), OFFSET_OF(VertexData, BiTangent), 0},
-            {5, 4, GL_FLOAT, GL_FALSE, sizeof(VertexData), OFFSET_OF(VertexData, BlendIndices), 0},
+            {5, 4, GL_INT, GL_FALSE, sizeof(VertexData), OFFSET_OF(VertexData, BlendIndices), 0},  // Keep as GL_INT
             {6, 4, GL_FLOAT, GL_FALSE, sizeof(VertexData), OFFSET_OF(VertexData, BlendWeights), 0},
             {7, 3, GL_FLOAT, GL_FALSE, sizeof(VertexData), OFFSET_OF(VertexData, SmoothNormal), 0},
             {8, 4, GL_FLOAT, GL_FALSE, sizeof(VertexData), OFFSET_OF(VertexData, Color), 0}

@@ -209,15 +209,17 @@ public:
         SDL_GetWindowSize(Window, &x, &y);
         glViewport(0, 0, x, y);
 
-        glClear(GL_COLOR_BUFFER_BIT);
-        glClearDepthf(0);
+        // Enable depth testing
+        glEnable(GL_DEPTH_TEST);
+
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
         shader->UseProgram();
 
         shader->AllowMissingUniforms = false;
 
-        //shader->SetTexture("u_texture", texture);
+        shader->SetTexture("u_texture", texture);
 
         vec3 pos = vec3(0, 0, 0);
 
@@ -241,11 +243,10 @@ public:
         for (roj::SkinnedMesh& mesh : skm)
         {
             auto& indices = mesh.indices;
-            uint32_t VAO = mesh.VAO;
+            
+            mesh.VAO->Bind();
 
-
-            glBindVertexArray(VAO);
-            glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(indices.size()), GL_UNSIGNED_INT, 0);
+            glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(mesh.VAO->IndexCount), GL_UNSIGNED_INT, 0);
             glBindVertexArray(0);
             glActiveTexture(GL_TEXTURE0);
         }

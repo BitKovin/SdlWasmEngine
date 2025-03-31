@@ -5,9 +5,11 @@
 
 #include "utils.hpp"
 
+#include "Logger.hpp"
+
 using namespace utils::assimp;
 
-static void extractBoneData(std::vector<roj::SkinnedMesh::Vertex>& vertices, aiMesh* mesh, roj::SkinnedModel& model)
+static void extractBoneData(std::vector<VertexData>& vertices, aiMesh* mesh, roj::SkinnedModel& model)
 {
 	for (unsigned int i = 0; i < mesh->mNumBones; ++i)
 	{
@@ -29,14 +31,19 @@ static void extractBoneData(std::vector<roj::SkinnedMesh::Vertex>& vertices, aiM
 			auto& vertex = vertices[weights[j].mVertexId];
 			for (int k = 0; k < MAX_BONE_INFLUENCE; ++k)
 			{
-				if (vertex.weights[k] == 0.0f)
+				if (vertex.BlendWeights[k] == 0.0f)
 				{
-					vertex.weights[k] = weights[j].mWeight;
-					vertex.boneIds[k] = boneId;
+					vertex.BlendWeights[k] = weights[j].mWeight;
+					vertex.BlendIndices[k] = boneId;
+
+
 					break;
 				}
 			}
 		}
+
+		Logger::Log("a");
+
 	}
 }
 static void extractBoneNode(roj::BoneNode& bone, aiNode* src)
@@ -93,42 +100,6 @@ namespace roj
 
 	template class ModelLoader<SkinnedMesh>;
 
-	void SkinnedMesh::setup()
-	{
-		unsigned int VBO, EBO;
-		glGenVertexArrays(1, &VAO);
-		glGenBuffers(1, &VBO);
-		glGenBuffers(1, &EBO);
-
-		glBindVertexArray(VAO);
-		glBindBuffer(GL_ARRAY_BUFFER, VBO);
-		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
-
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
-
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
-
-		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
-
-		glEnableVertexAttribArray(2);
-		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texCoords));
-
-		glEnableVertexAttribArray(3);
-		glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, tangent));
-
-		glEnableVertexAttribArray(4);
-		glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, bitangent));
-
-		glEnableVertexAttribArray(5);
-		glVertexAttribIPointer(5, 4, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, boneIds));
-
-		glEnableVertexAttribArray(6);
-		glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, weights));
-		glBindVertexArray(0);
-	}
 	void SkinnedModel::clear()
 	{
 		meshes.clear();
@@ -138,28 +109,30 @@ namespace roj
 	std::vector<SkinnedMesh>::iterator SkinnedModel::end() { return meshes.end(); }
 
 	template<>
-	std::vector<SkinnedMesh::Vertex> ModelLoader<SkinnedMesh>::getMeshVertices(aiMesh* mesh)
+	std::vector<VertexData> ModelLoader<SkinnedMesh>::getMeshVertices(aiMesh* mesh)
 	{
 
-		std::vector<SkinnedMesh::Vertex> vertices;
+		std::vector<VertexData> vertices;
 		for (uint32_t i = 0; i < mesh->mNumVertices; i++)
 		{
-			SkinnedMesh::Vertex vertex;
-			vertex.position = { mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z };
+			VertexData vertex;
+			vertex.Position = { mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z };
 			if (mesh->HasNormals())
 			{
-				vertex.normal = { mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z };
+				vertex.Normal = { mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z };
 			}
 			if (mesh->mTextureCoords[0])
 			{
-				vertex.texCoords = { mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y };
-				vertex.tangent = { mesh->mTangents[i].x,   mesh->mTangents[i].y,   mesh->mTangents[i].z };
-				vertex.bitangent = { mesh->mBitangents[i].x, mesh->mBitangents[i].y, mesh->mBitangents[i].z };
+				vertex.TextureCoordinate = { mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y };
+				vertex.Tangent = { mesh->mTangents[i].x,   mesh->mTangents[i].y,   mesh->mTangents[i].z };
+				vertex.BiTangent = { mesh->mBitangents[i].x, mesh->mBitangents[i].y, mesh->mBitangents[i].z };
 			}
 			else
-				vertex.texCoords = glm::vec2(0.0f, 0.0f);
-			std::fill(vertex.boneIds, vertex.boneIds + MAX_BONE_INFLUENCE, 0);
-			std::fill(vertex.weights, vertex.weights + MAX_BONE_INFLUENCE, 0.0f);
+				vertex.TextureCoordinate = glm::vec2(0.0f, 0.0f);
+
+			std::fill(vertex.BlendIndices, vertex.BlendIndices + MAX_BONE_INFLUENCE, 0);
+			//std::fill(vertex.BlendWeights, vertex.BlendWeights + MAX_BONE_INFLUENCE, 0.0f);
+
 			vertices.push_back(vertex);
 		}
 
@@ -170,7 +143,7 @@ namespace roj
 	SkinnedMesh ModelLoader<SkinnedMesh>::processMesh(aiMesh* mesh, const aiScene* scene)
 	{
 		std::vector<MeshTexture> textures = getMeshTextures(scene->mMaterials[mesh->mMaterialIndex]);
-		std::vector<SkinnedMesh::Vertex> vertices = getMeshVertices(mesh);
+		std::vector<VertexData> vertices = getMeshVertices(mesh);
 		std::vector<uint32_t> indices;
 		for (uint32_t i = 0; i < mesh->mNumFaces; i++)
 		{
@@ -179,11 +152,12 @@ namespace roj
 		}
 		extractBoneData(vertices, mesh, m_model);
 
-		SkinnedMesh skinMesh;
+		SkinnedMesh skinMesh = SkinnedMesh();
 
-		skinMesh.vertices = vertices;
-		skinMesh.indices = indices;
-		skinMesh.textures = textures;
+		skinMesh.vertices = new VertexBuffer(vertices, VertexData::Declaration());
+
+		skinMesh.indices = new IndexBuffer(indices);
+		//skinMesh.textures = textures;
 
 		return skinMesh;
 	}
@@ -219,10 +193,12 @@ namespace roj
 		}
 		m_model.globalInversed = glm::inverse(toGlmMat4(scene->mRootNode->mTransformation));
 		m_model.sceneCamera = (scene->HasCameras()) ? scene->mCameras[0] : nullptr;
+
 		processNode(scene->mRootNode, scene);
+
 		for (SkinnedMesh& mesh : m_model)
 		{
-			mesh.setup();
+			mesh.VAO = new VertexArrayObject(*mesh.vertices, *mesh.indices);
 		}
 
 		extractAnimations(scene, m_model);

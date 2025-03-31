@@ -11,6 +11,8 @@
 
 #include "utils.hpp"
 
+#include "VertexData.h"
+
 namespace roj
 {
 struct MeshTexture
@@ -20,20 +22,13 @@ struct MeshTexture
 
 struct Mesh
 {
-	struct Vertex
-	{
-		glm::vec3 position;
-		glm::vec3 normal;
-		glm::vec2 texCoords;
-		glm::vec3 tangent;
-		glm::vec3 bitangent;
-	};
-	
-	std::vector<Vertex> vertices;
-	std::vector<uint32_t> indices;
+
+    VertexBuffer* vertexBuffer;
+    IndexBuffer* indexBuffer;
+
 	std::vector<MeshTexture> textures;
-	uint32_t VAO = 0;
-	void setup();
+	VertexArrayObject* VAO;
+	
 };
 
 template<typename mesh_t>
@@ -61,7 +56,7 @@ private:
 	void resetLoader();
     void processNode(aiNode* node, const aiScene* scene);
 	mesh_t processMesh(aiMesh* mesh, const aiScene* scene);
-	std::vector<typename mesh_t::Vertex>  getMeshVertices(aiMesh* mesh);
+	std::vector<VertexData>  getMeshVertices(aiMesh* mesh);
 	std::vector<MeshTexture> getMeshTextures(aiMaterial* material);
 	std::vector<MeshTexture> loadTextureMap(aiMaterial* mat, aiTextureType type);
 public:

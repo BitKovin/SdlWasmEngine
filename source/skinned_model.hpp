@@ -10,24 +10,11 @@ namespace roj
 	
 	struct SkinnedMesh
 	{
-		struct Vertex
-		{
-			glm::vec3 position;
-			glm::vec3 normal;
-			glm::vec2 texCoords;
-			glm::vec3 tangent;
-			glm::vec3 bitangent;
-			int boneIds[MAX_BONE_INFLUENCE];
-			float weights[MAX_BONE_INFLUENCE];
 
-			Vertex() = default;
-		};
+		VertexBuffer* vertices;
+		IndexBuffer* indices;
+		VertexArrayObject* VAO;
 
-		std::vector<Vertex> vertices;
-		std::vector<uint32_t> indices;
-		std::vector<MeshTexture> textures;
-		uint32_t VAO = 0;
-		void setup();
 	};
 
 
