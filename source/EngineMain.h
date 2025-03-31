@@ -139,7 +139,7 @@ public:
         roj::ModelLoader<roj::SkinnedMesh> modelLoader;
 
 
-        modelLoader.load("GameData/dog.glb");
+        modelLoader.load("GameData/dog.dae");
 
         Logger::Log(modelLoader.getInfoLog());
 
@@ -149,7 +149,7 @@ public:
 
         animator = roj::Animator(skm);
 
-        animator.set("run");
+        animator.set("root_root");
         animator.play();
 
 

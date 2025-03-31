@@ -41,53 +41,6 @@ void Mesh::setup()
 }
 
 template<>
-bool ModelLoader<Mesh>::load(const std::string& path)
-{
-    resetLoader();
-    const aiScene* scene = m_import.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
-    m_relativeDir = "GameData/";// static_cast<std::filesystem::path>(path).parent_path().string();
-
-    if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
-    {
-        m_infoLog += m_import.GetErrorString();
-        return false;
-    }
-
-    processNode(scene->mRootNode, scene);
-    for (Mesh& mesh : m_model)
-    {
-        mesh.setup();
-    }
-    return true;
-}
-template<>
-void ModelLoader<Mesh>::processNode(aiNode* node, const aiScene* scene)
-{
-    for (uint32_t i = 0; i < node->mNumMeshes; i++)
-    {
-        aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-        m_model.push_back(processMesh(mesh, scene));
-    }
-
-    for (uint32_t i = 0; i < node->mNumChildren; i++)
-    {
-        processNode(node->mChildren[i], scene);
-    }
-}
-template<>
-Mesh ModelLoader<Mesh>::processMesh(aiMesh* mesh, const aiScene* scene)
-{
-    std::vector<MeshTexture> textures = getMeshTextures(scene->mMaterials[mesh->mMaterialIndex]);
-    std::vector<Mesh::Vertex>  vertices = getMeshVertices(mesh);
-    std::vector<uint32_t> indices;
-    for (uint32_t i = 0; i < mesh->mNumFaces; i++)
-    {
-        aiFace& face = mesh->mFaces[i];
-        indices.insert(indices.end(), face.mIndices, face.mIndices + face.mNumIndices);
-    }
-    return Mesh{ vertices, indices, textures };
-}
-template<>
 std::vector<Mesh::Vertex> ModelLoader<Mesh>::getMeshVertices(aiMesh* mesh)
 {
     std::vector<Mesh::Vertex> vertices;
@@ -114,6 +67,62 @@ std::vector<Mesh::Vertex> ModelLoader<Mesh>::getMeshVertices(aiMesh* mesh)
     return vertices;
 }
 
+template<>
+Mesh ModelLoader<Mesh>::processMesh(aiMesh* mesh, const aiScene* scene)
+{
+    std::vector<MeshTexture> textures = getMeshTextures(scene->mMaterials[mesh->mMaterialIndex]);
+    std::vector<Mesh::Vertex>  vertices = getMeshVertices(mesh);
+    std::vector<uint32_t> indices;
+    for (uint32_t i = 0; i < mesh->mNumFaces; i++)
+    {
+        aiFace& face = mesh->mFaces[i];
+        indices.insert(indices.end(), face.mIndices, face.mIndices + face.mNumIndices);
+    }
+
+    Mesh m;
+
+    m.vertices = vertices;
+    m.indices = indices;
+    m.textures = textures;
+
+    return m;
+}
+
+template<>
+void ModelLoader<Mesh>::processNode(aiNode* node, const aiScene* scene)
+{
+    for (uint32_t i = 0; i < node->mNumMeshes; i++)
+    {
+        aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+        m_model.push_back(processMesh(mesh, scene));
+    }
+
+    for (uint32_t i = 0; i < node->mNumChildren; i++)
+    {
+        processNode(node->mChildren[i], scene);
+    }
+}
+
+template<>
+bool ModelLoader<Mesh>::load(const std::string& path)
+{
+    resetLoader();
+    const aiScene* scene = m_import.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
+    m_relativeDir = "GameData/";// static_cast<std::filesystem::path>(path).parent_path().string();
+
+    if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
+    {
+        m_infoLog += m_import.GetErrorString();
+        return false;
+    }
+
+    processNode(scene->mRootNode, scene);
+    for (Mesh& mesh : m_model)
+    {
+        mesh.setup();
+    }
+    return true;
+}
 
 
 

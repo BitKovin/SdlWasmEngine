@@ -1,5 +1,4 @@
 #version 300 es
-precision mediump float;
 layout(location = 0) in vec3 Position;
 layout(location = 2) in vec2 TextureCoordinate;
 out vec2 v_texcoord;

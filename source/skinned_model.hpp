@@ -19,6 +19,8 @@ namespace roj
 			glm::vec3 bitangent;
 			int boneIds[MAX_BONE_INFLUENCE];
 			float weights[MAX_BONE_INFLUENCE];
+
+			Vertex() = default;
 		};
 
 		std::vector<Vertex> vertices;
@@ -37,7 +39,7 @@ namespace roj
 		std::vector<BoneNode> children;
 	};
 
-	struct BoneTransform {
+	struct FrameBoneTransform {
 		std::vector<float> positionTimestamps = {};
 		std::vector<float> rotationTimestamps = {};
 		std::vector<float> scaleTimestamps = {};
@@ -51,7 +53,7 @@ namespace roj
 		float duration = 0.0f;
 		float ticksPerSec = 1.0f;
 		BoneNode rootBone;
-		std::unordered_map<std::string, BoneTransform> boneTransforms = {};
+		std::unordered_map<std::string, FrameBoneTransform> animationFrames = {};
 	};
 
 

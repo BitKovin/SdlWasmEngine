@@ -107,8 +107,36 @@ build CMakeFiles/a.dir/source/Time.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/Sdl
   OBJECT_DIR = CMakeFiles\a.dir
   OBJECT_FILE_DIR = CMakeFiles\a.dir\source
 
+build CMakeFiles/a.dir/source/animator.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/SdlWasmEngine/source/animator.cpp || cmake_object_order_depends_target_a
+  DEP_FILE = CMakeFiles\a.dir\source\animator.cpp.o.d
+  FLAGS = -std=c++11 -O3
+  INCLUDES = -IF:/Git/SdlWasmEngine/librariesEms
+  OBJECT_DIR = CMakeFiles\a.dir
+  OBJECT_FILE_DIR = CMakeFiles\a.dir\source
+
 build CMakeFiles/a.dir/source/main.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/SdlWasmEngine/source/main.cpp || cmake_object_order_depends_target_a
   DEP_FILE = CMakeFiles\a.dir\source\main.cpp.o.d
+  FLAGS = -std=c++11 -O3
+  INCLUDES = -IF:/Git/SdlWasmEngine/librariesEms
+  OBJECT_DIR = CMakeFiles\a.dir
+  OBJECT_FILE_DIR = CMakeFiles\a.dir\source
+
+build CMakeFiles/a.dir/source/model.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/SdlWasmEngine/source/model.cpp || cmake_object_order_depends_target_a
+  DEP_FILE = CMakeFiles\a.dir\source\model.cpp.o.d
+  FLAGS = -std=c++11 -O3
+  INCLUDES = -IF:/Git/SdlWasmEngine/librariesEms
+  OBJECT_DIR = CMakeFiles\a.dir
+  OBJECT_FILE_DIR = CMakeFiles\a.dir\source
+
+build CMakeFiles/a.dir/source/skinned_model.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/SdlWasmEngine/source/skinned_model.cpp || cmake_object_order_depends_target_a
+  DEP_FILE = CMakeFiles\a.dir\source\skinned_model.cpp.o.d
+  FLAGS = -std=c++11 -O3
+  INCLUDES = -IF:/Git/SdlWasmEngine/librariesEms
+  OBJECT_DIR = CMakeFiles\a.dir
+  OBJECT_FILE_DIR = CMakeFiles\a.dir\source
+
+build CMakeFiles/a.dir/source/utils.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/SdlWasmEngine/source/utils.cpp || cmake_object_order_depends_target_a
+  DEP_FILE = CMakeFiles\a.dir\source\utils.cpp.o.d
   FLAGS = -std=c++11 -O3
   INCLUDES = -IF:/Git/SdlWasmEngine/librariesEms
   OBJECT_DIR = CMakeFiles\a.dir
@@ -122,8 +150,8 @@ build CMakeFiles/a.dir/source/main.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/Sdl
 #############################################
 # Link the executable main.html
 
-build main.html: CXX_EXECUTABLE_LINKER__a_ CMakeFiles/a.dir/source/AssetRegistry.cpp.o CMakeFiles/a.dir/source/Camera.cpp.o CMakeFiles/a.dir/source/EngineMain.cpp.o CMakeFiles/a.dir/source/FrameDrawData.cpp.o CMakeFiles/a.dir/source/Input.cpp.o CMakeFiles/a.dir/source/Level.cpp.o CMakeFiles/a.dir/source/ShaderManager.cpp.o CMakeFiles/a.dir/source/SoundSystem/SoundManager.cpp.o CMakeFiles/a.dir/source/Time.cpp.o CMakeFiles/a.dir/source/main.cpp.o | F$:/Git/SdlWasmEngine/libsEms/libassimp.a F$:/Git/SdlWasmEngine/libsEms/libIrrXML.a
-  LINK_FLAGS = -s USE_SDL=2 -s USE_SDL_IMAGE=2 -s USE_SDL_MIXER=2 -s SDL2_IMAGE_FORMATS=[png] -s USE_WEBGL2=1 -s MIN_WEBGL_VERSION=2 -s MAX_WEBGL_VERSION=2 -s GL_PREINITIALIZED_CONTEXT=1 -s STACK_SIZE=500000 -s ALLOW_MEMORY_GROWTH=1 -s WASM=1 --preload-file F:/Git/SdlWasmEngine/GameData@/GameData -s GL_SUPPORT_AUTOMATIC_ENABLE_EXTENSIONS=1
+build main.html: CXX_EXECUTABLE_LINKER__a_ CMakeFiles/a.dir/source/AssetRegistry.cpp.o CMakeFiles/a.dir/source/Camera.cpp.o CMakeFiles/a.dir/source/EngineMain.cpp.o CMakeFiles/a.dir/source/FrameDrawData.cpp.o CMakeFiles/a.dir/source/Input.cpp.o CMakeFiles/a.dir/source/Level.cpp.o CMakeFiles/a.dir/source/ShaderManager.cpp.o CMakeFiles/a.dir/source/SoundSystem/SoundManager.cpp.o CMakeFiles/a.dir/source/Time.cpp.o CMakeFiles/a.dir/source/animator.cpp.o CMakeFiles/a.dir/source/main.cpp.o CMakeFiles/a.dir/source/model.cpp.o CMakeFiles/a.dir/source/skinned_model.cpp.o CMakeFiles/a.dir/source/utils.cpp.o | F$:/Git/SdlWasmEngine/libsEms/libassimp.a F$:/Git/SdlWasmEngine/libsEms/libIrrXML.a
+  LINK_FLAGS = -s USE_SDL=2 -s USE_SDL_IMAGE=2 -s USE_SDL_MIXER=2 -s SDL2_IMAGE_FORMATS=[png] -s USE_WEBGL2=1 -s MIN_WEBGL_VERSION=2 -s MAX_WEBGL_VERSION=2 -s GL_PREINITIALIZED_CONTEXT=1 -s STACK_SIZE=500000 -s ALLOW_MEMORY_GROWTH=1 -s NO_DISABLE_EXCEPTION_CATCHING -s WASM=1 --preload-file F:/Git/SdlWasmEngine/GameData@/GameData -s GL_SUPPORT_AUTOMATIC_ENABLE_EXTENSIONS=1
   LINK_LIBRARIES = F:/Git/SdlWasmEngine/libsEms/libassimp.a  F:/Git/SdlWasmEngine/libsEms/libIrrXML.a
   OBJECT_DIR = CMakeFiles\a.dir
   POST_BUILD = cd .

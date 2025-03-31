@@ -1,7 +1,6 @@
 #include "animator.hpp"
 
 #include "glm.h"
-#include <glm/gtx/quaternion.hpp>
 
 int roj::Animator::getKeyTransformIdx(std::vector<float>& timestamps)
 {

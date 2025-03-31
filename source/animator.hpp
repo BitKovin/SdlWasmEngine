@@ -15,9 +15,9 @@ private:
 private:
     int getKeyTransformIdx(std::vector<float>& timestamps);
     float getScaleFactor(float lastTimeStamp, float nextTimeStamp, float animationTime);
-    glm::mat4 interpolatePosition(BoneTransform& boneTransform);
-    glm::mat4 interpolateRotation(BoneTransform& boneTransform);
-    glm::mat4 interpolateScaling(BoneTransform& boneTransform);
+    glm::mat4 interpolatePosition(FrameBoneTransform& boneTransform);
+    glm::mat4 interpolateRotation(FrameBoneTransform& boneTransform);
+    glm::mat4 interpolateScaling(FrameBoneTransform& boneTransform);
     void calcBoneTransform(BoneNode& node, glm::mat4 offset);
 public:
     Animator() = default;
