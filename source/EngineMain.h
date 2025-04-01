@@ -29,7 +29,7 @@ private:
 
 	StaticMesh* mesh = nullptr;
 
-    GLuint texture = 0;
+    Texture* texture = 0;
 
 public:
 

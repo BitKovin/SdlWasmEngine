@@ -266,6 +266,7 @@
     <ClInclude Include="skinned_model.hpp" />
     <ClInclude Include="SoundSystem\SoundInstance.hpp" />
     <ClInclude Include="SoundSystem\SoundManager.hpp" />
+    <ClInclude Include="Texture.hpp" />
     <ClInclude Include="Time.hpp" />
     <ClInclude Include="utils.hpp" />
     <ClInclude Include="VertexData.h" />

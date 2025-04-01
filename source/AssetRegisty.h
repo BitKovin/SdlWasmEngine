@@ -5,11 +5,14 @@
 
 #include "Shader.hpp"
 
+#include "Texture.hpp"
+
 class AssetRegistry
 {
 
 private:
     static std::unordered_map<std::string, Shader> shaderCache;
+    static std::unordered_map<std::string, Texture*> textureCache;
 
 public:
 	
@@ -56,32 +59,20 @@ public:
         return shader;
     }
 
-    static GLuint GetTextureFromFile(const char* filename)
+    static Texture* GetTextureFromFile(const char* filename)
     {
 
-        GLuint texture;
+        string key = filename;
 
-        SDL_Surface* surface = IMG_Load(filename);
-        if (!surface) {
-            printf("Error loading image: %s\n", SDL_GetError());
+        auto it = textureCache.find(key);
+        if (it != textureCache.end())
+        {
+            return it->second; // Return cached shader
         }
-        SDL_Surface* converted_surface = SDL_ConvertSurfaceFormat(surface, SDL_PIXELFORMAT_RGBA32, 0);
 
-        glGenTextures(1, &texture);
-        glBindTexture(GL_TEXTURE_2D, texture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, converted_surface->w, converted_surface->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, converted_surface->pixels);
+        textureCache[key] = new Texture(filename, true);
 
-
-        // Set texture parameters (we need all these or these won't work)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-        SDL_FreeSurface(converted_surface);
-        SDL_FreeSurface(surface);
-
-        return texture;
+        return textureCache[key];
     }
 
     static std::string ReadFileToString(string filename) {

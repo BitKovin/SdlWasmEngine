@@ -25,9 +25,6 @@
     <Filter Include="Source Files\skeletal">
       <UniqueIdentifier>{ea9b6bdc-d79e-4427-8603-bd236b5ded48}</UniqueIdentifier>
     </Filter>
-    <Filter Include="binariesToInclude">
-      <UniqueIdentifier>{9d9d1dfb-71c7-4612-8b7c-796966c0a950}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -151,6 +148,9 @@
     </ClInclude>
     <ClInclude Include="utils.hpp">
       <Filter>Header Files\skeletal</Filter>
+    </ClInclude>
+    <ClInclude Include="Texture.hpp">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
