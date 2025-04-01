@@ -37,22 +37,22 @@ public:
     ShaderType shaderType = ShaderType::PixelShader;
 
     // Creates a Shader object from source code.
-    static Shader FromCode(const char* code, ShaderType shaderType, bool autoCompile = true)
+    static Shader* FromCode(const char* code, ShaderType shaderType, bool autoCompile = true)
     {
-        Shader output;
+        Shader* output = new Shader();
         GLuint glShaderType = (shaderType == VertexShader) ? GL_VERTEX_SHADER : GL_FRAGMENT_SHADER;
 
-        output.shaderCode = code;
+        output->shaderCode = code;
         const char* cCode = code;
 
-        output.shaderPointer = glCreateShader(glShaderType);
+        output->shaderPointer = glCreateShader(glShaderType);
 
-        output.shaderType = shaderType;
+        output->shaderType = shaderType;
 
-        glShaderSource(output.shaderPointer, 1, &cCode, NULL);
+        glShaderSource(output->shaderPointer, 1, &cCode, NULL);
 
         if (autoCompile)
-            output.CompileShader();
+            output->CompileShader();
 
         return output;
     }
@@ -97,9 +97,9 @@ public:
     }
 
     // Attaches a compiled shader to the program.
-    ShaderProgram* AttachShader(Shader shader)
+    ShaderProgram* AttachShader(Shader* shader)
     {
-        glAttachShader(program, shader.shaderPointer);
+        glAttachShader(program, shader->shaderPointer);
         return this;
     }
 

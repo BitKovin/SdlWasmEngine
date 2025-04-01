@@ -22,8 +22,8 @@ public:
         }
 
         // Load shaders
-        Shader vertexShader = AssetRegistry::GetShaderByName(vertexShaderName, ShaderType::VertexShader);
-        Shader pixelShader = AssetRegistry::GetShaderByName(pixelShaderName, ShaderType::PixelShader);
+        Shader* vertexShader = AssetRegistry::GetShaderByName(vertexShaderName, ShaderType::VertexShader);
+        Shader* pixelShader = AssetRegistry::GetShaderByName(pixelShaderName, ShaderType::PixelShader);
 
         // Create and link the shader program
         ShaderProgram& program = shaderProgramCache[key];

@@ -11,12 +11,12 @@ class AssetRegistry
 {
 
 private:
-    static std::unordered_map<std::string, Shader> shaderCache;
+    static std::unordered_map<std::string, Shader*> shaderCache;
     static std::unordered_map<std::string, Texture*> textureCache;
 
 public:
 	
-    static Shader GetShaderByName(const std::string& name, ShaderType shaderType)
+    static Shader* GetShaderByName(const std::string& name, ShaderType shaderType)
     {
 
         string fileEnding;
@@ -51,12 +51,10 @@ public:
         std::string filePath = "GameData/Shaders/" + fileName;
         std::string shaderCode = ReadFileToString(filePath);
 
-        Shader shader = Shader::FromCode(shaderCode.c_str(), shaderType);
-
         // Cache the newly loaded shader
-        shaderCache[key] = shader;
+        shaderCache[key] = Shader::FromCode(shaderCode.c_str(), shaderType);
 
-        return shader;
+        return shaderCache[key];
     }
 
     static Texture* GetTextureFromFile(const char* filename)
