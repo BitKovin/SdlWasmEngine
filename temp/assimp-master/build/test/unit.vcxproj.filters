@@ -1,0 +1,432 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\CCompilerTest.c">
+      <Filter>UnitTests\Compiler</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\Main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\code\Common\Version.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\code\Common\Base64.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utSimd.cpp">
+      <Filter>UnitTests\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utIOSystem.cpp">
+      <Filter>UnitTests\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utIOStreamBuffer.cpp">
+      <Filter>UnitTests\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utIssues.cpp">
+      <Filter>UnitTests\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utAnim.cpp">
+      <Filter>UnitTests\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\AssimpAPITest.cpp">
+      <Filter>UnitTests\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\AssimpAPITest_aiMatrix3x3.cpp">
+      <Filter>UnitTests\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\AssimpAPITest_aiMatrix4x4.cpp">
+      <Filter>UnitTests\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\AssimpAPITest_aiQuaternion.cpp">
+      <Filter>UnitTests\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\AssimpAPITest_aiVector2D.cpp">
+      <Filter>UnitTests\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\AssimpAPITest_aiVector3D.cpp">
+      <Filter>UnitTests\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\MathTest.cpp">
+      <Filter>UnitTests\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utBatchLoader.cpp">
+      <Filter>UnitTests\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utDefaultIOStream.cpp">
+      <Filter>UnitTests\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utFastAtof.cpp">
+      <Filter>UnitTests\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utMetadata.cpp">
+      <Filter>UnitTests\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\SceneDiffer.cpp">
+      <Filter>UnitTests\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\AbstractImportExportBase.cpp">
+      <Filter>UnitTests\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utTypes.cpp">
+      <Filter>UnitTests\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utVersion.cpp">
+      <Filter>UnitTests\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utProfiler.cpp">
+      <Filter>UnitTests\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utSharedPPData.cpp">
+      <Filter>UnitTests\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utStringUtils.cpp">
+      <Filter>UnitTests\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\Common\utMaybe.cpp">
+      <Filter>UnitTests\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\Common\utMesh.cpp">
+      <Filter>UnitTests\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\Common\utStandardShapes.cpp">
+      <Filter>UnitTests\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\Common\uiScene.cpp">
+      <Filter>UnitTests\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\Common\utLineSplitter.cpp">
+      <Filter>UnitTests\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\Common\utSpatialSort.cpp">
+      <Filter>UnitTests\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\Common\utAssertHandler.cpp">
+      <Filter>UnitTests\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\Common\utXmlParser.cpp">
+      <Filter>UnitTests\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\Common\utBase64.cpp">
+      <Filter>UnitTests\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\Common\utHash.cpp">
+      <Filter>UnitTests\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\Common\utBaseProcess.cpp">
+      <Filter>UnitTests\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\Common\utLogger.cpp">
+      <Filter>UnitTests\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\Geometry\utGeometryUtils.cpp">
+      <Filter>UnitTests\GeometryTools</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\ImportExport\Assxml\utAssxmlImportExport.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utLWSImportExport.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utLWOImportExport.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utSMDImportExport.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utglTFImportExport.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utglTF2ImportExport.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utHMPImportExport.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utIFCImportExport.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utFBXImporterExporter.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utImporter.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\ImportExport\utExporter.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\ut3DImportExport.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\ut3DSImportExport.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utACImportExport.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utAMFImportExport.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utASEImportExport.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utD3MFImportExport.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utQ3DImportExport.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utSTLImportExport.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utXImporterExporter.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utX3DImportExport.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utDXFImporterExporter.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utPMXImporter.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utPLYImportExport.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utObjImportExport.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utObjTools.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utOpenGEXImportExport.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utSIBImporter.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utBlenderIntermediate.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utBlendImportAreaLight.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utBlenderImportExport.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utBlendImportMaterials.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utBlenderWork.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utBVHImportExport.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utColladaExport.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utColladaImportExport.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utCSMImportExport.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utB3DImportExport.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utMDCImportExport.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utAssbinImportExport.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\ImportExport\utAssjsonImportExport.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\ImportExport\utCOBImportExport.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\ImportExport\utOgreImportExport.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\ImportExport\utQ3BSPFileImportExport.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\ImportExport\utOFFImportExport.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\ImportExport\utNFFImportExport.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\ImportExport\utXGLImportExport.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\ImportExport\utMD2Importer.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\ImportExport\utMD5Importer.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\ImportExport\utMDLImporter.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\ImportExport\MDL\utMDLImporter_HL1_ImportSettings.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\ImportExport\MDL\utMDLImporter_HL1_Materials.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\ImportExport\MDL\utMDLImporter_HL1_Nodes.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\ImportExport\RAW\utRAWImportExport.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\ImportExport\Terragen\utTerragenImportExport.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\ImportExport\Pbrt\utPbrtImportExport.cpp">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utMaterialSystem.cpp">
+      <Filter>UnitTests\Material</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utMatrix3x3.cpp">
+      <Filter>UnitTests\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utMatrix4x4.cpp">
+      <Filter>UnitTests\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utVector3.cpp">
+      <Filter>UnitTests\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utImproveCacheLocality.cpp">
+      <Filter>UnitTests\PostProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utFixInfacingNormals.cpp">
+      <Filter>UnitTests\PostProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utGenNormals.cpp">
+      <Filter>UnitTests\PostProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utTriangulate.cpp">
+      <Filter>UnitTests\PostProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utTextureTransform.cpp">
+      <Filter>UnitTests\PostProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utRemoveRedundantMaterials.cpp">
+      <Filter>UnitTests\PostProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utRemoveVCProcess.cpp">
+      <Filter>UnitTests\PostProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utScaleProcess.cpp">
+      <Filter>UnitTests\PostProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utArmaturePopulate.cpp">
+      <Filter>UnitTests\PostProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utJoinVertices.cpp">
+      <Filter>UnitTests\PostProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utRemoveComments.cpp">
+      <Filter>UnitTests\PostProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utRemoveComponent.cpp">
+      <Filter>UnitTests\PostProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utVertexTriangleAdjacency.cpp">
+      <Filter>UnitTests\PostProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utSplitLargeMeshes.cpp">
+      <Filter>UnitTests\PostProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utFindDegenerates.cpp">
+      <Filter>UnitTests\PostProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utFindInvalidData.cpp">
+      <Filter>UnitTests\PostProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utLimitBoneWeights.cpp">
+      <Filter>UnitTests\PostProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utPretransformVertices.cpp">
+      <Filter>UnitTests\PostProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utScenePreprocessor.cpp">
+      <Filter>UnitTests\PostProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utTargetAnimation.cpp">
+      <Filter>UnitTests\PostProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utSortByPType.cpp">
+      <Filter>UnitTests\PostProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utSceneCombiner.cpp">
+      <Filter>UnitTests\PostProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\utGenBoundingBoxesProcess.cpp">
+      <Filter>UnitTests\PostProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\temp\assimp-master\contrib\googletest\googletest\src\gtest-all.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\MathTest.h">
+      <Filter>UnitTests\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\RandomNumberGeneration.h">
+      <Filter>UnitTests\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\SceneDiffer.h">
+      <Filter>UnitTests\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\UTLogStream.h">
+      <Filter>UnitTests\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\TestIOSystem.h">
+      <Filter>UnitTests\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\TestModelFactory.h">
+      <Filter>UnitTests\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\unit\ImportExport\MDL\MDLHL1TestFiles.h">
+      <Filter>UnitTests\ImportExport</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="F:\Git\SdlWasmEngine\temp\assimp-master\test\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{6D6B2CBE-AE61-3FD4-99EB-169D3D281189}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UnitTests">
+      <UniqueIdentifier>{93D08624-E74B-322E-8546-924327E31C5B}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UnitTests\Common">
+      <UniqueIdentifier>{D0B7A093-7B58-3A7C-8390-5F8281DD5097}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UnitTests\Compiler">
+      <UniqueIdentifier>{CF13149B-6B42-3379-A775-5D80A7496694}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UnitTests\GeometryTools">
+      <UniqueIdentifier>{5FF003F5-141A-3C6F-A305-B41BBDE4EE18}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UnitTests\ImportExport">
+      <UniqueIdentifier>{7A905C8C-5987-3D29-827B-39A2E7B2EE48}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UnitTests\Material">
+      <UniqueIdentifier>{FA5FA10B-DF2B-390F-9882-8D7D7E26E06E}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UnitTests\Math">
+      <UniqueIdentifier>{9CF9435D-4355-39C2-8297-F48EA845514A}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UnitTests\PostProcess">
+      <UniqueIdentifier>{4A37D23B-C283-31F6-A3DF-C84A4C130AC1}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

@@ -52,7 +52,7 @@ public:
         Uint32 FullscreenFlag = SDL_WINDOW_FULLSCREEN_DESKTOP;
         bool IsFullscreen = SDL_GetWindowFlags(Window) & FullscreenFlag;
         SDL_SetWindowFullscreen(Window, IsFullscreen ? 0 : FullscreenFlag);
-        SDL_ShowCursor(IsFullscreen);
+        SDL_ShowCursor(SDL_ENABLE);
     }
 
     void initDemo()
@@ -61,7 +61,7 @@ public:
 
         sound.Loop = true;
 
-        sound.Play();
+        //sound.Play();
 
         // Fullscreen quad vertices using proper texture coordinates
         std::vector<VertexData> vertices;
@@ -126,7 +126,6 @@ public:
 
 	void Init()
 	{
-
         SoundManager::Initialize();
 
         Time::Init();
@@ -183,12 +182,21 @@ public:
 
 	}
 
+    bool msaa = false;
+
 	void GameUpdate()
 	{
         if (Input::GetAction("test")->Pressed())
         {
             //ToggleFullscreen(window);
             printf("framerate: %f  \n", (1 / Time::DeltaTime));
+
+            GLint samples = 0;
+            glGetIntegerv(GL_SAMPLES, &samples);
+            std::cout << "Samples: " << samples << std::endl;
+
+            msaa = !msaa;
+
         }
 
         if (Input::GetAction("fullscreen")->Pressed())
@@ -205,12 +213,30 @@ public:
 
 	void Render()
 	{
+
         int x, y;
         SDL_GetWindowSize(Window, &x, &y);
         glViewport(0, 0, x, y);
 
+        
+
         // Enable depth testing
         glEnable(GL_DEPTH_TEST);
+
+#if DESKTOP
+
+
+
+        if (msaa)
+        {
+            glEnable(GL_MULTISAMPLE);
+        }
+        else
+        {
+            glDisable(GL_MULTISAMPLE);
+        }
+
+#endif // DESKTOP
 
         glEnable(GL_CULL_FACE);
 

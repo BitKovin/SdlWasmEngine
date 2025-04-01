@@ -260,6 +260,30 @@ int main(int argc, char* args[]) {
         return 1;
     }
     
+#if DESKTOP
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
+    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, GL_TRUE);
+    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+
+    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 2);  // 4x MSAA
+
+#else
+    // Create OpenGL ES context
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+
+    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 2);  // 4x MSAA
+
+#endif
+
+
+
     int flags = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI;
 
     Input::AddAction("fullscreen");
@@ -286,20 +310,6 @@ int main(int argc, char* args[]) {
 #endif
     
     printf("start\n");
-
-#if DESKTOP
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
-    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, GL_TRUE);
-    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-#else
-    // Create OpenGL ES context
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
-    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-#endif
 
 
     glContext = SDL_GL_CreateContext(window);

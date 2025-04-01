@@ -25,6 +25,9 @@ public:
         DeltaTime = (currentCounter - lastCounter) / frequency;
         lastCounter = currentCounter;
 
+        if (DeltaTime > 0.1)
+            DeltaTime = 0.1;
+
         GameTime += DeltaTime;
 
         DeltaTimeF = (float)DeltaTime;

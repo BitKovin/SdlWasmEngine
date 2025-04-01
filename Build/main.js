@@ -31,7 +31,7 @@ if (ENVIRONMENT_IS_NODE) {
 
 // --pre-jses are emitted after the Module integration code, so that they can
 // refer to Module (if they choose; they can also define Module)
-// include: C:\Users\Admin\AppData\Local\Temp\tmp9qr8tah5.js
+// include: C:\Users\Admin\AppData\Local\Temp\tmpn2pmfsy9.js
 
   Module['expectedDataFileDownloads'] ??= 0;
   Module['expectedDataFileDownloads']++;
@@ -215,21 +215,21 @@ Module['FS_createPath']("/GameData", "sprite_work", true, true);
 
   })();
 
-// end include: C:\Users\Admin\AppData\Local\Temp\tmp9qr8tah5.js
-// include: C:\Users\Admin\AppData\Local\Temp\tmpsroxetxe.js
+// end include: C:\Users\Admin\AppData\Local\Temp\tmpn2pmfsy9.js
+// include: C:\Users\Admin\AppData\Local\Temp\tmpukh96xah.js
 
     // All the pre-js content up to here must remain later on, we need to run
     // it.
     if (Module['$ww'] || (typeof ENVIRONMENT_IS_PTHREAD != 'undefined' && ENVIRONMENT_IS_PTHREAD)) Module['preRun'] = [];
     var necessaryPreJSTasks = Module['preRun'].slice();
-  // end include: C:\Users\Admin\AppData\Local\Temp\tmpsroxetxe.js
-// include: C:\Users\Admin\AppData\Local\Temp\tmp3x24_jf8.js
+  // end include: C:\Users\Admin\AppData\Local\Temp\tmpukh96xah.js
+// include: C:\Users\Admin\AppData\Local\Temp\tmp34jm3crs.js
 
     if (!Module['preRun']) throw 'Module.preRun should exist because file support used it; did a pre-js delete it?';
     necessaryPreJSTasks.forEach((task) => {
       if (Module['preRun'].indexOf(task) < 0) throw 'All preRun tasks that exist before user pre-js code should remain after; did you replace Module or modify Module.preRun?';
     });
-  // end include: C:\Users\Admin\AppData\Local\Temp\tmp3x24_jf8.js
+  // end include: C:\Users\Admin\AppData\Local\Temp\tmp34jm3crs.js
 
 
 // Sometimes an existing Module object exists with properties
@@ -6199,42 +6199,6 @@ async function createWasm() {
         };
         AL.currentCtx.sources[src.id] = src;
         HEAP32[(((pSourceIds)+(i*4))>>2)] = src.id;
-      }
-    };
-
-  var _alSourcePlay = (sourceId) => {
-      if (!AL.currentCtx) {
-        return;
-      }
-      var src = AL.currentCtx.sources[sourceId];
-      if (!src) {
-        AL.currentCtx.err = 40961;
-        return;
-      }
-      AL.setSourceState(src, 4114);
-    };
-
-  var _alSourcef = (sourceId, param, value) => {
-      switch (param) {
-      case 0x1001 /* AL_CONE_INNER_ANGLE */:
-      case 0x1002 /* AL_CONE_OUTER_ANGLE */:
-      case 0x1003 /* AL_PITCH */:
-      case 4106:
-      case 0x100D /* AL_MIN_GAIN */:
-      case 0x100E /* AL_MAX_GAIN */:
-      case 0x1020 /* AL_REFERENCE_DISTANCE */:
-      case 0x1021 /* AL_ROLLOFF_FACTOR */:
-      case 0x1022 /* AL_CONE_OUTER_GAIN */:
-      case 0x1023 /* AL_MAX_DISTANCE */:
-      case 0x1024 /* AL_SEC_OFFSET */:
-      case 0x1025 /* AL_SAMPLE_OFFSET */:
-      case 0x1026 /* AL_BYTE_OFFSET */:
-      case 0x200B /* AL_SEC_LENGTH_SOFT */:
-        AL.setSourceParam('alSourcef', sourceId, param, value);
-        break;
-      default:
-        AL.setSourceParam('alSourcef', sourceId, param, null);
-        break;
       }
     };
 
@@ -12224,10 +12188,6 @@ var wasmImports = {
   alGenBuffers: _alGenBuffers,
   /** @export */
   alGenSources: _alGenSources,
-  /** @export */
-  alSourcePlay: _alSourcePlay,
-  /** @export */
-  alSourcef: _alSourcef,
   /** @export */
   alSourcei: _alSourcei,
   /** @export */
