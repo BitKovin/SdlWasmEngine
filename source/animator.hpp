@@ -8,7 +8,7 @@ class Animator
 private:
     std::vector<glm::mat4> m_boneMatrices;
     Animation* m_currAnim{nullptr};
-    SkinnedModel* m_model;
+    SkinnedModel m_model;
     float m_currTime{0.0f};
     bool m_playing = false;
     bool m_loopEnabled = false;
@@ -21,7 +21,7 @@ private:
     void calcBoneTransform(BoneNode& node, glm::mat4 offset);
 public:
     Animator() = default;
-	Animator(SkinnedModel& model);
+	Animator(SkinnedModel model);
     void play();
     void loop(bool enable);
     void set(const std::string& name);

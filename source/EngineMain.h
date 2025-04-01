@@ -23,6 +23,8 @@
 
 #include "ShaderManager.h"
 
+#include "SkeletalMesh.hpp"
+
 class EngineMain
 {
 private:
@@ -117,12 +119,13 @@ public:
 
     void InitInputs();
 
-    roj::SkinnedModel skm;
+
 
     roj::Animator animator;
 
     ShaderProgram* shader;
 
+    SkeletalMesh* skm;
 
 	void Init()
 	{
@@ -143,11 +146,12 @@ public:
 
         Logger::Log(modelLoader.getInfoLog());
 
-        skm = modelLoader.get();
+        roj::SkinnedModel* mesh = new roj::SkinnedModel(modelLoader.get());
 
+        animator = roj::Animator(*mesh);
 
-
-        animator = roj::Animator(skm);
+        skm = new SkeletalMesh();
+        skm->model = mesh;
 
         animator.set("run");
         animator.play();
@@ -243,41 +247,11 @@ public:
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
-        shader->UseProgram();
-
-        shader->AllowMissingUniforms = false;
-
-        shader->SetTexture("u_texture", texture);
-
-        vec3 pos = vec3(0, 0, 0);
-
-        vec3 rot = vec3(0);
-
-        mat4x4 world = scale(vec3(1)) * MathHelper::GetRotationMatrix(rot) * translate(pos);
-
-        shader->SetUniform("view", Camera::finalizedView);
-        shader->SetUniform("projection", Camera::finalizedProjection);
-
-        shader->SetUniform("world", world);
-
-        auto transforms = animator.getBoneMatrices();
-
-        for (int i = 0; i < transforms.size(); ++i)
-            shader->SetUniform("finalBonesMatrices[" + std::to_string(i) + "]", transforms[i]);
-
-        auto boneMatrices = animator.getBoneMatrices();
+        skm->boneTransforms = animator.getBoneMatrices();
+        
+        skm->DrawForward(Camera::finalizedView, Camera::finalizedProjection, texture);
 
 
-        for (roj::SkinnedMesh& mesh : skm)
-        {
-            auto& indices = mesh.indices;
-            
-            mesh.VAO->Bind();
-
-            glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(mesh.VAO->IndexCount), GL_UNSIGNED_INT, 0);
-            glBindVertexArray(0);
-            glActiveTexture(GL_TEXTURE0);
-        }
 
         SDL_GL_SwapWindow(Window);
 

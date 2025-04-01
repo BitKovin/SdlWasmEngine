@@ -152,6 +152,9 @@
     <ClInclude Include="Texture.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SkeletalMesh.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />
