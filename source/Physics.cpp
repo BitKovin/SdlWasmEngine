@@ -13,3 +13,5 @@ ObjectLayerPairFilterImpl* Physics::object_vs_object_layer_filter = nullptr;
 PhysicsSystem* Physics::physics_system = nullptr;
 
 MyContactListener* Physics::contact_listener = nullptr;
+
+BodyInterface* Physics::bodyInterface = nullptr;

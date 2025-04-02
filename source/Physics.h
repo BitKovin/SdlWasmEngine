@@ -1,9 +1,5 @@
 #pragma once
 
-#define JPH_NO_DEBUG
-
-#undef JPH_EXTERNAL_PROFILE
-
 #include <Jolt/Jolt.h>
 #include <Jolt/RegisterTypes.h>
 #include <Jolt/Core/Factory.h>
@@ -15,7 +11,13 @@
 #include <Jolt/Physics/Collision/Shape/SphereShape.h>
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Jolt/Physics/Body/BodyActivationListener.h>
+
+
 #include <iostream>
+
+#include "Time.hpp"
+
+#include "Logger.hpp"
 
 using namespace JPH;
 
@@ -169,6 +171,8 @@ private:
 
 	static MyContactListener* contact_listener;
 
+	static BodyInterface* bodyInterface;
+
 public:
 	
 	
@@ -176,6 +180,12 @@ public:
 	static void Init()
 	{
 		RegisterDefaultAllocator();
+		Factory::sInstance = new Factory();
+
+		// Register all physics types with the factory and install their collision handlers with the CollisionDispatch class.
+		// If you have your own custom shape types you probably need to register their handlers with the CollisionDispatch before calling this function.
+		// If you implement your own default material (PhysicsMaterial::sDefault) make sure to initialize it before this function or else this function will create one for you.
+		RegisterTypes();
 
 		tempMemAllocator = new TempAllocatorImpl(30 * 1024 * 1024);
 
@@ -205,7 +215,50 @@ public:
 
 		contact_listener = new MyContactListener();
 
-		//physics_system->SetContactListener(contact_listener);
+		bodyInterface = &physics_system->GetBodyInterface();
+
+		physics_system->SetContactListener(contact_listener);
+
+
+		create_test_body();
+		create_test_body();
+		create_test_body();
+		create_test_body();
+
+		physics_system->Update(0.03, 1, tempMemAllocator, threadPool);
+		create_test_body();
+		physics_system->Update(0.03, 1, tempMemAllocator, threadPool);
+		create_test_body();
+		physics_system->Update(0.03, 1, tempMemAllocator, threadPool);
+		physics_system->Update(0.03, 1, tempMemAllocator, threadPool);
+
+
+
+	}
+
+	static void create_test_body()
+	{
+
+		// Create a box shape with half extents (0.5f, 0.5f, 0.5f)
+		auto box_shape_settings = new JPH::BoxShapeSettings();
+		box_shape_settings->SetEmbedded();
+		box_shape_settings->mHalfExtent = Vec3(0.5, 0.5, 0.5);
+		JPH::Shape::ShapeResult shape_result = box_shape_settings->Create();
+		JPH::Shape* box_shape = shape_result.Get();
+
+		if (shape_result.HasError())
+			Logger::Log(shape_result.GetError().c_str());
+
+		JPH::BodyCreationSettings dynamic_body_settings(
+			box_shape,                   // Collision shape (e.g., a box shape)
+			JPH::Vec3(0, 10, 0),          // Initial position
+			JPH::Quat::sIdentity(),       // No initial rotation
+			JPH::EMotionType::Dynamic,    // Dynamic so that it is affected by forces
+			Layers::MOVING);          // Collision layer for moving objects
+
+
+		JPH::Body* dynamic_body = bodyInterface->CreateBody(dynamic_body_settings);
+		bodyInterface->AddBody(dynamic_body->GetID(), JPH::EActivation::Activate);
 
 	}
 
