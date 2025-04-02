@@ -46,98 +46,105 @@ build cmake_object_order_depends_target_a: phony || .
 
 build CMakeFiles/a.dir/source/AssetRegistry.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/SdlWasmEngine/source/AssetRegistry.cpp || cmake_object_order_depends_target_a
   DEP_FILE = CMakeFiles\a.dir\source\AssetRegistry.cpp.o.d
-  FLAGS = -std=c++11 -O3
+  FLAGS = -std=c++20 -O0
   INCLUDES = -IF:/Git/SdlWasmEngine/librariesEms
   OBJECT_DIR = CMakeFiles\a.dir
   OBJECT_FILE_DIR = CMakeFiles\a.dir\source
 
 build CMakeFiles/a.dir/source/Camera.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/SdlWasmEngine/source/Camera.cpp || cmake_object_order_depends_target_a
   DEP_FILE = CMakeFiles\a.dir\source\Camera.cpp.o.d
-  FLAGS = -std=c++11 -O3
+  FLAGS = -std=c++20 -O0
   INCLUDES = -IF:/Git/SdlWasmEngine/librariesEms
   OBJECT_DIR = CMakeFiles\a.dir
   OBJECT_FILE_DIR = CMakeFiles\a.dir\source
 
 build CMakeFiles/a.dir/source/EngineMain.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/SdlWasmEngine/source/EngineMain.cpp || cmake_object_order_depends_target_a
   DEP_FILE = CMakeFiles\a.dir\source\EngineMain.cpp.o.d
-  FLAGS = -std=c++11 -O3
+  FLAGS = -std=c++20 -O0
   INCLUDES = -IF:/Git/SdlWasmEngine/librariesEms
   OBJECT_DIR = CMakeFiles\a.dir
   OBJECT_FILE_DIR = CMakeFiles\a.dir\source
 
 build CMakeFiles/a.dir/source/FrameDrawData.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/SdlWasmEngine/source/FrameDrawData.cpp || cmake_object_order_depends_target_a
   DEP_FILE = CMakeFiles\a.dir\source\FrameDrawData.cpp.o.d
-  FLAGS = -std=c++11 -O3
+  FLAGS = -std=c++20 -O0
   INCLUDES = -IF:/Git/SdlWasmEngine/librariesEms
   OBJECT_DIR = CMakeFiles\a.dir
   OBJECT_FILE_DIR = CMakeFiles\a.dir\source
 
 build CMakeFiles/a.dir/source/Input.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/SdlWasmEngine/source/Input.cpp || cmake_object_order_depends_target_a
   DEP_FILE = CMakeFiles\a.dir\source\Input.cpp.o.d
-  FLAGS = -std=c++11 -O3
+  FLAGS = -std=c++20 -O0
   INCLUDES = -IF:/Git/SdlWasmEngine/librariesEms
   OBJECT_DIR = CMakeFiles\a.dir
   OBJECT_FILE_DIR = CMakeFiles\a.dir\source
 
 build CMakeFiles/a.dir/source/Level.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/SdlWasmEngine/source/Level.cpp || cmake_object_order_depends_target_a
   DEP_FILE = CMakeFiles\a.dir\source\Level.cpp.o.d
-  FLAGS = -std=c++11 -O3
+  FLAGS = -std=c++20 -O0
+  INCLUDES = -IF:/Git/SdlWasmEngine/librariesEms
+  OBJECT_DIR = CMakeFiles\a.dir
+  OBJECT_FILE_DIR = CMakeFiles\a.dir\source
+
+build CMakeFiles/a.dir/source/Physics.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/SdlWasmEngine/source/Physics.cpp || cmake_object_order_depends_target_a
+  DEP_FILE = CMakeFiles\a.dir\source\Physics.cpp.o.d
+  FLAGS = -std=c++20 -O0
   INCLUDES = -IF:/Git/SdlWasmEngine/librariesEms
   OBJECT_DIR = CMakeFiles\a.dir
   OBJECT_FILE_DIR = CMakeFiles\a.dir\source
 
 build CMakeFiles/a.dir/source/ShaderManager.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/SdlWasmEngine/source/ShaderManager.cpp || cmake_object_order_depends_target_a
   DEP_FILE = CMakeFiles\a.dir\source\ShaderManager.cpp.o.d
-  FLAGS = -std=c++11 -O3
+  FLAGS = -std=c++20 -O0
   INCLUDES = -IF:/Git/SdlWasmEngine/librariesEms
   OBJECT_DIR = CMakeFiles\a.dir
   OBJECT_FILE_DIR = CMakeFiles\a.dir\source
 
 build CMakeFiles/a.dir/source/SoundSystem/SoundManager.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/SdlWasmEngine/source/SoundSystem/SoundManager.cpp || cmake_object_order_depends_target_a
   DEP_FILE = CMakeFiles\a.dir\source\SoundSystem\SoundManager.cpp.o.d
-  FLAGS = -std=c++11 -O3
+  FLAGS = -std=c++20 -O0
   INCLUDES = -IF:/Git/SdlWasmEngine/librariesEms
   OBJECT_DIR = CMakeFiles\a.dir
   OBJECT_FILE_DIR = CMakeFiles\a.dir\source\SoundSystem
 
 build CMakeFiles/a.dir/source/Time.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/SdlWasmEngine/source/Time.cpp || cmake_object_order_depends_target_a
   DEP_FILE = CMakeFiles\a.dir\source\Time.cpp.o.d
-  FLAGS = -std=c++11 -O3
+  FLAGS = -std=c++20 -O0
   INCLUDES = -IF:/Git/SdlWasmEngine/librariesEms
   OBJECT_DIR = CMakeFiles\a.dir
   OBJECT_FILE_DIR = CMakeFiles\a.dir\source
 
 build CMakeFiles/a.dir/source/animator.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/SdlWasmEngine/source/animator.cpp || cmake_object_order_depends_target_a
   DEP_FILE = CMakeFiles\a.dir\source\animator.cpp.o.d
-  FLAGS = -std=c++11 -O3
+  FLAGS = -std=c++20 -O0
   INCLUDES = -IF:/Git/SdlWasmEngine/librariesEms
   OBJECT_DIR = CMakeFiles\a.dir
   OBJECT_FILE_DIR = CMakeFiles\a.dir\source
 
 build CMakeFiles/a.dir/source/main.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/SdlWasmEngine/source/main.cpp || cmake_object_order_depends_target_a
   DEP_FILE = CMakeFiles\a.dir\source\main.cpp.o.d
-  FLAGS = -std=c++11 -O3
+  FLAGS = -std=c++20 -O0
   INCLUDES = -IF:/Git/SdlWasmEngine/librariesEms
   OBJECT_DIR = CMakeFiles\a.dir
   OBJECT_FILE_DIR = CMakeFiles\a.dir\source
 
 build CMakeFiles/a.dir/source/model.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/SdlWasmEngine/source/model.cpp || cmake_object_order_depends_target_a
   DEP_FILE = CMakeFiles\a.dir\source\model.cpp.o.d
-  FLAGS = -std=c++11 -O3
+  FLAGS = -std=c++20 -O0
   INCLUDES = -IF:/Git/SdlWasmEngine/librariesEms
   OBJECT_DIR = CMakeFiles\a.dir
   OBJECT_FILE_DIR = CMakeFiles\a.dir\source
 
 build CMakeFiles/a.dir/source/skinned_model.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/SdlWasmEngine/source/skinned_model.cpp || cmake_object_order_depends_target_a
   DEP_FILE = CMakeFiles\a.dir\source\skinned_model.cpp.o.d
-  FLAGS = -std=c++11 -O3
+  FLAGS = -std=c++20 -O0
   INCLUDES = -IF:/Git/SdlWasmEngine/librariesEms
   OBJECT_DIR = CMakeFiles\a.dir
   OBJECT_FILE_DIR = CMakeFiles\a.dir\source
 
 build CMakeFiles/a.dir/source/utils.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/SdlWasmEngine/source/utils.cpp || cmake_object_order_depends_target_a
   DEP_FILE = CMakeFiles\a.dir\source\utils.cpp.o.d
-  FLAGS = -std=c++11 -O3
+  FLAGS = -std=c++20 -O0
   INCLUDES = -IF:/Git/SdlWasmEngine/librariesEms
   OBJECT_DIR = CMakeFiles\a.dir
   OBJECT_FILE_DIR = CMakeFiles\a.dir\source
@@ -150,9 +157,9 @@ build CMakeFiles/a.dir/source/utils.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/Sd
 #############################################
 # Link the executable main.html
 
-build main.html: CXX_EXECUTABLE_LINKER__a_ CMakeFiles/a.dir/source/AssetRegistry.cpp.o CMakeFiles/a.dir/source/Camera.cpp.o CMakeFiles/a.dir/source/EngineMain.cpp.o CMakeFiles/a.dir/source/FrameDrawData.cpp.o CMakeFiles/a.dir/source/Input.cpp.o CMakeFiles/a.dir/source/Level.cpp.o CMakeFiles/a.dir/source/ShaderManager.cpp.o CMakeFiles/a.dir/source/SoundSystem/SoundManager.cpp.o CMakeFiles/a.dir/source/Time.cpp.o CMakeFiles/a.dir/source/animator.cpp.o CMakeFiles/a.dir/source/main.cpp.o CMakeFiles/a.dir/source/model.cpp.o CMakeFiles/a.dir/source/skinned_model.cpp.o CMakeFiles/a.dir/source/utils.cpp.o | F$:/Git/SdlWasmEngine/libsEms/libassimp.a F$:/Git/SdlWasmEngine/libsEms/libIrrXML.a
-  LINK_FLAGS = -s USE_SDL=2 -s USE_SDL_IMAGE=2 -s USE_SDL_MIXER=2 -s SDL2_IMAGE_FORMATS=[png] -s USE_WEBGL2=1 -s MIN_WEBGL_VERSION=2 -s MAX_WEBGL_VERSION=2 -s GL_PREINITIALIZED_CONTEXT=1 -s STACK_SIZE=500000 -s ALLOW_MEMORY_GROWTH=1 -s NO_DISABLE_EXCEPTION_CATCHING -s WASM=1 --preload-file F:/Git/SdlWasmEngine/source/GameData@/GameData -s GL_SUPPORT_AUTOMATIC_ENABLE_EXTENSIONS=1
-  LINK_LIBRARIES = F:/Git/SdlWasmEngine/libsEms/libassimp.a  F:/Git/SdlWasmEngine/libsEms/libIrrXML.a
+build main.html: CXX_EXECUTABLE_LINKER__a_ CMakeFiles/a.dir/source/AssetRegistry.cpp.o CMakeFiles/a.dir/source/Camera.cpp.o CMakeFiles/a.dir/source/EngineMain.cpp.o CMakeFiles/a.dir/source/FrameDrawData.cpp.o CMakeFiles/a.dir/source/Input.cpp.o CMakeFiles/a.dir/source/Level.cpp.o CMakeFiles/a.dir/source/Physics.cpp.o CMakeFiles/a.dir/source/ShaderManager.cpp.o CMakeFiles/a.dir/source/SoundSystem/SoundManager.cpp.o CMakeFiles/a.dir/source/Time.cpp.o CMakeFiles/a.dir/source/animator.cpp.o CMakeFiles/a.dir/source/main.cpp.o CMakeFiles/a.dir/source/model.cpp.o CMakeFiles/a.dir/source/skinned_model.cpp.o CMakeFiles/a.dir/source/utils.cpp.o | F$:/Git/SdlWasmEngine/libsEms/libassimp.a F$:/Git/SdlWasmEngine/libsEms/libIrrXML.a F$:/Git/SdlWasmEngine/libsEms/libJolt.a
+  LINK_FLAGS = -s USE_SDL=2 -s USE_SDL_IMAGE=2 -s USE_SDL_MIXER=2 -s SDL2_IMAGE_FORMATS=[png] -s USE_WEBGL2=1 -s MIN_WEBGL_VERSION=2 -s MAX_WEBGL_VERSION=2 -s GL_PREINITIALIZED_CONTEXT=1 -s STACK_SIZE=500000 -s INITIAL_HEAP=83886080 -s ALLOW_MEMORY_GROWTH=1 -s NO_DISABLE_EXCEPTION_CATCHING -s WASM=1 -s ASSERTIONS=1 --preload-file F:/Git/SdlWasmEngine/source/GameData@/GameData -s GL_SUPPORT_AUTOMATIC_ENABLE_EXTENSIONS=1
+  LINK_LIBRARIES = F:/Git/SdlWasmEngine/libsEms/libassimp.a  F:/Git/SdlWasmEngine/libsEms/libIrrXML.a  F:/Git/SdlWasmEngine/libsEms/libJolt.a
   OBJECT_DIR = CMakeFiles\a.dir
   POST_BUILD = cd .
   PRE_LINK = cd .

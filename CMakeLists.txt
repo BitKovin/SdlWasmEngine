@@ -4,7 +4,7 @@ project(client)
 
 option(JS_ONLY "Compiles to native JS (No WASM)" OFF)
 
-add_definitions(-std=c++11 -O3)
+add_definitions(-std=c++20 -O0)
 
 file(GLOB_RECURSE ALL_SOURCES "source/*.cpp")
 set(SOURCES "")
@@ -20,7 +20,7 @@ add_executable(a ${SOURCES})
 set_target_properties(a PROPERTIES OUTPUT_NAME "main")  # Unified output name
 
 include_directories("${CMAKE_SOURCE_DIR}/librariesEms")
-target_link_libraries(a PRIVATE "${CMAKE_SOURCE_DIR}/libsEms/libassimp.a" "${CMAKE_SOURCE_DIR}/libsEms/libIrrXML.a")
+target_link_libraries(a PRIVATE "${CMAKE_SOURCE_DIR}/libsEms/libassimp.a" "${CMAKE_SOURCE_DIR}/libsEms/libIrrXML.a" "${CMAKE_SOURCE_DIR}/libsEms/libJolt.a")
 
 
     message(STATUS "Setting compilation target to WASM")
@@ -35,9 +35,11 @@ target_link_libraries(a PRIVATE "${CMAKE_SOURCE_DIR}/libsEms/libassimp.a" "${CMA
     "SHELL:-s MAX_WEBGL_VERSION=2"
     "SHELL:-s GL_PREINITIALIZED_CONTEXT=1"
     "SHELL:-s STACK_SIZE=500000"
+    "SHELL:-s INITIAL_HEAP=83886080"
     "SHELL:-s ALLOW_MEMORY_GROWTH=1"
     "SHELL:-s NO_DISABLE_EXCEPTION_CATCHING"
     "SHELL:-s WASM=1"
+    "SHELL:-s ASSERTIONS=1"
     "SHELL:--preload-file ${CMAKE_SOURCE_DIR}/source/GameData@/GameData"
     "SHELL:-s GL_SUPPORT_AUTOMATIC_ENABLE_EXTENSIONS=1"
 )

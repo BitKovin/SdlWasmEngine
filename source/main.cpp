@@ -1,4 +1,4 @@
-
+#define _HAS_STD_BYTE 0
 #include <stdio.h>
 #include <stdlib.h>
 #include <SDL2/SDL.h>
@@ -354,6 +354,7 @@ int main(int argc, char* args[]) {
     EmscriptenFullscreenStrategy strategy;
     strategy.scaleMode = EMSCRIPTEN_FULLSCREEN_CANVAS_SCALE_STDDEF;
     strategy.filteringMode = EMSCRIPTEN_FULLSCREEN_FILTERING_DEFAULT;
+    strategy.canvasResizedCallback = 0;
     emscripten_enter_soft_fullscreen("canvas", &strategy); //not an error. Visual studio lies to you. Belive me. I'm catboy
 
 

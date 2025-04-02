@@ -55,7 +55,7 @@ public:
 		for (int i = 0; i < boneTransforms.size(); ++i)
 			shader_program->SetUniform("finalBonesMatrices[" + std::to_string(i) + "]", boneTransforms[i]);
 
-		for (roj::SkinnedMesh& mesh : *model)
+		for (roj::SkinnedMesh mesh : *model)
 		{
 
 			mesh.VAO->Bind();

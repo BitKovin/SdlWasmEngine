@@ -17,7 +17,7 @@ namespace roj
 {
 struct MeshTexture
 {
-	uint32_t id; aiTextureType type; std::string src;
+    aiTextureType type; std::string src;
 };
 
 struct Mesh
@@ -114,8 +114,8 @@ std::vector<roj::MeshTexture> ModelLoader<mesh_t>::loadTextureMap(aiMaterial* ma
 
         if (!cached)
         {
-            std::string texPath = "GameData/";// (std::filesystem::path(m_relativeDir) / texSrc.C_Str()).string();
-            //m_texCache.emplace_back(utils::loadGLTexture(texPath), type, texSrc.C_Str());
+            std::string texPath = (std::filesystem::path(m_relativeDir) / texSrc.C_Str()).string();
+            m_texCache.emplace_back(type, texSrc.C_Str());
         }
     }
     

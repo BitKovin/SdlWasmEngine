@@ -5,7 +5,13 @@ namespace roj
 {
 class Animator
 {
+
+public : 
+
+    bool Loop = false;
+
 private:
+
     std::vector<glm::mat4> m_boneMatrices;
     Animation* m_currAnim{nullptr};
     SkinnedModel m_model;
@@ -23,7 +29,6 @@ public:
     Animator() = default;
 	Animator(SkinnedModel model);
     void play();
-    void loop(bool enable);
     void set(const std::string& name);
     std::vector<std::string> get();
     std::vector<glm::mat4>& getBoneMatrices();

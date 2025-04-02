@@ -9,6 +9,7 @@
 #include "Time.hpp"
 #include "Camera.h"
 #include "Input.h"
+#include "Physics.h"
 
 #include "Level.hpp"
 
@@ -24,6 +25,8 @@
 #include "ShaderManager.h"
 
 #include "SkeletalMesh.hpp"
+
+
 
 class EngineMain
 {
@@ -132,6 +135,8 @@ public:
         SoundManager::Initialize();
 
         Time::Init();
+
+        Physics::Init();
 
         Level::OpenLevel();
 

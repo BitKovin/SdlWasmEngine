@@ -81,6 +81,12 @@
     <ClCompile Include="utils.cpp">
       <Filter>Source Files\skeletal</Filter>
     </ClCompile>
+    <ClCompile Include="Physics.h">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Physics.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SoundSystem\SoundInstance.hpp">
@@ -153,6 +159,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SkeletalMesh.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TextureCube.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
