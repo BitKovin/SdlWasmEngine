@@ -129,6 +129,12 @@ public:
     ShaderProgram* shader;
 
     SkeletalMesh* skm;
+    SkeletalMesh* skm1;
+    SkeletalMesh* skm2;
+
+    Body* body0;
+    Body* body1;
+    Body* body2;
 
 	void Init()
 	{
@@ -148,9 +154,23 @@ public:
         skm->LoadFromFile("GameData/cube.obj");
         skm->ColorTexture = texture;
 
+        skm->Size = vec3(30,0.2f,30);
+
+        skm1 = new SkeletalMesh();
+        skm1->LoadFromFile("GameData/cube.obj");
+        skm1->ColorTexture = texture;
+        skm1->Position = vec3(1,30,1);
+
+        skm2 = new SkeletalMesh();
+        skm2->LoadFromFile("GameData/cube.obj");
+        skm2->ColorTexture = texture;
+        skm2->Position = vec3(1.5, 40, 1);
+
         animator = roj::Animator(skm->model);
 
-
+        body0 = Physics::CreateBoxBody(skm->Position, skm->Size, true);
+        body1 = Physics::CreateBoxBody(skm1->Position, skm1->Size, false);
+        body2 = Physics::CreateBoxBody(skm2->Position, skm2->Size, false);
 
         animator.set("run");
         animator.play();
@@ -190,6 +210,9 @@ public:
 
 	void GameUpdate()
 	{
+
+        Physics::Simulate();
+
         if (Input::GetAction("test")->Pressed())
         {
             //ToggleFullscreen(window);
@@ -209,6 +232,13 @@ public:
             printf("framerate: %f  \n", (1 / Time::DeltaTime));
         }
 
+        skm->Position = FromPhysics(body0->GetPosition());
+        skm->Rotation = MathHelper::ToYawPitchRoll(FromPhysics(body0->GetRotation()));
+        skm1->Position = FromPhysics(body1->GetPosition());
+        skm1->Rotation = MathHelper::ToYawPitchRoll(FromPhysics(body1->GetRotation()));
+        skm2->Position = FromPhysics(body2->GetPosition());
+        skm2->Rotation = MathHelper::ToYawPitchRoll(FromPhysics(body2->GetRotation()));
+
         animator.update(Time::DeltaTimeF);
 
         Level::Current->Update();
@@ -219,6 +249,8 @@ public:
 	{
 
         skm->FinalizeFrameData();
+        skm1->FinalizeFrameData();
+        skm2->FinalizeFrameData();
 
         int x, y;
         SDL_GetWindowSize(Window, &x, &y);
@@ -252,7 +284,8 @@ public:
         skm->boneTransforms = animator.getBoneMatrices();
         
         skm->DrawForward(Camera::finalizedView, Camera::finalizedProjection);
-
+        skm1->DrawForward(Camera::finalizedView, Camera::finalizedProjection);
+        skm2->DrawForward(Camera::finalizedView, Camera::finalizedProjection);
 
 
         SDL_GL_SwapWindow(Window);

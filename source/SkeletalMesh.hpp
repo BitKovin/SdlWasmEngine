@@ -13,6 +13,8 @@
 
 #include "skinned_model.hpp"
 
+#include "glm.h"
+
 using namespace std;
 
 class SkeletalMesh : IDrawMesh
@@ -60,6 +62,12 @@ public:
 
 		model = AssetRegistry::GetSkinnedModelFromFile(path);
 
+		boneTransforms.resize(model->boneInfoMap.size());
+
+		for (int i = 0; i < boneTransforms.size(); i++)
+		{
+			boneTransforms[i] = glm::identity<mat4>();
+		}
 
 	}
 
@@ -73,7 +81,7 @@ public:
 		shader_program->SetTexture("u_texture", ColorTexture);
 
 
-		mat4x4 world = scale(finalSize) * MathHelper::GetRotationMatrix(finalRotation) * translate(finalPosition);
+		mat4x4 world = translate(finalPosition) * MathHelper::GetRotationMatrix(finalRotation) * scale(finalSize);
 
 		shader_program->SetUniform("view", view);
 		shader_program->SetUniform("projection", projection);

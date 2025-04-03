@@ -266,6 +266,8 @@
     <ClInclude Include="Logger.hpp" />
     <ClInclude Include="MathHelper.hpp" />
     <ClInclude Include="model.hpp" />
+    <ClInclude Include="PhysicsConverter.h" />
+    <ClInclude Include="PhysicsHelper.h" />
     <ClInclude Include="render.h" />
     <ClInclude Include="Shader.hpp" />
     <ClInclude Include="ShaderManager.h" />

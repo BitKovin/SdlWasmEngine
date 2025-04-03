@@ -164,6 +164,12 @@
     <ClInclude Include="TextureCube.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="PhysicsHelper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PhysicsConverter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />

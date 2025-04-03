@@ -1,6 +1,11 @@
 #pragma once
 
+#if __EMSCRIPTEN__ // i'm too tired right now to figure proper way
 
+#define NDEBUG 1
+#define JPH_OBJECT_STREAM 1
+
+#endif // __EMSCRIPTEN__
 
 #include <Jolt/Jolt.h>
 #include <Jolt/RegisterTypes.h>
@@ -14,7 +19,7 @@
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Jolt/Physics/Body/BodyActivationListener.h>
 
-
+#include "PhysicsConverter.h"
 
 #include "glm.h"
 
@@ -201,6 +206,7 @@ public:
 		RegisterDefaultAllocator();
 		Factory::sInstance = new Factory();
 
+		RegisterTypes();
 
 		tempMemAllocator = new TempAllocatorImpl(30 * 1024 * 1024);
 
@@ -236,27 +242,24 @@ public:
 
 	}
 
-	void Simulate()
+	static void Simulate()
 	{
 		physicsMainLock.lock();
 		physics_system->Update(Time::DeltaTime, 1, tempMemAllocator, threadPool);
 		physicsMainLock.unlock();
 	}
 
-	void Update()
+	static void Update()
 	{
-		for (Body* body : existingBodies)
-		{
-			
-		}
+
 	}
 
-	static Body* CreateBoxBody()
+	static Body* CreateBoxBody(vec3 Position, vec3 Size, bool Static)
 	{
-		// Create a box shape with half extents (0.5f, 0.5f, 0.5f)
+
 		auto box_shape_settings = new JPH::BoxShapeSettings();
 		box_shape_settings->SetEmbedded();
-		box_shape_settings->mHalfExtent = Vec3(0.5, 0.5, 0.5);
+		box_shape_settings->mHalfExtent = ToPhysics(Size)/2.0f;
 		JPH::Shape::ShapeResult shape_result = box_shape_settings->Create();
 		JPH::Shape* box_shape = shape_result.Get();
 
@@ -265,14 +268,15 @@ public:
 
 		JPH::BodyCreationSettings dynamic_body_settings(
 			box_shape,                   // Collision shape (e.g., a box shape)
-			JPH::Vec3(0, 10, 0),          // Initial position
+			ToPhysics(Position),          // Initial position
 			JPH::Quat::sIdentity(),       // No initial rotation
-			JPH::EMotionType::Dynamic,    // Dynamic so that it is affected by forces
-			Layers::MOVING);          // Collision layer for moving objects
+			Static ? JPH::EMotionType::Static : JPH::EMotionType::Dynamic,    // Dynamic so that it is affected by forces
+			Static ? Layers::NON_MOVING : Layers::MOVING);          // Collision layer for moving objects
 
 
 		JPH::Body* dynamic_body = bodyInterface->CreateBody(dynamic_body_settings);
 
+		AddBody(dynamic_body);
 
 		return dynamic_body;
 	}
