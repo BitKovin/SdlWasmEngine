@@ -15,4 +15,6 @@ public:
 
 	virtual void DrawShadow(mat4x4 viewProjection) {}
 
+	virtual void FinalizeFrameData(){}
+
 };

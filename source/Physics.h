@@ -1,5 +1,7 @@
 #pragma once
 
+
+
 #include <Jolt/Jolt.h>
 #include <Jolt/RegisterTypes.h>
 #include <Jolt/Core/Factory.h>
@@ -12,6 +14,9 @@
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Jolt/Physics/Body/BodyActivationListener.h>
 
+
+
+#include "glm.h"
 
 #include <iostream>
 
@@ -173,19 +178,29 @@ private:
 
 	static BodyInterface* bodyInterface;
 
+	static vector<Body*> existingBodies;
+
+	static mutex physicsMainLock;
+
 public:
 	
-	
+	static void AddBody(Body* body)
+	{
+		physicsMainLock.lock();
+
+		existingBodies.push_back(body);
+
+		bodyInterface->AddBody(body->GetID(), JPH::EActivation::Activate);
+
+		physicsMainLock.unlock();
+
+	}
 
 	static void Init()
 	{
 		RegisterDefaultAllocator();
 		Factory::sInstance = new Factory();
 
-		// Register all physics types with the factory and install their collision handlers with the CollisionDispatch class.
-		// If you have your own custom shape types you probably need to register their handlers with the CollisionDispatch before calling this function.
-		// If you implement your own default material (PhysicsMaterial::sDefault) make sure to initialize it before this function or else this function will create one for you.
-		RegisterTypes();
 
 		tempMemAllocator = new TempAllocatorImpl(30 * 1024 * 1024);
 
@@ -214,31 +229,30 @@ public:
 		// Registering one is entirely optional.
 
 		contact_listener = new MyContactListener();
-
-		bodyInterface = &physics_system->GetBodyInterface();
-
 		physics_system->SetContactListener(contact_listener);
 
-
-		create_test_body();
-		create_test_body();
-		create_test_body();
-		create_test_body();
-
-		physics_system->Update(0.03, 1, tempMemAllocator, threadPool);
-		create_test_body();
-		physics_system->Update(0.03, 1, tempMemAllocator, threadPool);
-		create_test_body();
-		physics_system->Update(0.03, 1, tempMemAllocator, threadPool);
-		physics_system->Update(0.03, 1, tempMemAllocator, threadPool);
-
-
+		bodyInterface = &physics_system->GetBodyInterface();
+		
 
 	}
 
-	static void create_test_body()
+	void Simulate()
 	{
+		physicsMainLock.lock();
+		physics_system->Update(Time::DeltaTime, 1, tempMemAllocator, threadPool);
+		physicsMainLock.unlock();
+	}
 
+	void Update()
+	{
+		for (Body* body : existingBodies)
+		{
+			
+		}
+	}
+
+	static Body* CreateBoxBody()
+	{
 		// Create a box shape with half extents (0.5f, 0.5f, 0.5f)
 		auto box_shape_settings = new JPH::BoxShapeSettings();
 		box_shape_settings->SetEmbedded();
@@ -258,10 +272,10 @@ public:
 
 
 		JPH::Body* dynamic_body = bodyInterface->CreateBody(dynamic_body_settings);
-		bodyInterface->AddBody(dynamic_body->GetID(), JPH::EActivation::Activate);
 
+
+		return dynamic_body;
 	}
-
 
 
 };

@@ -96,10 +96,16 @@ void roj::Animator::calcBoneTransform(BoneNode& node, glm::mat4 offset)
     }
 }
 
-roj::Animator::Animator(SkinnedModel model)
-    : m_model(model)
+roj::Animator::Animator(SkinnedModel* model)
+    : m_model(*model)
 {
-    m_boneMatrices.resize(model.boneInfoMap.size());
+    m_boneMatrices.resize(model->boneInfoMap.size());
+
+    for (int i = 0; i < m_boneMatrices.size(); i++)
+    {
+        m_boneMatrices[i] = identity<mat4>();
+    }
+
 }
 
 void roj::Animator::set(const std::string& name)

@@ -27,7 +27,7 @@ private:
     void calcBoneTransform(BoneNode& node, glm::mat4 offset);
 public:
     Animator() = default;
-	Animator(SkinnedModel model);
+	Animator(SkinnedModel* model);
     void play();
     void set(const std::string& name);
     std::vector<std::string> get();

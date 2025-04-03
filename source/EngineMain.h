@@ -144,19 +144,13 @@ public:
 
         InitInputs();
 
-        roj::ModelLoader<roj::SkinnedMesh> modelLoader;
-
-
-        modelLoader.load("GameData/dog.glb");
-
-        Logger::Log(modelLoader.getInfoLog());
-
-        roj::SkinnedModel* mesh = new roj::SkinnedModel(modelLoader.get());
-
-        animator = roj::Animator(*mesh);
-
         skm = new SkeletalMesh();
-        skm->model = mesh;
+        skm->LoadFromFile("GameData/cube.obj");
+        skm->ColorTexture = texture;
+
+        animator = roj::Animator(skm->model);
+
+
 
         animator.set("run");
         animator.play();
@@ -166,6 +160,7 @@ public:
 
 
 	}
+
 
 	void MainLoop()
 	{
@@ -223,6 +218,8 @@ public:
 	void Render()
 	{
 
+        skm->FinalizeFrameData();
+
         int x, y;
         SDL_GetWindowSize(Window, &x, &y);
         glViewport(0, 0, x, y);
@@ -254,7 +251,7 @@ public:
 
         skm->boneTransforms = animator.getBoneMatrices();
         
-        skm->DrawForward(Camera::finalizedView, Camera::finalizedProjection, texture);
+        skm->DrawForward(Camera::finalizedView, Camera::finalizedProjection);
 
 
 

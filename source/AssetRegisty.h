@@ -4,8 +4,10 @@
 #include <SDL2/SDL_image.h>
 
 #include "Shader.hpp"
-
+#include "skinned_model.hpp"
+#include "model.hpp"
 #include "Texture.hpp"
+#include "Logger.hpp"
 
 class AssetRegistry
 {
@@ -13,6 +15,7 @@ class AssetRegistry
 private:
     static std::unordered_map<std::string, Shader*> shaderCache;
     static std::unordered_map<std::string, Texture*> textureCache;
+    static std::unordered_map<std::string, roj::SkinnedModel*> skinnedModelCache;
 
 public:
 	
@@ -99,6 +102,27 @@ public:
 
         SDL_RWclose(file);
         return content;
+    }
+
+    static roj::SkinnedModel* GetSkinnedModelFromFile(const string& path)
+    {
+
+        auto it = skinnedModelCache.find(path);
+        if (it != skinnedModelCache.end())
+        {
+            return it->second; // Return cached shader
+        }
+
+        roj::ModelLoader<roj::SkinnedMesh> modelLoader;
+
+        modelLoader.load(path);
+
+        Logger::Log(modelLoader.getInfoLog());
+
+        skinnedModelCache[path] = new roj::SkinnedModel(modelLoader.get());
+
+
+        return skinnedModelCache[path];
     }
 
 private:

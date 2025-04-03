@@ -17,11 +17,24 @@ using namespace std;
 
 class SkeletalMesh : IDrawMesh
 {
+
+private:
+
+	vec3 finalPosition = vec3(0);
+	vec3 finalRotation = vec3(0);
+	vec3 finalSize = vec3(0);
+
 public:
 
 	roj::SkinnedModel* model = nullptr;
 
 	std::vector<mat4> boneTransforms;
+
+	Texture* ColorTexture = nullptr;
+
+	vec3 Position = vec3(0);
+	vec3 Rotation = vec3(0);
+	vec3 Size = vec3(1);
 
 	SkeletalMesh()
 	{
@@ -32,20 +45,35 @@ public:
 
 	}
 
-	void DrawForward(mat4x4 view, mat4x4 projection, Texture* texture)
+	void FinalizeFrameData()
+	{
+		finalPosition = Position;
+		finalRotation = Rotation;
+		finalSize = Size;
+	}
+
+
+
+	//obj or gml files are strongly recommended
+	void LoadFromFile(const string& path)
+	{
+
+		model = AssetRegistry::GetSkinnedModelFromFile(path);
+
+
+	}
+
+	void DrawForward(mat4x4 view, mat4x4 projection)
 	{
 
 		ShaderProgram* shader_program = ShaderManager::GetShaderProgram("skeletal");
 
 		shader_program->UseProgram();
 
-		shader_program->SetTexture("u_texture", texture);
+		shader_program->SetTexture("u_texture", ColorTexture);
 
-		vec3 pos = vec3(0, 0, 2);
 
-		vec3 rot = vec3(0);
-
-		mat4x4 world = scale(vec3(1)) * MathHelper::GetRotationMatrix(rot) * translate(pos);
+		mat4x4 world = scale(finalSize) * MathHelper::GetRotationMatrix(finalRotation) * translate(finalPosition);
 
 		shader_program->SetUniform("view", view);
 		shader_program->SetUniform("projection", projection);
@@ -55,13 +83,11 @@ public:
 		for (int i = 0; i < boneTransforms.size(); ++i)
 			shader_program->SetUniform("finalBonesMatrices[" + std::to_string(i) + "]", boneTransforms[i]);
 
-		for (roj::SkinnedMesh mesh : *model)
+
+		for (const roj::SkinnedMesh& mesh : model->meshes)
 		{
-
 			mesh.VAO->Bind();
-
 			glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(mesh.VAO->IndexCount), GL_UNSIGNED_INT, 0);
-
 		}
 
 

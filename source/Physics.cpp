@@ -15,3 +15,6 @@ PhysicsSystem* Physics::physics_system = nullptr;
 MyContactListener* Physics::contact_listener = nullptr;
 
 BodyInterface* Physics::bodyInterface = nullptr;
+
+vector<Body*> Physics::existingBodies = vector<Body*>();
+mutex Physics::physicsMainLock = mutex();

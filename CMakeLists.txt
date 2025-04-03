@@ -4,7 +4,12 @@ project(client)
 
 option(JS_ONLY "Compiles to native JS (No WASM)" OFF)
 
-add_definitions(-std=c++20 -O0)
+add_definitions(-DNDEBUG)
+
+add_definitions(-std=c++20 -O3)
+
+
+
 
 file(GLOB_RECURSE ALL_SOURCES "source/*.cpp")
 set(SOURCES "")
