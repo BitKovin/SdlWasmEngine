@@ -149,20 +149,23 @@ public:
 
 	// Returns Euler angles (in degrees) in the order (pitch, yaw, roll) from a quaternion.
 	inline static glm::vec3 ToYawPitchRoll(const glm::quat& q) {
-		// Following a similar approach to the C# code.
+		// Compute yaw.
 		float siny = 2.0f * (q.w * q.y + q.z * q.x);
 		float cosy = 1.0f - 2.0f * (q.x * q.x + q.y * q.y);
 		float yaw = std::atan2(siny, cosy);
 
+		// Compute pitch and clamp to avoid asin domain errors.
 		float sinp = 2.0f * (q.w * q.x - q.y * q.z);
-		float pitch = (std::abs(sinp) >= 1.0f) ? (glm::half_pi<float>() * (sinp < 0 ? -1.0f : 1.0f)) : std::asin(sinp);
+		float pitch = std::asin(glm::clamp(sinp, -1.0f, 1.0f));
 
+		// Compute roll.
 		float sinr = 2.0f * (q.w * q.z + q.x * q.y);
 		float cosr = 1.0f - 2.0f * (q.x * q.x + q.z * q.z);
 		float roll = std::atan2(sinr, cosr);
 
 		return glm::vec3(ToDegrees(pitch), ToDegrees(yaw), ToDegrees(roll));
 	}
+
 
 	// Calculates the look-at rotation (in degrees) for 3D positions.
 	inline static glm::vec3 FindLookAtRotation(const glm::vec3& source, const glm::vec3& target) {
