@@ -136,6 +136,8 @@ public:
     Body* body1;
     Body* body2;
 
+    Body* bodyCamera;
+
 	void Init()
 	{
         SoundManager::Initialize();
@@ -168,9 +170,11 @@ public:
 
         animator = roj::Animator(skm->model);
 
-        body0 = Physics::CreateBoxBody(skm->Position, skm->Size, true);
-        body1 = Physics::CreateBoxBody(skm1->Position, skm1->Size, false);
-        body2 = Physics::CreateBoxBody(skm2->Position, skm2->Size, false);
+        body0 = Physics::CreateBoxBody(skm->Position, skm->Size,10, true);
+        body1 = Physics::CreateBoxBody(skm1->Position, skm1->Size,10, false);
+        body2 = Physics::CreateBoxBody(skm2->Position, skm2->Size,10, false);
+
+        bodyCamera = Physics::CreateBoxBody(Camera::position, vec3(0.2),120, false);
 
         animator.set("run");
         animator.play();
@@ -231,6 +235,8 @@ public:
             ToggleFullscreen(Window);
             printf("framerate: %f  \n", (1 / Time::DeltaTime));
         }
+
+        Physics::SetBodyPositionAndRotation(bodyCamera, Camera::position, Camera::rotation);
 
         skm->Position = FromPhysics(body0->GetPosition());
         skm->Rotation = MathHelper::ToYawPitchRoll(FromPhysics(body0->GetRotation()));

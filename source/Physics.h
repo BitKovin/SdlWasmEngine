@@ -29,6 +29,8 @@
 
 #include "Logger.hpp"
 
+#include "MathHelper.hpp"
+
 using namespace JPH;
 
 using namespace std;
@@ -242,6 +244,21 @@ public:
 
 	}
 
+	static void SetBodyPosition(Body* body,vec3 pos)
+	{
+		bodyInterface->SetPosition(body->GetID(), ToPhysics(pos), JPH::EActivation::Activate);
+	}
+
+	static void SetBodyPositionAndRotation(Body* body, vec3 pos, quat rot)
+	{
+		bodyInterface->SetPositionAndRotation(body->GetID(), ToPhysics(pos),ToPhysics(rot), JPH::EActivation::Activate);
+	}
+
+	static void SetBodyPositionAndRotation(Body* body, vec3 pos, vec3 rot)
+	{
+		bodyInterface->SetPositionAndRotation(body->GetID(), ToPhysics(pos), ToPhysics(MathHelper::GetRotationQuaternion(rot)), JPH::EActivation::Activate);
+	}
+
 	static void Simulate()
 	{
 		physicsMainLock.lock();
@@ -254,7 +271,7 @@ public:
 
 	}
 
-	static Body* CreateBoxBody(vec3 Position, vec3 Size, bool Static)
+	static Body* CreateBoxBody(vec3 Position, vec3 Size, float Mass = 10, bool Static = false)
 	{
 
 		auto box_shape_settings = new JPH::BoxShapeSettings();
@@ -266,15 +283,18 @@ public:
 		if (shape_result.HasError())
 			Logger::Log(shape_result.GetError().c_str());
 
-		JPH::BodyCreationSettings dynamic_body_settings(
+		JPH::BodyCreationSettings body_settings(
 			box_shape,                   // Collision shape (e.g., a box shape)
 			ToPhysics(Position),          // Initial position
 			JPH::Quat::sIdentity(),       // No initial rotation
 			Static ? JPH::EMotionType::Static : JPH::EMotionType::Dynamic,    // Dynamic so that it is affected by forces
 			Static ? Layers::NON_MOVING : Layers::MOVING);          // Collision layer for moving objects
 
+		body_settings.mOverrideMassProperties = EOverrideMassProperties::CalculateInertia;
+		body_settings.mMassPropertiesOverride.mMass = Mass;
+		body_settings.mFriction = 0.5f;
 
-		JPH::Body* dynamic_body = bodyInterface->CreateBody(dynamic_body_settings);
+		JPH::Body* dynamic_body = bodyInterface->CreateBody(body_settings);
 
 		AddBody(dynamic_body);
 
