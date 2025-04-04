@@ -18,6 +18,8 @@
 #include <Jolt/Physics/Collision/Shape/SphereShape.h>
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Jolt/Physics/Body/BodyActivationListener.h>
+#include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
+#include <Jolt/Physics/Character/CharacterVirtual.h>
 
 #include "PhysicsConverter.h"
 
@@ -142,7 +144,7 @@ public:
 	// See: ContactListener
 	virtual ValidateResult	OnContactValidate(const Body& inBody1, const Body& inBody2, RVec3Arg inBaseOffset, const CollideShapeResult& inCollisionResult) override
 	{
-		cout << "Contact validate callback" << endl;
+		//cout << "Contact validate callback" << endl;
 
 		// Allows you to ignore a contact before it is created (using layers to not make objects collide is cheaper!)
 		return ValidateResult::AcceptAllContactsForThisBodyPair;
@@ -150,17 +152,17 @@ public:
 
 	virtual void			OnContactAdded(const Body& inBody1, const Body& inBody2, const ContactManifold& inManifold, ContactSettings& ioSettings) override
 	{
-		cout << "A contact was added" << endl;
+		//cout << "A contact was added" << endl;
 	}
 
 	virtual void			OnContactPersisted(const Body& inBody1, const Body& inBody2, const ContactManifold& inManifold, ContactSettings& ioSettings) override
 	{
-		cout << "A contact was persisted" << endl;
+		//cout << "A contact was persisted" << endl;
 	}
 
 	virtual void			OnContactRemoved(const SubShapeIDPair& inSubShapePair) override
 	{
-		cout << "A contact was removed" << endl;
+		//cout << "A contact was removed" << endl;
 	}
 };
 
@@ -203,6 +205,18 @@ public:
 
 	}
 
+	static void DestroyBody(Body* body)
+	{
+
+		physicsMainLock.lock();
+
+		bodyInterface->RemoveBody(body->GetID());
+
+		bodyInterface->DestroyBody(body->GetID());
+
+		physicsMainLock.unlock();
+	}
+
 	static void Init()
 	{
 		RegisterDefaultAllocator();
@@ -232,9 +246,6 @@ public:
 
 		physics_system->Init(cMaxBodies, cNumBodyMutexes, cMaxBodyPairs, cMaxContactConstraints, *broad_phase_layer_interface, *object_vs_broadphase_layer_filter, *object_vs_object_layer_filter);
 
-		// A contact listener gets notified when bodies (are about to) collide, and when they separate again.
-		// Note that this is called from a job so whatever you do here needs to be thread safe.
-		// Registering one is entirely optional.
 
 		contact_listener = new MyContactListener();
 		physics_system->SetContactListener(contact_listener);
@@ -299,6 +310,51 @@ public:
 		AddBody(dynamic_body);
 
 		return dynamic_body;
+	}
+
+	static Body* CreateCharacterBody(vec3 Position, float Radius, float Height, float Mass)
+	{
+		// Calculate cylinder portion height (total capsule height = cylinder_height + 2 * radius)
+		float cylinder_half_height = (Height - 2.0f * Radius) / 2.0f;
+		if (cylinder_half_height < 0.0f) {
+			Logger::Log("Capsule height is too small for given radius, using minimum height");
+			cylinder_half_height = 0.0f;
+		}
+
+		// Create capsule shape
+		auto capsule_shape_settings = new JPH::CapsuleShapeSettings();
+		capsule_shape_settings->SetEmbedded();
+		capsule_shape_settings->mRadius = Radius;
+		capsule_shape_settings->mHalfHeightOfCylinder = cylinder_half_height;
+
+		JPH::Shape::ShapeResult shape_result = capsule_shape_settings->Create();
+		JPH::Shape* capsule_shape = shape_result.Get();
+
+		if (shape_result.HasError())
+			Logger::Log(shape_result.GetError().c_str());
+
+		// Configure body settings
+		JPH::BodyCreationSettings body_settings(
+			capsule_shape,
+			ToPhysics(Position),
+			JPH::Quat::sIdentity(),
+			JPH::EMotionType::Dynamic,  // Dynamic body type
+			Layers::MOVING              // Use moving layer
+		);
+
+		// Lock rotation in all axes
+		body_settings.mAllowedDOFs = JPH::EAllowedDOFs::TranslationX | JPH::EAllowedDOFs::TranslationY | JPH::EAllowedDOFs::TranslationZ;  // Allow only translation
+
+		// Set mass properties
+		body_settings.mOverrideMassProperties = JPH::EOverrideMassProperties::CalculateInertia;
+		body_settings.mMassPropertiesOverride.mMass = Mass;
+		body_settings.mFriction = 0.5f;  // Match box friction
+
+		// Create and add body to world
+		JPH::Body* character_body = bodyInterface->CreateBody(body_settings);
+		AddBody(character_body);
+
+		return character_body;
 	}
 
 

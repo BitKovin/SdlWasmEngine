@@ -170,6 +170,9 @@
     <ClInclude Include="PhysicsConverter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Entities\TestCube.hpp">
+      <Filter>Header Files\Entities</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />

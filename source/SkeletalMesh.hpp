@@ -17,7 +17,7 @@
 
 using namespace std;
 
-class SkeletalMesh : IDrawMesh
+class SkeletalMesh : public IDrawMesh
 {
 
 private:
@@ -70,6 +70,8 @@ public:
 		}
 
 	}
+
+
 
 	void DrawForward(mat4x4 view, mat4x4 projection)
 	{

@@ -4,17 +4,20 @@
 
 #include "glm.h"
 
-class IDrawMesh : EObject
+class IDrawMesh : public EObject
 {
 
 public:
 
-	virtual void DrawForward(mat4x4 viewProjection) {}
+	virtual void DrawForward(mat4x4 view, mat4x4 projection) {}
 
-	virtual void DrawDepth(mat4x4 viewProjection) {}
+	virtual void DrawDepth(mat4x4 view, mat4x4 projection) {}
 
-	virtual void DrawShadow(mat4x4 viewProjection) {}
+	virtual void DrawShadow(mat4x4 view, mat4x4 projection) {}
 
 	virtual void FinalizeFrameData(){}
+
+	virtual bool IsCameraVisible() { return true; }
+	virtual bool IsShadowVisible() { return true; }
 
 };

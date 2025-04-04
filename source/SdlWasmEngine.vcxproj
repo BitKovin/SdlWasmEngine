@@ -258,6 +258,7 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="EngineMain.h" />
     <ClInclude Include="Entities\Player.hpp" />
+    <ClInclude Include="Entities\TestCube.hpp" />
     <ClInclude Include="gl.h" />
     <ClInclude Include="glm.h" />
     <ClInclude Include="IDrawMesh.h" />

@@ -76,10 +76,14 @@ void roj::Animator::calcBoneTransform(BoneNode& node, glm::mat4 offset)
         glm::mat4 translation = interpolatePosition(boneTransform);
         glm::mat4 rotation = interpolateRotation(boneTransform);
         glm::mat4 scale = interpolateScaling(boneTransform);
-        offset *= translation * rotation * scale;
+
+        node.finalLocalTransform = translation * rotation * scale;
+
+        offset *= node.finalLocalTransform;
     }
     else
     {
+        node.finalLocalTransform = node.transform;
         offset *= node.transform;
     }
 
@@ -131,6 +135,26 @@ std::vector<std::string> roj::Animator::get()
 std::vector<glm::mat4>& roj::Animator::getBoneMatrices()
 {
     return m_boneMatrices;
+}
+
+std::unordered_map<std::string, mat4> roj::Animator::GetBonePoseArray()
+{
+    std::unordered_map<std::string, mat4> outVector = std::unordered_map<std::string, mat4>();
+
+    PopulateBonePoseArray(m_currAnim->rootBone, glm::mat4(1.0f), outVector);
+
+    return outVector;
+}
+
+void roj::Animator::PopulateBonePoseArray(BoneNode& node, glm::mat4 offset, std::unordered_map<std::string, mat4>& outVector)
+{
+    
+    outVector[node.name] = node.finalLocalTransform;
+
+    for (roj::BoneNode& child : node.children)
+    {
+        PopulateBonePoseArray(child, offset, outVector);
+    }
 }
 
 void roj::Animator::update(float dt)

@@ -11,6 +11,8 @@
 
 #include "gl.h"
 
+
+
 SDL_Window *window;
 
 void update_screen_size(int w, int h)
@@ -37,6 +39,12 @@ SDL_GLContext glContext;
 #include <SDL2/SDL_syswm.h> // Add this header for window system info
 #pragma comment(lib, "dinput8.lib")
 #pragma comment(lib, "dxguid.lib")
+
+#include <Windows.h>
+
+extern "C" {
+    _declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
+}
 
 // Globals
 LPDIRECTINPUT8 g_pDI = nullptr; // Declare DirectInput interface
@@ -340,6 +348,13 @@ int main(int argc, char* args[]) {
     SDL_GL_SetSwapInterval(0);
 
     engine = new EngineMain(window);
+
+#if __EMSCRIPTEN__
+
+    engine->asyncGameUpdate = false;
+
+#endif // __EMSCRIPTEN
+
 
     EngineMain::MainInstance = engine;
 

@@ -14,6 +14,7 @@
 #include "Level.hpp"
 
 #include "Entities/Player.hpp"
+#include "Entities/TestCube.hpp"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -26,7 +27,9 @@
 
 #include "SkeletalMesh.hpp"
 
+#include <future>
 
+#include <thread>
 
 class EngineMain
 {
@@ -115,8 +118,13 @@ public:
         texture = AssetRegistry::GetTextureFromFile("GameData/cat.png");
 
 
-        Level::Current->AddEntity(new Player);
+        Level::Current->AddEntity(new Player());
 
+        Level::Current->AddEntity(new TestCube(vec3(2, 3, 1)));
+        Level::Current->AddEntity(new TestCube(vec3(2, 4, 1)));
+        Level::Current->AddEntity(new TestCube(vec3(2, 4, 0.5)));
+        Level::Current->AddEntity(new TestCube(vec3(2, 5, 1)));
+        Level::Current->AddEntity(new TestCube(vec3(1, 5, 1)));
 
     }
 
@@ -129,12 +137,8 @@ public:
     ShaderProgram* shader;
 
     SkeletalMesh* skm;
-    SkeletalMesh* skm1;
-    SkeletalMesh* skm2;
 
     Body* body0;
-    Body* body1;
-    Body* body2;
 
     Body* bodyCamera;
 
@@ -153,69 +157,111 @@ public:
         InitInputs();
 
         skm = new SkeletalMesh();
-        skm->LoadFromFile("GameData/cube.obj");
+        skm->LoadFromFile("GameData/dog.glb");
         skm->ColorTexture = texture;
 
         skm->Size = vec3(30,0.2f,30);
 
-        skm1 = new SkeletalMesh();
-        skm1->LoadFromFile("GameData/cube.obj");
-        skm1->ColorTexture = texture;
-        skm1->Position = vec3(1,30,1);
-
-        skm2 = new SkeletalMesh();
-        skm2->LoadFromFile("GameData/cube.obj");
-        skm2->ColorTexture = texture;
-        skm2->Position = vec3(1.5, 40, 1);
 
         animator = roj::Animator(skm->model);
 
-        body0 = Physics::CreateBoxBody(skm->Position, skm->Size,10, true);
-        body1 = Physics::CreateBoxBody(skm1->Position, skm1->Size,10, false);
-        body2 = Physics::CreateBoxBody(skm2->Position, skm2->Size,10, false);
+
+        body0 = Physics::CreateBoxBody(skm->Position, skm->Size, 10, true);
+
+
+
 
         bodyCamera = Physics::CreateBoxBody(Camera::position, vec3(0.2),120, false);
 
         animator.set("run");
         animator.play();
 
+        animator.update(0.01);
+
+        auto pose = animator.GetBonePoseArray();
 
         shader = ShaderManager::GetShaderProgram("skeletal");
 
 
 	}
 
+    // Toggle asynchronous GameUpdate.
+    bool asyncGameUpdate = true;
 
-	void MainLoop()
-	{
+    // Store the future of the async update.
+    std::future<void> gameUpdateFuture;
+
+    // Main game loop.
+    void MainLoop() {
+
+        // Wait for game update here
         Time::Update();
         Input::Update();
 
+        Level::Current->FinalizeFrame();
 
         int x, y;
         SDL_GetWindowSize(Window, &x, &y);
-
-        float AspectRatio = ((float)x) / ((float)y);
-
+        float AspectRatio = static_cast<float>(x) / static_cast<float>(y);
         Camera::AspectRatio = AspectRatio;
 
-        if(Input::GetAction("test")->Pressed())
+        if (Input::GetAction("test")->Pressed())
             animator.play();
 
         Camera::Update(Time::DeltaTime);
-
         Input::UpdateMouse();
-        GameUpdate();
+
+        // Start GameUpdate here, either asynchronously or synchronously.
+        if (asyncGameUpdate) {
+            // Optionally, check if a previous async GameUpdate is still running.
+
+            // Launch GameUpdate asynchronously.
+            gameUpdateFuture = std::async(std::launch::async, &EngineMain::GameUpdate, this);
+        }
+        else {
+            // Run GameUpdate on the main thread.
+            GameUpdate();
+        }
+
         Render();
 
-	}
+
+        if (asyncGameUpdate)
+        {
+            if (gameUpdateFuture.valid()) {
+                // If it's not done yet, wait (or you could choose to skip/warn).
+                if (gameUpdateFuture.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
+                    gameUpdateFuture.wait();
+                }
+            }
+        }
+
+
+        if (Input::GetAction("fullscreen")->Pressed())
+        {
+            ToggleFullscreen(Window);
+            printf("framerate: %f  \n", (1 / Time::DeltaTime));
+        }
+
+    }
 
     bool msaa = false;
+
+    static void myFunction() {
+        std::cout << "Hello from the async task!" << std::endl;
+        // Simulate some work with a sleep.
+        std::this_thread::sleep_for(50ms);
+        std::cout << "Async task finished." << std::endl;
+    }
 
 	void GameUpdate()
 	{
 
         Physics::Simulate();
+
+        Level::Current->UpdatePhysics();
+
+        Level::Current->Update();
 
         if (Input::GetAction("test")->Pressed())
         {
@@ -230,24 +276,16 @@ public:
 
         }
 
-        if (Input::GetAction("fullscreen")->Pressed())
-        {
-            ToggleFullscreen(Window);
-            printf("framerate: %f  \n", (1 / Time::DeltaTime));
-        }
-
         Physics::SetBodyPositionAndRotation(bodyCamera, Camera::position, Camera::rotation);
 
         skm->Position = FromPhysics(body0->GetPosition());
         skm->Rotation = MathHelper::ToYawPitchRoll(FromPhysics(body0->GetRotation()));
-        skm1->Position = FromPhysics(body1->GetPosition());
-        skm1->Rotation = MathHelper::ToYawPitchRoll(FromPhysics(body1->GetRotation()));
-        skm2->Position = FromPhysics(body2->GetPosition());
-        skm2->Rotation = MathHelper::ToYawPitchRoll(FromPhysics(body2->GetRotation()));
 
-        animator.update(Time::DeltaTimeF);
 
-        Level::Current->Update();
+		animator.update(Time::DeltaTimeF);
+
+
+       
 
 	}
 
@@ -255,8 +293,6 @@ public:
 	{
 
         skm->FinalizeFrameData();
-        skm1->FinalizeFrameData();
-        skm2->FinalizeFrameData();
 
         int x, y;
         SDL_GetWindowSize(Window, &x, &y);
@@ -290,9 +326,11 @@ public:
         skm->boneTransforms = animator.getBoneMatrices();
         
         skm->DrawForward(Camera::finalizedView, Camera::finalizedProjection);
-        skm1->DrawForward(Camera::finalizedView, Camera::finalizedProjection);
-        skm2->DrawForward(Camera::finalizedView, Camera::finalizedProjection);
 
+        for (IDrawMesh* mesh : Level::Current->VissibleRenderList)
+        {
+            mesh->DrawForward(Camera::finalizedView, Camera::finalizedProjection);
+        }
 
         SDL_GL_SwapWindow(Window);
 

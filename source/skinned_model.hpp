@@ -23,6 +23,7 @@ namespace roj
 	{
 		std::string name;
 		glm::mat4 transform;
+		mat4 finalLocalTransform;
 		std::vector<BoneNode> children;
 	};
 

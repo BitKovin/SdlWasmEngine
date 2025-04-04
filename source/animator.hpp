@@ -1,6 +1,10 @@
 #ifndef ANIMATOR_HPP
 #define ANIMATOR_HPP
 #include "skinned_model.hpp"
+
+#include <unordered_map>
+#include <string>
+
 namespace roj
 {
 class Animator
@@ -32,6 +36,11 @@ public:
     void set(const std::string& name);
     std::vector<std::string> get();
     std::vector<glm::mat4>& getBoneMatrices();
+
+    std::unordered_map<std::string, mat4> GetBonePoseArray();
+
+    void PopulateBonePoseArray(BoneNode& node, glm::mat4 offset, std::unordered_map<std::string, mat4>& outVector);
+
     void update(float dt);
     void reset();
     
