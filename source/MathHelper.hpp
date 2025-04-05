@@ -24,14 +24,7 @@ public:
 	// Constructs a quaternion from a rotation vector (pitch, yaw, roll)
 	// following the XNA convention: Y (yaw), X (pitch), Z (roll)
 	inline static glm::quat GetRotationQuaternion(const glm::vec3& rotation) {
-		float yaw = ToRadians(rotation.y);
-		float pitch = ToRadians(rotation.x);
-		float roll = ToRadians(rotation.z);
-		// Multiply in order: yaw * pitch * roll (note: GLM multiplies right-to–left)
-		glm::quat qYaw = glm::angleAxis(yaw, glm::vec3(0.f, 1.f, 0.f));
-		glm::quat qPitch = glm::angleAxis(pitch, glm::vec3(1.f, 0.f, 0.f));
-		glm::quat qRoll = glm::angleAxis(roll, glm::vec3(0.f, 0.f, 1.f));
-		return qYaw * qPitch * qRoll;
+		return quat(rotation / 180.0f * pi<float>());
 	}
 
 	// Transforms the given vector by the quaternion
@@ -148,23 +141,15 @@ public:
 
 
 	// Returns Euler angles (in degrees) in the order (pitch, yaw, roll) from a quaternion.
-	inline static glm::vec3 ToYawPitchRoll(const glm::quat& q) {
-		// Compute yaw.
-		float siny = 2.0f * (q.w * q.y + q.z * q.x);
-		float cosy = 1.0f - 2.0f * (q.x * q.x + q.y * q.y);
-		float yaw = std::atan2(siny, cosy);
+	inline static glm::vec3 ToYawPitchRoll(const glm::quat& q) 
+	{
 
-		// Compute pitch and clamp to avoid asin domain errors.
-		float sinp = 2.0f * (q.w * q.x - q.y * q.z);
-		float pitch = std::asin(glm::clamp(sinp, -1.0f, 1.0f));
-
-		// Compute roll.
-		float sinr = 2.0f * (q.w * q.z + q.x * q.y);
-		float cosr = 1.0f - 2.0f * (q.x * q.x + q.z * q.z);
-		float roll = std::atan2(sinr, cosr);
-
-		return glm::vec3(ToDegrees(pitch), ToDegrees(yaw), ToDegrees(roll));
+		return glm::vec3(
+			glm::degrees(glm::pitch(q)),
+			glm::degrees(glm::yaw(q)),
+			glm::degrees(glm::roll(q)));
 	}
+
 
 
 	// Calculates the look-at rotation (in degrees) for 3D positions.
