@@ -6,16 +6,107 @@
 
 #include "../Camera.h"
 
+#include "../Physics.h"
+
+#include <algorithm>   // for std::clamp
+#include <cmath>       // for std::max
+
 class Player : public Entity
 {
+
+private:
+
+    float maxSpeed = 7;
+    float maxSpeedAir = 2;
+    float acceleration = 90;
+    float airAcceleration = 30;
+
+    vec3 velocity = vec3(0);
+
+    glm::vec3 Friction(glm::vec3 vel, float factor = 60.0f) {
+        vel = MathHelper::XZ(vel);
+        float length = glm::length(vel);
+
+        // Avoid division by zero: if length is positive, normalize; otherwise return zero vector.
+        glm::vec3 direction = (length > 0.0f) ? glm::normalize(vel) : glm::vec3(0.0f);
+
+        length -= factor * Time::DeltaTimeF;
+        length = std::max(0.0f, length);
+
+        return direction * length;
+    }
+
+    glm::vec3 UpdateGroundVelocity(glm::vec3 withDir, glm::vec3 vel) {
+        vel = MathHelper::XZ(vel);
+        vel = Friction(vel);
+
+        // Project current velocity onto the direction
+        float currentSpeed = glm::dot(vel, withDir);
+
+        // Clamp the additional speed so that it does not exceed what can be accelerated in the frame.
+        float addSpeed = glm::clamp(maxSpeed - currentSpeed, 0.0f, acceleration * Time::DeltaTimeF);
+
+        if (false) {
+            if (currentSpeed + addSpeed > maxSpeed)
+                addSpeed = maxSpeed - currentSpeed;
+        }
+
+        return vel + addSpeed * withDir;
+    }
+
+    glm::vec3 UpdateAirVelocity(glm::vec3 wishdir, glm::vec3 vel) {
+        vel = MathHelper::XZ(vel);
+
+        float currentSpeed = glm::dot(vel, wishdir);
+        float wishspeed = maxSpeedAir;
+        float addSpeed = wishspeed - currentSpeed;
+
+        if (addSpeed <= 0.0f) {
+            return vel;
+        }
+
+        float accelspeed = airAcceleration * Time::DeltaTimeF * wishspeed;
+
+        if (accelspeed > addSpeed) {
+            accelspeed = addSpeed;
+        }
+
+        return vel + accelspeed * wishdir;
+    }
+
+    void Jump()
+    {
+        LeadBody->SetLinearVelocity(JPH::Vec3(velocity.x, 9.5, velocity.z));
+    }
+
+    bool CheckGroundAt(vec3 location)
+    {
+        auto result = Physics::LineTrace(location, location - vec3(0, 0.95, 0), BodyType::GroupCollisionTest, {LeadBody});
+
+        return result.hasHit;
+
+    }
+
+
 public:
 	Player(){}
 	~Player(){}
 
 	float Speed = 5;
 
+	void Start()
+	{
+		LeadBody = Physics::CreateCharacterBody(this, Position, 0.5, 1.8, 70, BodyType::CharacterCapsule, BodyType::World);
+        Physics::SetGravityFactor(LeadBody, 3);
+	}
+
+    bool OnGround = false;
+
 	void Update()
 	{
+
+        OnGround = CheckGroundAt(Position);
+
 		Camera::rotation.y += Input::MouseDelta.x;
 		Camera::rotation.x -= Input::MouseDelta.y;
 
@@ -35,7 +126,7 @@ public:
 
 		vec3 right = MathHelper::GetRightVector(Camera::rotation);
 
-		vec3 forward = MathHelper::GetForwardVector(Camera::rotation);
+		vec3 forward = MathHelper::GetForwardVector(vec3(0,Camera::rotation.y,0));
 
 
 		if (length(input) > 1)
@@ -43,14 +134,32 @@ public:
 
 		vec3 movement = input.x * right + input.y * forward;
 
-		Position += movement * Speed * Time::DeltaTimeF;
+		Physics::Activate(LeadBody);
 
+        velocity = FromPhysics(LeadBody->GetLinearVelocity());
 
+        if (OnGround)
+        {
+            velocity = UpdateGroundVelocity(movement, velocity);
+        }
+        else
+        {
+            velocity = UpdateAirVelocity(movement, velocity);
+        }
+        
 
-		Camera::position = Position;
+        velocity.y = LeadBody->GetLinearVelocity().GetY();
+
+		LeadBody->SetLinearVelocity(ToPhysics(velocity));
+
+        if(OnGround)
+        if (Input::GetAction("jump")->Pressed())
+        {
+            Jump();
+        }
+
+		Camera::position = Position + vec3(0,0.7,0);
 
 	}
-
-private:
 
 };

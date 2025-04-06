@@ -43,7 +43,7 @@ public:
 
 		Drawables.push_back(&mesh);
 
-		body = Physics::CreateBoxBody(Position, vec3(1), 10, false);
+		body = Physics::CreateBoxBody(this ,Position, vec3(1), 10, false);
 
 		LeadBody = body;
 

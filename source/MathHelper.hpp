@@ -63,7 +63,8 @@ public:
 	}
 
 	// Fast normalization of a vector using InvSqrt.
-	inline static glm::vec3 FastNormalize(const glm::vec3& v) {
+	inline static glm::vec3 FastNormalize(const glm::vec3& v) 
+	{
 		float lengthSq = v.x * v.x + v.y * v.y + v.z * v.z;
 		float invLen = InvSqrt(lengthSq);
 		return v * invLen;

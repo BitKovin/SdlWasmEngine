@@ -20,6 +20,9 @@
 #include <Jolt/Physics/Body/BodyActivationListener.h>
 #include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
 #include <Jolt/Physics/Character/CharacterVirtual.h>
+#include <Jolt/Physics/Collision/RayCast.h>
+#include <Jolt/Physics/Body/Body.h>
+#include <Jolt/Physics/Collision/CastResult.h>
 
 #include "PhysicsConverter.h"
 
@@ -36,6 +39,58 @@
 using namespace JPH;
 
 using namespace std;
+
+enum class BodyType : uint32_t {
+	None = 1,       // 1
+	MainBody = 2,       // 2
+	HitBox = 4,       // 4
+	WorldOpaque = 8,       // 8
+	CharacterCapsule = 16,      // 16
+	NoRayTest = 32,      // 32
+	Liquid = 64,      // 64
+	WorldTransparent = 128,     // 128
+
+	// Combined groups:
+	World = WorldOpaque | WorldTransparent,
+	GroupAll = MainBody | HitBox | World | CharacterCapsule | NoRayTest | Liquid,
+	GroupHitTest = GroupAll & ~CharacterCapsule & ~Liquid,
+	GroupCollisionTest = GroupAll & ~HitBox & ~Liquid,
+	GroupAllPhysical = GroupHitTest & Liquid,
+};
+
+// Overload bitwise operators for BodyType
+inline BodyType operator|(BodyType a, BodyType b) {
+	return static_cast<BodyType>(static_cast<uint32_t>(a) | static_cast<uint32_t>(b));
+}
+
+inline BodyType operator&(BodyType a, BodyType b) {
+	return static_cast<BodyType>(static_cast<uint32_t>(a) & static_cast<uint32_t>(b));
+}
+
+inline BodyType operator~(BodyType a) {
+	return static_cast<BodyType>(~static_cast<uint32_t>(a));
+}
+
+inline BodyType& operator|=(BodyType& a, BodyType b) {
+	a = a | b;
+	return a;
+}
+
+inline BodyType& operator&=(BodyType& a, BodyType b) {
+	a = a & b;
+	return a;
+}
+
+class Entity;
+
+struct BodyData 
+{
+	BodyType group;
+	BodyType mask;
+
+	Entity* OwnerEntity;
+
+};
 
 // Layer that objects can be in, determines which other objects it can collide with
 // Typically you at least want to have 1 layer for moving bodies and 1 layer for static bodies, but you can have more
@@ -142,13 +197,27 @@ class MyContactListener : public ContactListener
 {
 public:
 	// See: ContactListener
-	virtual ValidateResult	OnContactValidate(const Body& inBody1, const Body& inBody2, RVec3Arg inBaseOffset, const CollideShapeResult& inCollisionResult) override
+	virtual ValidateResult OnContactValidate(const Body& inBody1, const Body& inBody2,
+		RVec3Arg inBaseOffset,
+		const CollideShapeResult& inCollisionResult) override
 	{
-		//cout << "Contact validate callback" << endl;
+		auto* props1 = reinterpret_cast<BodyData*>(inBody1.GetUserData());
+		auto* props2 = reinterpret_cast<BodyData*>(inBody2.GetUserData());
 
-		// Allows you to ignore a contact before it is created (using layers to not make objects collide is cheaper!)
+		if (props1 && props2) {
+			// Only allow collision if both:
+			// 1. The first body's group is contained in the second body's mask.
+			// 2. The second body's group is contained in the first body's mask.
+			bool collide1 = (static_cast<uint32_t>(props1->group) & static_cast<uint32_t>(props2->mask)) != 0;
+			bool collide2 = (static_cast<uint32_t>(props2->group) & static_cast<uint32_t>(props1->mask)) != 0;
+
+			if (!collide1 || !collide2)
+				return ValidateResult::RejectContact;
+		}
+
 		return ValidateResult::AcceptAllContactsForThisBodyPair;
 	}
+
 
 	virtual void			OnContactAdded(const Body& inBody1, const Body& inBody2, const ContactManifold& inManifold, ContactSettings& ioSettings) override
 	{
@@ -163,6 +232,43 @@ public:
 	virtual void			OnContactRemoved(const SubShapeIDPair& inSubShapePair) override
 	{
 		//cout << "A contact was removed" << endl;
+	}
+};
+
+class TraceBodyFilter : public BodyFilter
+{
+public:
+	// List of bodies to ignore during the ray cast.
+	std::vector<Body*> ignoreList = {};
+	// Collision mask to filter out bodies that don't belong to the desired groups.
+	BodyType mask = BodyType::GroupHitTest;
+
+	TraceBodyFilter() = default;
+	virtual ~TraceBodyFilter() = default;
+
+	/// Filter function when the Body is locked.
+	virtual bool ShouldCollideLocked(const Body& inBody) const override
+	{
+		// Check if the body is in the ignore list.
+		for (Body* ignored : ignoreList)
+		{
+			if (ignored == &inBody)
+				return false;
+		}
+
+		// Retrieve collision properties from the body's user data.
+		// It is assumed that user data points to a CollisionProperties struct.
+		auto* properties = reinterpret_cast<BodyData*>(inBody.GetUserData());
+		if (properties)
+		{
+			// Check if the body's group is included in our filter's mask.
+			// If the bitwise AND of mask and the body's group is zero, they don't match.
+			if ((static_cast<uint32_t>(mask) & static_cast<uint32_t>(properties->group)) == 0)
+				return false;
+		}
+
+		// Accept the collision if no condition rejects it.
+		return true;
 	}
 };
 
@@ -208,14 +314,20 @@ public:
 	static void DestroyBody(Body* body)
 	{
 
+
 		physicsMainLock.lock();
 
 		bodyInterface->RemoveBody(body->GetID());
 
-		bodyInterface->DestroyBody(body->GetID());
+		// Retrieve and delete collision properties if present.
+		auto* props = reinterpret_cast<BodyData*>(body->GetUserData());
+		if (props)
+			delete props;
 
+		bodyInterface->DestroyBody(body->GetID());
 		physicsMainLock.unlock();
 	}
+
 
 	static void Init()
 	{
@@ -282,37 +394,135 @@ public:
 
 	}
 
-	static Body* CreateBoxBody(vec3 Position, vec3 Size, float Mass = 10, bool Static = false)
+	static Body* CreateBoxBody(Entity* owner, vec3 Position, vec3 Size, float Mass = 10, bool Static = false,
+		BodyType group = BodyType::MainBody,
+		BodyType mask = BodyType::GroupCollisionTest)
 	{
-
+		// Create a box shape (existing code)
 		auto box_shape_settings = new JPH::BoxShapeSettings();
 		box_shape_settings->SetEmbedded();
-		box_shape_settings->mHalfExtent = ToPhysics(Size)/2.0f;
+		box_shape_settings->mHalfExtent = ToPhysics(Size) / 2.0f;
 		JPH::Shape::ShapeResult shape_result = box_shape_settings->Create();
 		JPH::Shape* box_shape = shape_result.Get();
 
 		if (shape_result.HasError())
 			Logger::Log(shape_result.GetError().c_str());
 
+		// Choose a collision layer based on dynamic or static:
 		JPH::BodyCreationSettings body_settings(
-			box_shape,                   // Collision shape (e.g., a box shape)
-			ToPhysics(Position),          // Initial position
-			JPH::Quat::sIdentity(),       // No initial rotation
-			Static ? JPH::EMotionType::Static : JPH::EMotionType::Dynamic,    // Dynamic so that it is affected by forces
-			Static ? Layers::NON_MOVING : Layers::MOVING);          // Collision layer for moving objects
+			box_shape,
+			ToPhysics(Position),
+			JPH::Quat::sIdentity(),
+			Static ? JPH::EMotionType::Static : JPH::EMotionType::Dynamic,
+			Static ? Layers::NON_MOVING : Layers::MOVING);
 
-		body_settings.mOverrideMassProperties = EOverrideMassProperties::CalculateInertia;
+		body_settings.mOverrideMassProperties = JPH::EOverrideMassProperties::CalculateInertia;
 		body_settings.mMassPropertiesOverride.mMass = Mass;
 		body_settings.mFriction = 0.5f;
 
-		JPH::Body* dynamic_body = bodyInterface->CreateBody(body_settings);
+		// Allocate and attach collision properties to the body via the user data field:
+		BodyData* properties = new BodyData{ group, mask, owner };
+		body_settings.mUserData = reinterpret_cast<uintptr_t>(properties);
 
+		JPH::Body* dynamic_body = bodyInterface->CreateBody(body_settings);
 		AddBody(dynamic_body);
 
 		return dynamic_body;
 	}
 
-	static Body* CreateCharacterBody(vec3 Position, float Radius, float Height, float Mass)
+
+	static void Activate(Body* body)
+	{
+
+		bodyInterface->ActivateBody(body->GetID());
+	}
+
+	static void SetGravityFactor(Body* body, float factor)
+	{
+		bodyInterface->SetGravityFactor(body->GetID(), factor);
+	}
+
+
+
+	struct HitResult
+	{
+		bool hasHit;
+		vec3 position;   // World space hit position.
+		vec3 normal;     // World space hit normal.
+		const JPH::Body* hitbody; // ID of the hit body.
+		float fraction;  // Fraction along the ray where the hit occurred.
+	};
+
+	static HitResult LineTrace(vec3 start, vec3 end, BodyType mask = BodyType::GroupHitTest, vector<Body*> ignoreList = {})
+	{
+		HitResult hit;
+
+		// Convert start and end from your own vector type to Jolt's coordinate system.
+		JPH::Vec3 startLoc = ToPhysics(start);
+		JPH::Vec3 endLoc = ToPhysics(end);
+
+		// Set up the ray from startLoc to endLoc.
+		JPH::RRayCast ray;
+		ray.mOrigin = startLoc;
+		JPH::Vec3 ray_dir = endLoc - startLoc;
+		ray.mDirection = ray_dir;
+
+		// Prepare a result structure for the ray cast.
+		JPH::RayCastResult result;
+
+		TraceBodyFilter filter;
+		filter.mask = mask;
+		filter.ignoreList = ignoreList;
+
+		physicsMainLock.lock();
+
+		// Cast the ray using the narrow phase query.
+		bool hasHit = physics_system->GetNarrowPhaseQuery().CastRay(ray, result, {}, {}, filter );
+
+		if (hasHit)
+		{
+			// Calculate fraction of the hit along the ray.
+			hit.fraction = result.mFraction;
+			// Compute the hit position in physics space and convert it back to your coordinate system.
+			hit.position = FromPhysics(ray.GetPointOnRay(result.mFraction));
+
+			// Lock the body using the BodyLockInterface to safely access it.
+			JPH::BodyLockRead body_lock(physics_system->GetBodyLockInterface(), result.mBodyID);
+
+			// Retrieve the hit body's surface normal.
+			// The method GetWorldSpaceSurfaceNormal requires the sub-shape ID and the hit position.
+			const JPH::Body* body = &body_lock.GetBody();
+			if (body)
+			{
+				hit.normal = FromPhysics(body->GetWorldSpaceSurfaceNormal(result.mSubShapeID2, ray.GetPointOnRay(result.mFraction)));
+			}
+			else
+			{
+				hit.normal = vec3(0, 0, 0);
+			}
+
+			// Record the hit body and shape.
+			hit.hitbody = body;
+		}
+		else
+		{
+			// No hit: return the end point, a fraction of 1.0 and zero normal.
+			hit.fraction = 1.0f;
+			hit.position = end;
+			hit.normal = vec3(0, 0, 0);
+			hit.hitbody = nullptr; // Invalid body ID.
+		}
+
+		physicsMainLock.unlock();
+
+		hit.hasHit = hasHit;
+
+		return hit;
+	}
+
+	static Body* CreateCharacterBody(Entity* owner, vec3 Position, float Radius, float Height, float Mass,
+		BodyType group = BodyType::CharacterCapsule,
+		BodyType mask = BodyType::GroupCollisionTest)
 	{
 		// Calculate cylinder portion height (total capsule height = cylinder_height + 2 * radius)
 		float cylinder_half_height = (Height - 2.0f * Radius) / 2.0f;
@@ -348,7 +558,11 @@ public:
 		// Set mass properties
 		body_settings.mOverrideMassProperties = JPH::EOverrideMassProperties::CalculateInertia;
 		body_settings.mMassPropertiesOverride.mMass = Mass;
-		body_settings.mFriction = 0.5f;  // Match box friction
+		body_settings.mFriction = 0.0f;  // Match box friction
+
+		// Allocate and attach collision properties to the body via the user data field:
+		BodyData* properties = new BodyData{ group, mask, owner };
+		body_settings.mUserData = reinterpret_cast<uintptr_t>(properties);
 
 		// Create and add body to world
 		JPH::Body* character_body = bodyInterface->CreateBody(body_settings);

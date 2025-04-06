@@ -118,7 +118,13 @@ public:
         texture = AssetRegistry::GetTextureFromFile("GameData/cat.png");
 
 
-        Level::Current->AddEntity(new Player());
+        auto player = new Player();
+
+        Level::Current->AddEntity(player);
+
+        player->Position = vec3(0,3,0);
+
+        player->Start();
 
         Level::Current->AddEntity(new TestCube(vec3(2, 3, 1)));
         Level::Current->AddEntity(new TestCube(vec3(2, 4, 1)));
@@ -140,7 +146,6 @@ public:
 
     Body* body0;
 
-    Body* bodyCamera;
 
 	void Init()
 	{
@@ -157,7 +162,7 @@ public:
         InitInputs();
 
         skm = new SkeletalMesh();
-        skm->LoadFromFile("GameData/dog.glb");
+        skm->LoadFromFile("GameData/cube.obj");
         skm->ColorTexture = texture;
 
         skm->Size = vec3(30,0.2f,30);
@@ -166,19 +171,18 @@ public:
         animator = roj::Animator(skm->model);
 
 
-        body0 = Physics::CreateBoxBody(skm->Position, skm->Size, 10, true);
+        body0 = Physics::CreateBoxBody(nullptr ,skm->Position, skm->Size, 10, true, BodyType::World);
 
 
 
 
-        bodyCamera = Physics::CreateBoxBody(Camera::position, vec3(0.2),120, false);
 
         animator.set("run");
         animator.play();
 
         animator.update(0.01);
 
-        auto pose = animator.GetBonePoseArray();
+        //auto pose = animator.GetBonePoseArray();
 
         shader = ShaderManager::GetShaderProgram("skeletal");
 
@@ -275,8 +279,6 @@ public:
             msaa = !msaa;
 
         }
-
-        Physics::SetBodyPositionAndRotation(bodyCamera, Camera::position, Camera::rotation);
 
         skm->Position = FromPhysics(body0->GetPosition());
         skm->Rotation = MathHelper::ToYawPitchRoll(FromPhysics(body0->GetRotation()));
