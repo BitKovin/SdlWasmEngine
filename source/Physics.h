@@ -100,7 +100,8 @@ namespace Layers
 {
 	static constexpr ObjectLayer NON_MOVING = 0;
 	static constexpr ObjectLayer MOVING = 1;
-	static constexpr ObjectLayer NUM_LAYERS = 2;
+	static constexpr ObjectLayer TRACE_ONLY = 2;
+	static constexpr ObjectLayer NUM_LAYERS = 3;
 };
 
 /// Class that determines if two object layers can collide
@@ -109,6 +110,10 @@ class ObjectLayerPairFilterImpl : public ObjectLayerPairFilter
 public:
 	virtual bool					ShouldCollide(ObjectLayer inObject1, ObjectLayer inObject2) const override
 	{
+
+		if (inObject1 == Layers::TRACE_ONLY || inObject2 == Layers::TRACE_ONLY)
+			return false;
+
 		switch (inObject1)
 		{
 		case Layers::NON_MOVING:
