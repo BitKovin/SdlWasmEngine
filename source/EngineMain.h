@@ -33,7 +33,7 @@
 
 #include <thread>
 
-
+#include "ImGuiEngineImpl.h"
 
 class EngineMain
 {
@@ -206,6 +206,9 @@ public:
     // Main game loop.
     void MainLoop() {
 
+
+        ImStartFrame();
+
         // Wait for game update here
         Time::Update();
         Input::Update();
@@ -336,10 +339,18 @@ public:
         
         skm->DrawForward(Camera::finalizedView, Camera::finalizedProjection);
 
+        //printf("renderin %i meshes\n", Level::Current->VissibleRenderList.size());
+
         for (IDrawMesh* mesh : Level::Current->VissibleRenderList)
         {
             mesh->DrawForward(Camera::finalizedView, Camera::finalizedProjection);
         }
+
+        bool showdemo = true;
+
+        ImGui::ShowDemoWindow(&showdemo);
+
+        RenderImGui();
 
         SDL_GL_SwapWindow(Window);
 

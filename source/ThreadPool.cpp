@@ -50,7 +50,7 @@ void ThreadPool::QueueJob(const std::function<void()>& job)
 #endif
 }
 
-bool ThreadPool::busy() {
+bool ThreadPool::IsBusy() {
 #ifdef DISABLE_TREADPOOL
 	return false;
 

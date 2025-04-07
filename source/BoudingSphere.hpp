@@ -85,9 +85,12 @@ public:
         return sphere;
     }
 
-    BoudingSphere Transform(vec3 translation)
+    BoudingSphere Transform(vec3 translation, vec3 scale = vec3(1))
     {
-        return BoudingSphere(offset + translation, Radius);
+
+        float s = glm::max(glm::max(scale.x, scale.y), scale.z);
+
+        return BoudingSphere(offset * s + translation, Radius * s);
     }
 
 

@@ -77,6 +77,13 @@ public:
 
 	}
 
+	bool IsInFrustrum(Frustum frustrum) 
+	{
+
+		auto sphere = model->boundingSphere.Transform(Position);
+
+		return frustrum.IsSphereVisible(sphere.offset, sphere.Radius);
+	};
 
 
 	void DrawForward(mat4x4 view, mat4x4 projection)

@@ -13,6 +13,8 @@ public:
 	// http://iquilezles.org/www/articles/frustumcorrect/frustumcorrect.htm
 	bool IsBoxVisible(const glm::vec3& minp, const glm::vec3& maxp) const;
 
+	bool IsSphereVisible(const glm::vec3& center, float radius) const;
+
 private:
 	enum Planes
 	{
@@ -49,6 +51,12 @@ inline Frustum::Frustum(glm::mat4 m)
 	m_planes[Near] = m[3] + m[2];
 	m_planes[Far] = m[3] - m[2];
 
+	// Normalize the planes for accurate distance calculations.
+	for (int i = 0; i < Count; i++) {
+		float length = glm::length(glm::vec3(m_planes[i]));
+		m_planes[i] /= length;
+	}
+
 	glm::vec3 crosses[Combinations] = {
 		glm::cross(glm::vec3(m_planes[Left]),   glm::vec3(m_planes[Right])),
 		glm::cross(glm::vec3(m_planes[Left]),   glm::vec3(m_planes[Bottom])),
@@ -75,8 +83,8 @@ inline Frustum::Frustum(glm::mat4 m)
 	m_points[5] = intersection<Left, Top, Far>(crosses);
 	m_points[6] = intersection<Right, Bottom, Far>(crosses);
 	m_points[7] = intersection<Right, Top, Far>(crosses);
-
 }
+
 
 
 inline bool Frustum::IsBoxVisible(const glm::vec3& minp, const glm::vec3& maxp) const
@@ -108,6 +116,25 @@ inline bool Frustum::IsBoxVisible(const glm::vec3& minp, const glm::vec3& maxp) 
 
 	return true;
 }
+
+inline bool Frustum::IsSphereVisible(const glm::vec3& center, float radius) const
+{
+	// Check against each plane in the frustum
+	for (int i = 0; i < Count; i++)
+	{
+		// Calculate the signed distance from the sphere center to the plane.
+		float distance = glm::dot(m_planes[i], glm::vec4(center, 1.0f));
+
+		// If the distance is less than -radius, the sphere is completely outside this plane.
+		if (distance < -radius)
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
 
 template<Frustum::Planes a, Frustum::Planes b, Frustum::Planes c>
 inline glm::vec3 Frustum::intersection(const glm::vec3* crosses) const

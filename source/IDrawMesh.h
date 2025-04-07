@@ -4,6 +4,9 @@
 
 #include "glm.h"
 
+#include "FrustrumCull.hpp"
+#include "Camera.h"
+
 class IDrawMesh : public EObject
 {
 
@@ -17,7 +20,9 @@ public:
 
 	virtual void FinalizeFrameData(){}
 
-	virtual bool IsCameraVisible() { return true; }
+	virtual bool IsCameraVisible() { return IsInFrustrum(Camera::frustum); }
 	virtual bool IsShadowVisible() { return true; }
+
+	virtual bool IsInFrustrum(Frustum frustrum) { return true; };
 
 };

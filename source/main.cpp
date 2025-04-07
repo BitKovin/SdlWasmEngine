@@ -9,6 +9,10 @@
 #include <emscripten/html5.h>
 #endif 
 
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_opengl3.h"
+#include "imgui/imgui_impl_sdl2.h"
+
 #include "gl.h"
 
 
@@ -180,7 +184,12 @@ void desktop_render_loop()
 #endif
 
         // Handle events
-        while (SDL_PollEvent(&event)) {
+        while (SDL_PollEvent(&event)) 
+        {
+
+            ImGui_ImplSDL2_ProcessEvent(&event);
+
+
             if (event.type == SDL_QUIT)
                 quit = 1;
 
@@ -197,6 +206,23 @@ void desktop_render_loop()
     }
 }
 
+void InitImGui()
+{
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+
+    // Setup Dear ImGui style
+    ImGui::StyleColorsDark();
+    //ImGui::StyleColorsLight();
+
+    // Setup Platform/Renderer backends
+    ImGui_ImplSDL2_InitForOpenGL(window, glContext);
+    ImGui_ImplOpenGL3_Init();
+}
 
 void emscripten_render_loop()
 {
@@ -233,6 +259,8 @@ void emscripten_render_loop()
     SDL_Event event;
     while (SDL_PollEvent(&event))
 	{
+        ImGui_ImplSDL2_ProcessEvent(&event);
+
         switch (event.type)
         {
             break;
@@ -332,8 +360,10 @@ int main(int argc, char* args[]) {
     }
 #endif
 
+    InitImGui();
+
     SDL_SetHintWithPriority(SDL_HINT_MOUSE_RELATIVE_MODE_WARP, "1", SDL_HINT_OVERRIDE);
-    SDL_SetRelativeMouseMode(SDL_TRUE);
+    //SDL_SetRelativeMouseMode(SDL_TRUE);
     
 
     printf("GL Version={%s}\n", glGetString(GL_VERSION));

@@ -96,7 +96,7 @@ public:
 
 	void Start()
 	{
-		LeadBody = Physics::CreateCharacterBody(this, Position, 0.5, 1.8, 70, BodyType::CharacterCapsule, BodyType::World);
+		LeadBody = Physics::CreateCharacterBody(this, Position, 0.5, 1.8, 70);
         Physics::SetGravityFactor(LeadBody, 3);
 	}
 
