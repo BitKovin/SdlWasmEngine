@@ -33,6 +33,7 @@ target_link_libraries(a PRIVATE "${CMAKE_SOURCE_DIR}/libsEms/libassimp.a" "${CMA
     target_link_options(a PRIVATE
     "SHELL:-s USE_SDL=2"
     "SHELL:-s USE_SDL_IMAGE=2"
+    "SHELL:-s USE_SDL_TTF=2"
     "SHELL:-s USE_SDL_MIXER=2"
     "SHELL:-s SDL2_IMAGE_FORMATS=[png]"
     "SHELL:-s USE_WEBGL2=1"

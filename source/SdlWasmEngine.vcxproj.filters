@@ -31,6 +31,9 @@
     <Filter Include="Source Files\ImGui">
       <UniqueIdentifier>{10a640a6-c40d-47d6-b55a-f5965e922530}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\UI">
+      <UniqueIdentifier>{754d4e2a-67b8-4b50-82d5-afc7b64c960c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -116,6 +119,12 @@
     </ClCompile>
     <ClCompile Include="imgui\imgui_impl_opengl3.cpp">
       <Filter>Source Files\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\UiRenderer.cpp">
+      <Filter>Header Files\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\UiElement.cpp">
+      <Filter>Header Files\UI</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -238,6 +247,21 @@
     </ClInclude>
     <ClInclude Include="imgui\imgui_impl_opengl3_loader.h">
       <Filter>Header Files\ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\UiElement.h">
+      <Filter>Header Files\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\UiRenderer.h">
+      <Filter>Header Files\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\UiImage.hpp">
+      <Filter>Header Files\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\UiViewport.hpp">
+      <Filter>Header Files\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\UiText.hpp">
+      <Filter>Header Files\UI</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

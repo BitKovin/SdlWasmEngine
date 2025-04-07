@@ -189,7 +189,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_image.lib;OpenAL32.lib;glew32.lib;glew32s.lib;opengl32.lib;assimp-vc143-mt.lib;Jolt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_image.lib;SDL2_ttf.lib;OpenAL32.lib;glew32.lib;glew32s.lib;opengl32.lib;assimp-vc143-mt.lib;Jolt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -208,7 +208,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_image.lib;OpenAL32.lib;glew32.lib;glew32s.lib;opengl32.lib;assimp-vc143-mt.lib;Jolt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_image.lib;SDL2_ttf.lib;OpenAL32.lib;glew32.lib;glew32s.lib;opengl32.lib;assimp-vc143-mt.lib;Jolt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
   </ItemDefinitionGroup>
@@ -226,7 +226,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_image.lib;OpenAL32.lib;glew32.lib;glew32s.lib;opengl32.lib;assimp-vc143-mt.lib;Jolt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_image.lib;SDL2_ttf.lib;OpenAL32.lib;glew32.lib;glew32s.lib;opengl32.lib;assimp-vc143-mt.lib;Jolt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -257,6 +257,8 @@
     <ClCompile Include="StaticMesh.hpp" />
     <ClCompile Include="ThreadPool.cpp" />
     <ClCompile Include="Time.cpp" />
+    <ClCompile Include="UI\UiElement.cpp" />
+    <ClCompile Include="UI\UiRenderer.cpp" />
     <ClCompile Include="utils.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -298,6 +300,11 @@
     <ClInclude Include="TextureCube.hpp" />
     <ClInclude Include="ThreadPool.h" />
     <ClInclude Include="Time.hpp" />
+    <ClInclude Include="UI\UiElement.h" />
+    <ClInclude Include="UI\UiImage.hpp" />
+    <ClInclude Include="UI\UiRenderer.h" />
+    <ClInclude Include="UI\UiText.hpp" />
+    <ClInclude Include="UI\UiViewport.hpp" />
     <ClInclude Include="utils.hpp" />
     <ClInclude Include="VertexData.h" />
   </ItemGroup>

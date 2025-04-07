@@ -35,6 +35,11 @@
 
 #include "ImGuiEngineImpl.h"
 
+#include "UI/UiImage.hpp"
+
+#include "UI/UiViewport.hpp"
+#include "UI/UiText.hpp"
+
 class EngineMain
 {
 private:
@@ -48,6 +53,8 @@ public:
 	SDL_Window* Window = nullptr;
 
 	static EngineMain* MainInstance;
+
+    static UiViewport Viewport;
 
 	EngineMain(SDL_Window* window)
 	{
@@ -73,51 +80,6 @@ public:
         auto sound = SoundManager::GetSoundFromPath("GameData/bass_beat.wav");
 
         sound.Loop = true;
-
-        //sound.Play();
-
-        // Fullscreen quad vertices using proper texture coordinates
-        std::vector<VertexData> vertices;
-        vertices.reserve(4);  // Pre-allocate memory
-
-        // Top Right
-        VertexData v1;
-        v1.Position = glm::vec3(1.0f, 1.0f, 0.0f);
-        v1.TextureCoordinate = glm::vec2(1.0f, 0.0f);
-        v1.Color = glm::vec4(1.0f);
-        vertices.push_back(v1);
-
-        // Bottom Right
-        VertexData v2;
-        v2.Position = glm::vec3(1.0f, -1.0f, 0.0f);
-        v2.TextureCoordinate = glm::vec2(1.0f, 1.0f);
-        v2.Color = glm::vec4(1.0f);
-        vertices.push_back(v2);
-
-        // Bottom Left
-        VertexData v3;
-        v3.Position = glm::vec3(-1.0f, -1.0f, 0.0f);
-        v3.TextureCoordinate = glm::vec2(0.0f, 1.0f);
-        v3.Color = glm::vec4(1.0f);
-        vertices.push_back(v3);
-
-        // Top Left
-        VertexData v4;
-        v4.Position = glm::vec3(-1.0f, 1.0f, 0.0f);
-        v4.TextureCoordinate = glm::vec2(0.0f, 0.0f);
-        v4.Color = glm::vec4(1.0f);
-        vertices.push_back(v4);
-
-        std::vector<GLuint> indices = { 0, 1, 2, 0, 2, 3 };
-
-        // Create buffers
-        auto vb = new VertexBuffer(vertices, VertexData::Declaration());
-        auto ib = new IndexBuffer(indices);
-        auto vao = new VertexArrayObject(*vb, *ib);
-
-        mesh = new StaticMesh();
-
-        mesh->vao = vao;
 
 
         texture = AssetRegistry::GetTextureFromFile("GameData/cat.png");
@@ -151,6 +113,9 @@ public:
 
     Body* body0;
 
+    std::shared_ptr<UiImage> img;
+
+    std::shared_ptr<UiText> text;
 
 	void Init()
 	{
@@ -162,6 +127,8 @@ public:
         Time::Init();
 
         Physics::Init();
+
+        UiRenderer::Init();
 
         Level::OpenLevel();
 
@@ -179,7 +146,7 @@ public:
         animator = roj::Animator(skm->model);
 
 
-        body0 = Physics::CreateBoxBody(nullptr ,skm->Position, skm->Size, 10, true, BodyType::World);
+        body0 = Physics::CreateBoxBody(nullptr, skm->Position, skm->Size, 10, true, BodyType::World);
 
 
 
@@ -192,6 +159,22 @@ public:
 
         shader = ShaderManager::GetShaderProgram("skeletal");
 
+        img = make_shared<UiImage>();
+
+        img->position = vec2(100,100);
+        img->size = vec2(100);
+
+        text = make_shared<UiText>();
+
+        text->position = vec2(0, 0);
+
+        text->origin = vec2(0, 1);
+        text->pivot = vec2(0, 1);
+
+        text->text = "text text";
+
+        Viewport.AddChild(img);
+        Viewport.AddChild(text);
 
 	}
 
@@ -212,6 +195,7 @@ public:
         Input::Update();
 
         Level::Current->FinalizeFrame();
+        Viewport.FinalizeChildren();
 
         int x, y;
         SDL_GetWindowSize(Window, &x, &y);
@@ -298,9 +282,6 @@ public:
 
 		animator.update(Time::DeltaTimeF);
 
-
-       
-
 	}
 
 	void Render()
@@ -351,6 +332,12 @@ public:
         bool showdemo = true;
 
         ImGui::ShowDemoWindow(&showdemo);
+
+        glDisable(GL_DEPTH_TEST);
+
+        Viewport.Update();
+
+        Viewport.Draw();
 
         RenderImGui();
 

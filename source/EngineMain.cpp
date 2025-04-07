@@ -2,6 +2,8 @@
 
 EngineMain* EngineMain::MainInstance = nullptr;
 
+UiViewport EngineMain::Viewport;
+
 void EngineMain::InitInputs()
 {
     Input::AddAction("forward")->AddKeyboardKey(SDL_GetScancodeFromKey(SDL_KeyCode::SDLK_w));

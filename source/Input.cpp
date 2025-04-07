@@ -15,7 +15,7 @@ std::vector<glm::vec2> Input::MouseDeltas;
 int Input::MaxDeltas = 1;
 std::unordered_map<std::string, InputAction*> Input::actions;
 bool Input::LockCursor = false;
-float Input::sensitivity = 0.2f;
+float Input::sensitivity = 0.22f;
 glm::vec2 Input::windowCenter;
 bool Input::PendingCenterCursor = false;
 bool Input::PendingWindowStateReset = false;

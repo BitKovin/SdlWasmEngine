@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <SDL2/SDL.h>
-//#include <SDL2/SDL_image.h>
+#include <SDL2/SDL_ttf.h>
 #if DESKTOP
 #else
 #include <emscripten.h>
@@ -296,12 +296,15 @@ void emscripten_render_loop()
 
 }
 
-int main(int argc, char* args[]) {
+int main(int argc, char* args[]) 
+{
     // Initialize SDL
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_JOYSTICK) < 0) {
         fprintf(stderr, "SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
         return 1;
     }
+
+
     
 #if DESKTOP
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
@@ -346,6 +349,8 @@ int main(int argc, char* args[]) {
         return 1;
     }
    
+    TTF_Init();
+
 #if WINDOWS
 
     InitDirectInput(window);
