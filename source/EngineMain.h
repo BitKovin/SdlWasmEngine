@@ -183,8 +183,6 @@ public:
 
 
 
-
-
         animator.set("run");
         animator.play();
 
@@ -217,6 +215,8 @@ public:
 
         int x, y;
         SDL_GetWindowSize(Window, &x, &y);
+
+
         float AspectRatio = static_cast<float>(x) / static_cast<float>(y);
         Camera::AspectRatio = AspectRatio;
 
@@ -285,6 +285,8 @@ public:
             GLint samples = 0;
             glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &samples);
             std::cout << "Samples: " << samples << std::endl;
+
+            Input::LockCursor = !Input::LockCursor;
 
             msaa = !msaa;
 

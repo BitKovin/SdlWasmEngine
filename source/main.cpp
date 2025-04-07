@@ -224,10 +224,10 @@ void InitImGui()
     ImGui_ImplOpenGL3_Init();
 }
 
+int curH, curW = -1;
+
 void emscripten_render_loop()
 {
-
-
 
     int x, y;
 
@@ -241,9 +241,17 @@ void emscripten_render_loop()
     int width = canvas_get_width();
     int height = canvas_get_height();
 
-    update_screen_size(width, height);
+    if (width != curW || height != curH)
+    {
+        update_screen_size(width, height);
+        //Logger::Log(std::to_string(width) + "  " + std::to_string(height));
+    }
+    
 
-    Logger::Log(std::to_string(width) + "  " + std::to_string(height));
+    curW = width;
+    curH = height;
+
+    
 
 #endif // DESKTOP == FALSE
 

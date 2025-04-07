@@ -18,6 +18,7 @@ bool Input::LockCursor = false;
 float Input::sensitivity = 0.2f;
 glm::vec2 Input::windowCenter;
 bool Input::PendingCenterCursor = false;
+bool Input::PendingWindowStateReset = false;
 MouseMoveCalculator* Input::mouseMoveCalculator = nullptr;
 SDL_Window* Input::window = nullptr;
 SDL_Joystick* Input::joystick = nullptr;
@@ -76,6 +77,32 @@ void Input::JoystickCamera() {
         MouseDelta = MouseDelta + stickDelta * ((float)Time::DeltaTime * 200.f);
     }
 }
+
+#ifdef __EMSCRIPTEN__
+#include <emscripten/emscripten.h>
+
+EM_JS(void, release_cursor_js, (), {
+    // Ensure that the pointer lock is active on the canvas
+    if (document.pointerLockElement === Module['canvas']) {
+      document.exitPointerLock();
+    }
+   else {
+  console.warn('Pointer lock is not active on the canvas.');
+}
+    });
+
+EM_JS(void, lock_cursor_js, (), {
+  if (Module['canvas']) {
+    Module['canvas'].requestPointerLock();
+  }
+ else {
+console.warn('Canvas element not found for pointer lock.');
+}
+    });
+
+#endif // __EMSCRIPTEN
+
+
  
 void Input::UpdateMouse() {
     int x, y;
@@ -86,15 +113,31 @@ void Input::UpdateMouse() {
 
     MousePos = mousePos;
 
+
+
     JoystickCamera();
 
+    bool currentMouse = SDL_GetRelativeMouseMode();
+
+    if(LockCursor != currentMouse)
     if (LockCursor)
     {
-        //SDL_SetRelativeMouseMode(SDL_TRUE);
+        SDL_SetRelativeMouseMode(SDL_TRUE);
+        printf("locking cursor\n");
+        PendingWindowStateReset = true;
+
+#ifdef __EMSCRIPTEN__
+        lock_cursor_js();
+#endif // 
     }
     else
     {
-        //SDL_SetRelativeMouseMode(SDL_FALSE);
+#ifdef __EMSCRIPTEN__
+        release_cursor_js();
+#endif // 
+        SDL_SetRelativeMouseMode(SDL_FALSE);
+        printf("unlocking cursor\n");
+        PendingWindowStateReset = true;
     }
 
 }

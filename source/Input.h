@@ -39,6 +39,8 @@ public:
     static glm::vec2 windowCenter;
     static bool PendingCenterCursor;
 
+    static bool PendingWindowStateReset;
+
     // Optional custom mouse movement calculator
     static MouseMoveCalculator* mouseMoveCalculator;
 
