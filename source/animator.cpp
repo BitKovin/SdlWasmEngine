@@ -107,7 +107,7 @@ roj::Animator::Animator(SkinnedModel* model)
 
     for (int i = 0; i < m_boneMatrices.size(); i++)
     {
-        m_boneMatrices[i] = identity<mat4>();
+        m_boneMatrices[i] = glm::identity<mat4>();
     }
 
 }

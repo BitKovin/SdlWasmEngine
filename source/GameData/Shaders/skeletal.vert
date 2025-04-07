@@ -5,6 +5,7 @@ layout(location = 1) in vec3 Normal;
 layout(location = 2) in vec2 TextureCoordinate;
 layout(location = 5) in ivec4 boneIds; 
 layout(location = 6) in vec4 weights;
+layout(location = 7) in vec3 smoothNormals;
 	
 uniform mat4 projection;
 uniform mat4 view;

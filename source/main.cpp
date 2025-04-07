@@ -22,7 +22,6 @@ void update_screen_size(int w, int h)
     SDL_SetWindowSize(window, w, h);
 }
 
-#include "render.h"
 #include "SoundSystem/SoundManager.hpp"
 
 #include "EngineMain.h"

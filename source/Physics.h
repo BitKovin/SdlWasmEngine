@@ -300,19 +300,19 @@ private:
 
 	static vector<Body*> existingBodies;
 
-	static mutex physicsMainLock;
+	//static mutex physicsMainLock;
 
 public:
 	
 	static void AddBody(Body* body)
 	{
-		physicsMainLock.lock();
+		//physicsMainLock.lock();
 
 		existingBodies.push_back(body);
 
 		bodyInterface->AddBody(body->GetID(), JPH::EActivation::Activate);
 
-		physicsMainLock.unlock();
+		//physicsMainLock.unlock();
 
 	}
 
@@ -320,7 +320,7 @@ public:
 	{
 
 
-		physicsMainLock.lock();
+		//physicsMainLock.lock();
 
 		bodyInterface->RemoveBody(body->GetID());
 
@@ -330,7 +330,7 @@ public:
 			delete props;
 
 		bodyInterface->DestroyBody(body->GetID());
-		physicsMainLock.unlock();
+		//physicsMainLock.unlock();
 	}
 
 
@@ -389,9 +389,9 @@ public:
 
 	static void Simulate()
 	{
-		physicsMainLock.lock();
+		//physicsMainLock.lock();
 		physics_system->Update(Time::DeltaTime, 1, tempMemAllocator, threadPool);
-		physicsMainLock.unlock();
+		//physicsMainLock.unlock();
 	}
 
 	static void Update()
@@ -479,7 +479,7 @@ public:
 		filter.mask = mask;
 		filter.ignoreList = ignoreList;
 
-		physicsMainLock.lock();
+		//physicsMainLock.lock();
 
 		// Cast the ray using the narrow phase query.
 		bool hasHit = physics_system->GetNarrowPhaseQuery().CastRay(ray, result, {}, {}, filter );
@@ -518,7 +518,7 @@ public:
 			hit.hitbody = nullptr; // Invalid body ID.
 		}
 
-		physicsMainLock.unlock();
+		//physicsMainLock.unlock();
 
 		hit.hasHit = hasHit;
 

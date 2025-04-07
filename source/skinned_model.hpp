@@ -3,6 +3,10 @@
 #include "model.hpp"
 #include <unordered_map>
 
+#include <vector>
+
+#include "BoudingSphere.hpp"
+
 #define MAX_BONE_INFLUENCE 4
 
 namespace roj
@@ -14,6 +18,10 @@ namespace roj
 		VertexBuffer* vertices;
 		IndexBuffer* indices;
 		VertexArrayObject* VAO;
+
+		std::vector<MeshTexture> textures;
+
+		string name;
 
 	};
 
@@ -58,6 +66,9 @@ namespace roj
 		std::vector<SkinnedMesh> meshes;
 		std::unordered_map<std::string, BoneInfo> boneInfoMap;
 		std::unordered_map<std::string, Animation> animations;
+
+		BoudingSphere boundingSphere;
+
 		std::vector<SkinnedMesh>::iterator begin();
 		std::vector<SkinnedMesh>::iterator end();
 		void clear();

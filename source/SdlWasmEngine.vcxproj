@@ -248,16 +248,19 @@
     <ClCompile Include="skinned_model.cpp" />
     <ClCompile Include="SoundSystem\SoundManager.cpp" />
     <ClCompile Include="StaticMesh.hpp" />
+    <ClCompile Include="ThreadPool.cpp" />
     <ClCompile Include="Time.cpp" />
     <ClCompile Include="utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="animator.hpp" />
     <ClInclude Include="AssetRegisty.h" />
+    <ClInclude Include="BoudingSphere.hpp" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="EngineMain.h" />
     <ClInclude Include="Entities\Player.hpp" />
     <ClInclude Include="Entities\TestCube.hpp" />
+    <ClInclude Include="FrustrumCull.hpp" />
     <ClInclude Include="gl.h" />
     <ClInclude Include="glm.h" />
     <ClInclude Include="IDrawMesh.h" />
@@ -268,7 +271,6 @@
     <ClInclude Include="model.hpp" />
     <ClInclude Include="PhysicsConverter.h" />
     <ClInclude Include="PhysicsHelper.h" />
-    <ClInclude Include="render.h" />
     <ClInclude Include="Shader.hpp" />
     <ClInclude Include="ShaderManager.h" />
     <ClInclude Include="SkeletalMesh.hpp" />
@@ -277,6 +279,7 @@
     <ClInclude Include="SoundSystem\SoundManager.hpp" />
     <ClInclude Include="Texture.hpp" />
     <ClInclude Include="TextureCube.hpp" />
+    <ClInclude Include="ThreadPool.h" />
     <ClInclude Include="Time.hpp" />
     <ClInclude Include="utils.hpp" />
     <ClInclude Include="VertexData.h" />

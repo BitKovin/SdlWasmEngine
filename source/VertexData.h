@@ -165,7 +165,7 @@ struct VertexData {
     int BlendIndices[4] = {0,0,0,0};
     glm::vec4 BlendWeights = vec4();
     glm::vec3 SmoothNormal = vec3();
-    glm::vec4 Color = vec4();
+    glm::vec4 Color = vec4(1);
 
     static VertexDeclaration Declaration() {
         return VertexDeclaration({

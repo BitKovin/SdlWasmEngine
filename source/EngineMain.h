@@ -27,9 +27,13 @@
 
 #include "SkeletalMesh.hpp"
 
+#include "ThreadPool.h"
+
 #include <future>
 
 #include <thread>
+
+
 
 class EngineMain
 {
@@ -54,6 +58,7 @@ public:
 
 	}
 
+    ThreadPool MainThreadPool;
 
     void ToggleFullscreen(SDL_Window* Window)
     {
@@ -149,6 +154,9 @@ public:
 
 	void Init()
 	{
+
+        MainThreadPool.Start();
+
         SoundManager::Initialize();
 
         Time::Init();
@@ -244,7 +252,6 @@ public:
         if (Input::GetAction("fullscreen")->Pressed())
         {
             ToggleFullscreen(Window);
-            printf("framerate: %f  \n", (1 / Time::DeltaTime));
         }
 
     }
@@ -273,7 +280,7 @@ public:
             printf("framerate: %f  \n", (1 / Time::DeltaTime));
 
             GLint samples = 0;
-            glGetIntegerv(GL_SAMPLES, &samples);
+            glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &samples);
             std::cout << "Samples: " << samples << std::endl;
 
             msaa = !msaa;

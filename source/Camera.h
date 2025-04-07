@@ -5,6 +5,7 @@
 #include <vector>
 #include "MathHelper.hpp"  // Your MathHelper functions declared in the RetroEngine namespace
 
+#include "FrustrumCull.hpp"
 
 struct CameraShake;
 
@@ -30,8 +31,7 @@ public:
 	static vec3 finalizedPosition;
 	static vec3 finalizedRotation;
 
-	static mat4 frustum;
-	static mat4 frustumOcclusion;
+	static Frustum frustum;
 
 	static float FOV;
 	static float ViewmodelFOV;

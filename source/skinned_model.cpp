@@ -95,8 +95,11 @@ static void extractAnimations(const aiScene* scene, roj::SkinnedModel& model)
 	}
 }
 
+
 namespace roj
 {
+
+
 
 	template class ModelLoader<SkinnedMesh>;
 
@@ -120,6 +123,7 @@ namespace roj
 			if (mesh->HasNormals())
 			{
 				vertex.Normal = { mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z };
+				vertex.SmoothNormal = vertexNormals[vertex.Position];
 			}
 			if (mesh->mTextureCoords[0])
 			{
@@ -130,8 +134,11 @@ namespace roj
 			else
 				vertex.TextureCoordinate = glm::vec2(0.0f, 0.0f);
 
+
+
 			std::fill(vertex.BlendIndices, vertex.BlendIndices + MAX_BONE_INFLUENCE, 0);
-			//std::fill(vertex.BlendWeights, vertex.BlendWeights + MAX_BONE_INFLUENCE, 0.0f);
+
+
 
 			vertices.push_back(vertex);
 		}
@@ -157,14 +164,60 @@ namespace roj
 		skinMesh.vertices = new VertexBuffer(vertices, VertexData::Declaration());
 
 		skinMesh.indices = new IndexBuffer(indices);
-		//skinMesh.textures = textures;
+		skinMesh.textures = textures;
+
+		skinMesh.name = mesh->mName.C_Str();
 
 		return skinMesh;
 	}
 
 	template<>
+	void ModelLoader<SkinnedMesh>::processNodeVertices(aiNode* node, const aiScene* scene)
+	{
+
+		for (uint32_t i = 0; i < node->mNumMeshes; i++)
+		{
+			aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+			for (uint32_t i = 0; i < mesh->mNumFaces; i++)
+			{
+				for (uint32_t i = 0; i < mesh->mNumVertices; i++)
+				{
+					VertexData vertex;
+					vertex.Position = { mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z };
+					if (mesh->HasNormals())
+					{
+						vertex.Normal = { mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z };
+					}
+
+					if (vertexNormals.contains(vertex.Position))
+					{
+						vertexNormals[vertex.Position] += vertex.Normal;
+						vertexNormalsN[vertex.Position]++;
+					}
+					else
+					{
+						vertexNormals[vertex.Position] = vertex.Normal;
+						vertexNormalsN[vertex.Position] = 1;
+					}
+
+					vertexPositions.push_back(vertex.Position);
+
+				}
+
+			}
+		}
+
+		for (uint32_t i = 0; i < node->mNumChildren; i++)
+		{
+			processNodeVertices(node->mChildren[i], scene);
+		}
+
+	}
+
+	template<>
 	void ModelLoader<SkinnedMesh>::processNode(aiNode* node, const aiScene* scene)
 	{
+
 		for (uint32_t i = 0; i < node->mNumMeshes; i++)
 		{
 			aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
@@ -184,7 +237,7 @@ namespace roj
 		Assimp::Importer importer;
 
 		const aiScene* scene = m_import.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
-		m_relativeDir = "GameData/";// static_cast<std::filesystem::path>(path).parent_path().string();
+		m_relativeDir = "GameData/";//static_cast<std::filesystem::path>(path).parent_path().string();
 
 		if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
 		{
@@ -194,6 +247,13 @@ namespace roj
 		m_model.globalInversed = glm::inverse(toGlmMat4(scene->mRootNode->mTransformation));
 		m_model.sceneCamera = (scene->HasCameras()) ? scene->mCameras[0] : nullptr;
 
+		processNodeVertices(scene->mRootNode, scene);
+
+		for (auto& v : vertexNormals)
+		{
+			vertexNormals[v.first] = v.second / vertexNormalsN[v.first];
+		}
+
 		processNode(scene->mRootNode, scene);
 
 		for (SkinnedMesh& mesh : m_model)
@@ -201,7 +261,12 @@ namespace roj
 			mesh.VAO = new VertexArrayObject(*mesh.vertices, *mesh.indices);
 		}
 
+
+
 		extractAnimations(scene, m_model);
+
+		m_model.boundingSphere = BoudingSphere::FromPoints(vertexPositions);
+
 		return true;
 	}
 }
