@@ -233,6 +233,7 @@
     <ClCompile Include="animator.cpp" />
     <ClCompile Include="AssetRegistry.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="DebugDraw.cpp" />
     <ClCompile Include="EngineMain.cpp" />
     <ClCompile Include="Entity.hpp" />
     <ClCompile Include="EObject.hpp" />

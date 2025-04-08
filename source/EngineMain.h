@@ -35,6 +35,8 @@
 
 #include "ImGuiEngineImpl.h"
 
+#include "DebugDraw.hpp"
+
 #include "UI/UiButton.hpp"
 
 #include "UI/UiViewport.hpp"
@@ -55,7 +57,6 @@ public:
 	static EngineMain* MainInstance;
 
     static UiViewport Viewport;
-
 
 	EngineMain(SDL_Window* window)
 	{
@@ -106,8 +107,6 @@ public:
 
 
 
-    roj::Animator animator;
-
     ShaderProgram* shader;
 
     SkeletalMesh* skm;
@@ -149,17 +148,14 @@ public:
         skm->Size = vec3(30,0.2f,30);
 
 
-        animator = roj::Animator(skm->model);
 
 
         body0 = Physics::CreateBoxBody(nullptr, skm->Position, skm->Size, 10, true, BodyType::World);
 
 
 
-        animator.set("run");
-        animator.play();
+        skm->PlayAnimation("run");
 
-        animator.update(0.01);
 
         //auto pose = animator.GetBonePoseArray();
 
@@ -211,6 +207,7 @@ public:
 
         Level::Current->FinalizeFrame();
         Viewport.FinalizeChildren();
+        DebugDraw::Finalize();
 
         int x, y;
         SDL_GetWindowSize(Window, &x, &y);
@@ -221,7 +218,7 @@ public:
         Camera::AspectRatio = AspectRatio;
 
         if (Input::GetAction("test")->Pressed())
-            animator.play();
+            skm->PlayAnimation();
 
         Camera::Update(Time::DeltaTime);
         Input::UpdateMouse();
@@ -292,11 +289,11 @@ public:
 
         }
 
+        skm->Update();
+
         skm->Position = FromPhysics(body0->GetPosition());
         skm->Rotation = MathHelper::ToYawPitchRoll(FromPhysics(body0->GetRotation()));
 
-
-		animator.update(Time::DeltaTimeF);
 
 	}
 
@@ -333,8 +330,6 @@ public:
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
-        skm->boneTransforms = animator.getBoneMatrices();
         
         skm->DrawForward(Camera::finalizedView, Camera::finalizedProjection);
 
@@ -344,6 +339,8 @@ public:
         {
             mesh->DrawForward(Camera::finalizedView, Camera::finalizedProjection);
         }
+
+        DebugDraw::Draw();
 
         bool showdemo = true;
 

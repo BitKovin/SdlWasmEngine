@@ -17,54 +17,70 @@
 
 #include "animator.hpp"
 
+#include "StaticMesh.hpp"
+
+#include "Time.hpp"
+
 using namespace std;
 
-class SkeletalMesh : public IDrawMesh
+class SkeletalMesh : public StaticMesh
 {
-
 private:
-
-	vec3 finalPosition = vec3(0);
-	vec3 finalRotation = vec3(0);
-	vec3 finalSize = vec3(0);
 
 	roj::Animator animator;
 
-public:
-
-	roj::SkinnedModel* model = nullptr;
-
 	std::vector<mat4> boneTransforms;
 
-	Texture* ColorTexture = nullptr;
+	std::vector<mat4> finalizedBoneTransforms;
 
-	vec3 Position = vec3(0);
-	vec3 Rotation = vec3(0);
-	vec3 Size = vec3(1);
 
-	SkeletalMesh()
+protected:
+
+	void ApplyAdditionalShaderParams(ShaderProgram* shader_program)
 	{
-
+		for (int i = 0; i < finalizedBoneTransforms.size(); ++i)
+			shader_program->SetUniform("finalBonesMatrices[" + std::to_string(i) + "]", finalizedBoneTransforms[i]);
 	}
-	~SkeletalMesh()
-	{
 
+public:
+
+	void PlayAnimation(string name)
+	{
+		animator.set(name);
+		animator.play();
 	}
 
 	void FinalizeFrameData()
 	{
-		finalPosition = Position;
-		finalRotation = Rotation;
-		finalSize = Size;
+		StaticMesh::FinalizeFrameData();
+		finalizedBoneTransforms = boneTransforms;
 	}
 
+	void PlayAnimation()
+	{
+		animator.play();
+	}
 
+	void Update(float timeScale = 1)
+	{
+		animator.update(Time::DeltaTimeF * timeScale);
+		boneTransforms = animator.getBoneMatrices();
+	}
 
-	//obj or gml files are strongly recommended
-	void LoadFromFile(const string& path)
+	void SetLooped(bool looped)
+	{
+		animator.Loop = looped;
+	}
+
+	bool GetLooped()
+	{
+		return animator.Loop;
+	}
+
+	void LoadFromFile(string path)
 	{
 
-		model = AssetRegistry::GetSkinnedModelFromFile(path);
+		StaticMesh::LoadFromFile(path);
 
 		boneTransforms.resize(model->boneInfoMap.size());
 
@@ -74,99 +90,6 @@ public:
 		}
 
 		animator = roj::Animator(model);
-
 	}
-
-	bool IsInFrustrum(Frustum frustrum) 
-	{
-
-		auto sphere = model->boundingSphere.Transform(Position);
-
-		return frustrum.IsSphereVisible(sphere.offset, sphere.Radius);
-	};
-
-
-	void DrawForward(mat4x4 view, mat4x4 projection)
-	{
-
-		ShaderProgram* shader_program = ShaderManager::GetShaderProgram("skeletal");
-
-		shader_program->UseProgram();
-
-		shader_program->SetTexture("u_texture", ColorTexture);
-
-
-		mat4x4 world = translate(finalPosition) * MathHelper::GetRotationMatrix(finalRotation) * scale(finalSize);
-
-		shader_program->SetUniform("view", view);
-		shader_program->SetUniform("projection", projection);
-
-		shader_program->SetUniform("world", world);
-
-		for (int i = 0; i < boneTransforms.size(); ++i)
-			shader_program->SetUniform("finalBonesMatrices[" + std::to_string(i) + "]", boneTransforms[i]);
-
-
-		for (const roj::SkinnedMesh& mesh : model->meshes)
-		{
-			mesh.VAO->Bind();
-			glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(mesh.VAO->IndexCount), GL_UNSIGNED_INT, 0);
-		}
-
-
-	}
-
-	void DrawDepth(mat4x4 view, mat4x4 projection)
-	{
-		ShaderProgram* shader_program = ShaderManager::GetShaderProgram("skeletal", "empty_pixel");
-
-		shader_program->UseProgram();
-
-		mat4x4 world = translate(finalPosition) * MathHelper::GetRotationMatrix(finalRotation) * scale(finalSize);
-
-		shader_program->SetUniform("view", view);
-		shader_program->SetUniform("projection", projection);
-
-		shader_program->SetUniform("world", world);
-
-		for (int i = 0; i < boneTransforms.size(); ++i)
-			shader_program->SetUniform("finalBonesMatrices[" + std::to_string(i) + "]", boneTransforms[i]);
-
-
-		for (const roj::SkinnedMesh& mesh : model->meshes)
-		{
-			mesh.VAO->Bind();
-			glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(mesh.VAO->IndexCount), GL_UNSIGNED_INT, 0);
-		}
-	}
-
-	void DrawShadow(mat4x4 view, mat4x4 projection)
-	{
-		ShaderProgram* shader_program = ShaderManager::GetShaderProgram("skeletal", "empty_pixel");
-
-		shader_program->UseProgram();
-
-		mat4x4 world = translate(finalPosition) * MathHelper::GetRotationMatrix(finalRotation) * scale(finalSize);
-
-		shader_program->SetUniform("view", view);
-		shader_program->SetUniform("projection", projection);
-
-		shader_program->SetUniform("world", world);
-
-		for (int i = 0; i < boneTransforms.size(); ++i)
-			shader_program->SetUniform("finalBonesMatrices[" + std::to_string(i) + "]", boneTransforms[i]);
-
-
-		for (const roj::SkinnedMesh& mesh : model->meshes)
-		{
-			mesh.VAO->Bind();
-			glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(mesh.VAO->IndexCount), GL_UNSIGNED_INT, 0);
-		}
-	}
-
-
-
-
-private:
 
 };

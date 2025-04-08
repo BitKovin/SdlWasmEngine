@@ -8,6 +8,8 @@
 
 #include "../Physics.h"
 
+#include "../DebugDraw.hpp"
+
 #include <algorithm>   // for std::clamp
 #include <cmath>       // for std::max
 
@@ -82,6 +84,8 @@ private:
     bool CheckGroundAt(vec3 location)
     {
         auto result = Physics::LineTrace(location, location - vec3(0, 0.95, 0), BodyType::GroupCollisionTest, {LeadBody});
+
+        //DebugDraw::Line(location + vec3(1,0,0), location + vec3(1,0,0) - vec3(0, 0.95, 0));
 
         return result.hasHit;
 

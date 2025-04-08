@@ -458,7 +458,7 @@ public:
 		float fraction;  // Fraction along the ray where the hit occurred.
 	};
 
-	static HitResult LineTrace(vec3 start, vec3 end, BodyType mask = BodyType::GroupHitTest, vector<Body*> ignoreList = {})
+	static HitResult LineTrace(const vec3 start, const vec3 end, const BodyType mask = BodyType::GroupHitTest, const vector<Body*> ignoreList = {})
 	{
 		HitResult hit;
 

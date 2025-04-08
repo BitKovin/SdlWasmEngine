@@ -204,6 +204,9 @@
     <ClCompile Include="Navigation\Detour\DetourTileCacheBuilder.cpp">
       <Filter>Source Files\Navigation\Detour</Filter>
     </ClCompile>
+    <ClCompile Include="DebugDraw.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SoundSystem\SoundInstance.hpp">
