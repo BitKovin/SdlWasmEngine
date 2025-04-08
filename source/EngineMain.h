@@ -207,6 +207,9 @@ public:
 
         Level::Current->FinalizeFrame();
         Viewport.FinalizeChildren();
+
+        NavigationSystem::DrawNavmesh();
+
         DebugDraw::Finalize();
 
         int x, y;
@@ -268,6 +271,7 @@ public:
 	void GameUpdate()
 	{
 
+        NavigationSystem::Update();
         Physics::Simulate();
 
         Level::Current->UpdatePhysics();

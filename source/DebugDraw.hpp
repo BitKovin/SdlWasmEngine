@@ -27,6 +27,7 @@ class DrawCommandLine : public DebugDrawCommand
     float thickness;
     StaticMesh lineMesh;
 
+
 public:
     DrawCommandLine(vec3 s, vec3 e, float th, double duration)
     {

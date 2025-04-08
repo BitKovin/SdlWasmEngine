@@ -13,6 +13,8 @@
 #include <algorithm>   // for std::clamp
 #include <cmath>       // for std::max
 
+#include "../Navigation/Navigation.hpp"
+
 class Player : public Entity
 {
 
@@ -106,8 +108,13 @@ public:
 
     bool OnGround = false;
 
+    dtObstacleRef playerObstacle = 0;
+
 	void Update()
 	{
+
+        NavigationSystem::RemoveObstacle(playerObstacle);
+        playerObstacle = NavigationSystem::CreateObstacleBox(Position - vec3(1.1, 1, 1.1), Position + vec3(1.1, 1, 1.1));
 
         OnGround = CheckGroundAt(Position);
 
@@ -160,6 +167,7 @@ public:
         if (Input::GetAction("jump")->Pressed())
         {
             Jump();
+            NavigationSystem::CreateObstacleBox(Position - vec3(1.1, 3, 1.1), Position + vec3(1.1, 3, 1.1));
         }
 
 		Camera::position = Position + vec3(0,0.7,0);

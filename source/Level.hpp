@@ -8,6 +8,8 @@
 
 #include "mutex"
 
+#include "Navigation/Navigation.hpp"
+
 using namespace std;
 
 class Level : EObject
@@ -49,6 +51,7 @@ public:
 
 		Current = newLevel;
 
+		NavigationSystem::GenerateNavData();
 
 		return newLevel;
 

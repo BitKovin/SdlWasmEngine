@@ -259,6 +259,7 @@
     <ClCompile Include="Navigation\Detour\DetourNode.cpp" />
     <ClCompile Include="Navigation\Detour\DetourTileCache.cpp" />
     <ClCompile Include="Navigation\Detour\DetourTileCacheBuilder.cpp" />
+    <ClCompile Include="Navigation\Navigation.cpp" />
     <ClCompile Include="Navigation\Recast\Recast.cpp" />
     <ClCompile Include="Navigation\Recast\RecastAlloc.cpp" />
     <ClCompile Include="Navigation\Recast\RecastArea.cpp" />
@@ -323,7 +324,6 @@
     <ClInclude Include="Navigation\Detour\DetourTileCache.h" />
     <ClInclude Include="Navigation\Detour\DetourTileCacheBuilder.h" />
     <ClInclude Include="Navigation\Navigation.hpp" />
-    <ClInclude Include="Navigation\NavMeshGenerator.hpp" />
     <ClInclude Include="Navigation\Recast\Recast.h" />
     <ClInclude Include="Navigation\Recast\RecastAlloc.h" />
     <ClInclude Include="Navigation\Recast\RecastAssert.h" />

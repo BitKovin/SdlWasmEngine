@@ -207,6 +207,9 @@
     <ClCompile Include="DebugDraw.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Navigation\Navigation.cpp">
+      <Filter>Source Files\Navigation</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SoundSystem\SoundInstance.hpp">
@@ -384,9 +387,6 @@
       <Filter>Header Files\Navigation\Recast</Filter>
     </ClInclude>
     <ClInclude Include="Navigation\Navigation.hpp">
-      <Filter>Header Files\Navigation</Filter>
-    </ClInclude>
-    <ClInclude Include="Navigation\NavMeshGenerator.hpp">
       <Filter>Header Files\Navigation</Filter>
     </ClInclude>
     <ClInclude Include="Navigation\Detour\DetourTileCache.h">
