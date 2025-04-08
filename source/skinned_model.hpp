@@ -21,6 +21,9 @@ namespace roj
 
 		std::vector<MeshTexture> textures;
 
+		std::vector<VertexData> vertexLocations;
+		std::vector<uint32_t> vertexIndices;
+
 		string name;
 
 	};

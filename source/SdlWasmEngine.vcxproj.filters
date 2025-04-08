@@ -34,6 +34,24 @@
     <Filter Include="Header Files\UI">
       <UniqueIdentifier>{754d4e2a-67b8-4b50-82d5-afc7b64c960c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Navigation">
+      <UniqueIdentifier>{7eed404c-6c80-4ff6-b2ac-60f53c1f956e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Navigation\Recast">
+      <UniqueIdentifier>{7af15503-dac3-4719-abba-808874bcab4e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Navigation\Detour">
+      <UniqueIdentifier>{a4c48d9a-1aca-4eaf-adc1-e8fdcb694877}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Navigation">
+      <UniqueIdentifier>{0c36a9d0-20b9-46c6-bef2-77b32d8b1f39}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Navigation\Recast">
+      <UniqueIdentifier>{bc08eec5-a11d-4b2f-bbb7-d5b6890f0880}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Navigation\Detour">
+      <UniqueIdentifier>{2a08328d-36f0-4dec-a10e-73d1805b99a2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -125,6 +143,66 @@
     </ClCompile>
     <ClCompile Include="UI\UiElement.cpp">
       <Filter>Header Files\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="Navigation\Recast\Recast.cpp">
+      <Filter>Source Files\Navigation\Recast</Filter>
+    </ClCompile>
+    <ClCompile Include="Navigation\Recast\RecastAlloc.cpp">
+      <Filter>Source Files\Navigation\Recast</Filter>
+    </ClCompile>
+    <ClCompile Include="Navigation\Recast\RecastArea.cpp">
+      <Filter>Source Files\Navigation\Recast</Filter>
+    </ClCompile>
+    <ClCompile Include="Navigation\Recast\RecastAssert.cpp">
+      <Filter>Source Files\Navigation\Recast</Filter>
+    </ClCompile>
+    <ClCompile Include="Navigation\Recast\RecastContour.cpp">
+      <Filter>Source Files\Navigation\Recast</Filter>
+    </ClCompile>
+    <ClCompile Include="Navigation\Recast\RecastFilter.cpp">
+      <Filter>Source Files\Navigation\Recast</Filter>
+    </ClCompile>
+    <ClCompile Include="Navigation\Recast\RecastLayers.cpp">
+      <Filter>Source Files\Navigation\Recast</Filter>
+    </ClCompile>
+    <ClCompile Include="Navigation\Recast\RecastMesh.cpp">
+      <Filter>Source Files\Navigation\Recast</Filter>
+    </ClCompile>
+    <ClCompile Include="Navigation\Recast\RecastMeshDetail.cpp">
+      <Filter>Source Files\Navigation\Recast</Filter>
+    </ClCompile>
+    <ClCompile Include="Navigation\Recast\RecastRasterization.cpp">
+      <Filter>Source Files\Navigation\Recast</Filter>
+    </ClCompile>
+    <ClCompile Include="Navigation\Recast\RecastRegion.cpp">
+      <Filter>Source Files\Navigation\Recast</Filter>
+    </ClCompile>
+    <ClCompile Include="Navigation\Detour\DetourAlloc.cpp">
+      <Filter>Source Files\Navigation\Detour</Filter>
+    </ClCompile>
+    <ClCompile Include="Navigation\Detour\DetourAssert.cpp">
+      <Filter>Source Files\Navigation\Detour</Filter>
+    </ClCompile>
+    <ClCompile Include="Navigation\Detour\DetourCommon.cpp">
+      <Filter>Source Files\Navigation\Detour</Filter>
+    </ClCompile>
+    <ClCompile Include="Navigation\Detour\DetourNavMesh.cpp">
+      <Filter>Source Files\Navigation\Detour</Filter>
+    </ClCompile>
+    <ClCompile Include="Navigation\Detour\DetourNavMeshBuilder.cpp">
+      <Filter>Source Files\Navigation\Detour</Filter>
+    </ClCompile>
+    <ClCompile Include="Navigation\Detour\DetourNavMeshQuery.cpp">
+      <Filter>Source Files\Navigation\Detour</Filter>
+    </ClCompile>
+    <ClCompile Include="Navigation\Detour\DetourNode.cpp">
+      <Filter>Source Files\Navigation\Detour</Filter>
+    </ClCompile>
+    <ClCompile Include="Navigation\Detour\DetourTileCache.cpp">
+      <Filter>Source Files\Navigation\Detour</Filter>
+    </ClCompile>
+    <ClCompile Include="Navigation\Detour\DetourTileCacheBuilder.cpp">
+      <Filter>Source Files\Navigation\Detour</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -265,6 +343,60 @@
     </ClInclude>
     <ClInclude Include="UI\UiButton.hpp">
       <Filter>Header Files\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="Navigation\Detour\DetourAlloc.h">
+      <Filter>Header Files\Navigation\Detour</Filter>
+    </ClInclude>
+    <ClInclude Include="Navigation\Detour\DetourAssert.h">
+      <Filter>Header Files\Navigation\Detour</Filter>
+    </ClInclude>
+    <ClInclude Include="Navigation\Detour\DetourCommon.h">
+      <Filter>Header Files\Navigation\Detour</Filter>
+    </ClInclude>
+    <ClInclude Include="Navigation\Detour\DetourMath.h">
+      <Filter>Header Files\Navigation\Detour</Filter>
+    </ClInclude>
+    <ClInclude Include="Navigation\Detour\DetourNavMesh.h">
+      <Filter>Header Files\Navigation\Detour</Filter>
+    </ClInclude>
+    <ClInclude Include="Navigation\Detour\DetourNavMeshBuilder.h">
+      <Filter>Header Files\Navigation\Detour</Filter>
+    </ClInclude>
+    <ClInclude Include="Navigation\Detour\DetourNavMeshQuery.h">
+      <Filter>Header Files\Navigation\Detour</Filter>
+    </ClInclude>
+    <ClInclude Include="Navigation\Detour\DetourNode.h">
+      <Filter>Header Files\Navigation\Detour</Filter>
+    </ClInclude>
+    <ClInclude Include="Navigation\Detour\DetourStatus.h">
+      <Filter>Header Files\Navigation\Detour</Filter>
+    </ClInclude>
+    <ClInclude Include="Navigation\Recast\Recast.h">
+      <Filter>Header Files\Navigation\Recast</Filter>
+    </ClInclude>
+    <ClInclude Include="Navigation\Recast\RecastAlloc.h">
+      <Filter>Header Files\Navigation\Recast</Filter>
+    </ClInclude>
+    <ClInclude Include="Navigation\Recast\RecastAssert.h">
+      <Filter>Header Files\Navigation\Recast</Filter>
+    </ClInclude>
+    <ClInclude Include="Navigation\Navigation.hpp">
+      <Filter>Header Files\Navigation</Filter>
+    </ClInclude>
+    <ClInclude Include="Navigation\NavMeshGenerator.hpp">
+      <Filter>Header Files\Navigation</Filter>
+    </ClInclude>
+    <ClInclude Include="Navigation\Detour\DetourTileCache.h">
+      <Filter>Header Files\Navigation\Detour</Filter>
+    </ClInclude>
+    <ClInclude Include="Navigation\Detour\DetourTileCacheBuilder.h">
+      <Filter>Header Files\Navigation\Detour</Filter>
+    </ClInclude>
+    <ClInclude Include="DebugDraw.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Delay.hpp">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

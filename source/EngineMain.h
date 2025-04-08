@@ -56,6 +56,7 @@ public:
 
     static UiViewport Viewport;
 
+
 	EngineMain(SDL_Window* window)
 	{
 		Window = window;

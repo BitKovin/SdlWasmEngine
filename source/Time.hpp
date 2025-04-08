@@ -4,9 +4,13 @@
 
 class Time {
 public:
-    static double DeltaTime;       // Time between the last two frames in seconds.
-    static float DeltaTimeF;       // Time between the last two frames in seconds.
-    static double GameTime;       // Time between the last two frames in seconds.
+    static double DeltaTime;       
+    static float DeltaTimeF;       
+    static double GameTime;       
+    static double GameTimeNoPause;       
+
+    static bool GamePaused;
+
 private:
     static Uint64 lastCounter;     // Stores the previous frame's counter.
     static double frequency;       // Stores the counter frequency.
@@ -25,8 +29,20 @@ public:
         DeltaTime = (currentCounter - lastCounter) / frequency;
         lastCounter = currentCounter;
 
+
+
         if (DeltaTime > 0.1)
             DeltaTime = 0.1;
+
+        if (GamePaused)
+        {
+            GameTimeNoPause += DeltaTime;
+        }
+        else
+        {
+            GameTimeNoPause += DeltaTime;
+            GameTime += DeltaTime;
+        }
 
         GameTime += DeltaTime;
 

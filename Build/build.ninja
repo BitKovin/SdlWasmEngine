@@ -92,6 +92,166 @@ build CMakeFiles/a.dir/source/Level.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/Sd
   OBJECT_DIR = CMakeFiles\a.dir
   OBJECT_FILE_DIR = CMakeFiles\a.dir\source
 
+build CMakeFiles/a.dir/source/Navigation/Detour/DetourAlloc.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/SdlWasmEngine/source/Navigation/Detour/DetourAlloc.cpp || cmake_object_order_depends_target_a
+  DEFINES = -DNDEBUG
+  DEP_FILE = CMakeFiles\a.dir\source\Navigation\Detour\DetourAlloc.cpp.o.d
+  FLAGS = -std=c++20 -O3
+  INCLUDES = -IF:/Git/SdlWasmEngine/librariesEms
+  OBJECT_DIR = CMakeFiles\a.dir
+  OBJECT_FILE_DIR = CMakeFiles\a.dir\source\Navigation\Detour
+
+build CMakeFiles/a.dir/source/Navigation/Detour/DetourAssert.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/SdlWasmEngine/source/Navigation/Detour/DetourAssert.cpp || cmake_object_order_depends_target_a
+  DEFINES = -DNDEBUG
+  DEP_FILE = CMakeFiles\a.dir\source\Navigation\Detour\DetourAssert.cpp.o.d
+  FLAGS = -std=c++20 -O3
+  INCLUDES = -IF:/Git/SdlWasmEngine/librariesEms
+  OBJECT_DIR = CMakeFiles\a.dir
+  OBJECT_FILE_DIR = CMakeFiles\a.dir\source\Navigation\Detour
+
+build CMakeFiles/a.dir/source/Navigation/Detour/DetourCommon.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/SdlWasmEngine/source/Navigation/Detour/DetourCommon.cpp || cmake_object_order_depends_target_a
+  DEFINES = -DNDEBUG
+  DEP_FILE = CMakeFiles\a.dir\source\Navigation\Detour\DetourCommon.cpp.o.d
+  FLAGS = -std=c++20 -O3
+  INCLUDES = -IF:/Git/SdlWasmEngine/librariesEms
+  OBJECT_DIR = CMakeFiles\a.dir
+  OBJECT_FILE_DIR = CMakeFiles\a.dir\source\Navigation\Detour
+
+build CMakeFiles/a.dir/source/Navigation/Detour/DetourNavMesh.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/SdlWasmEngine/source/Navigation/Detour/DetourNavMesh.cpp || cmake_object_order_depends_target_a
+  DEFINES = -DNDEBUG
+  DEP_FILE = CMakeFiles\a.dir\source\Navigation\Detour\DetourNavMesh.cpp.o.d
+  FLAGS = -std=c++20 -O3
+  INCLUDES = -IF:/Git/SdlWasmEngine/librariesEms
+  OBJECT_DIR = CMakeFiles\a.dir
+  OBJECT_FILE_DIR = CMakeFiles\a.dir\source\Navigation\Detour
+
+build CMakeFiles/a.dir/source/Navigation/Detour/DetourNavMeshBuilder.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/SdlWasmEngine/source/Navigation/Detour/DetourNavMeshBuilder.cpp || cmake_object_order_depends_target_a
+  DEFINES = -DNDEBUG
+  DEP_FILE = CMakeFiles\a.dir\source\Navigation\Detour\DetourNavMeshBuilder.cpp.o.d
+  FLAGS = -std=c++20 -O3
+  INCLUDES = -IF:/Git/SdlWasmEngine/librariesEms
+  OBJECT_DIR = CMakeFiles\a.dir
+  OBJECT_FILE_DIR = CMakeFiles\a.dir\source\Navigation\Detour
+
+build CMakeFiles/a.dir/source/Navigation/Detour/DetourNavMeshQuery.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/SdlWasmEngine/source/Navigation/Detour/DetourNavMeshQuery.cpp || cmake_object_order_depends_target_a
+  DEFINES = -DNDEBUG
+  DEP_FILE = CMakeFiles\a.dir\source\Navigation\Detour\DetourNavMeshQuery.cpp.o.d
+  FLAGS = -std=c++20 -O3
+  INCLUDES = -IF:/Git/SdlWasmEngine/librariesEms
+  OBJECT_DIR = CMakeFiles\a.dir
+  OBJECT_FILE_DIR = CMakeFiles\a.dir\source\Navigation\Detour
+
+build CMakeFiles/a.dir/source/Navigation/Detour/DetourNode.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/SdlWasmEngine/source/Navigation/Detour/DetourNode.cpp || cmake_object_order_depends_target_a
+  DEFINES = -DNDEBUG
+  DEP_FILE = CMakeFiles\a.dir\source\Navigation\Detour\DetourNode.cpp.o.d
+  FLAGS = -std=c++20 -O3
+  INCLUDES = -IF:/Git/SdlWasmEngine/librariesEms
+  OBJECT_DIR = CMakeFiles\a.dir
+  OBJECT_FILE_DIR = CMakeFiles\a.dir\source\Navigation\Detour
+
+build CMakeFiles/a.dir/source/Navigation/Detour/DetourTileCache.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/SdlWasmEngine/source/Navigation/Detour/DetourTileCache.cpp || cmake_object_order_depends_target_a
+  DEFINES = -DNDEBUG
+  DEP_FILE = CMakeFiles\a.dir\source\Navigation\Detour\DetourTileCache.cpp.o.d
+  FLAGS = -std=c++20 -O3
+  INCLUDES = -IF:/Git/SdlWasmEngine/librariesEms
+  OBJECT_DIR = CMakeFiles\a.dir
+  OBJECT_FILE_DIR = CMakeFiles\a.dir\source\Navigation\Detour
+
+build CMakeFiles/a.dir/source/Navigation/Detour/DetourTileCacheBuilder.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/SdlWasmEngine/source/Navigation/Detour/DetourTileCacheBuilder.cpp || cmake_object_order_depends_target_a
+  DEFINES = -DNDEBUG
+  DEP_FILE = CMakeFiles\a.dir\source\Navigation\Detour\DetourTileCacheBuilder.cpp.o.d
+  FLAGS = -std=c++20 -O3
+  INCLUDES = -IF:/Git/SdlWasmEngine/librariesEms
+  OBJECT_DIR = CMakeFiles\a.dir
+  OBJECT_FILE_DIR = CMakeFiles\a.dir\source\Navigation\Detour
+
+build CMakeFiles/a.dir/source/Navigation/Recast/Recast.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/SdlWasmEngine/source/Navigation/Recast/Recast.cpp || cmake_object_order_depends_target_a
+  DEFINES = -DNDEBUG
+  DEP_FILE = CMakeFiles\a.dir\source\Navigation\Recast\Recast.cpp.o.d
+  FLAGS = -std=c++20 -O3
+  INCLUDES = -IF:/Git/SdlWasmEngine/librariesEms
+  OBJECT_DIR = CMakeFiles\a.dir
+  OBJECT_FILE_DIR = CMakeFiles\a.dir\source\Navigation\Recast
+
+build CMakeFiles/a.dir/source/Navigation/Recast/RecastAlloc.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/SdlWasmEngine/source/Navigation/Recast/RecastAlloc.cpp || cmake_object_order_depends_target_a
+  DEFINES = -DNDEBUG
+  DEP_FILE = CMakeFiles\a.dir\source\Navigation\Recast\RecastAlloc.cpp.o.d
+  FLAGS = -std=c++20 -O3
+  INCLUDES = -IF:/Git/SdlWasmEngine/librariesEms
+  OBJECT_DIR = CMakeFiles\a.dir
+  OBJECT_FILE_DIR = CMakeFiles\a.dir\source\Navigation\Recast
+
+build CMakeFiles/a.dir/source/Navigation/Recast/RecastArea.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/SdlWasmEngine/source/Navigation/Recast/RecastArea.cpp || cmake_object_order_depends_target_a
+  DEFINES = -DNDEBUG
+  DEP_FILE = CMakeFiles\a.dir\source\Navigation\Recast\RecastArea.cpp.o.d
+  FLAGS = -std=c++20 -O3
+  INCLUDES = -IF:/Git/SdlWasmEngine/librariesEms
+  OBJECT_DIR = CMakeFiles\a.dir
+  OBJECT_FILE_DIR = CMakeFiles\a.dir\source\Navigation\Recast
+
+build CMakeFiles/a.dir/source/Navigation/Recast/RecastAssert.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/SdlWasmEngine/source/Navigation/Recast/RecastAssert.cpp || cmake_object_order_depends_target_a
+  DEFINES = -DNDEBUG
+  DEP_FILE = CMakeFiles\a.dir\source\Navigation\Recast\RecastAssert.cpp.o.d
+  FLAGS = -std=c++20 -O3
+  INCLUDES = -IF:/Git/SdlWasmEngine/librariesEms
+  OBJECT_DIR = CMakeFiles\a.dir
+  OBJECT_FILE_DIR = CMakeFiles\a.dir\source\Navigation\Recast
+
+build CMakeFiles/a.dir/source/Navigation/Recast/RecastContour.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/SdlWasmEngine/source/Navigation/Recast/RecastContour.cpp || cmake_object_order_depends_target_a
+  DEFINES = -DNDEBUG
+  DEP_FILE = CMakeFiles\a.dir\source\Navigation\Recast\RecastContour.cpp.o.d
+  FLAGS = -std=c++20 -O3
+  INCLUDES = -IF:/Git/SdlWasmEngine/librariesEms
+  OBJECT_DIR = CMakeFiles\a.dir
+  OBJECT_FILE_DIR = CMakeFiles\a.dir\source\Navigation\Recast
+
+build CMakeFiles/a.dir/source/Navigation/Recast/RecastFilter.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/SdlWasmEngine/source/Navigation/Recast/RecastFilter.cpp || cmake_object_order_depends_target_a
+  DEFINES = -DNDEBUG
+  DEP_FILE = CMakeFiles\a.dir\source\Navigation\Recast\RecastFilter.cpp.o.d
+  FLAGS = -std=c++20 -O3
+  INCLUDES = -IF:/Git/SdlWasmEngine/librariesEms
+  OBJECT_DIR = CMakeFiles\a.dir
+  OBJECT_FILE_DIR = CMakeFiles\a.dir\source\Navigation\Recast
+
+build CMakeFiles/a.dir/source/Navigation/Recast/RecastLayers.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/SdlWasmEngine/source/Navigation/Recast/RecastLayers.cpp || cmake_object_order_depends_target_a
+  DEFINES = -DNDEBUG
+  DEP_FILE = CMakeFiles\a.dir\source\Navigation\Recast\RecastLayers.cpp.o.d
+  FLAGS = -std=c++20 -O3
+  INCLUDES = -IF:/Git/SdlWasmEngine/librariesEms
+  OBJECT_DIR = CMakeFiles\a.dir
+  OBJECT_FILE_DIR = CMakeFiles\a.dir\source\Navigation\Recast
+
+build CMakeFiles/a.dir/source/Navigation/Recast/RecastMesh.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/SdlWasmEngine/source/Navigation/Recast/RecastMesh.cpp || cmake_object_order_depends_target_a
+  DEFINES = -DNDEBUG
+  DEP_FILE = CMakeFiles\a.dir\source\Navigation\Recast\RecastMesh.cpp.o.d
+  FLAGS = -std=c++20 -O3
+  INCLUDES = -IF:/Git/SdlWasmEngine/librariesEms
+  OBJECT_DIR = CMakeFiles\a.dir
+  OBJECT_FILE_DIR = CMakeFiles\a.dir\source\Navigation\Recast
+
+build CMakeFiles/a.dir/source/Navigation/Recast/RecastMeshDetail.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/SdlWasmEngine/source/Navigation/Recast/RecastMeshDetail.cpp || cmake_object_order_depends_target_a
+  DEFINES = -DNDEBUG
+  DEP_FILE = CMakeFiles\a.dir\source\Navigation\Recast\RecastMeshDetail.cpp.o.d
+  FLAGS = -std=c++20 -O3
+  INCLUDES = -IF:/Git/SdlWasmEngine/librariesEms
+  OBJECT_DIR = CMakeFiles\a.dir
+  OBJECT_FILE_DIR = CMakeFiles\a.dir\source\Navigation\Recast
+
+build CMakeFiles/a.dir/source/Navigation/Recast/RecastRasterization.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/SdlWasmEngine/source/Navigation/Recast/RecastRasterization.cpp || cmake_object_order_depends_target_a
+  DEFINES = -DNDEBUG
+  DEP_FILE = CMakeFiles\a.dir\source\Navigation\Recast\RecastRasterization.cpp.o.d
+  FLAGS = -std=c++20 -O3
+  INCLUDES = -IF:/Git/SdlWasmEngine/librariesEms
+  OBJECT_DIR = CMakeFiles\a.dir
+  OBJECT_FILE_DIR = CMakeFiles\a.dir\source\Navigation\Recast
+
+build CMakeFiles/a.dir/source/Navigation/Recast/RecastRegion.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/SdlWasmEngine/source/Navigation/Recast/RecastRegion.cpp || cmake_object_order_depends_target_a
+  DEFINES = -DNDEBUG
+  DEP_FILE = CMakeFiles\a.dir\source\Navigation\Recast\RecastRegion.cpp.o.d
+  FLAGS = -std=c++20 -O3
+  INCLUDES = -IF:/Git/SdlWasmEngine/librariesEms
+  OBJECT_DIR = CMakeFiles\a.dir
+  OBJECT_FILE_DIR = CMakeFiles\a.dir\source\Navigation\Recast
+
 build CMakeFiles/a.dir/source/Physics.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/SdlWasmEngine/source/Physics.cpp || cmake_object_order_depends_target_a
   DEFINES = -DNDEBUG
   DEP_FILE = CMakeFiles\a.dir\source\Physics.cpp.o.d
@@ -252,7 +412,7 @@ build CMakeFiles/a.dir/source/utils.cpp.o: CXX_COMPILER__a_unscanned_ F$:/Git/Sd
 #############################################
 # Link the executable main.html
 
-build main.html: CXX_EXECUTABLE_LINKER__a_ CMakeFiles/a.dir/source/AssetRegistry.cpp.o CMakeFiles/a.dir/source/Camera.cpp.o CMakeFiles/a.dir/source/EngineMain.cpp.o CMakeFiles/a.dir/source/FrameDrawData.cpp.o CMakeFiles/a.dir/source/Input.cpp.o CMakeFiles/a.dir/source/Level.cpp.o CMakeFiles/a.dir/source/Physics.cpp.o CMakeFiles/a.dir/source/ShaderManager.cpp.o CMakeFiles/a.dir/source/SoundSystem/SoundManager.cpp.o CMakeFiles/a.dir/source/ThreadPool.cpp.o CMakeFiles/a.dir/source/Time.cpp.o CMakeFiles/a.dir/source/UI/UiElement.cpp.o CMakeFiles/a.dir/source/UI/UiRenderer.cpp.o CMakeFiles/a.dir/source/animator.cpp.o CMakeFiles/a.dir/source/imgui/imgui.cpp.o CMakeFiles/a.dir/source/imgui/imgui_demo.cpp.o CMakeFiles/a.dir/source/imgui/imgui_draw.cpp.o CMakeFiles/a.dir/source/imgui/imgui_impl_opengl3.cpp.o CMakeFiles/a.dir/source/imgui/imgui_impl_sdl2.cpp.o CMakeFiles/a.dir/source/imgui/imgui_tables.cpp.o CMakeFiles/a.dir/source/imgui/imgui_widgets.cpp.o CMakeFiles/a.dir/source/main.cpp.o CMakeFiles/a.dir/source/model.cpp.o CMakeFiles/a.dir/source/skinned_model.cpp.o CMakeFiles/a.dir/source/utils.cpp.o | F$:/Git/SdlWasmEngine/libsEms/libassimp.a F$:/Git/SdlWasmEngine/libsEms/libIrrXML.a F$:/Git/SdlWasmEngine/libsEms/libJolt.a
+build main.html: CXX_EXECUTABLE_LINKER__a_ CMakeFiles/a.dir/source/AssetRegistry.cpp.o CMakeFiles/a.dir/source/Camera.cpp.o CMakeFiles/a.dir/source/EngineMain.cpp.o CMakeFiles/a.dir/source/FrameDrawData.cpp.o CMakeFiles/a.dir/source/Input.cpp.o CMakeFiles/a.dir/source/Level.cpp.o CMakeFiles/a.dir/source/Navigation/Detour/DetourAlloc.cpp.o CMakeFiles/a.dir/source/Navigation/Detour/DetourAssert.cpp.o CMakeFiles/a.dir/source/Navigation/Detour/DetourCommon.cpp.o CMakeFiles/a.dir/source/Navigation/Detour/DetourNavMesh.cpp.o CMakeFiles/a.dir/source/Navigation/Detour/DetourNavMeshBuilder.cpp.o CMakeFiles/a.dir/source/Navigation/Detour/DetourNavMeshQuery.cpp.o CMakeFiles/a.dir/source/Navigation/Detour/DetourNode.cpp.o CMakeFiles/a.dir/source/Navigation/Detour/DetourTileCache.cpp.o CMakeFiles/a.dir/source/Navigation/Detour/DetourTileCacheBuilder.cpp.o CMakeFiles/a.dir/source/Navigation/Recast/Recast.cpp.o CMakeFiles/a.dir/source/Navigation/Recast/RecastAlloc.cpp.o CMakeFiles/a.dir/source/Navigation/Recast/RecastArea.cpp.o CMakeFiles/a.dir/source/Navigation/Recast/RecastAssert.cpp.o CMakeFiles/a.dir/source/Navigation/Recast/RecastContour.cpp.o CMakeFiles/a.dir/source/Navigation/Recast/RecastFilter.cpp.o CMakeFiles/a.dir/source/Navigation/Recast/RecastLayers.cpp.o CMakeFiles/a.dir/source/Navigation/Recast/RecastMesh.cpp.o CMakeFiles/a.dir/source/Navigation/Recast/RecastMeshDetail.cpp.o CMakeFiles/a.dir/source/Navigation/Recast/RecastRasterization.cpp.o CMakeFiles/a.dir/source/Navigation/Recast/RecastRegion.cpp.o CMakeFiles/a.dir/source/Physics.cpp.o CMakeFiles/a.dir/source/ShaderManager.cpp.o CMakeFiles/a.dir/source/SoundSystem/SoundManager.cpp.o CMakeFiles/a.dir/source/ThreadPool.cpp.o CMakeFiles/a.dir/source/Time.cpp.o CMakeFiles/a.dir/source/UI/UiElement.cpp.o CMakeFiles/a.dir/source/UI/UiRenderer.cpp.o CMakeFiles/a.dir/source/animator.cpp.o CMakeFiles/a.dir/source/imgui/imgui.cpp.o CMakeFiles/a.dir/source/imgui/imgui_demo.cpp.o CMakeFiles/a.dir/source/imgui/imgui_draw.cpp.o CMakeFiles/a.dir/source/imgui/imgui_impl_opengl3.cpp.o CMakeFiles/a.dir/source/imgui/imgui_impl_sdl2.cpp.o CMakeFiles/a.dir/source/imgui/imgui_tables.cpp.o CMakeFiles/a.dir/source/imgui/imgui_widgets.cpp.o CMakeFiles/a.dir/source/main.cpp.o CMakeFiles/a.dir/source/model.cpp.o CMakeFiles/a.dir/source/skinned_model.cpp.o CMakeFiles/a.dir/source/utils.cpp.o | F$:/Git/SdlWasmEngine/libsEms/libassimp.a F$:/Git/SdlWasmEngine/libsEms/libIrrXML.a F$:/Git/SdlWasmEngine/libsEms/libJolt.a
   LINK_FLAGS = -s USE_SDL=2 -s USE_SDL_IMAGE=2 -s USE_SDL_TTF=2 -s USE_SDL_MIXER=2 -s SDL2_IMAGE_FORMATS=[png] -s USE_WEBGL2=1 -s MIN_WEBGL_VERSION=2 -s MAX_WEBGL_VERSION=2 -s GL_PREINITIALIZED_CONTEXT=1 -s STACK_SIZE=500000 -s INITIAL_HEAP=83886080 -s ALLOW_MEMORY_GROWTH=1 -s NO_DISABLE_EXCEPTION_CATCHING -s WASM=1 -s ASSERTIONS=1 --preload-file F:/Git/SdlWasmEngine/source/GameData@/GameData -s GL_SUPPORT_AUTOMATIC_ENABLE_EXTENSIONS=1
   LINK_LIBRARIES = F:/Git/SdlWasmEngine/libsEms/libassimp.a  F:/Git/SdlWasmEngine/libsEms/libIrrXML.a  F:/Git/SdlWasmEngine/libsEms/libJolt.a
   OBJECT_DIR = CMakeFiles\a.dir

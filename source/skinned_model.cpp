@@ -166,6 +166,9 @@ namespace roj
 		skinMesh.indices = new IndexBuffer(indices);
 		skinMesh.textures = textures;
 
+		skinMesh.vertexIndices = indices;
+		skinMesh.vertexLocations = vertices;
+
 		skinMesh.name = mesh->mName.C_Str();
 
 		return skinMesh;
