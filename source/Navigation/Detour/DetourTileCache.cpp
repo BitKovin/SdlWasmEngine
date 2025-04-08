@@ -520,120 +520,146 @@ dtStatus dtTileCache::queryTiles(const float* bmin, const float* bmax,
 	return DT_SUCCESS;
 }
 
-dtStatus dtTileCache::update(const float /*dt*/, dtNavMesh* navmesh,
-							 bool* upToDate)
+dtStatus dtTileCache::update(const float /*dt*/, dtNavMesh* navmesh, bool* upToDate)
 {
+	const int MAX_TILES_PER_UPDATE = 4; // Process 4 tiles per call
+	int processedTiles = 0;
+
+	const int DT_MAX_PENDING = 8;
+
+	dtStatus status = DT_SUCCESS;
+
 	if (m_nupdate == 0)
 	{
-		// Process requests.
+		// Process obstacle requests
 		for (int i = 0; i < m_nreqs; ++i)
 		{
 			ObstacleRequest* req = &m_reqs[i];
-			
 			unsigned int idx = decodeObstacleIdObstacle(req->ref);
-			if ((int)idx >= m_params.maxObstacles)
-				continue;
+			if ((int)idx >= m_params.maxObstacles) continue;
 			dtTileCacheObstacle* ob = &m_obstacles[idx];
 			unsigned int salt = decodeObstacleIdSalt(req->ref);
-			if (ob->salt != salt)
-				continue;
-			
+			if (ob->salt != salt) continue;
+
 			if (req->action == REQUEST_ADD)
 			{
-				// Find touched tiles.
+				// Calculate obstacle bounds and query affected tiles
 				float bmin[3], bmax[3];
 				getObstacleBounds(ob, bmin, bmax);
-
 				int ntouched = 0;
 				queryTiles(bmin, bmax, ob->touched, &ntouched, DT_MAX_TOUCHED_TILES);
-				ob->ntouched = (unsigned char)ntouched;
-				// Add tiles to update list.
+
+				ob->ntouched = 0;
 				ob->npending = 0;
-				for (int j = 0; j < ob->ntouched; ++j)
+
+				// Add tiles to update queue and obstacle's pending list
+				for (int j = 0; j < ntouched; ++j)
 				{
-					if (m_nupdate < MAX_UPDATE)
+					if (m_nupdate < MAX_UPDATE && ob->npending < DT_MAX_PENDING)
 					{
 						if (!contains(m_update, m_nupdate, ob->touched[j]))
+						{
 							m_update[m_nupdate++] = ob->touched[j];
+						}
 						ob->pending[ob->npending++] = ob->touched[j];
+						ob->ntouched++;
 					}
+				}
+
+				if (ob->ntouched == 0)
+				{
+					ob->state = DT_OBSTACLE_PROCESSED; // No tiles affected
+				}
+				else
+				{
+					ob->state = DT_OBSTACLE_PROCESSING;
 				}
 			}
 			else if (req->action == REQUEST_REMOVE)
 			{
-				// Prepare to remove obstacle.
-				ob->state = DT_OBSTACLE_REMOVING;
-				// Add tiles to update list.
-				ob->npending = 0;
-				for (int j = 0; j < ob->ntouched; ++j)
+				if (ob->ntouched == 0)
 				{
-					if (m_nupdate < MAX_UPDATE)
+					// Immediately release if never touched tiles
+					ob->state = DT_OBSTACLE_EMPTY;
+					ob->salt = (ob->salt + 1) & 0xFFFF;
+					if (ob->salt == 0) ob->salt++;
+					ob->next = m_nextFreeObstacle;
+					m_nextFreeObstacle = ob;
+				}
+				else
+				{
+					// Re-add all originally touched tiles for removal
+					ob->state = DT_OBSTACLE_REMOVING;
+					ob->npending = 0;
+					for (int j = 0; j < ob->ntouched; ++j)
 					{
-						if (!contains(m_update, m_nupdate, ob->touched[j]))
-							m_update[m_nupdate++] = ob->touched[j];
-						ob->pending[ob->npending++] = ob->touched[j];
+						if (m_nupdate < MAX_UPDATE && ob->npending < DT_MAX_PENDING)
+						{
+							if (!contains(m_update, m_nupdate, ob->pending[j]))
+							{
+								m_update[m_nupdate++] = ob->pending[j];
+							}
+							ob->pending[ob->npending++] = ob->pending[j];
+						}
 					}
 				}
 			}
 		}
-		
 		m_nreqs = 0;
 	}
-	
-	dtStatus status = DT_SUCCESS;
-	// Process updates
-	if (m_nupdate)
+
+	// Process tiles in batches
+	while (m_nupdate > 0 && processedTiles < MAX_TILES_PER_UPDATE)
 	{
-		// Build mesh
 		const dtCompressedTileRef ref = m_update[0];
-		status = buildNavMeshTile(ref, navmesh);
+		dtStatus tileStatus = buildNavMeshTile(ref, navmesh);
+		if (dtStatusFailed(tileStatus)) status = tileStatus;
+
+		// Remove processed tile from queue
 		m_nupdate--;
 		if (m_nupdate > 0)
-			memmove(m_update, m_update+1, m_nupdate*sizeof(dtCompressedTileRef));
+		{
+			memmove(m_update, m_update + 1, m_nupdate * sizeof(dtCompressedTileRef));
+		}
 
-		// Update obstacle states.
+		// Update all obstacles affected by this tile
 		for (int i = 0; i < m_params.maxObstacles; ++i)
 		{
 			dtTileCacheObstacle* ob = &m_obstacles[i];
-			if (ob->state == DT_OBSTACLE_PROCESSING || ob->state == DT_OBSTACLE_REMOVING)
+			if (ob->state != DT_OBSTACLE_PROCESSING && ob->state != DT_OBSTACLE_REMOVING) continue;
+
+			// Remove processed tile from obstacle's pending list
+			for (int j = 0; j < ob->npending; ++j)
 			{
-				// Remove handled tile from pending list.
-				for (int j = 0; j < (int)ob->npending; j++)
+				if (ob->pending[j] == ref)
 				{
-					if (ob->pending[j] == ref)
-					{
-						ob->pending[j] = ob->pending[(int)ob->npending-1];
-						ob->npending--;
-						break;
-					}
+					ob->pending[j] = ob->pending[ob->npending - 1];
+					ob->npending--;
+					break;
 				}
-				
-				// If all pending tiles processed, change state.
-				if (ob->npending == 0)
+			}
+
+			// Finalize obstacle if all tiles processed
+			if (ob->npending == 0)
+			{
+				if (ob->state == DT_OBSTACLE_PROCESSING)
 				{
-					if (ob->state == DT_OBSTACLE_PROCESSING)
-					{
-						ob->state = DT_OBSTACLE_PROCESSED;
-					}
-					else if (ob->state == DT_OBSTACLE_REMOVING)
-					{
-						ob->state = DT_OBSTACLE_EMPTY;
-						// Update salt, salt should never be zero.
-						ob->salt = (ob->salt+1) & ((1<<16)-1);
-						if (ob->salt == 0)
-							ob->salt++;
-						// Return obstacle to free list.
-						ob->next = m_nextFreeObstacle;
-						m_nextFreeObstacle = ob;
-					}
+					ob->state = DT_OBSTACLE_PROCESSED;
+				}
+				else if (ob->state == DT_OBSTACLE_REMOVING)
+				{
+					ob->state = DT_OBSTACLE_EMPTY;
+					ob->salt = (ob->salt + 1) & 0xFFFF;
+					if (ob->salt == 0) ob->salt++;
+					ob->next = m_nextFreeObstacle;
+					m_nextFreeObstacle = ob;
 				}
 			}
 		}
+		processedTiles++;
 	}
-	
-	if (upToDate)
-		*upToDate = m_nupdate == 0 && m_nreqs == 0;
 
+	if (upToDate) *upToDate = (m_nupdate == 0 && m_nreqs == 0);
 	return status;
 }
 

@@ -24,6 +24,9 @@ private:
 
     static vector<dtObstacleRef> obstacles;
 
+    static LinearAllocator* talloc; // 1MB
+    static FastLZCompressor* tcomp;
+
 public:
 
     static void DestroyNavData()
@@ -36,6 +39,13 @@ public:
 
         if (navMesh)
             dtFreeNavMesh(navMesh);
+
+        if (talloc)
+            delete talloc;
+
+        if (tcomp)
+            delete tcomp;
+
     }
 
     static void Update()
@@ -113,6 +123,11 @@ public:
 
         std::lock_guard<std::mutex> lock(mainLock);
 
+        for (auto obstacle : obstacles)
+        {
+            RemoveObstacle(obstacle);
+        }
+
         // Remove the obstacle using its reference
         const dtStatus status = tileCache->removeObstacle(obstacleRef);
         if (dtStatusFailed(status))
@@ -131,16 +146,31 @@ public:
 
     static dtObstacleRef CreateObstacleBox(const glm::vec3& min, const glm::vec3& max)
     {
-        if (!tileCache) // Assume tileCache is a dtTileCache* member
+        if (!tileCache) // Ensure tileCache is valid
             return 0;
+
+        glm::vec3 adjustedMin = min;
+        glm::vec3 adjustedMax = max;
+
+        // Ensure each axis (x, y, z) has a minimum length of 2.0 units
+        for (int i = 0; i < 3; ++i)
+        {
+            const float currentLength = adjustedMax[i] - adjustedMin[i];
+            if (currentLength < 2.0f)
+            {
+                const float delta = (2.0f - currentLength) * 0.5f;
+                adjustedMin[i] -= delta;
+                adjustedMax[i] += delta;
+            }
+        }
 
         dtObstacleRef obstacleRef = 0;
 
-        // Add the box obstacle using min and max coordinates
+        // Add the adjusted box obstacle
         dtStatus status = tileCache->addBoxObstacle(
-            &min.x,       // Pointer to the first float of min (x, y, z)
-            &max.x,       // Pointer to the first float of max (x, y, z)
-            &obstacleRef  // Where the obstacle reference will be stored
+            &adjustedMin.x,     // Adjusted min coordinates
+            &adjustedMax.x,     // Adjusted max coordinates
+            &obstacleRef
         );
 
         if (dtStatusFailed(status))
@@ -148,6 +178,8 @@ public:
             std::printf("Failed to add box obstacle. Status: %u\n", status);
             return 0;
         }
+
+        obstacles.push_back(obstacleRef);
 
         std::printf("Box obstacle added. Ref: %u\n", obstacleRef);
         return obstacleRef;

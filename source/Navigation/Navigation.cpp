@@ -1,6 +1,6 @@
 #include <vector>
 #include <mutex>
-#include <glm/glm.hpp>
+#include "../glm.h"
 #include <algorithm>
 #include <cmath>
 #include <cstring>
@@ -14,6 +14,9 @@ dtNavMesh* NavigationSystem::navMesh = nullptr;
 dtTileCache* NavigationSystem::tileCache = nullptr;
 std::mutex NavigationSystem::mainLock;
 std::vector<dtObstacleRef> NavigationSystem::obstacles;
+
+LinearAllocator* NavigationSystem::talloc = nullptr; // 1MB
+FastLZCompressor* NavigationSystem::tcomp = nullptr;
 
 // Custom allocator for tile cache
 struct LinearAllocator : public dtTileCacheAlloc {
@@ -133,8 +136,8 @@ void NavigationSystem::GenerateNavData() {
     tcParams.maxTiles = maxTiles;
     tcParams.maxObstacles = 256;
 
-    LinearAllocator* talloc = new LinearAllocator(1024 * 1024 * 5); // 1MB
-    FastLZCompressor* tcomp = new FastLZCompressor();
+    talloc = new LinearAllocator(1024 * 1024 * 5); // 1MB
+    tcomp = new FastLZCompressor();
 
     tileCache = dtAllocTileCache();
     if (!tileCache || dtStatusFailed(tileCache->init(&tcParams, talloc, tcomp, nullptr))) {
@@ -307,6 +310,9 @@ void NavigationSystem::GenerateNavData() {
             rcFreeHeightfieldLayerSet(layers);
         }
     }
+
+    delete talloc;
+    delete tcomp;
 
     delete ctx;
     // Note: talloc and tcomp are managed in DestroyNavData

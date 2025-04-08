@@ -114,7 +114,7 @@ public:
 	{
 
         NavigationSystem::RemoveObstacle(playerObstacle);
-        playerObstacle = NavigationSystem::CreateObstacleBox(Position - vec3(1.1, 1, 1.1), Position + vec3(1.1, 1, 1.1));
+        playerObstacle = NavigationSystem::CreateObstacleBox(Position - vec3(0.5, 1, 0.5), Position + vec3(0.5, 1, 0.5));
 
         OnGround = CheckGroundAt(Position);
 
