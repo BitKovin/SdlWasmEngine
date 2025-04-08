@@ -300,6 +300,7 @@
     <ClInclude Include="TextureCube.hpp" />
     <ClInclude Include="ThreadPool.h" />
     <ClInclude Include="Time.hpp" />
+    <ClInclude Include="UI\UiButton.hpp" />
     <ClInclude Include="UI\UiElement.h" />
     <ClInclude Include="UI\UiImage.hpp" />
     <ClInclude Include="UI\UiRenderer.h" />

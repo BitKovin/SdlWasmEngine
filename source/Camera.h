@@ -37,6 +37,8 @@ public:
 	static float ViewmodelFOV;
 	static float FarPlane;
 
+	static int ScreenHeight;
+
 	static vec3 lastWorkingRotation;
 	static vec3 velocity;
 	static std::vector<CameraShake> CameraShakes;

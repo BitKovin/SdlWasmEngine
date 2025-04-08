@@ -35,7 +35,7 @@
 
 #include "ImGuiEngineImpl.h"
 
-#include "UI/UiImage.hpp"
+#include "UI/UiButton.hpp"
 
 #include "UI/UiViewport.hpp"
 #include "UI/UiText.hpp"
@@ -113,9 +113,14 @@ public:
 
     Body* body0;
 
-    std::shared_ptr<UiImage> img;
+    std::shared_ptr<UiButton> img;
 
     std::shared_ptr<UiText> text;
+
+    void click()
+    {
+        printf("clicked \n");
+    }
 
 	void Init()
 	{
@@ -159,7 +164,16 @@ public:
 
         shader = ShaderManager::GetShaderProgram("skeletal");
 
-        img = make_shared<UiImage>();
+        img = make_shared<UiButton>();
+
+        // Define a lambda function
+        auto clickHandler = []() {
+            std::cout << "Button clicked!" << std::endl;
+            };
+
+        // Assign it to the pointer (needs dynamic allocation)
+        img->onClick = new std::function<void()>(clickHandler);
+
 
         img->position = vec2(100,100);
         img->size = vec2(100);
@@ -200,6 +214,7 @@ public:
         int x, y;
         SDL_GetWindowSize(Window, &x, &y);
 
+        Camera::ScreenHeight = y;
 
         float AspectRatio = static_cast<float>(x) / static_cast<float>(y);
         Camera::AspectRatio = AspectRatio;

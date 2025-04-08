@@ -65,14 +65,25 @@ void UiElement::Update()
     }
 
     UpdateChildrenOffsets();
-    UpdateOffsets();
+    
+    UpdateChildren();
 
-    glm::vec2 mousePos = Input::MousePos; // assume scaled to screen
+    if (Input::LockCursor)
+    {
+        hovering = false;
+        return;
+    }
+
+    float screenToViewportRatio = Camera::ScreenHeight / 1080.0F;
+
+    glm::vec2 mousePos = Input::MousePos / screenToViewportRatio; // assume scaled to screen
     glm::vec2 p = position + offset;
     glm::vec2 sz = GetSize();
 
     hovering = (mousePos.x >= p.x && mousePos.x <= p.x + sz.x &&
         mousePos.y >= p.y && mousePos.y <= p.y + sz.y);
+
+
 }
 
 glm::vec2 UiElement::GetOrigin() {

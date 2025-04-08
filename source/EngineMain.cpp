@@ -13,4 +13,6 @@ void EngineMain::InitInputs()
 
     Input::AddAction("jump")->AddKeyboardKey(SDL_GetScancodeFromKey(SDL_KeyCode::SDLK_SPACE));
 
+    Input::AddAction("click")->LMB = true;
+
 }

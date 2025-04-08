@@ -26,6 +26,9 @@
     float Camera::FOV = 80.0f;
     float Camera::ViewmodelFOV = 60.0f;
     float Camera::FarPlane = 3000.0f;
+
+    int Camera::ScreenHeight = 720;
+
     vec3 Camera::lastWorkingRotation = vec3(0.0f);
     vec3 Camera::velocity = vec3(0.0f);
     std::vector<CameraShake> Camera::CameraShakes;
