@@ -11,6 +11,7 @@
 #include "../Time.hpp"
 
 #include "../DebugDraw.hpp"
+#include "Detour/DetourNavMeshQuery.h"
 
 
 class NavigationSystem
@@ -31,6 +32,7 @@ public:
 
     static void Update()
     {
+        
         std::lock_guard<std::mutex> lock(mainLock);
 
         bool upToDate = false;
@@ -42,7 +44,7 @@ public:
         }
         else if (!upToDate)
         {
-            std::printf("Tile cache still processing updates.\n");
+            //std::printf("Tile cache still processing updates.\n");
         }
     }
 
@@ -67,6 +69,7 @@ public:
             for (int j = 0; j < tile->header->polyCount; ++j)
             {
                 const dtPoly* poly = &tile->polys[j];
+
 
                 // Only draw standard ground polys (avoid off-mesh connections, etc.)
                 if (poly->getType() != DT_POLYTYPE_GROUND)
@@ -110,7 +113,7 @@ public:
         const dtStatus status = tileCache->removeObstacle(obstacleRef);
         if (dtStatusFailed(status))
         {
-            //std::printf("Failed to remove obstacle with ref: %u. Status: %u\n", obstacleRef, status);
+            std::printf("Failed to remove obstacle with ref: %u. Status: %u\n", obstacleRef, status);
         }
         else
         {
@@ -137,9 +140,9 @@ public:
         for (int i = 0; i < 3; ++i)
         {
             const float currentLength = adjustedMax[i] - adjustedMin[i];
-            if (currentLength < 2.0f)
+            if (currentLength < 0.2f)
             {
-                const float delta = (2.0f - currentLength) * 0.5f;
+                const float delta = (0.2f - currentLength) * 0.5f;
                 adjustedMin[i] -= delta;
                 adjustedMax[i] += delta;
             }
@@ -156,7 +159,7 @@ public:
 
         if (dtStatusFailed(status))
         {
-            //std::printf("Failed to add box obstacle. Status: %u\n", status);
+            std::printf("Failed to add box obstacle. Status: %u\n", status);
             return 0;
         }
 
@@ -165,5 +168,13 @@ public:
         //std::printf("Box obstacle added. Ref: %u\n", obstacleRef);
         return obstacleRef;
     }
+
+    // =====================================================================
+// New function: FindSimplePath
+// Computes a simple path from a start to a target position. The path is
+// returned as an array of 3D points (world coordinates) in outPath.
+// Returns true if a valid path was found.
+// =====================================================================
+    static std::vector<glm::vec3> FindSimplePath(const glm::vec3& start, const glm::vec3& target);
 
 };

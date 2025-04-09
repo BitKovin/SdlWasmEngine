@@ -6,6 +6,9 @@
 #include <cstring>
 #include <iostream>
 #include "Navigation.hpp"
+
+#include "../Physics.h"
+
 // Recast and Detour includes
 
 
@@ -106,6 +109,10 @@ void NavigationSystem::GenerateNavData()
     }
     std::cout << "Bounding box: (" << bmin.x << "," << bmin.y << "," << bmin.z << ") to ("
         << bmax.x << "," << bmax.y << "," << bmax.z << ")" << std::endl;
+
+    bmin -= vec3(5);
+
+    bmax += vec3(5);
 
     // Recast configuration
     rcConfig cfg;
@@ -324,6 +331,7 @@ void NavigationSystem::GenerateNavData()
 
                 // Add to tile cache
                 dtCompressedTileRef tileRef;
+
                 status = tileCache->addTile(outData, outDataSize, DT_COMPRESSEDTILE_FREE_DATA, &tileRef);
                 if (dtStatusFailed(status)) {
                     std::cerr << "Failed to add tile to cache for tile (" << tx << "," << tz << ") layer " << i
@@ -338,11 +346,165 @@ void NavigationSystem::GenerateNavData()
                     std::cerr << "Failed to build navmesh tile for tile (" << tx << "," << tz << ") layer " << i
                         << " (status: " << status << ")" << std::endl;
                 }
+
             }
             rcFreeHeightfieldLayerSet(layers);
         }
     }
 
+    const int MaxTiles = navMesh->getMaxTiles();
+    for (int i = 0; i < MaxTiles; ++i)
+    {
+        const dtMeshTile* tile = navMesh->getTile(i);
+        if (!tile || !tile->header)
+            continue;
+
+        for (int j = 0; j < tile->header->polyCount; ++j)
+        {
+            dtPoly* poly = &tile->polys[j];
+
+            poly->flags = 1;
+
+        }
+    }
+
     delete ctx;
     // Note: talloc and tcomp are managed in DestroyNavData
+}
+
+bool HasLineOfSight(const vec3& pointA, const vec3& pointB)
+{
+    return Physics::SphereTrace(pointA, pointB, 0.4, BodyType::World).hasHit == false;
+}
+
+// =====================================================================
+    // FindSimplePath
+    // Computes a simple path from a start to a target position. It returns the
+    // computed path as a vector of 3D points (world coordinates). If no valid
+    // path is found, an empty vector is returned.
+    //
+    // After computing the initial straight path, the function checks if the
+    // second and second-from-last points are redundant. If there is a clear line
+    // of sight skipping those points, then they are removed.
+    // =====================================================================
+std::vector<glm::vec3> NavigationSystem::FindSimplePath(const glm::vec3& start, const glm::vec3& target)
+{
+
+    if (HasLineOfSight(start, target))
+    {
+        //return { target };
+    }
+
+    std::vector<glm::vec3> outPath;
+
+    if (!navMesh)
+        return outPath;
+
+    std::lock_guard<std::mutex> lock(mainLock);
+
+    // Create a navmesh query instance.
+    dtNavMeshQuery* navQuery = dtAllocNavMeshQuery();
+    if (!navQuery)
+        return outPath;
+
+    // Initialize the query. The 2048 value is the maximum number of nodes to use.
+    dtStatus status = navQuery->init(navMesh, 2048);
+    if (dtStatusFailed(status))
+    {
+        dtFreeNavMeshQuery(navQuery);
+        return outPath;
+    }
+
+    // Setup a basic query filter.
+    dtQueryFilter filter;
+    filter.setIncludeFlags(0xffff);
+    filter.setExcludeFlags(0);
+
+    // Find the nearest polygon to the start and target positions.
+    dtPolyRef startRef, endRef;
+    float extents[3] = { 1, 4, 1 };  // search extents in each axis
+
+    float startPos[3] = { start.x, start.y, start.z };
+    float targetPos[3] = { target.x, target.y, target.z };
+
+    status = navQuery->findNearestPoly(startPos, extents, &filter, &startRef, nullptr);
+    if (dtStatusFailed(status) || !startRef)
+    {
+        dtFreeNavMeshQuery(navQuery);
+        return outPath;
+    }
+
+    status = navQuery->findNearestPoly(targetPos, extents, &filter, &endRef, nullptr);
+    if (dtStatusFailed(status) || !endRef)
+    {
+        dtFreeNavMeshQuery(navQuery);
+        return outPath;
+    }
+
+    // Compute the polygon path.
+    const int MAX_POLYS = 256;
+    dtPolyRef polyPath[MAX_POLYS];
+    int polyPathCount = 0;
+    status = navQuery->findPath(startRef, endRef, startPos, targetPos, &filter,
+        polyPath, &polyPathCount, MAX_POLYS);
+    if (dtStatusFailed(status) || polyPathCount == 0)
+    {
+        dtFreeNavMeshQuery(navQuery);
+        return outPath;
+    }
+
+    // Compute the straight path (a series of waypoints) from the polygon path.
+    const int MAX_STRAIGHT_PATH = 256;
+    float straightPath[MAX_STRAIGHT_PATH * 3];
+    unsigned char straightPathFlags[MAX_STRAIGHT_PATH];
+    dtPolyRef straightPathPolys[MAX_STRAIGHT_PATH];
+    int straightPathCount = 0;
+    status = navQuery->findStraightPath(startPos, targetPos, polyPath, polyPathCount,
+        straightPath, straightPathFlags, straightPathPolys,
+        &straightPathCount, MAX_STRAIGHT_PATH);
+    if (dtStatusFailed(status))
+    {
+        dtFreeNavMeshQuery(navQuery);
+        return outPath;
+    }
+
+    // Convert the computed straight path into a vector of glm::vec3 points.
+    for (int i = 0; i < straightPathCount; ++i)
+    {
+        float* p = &straightPath[i * 3];
+        outPath.emplace_back(p[0], p[1], p[2]);
+    }
+
+    dtFreeNavMeshQuery(navQuery);
+
+    
+    // ---------------------------------------------------------------------
+    // Post-process the path by testing redundancy on the second and
+    // second-from-last points based on line-of-sight.
+    // ---------------------------------------------------------------------
+    if (outPath.size() >= 2)
+    {
+        // Check the second point (index 1). If there is a clear line of sight
+        // from the first point to the third point, then the second point is redundant.
+        if (HasLineOfSight(outPath[1], start))
+        {
+            outPath.erase(outPath.begin());
+        }
+    }
+    
+    if (outPath.size() >= 1)
+    {
+        // Check the second-from-last point. If there is a clear line of sight from
+        // the third-from-last point to the last point, then the second-from-last
+        // point is redundant.
+        size_t n = outPath.size();
+        if (HasLineOfSight(outPath[n - 1], target))
+        {
+            outPath.erase(outPath.end()-1);
+        }
+    }
+    
+    outPath.push_back(target);
+
+    return outPath;
 }

@@ -110,6 +110,14 @@ public:
         Line(p001, p011, duration, thickness);
     }
 
+    static void Path(vector<vec3> path, float duration = 1, float thickness = 0.02f)
+    {
+        for (int i = 1; i < path.size(); i++)
+        {
+            Line(path[i - 1], path[i], duration, thickness);
+        }
+    }
+
     // This method is called to produce a snapshot for the render thread. It:
     // 1. Removes expired commands from 'commands'
     // 2. Copies pointers to the remaining commands into 'finalizedCommands'

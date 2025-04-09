@@ -23,6 +23,7 @@
 #include <Jolt/Physics/Collision/RayCast.h>
 #include <Jolt/Physics/Body/Body.h>
 #include <Jolt/Physics/Collision/CastResult.h>
+#include <Jolt/Physics/Collision/ShapeCast.h>
 
 #include "PhysicsConverter.h"
 
@@ -453,6 +454,7 @@ public:
 	{
 		bool hasHit;
 		vec3 position;   // World space hit position.
+		vec3 shapePosition;   // World space hit position.
 		vec3 normal;     // World space hit normal.
 		const JPH::Body* hitbody; // ID of the hit body.
 		float fraction;  // Fraction along the ray where the hit occurred.
@@ -488,6 +490,9 @@ public:
 		{
 			// Calculate fraction of the hit along the ray.
 			hit.fraction = result.mFraction;
+
+			hit.shapePosition = mix(start, end, hit.fraction);
+
 			// Compute the hit position in physics space and convert it back to your coordinate system.
 			hit.position = FromPhysics(ray.GetPointOnRay(result.mFraction));
 
@@ -525,6 +530,121 @@ public:
 		return hit;
 	}
 
+	class ClosestHitShapeCastCollector : public JPH::CollisionCollector<JPH::ShapeCastResult, JPH::CollisionCollectorTraitsCastShape>
+	{
+	public:
+		ClosestHitShapeCastCollector() : mHadHit(false), mClosestFraction(1.0f) {}
+
+		virtual void AddHit(const JPH::ShapeCastResult& inHit) override
+		{
+			if (inHit.mFraction < mClosestFraction)
+			{
+				mClosestFraction = inHit.mFraction;
+				mHit = inHit;
+				mHadHit = true;
+			}
+		}
+
+		bool HadHit() const { return mHadHit; }
+		const JPH::ShapeCastResult& GetHit() const { return mHit; }
+
+	private:
+		bool mHadHit;
+		float mClosestFraction;
+		JPH::ShapeCastResult mHit;
+	};
+	
+	static HitResult SphereTrace(const vec3 start, const vec3 end, float radius, const BodyType mask = BodyType::GroupHitTest, const vector<Body*> ignoreList = {})
+	{
+		HitResult hit;
+
+		// Convert start and end from your own vector type to Jolt's coordinate system.
+		JPH::Vec3 startLoc = ToPhysics(start);
+		JPH::Vec3 endLoc = ToPhysics(end);
+
+		// Create a sphere shape for the trace.
+		auto sphere_shape_settings = new JPH::SphereShapeSettings();
+		sphere_shape_settings->SetEmbedded();
+		sphere_shape_settings->mRadius = radius;
+		JPH::Shape::ShapeResult shape_result = sphere_shape_settings->Create();
+		JPH::ShapeRefC sphere_shape = shape_result.Get();
+
+		if (shape_result.HasError())
+		{
+			Logger::Log(shape_result.GetError().c_str());
+			hit.hasHit = false;
+			hit.fraction = 1.0f;
+			hit.position = end;
+			hit.shapePosition = end;
+			hit.normal = vec3(0, 0, 0);
+			hit.hitbody = nullptr;
+			delete sphere_shape_settings;
+			return hit;
+		}
+
+		// Set up the shape cast from startLoc to endLoc.
+		JPH::Vec3 direction = endLoc - startLoc;
+		JPH::RMat44 start_transform = JPH::RMat44::sTranslation(startLoc);
+		JPH::RShapeCast shape_cast(sphere_shape, JPH::Vec3::sReplicate(1.0f), start_transform, direction);
+
+
+
+		TraceBodyFilter filter;
+		filter.mask = mask;
+		filter.ignoreList = ignoreList;
+
+		//physicsMainLock.lock();
+
+		// Cast the shape using the narrow phase query.
+		ClosestHitShapeCastCollector collector;
+		physics_system->GetNarrowPhaseQuery().CastShape(shape_cast, JPH::ShapeCastSettings(), JPH::Vec3::sZero(), collector, {}, {}, filter);
+		if (collector.HadHit())
+		{
+			// Calculate fraction of the hit along the path.
+			hit.fraction = collector.GetHit().mFraction;
+
+			hit.shapePosition = mix(start, end, hit.fraction);
+
+			// Compute the hit position in physics space (point on the hit body) and convert it back to your coordinate system.
+			hit.position = FromPhysics(collector.GetHit().mContactPointOn2);
+
+			// Lock the body using the BodyLockInterface to safely access it.
+			JPH::BodyLockRead body_lock(physics_system->GetBodyLockInterface(), collector.GetHit().mBodyID2);
+
+			// Retrieve the hit body's surface normal.
+			const JPH::Body* body = &body_lock.GetBody();
+			if (body)
+			{
+				hit.normal = FromPhysics(body->GetWorldSpaceSurfaceNormal(collector.GetHit().mSubShapeID2, collector.GetHit().mContactPointOn2));
+			}
+			else
+			{
+				hit.normal = vec3(0, 0, 0);
+			}
+
+			// Record the hit body.
+			hit.hitbody = body;
+			hit.hasHit = true;
+		}
+		else
+		{
+			// No hit: return the end point, a fraction of 1.0 and zero normal.
+			hit.fraction = 1.0f;
+			hit.position = end;
+			hit.normal = vec3(0, 0, 0);
+			hit.hitbody = nullptr;
+			hit.hasHit = false;
+		}
+
+		//physicsMainLock.unlock();
+
+		// Clean up the shape settings.
+		delete sphere_shape_settings;
+
+		return hit;
+	}
+
+	
 	static Body* CreateCharacterBody(Entity* owner, vec3 Position, float Radius, float Height, float Mass,
 		BodyType group = BodyType::CharacterCapsule,
 		BodyType mask = BodyType::GroupCollisionTest)

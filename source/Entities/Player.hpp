@@ -85,14 +85,13 @@ private:
 
     bool CheckGroundAt(vec3 location)
     {
-        auto result = Physics::LineTrace(location, location - vec3(0, 0.95, 0), BodyType::GroupCollisionTest, {LeadBody});
-
-        //DebugDraw::Line(location + vec3(1,0,0), location + vec3(1,0,0) - vec3(0, 0.95, 0));
+        auto result = Physics::SphereTrace(location, location - vec3(0, 0.95, 0), 1, BodyType::GroupCollisionTest, {LeadBody});
 
         return result.hasHit;
 
     }
 
+    vec3 testStart;
 
 public:
 	Player(){}
@@ -114,7 +113,7 @@ public:
 	{
 
         NavigationSystem::RemoveObstacle(playerObstacle);
-        playerObstacle = NavigationSystem::CreateObstacleBox(Position - vec3(0.5, 1, 0.5), Position + vec3(0.5, 1, 0.5));
+        playerObstacle = NavigationSystem::CreateObstacleBox(Position - vec3(0.4, 1, 0.2), Position + vec3(0.4, 1, 0.2));
 
         OnGround = CheckGroundAt(Position);
 
@@ -163,11 +162,25 @@ public:
 
 		LeadBody->SetLinearVelocity(ToPhysics(velocity));
 
+        if (Input::GetAction("test")->Pressed())
+        {
+            testStart = Position;
+        }
+
         if(OnGround)
         if (Input::GetAction("jump")->Pressed())
         {
             Jump();
-            NavigationSystem::CreateObstacleBox(Position - vec3(1.1, 3, 1.1), Position + vec3(1.1, 3, 1.1));
+            //NavigationSystem::CreateObstacleBox(Position - vec3(1.1, 3, 1.1), Position + vec3(1.1, 3, 1.1));
+
+            DebugDraw::Line(Position, testStart);
+
+            auto path = NavigationSystem::FindSimplePath(Position, testStart);
+
+            path.insert(path.begin(), Position);
+
+            DebugDraw::Path(path, 5);
+
         }
 
 		Camera::position = Position + vec3(0,0.7,0);
