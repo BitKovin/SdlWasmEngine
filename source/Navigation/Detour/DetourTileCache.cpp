@@ -9,6 +9,8 @@
 #include <string.h>
 #include <new>
 
+#include ".././../DebugDraw.hpp"
+
 dtTileCache* dtAllocTileCache()
 {
 	void* mem = dtAlloc(sizeof(dtTileCache), DT_ALLOC_PERM);
@@ -489,10 +491,10 @@ dtStatus dtTileCache::queryTiles(const float* bmin, const float* bmax,
 	
 	const float tw = m_params.width * m_params.cs;
 	const float th = m_params.height * m_params.cs;
-	const int tx0 = (int)dtMathFloorf((bmin[0]-m_params.orig[0]) / tw);
-	const int tx1 = (int)dtMathFloorf((bmax[0]-m_params.orig[0]) / tw);
-	const int ty0 = (int)dtMathFloorf((bmin[2]-m_params.orig[2]) / th);
-	const int ty1 = (int)dtMathFloorf((bmax[2]-m_params.orig[2]) / th);
+	const int tx0 = (int)dtMathFloorf((bmin[0]-m_params.orig[0] - 2) / tw);
+	const int tx1 = (int)dtMathFloorf((bmax[0]-m_params.orig[0] + 2) / tw);
+	const int ty0 = (int)dtMathFloorf((bmin[2]-m_params.orig[2] - 2) / th);
+	const int ty1 = (int)dtMathFloorf((bmax[2]-m_params.orig[2] + 2) / th);
 	
 	for (int ty = ty0; ty <= ty1; ++ty)
 	{
@@ -508,6 +510,7 @@ dtStatus dtTileCache::queryTiles(const float* bmin, const float* bmax,
 				
 				if (dtOverlapBounds(bmin,bmax, tbmin,tbmax))
 				{
+
 					if (n < maxResults)
 						results[n++] = tiles[i];
 				}
@@ -548,6 +551,7 @@ dtStatus dtTileCache::update(const float /*dt*/, dtNavMesh* navmesh, bool* upToD
 				getObstacleBounds(ob, bmin, bmax);
 				int ntouched = 0;
 				queryTiles(bmin, bmax, ob->touched, &ntouched, DT_MAX_TOUCHED_TILES);
+				ob->original_ntouched = ntouched;
 
 				ob->ntouched = 0;
 				ob->npending = 0;
@@ -591,15 +595,14 @@ dtStatus dtTileCache::update(const float /*dt*/, dtNavMesh* navmesh, bool* upToD
 					// Re-add all originally touched tiles for removal
 					ob->state = DT_OBSTACLE_REMOVING;
 					ob->npending = 0;
-					for (int j = 0; j < ob->ntouched; ++j)
-					{
-						if (m_nupdate < MAX_UPDATE && ob->npending < DT_MAX_PENDING)
-						{
-							if (!contains(m_update, m_nupdate, ob->pending[j]))
-							{
-								m_update[m_nupdate++] = ob->pending[j];
+					// Loop through all originally touched tiles
+					for (int j = 0; j < ob->original_ntouched; ++j) {
+						if (m_nupdate < MAX_UPDATE && ob->npending < DT_MAX_PENDING) {
+							dtCompressedTileRef tileRef = ob->touched[j];
+							if (!contains(m_update, m_nupdate, tileRef)) {
+								m_update[m_nupdate++] = tileRef;
 							}
-							ob->pending[ob->npending++] = ob->pending[j];
+							ob->pending[ob->npending++] = tileRef;
 						}
 					}
 				}

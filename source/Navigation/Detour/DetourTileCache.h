@@ -75,6 +75,7 @@ struct dtTileCacheObstacle
 	unsigned char type;
 	unsigned char state;
 	unsigned char ntouched;
+	int original_ntouched;  // New member to store the original count
 	unsigned char npending;
 	dtTileCacheObstacle* next;
 };

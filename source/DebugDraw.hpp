@@ -80,6 +80,36 @@ public:
         AddCommand(std::make_unique<DrawCommandLine>(start, end, thickness, duration));
     }
 
+    static void Bounds(vec3 min, vec3 max, float duration = 0.1f, float thickness = 0.02f)
+    {
+        vec3 p000 = { min.x, min.y, min.z };
+        vec3 p001 = { min.x, min.y, max.z };
+        vec3 p010 = { min.x, max.y, min.z };
+        vec3 p011 = { min.x, max.y, max.z };
+        vec3 p100 = { max.x, min.y, min.z };
+        vec3 p101 = { max.x, min.y, max.z };
+        vec3 p110 = { max.x, max.y, min.z };
+        vec3 p111 = { max.x, max.y, max.z };
+
+        // Bottom face
+        Line(p000, p100, duration, thickness);
+        Line(p100, p101, duration, thickness);
+        Line(p101, p001, duration, thickness);
+        Line(p001, p000, duration, thickness);
+
+        // Top face
+        Line(p010, p110, duration, thickness);
+        Line(p110, p111, duration, thickness);
+        Line(p111, p011, duration, thickness);
+        Line(p011, p010, duration, thickness);
+
+        // Vertical edges
+        Line(p000, p010, duration, thickness);
+        Line(p100, p110, duration, thickness);
+        Line(p101, p111, duration, thickness);
+        Line(p001, p011, duration, thickness);
+    }
+
     // This method is called to produce a snapshot for the render thread. It:
     // 1. Removes expired commands from 'commands'
     // 2. Copies pointers to the remaining commands into 'finalizedCommands'
