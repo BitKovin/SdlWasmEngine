@@ -352,22 +352,6 @@ void NavigationSystem::GenerateNavData()
         }
     }
 
-    const int MaxTiles = navMesh->getMaxTiles();
-    for (int i = 0; i < MaxTiles; ++i)
-    {
-        const dtMeshTile* tile = navMesh->getTile(i);
-        if (!tile || !tile->header)
-            continue;
-
-        for (int j = 0; j < tile->header->polyCount; ++j)
-        {
-            dtPoly* poly = &tile->polys[j];
-
-            poly->flags = 1;
-
-        }
-    }
-
     delete ctx;
     // Note: talloc and tcomp are managed in DestroyNavData
 }
@@ -376,6 +360,15 @@ bool HasLineOfSight(const vec3& pointA, const vec3& pointB)
 {
     return Physics::SphereTrace(pointA, pointB, 0.4, BodyType::World).hasHit == false;
 }
+
+// Custom filter to check polygon area instead of flags
+class CustomFilter : public dtQueryFilter
+{
+    bool passFilter(const dtPolyRef /*ref*/, const dtMeshTile* /*tile*/, const dtPoly* poly) const override
+    {
+        return true;// poly->getArea() == DT_TILECACHE_WALKABLE_AREA; // Match area set during navmesh build
+    }
+};
 
 // =====================================================================
     // FindSimplePath
@@ -416,7 +409,7 @@ std::vector<glm::vec3> NavigationSystem::FindSimplePath(const glm::vec3& start, 
     }
 
     // Setup a basic query filter.
-    dtQueryFilter filter;
+    CustomFilter filter;
     filter.setIncludeFlags(0xffff);
     filter.setExcludeFlags(0);
 

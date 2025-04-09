@@ -42,8 +42,6 @@ static void extractBoneData(std::vector<VertexData>& vertices, aiMesh* mesh, roj
 			}
 		}
 
-		Logger::Log("a");
-
 	}
 }
 static void extractBoneNode(roj::BoneNode& bone, aiNode* src)

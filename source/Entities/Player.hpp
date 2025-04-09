@@ -15,6 +15,8 @@
 
 #include "../Navigation/Navigation.hpp"
 
+#include "../SkeletalMesh.hpp"
+
 class Player : public Entity
 {
 
@@ -93,6 +95,8 @@ private:
 
     vec3 testStart;
 
+    SkeletalMesh viewmodel;
+
 public:
 	Player(){}
 	~Player(){}
@@ -103,6 +107,14 @@ public:
 	{
 		LeadBody = Physics::CreateCharacterBody(this, Position, 0.5, 1.8, 70);
         Physics::SetGravityFactor(LeadBody, 3);
+
+        viewmodel.LoadFromFile("GameData/testViewmodel.glb");
+        viewmodel.ColorTexture = AssetRegistry::GetTextureFromFile("GameData/cat.png");
+
+        viewmodel.PlayAnimation("idle");
+
+        Drawables.push_back(&viewmodel);
+
 	}
 
     bool OnGround = false;
@@ -112,8 +124,10 @@ public:
 	void Update()
 	{
 
+        
+
         NavigationSystem::RemoveObstacle(playerObstacle);
-        playerObstacle = NavigationSystem::CreateObstacleBox(Position - vec3(0.4, 1, 0.2), Position + vec3(0.4, 1, 0.2));
+        playerObstacle = NavigationSystem::CreateObstacleBox(Position + vec3(2,0,0) - vec3(0.4, 1, 0.2), Position + vec3(2, 0, 0) + vec3(0.4, 1, 0.2));
 
         OnGround = CheckGroundAt(Position);
 
@@ -184,6 +198,10 @@ public:
         }
 
 		Camera::position = Position + vec3(0,0.7,0);
+
+        viewmodel.Update();
+        viewmodel.Position = Camera::position;
+        viewmodel.Rotation = Camera::rotation;
 
 	}
 
