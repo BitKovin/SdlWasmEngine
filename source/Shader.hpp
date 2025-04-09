@@ -240,7 +240,7 @@ public:
 
         // Bind texture and update uniform
         glActiveTexture(GL_TEXTURE0 + unit);
-        glBindTexture(GL_TEXTURE_2D, texture->getID());
+        glBindTexture(GL_TEXTURE_2D, texture == nullptr? 0 : texture->getID());
         glUniform1i(location, unit);
     }
 

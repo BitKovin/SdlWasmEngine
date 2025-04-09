@@ -145,12 +145,12 @@ public:
         skm->LoadFromFile("GameData/cube.obj");
         skm->ColorTexture = texture;
 
-        skm->Size = vec3(30,0.2f,30);
+        skm->Scale = vec3(30,0.2f,30);
 
 
 
 
-        body0 = Physics::CreateBoxBody(nullptr, skm->Position, skm->Size, 10, true, BodyType::World);
+        body0 = Physics::CreateBoxBody(nullptr, skm->Position, skm->Scale, 10, true, BodyType::World);
 
 
 
@@ -208,7 +208,7 @@ public:
         Level::Current->FinalizeFrame();
         Viewport.FinalizeChildren();
 
-        NavigationSystem::DrawNavmesh();
+        //NavigationSystem::DrawNavmesh();
 
         DebugDraw::Finalize();
 
@@ -329,6 +329,9 @@ public:
         }
 
 #endif // DESKTOP
+
+        glEnable(GL_POLYGON_OFFSET_FILL);
+        glPolygonOffset(1.0, 1.0);
 
         glEnable(GL_CULL_FACE);
 

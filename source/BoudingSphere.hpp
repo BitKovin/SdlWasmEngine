@@ -4,6 +4,8 @@
 #include <vector>
 #include <cmath>
 
+#include "MathHelper.hpp"
+
 using namespace std;
 
 class BoudingSphere
@@ -85,12 +87,13 @@ public:
         return sphere;
     }
 
-    BoudingSphere Transform(vec3 translation, vec3 scale = vec3(1))
+    BoudingSphere Transform(vec3 translation,vec3 rotation = vec3(0), vec3 scale = vec3(1))
     {
 
         float s = glm::max(glm::max(scale.x, scale.y), scale.z);
 
-        return BoudingSphere(offset * s + translation, Radius * s);
+        return BoudingSphere(MathHelper::RotateVector(offset, rotation) * s + translation, Radius * s);
+
     }
 
 

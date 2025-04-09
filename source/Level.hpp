@@ -90,6 +90,9 @@ public:
 
 		VissibleRenderList.clear();
 
+		vector<IDrawMesh*> opaque;
+		vector<IDrawMesh*> transparent;
+
 		entityArrayLock.lock();
 		for (auto var : LevelObjects)
 		{
@@ -99,17 +102,45 @@ public:
 			{
 				if (mesh->IsCameraVisible())
 				{
-					VissibleRenderList.push_back(mesh);
-				}
-				else
-				{
-					printf("not rendered\n");
+					if (mesh->Transparent)
+					{
+						transparent.push_back(mesh);
+					}
+					else
+					{
+						opaque.push_back(mesh);
+					}
 				}
 			}
 
 		}
 
 		entityArrayLock.unlock();
+
+
+		// Sort opaque objects from closest to farthest (ascending order by distance).
+		std::sort(opaque.begin(), opaque.end(),
+			[](IDrawMesh* a, IDrawMesh* b) {
+				return a->GetDistanceToCamera() < b->GetDistanceToCamera();
+			});
+
+		// Sort transparent objects from farthest to closest (descending order by distance).
+		std::sort(transparent.begin(), transparent.end(),
+			[](IDrawMesh* a, IDrawMesh* b) {
+				return a->GetDistanceToCamera() > b->GetDistanceToCamera();
+			});
+
+		// Append sorted opaque objects first.
+		for (auto mesh : opaque)
+		{
+			VissibleRenderList.push_back(mesh);
+		}
+
+		// Append sorted transparent objects second.
+		for (auto mesh : transparent)
+		{
+			VissibleRenderList.push_back(mesh);
+		}
 
 	}
 

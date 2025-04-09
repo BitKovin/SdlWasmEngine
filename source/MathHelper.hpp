@@ -140,6 +140,12 @@ public:
 		return rotationMatrix * vector;
 	}
 
+	// Rotates a vector around an axis by a given angle (in degrees).
+	inline static glm::vec3 RotateVector(const glm::vec3& vector, const glm::vec3& angle) {
+		glm::mat3 rotationMatrix = GetRotationMatrix(angle);
+		return rotationMatrix * vector;
+	}
+
 
 	// Returns Euler angles (in degrees) in the order (pitch, yaw, roll) from a quaternion.
 	inline static glm::vec3 ToYawPitchRoll(const glm::quat& q) 

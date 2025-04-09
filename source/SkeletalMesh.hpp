@@ -23,6 +23,11 @@
 
 using namespace std;
 
+struct AnimationPose 
+{
+	std::unordered_map<std::string, mat4> boneTransforms;
+};
+
 class SkeletalMesh : public StaticMesh
 {
 private:
@@ -43,6 +48,21 @@ protected:
 	}
 
 public:
+
+	AnimationPose GetAnimationPose()
+	{
+
+		AnimationPose pose;
+		pose.boneTransforms = animator.GetBonePoseArray();
+
+		return pose;
+	}
+
+	void PasteAnimationPose(AnimationPose pose)
+	{
+		animator.ApplyBonePoseArray(pose.boneTransforms);
+		boneTransforms = animator.getBoneMatrices();
+	}
 
 	void PlayAnimation(string name)
 	{

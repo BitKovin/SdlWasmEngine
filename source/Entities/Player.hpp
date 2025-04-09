@@ -29,6 +29,8 @@ private:
 
     vec3 velocity = vec3(0);
 
+    vec3 cameraRotation = vec3(0);
+
     glm::vec3 Friction(glm::vec3 vel, float factor = 60.0f) {
         vel = MathHelper::XZ(vel);
         float length = glm::length(vel);
@@ -96,6 +98,7 @@ private:
     vec3 testStart;
 
     SkeletalMesh viewmodel;
+    SkeletalMesh arms;
 
 public:
 	Player(){}
@@ -109,13 +112,18 @@ public:
         Physics::SetGravityFactor(LeadBody, 3);
 
         viewmodel.LoadFromFile("GameData/testViewmodel.glb");
-        viewmodel.ColorTexture = AssetRegistry::GetTextureFromFile("GameData/cat.png");
 
-        viewmodel.PlayAnimation("idle");
+        viewmodel.PlayAnimation("draw");
+
+        viewmodel.Transparent = true;
 
         viewmodel.IsViewmodel = true;
 
         Drawables.push_back(&viewmodel);
+
+        arms.LoadFromFile("GameData/arms.glb");
+        arms.IsViewmodel = true;
+        Drawables.push_back(&arms);
 
 	}
 
@@ -133,8 +141,8 @@ public:
 
         OnGround = CheckGroundAt(Position);
 
-		Camera::rotation.y += Input::MouseDelta.x;
-		Camera::rotation.x -= Input::MouseDelta.y;
+        cameraRotation.y += Input::MouseDelta.x;
+        cameraRotation.x -= Input::MouseDelta.y;
 
 		vec2 input = Input::GetLeftStickPosition();
 
@@ -199,11 +207,38 @@ public:
 
         }
 
-		Camera::position = Position + vec3(0,0.7,0);
+		
+
+        if (Input::GetAction("attack")->Pressed())
+        {
+            viewmodel.PlayAnimation("attack");
+            Camera::AddCameraShake(CameraShake(
+                0.13f,                            // interpIn
+                1.2f,                            // duration
+                vec3(0.0f, 0.0f, -0.2f),         // positionAmplitude
+                vec3(0.0f, 0.0f, 6.4f),          // positionFrequency
+                vec3(-8, 0.15f, 0.0f),        // rotationAmplitude
+                vec3(-5.0f, 28.8f, 0.0f),        // rotationFrequency
+                1.2f,                            // falloff
+                CameraShake::ShakeType::SingleWave // shakeType
+            ));
+
+        }
+
+        Camera::position = Position + vec3(0, 0.7, 0);
+        Camera::rotation = cameraRotation;
 
         viewmodel.Update();
+
+        arms.PasteAnimationPose(viewmodel.GetAnimationPose());
+
         viewmodel.Position = Camera::position;
-        viewmodel.Rotation = Camera::rotation;
+        viewmodel.Rotation = cameraRotation;
+
+        arms.Position = viewmodel.Position;
+        arms.Rotation = viewmodel.Rotation;
+
+        Camera::ApplyCameraShake(Time::DeltaTimeF);
 
 	}
 

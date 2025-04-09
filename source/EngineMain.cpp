@@ -15,4 +15,6 @@ void EngineMain::InitInputs()
 
     Input::AddAction("click")->LMB = true;
 
+    Input::AddAction("attack")->AddButton(5)->LMB = true;
+
 }

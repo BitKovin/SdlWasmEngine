@@ -249,6 +249,7 @@ namespace roj
 		}
 		for (uint32_t i = 0; i < node->mNumChildren; i++)
 		{
+
 			processNode(node->mChildren[i], scene);
 		}
 	}

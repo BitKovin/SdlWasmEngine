@@ -63,7 +63,7 @@ public:
         return shaderCache[key];
     }
 
-    static Texture* GetTextureFromFile(const char* filename)
+    static Texture* GetTextureFromFile(string filename)
     {
 
         string key = filename;
@@ -76,7 +76,7 @@ public:
 
         textureCache[key] = new Texture(filename, true);
 
-        return textureCache[key];
+        return textureCache[key]->valid ? textureCache[key] : nullptr;
     }
 
     static TTF_Font* GetFontFromFile(const char* filename, int fontSize) {

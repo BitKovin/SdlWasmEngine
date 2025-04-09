@@ -100,6 +100,25 @@ void roj::Animator::calcBoneTransform(BoneNode& node, glm::mat4 offset)
     }
 }
 
+void roj::Animator::ApplyNodePose(BoneNode& node, glm::mat4 offset, std::unordered_map<std::string, mat4>& pose)
+{
+
+
+    offset *= pose[node.name];
+
+    auto it2 = m_model.boneInfoMap.find(node.name);
+    if (it2 != m_model.boneInfoMap.end())
+    {
+        auto& boneInfo = it2->second;
+        m_boneMatrices[boneInfo.id] = offset * boneInfo.offset;
+    }
+
+    for (roj::BoneNode& child : node.children)
+    {
+        ApplyNodePose(child, offset, pose);
+    }
+}
+
 roj::Animator::Animator(SkinnedModel* model)
     : m_model(*model)
 {
@@ -146,6 +165,17 @@ std::unordered_map<std::string, mat4> roj::Animator::GetBonePoseArray()
     return outVector;
 }
 
+void roj::Animator::ApplyBonePoseArray(std::unordered_map<std::string, mat4> pose)
+{
+
+    if (m_currAnim == nullptr)
+    {
+        set(m_model.animations.begin()->first);
+    }
+
+    ApplyNodePose(m_currAnim->rootBone, glm::mat4(1.0f), pose);
+}
+
 void roj::Animator::PopulateBonePoseArray(BoneNode& node, glm::mat4 offset, std::unordered_map<std::string, mat4>& outVector)
 {
     
@@ -159,11 +189,15 @@ void roj::Animator::PopulateBonePoseArray(BoneNode& node, glm::mat4 offset, std:
 
 void roj::Animator::update(float dt)
 {
-    if (m_currAnim && m_playing) {
+    if (m_currAnim && m_playing) 
+    {
+
+        if (Loop)
+            if (m_currTime >= m_currAnim->duration)
+                m_currTime -= m_currAnim->duration;
+
         m_playing  = (m_loopEnabled) ? true : (m_currTime < m_currAnim->duration);
         m_currTime = m_currTime + (m_currAnim->ticksPerSec * dt);
-        if (m_currTime >= m_currAnim->duration)
-            m_currTime -= m_currAnim->duration;
 
         calcBoneTransform(m_currAnim->rootBone, glm::mat4(1.0f));
     }

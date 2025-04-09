@@ -29,6 +29,9 @@ private:
     glm::mat4 interpolateRotation(FrameBoneTransform& boneTransform);
     glm::mat4 interpolateScaling(FrameBoneTransform& boneTransform);
     void calcBoneTransform(BoneNode& node, glm::mat4 offset);
+
+    void ApplyNodePose(BoneNode& node, glm::mat4 offset, std::unordered_map<std::string, mat4>& pose);
+
 public:
     Animator() = default;
 	Animator(SkinnedModel* model);
@@ -39,7 +42,11 @@ public:
 
     std::unordered_map<std::string, mat4> GetBonePoseArray();
 
+    void ApplyBonePoseArray(std::unordered_map<std::string, mat4> pose);
+
+
     void PopulateBonePoseArray(BoneNode& node, glm::mat4 offset, std::unordered_map<std::string, mat4>& outVector);
+
 
     void update(float dt);
     void reset();

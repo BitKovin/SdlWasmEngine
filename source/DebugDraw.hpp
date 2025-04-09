@@ -43,10 +43,10 @@ public:
         lineMesh.Position = mix(s, e, 0.5);
         lineMesh.Rotation = MathHelper::FindLookAtRotation(s, e);
 
-        lineMesh.Size.z = distance(s, e);
+        lineMesh.Scale.z = distance(s, e);
 
-        lineMesh.Size.x = th;
-        lineMesh.Size.y = th;
+        lineMesh.Scale.x = th;
+        lineMesh.Scale.y = th;
 
     }
 

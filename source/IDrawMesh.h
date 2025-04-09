@@ -14,6 +14,13 @@ public:
 
 	bool IsViewmodel = false;
 
+	bool Transparent = false;
+
+	virtual float GetDistanceToCamera()
+	{
+		return 1;
+	}
+
 	virtual void DrawForward(mat4x4 view, mat4x4 projection) {}
 
 	virtual void DrawDepth(mat4x4 view, mat4x4 projection) {}

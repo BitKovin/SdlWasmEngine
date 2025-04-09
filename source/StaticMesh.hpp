@@ -23,7 +23,7 @@ private:
 
 	vec3 finalPosition = vec3(0);
 	vec3 finalRotation = vec3(0);
-	vec3 finalSize = vec3(0);
+	vec3 finalScale = vec3(0);
 
 protected:
 
@@ -42,7 +42,7 @@ public:
 
 	vec3 Position = vec3(0);
 	vec3 Rotation = vec3(0);
-	vec3 Size = vec3(1);
+	vec3 Scale = vec3(1);
 
 	StaticMesh()
 	{
@@ -53,11 +53,16 @@ public:
 
 	}
 
+	float GetDistanceToCamera()
+	{
+		return distance(Camera::position, Position) * (IsViewmodel ? 0.1 : 1);
+	}
+
 	void FinalizeFrameData()
 	{
 		finalPosition = Position;
 		finalRotation = Rotation;
-		finalSize = Size;
+		finalScale = Scale;
 	}
 
 
@@ -73,7 +78,7 @@ public:
 	bool IsInFrustrum(Frustum frustrum)
 	{
 
-		auto sphere = model->boundingSphere.Transform(Position);
+		auto sphere = model->boundingSphere.Transform(Position, Rotation, Scale);
 
 		return frustrum.IsSphereVisible(sphere.offset, sphere.Radius);
 	};
@@ -87,10 +92,8 @@ public:
 
 		shader_program->UseProgram();
 
-		shader_program->SetTexture("u_texture", ColorTexture);
 
-
-		mat4x4 world = translate(finalPosition) * MathHelper::GetRotationMatrix(finalRotation) * scale(finalSize);
+		mat4x4 world = translate(finalPosition) * MathHelper::GetRotationMatrix(finalRotation) * scale(finalScale);
 
 		shader_program->SetUniform("view", view);
 		shader_program->SetUniform("projection", projection);
@@ -105,6 +108,29 @@ public:
 		for (const roj::SkinnedMesh& mesh : model->meshes)
 		{
 
+			if (ColorTexture == nullptr)
+			{
+
+				string baseTextureName;
+
+				for (auto texture : mesh.textures)
+				{
+					if (texture.type == aiTextureType_BASE_COLOR)
+					{
+						baseTextureName = texture.src;
+						break;
+					}
+				}
+
+				const string textureRoot = "GameData/Textures/";
+
+				shader_program->SetTexture("u_texture", AssetRegistry::GetTextureFromFile(textureRoot + baseTextureName));
+			}
+			else
+			{
+				shader_program->SetTexture("u_texture", ColorTexture);
+			}
+
 			mesh.VAO->Bind();
 			glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(mesh.VAO->IndexCount), GL_UNSIGNED_INT, 0);
 		}
@@ -118,7 +144,7 @@ public:
 
 		shader_program->UseProgram();
 
-		mat4x4 world = translate(finalPosition) * MathHelper::GetRotationMatrix(finalRotation) * scale(finalSize);
+		mat4x4 world = translate(finalPosition) * MathHelper::GetRotationMatrix(finalRotation) * scale(finalScale);
 
 		shader_program->SetUniform("view", view);
 		shader_program->SetUniform("projection", projection);
@@ -143,7 +169,7 @@ public:
 
 		shader_program->UseProgram();
 
-		mat4x4 world = translate(finalPosition) * MathHelper::GetRotationMatrix(finalRotation) * scale(finalSize);
+		mat4x4 world = translate(finalPosition) * MathHelper::GetRotationMatrix(finalRotation) * scale(finalScale);
 
 		shader_program->SetUniform("view", view);
 		shader_program->SetUniform("projection", projection);
