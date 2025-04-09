@@ -113,6 +113,8 @@ public:
 
         viewmodel.PlayAnimation("idle");
 
+        viewmodel.IsViewmodel = true;
+
         Drawables.push_back(&viewmodel);
 
 	}
@@ -126,8 +128,8 @@ public:
 
         
 
-        NavigationSystem::RemoveObstacle(playerObstacle);
-        playerObstacle = NavigationSystem::CreateObstacleBox(Position + vec3(2,0,0) - vec3(0.4, 1, 0.2), Position + vec3(2, 0, 0) + vec3(0.4, 1, 0.2));
+        //NavigationSystem::RemoveObstacle(playerObstacle);
+        //playerObstacle = NavigationSystem::CreateObstacleBox(Position + vec3(2,0,0) - vec3(0.4, 1, 0.2), Position + vec3(2, 0, 0) + vec3(0.4, 1, 0.2));
 
         OnGround = CheckGroundAt(Position);
 

@@ -12,6 +12,8 @@ class IDrawMesh : public EObject
 
 public:
 
+	bool IsViewmodel = false;
+
 	virtual void DrawForward(mat4x4 view, mat4x4 projection) {}
 
 	virtual void DrawDepth(mat4x4 view, mat4x4 projection) {}

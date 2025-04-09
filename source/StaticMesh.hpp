@@ -97,11 +97,14 @@ public:
 
 		shader_program->SetUniform("world", world);
 
+		shader_program->SetUniform("isViewmodel", IsViewmodel);
+
 		ApplyAdditionalShaderParams(shader_program);
 
 
 		for (const roj::SkinnedMesh& mesh : model->meshes)
 		{
+
 			mesh.VAO->Bind();
 			glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(mesh.VAO->IndexCount), GL_UNSIGNED_INT, 0);
 		}
@@ -121,6 +124,8 @@ public:
 		shader_program->SetUniform("projection", projection);
 
 		shader_program->SetUniform("world", world);
+
+		shader_program->SetUniform("isViewmodel", IsViewmodel);
 
 		ApplyAdditionalShaderParams(shader_program);
 

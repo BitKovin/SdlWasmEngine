@@ -11,6 +11,8 @@
 
 #include "utils.hpp"
 
+#include <string>
+
 #include "VertexData.h"
 
 namespace roj
@@ -63,8 +65,8 @@ namespace roj
 		void processNodeVertices(aiNode* node, const aiScene* scene);
 		mesh_t processMesh(aiMesh* mesh, const aiScene* scene);
 		std::vector<VertexData>  getMeshVertices(aiMesh* mesh);
-		std::vector<MeshTexture> getMeshTextures(aiMaterial* material);
-		std::vector<MeshTexture> loadTextureMap(aiMaterial* mat, aiTextureType type);
+		std::vector<MeshTexture> getMeshTextures(aiMaterial* material, const aiScene* scene);
+		std::vector<MeshTexture> loadTextureMap(aiMaterial* mat, aiTextureType type, const aiScene* scene);
 	public:
 		ModelLoader() = default;
 		bool load(const std::string& path);
@@ -85,22 +87,26 @@ namespace roj
 	}
 
 	template<typename mesh_t>
-	std::vector<MeshTexture> ModelLoader<mesh_t>::getMeshTextures(aiMaterial* material)
+	std::vector<MeshTexture> ModelLoader<mesh_t>::getMeshTextures(aiMaterial* material, const aiScene* scene)
 	{
 		std::vector<MeshTexture> textures;
-		std::vector<MeshTexture> diffuseMaps = loadTextureMap(material, aiTextureType_DIFFUSE);
+
+		std::vector<MeshTexture> diffuseMaps = loadTextureMap(material, aiTextureType_BASE_COLOR, scene);
 		textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
-		std::vector<MeshTexture> specularMaps = loadTextureMap(material, aiTextureType_SPECULAR);
+
+		std::vector<MeshTexture> specularMaps = loadTextureMap(material, aiTextureType_SPECULAR, scene);
 		textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
-		std::vector<MeshTexture> normalMaps = loadTextureMap(material, aiTextureType_NORMALS);
+
+		std::vector<MeshTexture> normalMaps = loadTextureMap(material, aiTextureType_NORMALS, scene);
 		textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
-		std::vector<MeshTexture> heightMaps = loadTextureMap(material, aiTextureType_HEIGHT);
+
+		std::vector<MeshTexture> heightMaps = loadTextureMap(material, aiTextureType_HEIGHT, scene);
 		textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
 		return textures;
 	}
 
 	template<typename mesh_t>
-	std::vector<roj::MeshTexture> ModelLoader<mesh_t>::loadTextureMap(aiMaterial* mat, aiTextureType type)
+	std::vector<roj::MeshTexture> ModelLoader<mesh_t>::loadTextureMap(aiMaterial* mat, aiTextureType type, const aiScene* scene)
 	{
 		std::vector<MeshTexture> textures;
 
@@ -108,21 +114,19 @@ namespace roj
 		{
 			aiString texSrc;
 			mat->GetTexture(type, i, &texSrc);
-			bool cached = false;
-			for (uint32_t j = 0; !cached && (j < m_texCache.size()); j++)
-			{
-				if (std::strcmp(m_texCache[j].src.data(), texSrc.C_Str()) == 0)
-				{
-					textures.push_back(m_texCache[j]);
-					cached = true;
-				}
-			}
 
-			if (!cached)
-			{
-				std::string texPath = (std::filesystem::path(m_relativeDir) / texSrc.C_Str()).string();
-				m_texCache.emplace_back(type, texSrc.C_Str());
-			}
+			std::string str = texSrc.C_Str();
+
+			str = str.substr(1, str.size() - 1);
+
+			int id = std::stoi(str);
+
+			
+
+			std::string fileName = scene->mTextures[id]->mFilename.C_Str();
+			std::string fileExtension = scene->mTextures[id]->achFormatHint;
+
+			textures.emplace_back(type, fileName + "." + fileExtension);
 		}
 
 		return textures;

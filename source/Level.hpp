@@ -101,6 +101,10 @@ public:
 				{
 					VissibleRenderList.push_back(mesh);
 				}
+				else
+				{
+					printf("not rendered\n");
+				}
 			}
 
 		}

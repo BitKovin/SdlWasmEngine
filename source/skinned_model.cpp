@@ -121,7 +121,7 @@ namespace roj
 			if (mesh->HasNormals())
 			{
 				vertex.Normal = { mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z };
-				vertex.SmoothNormal = vertexNormals[vertex.Position];
+				//vertex.SmoothNormal = vertexNormals[vertex.Position];
 			}
 			if (mesh->mTextureCoords[0])
 			{
@@ -132,7 +132,7 @@ namespace roj
 			else
 				vertex.TextureCoordinate = glm::vec2(0.0f, 0.0f);
 
-
+			vertexPositions.push_back(vertex.Position);
 
 			std::fill(vertex.BlendIndices, vertex.BlendIndices + MAX_BONE_INFLUENCE, 0);
 
@@ -144,10 +144,27 @@ namespace roj
 		return vertices;
 	}
 
+	std::vector<MeshTexture> GetTextures(const aiScene* scene, const aiMaterial* material)
+	{
+
+		std::vector<MeshTexture> textures;
+
+		int n = material->GetTextureCount(aiTextureType::aiTextureType_BASE_COLOR);
+
+		for (int i = 0; i < n; i++)
+		{
+			auto texture = scene->mTextures[i];
+			textures.push_back(MeshTexture{ aiTextureType::aiTextureType_BASE_COLOR, texture->mFilename.C_Str()});
+		}
+
+		return textures;
+		
+	}
+
 	template<>
 	SkinnedMesh ModelLoader<SkinnedMesh>::processMesh(aiMesh* mesh, const aiScene* scene)
 	{
-		std::vector<MeshTexture> textures = getMeshTextures(scene->mMaterials[mesh->mMaterialIndex]);
+
 		std::vector<VertexData> vertices = getMeshVertices(mesh);
 		std::vector<uint32_t> indices;
 		for (uint32_t i = 0; i < mesh->mNumFaces; i++)
@@ -159,15 +176,20 @@ namespace roj
 
 		SkinnedMesh skinMesh = SkinnedMesh();
 
+
+		skinMesh.name = mesh->mName.C_Str();
+
 		skinMesh.vertices = new VertexBuffer(vertices, VertexData::Declaration());
 
 		skinMesh.indices = new IndexBuffer(indices);
+
+		std::vector<MeshTexture> textures = getMeshTextures(scene->mMaterials[mesh->mMaterialIndex], scene);
+
 		skinMesh.textures = textures;
 
 		skinMesh.vertexIndices = indices;
 		skinMesh.vertexLocations = vertices;
 
-		skinMesh.name = mesh->mName.C_Str();
 
 		return skinMesh;
 	}
@@ -185,6 +207,7 @@ namespace roj
 				{
 					VertexData vertex;
 					vertex.Position = { mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z };
+					/*
 					if (mesh->HasNormals())
 					{
 						vertex.Normal = { mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z };
@@ -200,8 +223,8 @@ namespace roj
 						vertexNormals[vertex.Position] = vertex.Normal;
 						vertexNormalsN[vertex.Position] = 1;
 					}
-
-					vertexPositions.push_back(vertex.Position);
+					*/
+					
 
 				}
 
@@ -248,7 +271,7 @@ namespace roj
 		m_model.globalInversed = glm::inverse(toGlmMat4(scene->mRootNode->mTransformation));
 		m_model.sceneCamera = (scene->HasCameras()) ? scene->mCameras[0] : nullptr;
 
-		processNodeVertices(scene->mRootNode, scene);
+		//processNodeVertices(scene->mRootNode, scene);
 
 		for (auto& v : vertexNormals)
 		{

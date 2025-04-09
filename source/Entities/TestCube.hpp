@@ -32,7 +32,7 @@ public:
 
 	}
 
-	SkeletalMesh mesh;
+	StaticMesh mesh;
 
 	Body* body;
 

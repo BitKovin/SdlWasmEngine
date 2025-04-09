@@ -15,6 +15,8 @@ const int MAX_BONES = 100;
 const int MAX_BONE_INFLUENCE = 4;
 uniform mat4 finalBonesMatrices[MAX_BONES];
 	
+uniform bool isViewmodel;
+
 out vec2 v_texcoord;
 	
 mat4 GetBoneTransforms()
@@ -49,5 +51,9 @@ void main()
     mat4 vertWorldTrans = world * boneTrans;
 
     gl_Position = projection * view * vertWorldTrans * vec4(Position, 1.0);
+
+	if(isViewmodel)
+	gl_Position.z*=0.01;
+
     v_texcoord = TextureCoordinate;
 }

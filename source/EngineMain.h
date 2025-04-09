@@ -341,7 +341,10 @@ public:
 
         for (IDrawMesh* mesh : Level::Current->VissibleRenderList)
         {
-            mesh->DrawForward(Camera::finalizedView, Camera::finalizedProjection);
+
+            mat4 proj = mesh->IsViewmodel ? Camera::finalizedProjectionViewmodel : Camera::finalizedProjection;
+
+            mesh->DrawForward(Camera::finalizedView, proj);
         }
 
         DebugDraw::Draw();
