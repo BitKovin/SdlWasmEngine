@@ -12,6 +12,7 @@
 
 #include "../DebugDraw.hpp"
 
+
 class NavigationSystem
 {
 
@@ -24,29 +25,9 @@ private:
 
     static vector<dtObstacleRef> obstacles;
 
-    static LinearAllocator* talloc; // 1MB
-    static FastLZCompressor* tcomp;
-
 public:
 
-    static void DestroyNavData()
-    {
-
-        std::lock_guard<std::mutex> lock(mainLock);
-
-        if (tileCache)
-            dtFreeTileCache(tileCache);
-
-        if (navMesh)
-            dtFreeNavMesh(navMesh);
-
-        if (talloc)
-            delete talloc;
-
-        if (tcomp)
-            delete tcomp;
-
-    }
+    static void DestroyNavData();
 
     static void Update()
     {
@@ -123,25 +104,25 @@ public:
 
         std::lock_guard<std::mutex> lock(mainLock);
 
-        for (auto obstacle : obstacles)
-        {
-            RemoveObstacle(obstacle);
-        }
+
 
         // Remove the obstacle using its reference
         const dtStatus status = tileCache->removeObstacle(obstacleRef);
         if (dtStatusFailed(status))
         {
-            std::printf("Failed to remove obstacle with ref: %u. Status: %u\n", obstacleRef, status);
+            //std::printf("Failed to remove obstacle with ref: %u. Status: %u\n", obstacleRef, status);
         }
         else
         {
-            std::printf("Obstacle with ref: %u removed successfully.\n", obstacleRef);
-            // Remove from tracking vector if used
-            auto it = std::find(obstacles.begin(), obstacles.end(), obstacleRef);
-            if (it != obstacles.end())
-                obstacles.erase(it);
+            //std::printf("Obstacle with ref: %u removed successfully.\n", obstacleRef);
+
         }
+
+        // Remove from tracking vector if used
+        auto it = std::find(obstacles.begin(), obstacles.end(), obstacleRef);
+        if (it != obstacles.end())
+            obstacles.erase(it);
+
     }
 
     static dtObstacleRef CreateObstacleBox(const glm::vec3& min, const glm::vec3& max)
@@ -175,13 +156,13 @@ public:
 
         if (dtStatusFailed(status))
         {
-            std::printf("Failed to add box obstacle. Status: %u\n", status);
+            //std::printf("Failed to add box obstacle. Status: %u\n", status);
             return 0;
         }
 
         obstacles.push_back(obstacleRef);
 
-        std::printf("Box obstacle added. Ref: %u\n", obstacleRef);
+        //std::printf("Box obstacle added. Ref: %u\n", obstacleRef);
         return obstacleRef;
     }
 

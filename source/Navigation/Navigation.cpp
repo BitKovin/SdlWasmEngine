@@ -9,14 +9,12 @@
 // Recast and Detour includes
 
 
+
 // Static member initialization
 dtNavMesh* NavigationSystem::navMesh = nullptr;
 dtTileCache* NavigationSystem::tileCache = nullptr;
 std::mutex NavigationSystem::mainLock;
 std::vector<dtObstacleRef> NavigationSystem::obstacles;
-
-LinearAllocator* NavigationSystem::talloc = nullptr; // 1MB
-FastLZCompressor* NavigationSystem::tcomp = nullptr;
 
 // Custom allocator for tile cache
 struct LinearAllocator : public dtTileCacheAlloc {
@@ -55,7 +53,40 @@ struct FastLZCompressor : public dtTileCacheCompressor {
     }
 };
 
-void NavigationSystem::GenerateNavData() {
+LinearAllocator* talloc = nullptr; // 1MB
+FastLZCompressor* tcomp = nullptr;
+
+void NavigationSystem::DestroyNavData()
+{
+
+
+	std::lock_guard<std::mutex> lock(mainLock);
+
+    for (auto obstacle : obstacles)
+    {
+        RemoveObstacle(obstacle);
+    }
+
+	if (tileCache)
+		dtFreeTileCache(tileCache);
+
+	if (navMesh)
+		dtFreeNavMesh(navMesh);
+
+
+	if (talloc)
+		delete talloc;
+
+	if (tcomp)
+		delete tcomp;
+
+    
+}
+
+
+
+void NavigationSystem::GenerateNavData() 
+{
     DestroyNavData();
     std::lock_guard<std::mutex> lock(mainLock);
 
@@ -310,9 +341,6 @@ void NavigationSystem::GenerateNavData() {
             rcFreeHeightfieldLayerSet(layers);
         }
     }
-
-    delete talloc;
-    delete tcomp;
 
     delete ctx;
     // Note: talloc and tcomp are managed in DestroyNavData
