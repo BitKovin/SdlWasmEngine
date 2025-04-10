@@ -26,6 +26,39 @@ using namespace std;
 struct AnimationPose 
 {
 	std::unordered_map<std::string, mat4> boneTransforms;
+
+	static AnimationPose Lerp(AnimationPose a, AnimationPose b, float progress)
+	{
+		if (progress < 0.002)
+			return a;
+
+		if (progress > 0.995)
+			return b;
+
+		std::unordered_map<std::string, mat4> resultPose;
+
+		for (auto bonePose : a.boneTransforms)
+		{
+			mat4 aMat = a.boneTransforms[bonePose.first];
+			mat4 bMat = b.boneTransforms[bonePose.first];
+
+			auto aTrans = MathHelper::DecomposeMatrix(aMat);
+			auto bTrans = MathHelper::DecomposeMatrix(bMat);
+
+			auto resultTrans = MathHelper::Transform::Lerp(aTrans, bTrans, progress);
+
+			resultPose[bonePose.first] = resultTrans.ToMatrix();
+
+		}
+
+		AnimationPose result;
+
+		result.boneTransforms = resultPose;
+
+		return result;
+
+	}
+
 };
 
 class SkeletalMesh : public StaticMesh
@@ -38,6 +71,28 @@ private:
 
 	std::vector<mat4> finalizedBoneTransforms;
 
+	double blendStartTime = 0;
+	double blendEndTime = 0;
+
+	bool firstAnimation = true;
+
+	float GetBlendInProgress()
+	{
+		double currentTime = Time::GameTime;
+
+		if (blendEndTime <= blendStartTime)
+			return 1.0f; // Avoid division by zero or invalid range
+
+		if (currentTime <= blendStartTime)
+			return 0.0f;
+
+		if (currentTime >= blendEndTime)
+			return 1.0f;
+
+		double progress = (currentTime - blendStartTime) / (blendEndTime - blendStartTime);
+		return static_cast<float>(progress);
+	}
+	AnimationPose blendStartPose;
 
 protected:
 
@@ -64,10 +119,10 @@ public:
 		boneTransforms = animator.getBoneMatrices();
 	}
 
-	void PlayAnimation(string name)
+	void PlayAnimation(string name, float interpIn = 0.12)
 	{
 		animator.set(name);
-		animator.play();
+		PlayAnimation(interpIn);
 	}
 
 	void FinalizeFrameData()
@@ -76,14 +131,42 @@ public:
 		finalizedBoneTransforms = boneTransforms;
 	}
 
-	void PlayAnimation()
+	void PlayAnimation(float interpIn = 0.12)
 	{
+
+		if (firstAnimation || animator.m_currAnim == nullptr)
+		{
+			interpIn = 0;
+			firstAnimation = false;
+		}
+
+		if (interpIn > 0.01)
+		{
+			blendStartPose = GetAnimationPose();
+			blendStartTime = Time::GameTime;
+			blendEndTime = Time::GameTime + interpIn;
+		}
+
 		animator.play();
 	}
 
 	void Update(float timeScale = 1)
 	{
 		animator.update(Time::DeltaTimeF * timeScale);
+
+		float blendProgress = GetBlendInProgress();
+
+		if (blendProgress < 0.995)
+		{
+			AnimationPose currentPose = GetAnimationPose();
+
+
+			AnimationPose newPose = AnimationPose::Lerp(blendStartPose, currentPose, blendProgress);
+
+			PasteAnimationPose(newPose);
+
+		}
+
 		boneTransforms = animator.getBoneMatrices();
 	}
 

@@ -17,7 +17,7 @@ public :
 private:
 
     std::vector<glm::mat4> m_boneMatrices;
-    Animation* m_currAnim{nullptr};
+    
     SkinnedModel m_model;
     float m_currTime{0.0f};
     bool m_playing = false;
@@ -33,12 +33,17 @@ private:
     void ApplyNodePose(BoneNode& node, glm::mat4 offset, std::unordered_map<std::string, mat4>& pose);
 
 public:
+
+    Animation* m_currAnim{ nullptr };
+
     Animator() = default;
 	Animator(SkinnedModel* model);
     void play();
     void set(const std::string& name);
     std::vector<std::string> get();
     std::vector<glm::mat4>& getBoneMatrices();
+
+    std::unordered_map<string, glm::mat4> currentPose;
 
     std::unordered_map<std::string, mat4> GetBonePoseArray();
 

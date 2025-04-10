@@ -31,6 +31,8 @@ private:
 
     vec3 cameraRotation = vec3(0);
 
+    Delay jumpDelay;
+
     glm::vec3 Friction(glm::vec3 vel, float factor = 60.0f) {
         vel = MathHelper::XZ(vel);
         float length = glm::length(vel);
@@ -85,11 +87,16 @@ private:
     void Jump()
     {
         LeadBody->SetLinearVelocity(JPH::Vec3(velocity.x, 9.5, velocity.z));
+        jumpDelay.AddDelay(0.2);
     }
 
     bool CheckGroundAt(vec3 location)
     {
-        auto result = Physics::SphereTrace(location, location - vec3(0, 0.95, 0), 1, BodyType::GroupCollisionTest, {LeadBody});
+
+        if (jumpDelay.Wait())
+            return false;
+
+        auto result = Physics::LineTrace(location, location - vec3(0, 0.95, 0), BodyType::GroupCollisionTest, {LeadBody});
 
         return result.hasHit;
 
@@ -133,12 +140,6 @@ public:
 
 	void Update()
 	{
-
-        
-
-        //NavigationSystem::RemoveObstacle(playerObstacle);
-        //playerObstacle = NavigationSystem::CreateObstacleBox(Position + vec3(2,0,0) - vec3(0.4, 1, 0.2), Position + vec3(2, 0, 0) + vec3(0.4, 1, 0.2));
-
         OnGround = CheckGroundAt(Position);
 
         cameraRotation.y += Input::MouseDelta.x;
@@ -192,7 +193,7 @@ public:
         }
 
         if(OnGround)
-        if (Input::GetAction("jump")->Pressed())
+        if (Input::GetAction("jump")->Holding())
         {
             Jump();
             //NavigationSystem::CreateObstacleBox(Position - vec3(1.1, 3, 1.1), Position + vec3(1.1, 3, 1.1));

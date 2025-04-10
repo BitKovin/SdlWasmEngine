@@ -330,7 +330,7 @@ public:
 
 #endif // DESKTOP
 
-        glEnable(GL_POLYGON_OFFSET_FILL);
+        glDisable(GL_POLYGON_OFFSET_FILL);
         glPolygonOffset(1.0, 1.0);
 
         glEnable(GL_CULL_FACE);
