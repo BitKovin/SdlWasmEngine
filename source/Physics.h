@@ -503,13 +503,13 @@ public:
 		return result.Get();
 	}
 
-	RefConst<Shape> CreateConvexHullFromPoints(const std::vector<Vec3>& points)
+	static RefConst<Shape> CreateConvexHullFromPoints(const std::vector<glm::vec3>& points)
 	{
 		// Convert std::vector<Vec3> to Array<Vec3> (Jolt's format)
 		Array<Vec3> hullPoints;
-		for (const Vec3& pt : points)
+		for (auto pt : points)
 		{
-			hullPoints.push_back(pt);
+			hullPoints.push_back(Vec3(pt.x, pt.y, pt.z));
 		}
 
 		// Settings for the convex hull shape
@@ -520,11 +520,13 @@ public:
 		if (result.HasError())
 		{
 			printf("Error creating convex hull shape: %s\n", result.GetError().c_str());
-			return;
+			return nullptr;
 		}
 
 		// Successfully created shape
 		RefConst<Shape> shape = result.Get();
+
+		return shape;
 	}
 
 	static RefConst<Shape> CreateStaticCompoundShapeFromConvexShapes(const std::vector<RefConst<Shape>>& convexShapes)
@@ -581,6 +583,58 @@ public:
 		AddBody(body);
 
 		return body;
+	}
+
+
+	static Body* CreateCharacterBody(Entity* owner, vec3 Position, float Radius, float Height, float Mass,
+		BodyType group = BodyType::CharacterCapsule,
+		BodyType mask = BodyType::GroupCollisionTest)
+	{
+		// Calculate cylinder portion height (total capsule height = cylinder_height + 2 * radius)
+		float cylinder_half_height = (Height - 2.0f * Radius) / 2.0f;
+		if (cylinder_half_height < 0.0f) {
+			Logger::Log("Capsule height is too small for given radius, using minimum height");
+			cylinder_half_height = 0.0f;
+		}
+
+		// Create capsule shape
+		auto capsule_shape_settings = new JPH::CapsuleShapeSettings();
+		capsule_shape_settings->SetEmbedded();
+		capsule_shape_settings->mRadius = Radius;
+		capsule_shape_settings->mHalfHeightOfCylinder = cylinder_half_height;
+
+		JPH::Shape::ShapeResult shape_result = capsule_shape_settings->Create();
+		JPH::Shape* capsule_shape = shape_result.Get();
+
+		if (shape_result.HasError())
+			Logger::Log(shape_result.GetError().c_str());
+
+		// Configure body settings
+		JPH::BodyCreationSettings body_settings(
+			capsule_shape,
+			ToPhysics(Position),
+			JPH::Quat::sIdentity(),
+			JPH::EMotionType::Dynamic,  // Dynamic body type
+			Layers::MOVING              // Use moving layer
+		);
+
+		// Lock rotation in all axes
+		body_settings.mAllowedDOFs = JPH::EAllowedDOFs::TranslationX | JPH::EAllowedDOFs::TranslationY | JPH::EAllowedDOFs::TranslationZ;  // Allow only translation
+
+		// Set mass properties
+		body_settings.mOverrideMassProperties = JPH::EOverrideMassProperties::CalculateInertia;
+		body_settings.mMassPropertiesOverride.mMass = Mass;
+		body_settings.mFriction = 0.0f;  // Match box friction
+
+		// Allocate and attach collision properties to the body via the user data field:
+		BodyData* properties = new BodyData{ group, mask, owner };
+		body_settings.mUserData = reinterpret_cast<uintptr_t>(properties);
+
+		// Create and add body to world
+		JPH::Body* character_body = bodyInterface->CreateBody(body_settings);
+		AddBody(character_body);
+
+		return character_body;
 	}
 
 	struct HitResult

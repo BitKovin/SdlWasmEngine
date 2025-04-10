@@ -94,7 +94,7 @@ public:
                     if (glm::distance(p0, p1) < 0.001f)
                         continue;
 
-                    DebugDraw::Line(p0, p1, 0.2f, 0.03f); // longer duration for better visibility
+                    DebugDraw::Line(p0, p1, 0.2f, Time::DeltaTimeF/2); // longer duration for better visibility
                 }
             }
         }

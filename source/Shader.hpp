@@ -84,10 +84,13 @@ private:
     GLuint m_maxTextureUnits = 16; // Will be initialized from GL
 
 
+
 public:
     GLuint program;
     std::vector<GLAttribute> attributes;  // Stores shader attributes.
     std::unordered_map<std::string, GLint> uniformLocations; // Cache for uniform locations.
+
+    string name;
 
     bool AllowMissingUniforms = true;
 

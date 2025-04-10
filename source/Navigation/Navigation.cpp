@@ -7,6 +7,8 @@
 #include <iostream>
 #include "Navigation.hpp"
 
+#include "../Level.hpp"
+
 #include "../Physics.h"
 
 // Recast and Detour includes
@@ -91,14 +93,16 @@ void NavigationSystem::DestroyNavData()
 void NavigationSystem::GenerateNavData() 
 {
     DestroyNavData();
+
+    auto mesh = Level::Current->GetStaticNavObstaclesMesh();
+
     std::lock_guard<std::mutex> lock(mainLock);
 
     // Define sample geometry: a flat square
-    std::vector<glm::vec3> vertices = {
-        {-20.0f, 0.5f, -20.0f}, {50.0f, 0.5f, -20.0f},
-        {50.0f, 0.5f, 50.0f},  {-20.0f, 0.5f, 50.0f}
-    };
-    std::vector<uint32_t> indices = { 0, 2, 1, 0, 3, 2 };
+    std::vector<glm::vec3> vertices = mesh.vertices;
+    std::vector<uint32_t> indices = mesh.indices;
+
+
 
     // Compute bounding box
     glm::vec3 bmin = vertices[0];
@@ -107,8 +111,7 @@ void NavigationSystem::GenerateNavData()
         bmin = glm::min(bmin, v);
         bmax = glm::max(bmax, v);
     }
-    std::cout << "Bounding box: (" << bmin.x << "," << bmin.y << "," << bmin.z << ") to ("
-        << bmax.x << "," << bmax.y << "," << bmax.z << ")" << std::endl;
+
 
     bmin -= vec3(5);
 
@@ -117,19 +120,19 @@ void NavigationSystem::GenerateNavData()
     // Recast configuration
     rcConfig cfg;
     memset(&cfg, 0, sizeof(cfg));
-    cfg.cs = 0.2f;                    // Cell size (voxel size in X/Z)
+    cfg.cs = 0.1f;                    // Cell size (voxel size in X/Z)
     cfg.ch = 0.2f;                    // Cell height
     cfg.walkableSlopeAngle = 45.0f;   // Max slope angle
     cfg.walkableHeight = static_cast<int>(ceilf(2.0f / cfg.ch)); // Agent height (~2m)
     cfg.walkableClimb = static_cast<int>(ceilf(0.9f / cfg.ch));  // Max climb height (~0.9m)
-    cfg.walkableRadius = static_cast<int>(ceilf(0.35f / cfg.cs)); // Agent radius (~0.5m)
+    cfg.walkableRadius = static_cast<int>(ceilf(0.5f / cfg.cs)); // Agent radius (~0.5m)
     cfg.maxEdgeLen = static_cast<int>(12 / cfg.cs);
     cfg.maxSimplificationError = 0.05f;
     cfg.minRegionArea = 25;      // Min region size
     cfg.mergeRegionArea = 100 * 100;  // Merge region size
     cfg.maxVertsPerPoly = 6;
     cfg.tileSize = 64;                // Tile size in cells
-    cfg.borderSize = static_cast<int>(ceilf(0.5f / cfg.cs));  // ~3-4 cells
+    cfg.borderSize = static_cast<int>(ceilf(0.5f / cfg.cs)) + 5;  // ~3-4 cells
     cfg.width = cfg.tileSize + cfg.borderSize * 2;
     cfg.height = cfg.tileSize + cfg.borderSize * 2;
     cfg.detailSampleDist = 6.0f;
@@ -140,7 +143,6 @@ void NavigationSystem::GenerateNavData()
     const int ntilesX = static_cast<int>(ceilf((bmax.x - bmin.x) / tileWidth));
     const int ntilesZ = static_cast<int>(ceilf((bmax.z - bmin.z) / tileWidth));
     const int maxTiles = ntilesX * ntilesZ;
-    std::cout << "Tile grid: " << ntilesX << "x" << ntilesZ << " (" << maxTiles << " tiles), tileWidth=" << tileWidth << std::endl;
 
     // Initialize nav mesh
     dtNavMeshParams navParams;
@@ -214,8 +216,6 @@ void NavigationSystem::GenerateNavData()
             };
             rcVcopy(cfg.bmin, tbmin);
             rcVcopy(cfg.bmax, tbmax);
-            std::cout << "Processing tile (" << tx << "," << tz << "): bmin=(" << tbmin[0] << "," << tbmin[1] << "," << tbmin[2]
-                << "), bmax=(" << tbmax[0] << "," << tbmax[1] << "," << tbmax[2] << ")" << std::endl;
 
             // Build heightfield
             rcHeightfield hf;
@@ -243,6 +243,12 @@ void NavigationSystem::GenerateNavData()
                 continue;
             }
 
+            // Erode walkable area to account for agent radius
+            if (!rcErodeWalkableArea(ctx, cfg.walkableRadius, chf)) {
+                std::cerr << "Failed to erode walkable area for tile (" << tx << "," << tz << ")" << std::endl;
+                continue;
+            }
+
             // Erode and build regions
             if (!rcBuildRegionsMonotone(ctx, chf, cfg.borderSize, cfg.minRegionArea, cfg.mergeRegionArea)) {
                 std::cerr << "Failed to erode walkable area for tile (" << tx << "," << tz << ")" << std::endl;
@@ -259,13 +265,10 @@ void NavigationSystem::GenerateNavData()
                 continue;
             }
 
-            std::cout << "Tile (" << tx << "," << tz << ") has " << layers->nlayers << " layers" << std::endl;
 
             // Process each layer
             for (int i = 0; i < layers->nlayers; ++i) {
                 const rcHeightfieldLayer& layer = layers->layers[i];
-                std::cout << "Tile (" << tx << "," << tz << ") layer " << i << ": " << layer.width << "x" << layer.height
-                    << ", hmin=" << layer.hmin << ", hmax=" << layer.hmax << std::endl;
 
                 // Prepare layer header
                 dtTileCacheLayerHeader header;
@@ -310,7 +313,6 @@ void NavigationSystem::GenerateNavData()
                 for (int j = 0; j < gridSize; ++j) {
                     if (areas[j] == DT_TILECACHE_WALKABLE_AREA) walkableCount++;
                 }
-                std::cout << "Tile (" << tx << "," << tz << ") layer " << i << ": " << walkableCount << " walkable cells out of " << gridSize << std::endl;
 
                 // Build compressed layer
                 unsigned char* outData = nullptr;

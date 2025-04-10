@@ -11,6 +11,8 @@
 
 #include "BrushFaceMesh.hpp"
 
+#include "LevelObjectFactory.h"
+
 // Static member definitions.
 bool MapData::MergeBrushes = false;
 float MapData::UnitSize = 32.0f;
@@ -193,28 +195,54 @@ void MapData::LoadToLevel()
     for (EntityData entityData : Entities)
     {
 
-        Entity* ent = new Entity();
+        Entity* ent = LevelObjectFactory::instance().create(entityData.Classname);
+
+        if (ent == nullptr)
+            ent = new Entity();
+
+        //ent->FromData(entityData);
 
         vector<BrushFaceMesh*> entBrushes;
 
-        for (BrushData brushData : entityData.Brushes)
+        vector<RefConst<Shape>> colShapes;
+
+        if (entityData.Brushes.size()) 
         {
 
-            string meshName = "entity" + entityData.name + "_brush" + brushData.Name;
-
-            auto faces = BrushFaceMesh::GetMeshesFromName(modelPath, meshName);
-
-            for (auto face : faces)
+            for (BrushData brushData : entityData.Brushes)
             {
-                entBrushes.push_back(face);
+
+                string meshName = "entity" + entityData.name + "_brush" + brushData.Name;
+
+                auto faces = BrushFaceMesh::GetMeshesFromName(modelPath, meshName);
+
+                for (auto face : faces)
+                {
+
+                    auto shape = Physics::CreateConvexHullFromPoints(face->vertexLocations);
+
+                    colShapes.push_back(shape);
+
+                }
+
+                for (auto face : faces)
+                {
+
+                    face->StaticNavigation = ent->Static;
+
+                    entBrushes.push_back(face);
+                }
+
             }
 
+            auto compoundShape = Physics::CreateStaticCompoundShapeFromConvexShapes(colShapes);
 
-        }
+            ent->LeadBody = Physics::CreateBodyFromShape(ent, vec3(0), compoundShape, 1000, true, BodyType::World | (BodyType::WorldOpaque));
 
-        for (auto face : entBrushes)
-        {
-            ent->Drawables.push_back(face);
+            for (auto face : entBrushes)
+            {
+                ent->Drawables.push_back(face);
+            }
         }
 
         Level::Current->AddEntity(ent);

@@ -11,6 +11,9 @@ using namespace std;
 class LevelObject : public EObject
 {
 public:
+
+	bool Static = false;
+
 	LevelObject(){}
 	~LevelObject(){}
 

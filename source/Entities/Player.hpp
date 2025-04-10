@@ -113,6 +113,11 @@ public:
 
 	float Speed = 5;
 
+    void FromData(EntityData data)
+    {
+        cameraRotation.y = data.GetPropertyFloat("angle") - 90;
+    }
+
 	void Start()
 	{
 		LeadBody = Physics::CreateCharacterBody(this, Position, 0.5, 1.8, 70);
@@ -140,6 +145,10 @@ public:
 
 	void Update()
 	{
+
+        //NavigationSystem::RemoveObstacle(playerObstacle);
+        //playerObstacle = NavigationSystem::CreateObstacleBox(Position - vec3(0.4, 1, 0.4), Position + vec3(0.4, 1, 0.4));
+
         OnGround = CheckGroundAt(Position);
 
         cameraRotation.y += Input::MouseDelta.x;

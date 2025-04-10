@@ -21,7 +21,16 @@ Level* Level::OpenLevel(string filePath)
 
 	mapData.LoadToLevel();
 
+	for (LevelObject* obj : Current->LevelObjects)
+	{
+		obj->Start();
+	}
+
+	printf("generating nav mesh");
+
 	NavigationSystem::GenerateNavData();
+
+	printf("generated nav mesh");
 
 	return newLevel;
 }

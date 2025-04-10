@@ -235,9 +235,10 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="DebugDraw.cpp" />
     <ClCompile Include="EngineMain.cpp" />
+    <ClCompile Include="Entities\Player.cpp" />
+    <ClCompile Include="Entities\WorldSpawn.cpp" />
     <ClCompile Include="Entity.hpp" />
     <ClCompile Include="EObject.hpp" />
-    <ClCompile Include="FrameDrawData.cpp" />
     <ClCompile Include="imgui\imgui.cpp" />
     <ClCompile Include="imgui\imgui_demo.cpp" />
     <ClCompile Include="imgui\imgui_draw.cpp" />
@@ -248,6 +249,7 @@
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="Input.h" />
     <ClCompile Include="Level.cpp" />
+    <ClCompile Include="LevelObjectFactory.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MapData.cpp" />
     <ClCompile Include="MapParser.cpp" />
@@ -296,6 +298,7 @@
     <ClInclude Include="EngineMain.h" />
     <ClInclude Include="Entities\Player.hpp" />
     <ClInclude Include="Entities\TestCube.hpp" />
+    <ClInclude Include="Entities\WorldSpawn.h" />
     <ClInclude Include="FrustrumCull.hpp" />
     <ClInclude Include="gl.h" />
     <ClInclude Include="glm.h" />
@@ -312,10 +315,12 @@
     <ClInclude Include="imgui\imstb_truetype.h" />
     <ClInclude Include="LevelObject.hpp" />
     <ClInclude Include="Level.hpp" />
+    <ClInclude Include="LevelObjectFactory.h" />
     <ClInclude Include="Logger.hpp" />
     <ClInclude Include="MapData.h" />
     <ClInclude Include="MapParser.h" />
     <ClInclude Include="MathHelper.hpp" />
+    <ClInclude Include="MeshUtils.hpp" />
     <ClInclude Include="model.hpp" />
     <ClInclude Include="Navigation\Detour\DetourAlloc.h" />
     <ClInclude Include="Navigation\Detour\DetourAssert.h" />
@@ -334,6 +339,7 @@
     <ClInclude Include="Navigation\Recast\RecastAssert.h" />
     <ClInclude Include="PhysicsConverter.h" />
     <ClInclude Include="PhysicsHelper.h" />
+    <ClInclude Include="RegisterLevelObject.h" />
     <ClInclude Include="Shader.hpp" />
     <ClInclude Include="ShaderManager.h" />
     <ClInclude Include="SkeletalMesh.hpp" />

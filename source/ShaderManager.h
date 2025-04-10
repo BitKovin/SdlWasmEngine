@@ -10,9 +10,9 @@ private:
     static std::unordered_map<std::string, ShaderProgram> shaderProgramCache;
 
 public:
-    static ShaderProgram* GetShaderProgram(const std::string& vertexShaderName = "default_vertex", const std::string& pixelShaderName = "default_pixel")
+    static ShaderProgram* GetShaderProgram(const std::string& vertexShaderName = "default_vertex", const std::string& pixelShaderName = "default_pixel", ShaderProgram* cached = nullptr)
     {
-        std::string key = vertexShaderName + "+" + pixelShaderName; // Unique key for shader program
+        std::string key = vertexShaderName + pixelShaderName; // Unique key for shader program
 
         // Check if the program is already cached
         auto it = shaderProgramCache.find(key);
@@ -28,6 +28,9 @@ public:
         // Create and link the shader program
         ShaderProgram& program = shaderProgramCache[key];
         program.AttachShader(vertexShader)->AttachShader(pixelShader)->LinkProgram();
+
+        program.name = key;
+
         return &program;
     }
 };

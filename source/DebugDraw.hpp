@@ -38,7 +38,7 @@ public:
         DrawTime = Delay(duration);
 
         lineMesh.LoadFromFile("GameData/cube.obj");
-        lineMesh.PixelShader = "solidRed_pixel";
+        lineMesh.SetPixelShader("solidRed_pixel");
 
         lineMesh.Position = mix(s, e, 0.5);
         lineMesh.Rotation = MathHelper::FindLookAtRotation(s, e);
@@ -48,11 +48,13 @@ public:
         lineMesh.Scale.x = th;
         lineMesh.Scale.y = th;
 
+        lineMesh.FinalizeFrameData();
+
     }
 
     void Draw() override
     {
-        lineMesh.FinalizeFrameData();
+        
         lineMesh.DrawForward(Camera::finalizedView, Camera::finalizedProjection);
     }
 };
@@ -128,22 +130,16 @@ public:
         // Clear the previous snapshot.
         finalizedCommands.clear();
 
-        // Iterate over commands and build a new container for active commands.
-        // Use index-based iteration so we can erase elements while iterating.
-        for (auto it = commands.begin(); it != commands.end(); )
-        {
-            // If DrawTime.Wait() is true, then the command expired.
-            if ((*it)->DrawTime.Wait() == false)
-            {
-                // Erase expired command from the owning container.
-                it = commands.erase(it);
-            }
-            else
-            {
-                // The command is active: add its raw pointer to the snapshot.
-                finalizedCommands.push_back(it->get());
-                ++it;
-            }
+        // Remove expired commands
+        auto new_end = std::remove_if(commands.begin(), commands.end(),
+            [](const std::unique_ptr<DebugDrawCommand>& cmd) {
+                return !(cmd && cmd->DrawTime.Wait());
+            });
+        commands.erase(new_end, commands.end());
+
+        // Now collect raw pointers to active commands
+        for (const auto& cmd : commands) {
+            finalizedCommands.push_back(cmd.get());
         }
     }
 

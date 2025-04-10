@@ -89,13 +89,13 @@ public:
         texture = AssetRegistry::GetTextureFromFile("GameData/cat.png");
 
 
-        auto player = new Player();
+        //auto player = new Player();
 
-        Level::Current->AddEntity(player);
+        //Level::Current->AddEntity(player);
 
-        player->Position = vec3(0,3,0);
+        //player->Position = vec3(0,3,0);
 
-        player->Start();
+        //player->Start();
 
         Level::Current->AddEntity(new TestCube(vec3(2, 3, 1)));
         Level::Current->AddEntity(new TestCube(vec3(2, 4, 1)));
@@ -126,6 +126,8 @@ public:
 
 	void Init()
 	{
+
+        printf("init\n");
 
         MainThreadPool.Start();
 
@@ -205,10 +207,11 @@ public:
         Time::Update();
         Input::Update();
 
+        Camera::Update(Time::DeltaTime);
         Level::Current->FinalizeFrame();
         Viewport.FinalizeChildren();
 
-        //NavigationSystem::DrawNavmesh();
+        NavigationSystem::DrawNavmesh();
 
         DebugDraw::Finalize();
 
@@ -223,7 +226,7 @@ public:
         if (Input::GetAction("test")->Pressed())
             skm->PlayAnimation();
 
-        Camera::Update(Time::DeltaTime);
+        
         Input::UpdateMouse();
 
         // Start GameUpdate here, either asynchronously or synchronously.

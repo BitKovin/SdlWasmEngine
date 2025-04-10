@@ -66,9 +66,6 @@
     <ClCompile Include="EObject.hpp">
       <Filter>Header Files</Filter>
     </ClCompile>
-    <ClCompile Include="FrameDrawData.cpp">
-      <Filter>Header Files</Filter>
-    </ClCompile>
     <ClCompile Include="Camera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -215,6 +212,15 @@
     </ClCompile>
     <ClCompile Include="MapParser.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="LevelObjectFactory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Entities\Player.cpp">
+      <Filter>Header Files\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Entities\WorldSpawn.cpp">
+      <Filter>Header Files\Entities</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -414,6 +420,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="BrushFaceMesh.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LevelObjectFactory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RegisterLevelObject.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Entities\WorldSpawn.h">
+      <Filter>Header Files\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshUtils.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

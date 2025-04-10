@@ -10,6 +10,8 @@
 
 #include "Navigation/Navigation.hpp"
 
+#include "MeshUtils.hpp"
+
 using namespace std;
 
 class Level : EObject
@@ -21,8 +23,6 @@ private:
 	mutex entityArrayLock = mutex();
 
 public:
-
-	
 
 	static Level* Current;
 
@@ -40,6 +40,35 @@ public:
 
 	static Level* OpenLevel(string filePath);
 
+	MeshUtils::VerticesIndices GetStaticNavObstaclesMesh()
+	{
+		entityArrayLock.lock();
+
+		vector<MeshUtils::VerticesIndices> meshes;
+
+		for (auto obj : LevelObjects)
+		{
+			if(obj->Static)
+			for (auto mesh : obj->GetDrawMeshes()) 
+			{
+
+				if (mesh->StaticNavigation == false) continue;
+
+				auto obstacles = mesh->GetNavObstacleMeshes();
+
+				meshes.insert(meshes.end(), obstacles.begin(), obstacles.end());
+
+			}
+		}
+
+		entityArrayLock.unlock();
+
+
+		MeshUtils::VerticesIndices resultMesh = MeshUtils::MergeMeshes(meshes);
+
+		return resultMesh;
+
+	}
 	
 	void AddEntity(LevelObject* entity)
 	{
@@ -47,6 +76,19 @@ public:
 		LevelObjects.push_back(entity);
 		entityArrayLock.unlock();
 	}
+
+	void RemoveEntity(LevelObject* entity)
+	{
+		entityArrayLock.lock();
+		auto it = std::find(LevelObjects.begin(), LevelObjects.end(), entity);
+		if (it != LevelObjects.end())
+		{
+			LevelObjects.erase(it);
+		}
+		entityArrayLock.unlock();
+	}
+
+
 
 	void UpdatePhysics()
 	{
@@ -78,8 +120,7 @@ public:
 
 		entityArrayLock.lock();
 		for (auto var : LevelObjects)
-		{
-			var->Finalize();
+		{	
 
 			for (IDrawMesh* mesh : var->GetDrawMeshes())
 			{
@@ -93,6 +134,9 @@ public:
 					{
 						opaque.push_back(mesh);
 					}
+
+					var->Finalize();
+
 				}
 			}
 

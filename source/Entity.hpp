@@ -11,6 +11,10 @@
 
 #include "Physics.h"
 
+#include "RegisterLevelObject.h"
+
+#include "MapData.h"
+
 using namespace std;
 
 class Entity : public LevelObject
@@ -28,6 +32,9 @@ public:
 	vector<Body*> Bodies;
 
 	string ClassName = "Entity";
+
+	string Name = "";
+
 
 	Entity()
 	{
@@ -47,7 +54,14 @@ public:
 		}
 	}
 
+	virtual void FromData(EntityData data)
+	{
 
+		//Name = data.GetPropertyString("targetName");
+
+		//Position = data.GetPropertyVectorPosition("origin");
+
+	}
 
 	void Finalize()
 	{
@@ -57,17 +71,16 @@ public:
 		}
 	}
 
-	vector<IDrawMesh*> GetDrawMeshes() 
-	{ 
-		return Drawables; 
+	vector<IDrawMesh*> GetDrawMeshes()
+	{
+		return Drawables;
 	}
 
 	void DestroyDrawables()
 	{
 		for (IDrawMesh* mesh : Drawables)
 		{
-			mesh->Dispose();
-			free(mesh);
+			delete(mesh);
 		}
 	}
 

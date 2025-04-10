@@ -491,10 +491,10 @@ dtStatus dtTileCache::queryTiles(const float* bmin, const float* bmax,
 	
 	const float tw = m_params.width * m_params.cs;
 	const float th = m_params.height * m_params.cs;
-	const int tx0 = (int)dtMathFloorf((bmin[0]-m_params.orig[0] - 2) / tw);
-	const int tx1 = (int)dtMathFloorf((bmax[0]-m_params.orig[0] + 2) / tw);
-	const int ty0 = (int)dtMathFloorf((bmin[2]-m_params.orig[2] - 2) / th);
-	const int ty1 = (int)dtMathFloorf((bmax[2]-m_params.orig[2] + 2) / th);
+	const int tx0 = (int)dtMathFloorf((bmin[0]-m_params.orig[0] - 3) / tw);
+	const int tx1 = (int)dtMathFloorf((bmax[0]-m_params.orig[0] + 3) / tw);
+	const int ty0 = (int)dtMathFloorf((bmin[2]-m_params.orig[2] - 3) / th);
+	const int ty1 = (int)dtMathFloorf((bmax[2]-m_params.orig[2] + 3) / th);
 	
 	for (int ty = ty0; ty <= ty1; ++ty)
 	{

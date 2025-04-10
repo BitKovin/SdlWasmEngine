@@ -2,10 +2,16 @@
 
 #include "EObject.hpp"
 
+#include <vector>
+
 #include "glm.h"
 
 #include "FrustrumCull.hpp"
 #include "Camera.h"
+
+#include "MeshUtils.hpp"
+
+using namespace std;
 
 class IDrawMesh : public EObject
 {
@@ -16,10 +22,15 @@ public:
 
 	bool Transparent = false;
 
+	bool StaticNavigation = false;
+
 	virtual float GetDistanceToCamera()
 	{
 		return 1;
 	}
+
+	virtual vector<MeshUtils::VerticesIndices> GetNavObstacleMeshes() { return vector<MeshUtils::VerticesIndices>(); }
+
 
 	virtual void DrawForward(mat4x4 view, mat4x4 projection) {}
 
@@ -33,5 +44,7 @@ public:
 	virtual bool IsShadowVisible() { return true; }
 
 	virtual bool IsInFrustrum(Frustum frustrum) { return true; };
+
+	virtual void RemoveFromLevel(){}
 
 };

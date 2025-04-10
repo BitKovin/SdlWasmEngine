@@ -301,6 +301,12 @@ namespace roj
 
 		m_model.boundingSphere = BoudingSphere::FromPoints(vertexPositions);
 
+		if (m_model.boneCount > 2)
+		{
+			m_model.boundingSphere.Radius *= 2.5;
+			m_model.boundingSphere.offset *= 1.5f;
+		}
+
 		return true;
 	}
 }

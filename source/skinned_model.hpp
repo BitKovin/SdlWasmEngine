@@ -5,6 +5,8 @@
 
 #include <vector>
 
+#include "Texture.hpp"
+
 #include "BoudingSphere.hpp"
 
 #define MAX_BONE_INFLUENCE 4
@@ -25,8 +27,9 @@ namespace roj
 		std::vector<uint32_t> vertexIndices;
 
 		string materialName;
-
 		string name;
+
+		Texture* cachedBaseColor;
 
 	};
 

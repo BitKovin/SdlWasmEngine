@@ -14,13 +14,28 @@ class BrushFaceMesh : public StaticMesh
 private:
 
 
-
-
-
 public:
+
+	vector<vec3> vertexLocations; //for physics shape generation
 
 	string material;
 	
+	BrushFaceMesh()
+	{
+
+	}
+
+	~BrushFaceMesh()
+	{
+
+		for (auto mesh : model->meshes)
+		{
+			delete(mesh.VAO);
+		}
+
+		delete(model);
+	}
+
 	static vector<BrushFaceMesh*> GetMeshesFromName(string filePath, string name)
 	{
 
@@ -47,6 +62,11 @@ public:
 			newModel->meshes.push_back(mesh);
 
 			newModel->boundingSphere = model.boundingSphere;
+
+			for (auto& vertex : mesh.vertexLocations)
+			{
+				face->vertexLocations.push_back(vertex.Position);
+			}
 
 			face->model = newModel;
 
