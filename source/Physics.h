@@ -24,6 +24,11 @@
 #include <Jolt/Physics/Body/Body.h>
 #include <Jolt/Physics/Collision/CastResult.h>
 #include <Jolt/Physics/Collision/ShapeCast.h>
+#include <Jolt/Physics/Collision/Shape/ConvexHullShape.h>
+#include <Jolt/Physics/Collision/Shape/CompoundShape.h>
+#include <Jolt/Physics/Collision/Shape/StaticCompoundShape.h>
+#include <Jolt/Physics/Collision/Shape/MeshShape.h>
+#include <Jolt/Core/Reference.h>
 
 #include "PhysicsConverter.h"
 
@@ -448,7 +453,135 @@ public:
 		bodyInterface->SetGravityFactor(body->GetID(), factor);
 	}
 
+	/**
+ * Creates a MeshShape for a static mesh in Jolt Physics.
+ * @param vertices A vector of 3D vertex positions (vec3).
+ * @param indices A vector of indices defining triangles (3 indices per triangle).
+ * @return A RefConst<Shape> containing the created shape, or an empty RefConst if creation fails.
+ */
+	static RefConst<Shape> CreateMeshShape(const std::vector<vec3>& vertices, const std::vector<uint32_t>& indices)
+	{
+		// Validate that the number of indices is a multiple of 3 (required for triangles)
+		if (indices.size() % 3 != 0)
+		{
+			printf("Error: Number of indices (%zu) must be a multiple of 3 to form complete triangles.\n", indices.size());
+			return RefConst<Shape>(); // Return empty shape on error
+		}
 
+		// Convert vertices to Jolt's Float3 format
+		Array<Float3> joltVertices;
+		joltVertices.reserve(vertices.size()); // Reserve space to avoid reallocations
+		for (const auto& v : vertices)
+		{
+			joltVertices.push_back(Float3(v.x, v.y, v.z));
+		}
+
+		// Convert indices to Jolt's IndexedTriangle format
+		Array<IndexedTriangle> joltTriangles;
+		joltTriangles.reserve(indices.size() / 3); // Reserve space for the number of triangles
+		for (size_t i = 0; i < indices.size(); i += 3)
+		{
+			IndexedTriangle tri;
+			tri.mIdx[0] = indices[i];     // First vertex index of the triangle
+			tri.mIdx[1] = indices[i + 1]; // Second vertex index
+			tri.mIdx[2] = indices[i + 2]; // Third vertex index
+			joltTriangles.push_back(tri);
+		}
+
+		// Create MeshShapeSettings with the converted data
+		MeshShapeSettings shapeSettings(joltVertices, joltTriangles);
+
+		// Attempt to create the shape
+		Shape::ShapeResult result = shapeSettings.Create();
+		if (result.HasError())
+		{
+			printf("Error creating mesh shape: %s\n", result.GetError().c_str());
+			return RefConst<Shape>(); // Return empty shape on error
+		}
+
+		// Return the successfully created shape
+		return result.Get();
+	}
+
+	RefConst<Shape> CreateConvexHullFromPoints(const std::vector<Vec3>& points)
+	{
+		// Convert std::vector<Vec3> to Array<Vec3> (Jolt's format)
+		Array<Vec3> hullPoints;
+		for (const Vec3& pt : points)
+		{
+			hullPoints.push_back(pt);
+		}
+
+		// Settings for the convex hull shape
+		ConvexHullShapeSettings shapeSettings(hullPoints);
+
+		// Optional: check for errors
+		Shape::ShapeResult result = shapeSettings.Create();
+		if (result.HasError())
+		{
+			printf("Error creating convex hull shape: %s\n", result.GetError().c_str());
+			return;
+		}
+
+		// Successfully created shape
+		RefConst<Shape> shape = result.Get();
+	}
+
+	static RefConst<Shape> CreateStaticCompoundShapeFromConvexShapes(const std::vector<RefConst<Shape>>& convexShapes)
+	{
+		// Create settings for a static compound shape
+		StaticCompoundShapeSettings compoundSettings;
+
+		// Add each convex shape to the compound shape at the origin
+		for (const auto& shape : convexShapes)
+		{
+			compoundSettings.AddShape(Vec3::sZero(), Quat::sIdentity(), shape.GetPtr());
+		}
+
+		// Create the compound shape from the settings
+		Shape::ShapeResult result = compoundSettings.Create();
+
+		// Check for errors during shape creation
+		if (result.HasError())
+		{
+			printf("Error creating compound shape: %s\n", result.GetError().c_str());
+			return RefConst<Shape>(); // Return an empty shape reference on error
+		}
+
+		// Return the successfully created compound shape
+		return result.Get();
+	}
+
+	// Create a body from the provided shape
+	static JPH::Body* CreateBodyFromShape(Entity* owner, vec3 Position, RefConst<Shape> shape, float Mass = 10, bool Static = false,
+		BodyType group = BodyType::MainBody,
+		BodyType mask = BodyType::GroupCollisionTest)
+	{
+		// Choose a collision layer based on dynamic or static:
+		JPH::BodyCreationSettings body_settings(
+			shape.GetPtr(),                        // Pass the shape's raw pointer
+			ToPhysics(Position),                   // Convert position to physics coordinates
+			JPH::Quat::sIdentity(),                // Default orientation (no rotation)
+			Static ? JPH::EMotionType::Static : JPH::EMotionType::Dynamic,  // Motion type based on Static flag
+			Static ? Layers::NON_MOVING : Layers::MOVING);                  // Collision layer
+
+		// Set mass properties
+		body_settings.mOverrideMassProperties = JPH::EOverrideMassProperties::CalculateInertia;
+		body_settings.mMassPropertiesOverride.mMass = Mass;
+
+		// Set friction
+		body_settings.mFriction = 0.5f;
+
+		// Allocate and attach collision properties to the body via the user data field:
+		BodyData* properties = new BodyData{ group, mask, owner };
+		body_settings.mUserData = reinterpret_cast<uintptr_t>(properties);
+
+		// Create the body and add it to the physics system
+		JPH::Body* body = bodyInterface->CreateBody(body_settings);
+		AddBody(body);
+
+		return body;
+	}
 
 	struct HitResult
 	{
@@ -642,58 +775,6 @@ public:
 		delete sphere_shape_settings;
 
 		return hit;
-	}
-
-	
-	static Body* CreateCharacterBody(Entity* owner, vec3 Position, float Radius, float Height, float Mass,
-		BodyType group = BodyType::CharacterCapsule,
-		BodyType mask = BodyType::GroupCollisionTest)
-	{
-		// Calculate cylinder portion height (total capsule height = cylinder_height + 2 * radius)
-		float cylinder_half_height = (Height - 2.0f * Radius) / 2.0f;
-		if (cylinder_half_height < 0.0f) {
-			Logger::Log("Capsule height is too small for given radius, using minimum height");
-			cylinder_half_height = 0.0f;
-		}
-
-		// Create capsule shape
-		auto capsule_shape_settings = new JPH::CapsuleShapeSettings();
-		capsule_shape_settings->SetEmbedded();
-		capsule_shape_settings->mRadius = Radius;
-		capsule_shape_settings->mHalfHeightOfCylinder = cylinder_half_height;
-
-		JPH::Shape::ShapeResult shape_result = capsule_shape_settings->Create();
-		JPH::Shape* capsule_shape = shape_result.Get();
-
-		if (shape_result.HasError())
-			Logger::Log(shape_result.GetError().c_str());
-
-		// Configure body settings
-		JPH::BodyCreationSettings body_settings(
-			capsule_shape,
-			ToPhysics(Position),
-			JPH::Quat::sIdentity(),
-			JPH::EMotionType::Dynamic,  // Dynamic body type
-			Layers::MOVING              // Use moving layer
-		);
-
-		// Lock rotation in all axes
-		body_settings.mAllowedDOFs = JPH::EAllowedDOFs::TranslationX | JPH::EAllowedDOFs::TranslationY | JPH::EAllowedDOFs::TranslationZ;  // Allow only translation
-
-		// Set mass properties
-		body_settings.mOverrideMassProperties = JPH::EOverrideMassProperties::CalculateInertia;
-		body_settings.mMassPropertiesOverride.mMass = Mass;
-		body_settings.mFriction = 0.0f;  // Match box friction
-
-		// Allocate and attach collision properties to the body via the user data field:
-		BodyData* properties = new BodyData{ group, mask, owner };
-		body_settings.mUserData = reinterpret_cast<uintptr_t>(properties);
-
-		// Create and add body to world
-		JPH::Body* character_body = bodyInterface->CreateBody(body_settings);
-		AddBody(character_body);
-
-		return character_body;
 	}
 
 

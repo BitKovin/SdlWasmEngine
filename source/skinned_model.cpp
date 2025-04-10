@@ -118,6 +118,7 @@ namespace roj
 		{
 			VertexData vertex;
 			vertex.Position = { mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z };
+			vertex.Position *= LoaderGlobalParams::Size;
 			if (mesh->HasNormals())
 			{
 				vertex.Normal = { mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z };
@@ -176,7 +177,6 @@ namespace roj
 
 		SkinnedMesh skinMesh = SkinnedMesh();
 
-
 		skinMesh.name = mesh->mName.C_Str();
 
 		skinMesh.vertices = new VertexBuffer(vertices, VertexData::Declaration());
@@ -184,6 +184,8 @@ namespace roj
 		skinMesh.indices = new IndexBuffer(indices);
 
 		std::vector<MeshTexture> textures = getMeshTextures(scene->mMaterials[mesh->mMaterialIndex], scene);
+
+		skinMesh.materialName = scene->mMaterials[mesh->mMaterialIndex]->GetName().C_Str();
 
 		skinMesh.textures = textures;
 
@@ -242,10 +244,17 @@ namespace roj
 	void ModelLoader<SkinnedMesh>::processNode(aiNode* node, const aiScene* scene)
 	{
 
-		for (uint32_t i = 0; i < node->mNumMeshes; i++)
+
+		string name = node->mName.C_Str();
+
+		
+		if (LoaderGlobalParams::MeshNameLimit == "" || name == LoaderGlobalParams::MeshNameLimit)
 		{
-			aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-			m_model.meshes.push_back(processMesh(mesh, scene));
+			for (uint32_t i = 0; i < node->mNumMeshes; i++)
+			{
+				aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+				m_model.meshes.push_back(processMesh(mesh, scene));
+			}
 		}
 		for (uint32_t i = 0; i < node->mNumChildren; i++)
 		{

@@ -44,6 +44,9 @@ public:
     // Static members (configuration options)
     static bool MergeBrushes;
     static float UnitSize;
+
+    void LoadToLevel();
+
 };
 
 // Helper to retrieve an entity by classname.

@@ -6,6 +6,9 @@
 namespace roj
 {
 
+    std::string LoaderGlobalParams::MeshNameLimit;
+    float LoaderGlobalParams::Size = 1;
+
 template<>
 std::vector<VertexData> ModelLoader<Mesh>::getMeshVertices(aiMesh* mesh)
 {

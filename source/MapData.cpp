@@ -5,6 +5,12 @@
 #include <cmath>
 #include "glm.h"
 
+#include "Level.hpp"
+
+#include "Entity.hpp"
+
+#include "BrushFaceMesh.hpp"
+
 // Static member definitions.
 bool MapData::MergeBrushes = false;
 float MapData::UnitSize = 32.0f;
@@ -177,4 +183,42 @@ EntityData* GetEntityDataFromClass(MapData& mapData, const std::string& classNam
             return &ent;
     }
     return nullptr;
+}
+
+void MapData::LoadToLevel()
+{
+
+    string modelPath = Path.substr(0, Path.length()-3) + "obj";
+
+    for (EntityData entityData : Entities)
+    {
+
+        Entity* ent = new Entity();
+
+        vector<BrushFaceMesh*> entBrushes;
+
+        for (BrushData brushData : entityData.Brushes)
+        {
+
+            string meshName = "entity" + entityData.name + "_brush" + brushData.Name;
+
+            auto faces = BrushFaceMesh::GetMeshesFromName(modelPath, meshName);
+
+            for (auto face : faces)
+            {
+                entBrushes.push_back(face);
+            }
+
+
+        }
+
+        for (auto face : entBrushes)
+        {
+            ent->Drawables.push_back(face);
+        }
+
+        Level::Current->AddEntity(ent);
+
+    }
+
 }

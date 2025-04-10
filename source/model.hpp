@@ -17,6 +17,20 @@
 
 namespace roj
 {
+
+	class LoaderGlobalParams
+	{
+	public:
+
+		static std::string MeshNameLimit;
+		static float Size;
+
+	private:
+
+	};
+
+	
+
 	struct MeshTexture
 	{
 		aiTextureType type; std::string src;
@@ -60,6 +74,9 @@ namespace roj
 		std::unordered_map<glm::vec3, float> vertexNormalsN; // position and normal num
 
 	private:
+
+		
+
 		void resetLoader();
 		void processNode(aiNode* node, const aiScene* scene);
 		void processNodeVertices(aiNode* node, const aiScene* scene);
@@ -68,6 +85,9 @@ namespace roj
 		std::vector<MeshTexture> getMeshTextures(aiMaterial* material, const aiScene* scene);
 		std::vector<MeshTexture> loadTextureMap(aiMaterial* mat, aiTextureType type, const aiScene* scene);
 	public:
+
+		
+
 		ModelLoader() = default;
 		bool load(const std::string& path);
 		model_t& get();

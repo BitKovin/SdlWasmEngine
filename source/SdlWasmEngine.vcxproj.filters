@@ -413,6 +413,9 @@
     <ClInclude Include="MapParser.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="BrushFaceMesh.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />

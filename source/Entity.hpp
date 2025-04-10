@@ -25,6 +25,10 @@ public:
 
 	Body* LeadBody = nullptr;
 
+	vector<Body*> Bodies;
+
+	string ClassName = "Entity";
+
 	Entity()
 	{
 

@@ -24,6 +24,8 @@ namespace roj
 		std::vector<VertexData> vertexLocations;
 		std::vector<uint32_t> vertexIndices;
 
+		string materialName;
+
 		string name;
 
 	};

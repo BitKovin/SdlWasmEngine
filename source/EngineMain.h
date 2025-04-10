@@ -137,7 +137,7 @@ public:
 
         UiRenderer::Init();
 
-        Level::OpenLevel();
+        Level::OpenLevel("GameData/Maps/test.map");
 
         initDemo();
 
@@ -148,8 +148,6 @@ public:
         skm->ColorTexture = texture;
 
         skm->Scale = vec3(30,0.2f,30);
-
-        MapData mapData = MapParser::ParseMap("GameData/Maps/test.map");
 
 
         body0 = Physics::CreateBoxBody(nullptr, skm->Position, skm->Scale, 10, true, BodyType::World);

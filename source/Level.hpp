@@ -38,24 +38,7 @@ public:
 
 	}
 
-	static Level* OpenLevel()
-	{
-
-		if (Current)
-		{
-			Current->Dispose();
-			free(Current);
-		}
-
-		Level* newLevel = new Level();
-
-		Current = newLevel;
-
-		NavigationSystem::GenerateNavData();
-
-		return newLevel;
-
-	}
+	static Level* OpenLevel(string filePath);
 
 	
 	void AddEntity(LevelObject* entity)
