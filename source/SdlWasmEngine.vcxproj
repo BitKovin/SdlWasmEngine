@@ -249,6 +249,8 @@
     <ClCompile Include="Input.h" />
     <ClCompile Include="Level.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="MapData.cpp" />
+    <ClCompile Include="MapParser.cpp" />
     <ClCompile Include="model.cpp" />
     <ClCompile Include="Navigation\Detour\DetourAlloc.cpp" />
     <ClCompile Include="Navigation\Detour\DetourAssert.cpp" />
@@ -310,6 +312,8 @@
     <ClInclude Include="LevelObject.hpp" />
     <ClInclude Include="Level.hpp" />
     <ClInclude Include="Logger.hpp" />
+    <ClInclude Include="MapData.h" />
+    <ClInclude Include="MapParser.h" />
     <ClInclude Include="MathHelper.hpp" />
     <ClInclude Include="model.hpp" />
     <ClInclude Include="Navigation\Detour\DetourAlloc.h" />

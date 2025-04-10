@@ -96,7 +96,7 @@ private:
         if (jumpDelay.Wait())
             return false;
 
-        auto result = Physics::LineTrace(location, location - vec3(0, 0.95, 0), BodyType::GroupCollisionTest, {LeadBody});
+        auto result = Physics::LineTrace(location, location - vec3(0, 0.92, 0), BodyType::GroupCollisionTest, {LeadBody});
 
         return result.hasHit;
 
