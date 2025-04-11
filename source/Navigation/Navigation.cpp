@@ -120,11 +120,11 @@ void NavigationSystem::GenerateNavData()
     // Recast configuration
     rcConfig cfg;
     memset(&cfg, 0, sizeof(cfg));
-    cfg.cs = 0.1f;                    // Cell size (voxel size in X/Z)
-    cfg.ch = 0.2f;                    // Cell height
+    cfg.cs = 0.15f;                    // Cell size (voxel size in X/Z)
+    cfg.ch = 0.1f;                    // Cell height
     cfg.walkableSlopeAngle = 45.0f;   // Max slope angle
     cfg.walkableHeight = static_cast<int>(ceilf(2.0f / cfg.ch)); // Agent height (~2m)
-    cfg.walkableClimb = static_cast<int>(ceilf(0.9f / cfg.ch));  // Max climb height (~0.9m)
+    cfg.walkableClimb = static_cast<int>(ceilf(0.5f / cfg.ch));  // Max climb height (~0.9m)
     cfg.walkableRadius = static_cast<int>(ceilf(0.5f / cfg.cs)); // Agent radius (~0.5m)
     cfg.maxEdgeLen = static_cast<int>(12 / cfg.cs);
     cfg.maxSimplificationError = 0.05f;
