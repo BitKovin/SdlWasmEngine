@@ -38,6 +38,8 @@ public:
 
 	}
 
+	static void CloseLevel();
+
 	static Level* OpenLevel(string filePath);
 
 	MeshUtils::PositionVerticesIndices GetStaticNavObstaclesMesh()

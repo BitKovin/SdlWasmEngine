@@ -3,12 +3,30 @@
 #include "MapData.h"
 #include "MapParser.h"
 
+#include "Physics.h"
+
 Level* Level::Current = nullptr;
+
+void Level::CloseLevel()
+{
+	for (LevelObject* obj : Current->LevelObjects)
+	{
+		obj->Dispose();
+		delete(obj);
+	}
+	Current->LevelObjects.clear();
+
+	Physics::DestroyAllBodies();
+
+}
 
 Level* Level::OpenLevel(string filePath)
 {
 	if (Current)
 	{
+
+		CloseLevel();
+
 		Current->Dispose();
 		delete(Current);
 	}

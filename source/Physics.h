@@ -91,6 +91,12 @@ class Entity;
 
 struct BodyData 
 {
+
+	~BodyData()
+	{
+		printf("deleting body data");
+	}
+
 	BodyType group;
 	BodyType mask;
 
@@ -306,39 +312,62 @@ private:
 
 	static vector<Body*> existingBodies;
 
-	//static mutex physicsMainLock;
+	static mutex physicsMainLock;
 
 public:
 	
 	static void AddBody(Body* body)
 	{
-		//physicsMainLock.lock();
+		physicsMainLock.lock();
 
 		existingBodies.push_back(body);
 
 		bodyInterface->AddBody(body->GetID(), JPH::EActivation::Activate);
 
-		//physicsMainLock.unlock();
+		physicsMainLock.unlock();
 
 	}
 
 	static void DestroyBody(Body* body)
 	{
 
+		if (body == nullptr)
+			return;
 
-		//physicsMainLock.lock();
+		physicsMainLock.lock();
 
 		bodyInterface->RemoveBody(body->GetID());
 
 		// Retrieve and delete collision properties if present.
 		auto* props = reinterpret_cast<BodyData*>(body->GetUserData());
-		if (props)
+		if (props) 
+		{
 			delete props;
+		}
+			
 
 		bodyInterface->DestroyBody(body->GetID());
-		//physicsMainLock.unlock();
+
+		// Remove body from existingBodies
+		auto it = std::find(existingBodies.begin(), existingBodies.end(), body);
+		if (it != existingBodies.end())
+			existingBodies.erase(it);
+
+		physicsMainLock.unlock();
 	}
 
+	static void DestroyAllBodies()
+	{
+		physicsMainLock.lock();
+
+		for (Body* body : existingBodies)
+		{
+			DestroyBody(body);
+		}
+		existingBodies.clear();
+
+		physicsMainLock.unlock();
+	}
 
 	static void Init()
 	{

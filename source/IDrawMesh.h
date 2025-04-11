@@ -24,6 +24,8 @@ public:
 
 	bool StaticNavigation = false;
 
+	virtual ~IDrawMesh() {}
+
 	virtual float GetDistanceToCamera()
 	{
 		return 1;

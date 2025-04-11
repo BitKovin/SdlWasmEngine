@@ -82,11 +82,27 @@ public:
 		{
 			delete(mesh);
 		}
+
+		Drawables.clear();
 	}
 
 	void virtual Destroy()
 	{
 		DestroyDrawables();
+		Physics::DestroyBody(LeadBody);
+		LeadBody = nullptr;
+		for (Body* body : Bodies)
+		{
+			Physics::DestroyBody(body);
+		}
+		Bodies.clear();
+	}
+
+protected:
+
+	void OnDispose()
+	{
+		Destroy();
 	}
 
 private:

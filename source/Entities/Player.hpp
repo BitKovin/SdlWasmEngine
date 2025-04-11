@@ -104,17 +104,22 @@ private:
 
     vec3 testStart;
 
-    SkeletalMesh viewmodel;
-    SkeletalMesh arms;
+    SkeletalMesh* viewmodel;
+    SkeletalMesh* arms;
 
 public:
-	Player(){}
+	Player()
+    {
+        viewmodel = new SkeletalMesh();
+        arms = new SkeletalMesh();
+    }
 	~Player(){}
 
 	float Speed = 5;
 
     void FromData(EntityData data)
     {
+        Entity::FromData(data);
         cameraRotation.y = data.GetPropertyFloat("angle") - 90;
     }
 
@@ -123,19 +128,19 @@ public:
 		LeadBody = Physics::CreateCharacterBody(this, Position, 0.5, 1.8, 70);
         Physics::SetGravityFactor(LeadBody, 3);
 
-        viewmodel.LoadFromFile("GameData/testViewmodel.glb");
+        viewmodel->LoadFromFile("GameData/testViewmodel.glb");
 
-        viewmodel.PlayAnimation("draw");
+        viewmodel->PlayAnimation("draw");
 
-        viewmodel.Transparent = true;
+        viewmodel->Transparent = true;
 
-        viewmodel.IsViewmodel = true;
+        viewmodel->IsViewmodel = true;
 
-        Drawables.push_back(&viewmodel);
+        Drawables.push_back(viewmodel);
 
-        arms.LoadFromFile("GameData/arms.glb");
-        arms.IsViewmodel = true;
-        Drawables.push_back(&arms);
+        arms->LoadFromFile("GameData/arms.glb");
+        arms->IsViewmodel = true;
+        Drawables.push_back(arms);
 
 	}
 
@@ -221,7 +226,7 @@ public:
 
         if (Input::GetAction("attack")->Pressed())
         {
-            viewmodel.PlayAnimation("attack");
+            viewmodel->PlayAnimation("attack");
             Camera::AddCameraShake(CameraShake(
                 0.13f,                            // interpIn
                 1.2f,                            // duration
@@ -238,15 +243,15 @@ public:
         Camera::position = Position + vec3(0, 0.7, 0);
         Camera::rotation = cameraRotation;
 
-        viewmodel.Update();
+        viewmodel->Update();
 
-        arms.PasteAnimationPose(viewmodel.GetAnimationPose());
+        arms->PasteAnimationPose(viewmodel->GetAnimationPose());
 
-        viewmodel.Position = Camera::position;
-        viewmodel.Rotation = cameraRotation;
+        viewmodel->Position = Camera::position;
+        viewmodel->Rotation = cameraRotation;
 
-        arms.Position = viewmodel.Position;
-        arms.Rotation = viewmodel.Rotation;
+        arms->Position = viewmodel->Position;
+        arms->Rotation = viewmodel->Rotation;
 
         Camera::ApplyCameraShake(Time::DeltaTimeF);
 

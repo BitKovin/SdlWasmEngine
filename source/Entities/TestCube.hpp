@@ -14,14 +14,19 @@
 class TestCube : public Entity
 {
 public:
+
+	StaticMesh* mesh;
+
 	TestCube()
 	{
-
+		mesh = new StaticMesh();
 	}
 
 	TestCube(vec3 pos)
 	{
 		Position = pos;
+
+		mesh = new StaticMesh();
 
 		Start();
 
@@ -32,35 +37,23 @@ public:
 
 	}
 
-	StaticMesh mesh;
 
-	Body* body;
 
 	void Start()
 	{
-		mesh.LoadFromFile("GameData/cube.obj");
-		mesh.ColorTexture = AssetRegistry::GetTextureFromFile("GameData/cat.png");
+		mesh->LoadFromFile("GameData/cube.obj");
+		mesh->ColorTexture = AssetRegistry::GetTextureFromFile("GameData/cat.png");
 
-		Drawables.push_back(&mesh);
+		Drawables.push_back(mesh);
 
-		body = Physics::CreateBoxBody(this ,Position, vec3(1), 10, false);
-
-		LeadBody = body;
+		LeadBody = Physics::CreateBoxBody(this, Position, vec3(1), 10, false);
 
 	}
 
 	void Update()
 	{
-		mesh.Position = Position;
-		mesh.Rotation = Rotation;
-	}
-
-	void Destroy()
-	{
-
-		Physics::DestroyBody(body);
-
-		Entity::Destroy();
+		mesh->Position = Position;
+		mesh->Rotation = Rotation;
 	}
 
 

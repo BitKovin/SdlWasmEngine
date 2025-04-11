@@ -109,12 +109,6 @@ public:
 
 
 
-    ShaderProgram* shader;
-
-    SkeletalMesh* skm;
-
-    Body* body0;
-
     std::shared_ptr<UiButton> img;
 
     std::shared_ptr<UiText> text;
@@ -145,23 +139,6 @@ public:
 
         InitInputs();
 
-        skm = new SkeletalMesh();
-        skm->LoadFromFile("GameData/cube.obj");
-        skm->ColorTexture = texture;
-
-        skm->Scale = vec3(30,0.2f,30);
-
-
-        body0 = Physics::CreateBoxBody(nullptr, skm->Position, skm->Scale, 10, true, BodyType::World);
-
-
-
-        skm->PlayAnimation("run");
-
-
-        //auto pose = animator.GetBonePoseArray();
-
-        shader = ShaderManager::GetShaderProgram("skeletal");
 
         img = make_shared<UiButton>();
 
@@ -211,7 +188,7 @@ public:
         Level::Current->FinalizeFrame();
         Viewport.FinalizeChildren();
 
-        NavigationSystem::DrawNavmesh();
+        //NavigationSystem::DrawNavmesh();
 
         DebugDraw::Finalize();
 
@@ -222,9 +199,6 @@ public:
 
         float AspectRatio = static_cast<float>(x) / static_cast<float>(y);
         Camera::AspectRatio = AspectRatio;
-
-        if (Input::GetAction("test")->Pressed())
-            skm->PlayAnimation();
 
         
         Input::UpdateMouse();
@@ -257,19 +231,17 @@ public:
 
         if (Input::GetAction("fullscreen")->Pressed())
         {
-            ToggleFullscreen(Window);
+            //ToggleFullscreen(Window);
+
+            Level::OpenLevel("GameData/Maps/test.map");
+
         }
+
+
 
     }
 
     bool msaa = false;
-
-    static void myFunction() {
-        std::cout << "Hello from the async task!" << std::endl;
-        // Simulate some work with a sleep.
-        std::this_thread::sleep_for(50ms);
-        std::cout << "Async task finished." << std::endl;
-    }
 
 	void GameUpdate()
 	{
@@ -296,18 +268,11 @@ public:
 
         }
 
-        skm->Update();
-
-        skm->Position = FromPhysics(body0->GetPosition());
-        skm->Rotation = MathHelper::ToYawPitchRoll(FromPhysics(body0->GetRotation()));
-
 
 	}
 
 	void Render()
 	{
-
-        skm->FinalizeFrameData();
 
         int x, y;
         SDL_GetWindowSize(Window, &x, &y);
@@ -340,8 +305,6 @@ public:
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        
-        skm->DrawForward(Camera::finalizedView, Camera::finalizedProjection);
 
         //printf("renderin %i meshes\n", Level::Current->VissibleRenderList.size());
 
