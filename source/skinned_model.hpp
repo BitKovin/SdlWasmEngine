@@ -29,7 +29,7 @@ namespace roj
 		string materialName;
 		string name;
 
-		Texture* cachedBaseColor;
+		Texture* cachedBaseColor = nullptr;
 
 	};
 

@@ -28,145 +28,184 @@ static std::vector<std::string> split_whitespace(const std::string& s) {
     return tokens;
 }
 
+// Safe string to float conversion
+static bool safe_stof(const std::string& s, float& value) {
+    if (s.empty()) {
+        return false;
+    }
+    char* endptr;
+    value = std::strtof(s.c_str(), &endptr);
+    // Conversion is successful only if the entire string was consumed
+    return (endptr == s.c_str() + s.size());
+}
+
 // -------------------
 // EntityData Methods
 // -------------------
 
+/**
+     * Retrieves a 3D position vector from a property, scaling it by MapData::UnitSize.
+     * Returns (0, 0, 0) if the property is invalid or missing.
+     */
 glm::vec3 EntityData::GetPropertyVectorPosition(const std::string& propName) {
-    try {
-        auto it = Properties.find(propName);
-        if (it == Properties.end())
-            throw std::runtime_error("Property not found");
-
-        std::string value = it->second;
-        value.erase(std::remove(value.begin(), value.end(), '\"'), value.end());
-
-        auto parts = split_whitespace(value);
-        if (parts.size() < 3)
-            throw std::runtime_error("Not enough components");
-
-        float x = std::stof(parts[0]);
-        float y = std::stof(parts[2]);
-        float z = std::stof(parts[1]) * -1.0f;
-        return glm::vec3(x, y, z) / MapData::UnitSize;
-    }
-    catch (...) {
+    auto it = Properties.find(propName);
+    if (it == Properties.end()) {
         return glm::vec3(0.0f);
     }
+
+    std::string value = it->second;
+    value.erase(std::remove(value.begin(), value.end(), '\"'), value.end());
+    auto parts = split_whitespace(value);
+    if (parts.size() < 3) {
+        return glm::vec3(0.0f);
+    }
+
+    float x, y, z;
+    if (!safe_stof(parts[0], x) || !safe_stof(parts[2], y) || !safe_stof(parts[1], z)) {
+        return glm::vec3(0.0f);
+    }
+
+    z *= -1.0f; // Adjust z-coordinate
+    return glm::vec3(x, y, z) / MapData::UnitSize;
 }
 
+/**
+ * Retrieves a 3D rotation vector from a property.
+ * Returns (0, 0, 0) if the property is invalid or missing.
+ */
 glm::vec3 EntityData::GetPropertyVectorRotation(const std::string& propName) {
-    try {
-        auto it = Properties.find(propName);
-        if (it == Properties.end())
-            throw std::runtime_error("Property not found");
-
-        std::string value = it->second;
-        value.erase(std::remove(value.begin(), value.end(), '\"'), value.end());
-
-        auto parts = split_whitespace(value);
-        if (parts.size() < 3)
-            throw std::runtime_error("Not enough components");
-
-        float x = std::stof(parts[0]);
-        float y = std::stof(parts[1]);
-        float z = std::stof(parts[2]);
-        return glm::vec3(x, y, z);
-    }
-    catch (...) {
+    auto it = Properties.find(propName);
+    if (it == Properties.end()) {
         return glm::vec3(0.0f);
     }
+
+    std::string value = it->second;
+    value.erase(std::remove(value.begin(), value.end(), '\"'), value.end());
+    auto parts = split_whitespace(value);
+    if (parts.size() < 3) {
+        return glm::vec3(0.0f);
+    }
+
+    float x, y, z;
+    if (!safe_stof(parts[0], x) || !safe_stof(parts[1], y) || !safe_stof(parts[2], z)) {
+        return glm::vec3(0.0f);
+    }
+
+    return glm::vec3(x, y, z);
 }
 
+/**
+ * Retrieves a 3D vector from a property with a custom default value.
+ * Returns the default value if the property is invalid or missing.
+ */
 glm::vec3 EntityData::GetPropertyVector(const std::string& propName, const glm::vec3& def) {
-    try {
-        auto it = Properties.find(propName);
-        if (it == Properties.end())
-            throw std::runtime_error("Property not found");
-
-        std::string value = it->second;
-        value.erase(std::remove(value.begin(), value.end(), '\"'), value.end());
-
-        auto parts = split_whitespace(value);
-        if (parts.size() < 3)
-            throw std::runtime_error("Not enough components");
-
-        float x = std::stof(parts[0]);
-        float y = std::stof(parts[1]);
-        float z = std::stof(parts[2]);
-        return glm::vec3(x, y, z);
-    }
-    catch (...) {
+    auto it = Properties.find(propName);
+    if (it == Properties.end()) {
         return def;
     }
+
+    std::string value = it->second;
+    value.erase(std::remove(value.begin(), value.end(), '\"'), value.end());
+    auto parts = split_whitespace(value);
+    if (parts.size() < 3) {
+        return def;
+    }
+
+    float x, y, z;
+    if (!safe_stof(parts[0], x) || !safe_stof(parts[1], y) || !safe_stof(parts[2], z)) {
+        return def;
+    }
+
+    return glm::vec3(x, y, z);
 }
 
+/**
+ * Retrieves a float value from a property with a custom default value.
+ * Returns the default value if the property is invalid or missing.
+ */
 float EntityData::GetPropertyFloat(const std::string& propName, float defaultValue) {
-    try {
-        auto it = Properties.find(propName);
-        if (it == Properties.end())
-            throw std::runtime_error("Property not found");
-
-        std::string value = it->second;
-        value.erase(std::remove(value.begin(), value.end(), '\"'), value.end());
-
-        auto parts = split_whitespace(value);
-        if (parts.empty())
-            throw std::runtime_error("Empty property");
-        return std::stof(parts[0]);
-    }
-    catch (...) {
+    auto it = Properties.find(propName);
+    if (it == Properties.end()) {
         return defaultValue;
     }
+
+    std::string value = it->second;
+    value.erase(std::remove(value.begin(), value.end(), '\"'), value.end());
+    auto parts = split_whitespace(value);
+    if (parts.empty()) {
+        return defaultValue;
+    }
+
+    float val;
+    if (!safe_stof(parts[0], val)) {
+        return defaultValue;
+    }
+
+    return val;
 }
 
+/**
+ * Retrieves a boolean value from a property with a custom default value.
+ * Interprets "true"/"1" as true, "false"/"0" as false, otherwise returns default.
+ */
 bool EntityData::GetPropertyBool(const std::string& propName, bool defaultValue) {
-    try {
-        auto it = Properties.find(propName);
-        if (it == Properties.end())
-            throw std::runtime_error("Property not found");
-
-        std::string value = it->second;
-        // Replace 0 with false and 1 with true.
-        std::replace(value.begin(), value.end(), '0', 'f');
-        std::replace(value.begin(), value.end(), '1', 't');
-        std::transform(value.begin(), value.end(), value.begin(), ::tolower);
-
-        auto parts = split_whitespace(value);
-        if (parts.empty())
-            throw std::runtime_error("Empty property");
-        if (parts[0] == "true")
-            return true;
-        else if (parts[0] == "false")
-            return false;
-        else
-            throw std::runtime_error("Invalid bool value");
+    auto it = Properties.find(propName);
+    if (it == Properties.end()) {
+        return defaultValue;
     }
-    catch (...) {
+
+    std::string value = it->second;
+    value.erase(std::remove(value.begin(), value.end(), '\"'), value.end());
+    auto parts = split_whitespace(value);
+    if (parts.empty()) {
+        return defaultValue;
+    }
+
+    std::string boolStr = parts[0];
+    std::replace(boolStr.begin(), boolStr.end(), '0', 'f');
+    std::replace(boolStr.begin(), boolStr.end(), '1', 't');
+    std::transform(boolStr.begin(), boolStr.end(), boolStr.begin(), ::tolower);
+
+    if (boolStr == "true") {
+        return true;
+    }
+    else if (boolStr == "false") {
+        return false;
+    }
+    else {
         return defaultValue;
     }
 }
 
+/**
+ * Retrieves a string value from a property with a custom default value.
+ * Returns the default value if the property is missing.
+ */
 std::string EntityData::GetPropertyString(const std::string& propName, const std::string& defaultValue) {
     auto it = Properties.find(propName);
-    if (it != Properties.end())
+    if (it != Properties.end()) {
         return it->second;
+    }
     return defaultValue;
 }
 
+/**
+ * Converts an imported rotation vector to a usable format.
+ * Adjusts based on whether it's for a model or not.
+ */
 glm::vec3 EntityData::ConvertRotation(glm::vec3 importRot, bool notForModel) {
     if (!notForModel) {
         importRot += glm::vec3(0.0f, 180.0f, 0.0f);
     }
-    // Convert to radians.
+    // Convert to radians
     importRot = glm::radians(importRot);
 
-    // Create the rotation matrix with the order similar to the original.
+    // Create the rotation matrix with the specified order
     glm::mat4 rotM = glm::rotate(glm::mat4(1.0f), -importRot.z, glm::vec3(1, 0, 0));
     rotM = glm::rotate(rotM, importRot.x, glm::vec3(0, 0, 1));
     rotM = glm::rotate(rotM, importRot.y, glm::vec3(0, 1, 0));
 
-    // Decompose using quaternion conversion.
+    // Decompose using quaternion conversion
     glm::quat q = glm::quat_cast(rotM);
     glm::vec3 rotation = glm::eulerAngles(q);
 
@@ -200,7 +239,7 @@ void MapData::LoadToLevel()
         if (ent == nullptr)
             ent = new Entity();
 
-        //ent->FromData(entityData);
+        ent->FromData(entityData);
 
         vector<BrushFaceMesh*> entBrushes;
 
@@ -225,10 +264,12 @@ void MapData::LoadToLevel()
 
                 }
 
+                
+
                 for (auto face : faces)
                 {
 
-                    face->StaticNavigation = ent->Static;
+                    
 
                     entBrushes.push_back(face);
                 }
@@ -239,8 +280,11 @@ void MapData::LoadToLevel()
 
             ent->LeadBody = Physics::CreateBodyFromShape(ent, vec3(0), compoundShape, 1000, true, BodyType::World | (BodyType::WorldOpaque));
 
+            entBrushes = BrushFaceMesh::MergeMeshesByMaterial(entBrushes);
+
             for (auto face : entBrushes)
             {
+                face->StaticNavigation = ent->Static;
                 ent->Drawables.push_back(face);
             }
         }

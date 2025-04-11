@@ -29,7 +29,7 @@ public:
 		return 1;
 	}
 
-	virtual vector<MeshUtils::VerticesIndices> GetNavObstacleMeshes() { return vector<MeshUtils::VerticesIndices>(); }
+	virtual vector<MeshUtils::PositionVerticesIndices> GetNavObstacleMeshes() { return vector<MeshUtils::PositionVerticesIndices>(); }
 
 
 	virtual void DrawForward(mat4x4 view, mat4x4 projection) {}

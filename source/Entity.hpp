@@ -57,9 +57,9 @@ public:
 	virtual void FromData(EntityData data)
 	{
 
-		//Name = data.GetPropertyString("targetName");
+		Name = data.GetPropertyString("targetName");
 
-		//Position = data.GetPropertyVectorPosition("origin");
+		Position = data.GetPropertyVectorPosition("origin");
 
 	}
 

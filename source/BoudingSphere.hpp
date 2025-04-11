@@ -6,6 +6,8 @@
 
 #include "MathHelper.hpp"
 
+#include "VertexData.h"
+
 using namespace std;
 
 class BoudingSphere
@@ -21,6 +23,21 @@ public:
 
     vec3 offset; // center of the sphere
     float Radius; // sphere radius
+
+    static BoudingSphere FromVertices(const vector<VertexData>& vertices)
+    {
+        vector<vec3> points;
+
+        points.resize(vertices.size());
+
+        for (VertexData vertex : vertices)
+        {
+            points.push_back(vertex.Position);
+        }
+
+        return FromPoints(points);
+
+    }
 
     // Computes a bounding sphere that encloses all given points.
     // Uses a variant of Ritter's algorithm.

@@ -32,7 +32,7 @@ protected:
 
 	string PixelShader = "default_pixel";
 
-	ShaderProgram* forward_shader_program;
+	ShaderProgram* forward_shader_program = nullptr;
 
 public:
 
@@ -68,9 +68,9 @@ public:
 		return translate(Position) * MathHelper::GetRotationMatrix(Rotation) * scale(Scale);
 	}
 
-	vector<MeshUtils::VerticesIndices> GetNavObstacleMeshes()
+	vector<MeshUtils::PositionVerticesIndices> GetNavObstacleMeshes()
 	{
-		vector<MeshUtils::VerticesIndices> result;
+		vector<MeshUtils::PositionVerticesIndices> result;
 
 		if (model == nullptr)
 			return result;
@@ -80,7 +80,7 @@ public:
 		for (auto mesh : model->meshes)
 		{
 
-			MeshUtils::VerticesIndices meshData;
+			MeshUtils::PositionVerticesIndices meshData;
 
 			meshData.indices = mesh.vertexIndices;
 

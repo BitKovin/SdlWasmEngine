@@ -40,11 +40,11 @@ public:
 
 	static Level* OpenLevel(string filePath);
 
-	MeshUtils::VerticesIndices GetStaticNavObstaclesMesh()
+	MeshUtils::PositionVerticesIndices GetStaticNavObstaclesMesh()
 	{
 		entityArrayLock.lock();
 
-		vector<MeshUtils::VerticesIndices> meshes;
+		vector<MeshUtils::PositionVerticesIndices> meshes;
 
 		for (auto obj : LevelObjects)
 		{
@@ -64,7 +64,7 @@ public:
 		entityArrayLock.unlock();
 
 
-		MeshUtils::VerticesIndices resultMesh = MeshUtils::MergeMeshes(meshes);
+		MeshUtils::PositionVerticesIndices resultMesh = MeshUtils::MergeMeshes(meshes);
 
 		return resultMesh;
 
