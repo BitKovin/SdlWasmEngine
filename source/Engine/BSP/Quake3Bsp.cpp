@@ -1855,9 +1855,9 @@ vector<MeshUtils::PositionVerticesIndices> BSPModelRef::GetNavObstacleMeshes()
 
     MeshUtils::PositionVerticesIndices meshData;
 
-    meshData.indices = GetIndices();
+    meshData.indices = GetIndices(true);
 
-    auto vertices = GetVertices();
+    auto vertices = GetVertices(true);
 
     for (auto& vertex : vertices)
     {

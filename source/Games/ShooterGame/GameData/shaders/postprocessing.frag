@@ -252,7 +252,7 @@ void main()
 
     color = GetFromLUT(color);
 
-    color = smoothPosterize(color, 100.0,0.35,TexCoords*vec2(aspectRatio,1.0));
+    color = smoothPosterize(color, 70.0,0.35,TexCoords*vec2(aspectRatio,1.0));
 
 
     if(false) 

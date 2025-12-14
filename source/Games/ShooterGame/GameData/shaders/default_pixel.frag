@@ -74,7 +74,7 @@ vec3 CalculateLight()
     float factor = clamp(dot(normal, normalize(direct_light_dir)) * 0.8 + 0.2, 0.0, 1.0);
     vec3 light = mix(light_color, direct_light_color, factor);
 
-    light *= 6.0f;
+    light *= 3.0f;
 
     light += v_light;
 

@@ -726,15 +726,18 @@ void Player::Update()
     if (length(input) > 1)
         input = normalize(input);
 
+	if (false)
+	{
 
-    if (Input::GetAction("dash")->Holding()&&input.y>0.4f && OnGround())
-    {
-        RunProgress += Time::DeltaTimeF * 4.0f;
-    }
-    else
-    {
-        RunProgress -= Time::DeltaTimeF * 4.0f;
-    }
+		if (Input::GetAction("dash")->Holding() && input.y > 0.4f && OnGround())
+		{
+			RunProgress += Time::DeltaTimeF * 4.0f;
+		}
+		else
+		{
+			RunProgress -= Time::DeltaTimeF * 4.0f;
+		}
+	}
 
     RunProgress = std::clamp(RunProgress, 0.0f, 1.0f);
 
@@ -817,7 +820,7 @@ void Player::Update()
             controller.SetVelocity(normalize(dashVector) * Speed);
         }
 
-        if (Input::GetAction("dash")->Pressed() && false)
+        if (Input::GetAction("dash")->Pressed())
         {
 
             vec3 dashDir = right * input.x + playerForward * input.y;

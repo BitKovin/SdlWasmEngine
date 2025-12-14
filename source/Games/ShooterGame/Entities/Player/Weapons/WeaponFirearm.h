@@ -25,7 +25,7 @@ struct FirearmParams {
 	float spreadIncreasePerShot = 0.1f;
 	float spreadDecreaseSpeed = 2.0f;
 	float maxActiveSpread = 1.2f;
-	float velocitySpreadDivisor = 7.0f;
+	float velocitySpreadDivisor = 17.0f;
 	float attackDelayTime = 0.3f;
 	float switchDelayTime = 0.35f;
 	float switchDelayOnAttack = 0.2f;
@@ -110,4 +110,9 @@ public:
 
 	// Runtime akimbo functions
 	void SetAkimbo(bool enabled);
+
+protected:
+
+	float akimboDistanceProgress = 0.0f;
+
 };

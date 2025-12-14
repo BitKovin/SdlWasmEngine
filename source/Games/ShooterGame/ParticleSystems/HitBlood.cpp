@@ -1,6 +1,6 @@
 #include <Particle/GlobalParticleSystem.hpp>
 
-static vec3 bloodColor = vec3(0.6,0,0);
+static vec3 bloodColor = vec3(0.5,0,0);
 
 class BloodDecal : public ParticleEmitter
 {

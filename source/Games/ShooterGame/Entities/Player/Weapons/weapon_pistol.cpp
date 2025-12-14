@@ -4,7 +4,7 @@
 
 class weapon_pistol : public WeaponFirearm {
 public:
-    bool Silencer = true;
+    bool Silencer = false;
 
 
 
@@ -19,8 +19,7 @@ public:
         params.pitchModifier = 1.0f; // Modified in Update based on Silencer
         params.baseSpread = 0.1f;
         params.spreadIncreasePerShot = 0.1f;
-        params.maxActiveSpread = 1.2f;
-        params.velocitySpreadDivisor = 7.0f;
+        params.maxActiveSpread = 0.8f;
         params.attackDelayTime = 0.3f;
         params.switchDelayTime = 0.35f;
         params.switchDelayOnAttack = 0.2f;

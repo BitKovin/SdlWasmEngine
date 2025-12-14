@@ -295,7 +295,7 @@ vec3 ParticleEmitter::GetLightForParticle(const Particle& particle)
     if (particle.UseWorldRotation == false)
     {
         auto light = Level::Current->BspData.GetLightvolColorPoint(particle.position * MAP_SCALE);
-        return (light.ambientColor + light.directColor) * 4.0f;
+        return (light.ambientColor + light.directColor) * 2.0f;
     }
 
     vec3 normal = MathHelper::GetForwardVector(particle.globalRotation);

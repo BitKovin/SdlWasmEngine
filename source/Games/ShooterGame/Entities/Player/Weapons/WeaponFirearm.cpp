@@ -110,6 +110,17 @@ void WeaponFirearm::Update()
 {
 	Weapon::Update();
 
+	if (akimbo)
+	{
+		akimboDistanceProgress += Time::DeltaTimeF * 4.0f;
+	}
+	else
+	{
+		akimboDistanceProgress -= Time::DeltaTimeF * 4.0f;
+	}
+
+	akimboDistanceProgress = std::clamp(akimboDistanceProgress, 0.0f, 1.0f);
+
 	// Detect akimbo change
 	if (akimbo != akimboPrev)
 		SetAkimbo(akimbo);
@@ -163,7 +174,37 @@ void WeaponFirearm::PerformAttack()
 		fireSoundPlayer->Play();
 	}
 
-	SwitchDelay.AddDelay(params.switchDelayOnAttack);
+	bool firstperson = owner != nullptr && owner->ThirdPersonView == false;
+
+	float shakeMultiplier = 1.0f;
+
+	if (firstperson)
+	{
+
+	}
+	else
+	{
+		shakeMultiplier = 0.3f;
+	}
+
+	if (params.hasRandomRecoilStrength) {
+		float horizontalRecoilStrength = RandomHelper::RandomFloat() * 2 - 1;
+		float verticalRecoilStrength = RandomHelper::RandomFloat() * 0.5f + 0.5f;
+		CameraShake modifiedShake = params.recoilShake;
+		modifiedShake.rotationAmplitude *= vec3(verticalRecoilStrength, horizontalRecoilStrength, 1);
+		modifiedShake.rotationAmplitude *= shakeMultiplier;
+		Camera::AddCameraShake(modifiedShake);
+	}
+	else {
+
+		auto shake = params.recoilShake;
+
+		shake.rotationAmplitude *= shakeMultiplier;
+
+		Camera::AddCameraShake(shake);
+	}
+
+	SwitchDelay.AddDelay(params.switchDelayOnAttack * (akimbo ? 0.5f : 1));
 
 	bool fireLeft = akimbo && alternateFire && fireLeftNext;
 
@@ -266,7 +307,12 @@ void WeaponFirearm::AsyncUpdate()
 
 void WeaponFirearm::LateUpdate()
 {
-	viewmodel->Position = Position + (mat3)Camera::GetRotationMatrix() * params.weaponOffset;
+
+	vec3 offset = params.weaponOffset;
+
+	offset.x += akimboDistanceProgress * -0.012f;
+
+	viewmodel->Position = Position + (mat3)Camera::GetRotationMatrix() * offset;
 	viewmodel->Rotation = Rotation;
 	if (params.hasRecoilModelOffset) viewmodel->Rotation.x += recoilModelOffset;
 	viewmodel->Visible = owner != nullptr && owner->InThirdPerson() == false;
@@ -283,7 +329,7 @@ void WeaponFirearm::LateUpdate()
 
 		viewmodelLeft->Visible = viewmodel->Visible;
 		armsLeft->Visible = arms->Visible;
-		viewmodelLeft->Position = Position + (mat3)Camera::GetRotationMatrix() * (params.weaponOffset * vec3(-1,1,1));
+		viewmodelLeft->Position = Position + (mat3)Camera::GetRotationMatrix() * (offset * vec3(-1,1,1));
 		viewmodelLeft->Rotation = Rotation;
 		if (params.hasRecoilModelOffset) viewmodelLeft->Rotation.x += recoilModelOffset;
 		armsLeft->Position = viewmodelLeft->Position;

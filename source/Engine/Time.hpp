@@ -26,6 +26,7 @@ public:
     static double GameTimeNoPause;     // total unscaled game time (seconds)
     static float TimeScale;            // global time scale multiplier
 
+
     // Call at startup to initialize timing
     static void Init();
     // Call each frame to update timers and apply time scale effects
@@ -40,9 +41,16 @@ public:
     // Get the current compounded timescale for sound processing
     static float GetSoundFinalTimeScale();
 
+    static void SetTargetFrameRate(double frameRate);
+
 private:
     static Uint64 lastCounter;          // previous frame's performance counter
     static double frequency;            // performance counter frequency
+    static Uint64 frameStartCounter;
+    static double frameError;        // drift compensation
+
+    static double TargetFrameRate;   // e.g. 60.0
+    static double TargetFrameTime;   // 1 / TargetFrameRate
 
     // Active time scale effects
     static std::vector<TimeScaleEffect> timeScaleEffects;
