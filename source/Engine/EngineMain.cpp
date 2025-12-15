@@ -355,8 +355,6 @@ void EngineMain::MainLoop()
     Level::Current->LoadAssets();
 
 
-    Time::Update();
-
     if (loadedlevel)
     {
         Time::Update();
@@ -408,6 +406,8 @@ void EngineMain::MainLoop()
     }
 
     FinishRender();
+
+    Time::Update();
 
     if (Input::GetAction("fullscreen")->Pressed())
     {
