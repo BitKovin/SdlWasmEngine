@@ -336,6 +336,8 @@
     <ClCompile Include="BehaviourTree\NodeFactory.cpp" />
     <ClCompile Include="BehaviourTree\TaskNodes.cpp" />
     <ClCompile Include="BehaviourTree\TreeNode.cpp" />
+    <ClCompile Include="Console\Console.cpp" />
+    <ClCompile Include="Console\ConsoleDefaultCommands.cpp" />
     <ClCompile Include="Entities\Brushes\AreaBase.hpp" />
     <ClCompile Include="Entities\Brushes\TriggerBase.cpp" />
     <ClCompile Include="Entities\PointLight.cpp" />
@@ -447,6 +449,10 @@
     <ClInclude Include="BehaviourTree\NodeFactory.h" />
     <ClInclude Include="BehaviourTree\TaskNodes.h" />
     <ClInclude Include="BehaviourTree\TreeNode.h" />
+    <ClInclude Include="Console\Console.h" />
+    <ClInclude Include="Console\ConsoleCommand.h" />
+    <ClInclude Include="Console\ConsoleDefaultCommands.h" />
+    <ClInclude Include="Console\ConsoleRegister.h" />
     <ClInclude Include="Entities\Brushes\DestructibleBrush.hpp" />
     <ClInclude Include="Entities\Brushes\MovebleBrush.hpp" />
     <ClInclude Include="Entities\Brushes\TriggerBase.hpp" />

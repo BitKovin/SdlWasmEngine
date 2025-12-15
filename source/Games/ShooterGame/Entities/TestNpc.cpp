@@ -4,6 +4,7 @@
 #include <Particle/GlobalParticleSystem.hpp>
 #include <SoundSystem/FmodEventInstance.h>
 #include <Navigation/Navigation.hpp>
+#include "Npc/NpcHelper.h"
 
 REGISTER_ENTITY(TestNpc, "testnpc")
 
@@ -210,11 +211,22 @@ void TestNpc::UpdateAttackDamage()
 	{
 		if (hit.entity->HasTag("player"))
 		{
-			hit.entity->OnPointDamage(20, hit.shapePosition, MathHelper::FastNormalize(hit.shapePosition - Position), "", this, this);
-			attackingDamage = false;
 
-			
-			AttackHitSoundPlayer->Play();
+			if (NpcHelper::CheckParry(MathHelper::GetForwardVector(mesh->Rotation), hit.entity))
+			{
+				Stun(hit.entity, hit.entity);
+				OnPointDamage(10, hit.shapePosition, MathHelper::FastNormalize(Position - hit.shapePosition), "", this, this);
+				attackingDamage = false;
+				return;
+			}
+			else
+			{
+				hit.entity->OnPointDamage(20, hit.shapePosition, MathHelper::FastNormalize(hit.shapePosition - Position), "", this, this);
+				attackingDamage = false;
+
+
+				AttackHitSoundPlayer->Play();
+			}
 
 		}
 	}
@@ -270,6 +282,8 @@ void TestNpc::AsyncUpdate()
 	if (dead || stuned) return;
 
 	UpdateAttackDamage();
+
+	if (dead || stuned) return;
 
 	DeathSoundPlayer->Position = Position;
 	HurtSoundPlayer->Position = Position;

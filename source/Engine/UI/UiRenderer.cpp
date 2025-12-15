@@ -285,7 +285,7 @@ namespace UiRenderer {
                 glDeleteTextures(1, &texToDelete);
                 totalCacheMemory -= mem;
 
-                printf("deleted texture %u from UiRenderer\n", texToDelete);
+                //printf("deleted texture %u from UiRenderer\n", texToDelete);
             }
             else {
                 ++it;

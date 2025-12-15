@@ -32,6 +32,8 @@ public:
 
 	bool thrown;
 
+	Delay parryDelay;
+
 	weapon_cane()
 	{
 
@@ -183,7 +185,7 @@ public:
 		grabStartPos = Player::Instance->Position;
 
 
-		SoundPlayer::PlayOneshot("event:/General/BassDrop", 3, true);
+		SoundPlayer::PlayOneshot("event:/General/BassDrop", 3, 1, true);
 
 	}
 
@@ -252,6 +254,26 @@ public:
 
 	}
 
+	void OnParried() 
+	{
+
+		Time::AddTimeScaleEffect(0.5, 0.3, true, "parry", 0.1f, 0.3f);
+
+	}
+
+	void PerformParry()
+	{
+
+		SetViewmodelScaleFactor(0.2f);
+
+		parryDelay.AddDelay(0.35f);
+
+		viewmodel->PlayAnimation("attack", false, 0.1f);
+
+		attackDelay.AddDelay(0.75f);
+
+	}
+
 	void Update()
 	{
 
@@ -259,29 +281,41 @@ public:
 
 		thrown = projectile != nullptr;
 
+		Parrying = parryDelay.Wait();
 
 		if (Input::GetAction("attack2")->Pressed())
 		{
 			if (attackDelay.Wait() == false)
 			{
 
-				if (thrown)
+				if (true)
 				{
 
-					if (projectile->inEnemy)
-					{
-						StartGrab();
-					}
-					else
-					{
-						ReturnCane();	
-					}
+					PerformParry();
 
-					
 				}
 				else
 				{
-					Attack();
+
+					if (thrown)
+					{
+
+						if (projectile->inEnemy)
+						{
+							StartGrab();
+						}
+						else
+						{
+							ReturnCane();
+						}
+
+
+					}
+					else
+					{
+						Attack();
+					}
+
 				}
 
 			}

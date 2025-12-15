@@ -5,6 +5,7 @@
 #include <sstream>
 #include <algorithm>
 #include "../json.hpp"
+#include "../glm.h"
 
 using json = nlohmann::json;
 

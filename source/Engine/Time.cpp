@@ -11,8 +11,8 @@ double Time::GameTimeNoPause = 0.0;
 float Time::TimeScale = 1.0f;
 double Time::frequency = 0.0;
 std::vector<TimeScaleEffect> Time::timeScaleEffects;
-double Time::TargetFrameRate = 60.0;
-double Time::TargetFrameTime = 1.0 / 60.0;
+double Time::TargetFrameRate = 160.0;
+double Time::TargetFrameTime = 1.0 / 160.0;
 double Time::frameError = 0.0;
 double Time::desiredTime = 0.0;
 double Time::frameStartTime = 0.0;
@@ -34,7 +34,7 @@ void Time::LimitFrameRate() {
         double remaining = desiredTime - currentTime;
         // ---- Coarse sleep (milliseconds)
         if (remaining > 0.002) { // sleep only if >2ms
-            SDL_Delay(static_cast<Uint32>((remaining - 0.002) * 1000.0));
+            SDL_Delay(static_cast<Uint32>((remaining - 0.001) * 1000.0));
         }
         // ---- Fine spin wait (sub-millisecond)
         while (true) {

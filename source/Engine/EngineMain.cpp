@@ -11,6 +11,8 @@
 #include "FileSystem/FileSystem.h"
 #include "BehaviourTree/BehaviorTree.h"
 #include "AiPerception/AiPerceptionSystem.h"
+#include "Console/Console.h"
+#include "Console/ConsoleDefaultCommands.h"
 
 EngineMain* EngineMain::MainInstance = nullptr;
 
@@ -164,6 +166,7 @@ void EngineMain::Init(std::vector<std::string> args)
 
     Time::Init();
 
+    ConsoleDefaultCommands::RegisterAll();
 
     printf("initPhys\n");
     Physics::Init();
@@ -494,6 +497,11 @@ void EngineMain::Render()
     if (DebugUiEnabled)
     {
         Level::Current->DevUiUpdate();
+
+        bool open = true;
+
+        if(Paused)
+		    Console::Get().Draw("Console", &open);
 
         RenderImGui();
     }

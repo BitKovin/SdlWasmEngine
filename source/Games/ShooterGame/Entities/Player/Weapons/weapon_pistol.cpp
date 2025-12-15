@@ -20,7 +20,7 @@ public:
         params.baseSpread = 0.1f;
         params.spreadIncreasePerShot = 0.1f;
         params.maxActiveSpread = 0.8f;
-        params.attackDelayTime = 0.3f;
+        params.attackDelayTime = 0.4f;
         params.switchDelayTime = 0.35f;
         params.switchDelayOnAttack = 0.2f;
         params.weaponOffset = vec3(0.0, 0.00, -0.0);

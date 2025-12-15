@@ -51,8 +51,6 @@ private:
 
 	vec3 velocity = vec3(0);
 
-	vec3 cameraRotation = vec3(0);
-
 
 	vec3 oldPos = vec3();
 
@@ -66,10 +64,6 @@ private:
 	float bobSpeed = 1.1f;
 
 	SoundPlayer* soundPlayer;
-
-
-
-	Weapon* currentOffhandWeapon = nullptr;
 
 	int lastSlot = -1;
 	WeaponSlotData meleeWeapon;
@@ -201,8 +195,11 @@ private:
 
 public:
 
+	vec3 cameraRotation = vec3(0);
 
 	Weapon* currentWeapon = nullptr;
+
+	Weapon* currentOffhandWeapon = nullptr;
 
 	CharacterController controller;
 

@@ -45,6 +45,10 @@ public:
 
 	bool ForceFirstPerson = false;
 
+	bool Parrying = false;
+
+	virtual void OnParried(){}
+
 	virtual bool IsMelee()
 	{
 		return false;

@@ -16,6 +16,8 @@
 
 #include "../Enviroment/Door.h"
 
+#include "NpcHelper.h"
+
 #include <RandomHelper.h>
 
 float NpcBase::GetDetectionSpeed(Crime crime) const

@@ -50,6 +50,8 @@ void Player::Start()
     PreloadEntityType("weapon_sniper");
     PreloadEntityType("weapon_swords");
 
+    PreloadEntityType("weapon_lefthand_empty");
+
     PreloadEntityType("weapon_cane");
 
     AddWeaponByName("weapon_pistol");
@@ -417,13 +419,10 @@ void Player::UpdateWeapon()
     if (currentOffhandWeapon != nullptr)
     {
 
-
-
         currentOffhandWeapon->Position = Camera::position + MathHelper::TransformVector(vec3(0, -bob.y+0.001, bob.x)*2.0f, Camera::GetRotationMatrix());
-        currentOffhandWeapon->Rotation = lerp(cameraRotation, Camera::rotation, 0.7f);
+        currentOffhandWeapon->Rotation = lerp(cameraRotation, Camera::rotation, 0.3f);
 
     }
-
 
 }
 
@@ -741,7 +740,7 @@ void Player::Update()
 
     RunProgress = std::clamp(RunProgress, 0.0f, 1.0f);
 
-    maxSpeed = mix(WalkSpeed, RunSpeed, RunProgress);
+    //maxSpeed = mix(WalkSpeed, RunSpeed, RunProgress);
 
     if (on_bike == false)
     {
