@@ -3,6 +3,7 @@
 #include <Physics.h>
 
 #include <imgui/imgui.h>
+#include <imgui/imgui_stdlib.h>
 
 class SkeletalEditorEntity : public Entity
 {
@@ -295,44 +296,19 @@ public:
 
 				if (selectedAnimationEventRef)
 				{
-					strncpy_s(buffer, selectedAnimationEventRef->eventName.c_str(), sizeof(buffer));
-					buffer[sizeof(buffer) - 1] = '\0';  // Ensure null termination
 
-					if (ImGui::InputText("event name", buffer, sizeof(buffer)))
-					{
-						selectedAnimationEventRef->eventName = std::string(buffer);  // Update std::string only if user edited the input
-					}
+
+					ImGui::InputText("event name", &selectedAnimationEventRef->eventName);
 
 					ImGui::DragFloat("event time", &selectedAnimationEventRef->time,0.01,0, mesh->GetAnimationDuration());
 
 
+					ImGui::InputText("event data 1", &selectedAnimationEventRef->userData1);
 
-					strncpy_s(buffer, selectedAnimationEventRef->userData1.c_str(), sizeof(buffer));
-					buffer[sizeof(buffer) - 1] = '\0';  // Ensure null termination
+					ImGui::InputText("event data 2", &selectedAnimationEventRef->userData2);
 
-					if (ImGui::InputText("event data 1", buffer, sizeof(buffer)))
-					{
-						selectedAnimationEventRef->userData1 = std::string(buffer);  // Update std::string only if user edited the input
-					}
+					ImGui::InputText("event data 3", &selectedAnimationEventRef->userData3);
 
-
-					strncpy_s(buffer, selectedAnimationEventRef->userData2.c_str(), sizeof(buffer));
-					buffer[sizeof(buffer) - 1] = '\0';  // Ensure null termination
-
-					if (ImGui::InputText("event data 2", buffer, sizeof(buffer)))
-					{
-						selectedAnimationEventRef->userData2 = std::string(buffer);  // Update std::string only if user edited the input
-					}
-
-
-					static char buffer[256];  // Fixed-size buffer (adjust size as needed)
-					strncpy_s(buffer, selectedAnimationEventRef->userData3.c_str(), sizeof(buffer));
-					buffer[sizeof(buffer) - 1] = '\0';  // Ensure null termination
-
-					if (ImGui::InputText("event data 3", buffer, sizeof(buffer)))
-					{
-						selectedAnimationEventRef->userData3 = std::string(buffer);  // Update std::string only if user edited the input
-					}
 
 				}
 

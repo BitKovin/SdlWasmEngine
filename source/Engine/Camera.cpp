@@ -23,7 +23,7 @@
     vec3 Camera::finalizedRotation = vec3(0.0f);
     Frustum Camera::frustum = Frustum(mat4(1.0f), vec3(0));
     float Camera::FOV = 75.0f;
-    float Camera::ViewmodelFOV = 60.0f;
+    float Camera::ViewmodelFOV = 65.0f;
     float Camera::FarPlane = 3000.0f;
 
     int Camera::ScreenHeight = 720;

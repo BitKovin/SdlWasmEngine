@@ -257,7 +257,14 @@ public:
 	void OnParried() 
 	{
 
-		Time::AddTimeScaleEffect(0.5, 0.3, true, "parry", 0.1f, 0.3f);
+		Time::AddTimeScaleEffect(0.3, 0.1, true, "parry", 0.02f, 0.1f);
+
+		//Time::AddTimeScaleEffect(0.2, 0.2, true, "parry2", 0.1f, 0.1f);
+
+		SoundPlayer::PlayOneshot("event:/Weapons/cane/cane_parry", 1.0f, 1.0f, false);
+
+		if (viewmodel->GetAnimationTime() < 0.18)
+			viewmodel->SetAnimationTime(0.18f);
 
 	}
 
@@ -266,7 +273,7 @@ public:
 
 		SetViewmodelScaleFactor(0.2f);
 
-		parryDelay.AddDelay(0.35f);
+		parryDelay.AddDelay(0.3f);
 
 		viewmodel->PlayAnimation("attack", false, 0.1f);
 

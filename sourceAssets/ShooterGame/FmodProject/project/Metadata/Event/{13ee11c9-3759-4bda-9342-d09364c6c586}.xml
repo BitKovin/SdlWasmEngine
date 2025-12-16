@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<objects serializationModel="Studio.02.03.00">
+<objects serializationModel="Studio.02.02.00">
 	<object class="Event" id="{13ee11c9-3759-4bda-9342-d09364c6c586}">
 		<property name="name">
 			<value>music2</value>
@@ -1017,7 +1017,7 @@
 			<value>0</value>
 		</property>
 		<property name="maximum">
-			<value>1</value>
+			<value>0.60000002384185791</value>
 		</property>
 		<relationship name="parameter">
 			<destination>{baeb28b7-7d52-4ce0-8cde-3a23dee2ab2d}</destination>

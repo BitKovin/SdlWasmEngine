@@ -26,39 +26,47 @@ void Time::Init() {
     DeltaTime = 0.0;
 }
 
-void Time::LimitFrameRate() {
-    if (TargetFrameRate > 0.0) {
-        const double targetFrameTime = TargetFrameTime;
-        Uint64 nowCounter = SDL_GetPerformanceCounter();
-        double currentTime = static_cast<double>(nowCounter) * frequency;
-        double remaining = desiredTime - currentTime;
-        // ---- Coarse sleep (milliseconds)
-        if (remaining > 0.002) { // sleep only if >2ms
-            SDL_Delay(static_cast<Uint32>((remaining - 0.001) * 1000.0));
-        }
-        // ---- Fine spin wait (sub-millisecond)
-        while (true) {
-            nowCounter = SDL_GetPerformanceCounter();
-            currentTime = static_cast<double>(nowCounter) * frequency;
-            if (currentTime >= desiredTime)
-                break;
-        }
-        // ---- Error compensation (prevents drift)
-        frameError = currentTime - desiredTime;
-        if (frameError > 0.002)
-            frameError = 0.002; // clamp runaway error
-
-        // Update for next frame
-        desiredTime += targetFrameTime;
-
-        // Set frame start
-        frameStartTime = currentTime;
+void Time::LimitFrameRate()
+{
+    if (TargetFrameRate <= 0.0)
+    {
+        Uint64 now = SDL_GetPerformanceCounter();
+        frameStartTime = (double)now * frequency;
+        return;
     }
-    else {
-        Uint64 nowCounter = SDL_GetPerformanceCounter();
-        frameStartTime = static_cast<double>(nowCounter) * frequency;
+
+    const double targetFrameTime = TargetFrameTime;
+
+    Uint64 nowCounter = SDL_GetPerformanceCounter();
+    double currentTime = (double)nowCounter * frequency;
+
+    // If this is the first frame or we fell behind badly, resync
+    if (desiredTime == 0.0 || currentTime > desiredTime + targetFrameTime)
+    {
+        desiredTime = currentTime + targetFrameTime;
     }
+
+    double remaining = desiredTime - currentTime;
+
+    // ---- Coarse sleep
+    if (remaining > 0.003)
+    {
+        SDL_Delay((Uint32)((remaining - 0.0015) * 1000.0));
+    }
+
+    // ---- Fine spin
+    while (true)
+    {
+        nowCounter = SDL_GetPerformanceCounter();
+        currentTime = (double)nowCounter * frequency;
+        if (currentTime >= desiredTime)
+            break;
+    }
+
+    frameStartTime = currentTime;
+    desiredTime += targetFrameTime;
 }
+
 
 void Time::Update() {
     LimitFrameRate();

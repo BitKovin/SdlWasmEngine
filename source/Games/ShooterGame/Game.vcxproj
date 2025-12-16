@@ -351,6 +351,7 @@
     <ClCompile Include="Entities\Npc\NpcCivilianBase.cpp" />
     <ClCompile Include="Entities\Npc\NpcGuardBase.cpp" />
     <ClCompile Include="Entities\Npc\NpcHelper.cpp" />
+    <ClCompile Include="Entities\Npc\NpcHumanAxe.cpp" />
     <ClCompile Include="Entities\Player\Player.cpp" />
     <ClCompile Include="Entities\Player\RestrictedArea.cpp" />
     <ClCompile Include="Entities\Player\Weapons\Animators\Animator_Akimbo.cpp" />
@@ -394,6 +395,7 @@
     <ClInclude Include="Entities\Npc\Animators\NpcAnimatorBase.h" />
     <ClInclude Include="Entities\Npc\NpcBase.h" />
     <ClInclude Include="Entities\Npc\NpcHelper.h" />
+    <ClInclude Include="Entities\Npc\NpcHumanAxe.h" />
     <ClInclude Include="Entities\Player\Player.hpp" />
     <ClInclude Include="Entities\Player\PlayerBodyAnimator.h" />
     <ClInclude Include="Entities\Player\RestrictedArea.h" />

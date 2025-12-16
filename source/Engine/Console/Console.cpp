@@ -7,7 +7,6 @@
 #include <chrono>
 #include <iomanip>
 #include <ctime>
-
 // Helper: Cross-platform localtime_r
 static std::tm localtime_xp(const std::time_t& timer)
 {
@@ -23,7 +22,6 @@ static std::tm localtime_xp(const std::time_t& timer)
 #endif
     return bt;
 }
-
 // Improved tokenizer with quote handling
 static std::vector<std::string> Tokenize(const std::string& str)
 {
@@ -55,7 +53,6 @@ static std::vector<std::string> Tokenize(const std::string& str)
     }
     return tokens;
 }
-
 // Find common prefix for auto-complete
 static std::string FindCommonPrefix(const std::vector<std::string>& items)
 {
@@ -70,13 +67,11 @@ static std::string FindCommonPrefix(const std::vector<std::string>& items)
     }
     return prefix;
 }
-
 Console& Console::Get()
 {
     static Console instance;
     return instance;
 }
-
 Console::Console()
 {
     // Register default commands
@@ -130,12 +125,10 @@ Console::Console()
     ClearInput();
     AddLog("Console initialized. Type 'help' for available commands.");
 }
-
 void Console::RegisterCommand(const ConsoleCommand& cmd)
 {
     m_commands[cmd.name] = cmd;
 }
-
 void Console::AddLog(const char* fmt, ...)
 {
     char buf[1024];
@@ -161,12 +154,10 @@ void Console::AddLog(const char* fmt, ...)
     // Set scroll flag
     m_scrollToBottom = true;
 }
-
 void Console::ClearLog()
 {
     m_items.clear();
 }
-
 void Console::PrintCommands(const std::string& prefix)
 {
     std::vector<const ConsoleCommand*> filtered;
@@ -192,7 +183,6 @@ void Console::PrintCommands(const std::string& prefix)
         AddLog("%-20s - %s", cmd->name.c_str(), cmd->help.c_str());
     }
 }
-
 void Console::ClearInput()
 {
     m_input.clear();
@@ -200,12 +190,10 @@ void Console::ClearInput()
     m_suggestions.selected = -1;
     m_suggestions.active = false;
 }
-
 void Console::UpdateSuggestions()
 {
     m_suggestions.items.clear();
     m_suggestions.selected = -1;
-
     // Find the command prefix
     size_t start = m_input.find_first_not_of(" \t");
     if (start == std::string::npos)
@@ -215,13 +203,11 @@ void Console::UpdateSuggestions()
     }
     size_t end = m_input.find(' ', start);
     std::string partial = m_input.substr(start, end == std::string::npos ? std::string::npos : end - start);
-
     if (end != std::string::npos)
     {
         m_suggestions.active = false;
         return;
     }
-
     // Find matching commands
     for (const auto& [name, cmd] : m_commands)
     {
@@ -230,24 +216,19 @@ void Console::UpdateSuggestions()
             m_suggestions.items.push_back(name);
         }
     }
-
     // Sort and limit
     std::sort(m_suggestions.items.begin(), m_suggestions.items.end());
     if (m_suggestions.items.size() > m_suggestionLimit)
     {
         m_suggestions.items.resize(m_suggestionLimit);
     }
-
     m_suggestions.active = !m_suggestions.items.empty();
 }
-
 void Console::ApplySuggestion(int index)
 {
     if (index < 0 || index >= (int)m_suggestions.items.size())
         return;
-
     const std::string& sug = m_suggestions.items[index];
-
     // Find command part
     size_t start = m_input.find_first_not_of(" \t");
     if (start == std::string::npos)
@@ -260,14 +241,11 @@ void Console::ApplySuggestion(int index)
     {
         end = m_input.size();
     }
-
     // Replace
     m_input = m_input.substr(0, start) + sug + ((end < m_input.size()) ? m_input.substr(end) : " ");
-
     m_suggestions.selected = index;
     m_focusInput = true;
 }
-
 void Console::CycleSuggestion(bool forward)
 {
     if (!m_suggestions.active || m_suggestions.items.empty())
@@ -281,7 +259,6 @@ void Console::CycleSuggestion(bool forward)
         m_suggestions.selected = (m_suggestions.selected - 1 + m_suggestions.items.size()) % m_suggestions.items.size();
     }
 }
-
 void Console::AddToHistory(const std::string& command)
 {
     if (command.empty())
@@ -300,7 +277,6 @@ void Console::AddToHistory(const std::string& command)
             m_recentCommands.pop_back();
     }
 }
-
 void Console::TrimHistory()
 {
     if (m_history.size() > m_maxHistory)
@@ -308,7 +284,6 @@ void Console::TrimHistory()
         m_history.erase(m_history.begin(), m_history.begin() + (m_history.size() - m_maxHistory));
     }
 }
-
 void Console::TrimLog()
 {
     if (m_items.size() > m_maxItems)
@@ -316,7 +291,6 @@ void Console::TrimLog()
         m_items.erase(m_items.begin(), m_items.begin() + (m_items.size() - m_maxItems));
     }
 }
-
 void Console::Execute(const std::string& input)
 {
     std::string trimmedInput = input;
@@ -352,17 +326,61 @@ void Console::Execute(const std::string& input)
         AddLog("Unknown error executing command '%s'", it->first.c_str());
     }
 }
-
 int Console::InputCallback(ImGuiInputTextCallbackData* data)
 {
     Console* console = static_cast<Console*>(data->UserData);
-    if (data->EventFlag == ImGuiInputTextFlags_CallbackHistory)
+    ImGuiIO& io = ImGui::GetIO();
+    if (data->EventFlag == ImGuiInputTextFlags_CallbackCompletion)
     {
-        return 0;
+        console->m_input = data->Buf;
+        if (io.KeyShift)
+        {
+            console->HandleReverseTabCompletion();
+        }
+        else
+        {
+            console->HandleTabCompletion();
+        }
+        data->DeleteChars(0, data->BufTextLen);
+        data->InsertChars(0, console->m_input.c_str());
+        data->BufTextLen = (int)console->m_input.size();
+        data->BufDirty = true;
+        data->CursorPos = data->BufTextLen;
+        data->SelectionStart = data->SelectionEnd = data->CursorPos;
     }
-    else if (data->EventFlag == ImGuiInputTextFlags_CallbackCompletion)
+    else if (data->EventFlag == ImGuiInputTextFlags_CallbackHistory)
     {
-        return 0;
+        console->m_input = data->Buf;
+        bool down = (data->EventKey == ImGuiKey_DownArrow);
+        if (console->m_suggestions.active)
+        {
+            console->HandleSuggestionNavigation(down);
+        }
+        else
+        {
+            int prev_pos = console->m_historyPos;
+            console->HandleHistoryNavigation(down);
+            if (prev_pos != console->m_historyPos || console->m_historyPos == -1)
+            {
+                std::string new_input;
+                if (console->m_historyPos >= 0)
+                {
+                    new_input = console->m_history[console->m_historyPos];
+                }
+                else
+                {
+                    new_input = "";
+                }
+                console->m_input = new_input;
+                console->UpdateSuggestions();
+                data->DeleteChars(0, data->BufTextLen);
+                data->InsertChars(0, new_input.c_str());
+                data->BufTextLen = (int)new_input.size();
+                data->BufDirty = true;
+                data->CursorPos = data->BufTextLen;
+                data->SelectionStart = data->SelectionEnd = data->CursorPos;
+            }
+        }
     }
     else if (data->EventFlag == ImGuiInputTextFlags_CallbackEdit)
     {
@@ -371,7 +389,6 @@ int Console::InputCallback(ImGuiInputTextCallbackData* data)
     }
     return 0;
 }
-
 void Console::DrawLog()
 {
     float logHeight = ImGui::GetContentRegionAvail().y - ImGui::GetFrameHeightWithSpacing() * 2.5f;
@@ -397,12 +414,13 @@ void Console::DrawLog()
     ImGui::PopStyleVar();
     ImGui::EndChild();
 }
-
 void Console::DrawInputAndSuggestions()
 {
     ImGui::PushItemWidth(-1);
     bool inputSubmitted = false;
     ImGuiInputTextFlags flags = ImGuiInputTextFlags_EnterReturnsTrue |
+        ImGuiInputTextFlags_CallbackCompletion |
+        ImGuiInputTextFlags_CallbackHistory |
         ImGuiInputTextFlags_CallbackEdit;
     std::string hintText = "Enter command...";
     if (m_suggestions.active && m_suggestions.selected >= 0 && m_showInputSuggestions)
@@ -438,7 +456,6 @@ void Console::DrawInputAndSuggestions()
         HandleEnterKey();
     }
 }
-
 void Console::HandleEnterKey()
 {
     if (m_suggestions.active && m_suggestions.selected >= 0)
@@ -452,7 +469,6 @@ void Console::HandleEnterKey()
     ClearInput();
     m_focusInput = true;
 }
-
 void Console::DrawSuggestionsAsList()
 {
     ImVec2 available = ImGui::GetContentRegionAvail();
@@ -493,7 +509,6 @@ void Console::DrawSuggestionsAsList()
     ImGui::PopStyleColor(3);
     ImGui::EndChild();
 }
-
 void Console::DrawMenuBar()
 {
     if (ImGui::BeginMenuBar())
@@ -520,55 +535,18 @@ void Console::DrawMenuBar()
         ImGui::EndMenuBar();
     }
 }
-
 void Console::DrawHint()
 {
     ImGui::TextDisabled("TAB: complete | UP/DOWN: history/suggestions | ESC: clear");
 }
-
 void Console::HandleInput()
 {
-    ImGuiIO& io = ImGui::GetIO();
     if (ImGui::IsWindowFocused() && ImGui::IsKeyPressed(ImGuiKey_Escape))
     {
         ClearInput();
         m_focusInput = true;
     }
-    if (ImGui::IsWindowFocused() && ImGui::IsKeyPressed(ImGuiKey_Tab) && !io.KeyShift)
-    {
-        HandleTabCompletion();
-    }
-    if (ImGui::IsWindowFocused() && ImGui::IsKeyPressed(ImGuiKey_Tab) && io.KeyShift)
-    {
-        HandleReverseTabCompletion();
-    }
-    if (ImGui::IsWindowFocused())
-    {
-        if (ImGui::IsKeyPressed(ImGuiKey_UpArrow))
-        {
-            if (m_suggestions.active && m_suggestions.selected >= 0)
-            {
-                HandleSuggestionNavigation(false);
-            }
-            else
-            {
-                HandleHistoryNavigation(false);
-            }
-        }
-        else if (ImGui::IsKeyPressed(ImGuiKey_DownArrow))
-        {
-            if (m_suggestions.active && m_suggestions.selected >= 0)
-            {
-                HandleSuggestionNavigation(true);
-            }
-            else
-            {
-                HandleHistoryNavigation(true);
-            }
-        }
-    }
 }
-
 void Console::HandleTabCompletion()
 {
     if (m_suggestions.active)
@@ -583,12 +561,10 @@ void Console::HandleTabCompletion()
         UpdateSuggestions();
         auto& items = m_suggestions.items;
         if (items.empty()) return;
-
         // Compute partial
         size_t start = m_input.find_first_not_of(" \t");
         size_t end = m_input.find(' ', start);
         std::string partial = m_input.substr(start, end == std::string::npos ? std::string::npos : end - start);
-
         if (items.size() == 1)
         {
             ApplySuggestion(0);
@@ -601,7 +577,7 @@ void Console::HandleTabCompletion()
             {
                 size_t apply_end = end == std::string::npos ? m_input.size() : end;
                 m_input = m_input.substr(0, start) + common + (end != std::string::npos ? m_input.substr(end) : " ");
-                UpdateSuggestions();  // Update after change
+                UpdateSuggestions(); // Update after change
             }
             m_suggestions.active = true;
             m_suggestions.selected = -1;
@@ -609,7 +585,6 @@ void Console::HandleTabCompletion()
     }
     m_focusInput = true;
 }
-
 void Console::HandleReverseTabCompletion()
 {
     if (m_suggestions.active)
@@ -625,11 +600,9 @@ void Console::HandleReverseTabCompletion()
         UpdateSuggestions();
         auto& items = m_suggestions.items;
         if (items.empty()) return;
-
         size_t start = m_input.find_first_not_of(" \t");
         size_t end = m_input.find(' ', start);
         std::string partial = m_input.substr(start, end == std::string::npos ? std::string::npos : end - start);
-
         if (items.size() == 1)
         {
             ApplySuggestion(0);
@@ -650,7 +623,6 @@ void Console::HandleReverseTabCompletion()
     }
     m_focusInput = true;
 }
-
 void Console::HandleHistoryNavigation(bool down)
 {
     if (m_history.empty())
@@ -699,7 +671,6 @@ void Console::HandleHistoryNavigation(bool down)
     m_focusInput = true;
     UpdateSuggestions();
 }
-
 void Console::HandleSuggestionNavigation(bool down)
 {
     if (!m_suggestions.active || m_suggestions.items.empty())
@@ -721,7 +692,6 @@ void Console::HandleSuggestionNavigation(bool down)
     }
     m_focusInput = true;
 }
-
 void Console::Draw(const char* title, bool* open)
 {
     ImGui::SetNextWindowSize(ImVec2(520, 600), ImGuiCond_FirstUseEver);
@@ -738,7 +708,6 @@ void Console::Draw(const char* title, bool* open)
     HandleInput();
     ImGui::End();
 }
-
 // Utility function implementations
 int Console::ArgInt(const std::vector<std::string>& args, int i, int def)
 {

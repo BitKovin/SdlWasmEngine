@@ -180,6 +180,9 @@
     <ClCompile Include="Entities\Npc\NpcHelper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Entities\Npc\NpcHumanAxe.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Entities\Player\Player.hpp">
@@ -276,6 +279,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Entities\Npc\NpcHelper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Entities\Npc\NpcHumanAxe.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
