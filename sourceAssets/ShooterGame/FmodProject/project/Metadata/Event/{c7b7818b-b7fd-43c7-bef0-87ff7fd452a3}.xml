@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<objects serializationModel="Studio.02.03.00">
+<objects serializationModel="Studio.02.02.00">
 	<object class="Event" id="{c7b7818b-b7fd-43c7-bef0-87ff7fd452a3}">
 		<property name="name">
 			<value>knife_attack</value>
@@ -65,7 +65,7 @@
 	</object>
 	<object class="EventMixerMaster" id="{2b0ada68-2d88-4e9d-b8d8-688714c8d5bc}">
 		<property name="volume">
-			<value>-3.5</value>
+			<value>-5</value>
 		</property>
 		<relationship name="effectChain">
 			<destination>{c8bc9a62-4462-4894-835a-446959ac4b66}</destination>

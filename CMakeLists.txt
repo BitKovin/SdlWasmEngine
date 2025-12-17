@@ -112,6 +112,8 @@ if (EMSCRIPTEN)
         "${CMAKE_SOURCE_DIR}/libsEms/libJolt.a"
         "${CMAKE_SOURCE_DIR}/libsEms/fmod${FMOD_SUFFIX}_wasm.a"
         "${CMAKE_SOURCE_DIR}/libsEms/fmodstudio${FMOD_SUFFIX}_wasm.a"
+        "${CMAKE_SOURCE_DIR}/libsEms/librmlui.a"
+        "${CMAKE_SOURCE_DIR}/libsEms/librmlui_debugger.a"
     )
 
 elseif (LINUX)
@@ -157,16 +159,6 @@ else()
 endif()
 
 message(STATUS "Using game source directory: ${GAME_DIR}")
-# Attempt to create the directory if it's missing (CMake will create it in the source tree or wherever GAME_PATH points)
-if(NOT IS_DIRECTORY "${GAME_DIR}")
-    file(MAKE_DIRECTORY "${GAME_DIR}")
-    file(MAKE_DIRECTORY "${GAME_DIR}/include" "${GAME_DIR}/src" "${GAME_DIR}/assets")
-    message(STATUS "Created game folder structure at: ${GAME_DIR}")
-    # create a small README if none exists
-    if(NOT EXISTS "${GAME_DIR}/README.md")
-        file(WRITE "${GAME_DIR}/README.md" "Game: ${GAME_NAME}\nCreated by CMake on ${CMAKE_HOST_SYSTEM}\n")
-    endif()
-endif()
 
 # ——————————————————————————————————————————————————————————
 # Common WASM linker flags (for the final module)

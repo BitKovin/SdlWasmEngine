@@ -6,6 +6,7 @@
 #include "Entities/TestBsp.h"
 #include <LoadingScreen/LoadingScreenSystem.h>
 #include "UI/LoadingScreen/UiDefaultLoadingScreen.h"
+#include "UI/RmlUi/RmlUiContext.h"
 
 #include <EngineMain.h>
 
@@ -127,8 +128,8 @@ GameStart::GameStart()
     Input::AddAction("attack")->AddButton(GamepadButton::RightTrigger)->LMB = true;
     Input::AddAction("attack2")->AddButton(GamepadButton::LeftTrigger)->RMB = true;
 
-    Input::AddAction("qSave")->AddKeyboardKey(SDL_KeyCode::SDLK_F5);
-    Input::AddAction("qLoad")->AddKeyboardKey(SDL_KeyCode::SDLK_F8);
+    Input::AddAction("qSave")->AddKeyboardKey(SDL_KeyCode::SDLK_F6);
+    Input::AddAction("qLoad")->AddKeyboardKey(SDL_KeyCode::SDLK_F7);
 
     Input::AddAction("cameraView")->AddKeyboardKey(SDL_KeyCode::SDLK_v);
 
@@ -156,6 +157,10 @@ GameStart::GameStart()
     Input::AddAction("slotMelee")->AddKeyboardKey(SDL_KeyCode::SDLK_f);
 
     Input::AddAction("debug_ui_toggle")->AddKeyboardKey(SDL_KeyCode::SDLK_UP);
+
+	auto doc = EngineMain::MainInstance->RmlContext->LoadDocument("GameData/ui/test.rml");
+
+	doc->Show();
 
 }
 

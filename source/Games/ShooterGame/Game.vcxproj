@@ -252,11 +252,12 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <AdditionalOptions>/arch:SSE2 %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard_C>stdclatest</LanguageStandard_C>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>mimalloc.lib;SDL2.lib;SDL2main.lib;SDL2_image.lib;SDL2_ttf.lib;OpenAL32.lib;glew32.lib;glew32s.lib;opengl32.lib;assimp-vc143-mt.lib;Jolt.lib;fmod_vc.lib;fmodstudio_vc.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>mimalloc.lib;SDL2.lib;SDL2main.lib;SDL2_image.lib;SDL2_ttf.lib;OpenAL32.lib;glew32.lib;glew32s.lib;opengl32.lib;assimp-vc143-mt.lib;Jolt.lib;fmod_vc.lib;fmodstudio_vc.lib;rmlui.lib;rmlui_debugger.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -272,13 +273,14 @@
       <WholeProgramOptimization>false</WholeProgramOptimization>
       <AdditionalOptions>/arch:SSE2 %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard_C>stdclatest</LanguageStandard_C>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>mimalloc.lib;SDL2.lib;SDL2main.lib;SDL2_image.lib;SDL2_ttf.lib;OpenAL32.lib;glew32.lib;glew32s.lib;opengl32.lib;assimp-vc143-mt.lib;Jolt.lib;fmod_vc.lib;fmodstudio_vc.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>mimalloc.lib;SDL2.lib;SDL2main.lib;SDL2_image.lib;SDL2_ttf.lib;OpenAL32.lib;glew32.lib;glew32s.lib;opengl32.lib;assimp-vc143-mt.lib;Jolt.lib;fmod_vc.lib;fmodstudio_vc.lib;rmlui.lib;rmlui_debugger.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
   </ItemDefinitionGroup>
@@ -295,13 +297,14 @@
       <WholeProgramOptimization>false</WholeProgramOptimization>
       <AdditionalOptions>/arch:SSE2 %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard_C>stdclatest</LanguageStandard_C>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>mimalloc.lib;SDL2.lib;SDL2main.lib;SDL2_image.lib;SDL2_ttf.lib;OpenAL32.lib;glew32.lib;glew32s.lib;opengl32.lib;assimp-vc143-mt.lib;Jolt.lib;fmod_vc.lib;fmodstudio_vc.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>mimalloc.lib;SDL2.lib;SDL2main.lib;SDL2_image.lib;SDL2_ttf.lib;OpenAL32.lib;glew32.lib;glew32s.lib;opengl32.lib;assimp-vc143-mt.lib;Jolt.lib;fmod_vc.lib;fmodstudio_vc.lib;rmlui.lib;rmlui_debugger.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
   </ItemDefinitionGroup>
@@ -316,13 +319,14 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalOptions>/arch:SSE2 %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard_C>stdclatest</LanguageStandard_C>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>mimalloc.lib;SDL2.lib;SDL2main.lib;SDL2_image.lib;SDL2_ttf.lib;OpenAL32.lib;glew32.lib;glew32s.lib;opengl32.lib;assimp-vc143-mt.lib;Jolt.lib;fmod_vc.lib;fmodstudio_vc.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>mimalloc.lib;SDL2.lib;SDL2main.lib;SDL2_image.lib;SDL2_ttf.lib;OpenAL32.lib;glew32.lib;glew32s.lib;opengl32.lib;assimp-vc143-mt.lib;Jolt.lib;fmod_vc.lib;fmodstudio_vc.lib;rmlui.lib;rmlui_debugger.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

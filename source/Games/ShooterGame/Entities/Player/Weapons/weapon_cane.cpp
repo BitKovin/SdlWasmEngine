@@ -271,6 +271,8 @@ public:
 	void PerformParry()
 	{
 
+		SoundPlayer::PlayOneshot("event:/Weapons/knife/knife_attack", 2, 1, false);
+
 		SetViewmodelScaleFactor(0.2f);
 
 		parryDelay.AddDelay(0.3f);

@@ -13,9 +13,8 @@
 
 #include "../EngineMain.h"
 
-// Global variables
-SDL_Window* window;
-SDL_GLContext glContext;
+#include "PlatformWindowData.h"
+using namespace PlatformWindowData;
 
 EngineMain* engine = nullptr;
 

@@ -28,9 +28,11 @@ extern "C" {
 
 #include "../EngineMain.h"
 
+#include "PlatformWindowData.h"
+using namespace PlatformWindowData;
+
 // Global variables
-SDL_Window* window;
-SDL_GLContext glContext;
+
 LPDIRECTINPUT8 g_pDI = nullptr;
 LPDIRECTINPUTDEVICE8 g_pMouse = nullptr;
 EngineMain* engine = nullptr;

@@ -215,7 +215,7 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
     // re‑enable color writes, disable depth writes, clear color    
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     glDepthMask(GL_FALSE);
-    glClear(GL_COLOR_BUFFER_BIT);
+    //glClear(GL_COLOR_BUFFER_BIT);
 
     // draw opaque where depth ==
     glDepthFunc(GL_LEQUAL);

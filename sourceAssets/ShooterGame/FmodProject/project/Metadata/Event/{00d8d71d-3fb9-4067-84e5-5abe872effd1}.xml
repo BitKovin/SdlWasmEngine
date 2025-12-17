@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<objects serializationModel="Studio.02.03.00">
+<objects serializationModel="Studio.02.02.00">
 	<object class="Event" id="{00d8d71d-3fb9-4067-84e5-5abe872effd1}">
 		<property name="name">
 			<value>FleshHit</value>
@@ -57,8 +57,8 @@
 		</relationship>
 	</object>
 	<object class="EventAutomatableProperties" id="{ff73b094-7238-4dcc-ad71-f8e057278898}">
-		<property name="minimumDistance">
-			<value>0</value>
+		<property name="maxVoices">
+			<value>30</value>
 		</property>
 		<property name="maximumDistance">
 			<value>65</value>
@@ -80,7 +80,7 @@
 	</object>
 	<object class="EventMixerMaster" id="{5b4f33cf-6788-41c6-88a3-81c38f974034}">
 		<property name="volume">
-			<value>-21.5</value>
+			<value>-21</value>
 		</property>
 		<relationship name="effectChain">
 			<destination>{56298081-cb69-498e-962e-5d18fd114450}</destination>

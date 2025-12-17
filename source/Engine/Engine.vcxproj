@@ -247,6 +247,7 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <AdditionalOptions>/arch:SSE2 %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard_C>stdclatest</LanguageStandard_C>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -267,6 +268,7 @@
       <WholeProgramOptimization>false</WholeProgramOptimization>
       <AdditionalOptions>/arch:SSE2 %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard_C>stdclatest</LanguageStandard_C>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -290,6 +292,7 @@
       <WholeProgramOptimization>false</WholeProgramOptimization>
       <AdditionalOptions>/arch:SSE2 %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard_C>stdclatest</LanguageStandard_C>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -311,6 +314,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalOptions>/arch:SSE2 %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard_C>stdclatest</LanguageStandard_C>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -423,6 +427,11 @@
     <ClCompile Include="StaticMesh.cpp" />
     <ClCompile Include="ThreadPool.cpp" />
     <ClCompile Include="Time.cpp" />
+    <ClCompile Include="UI\RmlUi\Backends\RmlUi_Backend_SDL_GL3.cpp" />
+    <ClCompile Include="UI\RmlUi\Backends\RmlUi_Platform_SDL.cpp" />
+    <ClCompile Include="UI\RmlUi\Backends\RmlUi_Renderer_GL2.cpp" />
+    <ClCompile Include="UI\RmlUi\Backends\RmlUi_Renderer_GL3.cpp" />
+    <ClCompile Include="UI\RmlUi\RmlUiContext.cpp" />
     <ClCompile Include="UI\UiElement.cpp" />
     <ClCompile Include="UI\UiRenderer.cpp" />
     <ClCompile Include="UI\UiVideo.hpp" />
@@ -546,6 +555,7 @@
     <ClInclude Include="PhysicsHelper.h" />
     <ClInclude Include="PlatformMains\emscripten_main.hpp" />
     <ClInclude Include="PlatformMains\linux_main.hpp" />
+    <ClInclude Include="PlatformMains\PlatformWindowData.h" />
     <ClInclude Include="PlatformMains\windows_main.hpp" />
     <ClInclude Include="RandomHelper.h" />
     <ClInclude Include="RegisterLevelObject.h" />
@@ -570,6 +580,12 @@
     <ClInclude Include="TextureCube.hpp" />
     <ClInclude Include="ThreadPool.h" />
     <ClInclude Include="Time.hpp" />
+    <ClInclude Include="UI\RmlUi\Backends\RmlUi_Backend.h" />
+    <ClInclude Include="UI\RmlUi\Backends\RmlUi_Include_GL3.h" />
+    <ClInclude Include="UI\RmlUi\Backends\RmlUi_Platform_SDL.h" />
+    <ClInclude Include="UI\RmlUi\Backends\RmlUi_Renderer_GL2.h" />
+    <ClInclude Include="UI\RmlUi\Backends\RmlUi_Renderer_GL3.h" />
+    <ClInclude Include="UI\RmlUi\RmlUiContext.h" />
     <ClInclude Include="UI\UiButton.hpp" />
     <ClInclude Include="UI\UiCanvas.hpp" />
     <ClInclude Include="UI\UiContentBox.hpp" />

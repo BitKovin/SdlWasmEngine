@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Entity.h>
-#include <Navigation.hpp>
+#include <Navigation/Navigation.hpp>
 #include <imgui/imgui.h>
 
 

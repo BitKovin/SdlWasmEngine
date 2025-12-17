@@ -25,6 +25,8 @@
 #include "Renderer/Renderer.h"
 #include "SaveSystem/LevelSaveSystem.h"
 
+class RmlUiContext;
+
 class EngineMain
 {
 private:
@@ -52,6 +54,8 @@ public:
     unsigned long frame = 0;
 
 	RenderTexture* UiRenderTexture = nullptr;
+
+	RmlUiContext* RmlContext = nullptr;
 
 	EngineMain(SDL_Window* window)
 	{

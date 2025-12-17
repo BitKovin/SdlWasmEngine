@@ -13,6 +13,7 @@
 #include "AiPerception/AiPerceptionSystem.h"
 #include "Console/Console.h"
 #include "Console/ConsoleDefaultCommands.h"
+#include "UI/RmlUi/RmlUiContext.h"
 
 EngineMain* EngineMain::MainInstance = nullptr;
 
@@ -35,6 +36,9 @@ EM_JS(int, canvas_get_height, (), {
 
 void EngineMain::UpdateScreenSize()
 {
+
+    glm::ivec2 oldScreenSize = ScreenSize;
+
 #if __EMSCRIPTEN__
 
     int width, height;
@@ -63,6 +67,13 @@ void EngineMain::UpdateScreenSize()
     ScreenSize.y = h;
 
 #endif // __EMSCRIPTEN__
+
+	if (ScreenSize != oldScreenSize)
+    {
+        if(RmlContext)
+		    RmlContext->OnResize(ScreenSize.x, ScreenSize.y);
+    }
+
 }
 
 void EngineMain::ToggleFullscreen()
@@ -177,6 +188,9 @@ void EngineMain::Init(std::vector<std::string> args)
     MainRenderer = new Renderer();
 
     UiRenderer::Init();
+
+	RmlContext = new RmlUiContext(Window, 800, 600, true);
+	RmlContext->Initialize();
 
     ParticleEmitter::InitBilboardVaoIfNeeded();
 
@@ -408,6 +422,8 @@ void EngineMain::MainLoop()
 
     }
 
+	RmlContext->Update(Time::DeltaTimeFNoTimeScale);
+
     FinishRender();
 
     Time::Update();
@@ -494,6 +510,8 @@ void EngineMain::Render()
 	fullscreenShader->SetUniform("screenSize", vec2((float)ScreenSize.x, (float)ScreenSize.y));
     MainRenderer->RenderFullscreenQuad();
 
+    RmlContext->Render();
+
     if (DebugUiEnabled)
     {
         Level::Current->DevUiUpdate();
@@ -505,7 +523,6 @@ void EngineMain::Render()
 
         RenderImGui();
     }
-
 
 
     if (LoadingFrames > 0)
