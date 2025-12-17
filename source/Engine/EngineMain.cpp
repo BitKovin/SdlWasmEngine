@@ -468,7 +468,7 @@ void EngineMain::Render()
 
     glEnable(GL_DEPTH_TEST);
 
-    vec2 uiResolution = vec2(UiManager::GetScaledUiHeight() * Camera::AspectRatio , UiManager::GetScaledUiHeight());
+    ivec2 uiResolution = ivec2(UiManager::GetScaledUiHeight() * Camera::AspectRatio , UiManager::GetScaledUiHeight());
 
 
 	if (UiRenderTexture == nullptr || UiRenderTexture->width() != uiResolution.x || UiRenderTexture->height() != uiResolution.y)
