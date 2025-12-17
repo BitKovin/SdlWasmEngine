@@ -317,3 +317,5 @@
 32	4871	7876893006861463	CMakeFiles/ShooterGame.dir/source/Games/ShooterGame/Entities/Enviroment/Door.cpp.o	9b45c9581f1f64a3
 89	5010	7876893007439227	CMakeFiles/ShooterGame.dir/source/Games/ShooterGame/UI/Player/PlayerHud.cpp.o	9636870ef7b41d5b
 38	7526	7876893006926549	CMakeFiles/ShooterGame.dir/source/Games/ShooterGame/Entities/Npc/NpcBase.cpp.o	270892335101f5e5
+17	17811	7876900148381093	ShooterGame/emscripten/bin/main.html	807415a8c87c9c20
+25	18117	7876904261842100	ShooterGame/emscripten/bin/main.html	807415a8c87c9c20

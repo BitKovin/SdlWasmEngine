@@ -300,7 +300,9 @@ bool PLY::Element::ParseElement(IOStreamBuffer<char> &streamBuffer, std::vector<
         // the original string identifier
         pOut->szName = std::string(&buffer[0], &buffer[0] + strlen(&buffer[0]));
         auto pos = pOut->szName.find_last_of(' ');
-        pOut->szName.erase(pos, pOut->szName.size());
+        if (pos != std::string::npos) {
+            pOut->szName.erase(pos, pOut->szName.size());
+        }
     }
 
     if (!PLY::DOM::SkipSpaces(buffer))
@@ -826,13 +828,13 @@ bool PLY::PropertyInstance::ParseValue(const char *&pCur,
         // technically this should cast to float, but people tend to use float descriptors for double data
         // this is the best way to not risk losing precision on import and it doesn't hurt to do this
         ai_real f;
-        pCur = fast_atoreal_move<ai_real>(pCur, f);
+        pCur = fast_atoreal_move(pCur, f);
         out->fFloat = (ai_real)f;
         break;
 
     case EDT_Double:
         double d;
-        pCur = fast_atoreal_move<double>(pCur, d);
+        pCur = fast_atoreal_move(pCur, d);
         out->fDouble = (double)d;
         break;
 
