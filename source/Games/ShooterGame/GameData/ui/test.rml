@@ -13,8 +13,8 @@
             padding: 5vh 5vw;
             box-sizing: border-box;
 
-            background-color: #141414;
-            color: #e0e0e0;
+            background-color: #14141400;
+            color: #e0e0e000;
 
             display: flex;
             flex-direction: column;
@@ -23,6 +23,7 @@
             text-align: center;
 
             font-family: "Kingthings Calligraphica 2";
+            
         }
 
         /* =========================
@@ -32,16 +33,14 @@
             margin: 0 0 3vh 0;
             font-size: 8vw;
             color: #f1c40f;
-
-            font-effect: shadow(2px 2px #030301);
+	        font-effect: glow(2px 4px 2px 3px rgb(44, 30, 30));
         }
 
         p {
             margin: 2vh 0 4vh 0;
             font-size: 3.2vw;
-            color: #cccccc;
-
-            font-effect: blur(10vh #ffffff);
+            color: transparent;
+            font-effect: blur(10vw #ffffff);
         }
 
         label {
@@ -56,28 +55,25 @@
         input[type="text"] {
             width: 80vw;
             max-width: 500px;
-
-            /* FIX: horizontal padding + line-height */
             padding: 0px 0px;
             line-height: 1.4;
-
-            /* FIX: use readable font for input */
-            /*font-family: "Arial";*/
             font-size: 6vh;
-
             background-color: #1e2a36;
             color: #ffffff;
-
-            border: 2px solid #3498db;
             border-radius: 10px;
-
             box-sizing: border-box;
             box-shadow: 0px 2px 6px #000000;
+            
         }
 
         input[type="text"]:focus {
             border-color: #f39c12;
             font-effect: shadow(2px 2px #030301);
+            tab-index: auto;
+        }
+
+        input, button, select {
+	    nav: auto;
         }
 
         /* =========================
@@ -86,23 +82,19 @@
         button {
             width: 60vw;
             max-width: 400px;
-
             margin-top: 4vh;
             padding: 12px 32px;
-
             font-size: 28px;
             font-family: "Kingthings Calligraphica 2";
-
             background-color: #2980b9;
             color: #ffffff;
-
-            border: 2px solid #5dade2;
             border-radius: 12px;
-
             cursor: pointer;
             box-shadow: 0px 4px 8px #000000;
-
             font-effect: shadow(2px 2px #030301);
+            
+            tab-index: auto;
+
         }
 
         button:hover {
@@ -110,16 +102,24 @@
             border-color: #f1c40f;
             box-shadow: 0px 2px 6px #000000;
         }
+        
+        /* Add focus style for navigation */
+        button:focus {
+            background-color: #1a5276;
+            border-color: #f1c40f;
+        }
     </style>
 </head>
 
-<body>
+<body data-title="RmlUi Filter Test">
     <h1>RmlUi Filter Test</h1>
     <p>If this text is blurred, filters are working.</p>
 
     <label for="username">Enter your name:</label>
-    <input type="text" id="username" placeholder="Type something here..." />
+    <input type="text" id="username" placeholder="Type something here..." nav-down = "#username2" />
+    <input type="text" id="username2" placeholder="Type something here..." nav-down = "#username3" />
+    <input type="text" id="username3" placeholder="Type something here..." nav-down = "#username" />
 
-    <button>Click Me</button>
+    <button id="testBtn" nav-up = "auto">Click Me</button>
 </body>
 </rml>

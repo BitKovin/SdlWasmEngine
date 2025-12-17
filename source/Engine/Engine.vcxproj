@@ -586,6 +586,7 @@
     <ClInclude Include="UI\RmlUi\Backends\RmlUi_Renderer_GL2.h" />
     <ClInclude Include="UI\RmlUi\Backends\RmlUi_Renderer_GL3.h" />
     <ClInclude Include="UI\RmlUi\RmlUiContext.h" />
+    <ClInclude Include="UI\RmlUi\RmlUiEvents.h" />
     <ClInclude Include="UI\UiButton.hpp" />
     <ClInclude Include="UI\UiCanvas.hpp" />
     <ClInclude Include="UI\UiContentBox.hpp" />
