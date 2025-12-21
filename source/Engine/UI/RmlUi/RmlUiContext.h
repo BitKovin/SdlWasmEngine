@@ -38,6 +38,9 @@ public:
     void ShowDocument(Rml::ElementDocument* doc, bool modal = false, bool pull_to_front = true);
     void HideDocument(Rml::ElementDocument* doc);
     void UnloadDocument(Rml::ElementDocument* doc);  // Hide + Close
+	void UnloadAllDocuments();
+
+    void ReloadAllSttyles();
 
     Rml::Element* GetElementById(Rml::ElementDocument* doc, const std::string& id);
     void AddEventListener(Rml::ElementDocument* doc, const std::string& event_name, Rml::EventListener* listener);

@@ -40,6 +40,7 @@ bool RmlUiContext::Initialize()
     if (!Rml::Initialise()) 
         return false;
 
+
     context_ = Rml::CreateContext("main", Rml::Vector2i(width_, height_));
     if (!context_) 
         return false;
@@ -112,10 +113,34 @@ void RmlUiContext::UnloadDocument(Rml::ElementDocument* doc) {
     if (!doc) return;
     doc->Close();
     for (auto it = loaded_docs_.begin(); it != loaded_docs_.end(); ++it) {
-        if (it->second == doc) {
+        if (it->second == doc) 
+        {
             loaded_docs_.erase(it);
             break;
         }
+    }
+}
+
+void RmlUiContext::UnloadAllDocuments()
+{
+
+	auto current_docs = loaded_docs_;  // Copy to avoid modification during iteration
+
+    for (auto doc : current_docs)
+    {
+        UnloadDocument(doc.second);
+    }
+
+	loaded_docs_.clear();
+
+}
+
+void RmlUiContext::ReloadAllSttyles()
+{
+
+    for (auto doc : loaded_docs_)
+    {
+        doc.second->ReloadStyleSheet();
     }
 }
 

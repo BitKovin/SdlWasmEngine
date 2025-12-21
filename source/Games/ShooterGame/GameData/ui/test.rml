@@ -13,7 +13,7 @@
             padding: 5vh 5vw;
             box-sizing: border-box;
 
-            background-color: #14141400;
+            background-color: #14141425;
             color: #e0e0e000;
 
             display: flex;

@@ -64,6 +64,9 @@ public:
         if (Input::GetAction("reload_shaders")->Pressed())
         {
             AssetRegistry::ReloadShaders();
+
+			EngineMain::MainInstance->RmlContext->ReloadAllSttyles();
+
         }
     }
 
@@ -160,7 +163,9 @@ GameStart::GameStart()
 
 	auto doc = EngineMain::MainInstance->RmlContext->LoadDocument("GameData/ui/test.rml");
 
-	//doc->Show();
+	
+
+	doc->Show();
 
     RmlUiEvents::onClick(doc, "testBtn", []()
         {

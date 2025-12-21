@@ -19,6 +19,8 @@
 
 #include "AiPerception/AiPerceptionSystem.h"
 
+#include "UI/RmlUi/RmlUiContext.h"
+
 
 
 Level* Level::Current = nullptr;
@@ -56,6 +58,8 @@ void Level::CloseLevel()
 	MyContactListener::afterSimulation();
 	MyContactListener::beforeSimulation();
 	MyContactListener::afterSimulation();
+
+	EngineMain::MainInstance->RmlContext->UnloadAllDocuments();
 
 }
 
