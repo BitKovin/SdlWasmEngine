@@ -10,8 +10,14 @@
 class SystemInterface_SDL;
 class RenderInterface_GL3;
 
-class RmlUiContext {
+class RmlUiContext 
+{
 public:
+
+
+	static inline RmlUiContext* Main = nullptr;
+
+
     // Callbacks for game update (only if no modal blocks input) and custom render (optional)
     using GameUpdateCallback = std::function<void(float delta)>;
     using PreRenderCallback = std::function<void()>;  // Called before RmlUi Render()

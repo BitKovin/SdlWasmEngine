@@ -191,6 +191,7 @@ void EngineMain::Init(std::vector<std::string> args)
 
 	RmlContext = new RmlUiContext(Window, 800, 600, true);
 	RmlContext->Initialize();
+	RmlUiContext::Main = RmlContext;
 
     ParticleEmitter::InitBilboardVaoIfNeeded();
 

@@ -1,125 +1,33 @@
 <rml>
-<head>
-    <title>RmlUi Filter Test</title>
 
-    <style>
-        /* =========================
-           Base layout
-           ========================= */
-        body {
-            width: 100%;
-            height: 100%;
-            margin: 0;
-            padding: 5vh 5vw;
-            box-sizing: border-box;
+    <head>
+        <title>RmlUi Filter Test</title>
+        <link type="text/css" href="style.rcss" />
+    </head>
 
-            background-color: #14141425;
-            color: #e0e0e000;
+    <body data-title="RmlUi Filter Test">
+        <h1>RmlUi Filter Test</h1>
+        <p>If this text is blurred, filters are working.</p>
 
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
+        <div class="focus_wrapper">
+            <input type="text" id="username" placeholder="Type something here..." nav-down="#username2" />
+            <div class="indicator"></div>
+        </div>
 
-            font-family: "Kingthings Calligraphica 2";
-            
-        }
+        <div class="focus_wrapper">
+            <input type="text" id="username2" placeholder="Type something here..." nav-down="#username3" />
+            <div class="indicator"></div>
+        </div>
 
-        /* =========================
-           Header
-           ========================= */
-        h1 {
-            margin: 0 0 3vh 0;
-            font-size: 8vw;
-            color: #f1c40f;
-	        font-effect: glow(2px 4px 2px 3px rgb(44, 30, 30));
-        }
+        <div class="focus_wrapper">
+            <input type="text" id="username3" placeholder="Type something here..." nav-down="#username" />
+            <div class="indicator"></div>
+        </div>
 
-        p {
-            margin: 2vh 0 4vh 0;
-            font-size: 3.2vw;
-            color: transparent;
-            font-effect: blur(10vw #ffffff);
-        }
+        <div class="focus_wrapper">
+            <button id="testBtn" nav-up="auto">Click Me</button>
+            <div class="indicator"></div>
+        </div>
 
-        label {
-            margin: 3vh 0 1vh 0;
-            font-size: 3.2vw;
-            color: #dddddd;
-        }
-
-        /* =========================
-           INPUT (FIXED — NO CLIPPING)
-           ========================= */
-        input[type="text"] {
-            width: 80vw;
-            max-width: 500px;
-            padding: 0px 0px;
-            line-height: 1.4;
-            font-size: 6vh;
-            background-color: #1e2a36;
-            color: #ffffff;
-            border-radius: 10px;
-            box-sizing: border-box;
-            box-shadow: 0px 2px 6px #000000;
-            
-        }
-
-        input[type="text"]:focus {
-            border-color: #f39c12;
-            font-effect: shadow(2px 2px #030301);
-            tab-index: auto;
-        }
-
-        input, button, select {
-	    nav: auto;
-        }
-
-        /* =========================
-           Button
-           ========================= */
-        button {
-            width: 60vw;
-            max-width: 400px;
-            margin-top: 4vh;
-            padding: 12px 32px;
-            font-size: 28px;
-            font-family: "Kingthings Calligraphica 2";
-            background-color: #2980b9;
-            color: #ffffff;
-            border-radius: 12px;
-            cursor: pointer;
-            box-shadow: 0px 4px 8px #000000;
-            font-effect: shadow(2px 2px #030301);
-            
-            tab-index: auto;
-
-        }
-
-        button:hover {
-            background-color: #3498db;
-            border-color: #f1c40f;
-            box-shadow: 0px 2px 6px #000000;
-        }
-        
-        /* Add focus style for navigation */
-        button:focus {
-            background-color: #1a5276;
-            border-color: #f1c40f;
-        }
-    </style>
-</head>
-
-<body data-title="RmlUi Filter Test">
-    <h1>RmlUi Filter Test</h1>
-    <p>If this text is blurred, filters are working.</p>
-
-    <label for="username">Enter your name:</label>
-    <input type="text" id="username" placeholder="Type something here..." nav-down = "#username2" />
-    <input type="text" id="username2" placeholder="Type something here..." nav-down = "#username3" />
-    <input type="text" id="username3" placeholder="Type something here..." nav-down = "#username" />
-
-    <button id="testBtn" nav-up = "auto">Click Me</button>
-</body>
+    </body>
 </rml>

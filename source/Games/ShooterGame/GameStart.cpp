@@ -117,6 +117,18 @@ GameStart::GameStart()
 
     NpcBase::globalPhraceDelay = Delay();
 
+
+    auto doc = RmlUiContext::Main->LoadDocument("GameData/ui/test.rml");
+
+
+
+    doc->Show();
+
+    RmlUiEvents::onClick(doc, "testBtn", []()
+        {
+            Logger::Log("Test button clicked!");
+        });
+
     if (startedGame) return;
 
     startedGame = true;
@@ -161,16 +173,7 @@ GameStart::GameStart()
 
     Input::AddAction("debug_ui_toggle")->AddKeyboardKey(SDL_KeyCode::SDLK_UP);
 
-	auto doc = EngineMain::MainInstance->RmlContext->LoadDocument("GameData/ui/test.rml");
 
-	
-
-	doc->Show();
-
-    RmlUiEvents::onClick(doc, "testBtn", []()
-        {
-            Logger::Log("Test button clicked!");
-		});
 
 }
 

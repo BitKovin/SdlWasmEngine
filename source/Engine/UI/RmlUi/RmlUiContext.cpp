@@ -4,6 +4,7 @@
 #include "Backends/RmlUi_Backend.h"
 #include "Backends/RmlUi_Renderer_GL3.h"
 #include "Backends/RmlUi_Platform_SDL.h"
+#include "RmlUiEvents.h"
 
 RmlUiContext::RmlUiContext(SDL_Window* sdl_window, int initial_width, int initial_height, bool enable_debugger)
     : window_(sdl_window), width_(initial_width), height_(initial_height), enable_debugger_(enable_debugger)
@@ -90,12 +91,53 @@ void RmlUiContext::OnResize(int new_width, int new_height)
 }
 
 Rml::ElementDocument* RmlUiContext::LoadDocument(const std::string& filename) {
-    auto doc = context_->LoadDocument(filename.c_str());
+    auto* doc = context_->LoadDocument(filename.c_str());
     if (doc) {
         loaded_docs_[filename] = doc;
+
+        using namespace RmlUiEvents;
+
+
+        doc->AddEventListener("touchstart",
+            new LambdaListener([](Rml::Element* e) {
+                if (!e)
+                    return;
+
+                auto focusedElement = e->GetOwnerDocument()->GetFocusLeafNode();
+
+                if (focusedElement)
+                    focusedElement->Blur();
+                })
+        );
+
+        doc->AddEventListener("mouseover",
+            new LambdaListener([](Rml::Element* e) {
+                if (!e)
+                    return;
+
+                const Rml::Property* focus_prop = e->GetProperty("focus"); 
+                    if (!focus_prop) return; // Read keyword value as int 
+
+                int focus_value = focus_prop->Get<int>(); // Compare with Style::Focus values 
+                if (focus_value != (int)Rml::Style::Focus::None) 
+                {
+
+                    auto focusedElement = e->GetOwnerDocument()->GetFocusLeafNode();
+
+
+                    if (focusedElement)
+                        focusedElement->Blur();
+                }
+                })
+        );
+
+
     }
     return doc;
 }
+
+
+
 
 void RmlUiContext::ShowDocument(Rml::ElementDocument* doc, bool modal, bool pull_to_front) {
     if (doc) {

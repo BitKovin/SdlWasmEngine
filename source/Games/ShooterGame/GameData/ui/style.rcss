@@ -1,0 +1,125 @@
+/* =========================
+   Base layout
+   ========================= */
+body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 5vh;
+    box-sizing: border-box;
+
+    background-color: #14141425;
+    color: #e0e0e000;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+
+    nav: auto;
+
+    font-family: "Kingthings Calligraphica 2";
+}
+
+/* =========================
+   Header
+   ========================= */
+h1 {
+    margin: 0 0 3vh 0;
+    font-size: 8vh;
+    color: #f1c40f;
+    font-effect: glow(2px 4px 2px 3px rgb(44, 30, 30));
+}
+
+p {
+    margin: 2vh 0 4vh 0;
+    font-size: 3.2vh;
+    color: transparent;
+    font-effect: blur(10vh #ffffff);
+}
+
+label {
+    margin: 3vh 0 1vh 0;
+    font-size: 3.2vh;
+    color: #dddddd;
+}
+
+/* =========================
+   INPUT (FIXED — NO CLIPPING)
+   ========================= */
+input[type="text"] {
+    width: 80vh;
+    max-width: 80vh;
+    padding: 0px 0px;
+    line-height: 1.4;
+    font-size: 6vh;
+    background-color: #1e2a36;
+    color: #ffffff;
+    box-sizing: border-box;
+    box-shadow: 0px 2px 6px #000000;
+}
+
+input[type="text"]:focus {
+    border-color: #f39c12;
+    font-effect: shadow(2px 2px #030301);
+    tab-index: auto;
+}
+
+input, button, select {
+    nav: auto;
+}
+
+/* =========================
+   Button
+   ========================= */
+button {
+    padding: 1.5vh 3vh;               /* vertical and horizontal padding scales with screen */
+    font-size: 3vh;                   /* font scales with viewport height */
+    background-color: #2980b9;
+    color: #ffffff;
+    border-radius: 1vh;               /* scales with screen height */
+    cursor: pointer;
+    box-shadow: 0 0.5vh 1vh #000000; /* shadow scales with screen height */
+    font-effect: shadow(0.2vh 0.2vh #030301);
+    tab-index: auto;
+
+    display: inline-block;            /* button size adapts to text */
+    text-align: center;
+    white-space: nowrap;              /* prevent line break */
+}
+
+
+button:active {
+    background-color: #3498db;
+    border-color: #f1c40f;
+    box-shadow: 0px 2px 6px #000000;
+}
+
+
+/* wrapper so we can position the “shape” */
+.focus_wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+/* the shape next to the element */
+.indicator {
+    position: absolute;
+    width: 1.2vh;
+    height: 1.2vh;
+    background-color: #f1c40f;
+    border-radius: 2vh;
+    right: -2vh;
+    top: 50%;
+    visibility: hidden; /* hidden by default */
+    transform: translateY(-50%);
+    border-radius: 1vh;
+}
+
+/* show indicator on hover/focus */
+.focus_wrapper *:hover ~ .indicator,
+.focus_wrapper *:focus ~ .indicator {
+    visibility: visible;
+}
+
