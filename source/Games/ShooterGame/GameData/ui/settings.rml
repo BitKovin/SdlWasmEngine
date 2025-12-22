@@ -1,0 +1,32 @@
+<rml>
+    <head>
+        <title>Pause Menu</title>
+        <link type="text/css" href="style.rcss" />
+        <link type="text/css" href="base.rcss" />
+    </head>
+
+    <body data-title="Pause Menu">
+        <h1>Options</h1>
+
+        <div class="focus_wrapper">
+            <button id="gameBtn">Game Settings</button>
+            <div class="indicator"></div>
+        </div>
+
+        <div class="focus_wrapper">
+            <button id="videoBtn">Video Settings</button>
+            <div class="indicator"></div>
+        </div>
+
+        <div class="focus_wrapper">
+            <button id="inputBtn">Input Settings</button>
+            <div class="indicator"></div>
+        </div>
+
+        <div class="focus_wrapper">
+            <button id="backBtn">Back</button>
+            <div class="indicator"></div>
+        </div>
+
+    </body>
+</rml>

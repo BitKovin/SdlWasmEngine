@@ -3,6 +3,7 @@
     <head>
         <title>RmlUi Filter Test</title>
         <link type="text/css" href="style.rcss" />
+        <link type="text/css" href="base.rcss" />
     </head>
 
     <body data-title="RmlUi Filter Test">

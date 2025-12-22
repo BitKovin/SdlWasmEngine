@@ -33,6 +33,11 @@ public:
     void Update(float delta_seconds);
     void Render();  // Renders UI on top of your scene
 
+	void PushModal(Rml::ElementDocument* doc);
+	void PopModal();
+	void RemoveFromModalFromStack(Rml::ElementDocument* doc);
+	void ClearModals();
+
     // Event forwarding: call this for every SDL_Event your game processes
     void ProcessEvent(SDL_Event& event);
 
@@ -45,6 +50,8 @@ public:
     void HideDocument(Rml::ElementDocument* doc);
     void UnloadDocument(Rml::ElementDocument* doc);  // Hide + Close
 	void UnloadAllDocuments();
+
+    void PerformModalBackAction();
 
     void ReloadAllSttyles();
 
@@ -71,4 +78,7 @@ private:
 
     GameUpdateCallback game_update_cb_;
     PreRenderCallback  pre_render_cb_;
+
+	std::stack<Rml::ElementDocument*> modal_stack_;
+
 };

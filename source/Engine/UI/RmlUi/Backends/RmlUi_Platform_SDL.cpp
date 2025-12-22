@@ -225,7 +225,17 @@ bool RmlSDL::InputEventHandler(Rml::Context* context, SDL_Window* window, SDL_Ev
 	break;
 	case event_key_down:
 	{
-		result = context->ProcessKeyDown(ConvertKey(GetKey(ev)), GetKeyModifierState());
+
+		auto keyIgnoreMask = SDL_KeyCode::SDLK_KP_ENTER | SDL_KeyCode::SDLK_RETURN | SDL_KeyCode::SDLK_UP | SDL_KeyCode::SDLK_DOWN | SDL_KeyCode::SDLK_LEFT | SDL_KeyCode::SDLK_RIGHT | SDL_KeyCode::SDLK_ESCAPE;
+		if (GetKey(ev) & keyIgnoreMask)
+		{
+
+		}
+		else
+		{
+			result = context->ProcessKeyDown(ConvertKey(GetKey(ev)), GetKeyModifierState());
+		}
+		
 		if (GetKey(ev) == SDLK_RETURN || GetKey(ev) == SDLK_KP_ENTER)
 			result &= context->ProcessTextInput('\n');
 	}

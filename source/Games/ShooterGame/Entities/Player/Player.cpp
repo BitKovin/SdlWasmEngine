@@ -904,7 +904,7 @@ void Player::AsyncUpdate()
 void Player::LateUpdate()
 {
 
-
+    if(EngineMain::MainInstance->Paused == false)
     if (Input::GetAction("pause")->Pressed())
     {
         EngineMain::MainInstance->Paused = !EngineMain::MainInstance->Paused;
@@ -912,6 +912,7 @@ void Player::LateUpdate()
         Input::LockCursor = !EngineMain::MainInstance->Paused;
 
     }
+
     Input::LockCursor = !EngineMain::MainInstance->Paused;
 
     UpdateWeapon();

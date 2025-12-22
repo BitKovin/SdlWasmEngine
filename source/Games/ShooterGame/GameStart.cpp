@@ -17,6 +17,10 @@ public:
 	GameStart();
 	~GameStart();
 
+	Rml::ElementDocument* pauseMenuDoc = nullptr;
+    Rml::ElementDocument* settingsMenuDoc = nullptr;
+
+
     void testHttp();
 
 	void Start()
@@ -73,6 +77,9 @@ public:
     void Update()
     {
 
+
+        UpdatePaused();
+
         if (Input::IsScrenTouched)
         {
             UiManager::UiScale = 2;
@@ -104,6 +111,52 @@ public:
 
     }
 
+    void UpdatePaused()
+    {
+        if (EngineMain::MainInstance->Paused)
+        {
+            if (!pauseMenuDoc->IsVisible())
+            {
+				RmlUiContext::Main->PushModal(pauseMenuDoc);
+            }
+        }
+        else
+        {
+            if (pauseMenuDoc != nullptr && pauseMenuDoc->IsVisible())
+            {
+				RmlUiContext::Main->RemoveFromModalFromStack(pauseMenuDoc);
+            }
+        }
+	}
+
+    void ConstructPauseMenu()
+    {
+        
+		pauseMenuDoc = RmlUiContext::Main->LoadDocument("GameData/ui/pause.rml");
+
+        RmlUiEvents::onClick(pauseMenuDoc, "backBtn", []()
+            {
+				EngineMain::MainInstance->Paused = false;
+            });
+        RmlUiEvents::onClick(pauseMenuDoc, "optionsBtn", [&]()
+            {
+				RmlUiContext::Main->PushModal(settingsMenuDoc);
+            });
+
+
+		settingsMenuDoc = RmlUiContext::Main->LoadDocument("GameData/ui/settings.rml");
+        RmlUiEvents::onClick(settingsMenuDoc, "backBtn", []()
+            {
+                RmlUiContext::Main->PopModal();
+            });
+
+	}
+
+    void ConstructMenus()
+    {
+        ConstructPauseMenu();
+	}
+
 private:
 
     static inline bool startedGame = false;
@@ -118,16 +171,9 @@ GameStart::GameStart()
     NpcBase::globalPhraceDelay = Delay();
 
 
-    auto doc = RmlUiContext::Main->LoadDocument("GameData/ui/test.rml");
+	UpdateWhenPaused = true;
+    ConstructMenus();
 
-
-
-    doc->Show();
-
-    RmlUiEvents::onClick(doc, "testBtn", []()
-        {
-            Logger::Log("Test button clicked!");
-        });
 
     if (startedGame) return;
 
@@ -173,7 +219,12 @@ GameStart::GameStart()
 
     Input::AddAction("debug_ui_toggle")->AddKeyboardKey(SDL_KeyCode::SDLK_UP);
 
-
+	Input::AddAction("ui_confirm")->AddKeyboardKey(SDL_KeyCode::SDLK_RETURN)->AddButton(GamepadButton::A);
+    Input::AddAction("ui_cancel")->AddKeyboardKey(SDL_KeyCode::SDLK_ESCAPE)->AddButton(GamepadButton::B);
+    Input::AddAction("ui_down")->AddKeyboardKey(SDL_KeyCode::SDLK_DOWN)->AddButton(GamepadButton::DPadDown);
+	Input::AddAction("ui_up")->AddKeyboardKey(SDL_KeyCode::SDLK_UP)->AddButton(GamepadButton::DPadUp);
+    Input::AddAction("ui_left")->AddKeyboardKey(SDL_KeyCode::SDLK_LEFT)->AddButton(GamepadButton::DPadLeft);
+	Input::AddAction("ui_right")->AddKeyboardKey(SDL_KeyCode::SDLK_RIGHT)->AddButton(GamepadButton::DPadRight);
 
 }
 

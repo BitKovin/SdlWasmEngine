@@ -5,6 +5,7 @@
 #include "Backends/RmlUi_Renderer_GL3.h"
 #include "Backends/RmlUi_Platform_SDL.h"
 #include "RmlUiEvents.h"
+#include "../../Input.h"
 
 RmlUiContext::RmlUiContext(SDL_Window* sdl_window, int initial_width, int initial_height, bool enable_debugger)
     : window_(sdl_window), width_(initial_width), height_(initial_height), enable_debugger_(enable_debugger)
@@ -61,7 +62,37 @@ void RmlUiContext::ProcessEvent(SDL_Event& event) {
 	RmlSDL::InputEventHandler(context_, window_, event);
 }
 
-void RmlUiContext::Update(float delta_seconds) {
+void RmlUiContext::Update(float delta_seconds) 
+{
+
+    if (Input::GetAction("ui_confirm")->Pressed())
+    {
+        context_->ProcessKeyDown(Rml::Input::KeyIdentifier::KI_RETURN, RmlSDL::GetKeyModifierState());
+    }
+    if (Input::GetAction("ui_cancel")->Pressed())
+    {
+        //context_->ProcessKeyDown(Rml::Input::KeyIdentifier::KI_ESCAPE, RmlSDL::GetKeyModifierState());
+		PerformModalBackAction();
+	}
+    if(Input::GetAction("ui_up")->Pressed())
+    {
+        context_->ProcessKeyDown(Rml::Input::KeyIdentifier::KI_UP, RmlSDL::GetKeyModifierState());
+	}
+    if (Input::GetAction("ui_down")->Pressed())
+    {
+        context_->ProcessKeyDown(Rml::Input::KeyIdentifier::KI_DOWN, RmlSDL::GetKeyModifierState());
+    }
+    if (Input::GetAction("ui_left")->Pressed())
+    {
+        context_->ProcessKeyDown(Rml::Input::KeyIdentifier::KI_LEFT, RmlSDL::GetKeyModifierState());
+    }
+    if (Input::GetAction("ui_right")->Pressed())
+    {
+        context_->ProcessKeyDown(Rml::Input::KeyIdentifier::KI_RIGHT, RmlSDL::GetKeyModifierState());
+	}
+
+
+
     context_->Update();
 
     if (game_update_cb_ && !IsUIBlockingInput()) {
@@ -74,6 +105,70 @@ void RmlUiContext::Render() {
 	render_interface_->BeginFrame();
     context_->Render();
 	render_interface_->EndFrame();
+}
+
+void RmlUiContext::PushModal(Rml::ElementDocument* doc)
+{
+    if (doc)
+    {
+        modal_stack_.push(doc);
+		ShowDocument(doc, true, true);
+	}
+}
+
+void RmlUiContext::PopModal()
+{
+    if (!modal_stack_.empty())
+    {
+		modal_stack_.top()->Hide();
+        modal_stack_.pop();
+
+        auto top = modal_stack_.top();
+
+        if (top)
+        {
+            top->Focus();
+        }
+
+
+	}
+}
+
+void RmlUiContext::RemoveFromModalFromStack(Rml::ElementDocument* doc)
+{
+    if (!doc)
+        return;
+    std::stack<Rml::ElementDocument*> temp_stack;
+    // Pop elements until we find the target document
+    while (!modal_stack_.empty())
+    {
+        Rml::ElementDocument* top_doc = modal_stack_.top();
+        modal_stack_.pop();
+        if (top_doc == doc)
+        {
+            top_doc->Hide();  // Hide the document being removed
+            break;  // Exit the loop once we've found and removed the target document
+        }
+        else
+        {
+            temp_stack.push(top_doc);  // Store other documents temporarily
+        }
+    }
+    // Push back the other documents onto the original stack
+    while (!temp_stack.empty())
+    {
+        modal_stack_.push(temp_stack.top());
+        temp_stack.pop();
+	}
+}
+
+void RmlUiContext::ClearModals()
+{
+    while (!modal_stack_.empty())
+    {
+        modal_stack_.top()->Hide();
+        modal_stack_.pop();
+	}
 }
 
 void RmlUiContext::OnResize(int new_width, int new_height) 
@@ -166,6 +261,8 @@ void RmlUiContext::UnloadDocument(Rml::ElementDocument* doc) {
 void RmlUiContext::UnloadAllDocuments()
 {
 
+    ClearModals();
+
 	auto current_docs = loaded_docs_;  // Copy to avoid modification during iteration
 
     for (auto doc : current_docs)
@@ -174,6 +271,31 @@ void RmlUiContext::UnloadAllDocuments()
     }
 
 	loaded_docs_.clear();
+
+}
+
+void RmlUiContext::PerformModalBackAction()
+{
+
+
+	if (modal_stack_.empty())
+        return;
+
+	auto top = modal_stack_.top();
+
+    Rml::Element* button = top->GetElementById("backBtn");
+
+    if (button)
+    {
+        // Dispatch a "click" event
+        button->DispatchEvent("click", {});
+    }
+    else
+    {
+		//PopModal();
+    }
+
+
 
 }
 
