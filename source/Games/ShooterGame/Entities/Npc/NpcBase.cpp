@@ -8,8 +8,6 @@
 
 #include <imgui/imgui.h>
 
-#include "../Player/Player.hpp"
-
 #include "Ai/TaskPoint.h"
 
 #include "../Player/Weapons/Projectiles/Bullet.h"
