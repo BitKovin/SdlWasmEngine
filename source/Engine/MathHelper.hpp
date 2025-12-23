@@ -20,6 +20,29 @@ public:
 		return mix(current, target, t);
 	}
 
+	template<typename T, glm::qualifier Q>
+	inline static glm::vec<3, T, Q> ClampLength(
+		const glm::vec<3, T, Q>& v,
+		T minLen,
+		T maxLen)
+	{
+		T lenSq = glm::length2(v);
+
+		if (lenSq == T(0))
+			return v;
+
+		T minSq = minLen * minLen;
+		T maxSq = maxLen * maxLen;
+
+		if (lenSq < minSq)
+			return v * (minLen / glm::sqrt(lenSq));
+
+		if (lenSq > maxSq)
+			return v * (maxLen / glm::sqrt(lenSq));
+
+		return v;
+	}
+
 	// Converts degrees to radians.
 	inline static float ToRadians(float degrees) {
 		return glm::radians(degrees);

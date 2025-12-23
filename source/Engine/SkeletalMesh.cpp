@@ -2,7 +2,7 @@
 #include <shared_mutex>
 #include <algorithm>
 #include "Level.hpp"
-
+#include "EngineMain.h"
 
 AnimationPose AnimationPose::Lerp(AnimationPose a, AnimationPose b, float progress)
 {
@@ -941,6 +941,7 @@ void SkeletalMesh::PlayAnimation(std::string name, bool Loop, float interpIn)
 	animator.oldRootBoneTransform = MathHelper::Transform();
 	rootMotionBasisQuat = quat();
 	currentAnimationData = GetAnimationDataFromName(name);	
+	oldAnimationEventTime = -1;
 	Update(0.0001f);
 	boneTransforms = animator.getBoneMatrices();
 }
@@ -1341,9 +1342,12 @@ void SkeletalMesh::StartRagdoll()
 			constraint->SetEnabled(true);
 		}
 
+		if (EngineMain::MainInstance->SimulatingGameTicks == false)
+		{
+			Physics::SetLinearVelocity(hitbox, linearVel / 1.5f);
+			Physics::SetAngularVelocity(hitbox, angularVel / 1.5f);
+		}
 
-		Physics::SetLinearVelocity(hitbox, linearVel/1.5f);
-		Physics::SetAngularVelocity(hitbox, angularVel/1.5f);
 
 	}
 

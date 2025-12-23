@@ -15,7 +15,7 @@ private:
 public:
 
 
-	bool EnemyOwner = false;
+	std::string OwnerTag = "player";
 
 	float Damage = 15;
 	float Speed = 100;

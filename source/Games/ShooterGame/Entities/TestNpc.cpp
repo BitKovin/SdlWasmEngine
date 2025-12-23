@@ -267,7 +267,7 @@ void TestNpc::AsyncUpdate()
 	}
 	else
 	{
-		Position += rootMotion.Position;
+		Position += MathHelper::ClampLength(rootMotion.Position, 0.0f, 0.2f);
 	}
 	
 	if (rootMotion.Rotation != vec3())
@@ -362,7 +362,10 @@ void TestNpc::AsyncUpdate()
 	// Only apply horizontal forces to avoid interfering with the vertical (gravity, jump, etc.)
 	vec3 horizontalForce(forceToApply.x, 0.0f, forceToApply.z);
 
-
+	if (EngineMain::MainInstance->LoadingFrames > 0)
+	{
+		horizontalForce = vec3(0); //weird delta time during loading
+	}
 	// Apply the calculated force to the body
 	LeadBody->AddForce(ToPhysics(horizontalForce));
 

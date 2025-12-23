@@ -65,6 +65,7 @@ public:
 	vector<IDrawMesh*> ShadowRenderList = vector<IDrawMesh*>();
 	vector<IDrawMesh*> DetailShadowRenderList = vector<IDrawMesh*>();
 
+
 	string filePath;
 
 	CQuake3BSP BspData;

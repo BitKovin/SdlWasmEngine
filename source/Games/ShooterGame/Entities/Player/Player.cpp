@@ -479,6 +479,7 @@ void Player::UpdateDebugUI()
     ImGui::Begin("debug");
     
 	ImGui::DragFloat("time scale", &Time::TimeScale, 0.01f, 0.f, 3);
+    ImGui::Checkbox("fixed simulation tick rate", &Time::SimulationLikeFixedTimeStep);
 
     if (ImGui::Checkbox("fly", &freeFly))
     {
@@ -956,6 +957,8 @@ void Player::UpdateThirdPersonCamera()
 
 void Player::UpdateBody()
 {
+
+    if (EngineMain::MainInstance->SimulatingGameTicks) return;
 
     bodyAnimator.movementSpeed = length(MathHelper::XZ(velocity));
 

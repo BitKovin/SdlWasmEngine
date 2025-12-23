@@ -23,6 +23,10 @@
 
 #include "../../Ai/NpcTasks/TaskState.h"
 
+#include <unordered_map>
+#include <set>
+#include <limits>
+
 enum class InvestigationReason
 {
 	TargetSeen,
@@ -49,6 +53,54 @@ enum class Crime
 	None
 };
 
+// Per-target memory structure used to track multiple targets
+struct TargetInfo
+{
+	std::string id;
+	bool follow = false;
+	vec3 lastSeenPosition = vec3();
+	Delay stopUpdateLastSeenPositionDelay = Delay();
+	float lastSeenTime = -1;
+	bool sees = false;
+	bool underArrest = false;
+	bool attack = false;
+	float underArrestExpire = 5.0f;
+	bool attackInRange = false;
+	Crime currentCrime = Crime::None;
+	float detection_progress = 0.0f;
+
+	void Serialize(json& target) const
+	{
+		SERIALIZE_FIELD(target, id);
+		SERIALIZE_FIELD(target, follow);
+		SERIALIZE_FIELD(target, lastSeenPosition);
+		SERIALIZE_FIELD(target, stopUpdateLastSeenPositionDelay);
+		SERIALIZE_FIELD(target, lastSeenTime);
+		SERIALIZE_FIELD(target, sees);
+		SERIALIZE_FIELD(target, underArrest);
+		SERIALIZE_FIELD(target, attack);
+		SERIALIZE_FIELD(target, underArrestExpire);
+		SERIALIZE_FIELD(target, attackInRange);
+		SERIALIZE_FIELD(target, currentCrime);
+		SERIALIZE_FIELD(target, detection_progress);
+	}
+
+	void Deserialize(const json& source)
+	{
+		DESERIALIZE_FIELD(source, id);
+		DESERIALIZE_FIELD(source, follow);
+		DESERIALIZE_FIELD(source, lastSeenPosition);
+		DESERIALIZE_FIELD(source, stopUpdateLastSeenPositionDelay);
+		DESERIALIZE_FIELD(source, lastSeenTime);
+		DESERIALIZE_FIELD(source, sees);
+		DESERIALIZE_FIELD(source, underArrest);
+		DESERIALIZE_FIELD(source, attack);
+		DESERIALIZE_FIELD(source, underArrestExpire);
+		DESERIALIZE_FIELD(source, attackInRange);
+		DESERIALIZE_FIELD(source, currentCrime);
+		DESERIALIZE_FIELD(source, detection_progress);
+	}
+};
 
 
 class NpcBase : public Entity
@@ -85,11 +137,14 @@ protected:
 
 	Delay tickIntervalDelay;
 
+	std::string fractionTag = "citizen";
+
 	float attackRange = 20;
 	float attackDesiredRange = 10;
 
 	std::shared_ptr<Observer> observer;
 
+	// Primary-target copies (kept for compatibility with existing code)
 	bool target_follow = false;
 	std::string target_id = "";
 	vec3 target_lastSeenPosition = vec3();
@@ -100,6 +155,12 @@ protected:
 	bool target_attack = false;
 	float target_underArrestExpire = 5.0f;
 	bool target_attackInRange = false;
+
+	// Multi-target memory and tag lists
+	std::unordered_map<std::string, TargetInfo> knownTargets;
+	std::set<hashed_string> neutralTags = { "player" }; // default neutral tags
+	std::set<hashed_string> hostileTags = {}; // tags that are always considered hostile
+	float forgetTime = 6000000.0f; // seconds to forget unseen targets
 
 	bool report_to_guard = false;
 	bool found_guard = false;
@@ -261,7 +322,10 @@ public:
 	void PrepareToStartMovement();
 	void StopMovement();
 	void MoveTo(const vec3& target, float acceptanceRadius);
+
+	// Overload: stop follow for a specific target id (new)
 	void StopTargetFollow();
+	void StopTargetFollow(const std::string& id);
 
 	void BodyInvestigated();
 
@@ -287,6 +351,11 @@ protected:
 
 	void ShareTargetKnowlageWithFinal(NpcBase* anotherNpc);
 
+	// helper to select primary (existing) target from knownTargets
+	void SelectPrimaryAndCopy();
+
+	bool IsNeutral(const std::shared_ptr<ObservationTarget>& target) const;
+	bool IsHostile(const std::shared_ptr<ObservationTarget>& target) const;
 
 private:
 

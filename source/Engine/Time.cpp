@@ -17,6 +17,7 @@ double Time::frameError = 0.0;
 double Time::desiredTime = 0.0;
 double Time::frameStartTime = 0.0;
 double Time::lastFrameStartTime = 0.0;
+bool Time::SimulationLikeFixedTimeStep = false;
 
 void Time::Init() {
     frequency = 1.0 / static_cast<double>(SDL_GetPerformanceFrequency());
@@ -79,6 +80,12 @@ void Time::Update() {
     // Clamp large spikes
     if (rawDelta > 0.1)
         rawDelta = 0.1;
+
+    if(SimulationLikeFixedTimeStep)
+    {
+        rawDelta = 1.0 / 5.0;
+	}
+
     // ----------------------------------------
     // Time scale effects (unscaled)
     // ----------------------------------------

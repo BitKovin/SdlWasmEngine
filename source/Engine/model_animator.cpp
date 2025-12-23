@@ -1,6 +1,6 @@
 ﻿#include "model_animator.hpp"
 
-
+#include "Level.hpp"
 
 #include "glm.h"
 
@@ -327,6 +327,7 @@ roj::Animator::~Animator()
 
 void roj::Animator::set(const hashed_string& name)
 {
+
     auto it = m_model->animations.find(name);
     if (it != m_model->animations.end()) {
         m_currAnim = &it->second;
@@ -489,6 +490,11 @@ void roj::Animator::precacheAnimation() {
 
     cachedFrameBoneTransforms.clear();
     cachedBoneInfos.clear();
+
+    cachedFrameBoneTransforms = std::vector<roj::FrameBoneTransform>();
+	cachedFrameBoneTransforms.reserve(m_model->boneInfoMap.size());
+	cachedBoneInfos = std::vector<roj::BoneInfo>();
+	cachedBoneInfos.reserve(m_model->boneInfoMap.size());
 
     std::function<void(BoneNode&, uint16_t&)> assignIdsAndCache =
         [&](BoneNode& node, uint16_t& currentId) {

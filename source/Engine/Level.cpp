@@ -294,16 +294,17 @@ void Level::RemoveEntity(LevelObject* obj)
 
 	if (entity)
 	{
-
-		if (entity->Unique && entity->Name != "")
+		if (entity->SaveGame)
 		{
-			deletedNames.push_back(entity->Name);
+			if (entity->Unique && entity->Name != "")
+			{
+				deletedNames.push_back(entity->Name);
+			}
+			else
+			{
+				deletedIDs.push_back(entity->Id);
+			}
 		}
-		else
-		{
-			deletedIDs.push_back(entity->Id);
-		}
-
 		std::unique_lock<std::shared_mutex> lock(entityNameMapMutex);
 
 		entityIdMap.erase(entity->Id);
@@ -376,7 +377,7 @@ void Level::MemoryCleanPendingEntities()
 	std::lock_guard<std::recursive_mutex> lock(entityArrayLock);
 	std::lock_guard<std::recursive_mutex> lockP(pendingEntityArrayLock);
 
-	DeletedLevelObjectAdresses.clear();
+	DeletedLevelObjectAdresses = std::unordered_set<void*>();
 	DeletedLevelObjectAdresses.reserve(PendingMemoryCleanObjects.size());
 
 	for (auto& entity : PendingMemoryCleanObjects)
@@ -398,6 +399,7 @@ void Level::MemoryCleanPendingEntities()
 	}
 
 	PendingMemoryCleanObjects.clear();
+	PendingMemoryCleanObjects = vector<LevelObject*>();
 
 }
 

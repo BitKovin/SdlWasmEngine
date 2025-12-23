@@ -372,8 +372,17 @@ void EngineMain::MainLoop()
 
     Level::Current->LoadAssets();
 
+	bool simulatedGameTicks = false;
 
-    if (loadedlevel)
+    if (Input::GetAction("dbg_simulate")->Pressed())
+    {
+		SimulateGameTicksForTime(1000.0f);
+
+        simulatedGameTicks = true;
+
+    }
+
+    if (loadedlevel || simulatedGameTicks)
     {
         Time::Update();
         Time::DeltaTime = 0.05;
@@ -441,6 +450,126 @@ void EngineMain::MainLoop()
 
 }
 
+void EngineMain::SimulateGameTick()
+{
+
+	float fixedDeltaTime = 1.0f / 10.0f;
+
+	Time::DeltaTimeF = fixedDeltaTime;
+	Time::DeltaTime = (double)fixedDeltaTime;
+	Time::DeltaTimeFNoTimeScale = fixedDeltaTime;
+	Time::GameTime += fixedDeltaTime;
+	Time::GameTimeNoPause += fixedDeltaTime;
+    
+	SimulatingGameTicks = true;
+
+	GameUpdate();
+
+    SimulatingGameTicks = false;
+
+}
+
+void EngineMain::SimulateGameTicksForTime(float timeToSimulate)
+{
+    LoadingScreenSystem::Progress = 0.0f;
+    LoadingScreenSystem::Draw();
+
+    const float lowDt = 1.0f / 5.0f;
+    const float highDt = 1.0f / 20.0f;
+    const float highPrecisionTime = 10.0f;
+
+    SimulatingGameTicks = true;
+
+    Camera::position = vec3(0, -1000000, 0);
+    Camera::rotation = MathHelper::FindLookAtRotation(vec3(), vec3(0, -100, 0));
+
+	FinishFrame();
+
+    // -----------------------------
+    // Tick count calculation
+    // -----------------------------
+    float lowPrecisionTime =
+        std::max(0.0f, timeToSimulate - highPrecisionTime);
+
+    int lowPrecisionTicks = (int)(lowPrecisionTime / lowDt);
+    int highPrecisionTicks = (int)(
+        (timeToSimulate - lowPrecisionTicks * lowDt) / highDt
+        );
+
+    int totalTicks = lowPrecisionTicks + highPrecisionTicks;
+
+    // -----------------------------
+    // Low precision phase
+    // -----------------------------
+    Time::DeltaTimeF = lowDt;
+    Time::DeltaTime = (double)lowDt;
+    Time::DeltaTimeFNoTimeScale = lowDt;
+
+	int onePercentTicks = glm::max(1, totalTicks / 50);
+
+    for (int i = 0; i < lowPrecisionTicks; i++)
+    {
+        Time::GameTime += lowDt;
+        Time::GameTimeNoPause += lowDt;
+        GameUpdate();
+        Level::Current->RemovePendingEntities();
+        Level::Current->MemoryCleanPendingEntities();
+        frame++;
+        if (i % onePercentTicks == 0)
+        {
+            LoadingScreenSystem::Progress =
+                (float)i / (float)totalTicks;
+            LoadingScreenSystem::Draw();
+        }
+    }
+
+    // -----------------------------
+    // High precision phase (last 10s)
+    // -----------------------------
+    Time::DeltaTimeF = highDt;
+    Time::DeltaTime = (double)highDt;
+    Time::DeltaTimeFNoTimeScale = highDt;
+
+    for (int i = 0; i < highPrecisionTicks; i++)
+    {
+        Time::GameTime += highDt;
+        Time::GameTimeNoPause += highDt;
+        GameUpdate();
+        Level::Current->RemovePendingEntities();
+        Level::Current->MemoryCleanPendingEntities();
+
+		frame++;
+
+        if (i % 10 == 0)
+        {
+            LoadingScreenSystem::Progress =
+                (float)(lowPrecisionTicks + i) / (float)totalTicks;
+            LoadingScreenSystem::Draw();
+        }
+    }
+
+    FinishFrame();
+
+    SimulatingGameTicks = false;
+    LoadingFrames = 5;
+}
+
+
+void EngineMain::SimulateGameTicksForTimeCombinedPrecision(float timeToSimulate)
+{
+
+
+    const float highPrecissionSimulationTime = 10;
+
+    float timeToSimulateHighPrecission = glm::min(highPrecissionSimulationTime, timeToSimulate);
+
+    float timeToSimulateLowPrecission = glm::clamp(timeToSimulate - timeToSimulateHighPrecission, 0.f, 1000000.f);
+
+	SimulateGameTicksForTime(timeToSimulateLowPrecission);
+	SimulateGameTicksForTime(timeToSimulateHighPrecission);
+
+}
+
 
 void EngineMain::GameUpdate()
 {
@@ -460,7 +589,8 @@ void EngineMain::GameUpdate()
 
     Level::Current->LateUpdate(Paused);
 
-    SoundManager::Update();
+    if(SimulatingGameTicks == false)
+        SoundManager::Update();
 
 }
 

@@ -29,10 +29,12 @@ void Bullet::Start()
 	trail->Rotation = Rotation;
 	trail->Start();
 
-	if (EnemyOwner == false && owner == nullptr)
+	if (OwnerTag == "player")
 	{
 		owner = Player::Instance;
 	}
+
+
 }
 
 void Bullet::Update()
@@ -60,8 +62,7 @@ void Bullet::Update()
 			return;
 		}
 
-		if ((hit.entity->HasTag("player") == false && EnemyOwner == false)
-			|| (hit.entity->HasTag("enemy") == false && EnemyOwner))
+		if (hit.entity->HasTag(OwnerTag) == false)
 		{
 
 			hit.entity->OnPointDamage(Damage, hit.position, MathHelper::FastNormalize(Position - oldPos), hit.hitboxName, this, this);

@@ -49,7 +49,7 @@ void LoadingScreenSystem::Draw()
 
 	glFinish();
 	glFlush();
-
+	SDL_PollEvent(nullptr);
 	SDL_GL_SwapWindow(EngineMain::MainInstance->Window);
 
 }

@@ -7,16 +7,22 @@
 #include <Input.h>
 
 #include <imgui/imgui.h>
+#include <imgui/imgui_stdlib.h>
 
 #include "Ai/TaskPoint.h"
 
 #include "../Player/Weapons/Projectiles/Bullet.h"
+#include "../Player/Player.hpp"
 
 #include "../Enviroment/Door.h"
 
 #include "NpcHelper.h"
 
+#include <EngineMain.h>
+
 #include <RandomHelper.h>
+
+#include <limits>
 
 float NpcBase::GetDetectionSpeed(Crime crime) const
 {
@@ -29,9 +35,10 @@ float NpcBase::GetDetectionSpeed(Crime crime) const
 	case Crime::WeaponHolding:
 		return 1.0f;
 	case Crime::Trespassing:
+		// slow detection for trespassing: only apply slow detection for neutral targets (player)
 		return 0.63f; // ~1.5 seconds to full detection
 	default:
-		return 0.0f; // no detection buifldup
+		return 0.0f; // no detection buildup
 	}
 }
 
@@ -53,7 +60,9 @@ NpcBase::NpcBase()
 	animator = NpcAnimatorBase(this);
 
 	Tags.push_back("npc");
+	Tags.push_back(fractionTag);
 
+	// knownTargets empty by default, neutralTags already has "player"
 }
 
 NpcBase::~NpcBase()
@@ -97,7 +106,7 @@ void NpcBase::Start()
 	desiredDirection = MathHelper::XZ(MathHelper::GetForwardVector(Rotation));
 	movingDirection = desiredDirection;
 
-	pathFollow.Async = false;
+	//pathFollow.Async = false;
 
 	VoiceSoundPlayer = SoundPlayer::Create();
 	VoiceSoundPlayer->SetSound(FmodEventInstance::Create("event:/Character/Dialogue"));
@@ -170,7 +179,7 @@ void NpcBase::OnPointDamage(float Damage, vec3 Point, vec3 Direction, string bon
 		Time::AddTimeScaleEffect(0.3f, 0.15f, true, "hit_slow");
 	}
 
-	if (bone == "calf_l" || bone == "calf_r" || Damage>50)
+	if (bone == "calf_l" || bone == "calf_r" || Damage > 50)
 	{
 		StartStunnedRagdoll();
 	}
@@ -233,7 +242,7 @@ void NpcBase::UpdateStunnedReturn()
 
 	vec3 pelvisPos = FromPhysics(pelvisBody->GetPosition());
 
-	Physics::SetBodyPosition(LeadBody, pelvisPos + vec3(0,0.4f,0));
+	Physics::SetBodyPosition(LeadBody, pelvisPos + vec3(0, 0.4f, 0));
 
 	if (stunnedRagdollDelay.Wait()) return;
 
@@ -339,7 +348,7 @@ void NpcBase::UpdateReturnFromRagdoll()
 
 	float lerpProgressFromEnd = ((blendOutTime - (getFromRagdollAnimation->GetAnimationDuration() - getFromRagdollAnimation->GetAnimationTime())) / blendOutTime);
 
-	newPose = AnimationPose::Lerp(meshPose, newPose , 1.0f - lerpProgressFromEnd);
+	newPose = AnimationPose::Lerp(meshPose, newPose, 1.0f - lerpProgressFromEnd);
 
 	mesh->PasteAnimationPose(newPose);
 
@@ -429,7 +438,7 @@ void NpcBase::AsyncUpdate()
 	}
 	else if (movementLockDelay.Wait())
 	{
-	
+
 		desiredDirection = MathHelper::Interp(curMove, vec3(), Time::DeltaTimeF, 5.0f);
 
 		float gravity = LeadBody->GetLinearVelocity().GetY();
@@ -525,7 +534,7 @@ void NpcBase::AsyncUpdate()
 
 	}
 
-	
+
 
 	UpdateAnimations();
 	UpdateReturnFromRagdoll();
@@ -547,7 +556,17 @@ void NpcBase::AsyncUpdate()
 
 	if (tickIntervalDelay.Wait() == false)
 	{
-		tickIntervalDelay.AddDelay(0.15f + distance(Position, Camera::position) / 200.0f);
+
+		if (EngineMain::MainInstance->SimulatingGameTicks)
+		{
+			tickIntervalDelay.AddDelay(RandomHelper::RandomFloat() + 0.5f);
+		}
+		else
+		{
+			tickIntervalDelay.AddDelay(0.15f + distance(Position, Camera::position) / 200.0f);
+		}
+
+
 	}
 
 
@@ -585,7 +604,7 @@ void NpcBase::LateUpdate()
 	{
 		ShareTargetKnowlageWithFinal(npc);
 	}
-	shareKnowlageWith.clear();
+	shareKnowlageWith = std::vector<NpcBase*>();
 	knowlageSharedThisFrame = 0;
 }
 
@@ -593,7 +612,7 @@ void NpcBase::UpdateDoorUpdate()
 {
 
 	if (observer->id % 3 != (EngineMain::MainInstance->frame + 1) % 3) return;
-	
+
 
 	auto trimmedPath = MathHelper::GetPathWithLength(Position, pathFollow.CurrentPath, 3.0f);
 
@@ -604,7 +623,7 @@ void NpcBase::UpdateDoorUpdate()
 
 	for (auto& point : trimmedPath)
 	{
-		if(first)
+		if (first)
 		{
 			prevPoint = point;
 			first = false;
@@ -616,7 +635,7 @@ void NpcBase::UpdateDoorUpdate()
 		if (hitResult.hasHit)
 		{
 			auto door = dynamic_cast<Door*>(hitResult.entity);
-			if(door)
+			if (door)
 			{
 
 				if (door->IsOpen == false)
@@ -726,97 +745,108 @@ void NpcBase::UpdateObserver()
 
 
 
-	//Logger::Log(Id);
+	// Reset per-target sees
+	for (auto& p : knownTargets)
+	{
+		p.second.sees = false;
+	}
 
-	target_sees = false;
+	bool anyCrimeObserved = false;
 
-	Crime min_crime = Crime::None;
-	std::string observed_offender;
-	vec3 observed_pos;
-
-	bool seeing_target = false;
-
+	// Process each visible target
 	for (std::shared_ptr<ObservationTarget> target : observer->visibleTargets)
 	{
+		// ensure we have entry if it's relevant (neutral or hostile) or we already remembered it
+		bool neutral = IsNeutral(target);
+		bool hostile = IsHostile(target);
 
+		if (neutral || hostile || knownTargets.count(target->ownerId))
+		{
+			auto& info = knownTargets[target->ownerId];
+			info.id = target->ownerId;
+			info.sees = true;
+			info.lastSeenPosition = target->position;
+			info.lastSeenTime = Time::GameTime;
+		}
 
+		// skip targets we don't react to
+		if (!neutral && !hostile && target->HasTag("body") == false)
+			continue;
+
+		Crime min_crime = Crime::None;
+		std::string observed_offender = target->ownerId;
+		vec3 observed_pos = target->position;
+
+		// Hostile tags force high priority reaction
+		if (hostile)
+		{
+			min_crime = Crime::Group_Attack;
+		}
+
+		// Same detection logic as before, applied per target
 		if (target->HasTag("violentCrime"))
 		{
-
 			if (min_crime > Crime::WeaponFire)
 			{
 				min_crime = Crime::WeaponFire;
-				observed_offender = target->ownerId;
-				observed_pos = target->position;
 			}
-
-		}
-
-		if (target->HasTag("body"))
-		{
-			bool near_player = false;
-			if (target_underArrest == false)
-			{
-
-			
-				for (std::shared_ptr<ObservationTarget> target2 : observer->visibleTargets)
-				{
-
-					if (target2->npc == false)
-					{
-						if (target2->HasTag("player"))
-						{
-
-							if (distance(target->position, target2->position) < 5)
-							{
-
-								if (min_crime > Crime::NearBody)
-								{
-									min_crime = Crime::NearBody;
-									observed_offender = target2->ownerId;
-									observed_pos = target2->position;
-								}
-
-								near_player = true;
-
-							}
-
-						}
-					}
-
-				}
-			}
-
-			if (near_player == false)
-			{
-				TryStartInvestigation(InvestigationReason::Body, target->position, target->ownerId);
-			}
-
 		}
 
 		if (target->HasTag("illegal_weapon"))
 		{
-
 			if (min_crime > Crime::WeaponHolding)
 			{
 				min_crime = Crime::WeaponHolding;
-				observed_offender = target->ownerId;
-				observed_pos = target->position;
 			}
-
-
 		}
 
 		if (target->HasTag("trespassing") && target->HasTag("player"))
 		{
-
 			if (min_crime > Crime::Trespassing)
 			{
 				min_crime = Crime::Trespassing;
-				observed_offender = target->ownerId;
-				observed_pos = target->position;
+			}
+		}
+
+		if (currentInvestigation == InvestigationReason::WeaponFire && target->HasTag("player") && distance(target->position, investigation_target) < 4)
+		{
+			if (min_crime > Crime::WeaponFireSound)
+			{
+				min_crime = Crime::WeaponFireSound;
+			}
+		}
+
+		// Body handling - check for near suspects (applied per relevant other visible targets)
+		if (target->HasTag("body"))
+		{
+			bool near_player = false;
+
+			for (std::shared_ptr<ObservationTarget> target2 : observer->visibleTargets)
+			{
+				if (target2->npc == false)
+				{
+					if (target2->HasTag("player") || IsNeutral(target2))
+					{
+						if (distance(target->position, target2->position) < 5)
+						{
+							auto& suspectInfo = knownTargets[target2->ownerId];
+							float speed = IsNeutral(target2) ? GetDetectionSpeed(Crime::NearBody) : 10000.0f;
+							suspectInfo.detection_progress = std::min(1.0f, suspectInfo.detection_progress + speed * Time::DeltaTimeF);
+							if (suspectInfo.detection_progress >= 1.0f)
+							{
+								TryCommitCrime(Crime::NearBody, target2->ownerId, target2->position);
+							}
+							near_player = true;
+							anyCrimeObserved = true;
+						}
+					}
+				}
 			}
 
+			if (!near_player)
+			{
+				TryStartInvestigation(InvestigationReason::Body, target->position, target->ownerId);
+			}
 		}
 
 		if (target->HasTag("in_trouble"))
@@ -824,98 +854,194 @@ void NpcBase::UpdateObserver()
 			TryStartInvestigation(InvestigationReason::NpcInTrouble, target->position, target->ownerId);
 		}
 
-		if (currentInvestigation == InvestigationReason::WeaponFire && target->HasTag("player") && distance(target->position, investigation_target) < 4)
+		// commit detection buildup per-target
+		if (min_crime != Crime::None)
 		{
-
-			if (min_crime > Crime::WeaponFireSound)
+			auto& info = knownTargets[target->ownerId];
+			float speed = (neutral ? GetDetectionSpeed(min_crime) : 10000.0f);
+			info.detection_progress = std::min(1.0f, info.detection_progress + speed * Time::DeltaTimeF);
+			if (info.detection_progress >= 1.0f)
 			{
-				min_crime = Crime::WeaponFireSound;
-				observed_offender = target->ownerId;
-				observed_pos = target->position;
-			}
-
-		}
-
-		if (target->ownerId == target_id)
-		{
-			seeing_target = true;
-		}
-
-
-	}
-
-	if (seeing_target && detection_progress>=1)
-	{
-		target_stopUpdateLastSeenPositionDelay.AddDelay(1.0f);
-	}
-
-	if (min_crime != Crime::None)
-	{
-		float speed = GetDetectionSpeed(min_crime);
-		detection_progress = std::min(1.0f, detection_progress + speed * Time::DeltaTimeF);
-		if (detection_progress >= 1.0f)
-		{
-			if (TryCommitCrime(min_crime, observed_offender, observed_pos))
-			{
-				detection_progress = 1.0f;
-			}
-			else
-			{
-				if (target_underArrest && !target_follow)
+				if (TryCommitCrime(min_crime, target->ownerId, target->position))
 				{
-					target_follow = true;
-					if (!target_stopUpdateLastSeenPositionDelay.Wait())
+					info.detection_progress = 1.0f;
+				}
+				else
+				{
+					// fallback behavior: if underArrest but not following, set follow
+					if (info.underArrest && !info.follow)
 					{
-						PlayPhrace("target_found");
-						report_to_guard = true;
+						info.follow = true;
+						if (!info.stopUpdateLastSeenPositionDelay.Wait())
+						{
+							PlayPhrace("target_found");
+							report_to_guard = true;
+						}
 					}
 				}
 			}
+			anyCrimeObserved = true;
 		}
-		has_observed_crime = true;
+	}
+
+	// Per-target passive increases / decreases and forgetting
+	for (auto it = knownTargets.begin(); it != knownTargets.end(); )
+	{
+		auto& info = it->second;
+
+		// Passive increase: sees + underArrest but not following
+		if (info.sees && info.underArrest && !info.follow)
+		{
+			float passive_speed = 0.33f;
+			info.detection_progress = std::min(1.0f, info.detection_progress + passive_speed * Time::DeltaTimeF);
+			if (info.detection_progress >= 1.0f)
+			{
+				info.follow = true;
+				PlayPhrace("target_found");
+				report_to_guard = true;
+			}
+		}
+		else
+		{
+			// decrease detection when appropriate
+			bool shouldDecrease = (!info.follow && !(info.sees && info.underArrest && !info.follow))
+				|| (info.sees && info.follow && !info.underArrest);
+
+			if (shouldDecrease)
+			{
+				info.detection_progress -= 0.5f * Time::DeltaTimeF;
+				info.detection_progress = std::max(0.0f, info.detection_progress);
+
+				if (info.follow && info.detection_progress < 0.1f)
+				{
+					StopTargetFollow(info.id);
+				}
+			}
+		}
+
+		// if currently seeing and fully detected, add a short delay for lastSeen updates
+		if (info.sees && info.detection_progress >= 1.0f)
+		{
+			info.stopUpdateLastSeenPositionDelay.AddDelay(1.0f);
+		}
+
+		// Forget unseen entries
+		if (Time::GameTime - info.lastSeenTime > forgetTime)
+		{
+			it = knownTargets.erase(it);
+		}
+		else
+		{
+			++it;
+		}
+	}
+
+	// Select primary target and copy to old single-target fields (keeps downstream code unchanged)
+	SelectPrimaryAndCopy();
+}
+
+void NpcBase::SelectPrimaryAndCopy()
+{
+	
+
+	std::string bestId = "";
+	Crime bestCrime = Crime::None;
+	float bestDist = std::numeric_limits<float>::max();
+	int bestPriority = -1; // Higher = more important
+
+
+	// Find the best target based on priority
+	for (const auto& pair : knownTargets)
+	{
+		const auto& info = pair.second;
+
+		// Calculate priority score (higher = more important)
+		int priority = 0;
+
+		if (info.attack) {
+			priority = 3; // Highest: actively attacking
+		}
+		else if (info.underArrest && info.follow) {
+			priority = 2; // High: arresting and following
+		}
+		else if (info.follow) {
+			priority = 1; // Medium: following but not arresting
+		}
+		else if (info.underArrest) {
+			priority = 0; // Low: knows about crime but not following
+		}
+		else {
+			continue; // Skip targets we're not actively dealing with
+		}
+
+		float dist = distance(Position, info.lastSeenPosition);
+
+		// Priority comparison: higher priority wins
+		if (priority > bestPriority ||
+			(priority == bestPriority && info.currentCrime < bestCrime) ||
+			(priority == bestPriority && info.currentCrime == bestCrime && dist < bestDist) ||
+			bestId.empty())
+		{
+			bestPriority = priority;
+			bestCrime = info.currentCrime;
+			bestId = pair.first;
+			bestDist = dist;
+		}
+	}
+	
+
+
+	if (bestId.empty())
+	{
+		// clear primary
+		target_id = "";
+		target_follow = false;
+		target_lastSeenPosition = vec3();
+		target_stopUpdateLastSeenPositionDelay = Delay();
+		target_lastSeenTime = -1;
+		target_sees = false;
+		target_underArrest = false;
+		target_attack = false;
+		target_underArrestExpire = 5.0f;
+
+		currentCrime = Crime::None;
+		detection_progress = 0.0f;
 	}
 	else
 	{
-		if ((!target_follow && (seeing_target && target_underArrest && !target_follow) == false)
-			|| (seeing_target && target_follow && !target_underArrest))
-		{
-			detection_progress -= 0.5f * Time::DeltaTimeF;
-			detection_progress = std::max(0.0f, detection_progress);
+		const auto& info = knownTargets[bestId];
+		target_id = bestId;
+		target_follow = info.follow;
+		target_lastSeenPosition = info.lastSeenPosition;
+		target_stopUpdateLastSeenPositionDelay = info.stopUpdateLastSeenPositionDelay;
+		target_lastSeenTime = info.lastSeenTime;
+		target_sees = info.sees;
+		target_underArrest = info.underArrest;
+		target_attack = info.attack;
+		target_underArrestExpire = info.underArrestExpire;
 
-			if (target_follow && detection_progress < 0.1)
-			{
-				StopTargetFollow();
-			}
-
-		}
-		has_observed_crime = false;
-
-
+		currentCrime = info.currentCrime;
+		detection_progress = info.detection_progress;
 	}
+	
+}
 
-	if (seeing_target && target_underArrest && !target_follow)
+bool NpcBase::IsNeutral(const std::shared_ptr<ObservationTarget>& target) const
+{
+	for (const auto& t : target->tags)
 	{
-		float passive_speed = 0.33f;
-		detection_progress = std::min(1.0f, detection_progress + passive_speed * Time::DeltaTimeF);
-		if (detection_progress >= 1.0f)
-		{
-			target_follow = true;
-
-			PlayPhrace("target_found");
-			report_to_guard = true;
-
-		}
+		if (neutralTags.contains(t)) return true;
 	}
+	return false;
+}
 
-
-	if (seeing_target && target_underArrest)
+bool NpcBase::IsHostile(const std::shared_ptr<ObservationTarget>& target) const
+{
+	for (const auto& t : target->tags)
 	{
-		if (target_follow)
-		{
-			target_sees = true;
-		}
+		if (hostileTags.count(t)) return true;
 	}
-
+	return false;
 }
 
 void NpcBase::UpdateObservationTarget()
@@ -974,10 +1100,8 @@ void NpcBase::UpdateObservationTarget()
 
 	}
 
-
-
-
 }
+
 
 void NpcBase::UpdateTargetFollow()
 {
@@ -1001,7 +1125,7 @@ void NpcBase::UpdateTargetFollow()
 
 	}
 
-
+	auto& info = knownTargets[target_id];
 
 	speed = ((target_follow) || currentInvestigation <= InvestigationReason::Body) ? 5 : 2;
 
@@ -1023,7 +1147,7 @@ void NpcBase::UpdateTargetFollow()
 
 		if (observer->id % 3 == EngineMain::MainInstance->frame % 3)
 		{
-			auto observers = AiPerceptionSystem::GetObserversInRadius(observer->position, isGuard ? 8 : 4);
+			auto observers = AiPerceptionSystem::GetObserversInRadius(observer->position, isGuard ? 13 : 6);
 
 			for (auto ob : observers)
 			{
@@ -1051,17 +1175,20 @@ void NpcBase::UpdateTargetFollow()
 		currentInvestigation = InvestigationReason::None;
 	}
 
+
 	if (target_underArrest && target_follow && target_sees && target_attack == false)
 	{
 		if (distance2(targetRef->Position, Position) < 15)
 		{
 			float decrease_rate = 0.5f;
-			target_underArrestExpire -= decrease_rate * Time::DeltaTimeF;
+			info.underArrestExpire -= decrease_rate * Time::DeltaTimeF;
 		}
 
 		if (target_underArrestExpire < 0)
 		{
-			target_attack = true;
+
+			info.attack = true;
+
 			PlayPhrace("arrest_final");
 		}
 	}
@@ -1133,7 +1260,7 @@ void NpcBase::UpdateTargetAttack()
 	}
 
 	animator.weapon_pendingAttack = true;
-	attackDelay.AddDelay(0.5f + RandomHelper::RandomFloat()*0.1f);
+	attackDelay.AddDelay(0.5f + RandomHelper::RandomFloat() * 0.1f);
 
 	auto targetRef = Level::Current->FindEntityWithId(target_id);
 
@@ -1156,7 +1283,7 @@ void NpcBase::UpdateTargetAttack()
 	bullet->Position = weaponMesh->Position;
 	bullet->Rotation = bulletRotation;
 	bullet->Speed = bulletSpeed;
-	bullet->EnemyOwner = true;
+	bullet->OwnerTag = fractionTag;
 	bullet->Damage = 10;
 	bullet->owner = this;
 	bullet->Start();
@@ -1203,6 +1330,7 @@ bool NpcBase::CheckAttackLocation(vec3 location, vec3 targetLocation)
 
 vec3 NpcBase::FindAttackLocation()
 {
+	// (unchanged - uses target_id primary)
 	// Detection parameters
 	const float tooCloseThreshold = 2.0f;
 
@@ -1498,9 +1626,9 @@ void NpcBase::UpdateAnimations(bool forceFullUpdate)
 
 	if (isGuard)
 	{
-		animator.weapon_holds = target_underArrest  && !isStunned();
-		animator.weapon_ready = target_follow && target_underArrest  && !isStunned();
-		animator.weapon_aims = target_attack && animator.weapon_ready && target_attackInRange  && !isStunned();
+		animator.weapon_holds = target_underArrest && !isStunned();
+		animator.weapon_ready = target_follow && target_underArrest && !isStunned();
+		animator.weapon_aims = target_attack && animator.weapon_ready && target_attackInRange && !isStunned();
 
 		animator.spineRotation = spineRotation;
 
@@ -1510,7 +1638,8 @@ void NpcBase::UpdateAnimations(bool forceFullUpdate)
 		animator.scared = (target_follow && target_attack) || (report_to_guard && currentInvestigation <= InvestigationReason::WeaponFire) || (report_to_guard && found_guard == false);
 	}
 
-
+	if (EngineMain::MainInstance->SimulatingGameTicks)
+		mesh->WasRended = false;
 
 	if (mesh->WasRended || forceFullUpdate)
 	{
@@ -1527,7 +1656,7 @@ void NpcBase::UpdateAnimations(bool forceFullUpdate)
 
 		mesh->PasteAnimationPose(pose);
 	}
-	if(forceFullUpdate == false)
+	if (forceFullUpdate == false)
 		animator.UsePrecomputedFrames = true;
 
 }
@@ -1565,146 +1694,141 @@ void NpcBase::LoadAssets()
 void NpcBase::ShareTargetKnowlageWith(NpcBase* anotherNpc)
 {
 
-	//if (knowlageSharedThisFrame > 20) return;
-
-	bool hasChanges = false;
-
-	if (target_underArrest && anotherNpc->target_underArrest == false)
+	// Generalized sharing across knownTargets
+	for (const auto& pair : knownTargets)
 	{
-		hasChanges = true;
+		const std::string& tId = pair.first;
+		const auto& myInfo = pair.second;
+
+		bool hasChanges = false;
+
+		if (anotherNpc->knownTargets.count(tId))
+		{
+			const auto& otherInfo = anotherNpc->knownTargets.at(tId);
+
+			if (myInfo.underArrest && !otherInfo.underArrest) hasChanges = true;
+			if (myInfo.currentCrime < otherInfo.currentCrime) 
+				hasChanges = true;
+			if (myInfo.underArrestExpire < otherInfo.underArrestExpire - 0.2f) hasChanges = true;
+			if (myInfo.attack && !otherInfo.attack) 
+				hasChanges = true;
+			if (myInfo.lastSeenTime > otherInfo.lastSeenTime + 0.2f) hasChanges = true;
+			if (myInfo.follow && myInfo.underArrest && !otherInfo.follow) hasChanges = true;
+			if (myInfo.sees && !otherInfo.sees) hasChanges = true;
+			if (myInfo.detection_progress >= 1 && otherInfo.detection_progress < 1) hasChanges = true;
+		}
+		else
+		{
+			// New target, share if active
+			if (myInfo.follow || myInfo.underArrest || myInfo.attack) hasChanges = true;
+		}
+
+		if (!hasChanges) continue;
+
+		if (distance(Position, anotherNpc->Position) > 2)
+			if (Physics::LineTrace(Position, anotherNpc->Position, BodyType::WorldOpaque).hasHit) 
+				continue;
+
+		shareKnowlageWith.push_back(anotherNpc);
+		knowlageSharedThisFrame++;
 	}
-
-	if (currentCrime < anotherNpc->currentCrime)
-	{
-		hasChanges = true;
-	}
-
-	if (target_underArrestExpire < anotherNpc->target_underArrestExpire + 0.2f && anotherNpc->target_underArrest == false)
-	{
-		hasChanges = true;
-	}
-
-	if (target_attack && anotherNpc->target_attack == false)
-	{
-		hasChanges = true;
-	}
-
-	if (target_lastSeenTime > anotherNpc->target_lastSeenTime + 0.2f)
-	{
-		hasChanges = true;
-	}
-
-	if (target_follow && target_underArrest && anotherNpc->target_follow == false)
-	{
-		hasChanges = true;
-	}
-
-	if (target_sees && anotherNpc->target_sees == false)
-	{
-		anotherNpc->target_stopUpdateLastSeenPositionDelay.AddDelay(0.5);
-		anotherNpc->target_lastSeenPosition = target_lastSeenPosition;
-		anotherNpc->target_lastSeenTime = target_lastSeenTime;
-	}
-
-	if (detection_progress >= 1 && anotherNpc->detection_progress < 1)
-	{
-		hasChanges = true;
-	}
-
-	if (target_lastSeenTime > anotherNpc->target_lastSeenTime)
-	{
-		anotherNpc->target_stopUpdateLastSeenPositionDelay.AddDelay(0.5);
-		anotherNpc->target_lastSeenPosition = target_lastSeenPosition;
-		anotherNpc->target_lastSeenTime = target_lastSeenTime;
-	}
-
-	if (hasChanges == false) return;
-
-	if (distance(Position, anotherNpc->Position) > 2)
-		if (Physics::LineTrace(Position, anotherNpc->Position, BodyType::WorldOpaque).hasHit) return;
-
-	shareKnowlageWith.push_back(anotherNpc);
-	knowlageSharedThisFrame++;
 }
 
 void NpcBase::ShareTargetKnowlageWithFinal(NpcBase* anotherNpc)
 {
 
-	if (target_follow && target_underArrest && anotherNpc->target_follow == false)
+	for (const auto& pair : knownTargets)
 	{
-		anotherNpc->target_follow = true;
-	}
+		const std::string& tId = pair.first;
+		const auto& myInfo = pair.second;
 
-	if (target_underArrest)
-	{
-		anotherNpc->target_underArrest = true;
-		anotherNpc->target_id = target_id;
-	}
+		if (anotherNpc->knownTargets.count(tId) == 0)
+		{
+			anotherNpc->knownTargets[tId] = TargetInfo();
+			anotherNpc->knownTargets[tId].id = tId;
+		}
 
-	if (target_underArrestExpire < anotherNpc->target_underArrestExpire)
-	{
-		anotherNpc->target_underArrestExpire = target_underArrestExpire;
-	}
+		auto& otherInfo = anotherNpc->knownTargets[tId];  // creates if missing
 
-	if (target_attack)
-	{
-		anotherNpc->target_attack = true;
-	}
+		if (myInfo.follow && myInfo.underArrest && !otherInfo.follow)
+		{
+			otherInfo.follow = true;
+		}
 
-	if (target_lastSeenTime > anotherNpc->target_lastSeenTime)
-	{
-		anotherNpc->target_lastSeenPosition = target_lastSeenPosition;
-		anotherNpc->target_lastSeenTime = target_lastSeenTime;
-	}
+		if (myInfo.underArrest)
+		{
+			otherInfo.underArrest = true;
+		}
 
-	if (currentCrime < anotherNpc->currentCrime)
-	{
-		anotherNpc->currentCrime = currentCrime;
-	}
+		if (myInfo.underArrestExpire < otherInfo.underArrestExpire)
+		{
+			otherInfo.underArrestExpire = myInfo.underArrestExpire;
+		}
 
-	if (detection_progress >= 1 && anotherNpc->detection_progress < 1)
-	{
-		anotherNpc->detection_progress = 1;
-	}
+		if (myInfo.attack)
+		{
+			otherInfo.attack = true;
+			otherInfo.underArrestExpire = -1.0f;
+			otherInfo.follow = true;
+			otherInfo.underArrest = true;
+		}
 
+		if (myInfo.lastSeenTime > otherInfo.lastSeenTime)
+		{
+			otherInfo.lastSeenPosition = myInfo.lastSeenPosition;
+			otherInfo.lastSeenTime = myInfo.lastSeenTime;
+			otherInfo.stopUpdateLastSeenPositionDelay.AddDelay(0.5);
+		}
+
+		if (myInfo.currentCrime < otherInfo.currentCrime)
+		{
+			otherInfo.currentCrime = myInfo.currentCrime;
+		}
+
+		if (myInfo.detection_progress >= 1 && otherInfo.detection_progress < 1)
+		{
+			otherInfo.detection_progress = 1;
+		}
+	}
 }
 
 bool NpcBase::TryCommitCrime(Crime crime, std::string offender, vec3 pos)
 {
+	// Ensure we have memory for this offender
+	auto& info = knownTargets[offender];
+	info.id = offender;
 
-	if (crime >= currentCrime) return false;
+	if (crime >= info.currentCrime) return false;
 
 	if (isGuard == false)
 	{
 		if (crime < Crime::Group_Arrest)
 		{
-			target_follow = true;
+			info.follow = true;
 			report_to_guard = true;
 		}
 	}
 
 
-	bool wasUnderArrest = target_underArrest;
-	bool wasAttack = target_attack;
+	bool wasUnderArrest = info.underArrest;
+	bool wasAttack = info.attack;
 
 
-	currentCrime = crime;
+	info.currentCrime = crime;
 
-	target_id = offender;
-
-	target_stopUpdateLastSeenPositionDelay.AddDelay(0.5f);
+	info.stopUpdateLastSeenPositionDelay.AddDelay(0.5f);
 
 	if (crime < Crime::Group_Attack)
 	{
-		target_underArrest = true;
-		target_attack = true;
-		target_underArrestExpire = -1.0f;
+		info.underArrest = true;
+		info.attack = true;
+		info.underArrestExpire = -1.0f;
 	}
 
 	if (crime < Crime::Group_Arrest)
 	{
-		target_underArrest = true;
-		target_follow = true;
+		info.underArrest = true;
+		info.follow = true;
 
 		if (isGuard == false)
 		{
@@ -1721,14 +1845,14 @@ bool NpcBase::TryCommitCrime(Crime crime, std::string offender, vec3 pos)
 			PlayPhrace("shots_fired");
 		}
 
-		target_follow = true;
+		info.follow = true;
 	}
 
-	if (target_attack && !wasAttack)
+	if (info.attack && !wasAttack)
 	{
 		PlayPhrace("arrest_final");
 	}
-	else if (target_underArrest && !wasUnderArrest)
+	else if (info.underArrest && !wasUnderArrest)
 	{
 		if (crime == Crime::WeaponHolding || crime == Crime::WeaponFireSound)
 		{
@@ -1740,7 +1864,63 @@ bool NpcBase::TryCommitCrime(Crime crime, std::string offender, vec3 pos)
 		}
 	}
 
+	// Ensure primary copies are updated if this offender became primary
+	SelectPrimaryAndCopy();
+
 	return true;
+}
+
+void NpcBase::StopTargetFollow()
+{
+	StopTargetFollow(target_id);
+}
+
+void NpcBase::StopTargetFollow(const std::string& id)
+{
+	if (id.empty()) return;
+
+	// if we have per-target memory, update it; otherwise fallback to clearing primary
+	if (knownTargets.count(id))
+	{
+		auto& info = knownTargets[id];
+
+		if (info.underArrest)
+		{
+			PlayPhrace("target_lost");
+		}
+
+		info.follow = false;
+		info.sees = false;
+		info.lastSeenPosition = vec3();
+		info.currentCrime = Crime::None;
+		pathFollow.reachedTarget = false;
+		pathFollow.FoundTarget = true;
+	}
+	else
+	{
+		// fallback to previous behaviour
+		if (target_underArrest)
+		{
+			PlayPhrace("target_lost");
+		}
+		target_follow = false;
+		target_sees = false;
+		target_lastSeenPosition = vec3();
+		pathFollow.reachedTarget = false;
+		pathFollow.FoundTarget = true;
+		currentCrime = Crime::None;
+	}
+
+	// If primary was this id, clear primary copies
+	if (target_id == id)
+	{
+		target_id = "";
+		target_follow = false;
+		target_sees = false;
+		target_underArrest = false;
+		currentCrime = Crime::None;
+		detection_progress = 0.0f;
+	}
 }
 
 void NpcBase::Serialize(json& target)
@@ -1777,6 +1957,7 @@ void NpcBase::Serialize(json& target)
 
 	SERIALIZE_FIELD(target, taskState);
 
+	// serialize primary copies (for compatibility)
 	SERIALIZE_FIELD(target, target_follow);
 	SERIALIZE_FIELD(target, target_id);
 	SERIALIZE_FIELD(target, target_lastSeenPosition);
@@ -1802,9 +1983,11 @@ void NpcBase::Serialize(json& target)
 
 	SERIALIZE_FIELD(target, flee_target);
 
+	// Save behavior tree state
 	btSaveState = behaviorTree.SaveState().dump(0);
 	SERIALIZE_FIELD(target, btSaveState);
 
+	// primary detection progress (compat)
 	SERIALIZE_FIELD(target, detection_progress);
 
 	SERIALIZE_FIELD(target, needHelpStunned);
@@ -1822,9 +2005,20 @@ void NpcBase::Serialize(json& target)
 	AnimationState taskAnimationState;
 
 	taskAnimationState = animator.taskAnimation->GetAnimationState();
-	
+
 	SERIALIZE_FIELD(target, taskAnimationState);
 
+	// Serialize knownTargets map
+	json ktJson = json::object();
+	for (const auto& pair : knownTargets)
+	{
+		json infoJson;
+		pair.second.Serialize(infoJson);
+		ktJson[pair.first] = infoJson;
+	}
+	target["knownTargets"] = ktJson;
+
+	// Optional: save tag lists and forgetTime if modified by design (left default if unchanged)
 }
 
 void NpcBase::Deserialize(json& source)
@@ -1851,6 +2045,7 @@ void NpcBase::Deserialize(json& source)
 
 	DESERIALIZE_FIELD(source, taskState);
 
+	// primary copies
 	DESERIALIZE_FIELD(source, target_follow);
 	DESERIALIZE_FIELD(source, target_id);
 	DESERIALIZE_FIELD(source, target_lastSeenPosition);
@@ -1883,6 +2078,24 @@ void NpcBase::Deserialize(json& source)
 	{
 		behaviorTree.LoadState(json::parse(btSaveState));
 	}
+
+	// Deserialize knownTargets map if present
+	if (source.contains("knownTargets"))
+	{
+		const json& ktJson = source["knownTargets"];
+		for (auto it = ktJson.begin(); it != ktJson.end(); ++it)
+		{
+			TargetInfo info;
+			info.Deserialize(it.value());
+			knownTargets[it.key()] = info;
+		}
+	}
+
+	if(HasTag("npc") == false)
+		Tags.push_back("npc");
+
+	if (HasTag(fractionTag) == false)
+		Tags.push_back(fractionTag);
 
 	Physics::SetBodyPosition(LeadBody, Position);
 
@@ -1928,6 +2141,8 @@ void NpcBase::Deserialize(json& source)
 	DESERIALIZE_FIELD(source, taskAnimationState);
 	animator.taskAnimation->SetAnimationState(taskAnimationState);
 
+	// Ensure primary is consistent with knownTargets
+	SelectPrimaryAndCopy();
 }
 
 void NpcBase::PrepareToStartMovement()
@@ -1954,30 +2169,6 @@ void NpcBase::MoveTo(const vec3& target, float acceptanceRadius)
 {
 	desiredTargetLocation = target;
 	pathFollow.acceptanceRadius = acceptanceRadius;
-
-}
-
-void NpcBase::StopTargetFollow()
-{
-
-	if (target_underArrest)
-	{
-
-		PlayPhrace("target_lost");
-	}
-	else
-	{
-
-		//PlayPhrace("shots_fired");
-
-	}
-
-	target_follow = false;
-	target_sees = false;
-	target_lastSeenPosition = vec3();
-	pathFollow.reachedTarget = false;
-	pathFollow.FoundTarget = true;
-	currentCrime = Crime::None;
 
 }
 
@@ -2031,7 +2222,7 @@ void NpcBase::StartTask(const std::string& taskName)
 
 	TaskPoint* taskPoint = dynamic_cast<TaskPoint*>(Level::Current->FindEntityWithName(taskName));
 
-	if (taskPoint == nullptr) 
+	if (taskPoint == nullptr)
 		return;
 
 	taskPoint->NpcEntered(this);
@@ -2063,7 +2254,7 @@ void NpcBase::UpdateTask()
 
 
 	TaskPoint* taskPoint = nullptr;
-	
+
 	if (taskState.TaskName.empty() == false)
 	{
 		taskPoint = dynamic_cast<TaskPoint*>(Level::Current->FindEntityWithName(taskState.TaskName));
@@ -2073,7 +2264,7 @@ void NpcBase::UpdateTask()
 
 	if (isStunned())
 		actualDoingTask = false;
-	
+
 
 	if (actualDoingTask)
 	{
@@ -2087,17 +2278,17 @@ void NpcBase::UpdateTask()
 			}
 			else
 			{
-				
+
 			}
 		}
 	}
 
-	if (taskPoint == nullptr) 
-	{ 
+	if (taskPoint == nullptr)
+	{
 
 		DoingTaskOld = actualDoingTask;
 
-		return; 
+		return;
 	}
 
 
@@ -2160,6 +2351,46 @@ void NpcBase::UpdateDebugUI()
 
 	ImGui::End();
 
+
+	auto hit = Physics::LineTrace(Camera::position, Camera::position + Camera::Forward() * 500.0f, BodyType::CharacterCapsule, {}, {Player::Instance});
+
+	if (hit.entity == this)
+	{
+
+		ImGui::Begin("look at npc info");
+
+		ImGui::Checkbox("Follow", &target_follow);
+
+		ImGui::InputText(
+			"Target ID",
+			&target_id
+		);
+
+		ImGui::InputFloat3(
+			"Last Seen Position",
+			&target_lastSeenPosition.x
+		);
+
+		ImGui::InputFloat(
+			"Last Seen Time",
+			&target_lastSeenTime
+		);
+
+		ImGui::Checkbox("Sees Target", &target_sees);
+		ImGui::Checkbox("Under Arrest", &target_underArrest);
+		ImGui::Checkbox("Attack", &target_attack);
+
+		ImGui::InputFloat(
+			"Under Arrest Expire",
+			&target_underArrestExpire
+		);
+
+		ImGui::Checkbox("Attack In Range", &target_attackInRange);
+
+		ImGui::End();
+
+	}
+
 }
 
 void NpcBase::FindClosestGuard()
@@ -2182,7 +2413,7 @@ void NpcBase::FindClosestGuard()
 	else
 	{
 
-		if (target_follow == false && currentInvestigation==InvestigationReason::Body)
+		if (target_follow == false && currentInvestigation == InvestigationReason::Body)
 		{
 			FinishInvestigation();
 			return;
@@ -2191,7 +2422,7 @@ void NpcBase::FindClosestGuard()
 		closestGuard = "";
 		found_guard = false;
 
-		auto fleePath = NavigationSystem::FindFleePathSimple(Position, target_lastSeenPosition, target_follow ? 20 : 60 , 4, speed);
+		auto fleePath = NavigationSystem::FindFleePathSimple(Position, target_lastSeenPosition, target_follow ? 20 : 60, 4, speed);
 
 		if (fleePath.size() > 0)
 		{
@@ -2204,7 +2435,16 @@ void NpcBase::FindClosestGuard()
 
 	}
 
-	findGuardCooldown.AddDelay(0.3 + RandomHelper::RandomFloat() / 3.0f);
+	if (EngineMain::MainInstance->SimulatingGameTicks)
+	{
+		findGuardCooldown.AddDelay(2.3 + RandomHelper::RandomFloat());
+	}
+	else
+	{
+		findGuardCooldown.AddDelay(0.3 + RandomHelper::RandomFloat() / 3.0f);
+	}
+
+
 
 }
 
@@ -2264,7 +2504,7 @@ void NpcBase::TryStartInvestigation(InvestigationReason reason, vec3 target, str
 			{
 				FinishInvestigation();
 			}
-			else if(currentInvestigation == InvestigationReason::WeaponFire)
+			else if (currentInvestigation == InvestigationReason::WeaponFire)
 			{
 				target_lastSeenPosition = investigation_target;
 			}

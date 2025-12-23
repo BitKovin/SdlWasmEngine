@@ -26,6 +26,8 @@ public:
     static double TargetFrameRate;
     static double TargetFrameTime;
 
+	static bool SimulationLikeFixedTimeStep;
+
     static void Init();
     static void Update();
     static void AddTimeScaleEffect(float duration, float scale,

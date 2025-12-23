@@ -53,6 +53,8 @@ public:
 
     unsigned long frame = 0;
 
+	bool SimulatingGameTicks = false;
+
 	RenderTexture* UiRenderTexture = nullptr;
 
 	RmlUiContext* RmlContext = nullptr;
@@ -96,6 +98,9 @@ public:
     // Main game loop.
     void MainLoop();
 
+	void SimulateGameTick();
+	void SimulateGameTicksForTime(float timeToSimulate);
+    void SimulateGameTicksForTimeCombinedPrecision(float timeToSimulate);
 
     void GameUpdate();
 
