@@ -251,7 +251,7 @@ public:
 	void FromData(EntityData data)
 	{
 		Entity::FromData(data);
-		cameraRotation.y = data.GetPropertyFloat("angle") + 90;
+		Rotation.y = data.GetPropertyFloat("angle") + 90;
 	}
 
 	void Start();

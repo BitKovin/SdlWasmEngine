@@ -10,7 +10,7 @@
 
 #include "RestrictedArea.h"
 
-REGISTER_ENTITY(Player, "info_player_start")
+REGISTER_ENTITY(Player, "player")
 
 Player* Player::Instance = nullptr;
 
@@ -60,6 +60,8 @@ void Player::Start()
     AddWeaponByName("weapon_sniper");
 
     SwitchWeaponOffhand("weapon_cane");
+
+    cameraRotation.y = Rotation.y;
 
 }
 

@@ -296,8 +296,8 @@ void Physics::Init()
 
 	JPH::PhysicsSettings settings = physics_system->GetPhysicsSettings(); 
 
-	settings.mNumVelocitySteps = 2u;
-	settings.mNumPositionSteps = 1u;
+	settings.mNumVelocitySteps = 5u;
+	settings.mNumPositionSteps = 2u;
 
 	if (ThreadPool::Supported() == false)
 	{

@@ -3,6 +3,7 @@
 
     <!-- Player Start -->
     <point name="info_player_start" color="0 1 0" box="-16 -16 -24 16 16 32">
+        <string key="targetname" name="Name"></string>
         <angle key="angle" name="Yaw Angle" value="0"></angle>
     </point>
 
@@ -42,6 +43,11 @@ To make a func_group into a terrain entity, refer to the Terrain Construction do
         <string key="onEnterAction" name="On Enter" value="trigger_enter"/>
         <boolean key="_cs" name="Cast Shadows" value="0"/>
         <string key="targetname" name="Name"></string>
+    </group>
+
+    <group name="triggerTravel" color="0.5 0.5 1">
+        <string key="targetLevel" name="Target Level" value="GameData/maps/test.bsp"/>
+        <string key="targetPlayerStart" name="Target Player Start" value="ps_1"/>
     </group>
 
 

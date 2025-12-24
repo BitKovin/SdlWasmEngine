@@ -191,6 +191,8 @@ namespace UiRenderer {
             return;
         }
 
+        if (text.empty())return;
+
         GLuint textureID = 0;
         int textureWidth = 0;
         int textureHeight = 0;

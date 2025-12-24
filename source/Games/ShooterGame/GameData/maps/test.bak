@@ -1262,6 +1262,15 @@
 ( 252 32 78 ) ( 252 32 80 ) ( 260 32 78 ) generic/bricks 0 0 0 0.5 0.5 0 0 0
 ( 252 34 78 ) ( 252 192 78 ) ( 252 34 80 ) generic/bricks 0 0 0 0.5 0.5 0 0 0
 }
+// brush 139
+{
+( 512 512 84 ) ( 512 384 84 ) ( 448 512 84 ) building_1/b1_f1 0 32 0 0.5 0.5 0 0 0
+( 512 450 80 ) ( 448 450 80 ) ( 512 450 16 ) building_1/b1_f1 0 32 0 0.5 0.5 0 0 0
+( 512 512 80 ) ( 512 512 16 ) ( 512 384 80 ) building_1/b1_f1 0 32 0 0.5 0.5 0 0 0
+( 448 384 16 ) ( 512 384 16 ) ( 448 512 16 ) building_1/b1_f1 0 32 0 0.5 0.5 0 0 0
+( 448 400 16 ) ( 448 400 80 ) ( 512 400 16 ) building_1/b1_f1 0 32 0 0.5 0.5 0 0 0
+( 494 384 16 ) ( 494 512 16 ) ( 494 384 80 ) building_1/b1_f1 0 32 0 0.5 0.5 0 0 0
+}
 }
 // entity 1
 {
@@ -1271,12 +1280,11 @@
 // entity 2
 {
 "classname" "static_mesh"
-"origin" "-111.497 -56.1932 34.7592"
+"origin" "-111.497 -68.1932 26.7592"
 "texture" "models/test.png"
-"angles" "32 20 29"
+"angles" "0 270 340"
 "model" "models/npc_base.obj"
 "modelscale" "32"
-"modelscale_vec" "32 16 32"
 }
 // entity 3
 {
@@ -1465,7 +1473,7 @@
 "origin" "-115.807 -103.272 24.4573"
 "model" "models/npc_base.obj"
 "modelscale" "32"
-"angles" "35.7764 -34.5749 16.2309"
+"angles" "0 270 340"
 }
 // entity 27
 {
@@ -1931,4 +1939,26 @@
 "origin" "239.84 64.189 16"
 "model" "models/tools/door.obj"
 "angle" "-90"
+}
+// entity 75
+{
+"classname" "triggerTravel"
+"targetPlayerStart" "int_enter1"
+"targetLevel" "GameData/maps/test_interior.bsp"
+// brush 0
+{
+( 496 440 48 ) ( 496 408 48 ) ( 488 440 48 ) lq_dev/trigger 0 0 0 0.5 0.5 0 0 0
+( 496 440 24 ) ( 488 440 24 ) ( 496 440 16 ) lq_dev/trigger 0 0 0 0.5 0.5 0 0 0
+( 496 440 24 ) ( 496 440 16 ) ( 496 408 24 ) lq_dev/trigger 0 0 0 0.5 0.5 0 0 0
+( 488 408 16 ) ( 496 408 16 ) ( 488 440 16 ) lq_dev/trigger 0 0 0 0.5 0.5 0 0 0
+( 488 408 16 ) ( 488 408 24 ) ( 496 408 16 ) lq_dev/trigger 0 0 0 0.5 0.5 0 0 0
+( 488 408 16 ) ( 488 440 16 ) ( 488 408 24 ) lq_dev/trigger 0 0 0 0.5 0.5 0 0 0
+}
+}
+// entity 76
+{
+"classname" "info_player_start"
+"origin" "440 432 40"
+"angle" "-180"
+"targetname" "int1_exit"
 }

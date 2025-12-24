@@ -49,6 +49,7 @@ struct TaskState
         Timer3,
         UserData,
         HasToLockPosition,
-        LockPosition
+        LockPosition,
+        StartPosition
     )
 };

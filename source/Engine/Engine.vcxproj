@@ -350,6 +350,7 @@
     <ClCompile Include="http\http_client_emscripten.cpp" />
     <ClCompile Include="http\http_client_httplib.cpp" />
     <ClCompile Include="imgui\imgui_stdlib.cpp" />
+    <ClCompile Include="LevelTraversalSystem.cpp" />
     <ClCompile Include="LoadingScreen\LoadingScreenSystem.cpp" />
     <ClCompile Include="model_animator.cpp" />
     <ClCompile Include="AssetRegistry.cpp" />
@@ -480,6 +481,7 @@
     <ClInclude Include="imgui\FA6FreeSolidFontData.h" />
     <ClInclude Include="imgui\IconsFontAwesome6.h" />
     <ClInclude Include="imgui\imgui_stdlib.h" />
+    <ClInclude Include="LevelTraversalSystem.h" />
     <ClInclude Include="LoadingScreen\LoadingScreenSystem.h" />
     <ClInclude Include="LoadingScreen\UiLoadingScreenBase.h" />
     <ClInclude Include="malloc_override.h" />

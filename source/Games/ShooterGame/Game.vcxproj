@@ -357,6 +357,7 @@
     <ClCompile Include="Entities\Npc\NpcHelper.cpp" />
     <ClCompile Include="Entities\Npc\NpcHumanAxe.cpp" />
     <ClCompile Include="Entities\Player\Player.cpp" />
+    <ClCompile Include="Entities\Player\player_start.cpp" />
     <ClCompile Include="Entities\Player\RestrictedArea.cpp" />
     <ClCompile Include="Entities\Player\Weapons\Animators\Animator_Akimbo.cpp" />
     <ClCompile Include="Entities\Player\Weapons\Animators\Animator_OneHand.cpp" />
@@ -376,6 +377,7 @@
     <ClCompile Include="Entities\RelativeTeleporter.cpp" />
     <ClCompile Include="Entities\TestNpc.cpp" />
     <ClCompile Include="Entities\TestParticleSystem.cpp" />
+    <ClCompile Include="Entities\Triggers\TriggerTravel.cpp" />
     <ClCompile Include="GameStart.cpp" />
     <ClCompile Include="ParticleSystems\BulletTrail.cpp" />
     <ClCompile Include="ParticleSystems\CaneTrail.cpp" />
