@@ -143,7 +143,7 @@ void LevelSaveSystem::LoadLevelFromData(LevelSaveData data)
     Logger::Log("save loaded\n");
 }
 
-const string saveDataPath = "SaveData/";
+
 
 void LevelSaveSystem::SaveLevelToFile(const string& saveName)
 {

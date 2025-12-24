@@ -6,7 +6,7 @@
 void LevelTraversalSystem::TravelToLevel(std::string LevelPath, Entity* playerEntity, std::string desiredSpawnPointName)
 {
 
-
+	Traveling = true;
 	bool oldSaveGame = playerEntity->SaveGame;
 
 	playerEntity->SaveGame = false;
@@ -33,5 +33,23 @@ void LevelTraversalSystem::TravelToLevel(std::string LevelPath, Entity* playerEn
 	LevelSaveSystem::pendingSave = levelData;
 
 	Level::LoadLevelFromFile(LevelPath);
+
+}
+
+void LevelTraversalSystem::FinishTransition()
+{
+
+	PlayerSerializedData = json();
+	DesiredSpawnPointName = "";
+	Traveling = false;
+
+}
+
+void LevelTraversalSystem::Reset()
+{
+
+	PlayerSerializedData = json();
+	DesiredSpawnPointName = "";
+	LevelMemory = {};
 
 }

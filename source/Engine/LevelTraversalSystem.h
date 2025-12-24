@@ -18,7 +18,12 @@ public:
 
 	static void TravelToLevel(std::string LevelPath, Entity* playerEntity, std::string desiredSpawnPointName);
 
+	static inline bool Traveling = false;
+
+	static void FinishTransition();
+	static void Reset();
 private:
+
 
 };
 

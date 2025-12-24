@@ -21,7 +21,7 @@
 
 #include "UI/RmlUi/RmlUiContext.h"
 
-
+#include "LevelTraversalSystem.h"
 
 Level* Level::Current = nullptr;
 
@@ -60,6 +60,11 @@ void Level::CloseLevel()
 	MyContactListener::afterSimulation();
 
 	EngineMain::MainInstance->RmlContext->UnloadAllDocuments();
+
+	if (LevelTraversalSystem::Traveling == false)
+	{
+		LevelTraversalSystem::Reset();
+	}
 
 }
 
@@ -211,6 +216,8 @@ Level* Level::OpenLevel(string filePath)
 
 	}
 
+
+	LevelTraversalSystem::FinishTransition();
 
 	Current->LoadAssets();
 

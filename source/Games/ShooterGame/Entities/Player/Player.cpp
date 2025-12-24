@@ -10,6 +10,8 @@
 
 #include "RestrictedArea.h"
 
+#include <SaveSystem/GameSaveSystem.h>
+
 REGISTER_ENTITY(Player, "player")
 
 Player* Player::Instance = nullptr;
@@ -842,12 +844,12 @@ void Player::Update()
 
     if (Input::GetAction("qSave")->Pressed())
     {
-        LevelSaveSystem::SaveLevelToFile("quicksave");
+        GameSaveSystem::SaveGameToFile("quicksave");
     }
 
     if (Input::GetAction("qLoad")->Pressed())
     {
-        LevelSaveSystem::LoadLevelFromFile("quicksave");
+        GameSaveSystem::LoadGameFromFile("quicksave");
     }
 
     if (currentWeapon != nullptr)

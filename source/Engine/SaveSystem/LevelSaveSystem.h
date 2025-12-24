@@ -23,6 +23,7 @@ public:
 
 private:
 
+	static inline string saveDataPath = "SaveData/";
 
 };
 

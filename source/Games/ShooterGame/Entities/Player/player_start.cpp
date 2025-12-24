@@ -1,6 +1,9 @@
 #include <Entity.h>
 #include <LevelTraversalSystem.h>
 #include "Player.hpp"
+
+#include <glm.h>
+
 class player_start : public Entity
 {
 public:
@@ -35,7 +38,12 @@ public:
 
 			
 			Player* p = dynamic_cast<Player*>(player);
+			p->Rotation.y = angle;
 			p->cameraRotation.y = angle;
+			p->cameraRotation.x = 0;
+			p->cameraRotation.z = 0;
+
+
 			p->Teleport(Position);
 
 		}
@@ -46,8 +54,7 @@ public:
 	{
 		Entity::Start();
 
-		LevelTraversalSystem::DesiredSpawnPointName = "";
-
+		
 	}
 
 private:

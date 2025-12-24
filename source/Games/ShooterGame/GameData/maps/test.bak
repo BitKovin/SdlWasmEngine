@@ -1309,7 +1309,6 @@
 {
 "classname" "info_player_start"
 "origin" "128 432 40"
-"angle" "270"
 }
 // entity 6
 {
@@ -1960,5 +1959,5 @@
 "classname" "info_player_start"
 "origin" "440 432 40"
 "angle" "-180"
-"targetname" "int1_exit"
+"targetname" "int1_exit1"
 }
