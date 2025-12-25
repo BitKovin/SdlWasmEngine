@@ -357,6 +357,8 @@ protected:
 	bool IsNeutral(const std::shared_ptr<ObservationTarget>& target) const;
 	bool IsHostile(const std::shared_ptr<ObservationTarget>& target) const;
 
+	void MoveToScheduledTask();
+
 private:
 
 };

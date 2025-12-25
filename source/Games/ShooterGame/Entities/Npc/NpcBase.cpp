@@ -24,6 +24,8 @@
 
 #include <limits>
 
+#include <LevelTraversalSystem.h>
+
 float NpcBase::GetDetectionSpeed(Crime crime) const
 {
 	switch (crime) {
@@ -131,6 +133,8 @@ void NpcBase::Start()
 	pathFollow.reachedTarget = true;
 
 	StartTask(defaultTask);
+
+	MoveToScheduledTask()
 
 }
 
@@ -1042,6 +1046,13 @@ bool NpcBase::IsHostile(const std::shared_ptr<ObservationTarget>& target) const
 		if (hostileTags.count(t)) return true;
 	}
 	return false;
+}
+
+void NpcBase::MoveToScheduledTask()
+{
+
+	float scheduleTime = Time::GameTime;
+
 }
 
 void NpcBase::UpdateObservationTarget()
@@ -2143,6 +2154,14 @@ void NpcBase::Deserialize(json& source)
 
 	// Ensure primary is consistent with knownTargets
 	SelectPrimaryAndCopy();
+
+	if (LevelTraversalSystem::Traveling) //we know that we are being loaded into level and not loaded using save game.
+	{
+
+		MoveToScheduledTask();
+
+	}
+
 }
 
 void NpcBase::PrepareToStartMovement()

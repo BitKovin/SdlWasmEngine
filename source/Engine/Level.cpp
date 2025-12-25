@@ -22,6 +22,7 @@
 #include "UI/RmlUi/RmlUiContext.h"
 
 #include "LevelTraversalSystem.h"
+#include "SaveSystem/GameSaveSystem.h"
 
 Level* Level::Current = nullptr;
 
@@ -61,7 +62,7 @@ void Level::CloseLevel()
 
 	EngineMain::MainInstance->RmlContext->UnloadAllDocuments();
 
-	if (LevelTraversalSystem::Traveling == false)
+	if (GameSaveSystem::LoadingGame == false)
 	{
 		LevelTraversalSystem::Reset();
 	}

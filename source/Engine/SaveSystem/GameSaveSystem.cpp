@@ -15,10 +15,12 @@ GameSaveData GameSaveSystem::SaveGameToData()
 void GameSaveSystem::LoadGameFromData(GameSaveData data)
 {
 
+    LevelTraversalSystem::Reset();
+
     LevelTraversalSystem::LevelMemory = data.LevelMemory;
 
     LevelSaveSystem::pendingSave = data.LevelData;
-    LevelTraversalSystem::Traveling = true;
+    LevelTraversalSystem::Traveling = false;
     Level::LoadLevelFromFile(data.LevelData.name);
 
 }

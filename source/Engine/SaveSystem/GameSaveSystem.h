@@ -19,6 +19,8 @@ public:
 	static void SaveGameToFile(std::string saveName);
 	static void LoadGameFromFile(std::string saveName);
 
+	static inline bool LoadingGame = false;
+
 private:
 
 	static inline string saveDataPath = "SaveData/";
