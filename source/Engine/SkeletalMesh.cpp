@@ -1579,8 +1579,22 @@ void SkeletalMesh::UpdateHitboxes()
 
 			if (RagdollPoseFollowStrength > 0)
 			{
-				Physics::Activate(body);
+				//Physics::Activate(body);
 			}
+
+			if (EngineMain::MainInstance->SimulatingGameTicks)
+			{
+				Physics::Deactivate(body);
+
+				if (EngineMain::MainInstance->SimulatingPreciseGameTicks)
+				{
+					Physics::Activate(body);
+
+				}
+
+			}
+
+			
 
 			auto res = animator.currentPose.find(boneName);
 

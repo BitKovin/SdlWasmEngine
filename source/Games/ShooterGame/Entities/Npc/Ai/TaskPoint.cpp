@@ -21,7 +21,13 @@ void TaskPoint::NpcEntered(NpcBase* npc)
 
     if (AllowMultipleNpcs == false)
     {
-        if (currentNpc != nullptr && currentNpc != npc) {
+        if (currentNpc != nullptr && currentNpc != npc) 
+        {
+
+            npc->taskState = GetDefaultTaskState();
+            npc->taskState.TaskStage = "_waitingForTurn_";
+            npc->taskState.HasToMoveToTarget = false;
+
             Logger::Log("Task already occupied: " + Name);
             return;
 		}
@@ -36,7 +42,16 @@ void TaskPoint::NpcExited(NpcBase* npc)
     if (currentNpc == npc) currentNpc = nullptr;
 }
 
-void TaskPoint::NpcUpdate(NpcBase* npc) {}
+void TaskPoint::NpcUpdate(NpcBase* npc) 
+{
+    TaskState& s = npc->GetTaskStateRef();
+
+    if (s.TaskStage == "_waitingForTurn_")
+    {
+        NpcEntered(npc);
+    }
+
+}
 void TaskPoint::NpcInterrupted(NpcBase* npc)
 {
     //Logger::Log("npc interrupted task");

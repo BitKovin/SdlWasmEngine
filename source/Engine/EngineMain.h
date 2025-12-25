@@ -54,6 +54,7 @@ public:
     unsigned long frame = 0;
 
 	bool SimulatingGameTicks = false;
+    bool SimulatingPreciseGameTicks = false;
 
 	RenderTexture* UiRenderTexture = nullptr;
 

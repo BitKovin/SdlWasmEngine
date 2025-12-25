@@ -1320,6 +1320,13 @@ void NpcBase::UpdateTargetAttack()
 		{
 			predictedTargetPosition += playerRef->controller.GetVelocity() * distance(Position, targetRef->Position) / bulletSpeed;
 		}
+		else
+		{
+			if (targetRef->LeadBody)
+			{
+				predictedTargetPosition += FromPhysics(targetRef->LeadBody->GetLinearVelocity()) * distance(Position, targetRef->Position) / bulletSpeed;
+			}
+		}
 
 		
 	}

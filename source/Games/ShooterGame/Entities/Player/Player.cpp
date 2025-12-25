@@ -21,7 +21,11 @@ string serializedPlayer = "";
 void Player::Start()
 {
 
+    if (started) return;
+
     Entity::Start();
+
+    started = true;
 
     Instance = this;
 
@@ -547,7 +551,6 @@ void Player::UpdateDebugUI()
     ImGui::End();
 
 
-
 }
 
 bool Player::OnGround()
@@ -641,6 +644,13 @@ void Player::Update()
 {
 
     if (EngineMain::MainInstance->SimulatingGameTicks) return;
+
+    auto targets = AiPerceptionSystem::GetTargets();
+
+    for (auto target : targets)
+    {
+        DebugDraw::Line(target->position, Camera::position - vec3(0, 1, 0));
+    }
 
     //printf("%i \n",SkeletalMesh::skelMeshes);
 
@@ -1039,15 +1049,7 @@ bool Player::InThirdPerson()
     return ThirdPersonView;
 }
 
-void Player::Serialize(json& target)
-{
 
-    Entity::Serialize(target);
-
-    SERIALIZE_FIELD(target, cameraRotation);
-    SERIALIZE_FIELD(target, velocity);
-
-}
 
 void Player::OnDamage(float Damage, Entity* DamageCauser, Entity* Weapon)
 {
@@ -1085,6 +1087,17 @@ void Player::UpdateCurrentRestrictedArea()
 
 }
 
+void Player::Serialize(json& target)
+{
+
+    Entity::Serialize(target);
+
+    SERIALIZE_FIELD(target, cameraRotation);
+    SERIALIZE_FIELD(target, velocity);
+    SERIALIZE_FIELD(target, currentSlot);
+
+}
+
 void Player::Deserialize(json& source)
 {
 
@@ -1092,6 +1105,9 @@ void Player::Deserialize(json& source)
 
     DESERIALIZE_FIELD(source, cameraRotation);
     DESERIALIZE_FIELD(source, velocity);
+    DESERIALIZE_FIELD(source, currentSlot);
+
+    SwitchToSlot(currentSlot, true);
 
     controller.SetVelocity(velocity);
     Teleport(Position);

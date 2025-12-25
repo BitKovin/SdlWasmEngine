@@ -799,6 +799,13 @@ public:
 	static uint64_t FindSurfaceId(string surfaceName);
 	static string FindSurfacyById(uint64_t id);
 
+
+	static void Deactivate(const Body* body)
+	{
+
+		bodyInterface->DeactivateBody(body->GetID());
+	}
+
 	static void Activate(const Body* body)
 	{
 

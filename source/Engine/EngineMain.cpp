@@ -566,7 +566,7 @@ void EngineMain::SimulateGameTicksForTime(float timeToSimulate)
     Time::DeltaTimeF = highDt;
     Time::DeltaTime = (double)highDt;
     Time::DeltaTimeFNoTimeScale = highDt;
-
+    SimulatingPreciseGameTicks = true;
     for (int i = 0; i < highPrecisionTicks; i++)
     {
         Time::GameTime += highDt;
@@ -584,7 +584,7 @@ void EngineMain::SimulateGameTicksForTime(float timeToSimulate)
             LoadingScreenSystem::Draw();
         }
     }
-
+    SimulatingPreciseGameTicks = false;
     if (player)
     {
         player->Teleport(oldPlayerPosition);

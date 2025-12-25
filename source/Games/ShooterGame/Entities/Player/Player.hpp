@@ -212,6 +212,8 @@ public:
 
 	bool ThirdPersonView = false;
 
+	bool started = false;
+
 	Player()
 	{
 
@@ -297,13 +299,14 @@ public:
 
 	bool InThirdPerson();
 
-	void Serialize(json& target);
+
 	void OnDamage(float Damage, Entity* DamageCauser = nullptr, Entity* Weapon = nullptr);
 	void OnPointDamage(float Damage, vec3 Point, vec3 Direction, string bone, Entity* DamageCauser, Entity* Weapon);
 
 	void UpdateCurrentRestrictedArea();
 
-	void Deserialize(json& source);
+	void Serialize(json& target);
+	void Deserialize(json& source) override;
 
 	void Teleport(vec3 target) override;
 

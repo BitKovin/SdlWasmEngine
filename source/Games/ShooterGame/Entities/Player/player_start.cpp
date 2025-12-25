@@ -33,7 +33,11 @@ public:
 			player->LoadAssetsIfNeeded();
 			player->Start();
 
-			player->Deserialize(LevelTraversalSystem::PlayerSerializedData);
+			if (LevelTraversalSystem::Traveling)
+			{
+				player->Deserialize(LevelTraversalSystem::PlayerSerializedData);
+			}
+
 
 
 			
