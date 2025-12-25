@@ -656,7 +656,7 @@ void NpcBase::UpdateDoorUpdate()
 void NpcBase::UpdateBT()
 {
 
-	behaviorTree.GetBlackboard().SetValue("target", Player::Instance->Id);
+	behaviorTree.GetBlackboard().SetValue("target", target_id);
 
 
 	if (taskState.HasToMoveToTarget)

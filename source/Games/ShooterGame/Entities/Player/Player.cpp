@@ -640,6 +640,8 @@ void Player::TryStep(vec3 dir)
 void Player::Update()
 {
 
+    if (EngineMain::MainInstance->SimulatingGameTicks) return;
+
     //printf("%i \n",SkeletalMesh::skelMeshes);
 
     if(Input::GetAction("cameraView")->Pressed())
@@ -893,6 +895,8 @@ void Player::Update()
 
 void Player::AsyncUpdate()
 {
+
+    if (EngineMain::MainInstance->SimulatingGameTicks) return;
 
     if (InThirdPerson())
     {

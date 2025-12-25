@@ -112,6 +112,8 @@ public:
 		Health -= Damage;
 	}
 
+	virtual void Teleport(vec3 position);
+
 	virtual void OnPointDamage(float Damage, vec3 Point, vec3 Direction, string bone = "", Entity* DamageCauser = nullptr, Entity* Weapon = nullptr)
 	{
 		OnDamage(Damage, DamageCauser, Weapon);

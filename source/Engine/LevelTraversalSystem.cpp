@@ -22,7 +22,7 @@ void LevelTraversalSystem::TravelToLevel(std::string LevelPath, Entity* playerEn
 	PlayerSerializedData = j;
 	DesiredSpawnPointName = desiredSpawnPointName;
 
-	LevelSaveData levelData;
+	LevelSaveData levelData = LevelSaveData();
 
 	if (LevelMemory.count(LevelPath))
 	{
@@ -31,6 +31,10 @@ void LevelTraversalSystem::TravelToLevel(std::string LevelPath, Entity* playerEn
 	}
 	
 	LevelSaveSystem::pendingSave = levelData;
+
+	float timeToSimulate = Time::GameTime - levelData.GameTime;
+
+	TimeSkip = timeToSimulate;
 
 	Level::LoadLevelFromFile(LevelPath);
 
@@ -51,5 +55,5 @@ void LevelTraversalSystem::Reset()
 	PlayerSerializedData = json();
 	DesiredSpawnPointName = "";
 	LevelMemory = {};
-
+	TimeSkip = 0;
 }

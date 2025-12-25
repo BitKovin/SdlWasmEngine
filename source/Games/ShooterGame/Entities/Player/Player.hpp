@@ -305,7 +305,7 @@ public:
 
 	void Deserialize(json& source);
 
-	void Teleport(vec3 target);
+	void Teleport(vec3 target) override;
 
 	void MoveTo(vec3 target);
 

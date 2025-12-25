@@ -14,6 +14,7 @@
 #include "Console/Console.h"
 #include "Console/ConsoleDefaultCommands.h"
 #include "UI/RmlUi/RmlUiContext.h"
+#include "LevelTraversalSystem.h"
 
 EngineMain* EngineMain::MainInstance = nullptr;
 
@@ -384,6 +385,15 @@ void EngineMain::MainLoop()
 
     if (loadedlevel || simulatedGameTicks)
     {
+
+        if (loadedlevel)
+        {
+            if (LevelTraversalSystem::TimeSkip > 0)
+            {
+                SimulateGameTicksForTime(LevelTraversalSystem::TimeSkip);
+            }
+        }
+
         Time::Update();
         Time::DeltaTime = 0.05;
         Time::DeltaTimeF = 0.05f;
@@ -391,6 +401,7 @@ void EngineMain::MainLoop()
         LoadingFrames = 5;
 
     }
+    LevelTraversalSystem::TimeSkip = 0;
 
     Input::Update();
 
@@ -471,8 +482,13 @@ void EngineMain::SimulateGameTick()
 
 void EngineMain::SimulateGameTicksForTime(float timeToSimulate)
 {
+
+    Input::ReleaseAllActions();
+
     LoadingScreenSystem::Progress = 0.0f;
     LoadingScreenSystem::Draw();
+
+    Logger::Log("Simulating Seconds: " + to_string(timeToSimulate));
 
     const float lowDt = 1.0f / 5.0f;
     const float highDt = 1.0f / 20.0f;
@@ -505,7 +521,28 @@ void EngineMain::SimulateGameTicksForTime(float timeToSimulate)
     Time::DeltaTime = (double)lowDt;
     Time::DeltaTimeFNoTimeScale = lowDt;
 
-	int onePercentTicks = glm::max(1, totalTicks / 50);
+
+    Entity* player = Level::Current->FindEntityWithName("player");
+
+    vec3 oldPlayerPosition = vec3();
+
+    vec3 farAwayPosition = vec3(100000, 1000000, 1000000);
+
+    if (player)
+    {
+
+        oldPlayerPosition = player->Position;
+
+        player->Teleport(farAwayPosition);
+
+        player->Update();
+        player->AsyncUpdate();
+        player->LateUpdate();
+
+    }
+
+
+	int onePercentTicks = glm::max(1, totalTicks / 200);
 
     for (int i = 0; i < lowPrecisionTicks; i++)
     {
@@ -546,6 +583,12 @@ void EngineMain::SimulateGameTicksForTime(float timeToSimulate)
                 (float)(lowPrecisionTicks + i) / (float)totalTicks;
             LoadingScreenSystem::Draw();
         }
+    }
+
+    if (player)
+    {
+        player->Teleport(oldPlayerPosition);
+
     }
 
     FinishFrame();

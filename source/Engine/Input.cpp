@@ -291,6 +291,9 @@ void Input::ReceiveSdlEvent(SDL_Event event)
 
 bool Input::IsTouchEventPressed(int id)
 {
+
+    if (EngineMain::MainInstance->SimulatingGameTicks) return false;
+
     auto event = GetTouchEventFromId(id);
 
     if (event.id == 0) return false;
@@ -301,6 +304,9 @@ bool Input::IsTouchEventPressed(int id)
 
 bool Input::IsTouchEventReleased(int id)
 {
+
+    if (EngineMain::MainInstance->SimulatingGameTicks) return false;
+
     auto event = GetTouchEventFromId(id);
 
     if (event.id == 0) return false;
@@ -310,6 +316,8 @@ bool Input::IsTouchEventReleased(int id)
 
 bool Input::IsTouchEventHolding(int id)
 {
+
+    if (EngineMain::MainInstance->SimulatingGameTicks) return false;
 
 	auto event = GetTouchEventFromId(id);
 
@@ -328,6 +336,8 @@ bool Input::IsTouchEventHolding(int id)
 vec2 Input::GetTouchEventPosition(int id)
 {
 
+    if (EngineMain::MainInstance->SimulatingGameTicks) return vec2(0);
+
 	auto event = GetTouchEventFromId(id);
 
 	if (event.id == 0) return vec2(0);
@@ -338,6 +348,7 @@ vec2 Input::GetTouchEventPosition(int id)
 
 vec2 Input::GetTouchEventDelta(int id)
 {
+
     auto event = GetTouchEventFromId(id);
 
     if (event.id == 0) return vec2(0);
@@ -347,6 +358,9 @@ vec2 Input::GetTouchEventDelta(int id)
 
 vec2 Input::GetLeftStickPosition()
 {
+
+    if (EngineMain::MainInstance->SimulatingGameTicks) return vec2(0);
+
     if (joystick)
     {
         const int axisRightX = 0;
@@ -371,6 +385,9 @@ vec2 Input::GetLeftStickPosition()
 
 vec2 Input::GetRightStickPosition()
 {
+
+    if (EngineMain::MainInstance->SimulatingGameTicks) return vec2(0);
+
     if (joystick)
     {
         const int axisRightX = 2;
@@ -412,6 +429,19 @@ InputAction* Input::AddAction(const std::string& actionName) {
         return action;
     }
     return actions[actionName];
+}
+
+void Input::ReleaseAllActions()
+{
+
+    MouseDelta = vec2(0);
+    
+
+    for (auto action : actions)
+    {
+        action.second->CleanInput();
+    }
+
 }
 
 void Input::RemoveAction(const std::string& actionName)
@@ -593,6 +623,13 @@ void InputAction::Update() {
     else if (!pressing && oldPressing) {
         released = true;
     }
+}
+
+void InputAction::CleanInput()
+{
+    pressed = false;
+    pressing = false;
+    released = false;
 }
 
 TouchEvent Input::GetTouchEventFromId(int id)

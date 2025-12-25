@@ -80,6 +80,16 @@ void Entity::Serialize(json& target)
 
 }
 
+void Entity::Teleport(vec3 position)
+{
+
+	Position = position;
+
+	if (LeadBody)
+		Physics::SetBodyPosition(LeadBody, position);
+
+}
+
 void Entity::Deserialize(json& source)
 {
 	DESERIALIZE_FIELD(source, Name);
