@@ -189,6 +189,9 @@
     <ClCompile Include="Entities\Triggers\TriggerTravel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Entities\NpcSimulationManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Entities\Player\Player.hpp">
@@ -288,6 +291,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Entities\Npc\NpcHumanAxe.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Entities\NpcSimulationManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

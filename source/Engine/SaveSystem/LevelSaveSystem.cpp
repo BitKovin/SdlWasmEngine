@@ -48,7 +48,7 @@ LevelSaveData LevelSaveSystem::SaveLevelToData()
 
         entity->Serialize(jsonData);
 
-        data.data = jsonData.dump();
+        data.data = jsonData;
 
         entities.push_back(data);
 
@@ -132,9 +132,7 @@ void LevelSaveSystem::LoadLevelFromData(LevelSaveData data)
     for (auto entity : pendingLoadEntities)
     {
 
-        json data = json::parse(entity.second.data);
-
-        entity.first->Deserialize(data);
+        entity.first->Deserialize(entity.second.data);
 
     }
 

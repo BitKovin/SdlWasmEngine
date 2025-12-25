@@ -186,6 +186,9 @@ public:
     static InputAction* AddAction(const std::string& actionName);
 
     static void RemoveAction(const std::string& actionName);
+
+    static void ReleaseAllActions();
+
 };
 
 class InputAction 
@@ -226,6 +229,8 @@ public:
 
     // Call every frame to update the action state.
     void Update();
+
+    void CleanInput();
 
     static InputAction NullAction;
 

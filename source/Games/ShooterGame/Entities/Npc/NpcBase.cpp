@@ -134,7 +134,7 @@ void NpcBase::Start()
 
 	StartTask(defaultTask);
 
-	MoveToScheduledTask()
+	MoveToScheduledTask();
 
 }
 
@@ -361,6 +361,8 @@ void NpcBase::UpdateReturnFromRagdoll()
 
 void NpcBase::PlayPhrace(std::string name)
 {
+
+	if (EngineMain::MainInstance->SimulatingGameTicks) return;
 
 	if (VoiceSoundPlayer == nullptr) return;
 
@@ -2012,6 +2014,9 @@ void NpcBase::Serialize(json& target)
 
 	SERIALIZE_FIELD(target, movementLockDelay);
 
+	SERIALIZE_FIELD(target, DoingTask);
+	SERIALIZE_FIELD(target, DoingTaskOld);
+
 
 	AnimationState taskAnimationState;
 
@@ -2151,6 +2156,9 @@ void NpcBase::Deserialize(json& source)
 	AnimationState taskAnimationState;
 	DESERIALIZE_FIELD(source, taskAnimationState);
 	animator.taskAnimation->SetAnimationState(taskAnimationState);
+
+	DESERIALIZE_FIELD(source, DoingTask);
+	DESERIALIZE_FIELD(source, DoingTaskOld);
 
 	// Ensure primary is consistent with knownTargets
 	SelectPrimaryAndCopy();

@@ -174,6 +174,7 @@ GameStart::GameStart()
 	UpdateWhenPaused = true;
     ConstructMenus();
 
+    Spawn("npcSimulationManager");
 
     if (startedGame) return;
 

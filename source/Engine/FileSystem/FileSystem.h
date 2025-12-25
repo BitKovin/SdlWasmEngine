@@ -16,6 +16,8 @@ namespace FileSystemEngine
     // on failure: throws std::runtime_error
     std::string ReadFile(const std::string& path);
 
+    std::vector<std::string> GetFilesInPath(const std::string& path);
+
     // Write text file (GameData is read‑only! only SaveData makes sense here)
     // returns true on success, false on failure
     bool WriteFile(const std::string& path, const std::string& content);

@@ -2,6 +2,7 @@
 #include "FileSystem.h"
 #include <stdexcept>
 #include <SDL2/SDL.h>
+#include <sstream>
 
 #include "../Logger.hpp"
 
@@ -170,6 +171,108 @@ namespace FileSystemEngine {
             return std::string(bin.begin(), bin.end());
         }
     }
+
+#ifdef __EMSCRIPTEN__
+    EM_JS(char*, ListFilesJS, (const char* dirPath), {
+        const dir = UTF8ToString(dirPath);
+        try {
+            const entries = FS.readdir(dir).filter(f => f !== '.' && f !== '..');
+            const files = entries.filter(f => {
+                const p = dir.endsWith('/') ? dir + f : dir + '/' + f;
+                return FS.isFile(FS.stat(p).mode);
+            });
+            const str = files.join('\n');
+            const len = lengthBytesUTF8(str) + 1;
+            const buf = _malloc(len);
+            stringToUTF8(str, buf, len);
+            return buf;
+        }
+     catch (e) {
+      return 0;
+  }
+        });
+#endif
+
+
+    std::vector<std::string> GetFilesInPath(const std::string& path)
+    {
+        std::vector<std::string> files;
+        std::string dir_path = path;
+        if (!dir_path.empty() && dir_path.back() != '/') {
+            dir_path += '/';
+        }
+
+        if (isSavePath(path)) {
+            // Handle save data
+#ifdef __EMSCRIPTEN__
+            std::string em_dir = "/save/" + path;
+            char* c = ListFilesJS(em_dir.c_str());
+            if (c) {
+                std::string list(c);
+                free(c);
+                std::stringstream ss(list);
+                std::string file;
+                while (std::getline(ss, file, '\n')) {
+                    files.push_back(file);
+                }
+            }
+#else
+        // Desktop: use std::filesystem for save data
+            try {
+                for (const auto& entry : std::filesystem::directory_iterator(path)) {
+                    if (entry.is_regular_file()) {
+                        files.push_back(entry.path().filename().string());
+                    }
+                }
+            }
+            catch (...) {
+                // Return empty on error
+            }
+#endif
+        }
+        else {
+            // Handle game data
+#ifdef __EMSCRIPTEN__
+            std::string em_dir = path;
+            if (!em_dir.empty() && em_dir[0] != '/') {
+                em_dir = "/" + em_dir;
+            }
+            char* c = ListFilesJS(em_dir.c_str());
+            if (c) {
+                std::string list(c);
+                free(c);
+                std::stringstream ss(list);
+                std::string file;
+                while (std::getline(ss, file, '\n')) {
+                    files.push_back(file);
+                }
+            }
+#else
+        // Desktop: use SDL_GetBasePath() + path for game data
+            const char* base = SDL_GetBasePath();
+            std::string full_path;
+            if (base) {
+                full_path = path;
+                SDL_free((void*)base);
+            }
+            else {
+                full_path = path;
+            }
+            try {
+                for (const auto& entry : std::filesystem::directory_iterator(full_path)) {
+                    if (entry.is_regular_file()) {
+                        files.push_back(entry.path().filename().string());
+                    }
+                }
+            }
+            catch (...) {
+                // Return empty on error
+            }
+#endif
+        }
+        return files;
+    }
+
 
     bool FileSystemEngine::WriteFile(const std::string& path, const std::string& content) 
     {

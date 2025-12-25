@@ -341,6 +341,7 @@
     <ClCompile Include="Ai\BehaviorTreeTasks\StopTargetFollow.cpp" />
     <ClCompile Include="Ai\BehaviorTreeTasks\Task_DestinationReached.cpp" />
     <ClCompile Include="Entities\Enviroment\Door.cpp" />
+    <ClCompile Include="Entities\NpcSimulationManager.cpp" />
     <ClCompile Include="Entities\Npc\Ai\TaskPairedAction.cpp" />
     <ClCompile Include="Entities\Npc\Ai\TaskPhasedAction.cpp" />
     <ClCompile Include="Entities\Npc\Ai\TaskPoint.cpp" />
@@ -393,6 +394,7 @@
     <ClInclude Include="Ai\NpcTasks\TaskState.h" />
     <ClInclude Include="Entities\Enviroment\Door.h" />
     <ClInclude Include="Entities\IEnemy.h" />
+    <ClInclude Include="Entities\NpcSimulationManager.h" />
     <ClInclude Include="Entities\Npc\Ai\TaskPairedAction.h" />
     <ClInclude Include="Entities\Npc\Ai\TaskPhasedAction.h" />
     <ClInclude Include="Entities\Npc\Ai\TaskPoint.h" />

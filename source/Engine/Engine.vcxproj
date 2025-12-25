@@ -347,6 +347,7 @@
     <ClCompile Include="Entities\PointLight.cpp" />
     <ClCompile Include="Entities\transformPoint.cpp" />
     <ClCompile Include="FileSystem\FileSystem.cpp" />
+    <ClCompile Include="Helpers\CSVParser.cpp" />
     <ClCompile Include="http\http_client_emscripten.cpp" />
     <ClCompile Include="http\http_client_httplib.cpp" />
     <ClCompile Include="imgui\imgui_stdlib.cpp" />
@@ -478,6 +479,7 @@
     <ClInclude Include="Entities\WorldSpawn.h" />
     <ClInclude Include="FileSystem\FileSystem.h" />
     <ClInclude Include="FogManager.h" />
+    <ClInclude Include="Helpers\CSVParser.h" />
     <ClInclude Include="http\http_client.h" />
     <ClInclude Include="imgui\FA6FreeSolidFontData.h" />
     <ClInclude Include="imgui\IconsFontAwesome6.h" />

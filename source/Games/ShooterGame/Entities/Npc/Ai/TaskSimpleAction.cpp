@@ -70,6 +70,7 @@ void TaskSimpleAction::NpcInterrupted(NpcBase* npc)
     TaskPoint::NpcInterrupted(npc);
     npc->GetTaskStateRef().AllowWeapon = true;
     npc->GetTaskStateRef().HasToLockPosition = false;
+    npc->GetTaskStateRef().TaskStage = "";
 }
 
 void TaskSimpleAction::NpcReturned(NpcBase* npc)
