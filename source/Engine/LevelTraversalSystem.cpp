@@ -30,9 +30,21 @@ void LevelTraversalSystem::TravelToLevel(std::string LevelPath, Entity* playerEn
 		levelData = LevelMemory[LevelPath];
 	}
 	
+	float timeToSimulate = Time::GameTime - levelData.GameTime;
+
+	float simulationLimit = 100; // in future I should replace it with time since start of the day or smth
+
+	if (timeToSimulate > simulationLimit) //limiting simulation time and snappting game time to only simulate remaining time
+	{
+		timeToSimulate = simulationLimit;
+
+	}
+
+	levelData.GameTime = Time::GameTime - timeToSimulate;
+
 	LevelSaveSystem::pendingSave = levelData;
 
-	float timeToSimulate = Time::GameTime - levelData.GameTime;
+
 
 	TimeSkip = timeToSimulate;
 
