@@ -166,6 +166,8 @@ void NpcBase::Death()
 
 	//Tags.clear();
 
+	Tags.push_back("dead");
+
 	AiPerceptionSystem::RemoveObserver(observer);
 	observer = nullptr;
 
@@ -762,6 +764,9 @@ void NpcBase::UpdateObserver()
 	// Process each visible target
 	for (std::shared_ptr<ObservationTarget> target : observer->visibleTargets)
 	{
+		if (target->ownerId == Id) continue;
+
+
 		// ensure we have entry if it's relevant (neutral or hostile) or we already remembered it
 		bool neutral = IsNeutral(target);
 		bool hostile = IsHostile(target);
@@ -787,7 +792,25 @@ void NpcBase::UpdateObserver()
 		if (hostile)
 		{
 			min_crime = Crime::Group_Attack;
+			auto& info = knownTargets[target->ownerId];
+			info.attack = true;
+			info.underArrestExpire = -1;
 		}
+
+		if (target->HasTag("dead"))
+		{
+			if (knownTargets.count(target->ownerId))
+			{
+
+				auto& info = knownTargets[target->ownerId];
+
+				knownTargets.erase(target->ownerId);
+				continue;
+
+
+			}
+		}
+
 
 		// Same detection logic as before, applied per target
 		if (target->HasTag("violentCrime"))
@@ -1062,7 +1085,7 @@ void NpcBase::UpdateObservationTarget()
 
 	observationTarget->tags.clear();
 
-	observationTarget->active = false; // needToInvestigateBody || (target_attack && target_follow);
+	observationTarget->active = true; // needToInvestigateBody || (target_attack && target_follow);
 	observationTarget->isTriggeredNpc = false;
 
 	if (dead)
@@ -1099,9 +1122,9 @@ void NpcBase::UpdateObservationTarget()
 		if (target_underArrest && target_follow || needHelpStunned)
 		{
 
-			observationTarget->tags.insert("in_trouble");
-			observationTarget->active = true;
-			observationTarget->isTriggeredNpc = true;
+			//observationTarget->tags.insert("in_trouble");
+			//observationTarget->active = true;
+			//observationTarget->isTriggeredNpc = true;
 		}
 		else
 		{
@@ -1112,6 +1135,13 @@ void NpcBase::UpdateObservationTarget()
 		}
 
 	}
+
+	if (dead)
+	{
+		observationTarget->tags.insert("dead");
+	}
+
+	observationTarget->tags.insert(fractionTag);
 
 }
 
@@ -1286,7 +1316,12 @@ void NpcBase::UpdateTargetAttack()
 
 		Player* playerRef = dynamic_cast<Player*>(targetRef);
 
-		predictedTargetPosition += playerRef->controller.GetVelocity() * distance(Position, targetRef->Position) / bulletSpeed;
+		if (playerRef)
+		{
+			predictedTargetPosition += playerRef->controller.GetVelocity() * distance(Position, targetRef->Position) / bulletSpeed;
+		}
+
+		
 	}
 
 	vec3 bulletRotation = MathHelper::FindLookAtRotation(vec3(), predictedTargetPosition - Position);
@@ -1315,7 +1350,7 @@ bool NpcBase::CheckAttackLOS(vec3 location, vec3 targetLocation)
 
 	auto hit = Physics::SphereTrace(attackPos, targetLocation + vec3(0, 0.65, 0), 0.1f, BodyType::GroupHitTest, mesh->hitboxBodies);
 
-	if (hit.hasHit && hit.entity->HasTag("player") == false)
+	if (hit.hasHit && hit.entity->Id != target_id)
 	{
 
 		return false;
@@ -1706,6 +1741,8 @@ void NpcBase::LoadAssets()
 
 void NpcBase::ShareTargetKnowlageWith(NpcBase* anotherNpc)
 {
+
+	if (anotherNpc->fractionTag != fractionTag) return;
 
 	// Generalized sharing across knownTargets
 	for (const auto& pair : knownTargets)

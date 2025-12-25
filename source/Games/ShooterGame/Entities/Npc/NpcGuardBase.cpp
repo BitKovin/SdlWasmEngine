@@ -10,12 +10,14 @@ private:
 
 };
 
-NpcGuardBase::NpcGuardBase()
+NpcGuardBase::NpcGuardBase() : NpcBase()
 {
 
 	isGuard = true;
 
 	modelPath = "GameData/models/npc/guard.glb";
+
+	hostileTags.insert("bandit");
 
 }
 

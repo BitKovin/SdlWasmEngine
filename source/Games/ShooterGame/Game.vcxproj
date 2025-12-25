@@ -352,6 +352,7 @@
     <ClCompile Include="Entities\Npc\Ai\Task_PatrolPoint.cpp" />
     <ClCompile Include="Entities\Npc\Ai\Task_SmokePoint.cpp" />
     <ClCompile Include="Entities\Npc\Animators\NpcAnimatorBase.cpp" />
+    <ClCompile Include="Entities\Npc\NpcBanditTest.cpp" />
     <ClCompile Include="Entities\Npc\NpcBase.cpp" />
     <ClCompile Include="Entities\Npc\NpcCivilianBase.cpp" />
     <ClCompile Include="Entities\Npc\NpcGuardBase.cpp" />

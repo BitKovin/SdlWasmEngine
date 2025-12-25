@@ -100,7 +100,7 @@ Level* Level::OpenLevel(string filePath)
 		delete(Current);
 	}
 
-	if (isNewLevel)
+	if (isNewLevel && false)
 	{
 		AssetRegistry::ClearMemory();
 		DebugDraw::ClearCommands();
