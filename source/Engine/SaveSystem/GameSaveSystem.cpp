@@ -18,6 +18,7 @@ void GameSaveSystem::LoadGameFromData(GameSaveData data)
     LevelTraversalSystem::Reset();
 
     LevelTraversalSystem::LevelMemory = data.LevelMemory;
+    LoadingGame = true;
 
     LevelSaveSystem::pendingSave = data.LevelData;
     LevelTraversalSystem::Traveling = false;

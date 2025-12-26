@@ -11,6 +11,7 @@
 #include "RestrictedArea.h"
 
 #include <SaveSystem/GameSaveSystem.h>
+#include "../NpcSimulationManager.h"
 
 REGISTER_ENTITY(Player, "player")
 
@@ -1095,6 +1096,7 @@ void Player::Serialize(json& target)
     SERIALIZE_FIELD(target, cameraRotation);
     SERIALIZE_FIELD(target, velocity);
     SERIALIZE_FIELD(target, currentSlot);
+    SERIALIZE_FIELD(target, NpcSimulationManager::worldSimulationState);
 
 }
 
@@ -1106,6 +1108,7 @@ void Player::Deserialize(json& source)
     DESERIALIZE_FIELD(source, cameraRotation);
     DESERIALIZE_FIELD(source, velocity);
     DESERIALIZE_FIELD(source, currentSlot);
+    DESERIALIZE_FIELD(source, NpcSimulationManager::worldSimulationState);
 
     SwitchToSlot(currentSlot, true);
 

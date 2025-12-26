@@ -2,7 +2,7 @@
 
 #include <Entity.h>
 #include <map>
-
+#include <json.hpp>
 struct SchedulePoint
 {
 	std::string location = "";
@@ -14,6 +14,7 @@ struct NpcSimulationData
 	std::string id = "";
 	std::string className = "npc_civilian";
 	std::map<int, SchedulePoint> schedule;
+
 };
 
 struct NpcSimulationState
@@ -23,12 +24,13 @@ struct NpcSimulationState
 	std::string currentTask = "";
 
 	json entityState = json();
-
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(NpcSimulationState, id, currentLocation, currentTask, entityState)
 };
 
 struct WorldSimulationState
 {
 	std::map<std::string, NpcSimulationState> npcStates;
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(WorldSimulationState, npcStates)
 };
 
 class NpcSimulationManager : public Entity
@@ -43,6 +45,8 @@ public:
 	void Start() override;
 
 	static NpcSimulationState* GetSimulationStateRef(const std::string& id);
+
+	static inline WorldSimulationState worldSimulationState;
 
 private:
 
@@ -63,7 +67,7 @@ private:
 
 	static inline map<std::string, NpcSimulationData> staticSimulationData;
 
-	static inline WorldSimulationState worldSimulationState;
+
 
 
 };
