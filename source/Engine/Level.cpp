@@ -118,6 +118,8 @@ Level* Level::OpenLevel(string filePath)
 	Level* newLevel = new Level();
 
 	newLevel->filePath = filePath;
+	std::filesystem::path p(newLevel->filePath);
+	newLevel->mapName = p.stem().string();
 
 	Current = newLevel;
 

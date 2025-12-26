@@ -67,6 +67,7 @@ public:
 
 
 	string filePath;
+	string mapName;
 
 	CQuake3BSP BspData;
 

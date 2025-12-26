@@ -253,6 +253,8 @@ public:
 	void PasteAnimationPose(AnimationPose pose)
 	{
 
+		if (model == nullptr) return;
+
 		dirtyPose = true;
 
 		animator.ApplyBonePoseArray(pose.boneTransforms);

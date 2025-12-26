@@ -1,7 +1,6 @@
 // CSVParser.cpp
 #include "CSVParser.h"
 
-#include <cctype>  // for std::tolower
 
 std::string CSVParser::Cell::trimmed() const {
     std::string s = value_;
@@ -15,81 +14,97 @@ std::vector<std::vector<std::string>> CSVParser::parse(const std::string& str, c
     std::vector<std::string> row;
     std::string cell;
     size_t i = 0;
+    const size_t len = str.length();
 
-    while (i < str.length()) {
-        cell.clear();
+    while (i < len) {
+        row.clear();
+        bool row_done = false;
+        bool last_was_delim = false;
+        while (!row_done && i < len) {
+            cell.clear();
 
-        // Skip leading whitespace if not quoted
-        while (i < str.length() && (str[i] == ' ' || str[i] == '\t') && str[i] != '"') {
-            ++i;
-        }
+            // Skip leading whitespace if not quoted
+            while (i < len && (str[i] == ' ' || str[i] == '\t') && str[i] != '"') {
+                ++i;
+            }
 
-        bool quoted = false;
-        if (i < str.length() && str[i] == '"') {
-            quoted = true;
-            ++i;
-        }
+            bool is_quoted = false;
+            bool quoted = false;
+            if (i < len && str[i] == '"') {
+                is_quoted = true;
+                quoted = true;
+                ++i;  // Skip opening quote
+            }
 
-        while (i < str.length()) {
-            if (quoted) {
-                if (str[i] == '"') {
-                    ++i;
-                    if (i < str.length() && str[i] == '"') {
-                        cell += '"';
+            // Parse the field
+            while (i < len) {
+                if (quoted) {
+                    if (str[i] == '"') {
                         ++i;
+                        if (i < len && str[i] == '"') {
+                            cell += '"';
+                            ++i;
+                        }
+                        else {
+                            quoted = false;
+                            break;
+                        }
                     }
                     else {
-                        quoted = false;
-                        break;
+                        cell += str[i++];
                     }
                 }
                 else {
+                    if (str[i] == delim || str[i] == '\n' || str[i] == '\r') {
+                        break;
+                    }
                     cell += str[i++];
                 }
             }
+
+            // Trim trailing whitespace if not quoted
+            if (!is_quoted) {
+                while (!cell.empty() && (cell.back() == ' ' || cell.back() == '\t')) {
+                    cell.pop_back();
+                }
+            }
+
+            row.push_back(cell);
+            last_was_delim = false;
+
+            // Handle delimiter or newline
+            if (i >= len) {
+                row_done = true;
+            }
+            else if (str[i] == delim) {
+                ++i;
+                last_was_delim = true;
+            }
             else {
-                if (str[i] == delim || str[i] == '\n' || str[i] == '\r') {
-                    break;
+                // Handle newline
+                if (str[i] == '\r') {
+                    ++i;
                 }
-                cell += str[i++];
+                if (i < len && str[i] == '\n') {
+                    ++i;
+                }
+                row_done = true;
             }
         }
 
-        // Trim trailing whitespace
-        while (!cell.empty() && (cell.back() == ' ' || cell.back() == '\t')) {
-            cell.pop_back();
+        if (last_was_delim) {
+            row.push_back("");
         }
 
-        row.push_back(cell);
-
-        if (i < str.length()) {
-            if (str[i] == delim) {
-                ++i;
-            }
-            else if (str[i] == '\r') {
-                ++i;
-                if (i < str.length() && str[i] == '\n') ++i;
-                if (!row.empty()) {
-                    csv.push_back(row);
-                    row.clear();
-                }
-            }
-            else if (str[i] == '\n') {
-                ++i;
-                if (!row.empty()) {
-                    csv.push_back(row);
-                    row.clear();
-                }
-            }
+        if (!row.empty()) {
+            csv.push_back(row);
         }
-    }
-
-    if (!row.empty()) {
-        csv.push_back(row);
     }
 
     return csv;
 }
+
+
 
 CSVParser::CSVParser(const std::string& csv_text, char delimiter)
     : data_(parse(csv_text, delimiter)) {

@@ -207,6 +207,9 @@ protected:
 
 	std::string defaultTask = "np_0_0";
 
+	std::string scheduledTask = "";
+	std::string DesiredTask = "defaultTask";
+
 private:
 
 	bool has_observed_crime = false;
@@ -235,6 +238,8 @@ public:
 	vec3 desiredLookVector = vec3(1);
 
 	PathFollowQuery pathFollow;
+
+	std::string SimulationId;
 
 	NpcBase();
 
@@ -358,6 +363,8 @@ protected:
 	bool IsHostile(const std::shared_ptr<ObservationTarget>& target) const;
 
 	void MoveToScheduledTask();
+
+	void UpdateScheduledTask();
 
 private:
 

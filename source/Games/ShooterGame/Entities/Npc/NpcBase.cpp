@@ -25,6 +25,7 @@
 #include <limits>
 
 #include <LevelTraversalSystem.h>
+#include "../NpcSimulationManager.h"
 
 float NpcBase::GetDetectionSpeed(Crime crime) const
 {
@@ -399,6 +400,8 @@ void NpcBase::AsyncUpdate()
 		UpdateTargetFollow();
 		UpdateBT();
 		UpdateTargetAttack();
+
+		UpdateScheduledTask();
 
 	}
 
@@ -1077,6 +1080,27 @@ void NpcBase::MoveToScheduledTask()
 {
 
 	float scheduleTime = Time::GameTime;
+
+}
+
+void NpcBase::UpdateScheduledTask()
+{
+
+	if (SimulationId.empty()) return;
+
+	auto SimulationStateRef = NpcSimulationManager::GetSimulationStateRef(SimulationId);
+
+
+	if (scheduledTask != SimulationStateRef->currentTask)
+	{
+
+		scheduledTask = SimulationStateRef->currentTask;
+
+		DesiredTask = scheduledTask;
+
+		//StartTask(SimulationStateRef->currentTask);
+
+	}
 
 }
 
@@ -2060,6 +2084,11 @@ void NpcBase::Serialize(json& target)
 
 	SERIALIZE_FIELD(target, DoingTask);
 	SERIALIZE_FIELD(target, DoingTaskOld);
+	SERIALIZE_FIELD(target, DesiredTask);
+
+	SERIALIZE_FIELD(target, scheduledTask);
+
+	SERIALIZE_FIELD(target, SimulationId);
 
 
 	AnimationState taskAnimationState;
@@ -2134,6 +2163,9 @@ void NpcBase::Deserialize(json& source)
 	DESERIALIZE_FIELD(source, flee_target);
 
 	DESERIALIZE_FIELD(source, btSaveState);
+
+	DESERIALIZE_FIELD(source, scheduledTask);
+
 	if (btSaveState.empty() == false)
 	{
 		behaviorTree.LoadState(json::parse(btSaveState));
@@ -2181,6 +2213,7 @@ void NpcBase::Deserialize(json& source)
 	mesh->Rotation = Rotation;
 
 	mesh->SetAnimationState(animationStateSaveData);
+	if(getFromRagdollAnimation)
 	getFromRagdollAnimation->SetAnimationState(getFromRagdollAnimationSaveState);
 
 	//mesh->Update(0);
@@ -2199,10 +2232,15 @@ void NpcBase::Deserialize(json& source)
 
 	AnimationState taskAnimationState;
 	DESERIALIZE_FIELD(source, taskAnimationState);
-	animator.taskAnimation->SetAnimationState(taskAnimationState);
+
+	if(animator.taskAnimation)
+		animator.taskAnimation->SetAnimationState(taskAnimationState);
 
 	DESERIALIZE_FIELD(source, DoingTask);
 	DESERIALIZE_FIELD(source, DoingTaskOld);
+	DESERIALIZE_FIELD(source, DesiredTask);
+
+	DESERIALIZE_FIELD(source, SimulationId);
 
 	// Ensure primary is consistent with knownTargets
 	SelectPrimaryAndCopy();
@@ -2289,6 +2327,8 @@ TaskState& NpcBase::GetTaskStateRef()
 void NpcBase::StartTask(const std::string& taskName)
 {
 
+	DesiredTask = taskName;
+
 	StopTask();
 
 	TaskPoint* taskPoint = dynamic_cast<TaskPoint*>(Level::Current->FindEntityWithName(taskName));
@@ -2317,6 +2357,9 @@ void NpcBase::StopTask()
 
 void NpcBase::UpdateTask()
 {
+
+
+
 
 	if (LeadBody)
 	{
@@ -2382,7 +2425,7 @@ void NpcBase::UpdateTask()
 		if (actualDoingTask)
 		{
 
-			if (target_follow || report_to_guard || currentInvestigation != InvestigationReason::None)
+			if (target_follow || report_to_guard || currentInvestigation != InvestigationReason::None || taskState.TaskName != DesiredTask)
 			{
 				taskPoint->NpcTryInterrupt(this);
 			}
@@ -2391,13 +2434,26 @@ void NpcBase::UpdateTask()
 
 	}
 
+	auto desTask = DesiredTask;
+
 	if (actualDoingTask)
 	{
 		taskPoint->NpcUpdate(this);
 	}
 
+	DesiredTask = desTask;
 
 	DoingTaskOld = actualDoingTask;
+
+
+	if (DesiredTask != "")
+	{
+		if (taskState.DoingJob == false && taskState.TaskName != DesiredTask)
+		{
+			StartTask(DesiredTask);
+		}
+	}
+	
 
 }
 
@@ -2457,6 +2513,8 @@ void NpcBase::UpdateDebugUI()
 		);
 
 		ImGui::Checkbox("Attack In Range", &target_attackInRange);
+
+		ImGui::LabelText("task", taskState.TaskName.c_str());
 
 		ImGui::End();
 

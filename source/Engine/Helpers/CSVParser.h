@@ -1,3 +1,4 @@
+// CSVParser.h
 #pragma once
 
 #include <vector>
@@ -6,18 +7,14 @@
 #include <algorithm>
 #include <cctype>
 
-// Simple ivec2 struct (can be replaced with glm::ivec2 if using GLM)
-struct ivec2 {
-    int x, y;  // x = column, y = row
-    ivec2(int xx = -1, int yy = -1) : x(xx), y(yy) {}
-    bool isValid() const { return x >= 0 && y >= 0; }
-};
+#include "../glm.h"
 
 class CSVParser {
 private:
     std::vector<std::vector<std::string>> data_;
 
     std::vector<std::vector<std::string>> parse(const std::string& str, char delim);
+
 
 public:
     class Cell {
@@ -35,7 +32,7 @@ public:
     };
 
     // Constructor
-    explicit CSVParser(const std::string& csv_text, char delimiter = ',');
+    explicit CSVParser(const std::string& csv_text, char delimiter = ';');
 
     // 2D array access
     const std::vector<std::string>& operator[](size_t row) const;

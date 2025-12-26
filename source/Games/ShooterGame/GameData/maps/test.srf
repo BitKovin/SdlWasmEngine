@@ -2463,7 +2463,7 @@ default
 381 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/generic/cat
-	entity 71
+	entity 69
 	castShadows 0
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
@@ -2471,7 +2471,7 @@ default
 382 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/generic/cat
-	entity 71
+	entity 69
 	castShadows 0
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
@@ -2479,7 +2479,7 @@ default
 383 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/generic/cat
-	entity 71
+	entity 69
 	castShadows 0
 	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
@@ -2487,7 +2487,7 @@ default
 384 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/generic/cat
-	entity 71
+	entity 69
 	castShadows 0
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
@@ -2495,7 +2495,7 @@ default
 385 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/generic/cat
-	entity 71
+	entity 69
 	castShadows 0
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
@@ -2503,7 +2503,7 @@ default
 386 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/generic/cat
-	entity 71
+	entity 69
 	castShadows 0
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
@@ -2511,7 +2511,7 @@ default
 387 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/generic/cat
-	entity 72
+	entity 70
 	castShadows 0
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
@@ -2519,7 +2519,7 @@ default
 388 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/generic/cat
-	entity 72
+	entity 70
 	castShadows 0
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
@@ -2527,7 +2527,7 @@ default
 389 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/generic/cat
-	entity 72
+	entity 70
 	castShadows 0
 	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
@@ -2535,7 +2535,7 @@ default
 390 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/generic/cat
-	entity 72
+	entity 70
 	castShadows 0
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
@@ -2543,7 +2543,7 @@ default
 391 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/generic/cat
-	entity 72
+	entity 70
 	castShadows 0
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
@@ -2551,7 +2551,7 @@ default
 392 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/generic/cat
-	entity 72
+	entity 70
 	castShadows 0
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
@@ -2559,7 +2559,7 @@ default
 393 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_dev/trigger
-	entity 75
+	entity 73
 	castShadows 0
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
@@ -2567,7 +2567,7 @@ default
 394 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_dev/trigger
-	entity 75
+	entity 73
 	castShadows 0
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
@@ -2575,7 +2575,7 @@ default
 395 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_dev/trigger
-	entity 75
+	entity 73
 	castShadows 0
 	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
@@ -2583,7 +2583,7 @@ default
 396 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_dev/trigger
-	entity 75
+	entity 73
 	castShadows 0
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
@@ -2591,7 +2591,7 @@ default
 397 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_dev/trigger
-	entity 75
+	entity 73
 	castShadows 0
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
@@ -2599,7 +2599,7 @@ default
 398 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_dev/trigger
-	entity 75
+	entity 73
 	castShadows 0
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }

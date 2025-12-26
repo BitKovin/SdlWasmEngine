@@ -1846,7 +1846,7 @@
 "classname" "nav_point"
 "origin" "-48 -128 32"
 "targetname" "np_0_3"
-"target" "np_0_e"
+"target" "np_0_0"
 }
 // entity 64
 {
@@ -1874,7 +1874,7 @@
 "classname" "task_chair"
 "origin" "-8 139 16"
 "targetname" "np_0_e"
-"target" "np_0_0"
+"target" "np_0_e"
 "waitTime" "3"
 "acceptanceRadius" "0.3"
 "model" "models/tools/sittingPos.obj"
@@ -1889,19 +1889,6 @@
 }
 // entity 69
 {
-"classname" "npc_guard"
-"origin" "-112 -32 48"
-"target" "np_guard_wait_1"
-"angle" "-0.422169"
-}
-// entity 70
-{
-"classname" "npc_civilian"
-"origin" "-24 196 44"
-"target" "np_0_0"
-}
-// entity 71
-{
 "classname" "area_restricted"
 // brush 0
 {
@@ -1913,7 +1900,7 @@
 ( 128 -80 16 ) ( 128 0 16 ) ( 128 -80 32 ) generic/cat 0 0 0 0.5 0.5 0 0 0
 }
 }
-// entity 72
+// entity 70
 {
 "classname" "destructible"
 "health" "500"
@@ -1927,20 +1914,20 @@
 ( -1776 -1120 24 ) ( -1776 -1120 16 ) ( -1776 -1216 24 ) generic/cat 280 64.6153869629 0 0.2285714149 0.2476190627 0 0 0
 }
 }
-// entity 73
+// entity 71
 {
 "classname" "env_door"
 "origin" "256 126 16"
 "angle" "90"
 }
-// entity 74
+// entity 72
 {
 "classname" "misc_model"
 "origin" "239.84 64.189 16"
 "model" "models/tools/door.obj"
 "angle" "-90"
 }
-// entity 75
+// entity 73
 {
 "classname" "triggerTravel"
 "targetPlayerStart" "int_enter1"
@@ -1955,7 +1942,7 @@
 ( 488 408 16 ) ( 488 440 16 ) ( 488 408 24 ) lq_dev/trigger 0 0 0 0.5 0.5 0 0 0
 }
 }
-// entity 76
+// entity 74
 {
 "classname" "info_player_start"
 "origin" "440 432 40"

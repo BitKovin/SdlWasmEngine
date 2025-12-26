@@ -42,6 +42,7 @@ LevelSaveData LevelSaveSystem::SaveLevelToData()
 
         EntitySaveData data;
         data.className = entity->ClassName;
+        data.name = entity->Name;
         data.id = entity->Id;
         
         json jsonData;
@@ -108,6 +109,7 @@ void LevelSaveSystem::LoadLevelFromData(LevelSaveData data)
         if (targetEntity == nullptr)
         {
             targetEntity = LevelObjectFactory::instance().create(entitySaveData.className);
+            targetEntity->Name = entitySaveData.name;
             Level::Current->AddEntity(targetEntity);
             createdEntities.push_back(targetEntity);
         }
