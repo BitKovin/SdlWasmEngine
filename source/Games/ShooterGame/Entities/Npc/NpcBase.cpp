@@ -167,6 +167,8 @@ void NpcBase::Death()
 
 	//Tags.clear();
 
+
+
 	Tags.push_back("dead");
 
 	AiPerceptionSystem::RemoveObserver(observer);
@@ -361,6 +363,19 @@ void NpcBase::UpdateReturnFromRagdoll()
 
 }
 
+
+void NpcBase::Destroy()
+{
+
+	Entity::Destroy();
+
+	mesh->ClearHitboxes();
+
+	VoiceSoundPlayer->Destroy();
+	AiPerceptionSystem::RemoveTarget(observationTarget);
+	AiPerceptionSystem::RemoveObserver(observer);
+
+}
 
 void NpcBase::PlayPhrace(std::string name)
 {
@@ -1287,7 +1302,10 @@ void NpcBase::UpdateTargetAttack()
 
 	}
 
-
+	if (auto stateRef = GetSimulationStateRef())
+	{
+		stateRef->dead = true;
+	}
 
 
 	if (target_attack && target_follow && target_sees)
@@ -1366,6 +1384,13 @@ void NpcBase::UpdateTargetAttack()
 	bullet->Damage = 10;
 	bullet->owner = this;
 	bullet->Start();
+
+}
+
+NpcSimulationState* NpcBase::GetSimulationStateRef()
+{
+
+	return NpcSimulationManager::GetSimulationStateRef(SimulationId);
 
 }
 
@@ -2107,6 +2132,10 @@ void NpcBase::Serialize(json& target)
 	}
 	target["knownTargets"] = ktJson;
 
+	std::string currentMap = Level::Current->mapName;
+
+	SERIALIZE_FIELD(target, currentMap);
+
 	// Optional: save tag lists and forgetTime if modified by design (left default if unchanged)
 }
 
@@ -2245,13 +2274,33 @@ void NpcBase::Deserialize(json& source)
 	// Ensure primary is consistent with knownTargets
 	SelectPrimaryAndCopy();
 
+	std::string currentMap = "";
+
+	DESERIALIZE_FIELD(source, currentMap);
+
+	if (currentMap != Level::Current->mapName)
+	{
+		taskState = TaskState();
+		scheduledTask = "";
+		DesiredTask = "";
+		DoingTask = true;
+		DoingTaskOld = true;
+		target_id = "";
+		target_attack = false;
+		target_follow = false;
+		animator.taskAnimation->StopAnimation();
+
+		UpdateObserver();
+	}
+
+	/*
 	if (LevelTraversalSystem::Traveling) //we know that we are being loaded into level and not loaded using save game.
 	{
 
 		MoveToScheduledTask();
 
 	}
-
+	*/
 }
 
 void NpcBase::PrepareToStartMovement()
@@ -2401,6 +2450,12 @@ void NpcBase::UpdateTask()
 	{
 
 		DoingTaskOld = actualDoingTask;
+
+		if (DesiredTask != "")
+		{
+			StartTask(DesiredTask);
+		}
+
 
 		return;
 	}

@@ -66,7 +66,7 @@ void Player::Start()
     AddWeaponByName("weapon_tommy");
     AddWeaponByName("weapon_sniper");
 
-    SwitchWeaponOffhand("weapon_cane");
+    SwitchWeaponOffhand("weapon_lefthand_empty");
 
     cameraRotation.y = Rotation.y;
 
@@ -646,12 +646,6 @@ void Player::Update()
 
     if (EngineMain::MainInstance->SimulatingGameTicks) return;
 
-    auto targets = AiPerceptionSystem::GetTargets();
-
-    for (auto target : targets)
-    {
-        DebugDraw::Line(target->position, Camera::position - vec3(0, 1, 0));
-    }
 
     //printf("%i \n",SkeletalMesh::skelMeshes);
 

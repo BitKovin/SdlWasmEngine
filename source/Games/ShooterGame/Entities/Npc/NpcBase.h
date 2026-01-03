@@ -276,14 +276,7 @@ public:
 	void UpdateReturnFromRagdoll();
 
 
-	void Destroy()
-	{
-		Entity::Destroy();
-
-		mesh->ClearHitboxes();
-
-
-	}
+	void Destroy();
 
 	void PlayPhrace(std::string name);
 
@@ -303,6 +296,8 @@ public:
 	void UpdateTargetFollow();
 
 	void UpdateTargetAttack();
+
+	class NpcSimulationState* GetSimulationStateRef();
 
 	bool CheckAttackLOS(vec3 location, vec3 targetLocation);
 

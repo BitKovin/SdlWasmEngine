@@ -457,6 +457,11 @@ void EngineMain::MainLoop()
 
     }
 
+    if (LoadingFrames == 1)
+    {
+        AssetRegistry::EndLevelLoad();
+    }
+
     frame++;
 
 }

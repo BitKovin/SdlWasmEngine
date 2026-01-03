@@ -3,7 +3,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
-
+#include <set>
 #include "malloc_override.h"
 
 #include "Shader.hpp"
@@ -25,11 +25,17 @@ private:
     static std::unordered_map<std::string, roj::SkinnedModel*> skinnedModelCache;
     static std::unordered_map<std::string, roj::SkinnedModel*> skinnedModelAnimationCache;
 
+    static std::set<std::string> loadedAssetsDuringLoading;
+
+    static inline bool loadingLevel = false;
+
     static std::unordered_map<std::string, TTF_Font*> fontCache;
 
 public:
 	
     static void ClearMemory();
+    static void ClearUnusedMemory();
+    static bool IsAssetUsed(std::string filename);
 
     static Shader* GetShaderByName(const std::string& name, ShaderType shaderType);
 
@@ -64,9 +70,16 @@ public:
 
     static std::string ReadFileToString(string filename);
 
+    static void BeginLevelLoad();
+    static void EndLevelLoad();
+
+    static void MarkAsUsed(std::string filename);
+
     static roj::SkinnedModel* GetSkinnedModelFromFile(const string& path);
     static roj::SkinnedModel* GetSkinnedAnimationFromFile(const string& path);
 
 private:
+
+    static void MarkModelTexturesAsUsed(roj::SkinnedModel* model, std::string path);
 
 };

@@ -81,6 +81,9 @@ void NpcSimulationManager::Finalize()
 
 	for (auto& npcState : worldSimulationState.npcStates)
 	{
+
+		if (npcState.second.dead) continue;
+
 		UpdateNpcState(npcState.second);
 		UpdateNpc(npcState.second);
 
@@ -157,7 +160,18 @@ void NpcSimulationManager::UpdateNpc(NpcSimulationState& npcState)
 
 		auto task = Level::Current->FindEntityWithName(npcState.currentTask);
 
-		npcRef->Teleport(task->Position + vec3(0,1,0));
+		auto hit = Physics::LineTrace(task->Position + vec3(0,1,0), task->Position - vec3(0, 2, 0), BodyType::World);
+
+		if (hit.hasHit)
+		{
+			npcRef->Teleport(hit.position + vec3(0, 1, 0));
+		}
+		else
+		{
+			npcRef->Teleport(task->Position + vec3(0, 0.2f, 0));
+		}
+
+
 
 		exists = true;
 

@@ -137,7 +137,8 @@ namespace FileSystemEngine {
             // Open file (MSVC-safe version)
             std::FILE* file = nullptr;
 #if defined(_MSC_VER)
-            if (fopen_s(&file, real.string().c_str(), "rb") != 0 || !file)
+            file = _fsopen(real.string().c_str(), "rb", _SH_DENYNO);
+            if (!file)
                 return "";
 #else
             file = std::fopen(real.string().c_str(), "rb");
@@ -274,7 +275,105 @@ namespace FileSystemEngine {
     }
 
 
-    bool FileSystemEngine::WriteFile(const std::string& path, const std::string& content) 
+    uint32_t GetFileModificationTime(const std::string& path) {
+        if (path.empty()) {
+            return 0;
+        }
+
+#ifdef __EMSCRIPTEN__
+        // Emscripten: use FS.stat()
+        std::string fullPath;
+        if (isSavePath(path)) {
+            fullPath = path; 
+        }
+        else {
+            fullPath = path;
+            if (fullPath[0] != '/') fullPath = "/" + fullPath;
+        }
+
+        try {
+            // FS.stat returns an object with .mtime property (seconds)
+            // We need to call JS to get it
+            EM_JS(double, GetMTimeJS, (const char* p), {
+                try {
+                    const stat = FS.stat(UTF8ToString(p));
+                    return stat.mtime;  // mtime is in seconds (double)
+                }
+     catch (e) {
+      return 0;
+  }
+                });
+
+            double mtime = GetMTimeJS(fullPath.c_str());
+            return static_cast<uint32_t>(mtime);
+        }
+        catch (...) {
+            return 0;
+        }
+
+#else
+        // Desktop (SDL2 + std::filesystem preferred)
+        // We try std::filesystem first (C++17), fallback to SDL if needed
+
+#if defined(__has_include) && __has_include(<filesystem>)
+        try {
+            namespace fs = std::filesystem;
+            fs::path p(path);
+
+            // For GameData files, we may need to resolve relative to base path
+            if (!isSavePath(path)) {
+                const char* base = SDL_GetBasePath();
+                if (base) {
+                    p = fs::path(base) / path;
+                    SDL_free((void*)base);
+                }
+            }
+
+            if (!fs::exists(p)) {
+                return 0;
+            }
+
+            auto ftime = fs::last_write_time(p);
+            auto sctp = std::chrono::time_point_cast<std::chrono::seconds>(ftime);
+            auto epoch = sctp.time_since_epoch();
+            return static_cast<uint32_t>(epoch.count());
+        }
+        catch (...) {
+            // fallback
+        }
+#endif
+
+        // Fallback: use SDL_RWops for GameData, or fopen for SaveData
+        SDL_RWops* rw = nullptr;
+        if (isSavePath(path)) {
+            // For save files on desktop → use fopen
+            std::string realPath = path;  // or strip prefix if needed
+            FILE* f = std::fopen(realPath.c_str(), "rb");
+            if (!f) return 0;
+
+            struct stat st;
+            if (fstat(_fileno(f), &st) == 0) {
+                fclose(f);
+                return static_cast<uint32_t>(st.st_mtime);
+            }
+            fclose(f);
+            return 0;
+        }
+        else {
+            // GameData: use SDL
+            rw = SDL_RWFromFile(path.c_str(), "rb");
+            if (!rw) return 0;
+
+            // Unfortunately SDL_RWops doesn't provide mtime directly
+            // → we fall back to platform-specific way or return 0
+            SDL_RWclose(rw);
+            return 0;  // ← SDL limitation; consider using std::filesystem instead
+        }
+
+#endif
+    }
+
+    bool FileSystemEngine::WriteFile(const std::string& path, const std::string& content)
     {
 
 #ifdef __EMSCRIPTEN__

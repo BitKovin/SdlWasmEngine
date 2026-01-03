@@ -11,7 +11,7 @@ public:
         params.fireVolume = 0.4f;
         params.baseSpread = 1.0f;
         params.hasActiveSpread = false;
-        params.attackDelayTime = 0.13f;
+        params.attackDelayTime = 0.15f;
         params.switchDelayTime = 0.35f;
         params.switchDelayOnAttack = 0.09f;
         params.weaponOffset = vec3(0.0, 0.00, -0.0);

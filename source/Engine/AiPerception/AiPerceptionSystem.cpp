@@ -27,7 +27,7 @@ std::shared_ptr<ObservationTarget> AiPerceptionSystem::CreateTarget(const glm::v
 
 void AiPerceptionSystem::RemoveObserver(const std::shared_ptr<Observer>& observer)
 {
-
+    if (observer == nullptr) return;
     observer->ownerPtr = nullptr;
 
     observers.erase(std::remove(observers.begin(), observers.end(), observer), observers.end());
@@ -35,6 +35,7 @@ void AiPerceptionSystem::RemoveObserver(const std::shared_ptr<Observer>& observe
 
 void AiPerceptionSystem::RemoveTarget(const std::shared_ptr<ObservationTarget>& target)
 {
+    if (target == nullptr) return;
     targets.erase(std::remove(targets.begin(), targets.end(), target), targets.end());
 }
 

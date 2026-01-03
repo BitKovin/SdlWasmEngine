@@ -15,7 +15,7 @@ public:
 	SkeletalMesh* viewmodel = nullptr;
 	SkeletalMesh* arms = nullptr;
 
-	vec3 weaponOffset = vec3(0.0, 0.00, -0.0);
+	vec3 weaponOffset = vec3(0.0, -0.02, -0.0);
 
 
 	weapon_lefthand_empty()

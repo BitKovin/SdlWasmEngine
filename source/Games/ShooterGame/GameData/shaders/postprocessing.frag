@@ -82,11 +82,11 @@ vec4 fxaa(
 ) {
     vec4 color;
     mediump vec2 inverseVP = vec2(1.0f / resolution.x, 1.0f / resolution.y);
-    vec3 rgbNW = texture(tex, v_rgbNW).xyz;
-    vec3 rgbNE = texture(tex, v_rgbNE).xyz;
-    vec3 rgbSW = texture(tex, v_rgbSW).xyz;
-    vec3 rgbSE = texture(tex, v_rgbSE).xyz;
-    vec4 texColor = texture(tex, v_rgbM);
+    vec3 rgbNW = textureLod(tex, v_rgbNW, 0.0).xyz;
+    vec3 rgbNE = textureLod(tex, v_rgbNE, 0.0).xyz;
+    vec3 rgbSW = textureLod(tex, v_rgbSW, 0.0).xyz;
+    vec3 rgbSE = textureLod(tex, v_rgbSE, 0.0).xyz;
+    vec4 texColor = textureLod(tex, v_rgbM, 0.0);
     vec3 rgbM = texColor.xyz;
     vec3 luma = vec3(0.299f, 0.587f, 0.114f);
     float lumaNW = dot(rgbNW, luma);
@@ -107,10 +107,10 @@ vec4 fxaa(
     float rcpDirMin = 1.0f / (min(abs(dir.x), abs(dir.y)) + dirReduce);
     dir = min(vec2(FXAA_SPAN_MAX, FXAA_SPAN_MAX), max(vec2(-FXAA_SPAN_MAX, -FXAA_SPAN_MAX), dir * rcpDirMin)) * inverseVP;
 
-    vec3 rgbA = 0.5f * (texture(tex, fragCoord * inverseVP + dir * (1.0f / 3.0f - 0.5f)).xyz +
-        texture(tex, fragCoord * inverseVP + dir * (2.0f / 3.0f - 0.5f)).xyz);
-    vec3 rgbB = rgbA * 0.5f + 0.25f * (texture(tex, fragCoord * inverseVP + dir * -0.5f).xyz +
-        texture(tex, fragCoord * inverseVP + dir * 0.5f).xyz);
+    vec3 rgbA = 0.5f * (textureLod(tex, fragCoord * inverseVP + dir * (1.0f / 3.0f - 0.5f), 0.0).xyz +
+        textureLod(tex, fragCoord * inverseVP + dir * (2.0f / 3.0f - 0.5f), 0.0).xyz);
+    vec3 rgbB = rgbA * 0.5f + 0.25f * (textureLod(tex, fragCoord * inverseVP + dir * -0.5f, 0.0).xyz +
+        textureLod(tex, fragCoord * inverseVP + dir * 0.5f, 0.0).xyz);
 
     float lumaB = dot(rgbB, luma);
     if((lumaB < lumaMin) || (lumaB > lumaMax))

@@ -22,6 +22,7 @@ struct NpcSimulationState
 	std::string id = "";
 	std::string currentLocation = "";
 	std::string currentTask = "";
+	bool dead = false;
 
 	json entityState = json();
 	NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(NpcSimulationState, id, currentLocation, currentTask, entityState)

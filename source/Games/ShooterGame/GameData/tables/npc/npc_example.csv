@@ -7,9 +7,9 @@ time;normal state;;;;classname;immunity
 5:00;test, np_0_e;;;;;
 6:00;test, np_0_e;;;;;
 7:00;test, np_0_e;;;;;
-8:00;test, np_guard_wait_1;;;;;
-9:00;test, np_guard_wait_1;;;;;
-10:00;test, np_guard_wait_1;;;;;
+8:00;test_interior, t_smoke_int;;;;;
+9:00;test_interior, t_smoke_int;;;;;
+10:00;test_interior, t_smoke_int;;;;;
 11:00;test, np_0_0;;;;;
 12:00;test, np_0_0;;;;;
 13:00;test, np_0_0;;;;;

@@ -425,11 +425,13 @@ void NpcHumanAxe::LoadAssets()
 
 	SoundManager::LoadBankFromPath("GameData/sounds/banks/Desktop/SFX.bank");
 
+	mesh->TexturesLocation = "GameData/models/enemies/humanAxe/humanAxe.glb/";
 	mesh->LoadFromFile("GameData/models/enemies/humanAxe/humanAxe.glb");
+	mesh->PreloadAssets();
 	mesh->CreateHitboxes(this);
 	mesh->PlayAnimation("run", true);
 	mesh->SetLooped(true);
-	mesh->ColorTexture = AssetRegistry::GetTextureFromFile("GameData/cat.png");
+	//mesh->ColorTexture = AssetRegistry::GetTextureFromFile("GameData/cat.png");
 
 }
 

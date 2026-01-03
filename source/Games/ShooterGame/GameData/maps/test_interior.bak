@@ -96,6 +96,6 @@
 // entity 4
 {
 "classname" "light"
-"origin" "20 240 36"
-"light" "1000"
+"origin" "20 240 164"
+"light" "2000"
 }

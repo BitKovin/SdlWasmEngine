@@ -18,6 +18,10 @@ namespace FileSystemEngine
 
     std::vector<std::string> GetFilesInPath(const std::string& path);
 
+    // Returns last modification time as Unix timestamp (seconds since epoch)
+    // Returns 0 on failure or if file doesn't exist
+    uint32_t GetFileModificationTime(const std::string& path);
+
     // Write text file (GameData is read‑only! only SaveData makes sense here)
     // returns true on success, false on failure
     bool WriteFile(const std::string& path, const std::string& content);

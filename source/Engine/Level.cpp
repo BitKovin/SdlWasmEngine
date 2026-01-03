@@ -100,9 +100,9 @@ Level* Level::OpenLevel(string filePath)
 		delete(Current);
 	}
 
-	if (isNewLevel && false)
+	if (isNewLevel)
 	{
-		AssetRegistry::ClearMemory();
+		AssetRegistry::BeginLevelLoad();
 		DebugDraw::ClearCommands();
 		SoundManager::CleanAllData();
 	}
@@ -227,6 +227,7 @@ Level* Level::OpenLevel(string filePath)
 	Current->AddPendingLevelObjects();
 	Current->RemovePendingEntities();
 	Current->MemoryCleanPendingEntities();
+
 
 	Time::Update();
 	Time::Update();
@@ -534,6 +535,8 @@ void Level::FinalizeFrame()
 
 	{
 
+		bool renderAll = EngineMain::MainInstance->LoadingFrames > 1;
+
 		std::lock_guard<std::recursive_mutex> lock(entityArrayLock);
 
 		for (auto var : LevelObjects)
@@ -544,7 +547,7 @@ void Level::FinalizeFrame()
 			for (IDrawMesh* mesh : var->GetDrawMeshes())
 			{		
 
-				if (mesh->IsCameraVisible())
+				if (mesh->IsCameraVisible() || renderAll)
 				{			
 
 					if (mesh->Transparent)
@@ -574,7 +577,7 @@ void Level::FinalizeFrame()
 					mesh->WasRended = false;
 				}
 
-				if (mesh->IsShadowVisible())
+				if (mesh->IsShadowVisible() || renderAll)
 				{
 
 					if (mesh->IsDetailShadow())

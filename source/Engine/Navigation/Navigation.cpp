@@ -17,6 +17,8 @@
 
 #include "../LoadingScreen/LoadingScreenSystem.h"
 #include "Detour/DetourCommon.h"
+#include "NavigationGenerationHelpers.hpp"
+#include "NavigationFileHelper.h"
 
 // Recast and Detour includes
 
@@ -27,25 +29,6 @@ std::recursive_mutex NavigationSystem::mainLock;
 std::vector<dtObstacleRef> NavigationSystem::obstacles;
 
 
-// Custom compressor (simplified, no real compression)
-struct FastLZCompressor : public dtTileCacheCompressor {
-    int maxCompressedSize(const int size) override { return static_cast<int>(size * 1.05f); }
-    dtStatus compress(const unsigned char* buffer, const int bufferSize,
-        unsigned char* compressed, const int maxCompressedSize, int* compressedSize) override {
-        if (bufferSize > maxCompressedSize) return DT_BUFFER_TOO_SMALL;
-        memcpy(compressed, buffer, bufferSize);
-        *compressedSize = bufferSize;
-        return DT_SUCCESS;
-    }
-    dtStatus decompress(const unsigned char* compressed, const int compressedSize,
-        unsigned char* buffer, const int maxBufferSize, int* bufferSize) override {
-        if (compressedSize > maxBufferSize) return DT_BUFFER_TOO_SMALL;
-        memcpy(buffer, compressed, compressedSize);
-        *bufferSize = compressedSize;
-        return DT_SUCCESS;
-    }
-};
-
 
 void NavigationSystem::DestroyNavData()
 {
@@ -55,21 +38,41 @@ void NavigationSystem::DestroyNavData()
 
     DestroyAllObstacles();
 
-	if (tileCache)
-		dtFreeTileCache(tileCache);
+    if (tileCache)
+    {
+        tileCache = nullptr;
+    }
+    if (tileCache)
+    {
+        dtFreeTileCache(tileCache);
+        tileCache = nullptr;
+    }
+
 
 	if (navMesh)
 		dtFreeNavMesh(navMesh);
 
 
-	if (talloc)
-		delete talloc;
+    if (talloc)
+    {
+        delete talloc;
+        talloc = nullptr;
+    }
+		
 
-	if (tcomp)
-		delete tcomp;
+    if (tcomp)
+    {
+        delete tcomp;
+        tcomp = nullptr;
+    }
+
 
     if (tmproc)
+    {
         delete tmproc;
+        tmproc = nullptr;
+    }
+
 
     if (g_crowd)
     {
@@ -121,6 +124,21 @@ void NavigationSystem::GenerateNavData()
 {
     DestroyNavData();
 
+    std::string navmeshFilePath = Level::Current->filePath + ".nav";
+    uint32_t mapVersion = FileSystemEngine::GetFileModificationTime(Level::Current->filePath);
+
+    bool loaded = NavigationFileHelper::Load(navmeshFilePath.c_str(), navMesh, tileCache, mapVersion);
+
+    if (loaded)
+    {
+        InitCrowd(512);
+        return;
+    }
+    else
+    {
+        Logger::Log("rebuilding navmesh to file");
+    }
+
     auto mesh = Level::Current->GetStaticNavObstaclesMesh();
 
     std::lock_guard<std::recursive_mutex> lock(mainLock);
@@ -131,7 +149,8 @@ void NavigationSystem::GenerateNavData()
 
     glm::vec3 bmin = vertices[0], bmax = vertices[0];
     for (const auto& v : vertices) { bmin = glm::min(bmin, v); bmax = glm::max(bmax, v); }
-    bmin -= glm::vec3(1); bmax += glm::vec3(1);
+    bmin -= glm::vec3(0.2); bmax += glm::vec3(0.2);
+
 
     // ---- Recast config (similar to yours)
     rcConfig cfg{};
@@ -350,7 +369,11 @@ void NavigationSystem::GenerateNavData()
 
     delete ctx;
 
+    NavigationFileHelper::Save(navmeshFilePath.c_str(), navMesh, tileCache, mapVersion);
+
     InitCrowd(512);
+
+
 
 }
 

@@ -66,7 +66,7 @@ void Bullet::Update()
 		{
 
 			hit.entity->OnPointDamage(Damage, hit.position, MathHelper::FastNormalize(Position - oldPos), hit.hitboxName, this, this);
-			Physics::AddImpulseAtLocation(hit.hitbody, forward * (Damage + 2) * 2.5f, hit.position);
+			Physics::AddImpulseAtLocation(hit.hitbody, forward * (Damage + 2) * 4.5f, hit.position);
 
 		}
 

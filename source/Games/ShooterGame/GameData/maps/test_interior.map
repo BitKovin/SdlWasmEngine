@@ -99,3 +99,10 @@
 "origin" "20 240 164"
 "light" "2000"
 }
+// entity 5
+{
+"classname" "task_smoke"
+"origin" "-252 36 0"
+"targetname" "t_smoke_int"
+"target" "t_smoke_int"
+}
