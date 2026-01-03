@@ -13,6 +13,12 @@
 #include "TextureCube.hpp"
 #include "Logger.hpp"
 #include "Video/Video.h"
+#include <vector>
+
+struct CachedFont {
+    TTF_Font* font = nullptr;
+    std::vector<uint8_t> data; // keeps font memory alive
+};
 
 class AssetRegistry
 {
@@ -29,7 +35,9 @@ private:
 
     static inline bool loadingLevel = false;
 
-    static std::unordered_map<std::string, TTF_Font*> fontCache;
+    static std::unordered_map<std::string, CachedFont> fontCache;
+
+
 
 public:
 	
@@ -49,24 +57,7 @@ public:
 
     static Video* GetVideoFromFile(string filename);
 
-    static TTF_Font* GetFontFromFile(const char* filename, int fontSize) {
-        std::string key = std::string(filename) + "_" + std::to_string(fontSize);
-        auto it = fontCache.find(key);
-        if (it != fontCache.end()) {
-            return it->second; // Return cached font.
-        }
-
-        TTF_Font* font = TTF_OpenFont(filename, fontSize);
-        if (!font) {
-            std::cerr << "TTF_OpenFont Error: " << TTF_GetError() << std::endl;
-            return nullptr;
-        }
-
-        
-
-        fontCache[key] = font;
-        return font;
-    }
+    static TTF_Font* GetFontFromFile(const char* filename, int fontSize);
 
     static std::string ReadFileToString(string filename);
 

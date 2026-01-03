@@ -125,7 +125,7 @@ void NavigationSystem::GenerateNavData()
     DestroyNavData();
 
     std::string navmeshFilePath = Level::Current->filePath + ".nav";
-    uint32_t mapVersion = FileSystemEngine::GetFileModificationTime(Level::Current->filePath);
+    uint32_t mapVersion = MathHelper::HashVector(FileSystemEngine::ReadFileBinary(Level::Current->filePath));
 
     bool loaded = NavigationFileHelper::Load(navmeshFilePath.c_str(), navMesh, tileCache, mapVersion);
 

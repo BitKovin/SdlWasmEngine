@@ -560,4 +560,15 @@ public:
 	}
 
 
+	inline static uint32_t HashVector(const std::vector<uint8_t>& data)
+	{
+		uint32_t hash = 2166136261u; // FNV offset basis
+		for (uint8_t byte : data)
+		{
+			hash ^= byte;
+			hash *= 16777619u; // FNV prime
+		}
+		return hash;
+	}
+
 };

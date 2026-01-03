@@ -6,6 +6,7 @@
 #include "Backends/RmlUi_Platform_SDL.h"
 #include "RmlUiEvents.h"
 #include "../../Input.h"
+#include "Backends/MyFileInterface.h"
 
 RmlUiContext::RmlUiContext(SDL_Window* sdl_window, int initial_width, int initial_height, bool enable_debugger)
     : window_(sdl_window), width_(initial_width), height_(initial_height), enable_debugger_(enable_debugger)
@@ -38,6 +39,8 @@ bool RmlUiContext::Initialize()
     render_interface_ = (RenderInterface_GL3*)Backend::GetRenderInterface();
     Rml::SetRenderInterface(render_interface_);
     
+    Rml::SetFileInterface(new RmlFileInterface());
+
 
     if (!Rml::Initialise()) 
         return false;

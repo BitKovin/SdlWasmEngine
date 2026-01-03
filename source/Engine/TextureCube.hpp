@@ -106,13 +106,24 @@ private:
         glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-        for (unsigned i = 0; i < 6; ++i) {
-            SDL_Surface* surf = IMG_Load(faces[i].c_str());
-            if (!surf) {
-                std::cerr << "[Cubemap] Failed to load " << faces[i]
-                    << ": " << IMG_GetError() << std::endl;
-                    continue;
+        for (unsigned i = 0; i < 6; ++i) 
+        {
+
+            auto fileData = FileSystemEngine::ReadFileBinary(faces[i].c_str());
+
+            // Create an SDL_RWops from memory
+            SDL_RWops* rw = SDL_RWFromConstMem(fileData.data(), static_cast<int>(fileData.size()));
+            if (!rw) {
+                SDL_Log("Failed to create RWops: %s", SDL_GetError());
+                return;
             }
+
+            // Load the image from RWops
+            SDL_Surface* surf = IMG_Load_RW(rw, 1); // 1 = automatically free the RWops after loading
+            if (!surf) {
+                SDL_Log("IMG_Load_RW failed: %s", IMG_GetError());
+            }
+
             SDL_Surface* conv = SDL_ConvertSurfaceFormat(
                 surf, SDL_PIXELFORMAT_RGBA32, 0);
             SDL_FreeSurface(surf);

@@ -14,7 +14,7 @@ UiCrosshair::UiCrosshair()
 
 
 	dotImage = std::make_shared<UiImage>();
-	dotImage->ImagePath = "GameData/textures//ui/crosshair_dot.png";
+	dotImage->ImagePath = "GameData/textures/ui/crosshair_dot.png";
 	dotImage->pivot = vec2(0.5f, 0.5f);
 	dotImage->size = vec2(4, 4);
 	dotImage->color = crosshairColor;
@@ -29,7 +29,7 @@ UiCrosshair::UiCrosshair()
 	AddChild(leftImage);
 
 	rightImage = std::make_shared<UiImage>();
-	rightImage->ImagePath = "GameData/textures//ui/crosshair_line.png";
+	rightImage->ImagePath = "GameData/textures/ui/crosshair_line.png";
 	rightImage->pivot = vec2(1.0f, 0.5f);
 	rightImage->rotation = 180.0f;
 	rightImage->position = vec2(Spread, 0.0f);
@@ -38,7 +38,7 @@ UiCrosshair::UiCrosshair()
 	AddChild(rightImage);
 
 	topImage = std::make_shared<UiImage>();
-	topImage->ImagePath = "GameData/textures//ui/crosshair_line.png";
+	topImage->ImagePath = "GameData/textures/ui/crosshair_line.png";
 	topImage->pivot = vec2(1.0f, 0.5f);
 	topImage->rotation = 90;
 	topImage->position = vec2(0.0f, Spread);
@@ -48,7 +48,7 @@ UiCrosshair::UiCrosshair()
 
 
 	bottomImage = std::make_shared<UiImage>();
-	bottomImage->ImagePath = "GameData/textures//ui/crosshair_line.png";
+	bottomImage->ImagePath = "GameData/textures/ui/crosshair_line.png";
 	bottomImage->pivot = vec2(1.0f, 0.5f);
 	bottomImage->rotation = -90;
 	bottomImage->position = vec2(0.0f, Spread);

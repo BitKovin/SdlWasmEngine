@@ -6,6 +6,7 @@
 #include <string>
 #include <iostream>
 #include <vector>
+#include "FileSystem/FileSystem.h"
 
 #include "malloc_override.h"
 
@@ -111,23 +112,47 @@ private:
         valid = true;
     }
 
-    void loadFromFile(const std::string& filename, bool generateMipmaps) {
-        SDL_Surface* surface = IMG_Load(filename.c_str());
+    void loadFromFile(const std::string& filename, bool generateMipmaps)
+    {
+        // 1. Read data from FileSystemEngine
+        std::vector<uint8_t> fileData = FileSystemEngine::ReadFileBinary(filename);
+        if (fileData.empty()) {
+            std::cerr << "File empty or not found: " << filename << std::endl;
+            return;
+        }
+
+		loadFromMemoryCompressed(fileData.data(), fileData.size(), generateMipmaps);
+        return;
+
+        // 2. Allocate a buffer that SDL owns
+        SDL_RWops* rw = SDL_RWFromConstMem(fileData.data(), static_cast<int>(fileData.size()));
+        if (!rw) {
+            Logger::Log(filename);
+            SDL_Log("Failed to create RWops: %s", SDL_GetError());
+            return;
+        }
+
+        // 3. Load the surface from RWops
+        SDL_Surface* surface = IMG_Load_RW(rw, 1); // SDL frees RWops automatically
         if (!surface) {
-            std::cerr << filename << "   Error loading image: " << IMG_GetError() << std::endl;
+            Logger::Log(filename);
+            SDL_Log("IMG_Load_RW failed: %s", IMG_GetError());
             return;
         }
 
-        SDL_Surface* converted_surface = SDL_ConvertSurfaceFormat(surface, SDL_PIXELFORMAT_RGBA32, 0);
+        // 4. Convert to RGBA32
+        SDL_Surface* converted = SDL_ConvertSurfaceFormat(surface, SDL_PIXELFORMAT_RGBA32, 0);
         SDL_FreeSurface(surface);
-        if (!converted_surface) {
-            std::cerr << filename << "  Error converting surface: " << SDL_GetError() << std::endl;
+        if (!converted) {
+            std::cerr << "Failed to convert surface: " << SDL_GetError() << std::endl;
             return;
         }
 
-        setupTexture(converted_surface->w, converted_surface->h, GL_RGBA, converted_surface->pixels, generateMipmaps);
-        SDL_FreeSurface(converted_surface);
+        // 5. Upload to GPU
+        setupTexture(converted->w, converted->h, GL_RGBA, converted->pixels, generateMipmaps);
+        SDL_FreeSurface(converted);
     }
+
 
     void loadFromMemoryCompressed(const unsigned char* data, size_t size, bool generateMipmaps) {
         SDL_RWops* rw = SDL_RWFromConstMem(data, static_cast<int>(size));

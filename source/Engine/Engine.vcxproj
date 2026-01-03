@@ -340,7 +340,8 @@
     <ClCompile Include="BehaviourTree\NodeFactory.cpp" />
     <ClCompile Include="BehaviourTree\TaskNodes.cpp" />
     <ClCompile Include="BehaviourTree\TreeNode.cpp" />
-    <ClCompile Include="Compression\zip.cpp" />
+    <ClCompile Include="Compression\miniz.cpp" />
+    <ClCompile Include="Compression\zip\zip.cpp" />
     <ClCompile Include="Console\Console.cpp" />
     <ClCompile Include="Console\ConsoleDefaultCommands.cpp" />
     <ClCompile Include="Entities\Brushes\AreaBase.hpp" />
@@ -348,6 +349,7 @@
     <ClCompile Include="Entities\PointLight.cpp" />
     <ClCompile Include="Entities\transformPoint.cpp" />
     <ClCompile Include="FileSystem\FileSystem.cpp" />
+    <ClCompile Include="FileSystem\ZipVFS.cpp" />
     <ClCompile Include="Helpers\ByteCompressor.cpp" />
     <ClCompile Include="Helpers\CSVParser.cpp" />
     <ClCompile Include="http\http_client_emscripten.cpp" />
@@ -465,7 +467,9 @@
     <ClInclude Include="BehaviourTree\TaskNodes.h" />
     <ClInclude Include="BehaviourTree\TreeNode.h" />
     <ClInclude Include="Compression\miniz.h" />
-    <ClInclude Include="Compression\zip.h" />
+    <ClInclude Include="Compression\zip\miniz.h" />
+    <ClInclude Include="Compression\zip\miniz_once.h" />
+    <ClInclude Include="Compression\zip\zip.h" />
     <ClInclude Include="Console\Console.h" />
     <ClInclude Include="Console\ConsoleCommand.h" />
     <ClInclude Include="Console\ConsoleDefaultCommands.h" />
@@ -483,6 +487,7 @@
     <ClInclude Include="Entities\transformPoint.h" />
     <ClInclude Include="Entities\WorldSpawn.h" />
     <ClInclude Include="FileSystem\FileSystem.h" />
+    <ClInclude Include="FileSystem\ZipVFS.h" />
     <ClInclude Include="FogManager.h" />
     <ClInclude Include="Helpers\ByteCompressor.h" />
     <ClInclude Include="Helpers\CSVParser.h" />
@@ -594,6 +599,7 @@
     <ClInclude Include="TextureCube.hpp" />
     <ClInclude Include="ThreadPool.h" />
     <ClInclude Include="Time.hpp" />
+    <ClInclude Include="UI\RmlUi\Backends\MyFileInterface.h" />
     <ClInclude Include="UI\RmlUi\Backends\RmlUi_Backend.h" />
     <ClInclude Include="UI\RmlUi\Backends\RmlUi_Include_GL3.h" />
     <ClInclude Include="UI\RmlUi\Backends\RmlUi_Platform_SDL.h" />

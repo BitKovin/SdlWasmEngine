@@ -1,440 +1,277 @@
-﻿// FileSystem.cpp
-#include "FileSystem.h"
-#include <stdexcept>
-#include <SDL2/SDL.h>
-#include <sstream>
+﻿#include "FileSystem.h"
+#include "ZipVFS.h"
+
 #include <filesystem>
 #include <fstream>
+#include <vector>
+#include <string>
+#include <optional>
+#include <chrono>
+#include <mutex>
+
 #include "../Logger.hpp"
+
+namespace fs = std::filesystem;
+
+static std::mutex g_fsMutex;
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
 #include <emscripten/emscripten.h>
 
-
+/*
+    Emscripten-backed write helpers.
+    ZIP IS NOT SUPPORTED FOR WRITING.
+*/
 
 EM_JS(void, WriteFileJS, (const char* relPath, const char* content), {
-    const rel = UTF8ToString(relPath);
+    const path = UTF8ToString(relPath);
     const data = UTF8ToString(content);
 
-    // build each sub‑directory under /save
-    const parts = rel.split('/');
-    let cur = '/save';
-    for (let i = 0; i < parts.length - 1; ++i) {
-        cur += '/' + parts[i];
-        try { FS.mkdir(cur); }
- catch (e) { /* already exists */ }
-}
-
-    // now write the file
-    const full = '/save/' + rel;
-    FS.writeFile(full, data);
-
-    // persist to IndexedDB
-    FS.syncfs(false, function(err) {
-        if (err) console.error('IDBFS write sync failed:', err);
-    });
-});
-
-
-EM_JS(char*, ReadFileJS, (const char* relPath), {
-  try {
-    const path = '/save/' + UTF8ToString(relPath);
-    const data = FS.readFile(path, { encoding: 'utf8' });
-    const len = lengthBytesUTF8(data) + 1;
-    const buf = _malloc(len);
-    stringToUTF8(data, buf, len);
-    return buf;
-  }
-catch (e) {
-return 0;
-}
-    });
-
-EM_JS(void, MountPersistentFS, (), {
-    FS.mkdir('/save');
-    FS.mount(IDBFS, {}, '/save');
-    FS.syncfs(true, function(err) {
-        if (err) console.error('IDBFS initial load failed:', err);
-    });
-    });
-
-#ifdef __EMSCRIPTEN__
-EM_JS(double, GetMTimeJS, (const char* p), {
     try {
-        const stat = FS.stat(UTF8ToString(p));
-        return stat.mtime;  // mtime in seconds
+        const parts = path.split('/');
+        let current = '';
+        for (let i = 0; i < parts.length - 1; i++) {
+            current += (i ? '/' : '') + parts[i];
+            if (!FS.analyzePath(current).exists) {
+                FS.mkdir(current);
+            }
+        }
+        FS.writeFile(path, data);
     }
  catch (e) {
-  return 0;
+  console.error("WriteFileJS failed:", e);
+}
+    });
+
+EM_JS(void, WriteFileBinaryJS, (const char* relPath, const uint8_t* data, int size), {
+    const path = UTF8ToString(relPath);
+    const buffer = new Uint8Array(Module.HEAPU8.buffer, data, size);
+
+    try {
+        const parts = path.split('/');
+        let current = '';
+        for (let i = 0; i < parts.length - 1; i++) {
+            current += (i ? '/' : '') + parts[i];
+            if (!FS.analyzePath(current).exists) {
+                FS.mkdir(current);
+            }
+        }
+        FS.writeFile(path, buffer);
+    }
+ catch (e) {
+  console.error("WriteFileBinaryJS failed:", e);
 }
     });
 #endif
 
+/* ============================
+   INITIALIZATION
+   ============================ */
 
-#else
-#include <fstream>
-#include <sstream>
-#include <filesystem>  // C++17
-#endif
-
-namespace FileSystemEngine {
-
-
-    void Init()
+void FileSystemEngine::Init()
+{
+    // ZIP VFS is read-only and indexed once
+    if (!ZipVFS::Instance().Init("GameData/"))
     {
-#ifdef __EMSCRIPTEN__
-        MountPersistentFS();
-#endif
+        Logger::Log("ZipVFS initialization failed");
+        throw std::runtime_error("ZipVFS initialization failed");
     }
+}
 
-    static bool isSavePath(const std::string& p) {
-        return p.rfind("SaveData/", 0) == 0;
-    }
+/* ============================
+   READ FILE (TEXT)
+   ============================ */
 
-    // strips "SaveData/" prefix
-    static std::string stripSavePrefix(const std::string& p) {
-        return p.substr(strlen("SaveData/"));
-    }
+std::string FileSystemEngine::ReadFile(const std::string& path)
+{
+    std::lock_guard<std::mutex> lock(g_fsMutex);
 
-    std::vector<uint8_t> ReadFileBinary(const std::string& path) {
-        if (isSavePath(path)) {
-            // --- SaveData binary read on desktop ---
-#ifdef __EMSCRIPTEN__
-            throw std::runtime_error("Binary SaveData not supported on Emscripten");
-#else
-            auto real = path;// stripSavePrefix(path);
-            std::ifstream ifs(real, std::ios::binary);
-            if (!ifs) throw std::runtime_error("Cannot open save file: " + real);
-            return { std::istreambuf_iterator<char>(ifs),
-                     std::istreambuf_iterator<char>() };
-#endif
-        }
-        else {
-            // --- GameData: use SDL_RWFromFile everywhere ---
-            SDL_RWops* rw = SDL_RWFromFile(path.c_str(), "rb");
-            //if (!rw) throw std::runtime_error("Failed open: " + path + " – " + SDL_GetError());
-
-            if (!rw)
-            {
-                return std::vector<uint8_t>();
-            }
-
-            Sint64 size = SDL_RWsize(rw);
-            if (size < 0) { SDL_RWclose(rw); throw std::runtime_error("Bad file size: " + path); }
-            std::vector<uint8_t> buf(size);
-            Sint64 r = SDL_RWread(rw, buf.data(), 1, size);
-            SDL_RWclose(rw);
-            if (r != size) throw std::runtime_error("Short read: " + path);
-            return buf;
-        }
-    }
-
-    std::string ReadFile(const std::string& path) {
-        if (isSavePath(path)) {
-#ifdef __EMSCRIPTEN__
-            // Emscripten: call JS, get malloc'd char*
-            auto rel = path;// stripSavePrefix(path);
-            char* c = ReadFileJS(rel.c_str());
-            //if (!c) throw std::runtime_error("Failed to read save: " + rel);
-            std::string s(c);
-            free(c);
-
-			Logger::Log("ReadFile (SaveData): " + s);
-
-            return s;
-#else
-
-            std::filesystem::path real(path);
-
-            // Open file (MSVC-safe version)
-            std::FILE* file = nullptr;
-#if defined(_MSC_VER)
-            file = _fsopen(real.string().c_str(), "rb", _SH_DENYNO);
+    // 1. Disk always has priority
+    try
+    {
+        if (fs::exists(path) && fs::is_regular_file(path))
+        {
+            std::ifstream file(path, std::ios::binary);
             if (!file)
-                return "";
-#else
-            file = std::fopen(real.string().c_str(), "rb");
+                return {};
+
+            file.seekg(0, std::ios::end);
+            size_t size = static_cast<size_t>(file.tellg());
+            file.seekg(0);
+
+            std::string result(size, '\0');
+            file.read(result.data(), size);
+            return result;
+        }
+    }
+    catch (...) {}
+
+    // 2. ZIP fallback
+    auto zipResult = ZipVFS::Instance().ReadFileAsText(path);
+    if (zipResult)
+        return *zipResult;
+
+    return {};
+}
+
+/* ============================
+   READ FILE (BINARY)
+   ============================ */
+
+std::vector<uint8_t> FileSystemEngine::ReadFileBinary(const std::string& path)
+{
+    std::lock_guard<std::mutex> lock(g_fsMutex);
+
+    // Disk first
+    try
+    {
+        if (fs::exists(path) && fs::is_regular_file(path))
+        {
+            std::ifstream file(path, std::ios::binary);
             if (!file)
-                return "";
-#endif
+                return {};
 
-            std::fseek(file, 0, SEEK_END);
-            long size = std::ftell(file);
-            std::rewind(file);
+            file.seekg(0, std::ios::end);
+            size_t size = static_cast<size_t>(file.tellg());
+            file.seekg(0);
 
-            if (size <= 0) {
-                std::fclose(file);
-                return "";
-            }
-
-            std::string content;
-            content.resize(static_cast<size_t>(size));
-
-            size_t read = std::fread(content.data(), 1, content.size(), file);
-            std::fclose(file);
-
-            content.resize(read);
-            return content;
-
-#endif
-        }
-        else {
-            // GameData text → just wrap ReadFileBinary
-            auto bin = ReadFileBinary(path);
-            return std::string(bin.begin(), bin.end());
+            std::vector<uint8_t> data(size);
+            file.read(reinterpret_cast<char*>(data.data()), size);
+            return data;
         }
     }
+    catch (...) {}
+
+    // ZIP fallback
+    auto zipResult = ZipVFS::Instance().ReadFileAsBinary(path);
+    if (zipResult)
+        return *zipResult;
+
+    return {};
+}
+
+/* ============================
+   WRITE FILE (TEXT)
+   ZIP IS NOT SUPPORTED
+   ============================ */
+
+bool FileSystemEngine::WriteFile(const std::string& path, const std::string& content)
+{
+    std::lock_guard<std::mutex> lock(g_fsMutex);
 
 #ifdef __EMSCRIPTEN__
-    EM_JS(char*, ListFilesJS, (const char* dirPath), {
-        const dir = UTF8ToString(dirPath);
-        try {
-            const entries = FS.readdir(dir).filter(f => f !== '.' && f !== '..');
-            const files = entries.filter(f => {
-                const p = dir.endsWith('/') ? dir + f : dir + '/' + f;
-                return FS.isFile(FS.stat(p).mode);
-            });
-            const str = files.join('\n');
-            const len = lengthBytesUTF8(str) + 1;
-            const buf = _malloc(len);
-            stringToUTF8(str, buf, len);
-            return buf;
-        }
-     catch (e) {
-      return 0;
-  }
-        });
-#endif
-
-
-    std::vector<std::string> GetFilesInPath(const std::string& path)
+    WriteFileJS(path.c_str(), content.c_str());
+    return true;
+#else
+    try
     {
-        std::vector<std::string> files;
-        std::string dir_path = path;
-        if (!dir_path.empty() && dir_path.back() != '/') {
-            dir_path += '/';
-        }
-
-        if (isSavePath(path)) {
-            // Handle save data
-#ifdef __EMSCRIPTEN__
-            std::string em_dir = "/save/" + path;
-            char* c = ListFilesJS(em_dir.c_str());
-            if (c) {
-                std::string list(c);
-                free(c);
-                std::stringstream ss(list);
-                std::string file;
-                while (std::getline(ss, file, '\n')) {
-                    files.push_back(file);
-                }
-            }
-#else
-        // Desktop: use std::filesystem for save data
-            try {
-                for (const auto& entry : std::filesystem::directory_iterator(path)) {
-                    if (entry.is_regular_file()) {
-                        files.push_back(entry.path().filename().string());
-                    }
-                }
-            }
-            catch (...) {
-                // Return empty on error
-            }
-#endif
-        }
-        else {
-            // Handle game data
-#ifdef __EMSCRIPTEN__
-            std::string em_dir = path;
-            if (!em_dir.empty() && em_dir[0] != '/') {
-                em_dir = "/" + em_dir;
-            }
-            char* c = ListFilesJS(em_dir.c_str());
-            if (c) {
-                std::string list(c);
-                free(c);
-                std::stringstream ss(list);
-                std::string file;
-                while (std::getline(ss, file, '\n')) {
-                    files.push_back(file);
-                }
-            }
-#else
-        // Desktop: use SDL_GetBasePath() + path for game data
-            const char* base = SDL_GetBasePath();
-            std::string full_path;
-            if (base) {
-                full_path = path;
-                SDL_free((void*)base);
-            }
-            else {
-                full_path = path;
-            }
-            try {
-                for (const auto& entry : std::filesystem::directory_iterator(full_path)) {
-                    if (entry.is_regular_file()) {
-                        files.push_back(entry.path().filename().string());
-                    }
-                }
-            }
-            catch (...) {
-                // Return empty on error
-            }
-#endif
-        }
-        return files;
-    }
-
-
-    uint32_t GetFileModificationTime(const std::string& path) {
-        if (path.empty()) {
-            return 0;
-        }
-
-#ifdef __EMSCRIPTEN__
-        // Emscripten: use FS.stat()
-        std::string fullPath;
-        if (isSavePath(path)) {
-            fullPath = path; 
-        }
-        else {
-            fullPath = path;
-            if (fullPath[0] != '/') fullPath = "/" + fullPath;
-        }
-
-        try {
-
-            double mtime = GetMTimeJS(fullPath.c_str());
-            return static_cast<uint32_t>(mtime);
-        }
-        catch (...) {
-            return 0;
-        }
-
-#else
-        // Desktop (SDL2 + std::filesystem preferred)
-        // We try std::filesystem first (C++17), fallback to SDL if needed
-
-#if defined(__has_include) && __has_include(<filesystem>)
-        try {
-            namespace fs = std::filesystem;
-            fs::path p(path);
-
-            // For GameData files, we may need to resolve relative to base path
-            if (!isSavePath(path)) {
-                const char* base = SDL_GetBasePath();
-                if (base) {
-                    p = fs::path(base) / path;
-                    SDL_free((void*)base);
-                }
-            }
-
-            if (!fs::exists(p)) {
-                return 0;
-            }
-
-            auto ftime = fs::last_write_time(p);
-            auto sctp = std::chrono::time_point_cast<std::chrono::seconds>(ftime);
-            auto epoch = sctp.time_since_epoch();
-            return static_cast<uint32_t>(epoch.count());
-        }
-        catch (...) {
-            // fallback
-        }
-#endif
-
-        // Fallback: use SDL_RWops for GameData, or fopen for SaveData
-        SDL_RWops* rw = nullptr;
-        if (isSavePath(path)) {
-            // For save files on desktop → use fopen
-            std::string realPath = path;  // or strip prefix if needed
-            FILE* f = std::fopen(realPath.c_str(), "rb");
-            if (!f) return 0;
-
-            struct stat st;
-            if (fstat(_fileno(f), &st) == 0) {
-                fclose(f);
-                return static_cast<uint32_t>(st.st_mtime);
-            }
-            fclose(f);
-            return 0;
-        }
-        else {
-            // GameData: use SDL
-            rw = SDL_RWFromFile(path.c_str(), "rb");
-            if (!rw) return 0;
-
-            // Unfortunately SDL_RWops doesn't provide mtime directly
-            // → we fall back to platform-specific way or return 0
-            SDL_RWclose(rw);
-            return 0;  // ← SDL limitation; consider using std::filesystem instead
-        }
-
-#endif
-    }
-
-    bool FileSystemEngine::WriteFileBinary(const std::string& path, const std::vector<uint8_t>& data)
-    {
-#ifdef __EMSCRIPTEN__
-        return false;
-#endif
-        auto rel = path;
-
-        try {
-            // === on-demand directory creation starts here ===
-            std::filesystem::path fsPath(rel);
-            if (auto parent = fsPath.parent_path(); !parent.empty() && !std::filesystem::exists(parent)) {
-                std::filesystem::create_directories(parent);
-            }
-            // === end directory logic ===
-            std::ofstream ofs(rel, std::ios::binary);
-            if (!ofs) return false;
-            ofs.write(reinterpret_cast<const char*>(data.data()), data.size());
-            return true;
-        }
-        catch (...) {
+        fs::create_directories(fs::path(path).parent_path());
+        std::ofstream file(path, std::ios::binary);
+        if (!file)
             return false;
-        }
 
-    }
-
-    bool FileSystemEngine::WriteFile(const std::string& path, const std::string& content)
-    {
-
-#ifdef __EMSCRIPTEN__
-
-        if (!isSavePath(path)) {
-            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-                "WriteFile only allowed under SaveData/: %s", path.c_str());
-            return false;
-        }
-#endif
-        auto rel = path;// stripSavePrefix(path);
-
-#ifdef __EMSCRIPTEN__
-        WriteFileJS(rel.c_str(), content.c_str());
+        file.write(content.data(), content.size());
         return true;
-#else
-        try {
-            // === on‑demand directory creation starts here ===
-            std::filesystem::path fsPath(rel);
-            if (auto parent = fsPath.parent_path(); !parent.empty() && !std::filesystem::exists(parent)) {
-                std::filesystem::create_directories(parent);
-            }
-            // === end directory logic ===
-
-            std::ofstream ofs(rel, std::ios::binary);
-            if (!ofs) return false;
-            ofs.write(content.data(), content.size());
-            return true;
-        }
-        catch (...) {
-            return false;
-        }
+    }
+    catch (...)
+    {
+        return false;
+    }
 #endif
+}
+
+/* ============================
+   WRITE FILE (BINARY)
+   ZIP IS NOT SUPPORTED
+   ============================ */
+
+bool FileSystemEngine::WriteFileBinary(const std::string& path, const std::vector<uint8_t>& data)
+{
+    std::lock_guard<std::mutex> lock(g_fsMutex);
+
+#ifdef __EMSCRIPTEN__
+    WriteFileBinaryJS(path.c_str(), data.data(), static_cast<int>(data.size()));
+    return true;
+#else
+    try
+    {
+        fs::create_directories(fs::path(path).parent_path());
+        std::ofstream file(path, std::ios::binary);
+        if (!file)
+            return false;
+
+        file.write(reinterpret_cast<const char*>(data.data()), data.size());
+        return true;
+    }
+    catch (...)
+    {
+        return false;
+    }
+#endif
+}
+
+/* ============================
+   DIRECTORY LISTING
+   ============================ */
+
+std::vector<std::string> FileSystemEngine::GetFilesInPath(const std::string& path)
+{
+    std::lock_guard<std::mutex> lock(g_fsMutex);
+    std::vector<std::string> result;
+
+    // Disk
+    try
+    {
+        if (fs::exists(path) && fs::is_directory(path))
+        {
+            for (const auto& entry : fs::directory_iterator(path))
+            {
+                result.push_back(entry.path().filename().string());
+            }
+        }
+    }
+    catch (...) {}
+
+    // ZIP
+    auto zipEntries = ZipVFS::Instance().GetFilesInPath(path);
+    for (const auto& name : zipEntries)
+    {
+        if (std::find(result.begin(), result.end(), name) == result.end())
+        {
+            result.push_back(name);
+        }
     }
 
+    return result;
+}
 
-} // namespace FileSystem
+/* ============================
+   FILE MODIFICATION TIME
+   ============================ */
+
+std::uint32_t FileSystemEngine::GetFileModificationTime(const std::string& path)
+{
+    std::lock_guard<std::mutex> lock(g_fsMutex);
+
+    // Disk priority
+    try
+    {
+        if (fs::exists(path) && fs::is_regular_file(path))
+        {
+            auto ftime = fs::last_write_time(path);
+
+            // C++17-safe conversion
+            auto sctp = std::chrono::time_point_cast<std::chrono::system_clock::duration>(
+                ftime - fs::file_time_type::clock::now()
+                + std::chrono::system_clock::now()
+            );
+
+            return std::chrono::system_clock::to_time_t(sctp);
+        }
+    }
+    catch (...) {}
+
+    // ZIP fallback
+    return ZipVFS::Instance().GetFileModificationTime(path);
+}
