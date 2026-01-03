@@ -200,7 +200,7 @@ void NpcHumanAxe::UpdateAttackDamage()
 
 	if (attackingDamage == false) return;
 
-	auto hit = Physics::SphereTrace(Position, MathHelper::GetForwardVector(mesh->Rotation) * 1.0f + Position, 0.2f, BodyType::World | BodyType::CharacterCapsule, { LeadBody });
+	auto hit = Physics::SphereTrace(Position, MathHelper::GetForwardVector(mesh->Rotation) * 1.1f + Position, 0.35f, BodyType::World | BodyType::CharacterCapsule, { LeadBody });
 
 	if (hit.hasHit)
 	{

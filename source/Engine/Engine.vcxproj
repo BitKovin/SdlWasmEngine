@@ -340,6 +340,7 @@
     <ClCompile Include="BehaviourTree\NodeFactory.cpp" />
     <ClCompile Include="BehaviourTree\TaskNodes.cpp" />
     <ClCompile Include="BehaviourTree\TreeNode.cpp" />
+    <ClCompile Include="Compression\zip.cpp" />
     <ClCompile Include="Console\Console.cpp" />
     <ClCompile Include="Console\ConsoleDefaultCommands.cpp" />
     <ClCompile Include="Entities\Brushes\AreaBase.hpp" />
@@ -347,6 +348,7 @@
     <ClCompile Include="Entities\PointLight.cpp" />
     <ClCompile Include="Entities\transformPoint.cpp" />
     <ClCompile Include="FileSystem\FileSystem.cpp" />
+    <ClCompile Include="Helpers\ByteCompressor.cpp" />
     <ClCompile Include="Helpers\CSVParser.cpp" />
     <ClCompile Include="http\http_client_emscripten.cpp" />
     <ClCompile Include="http\http_client_httplib.cpp" />
@@ -462,6 +464,8 @@
     <ClInclude Include="BehaviourTree\NodeFactory.h" />
     <ClInclude Include="BehaviourTree\TaskNodes.h" />
     <ClInclude Include="BehaviourTree\TreeNode.h" />
+    <ClInclude Include="Compression\miniz.h" />
+    <ClInclude Include="Compression\zip.h" />
     <ClInclude Include="Console\Console.h" />
     <ClInclude Include="Console\ConsoleCommand.h" />
     <ClInclude Include="Console\ConsoleDefaultCommands.h" />
@@ -480,6 +484,7 @@
     <ClInclude Include="Entities\WorldSpawn.h" />
     <ClInclude Include="FileSystem\FileSystem.h" />
     <ClInclude Include="FogManager.h" />
+    <ClInclude Include="Helpers\ByteCompressor.h" />
     <ClInclude Include="Helpers\CSVParser.h" />
     <ClInclude Include="http\http_client.h" />
     <ClInclude Include="imgui\FA6FreeSolidFontData.h" />

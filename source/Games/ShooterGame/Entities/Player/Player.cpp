@@ -66,7 +66,7 @@ void Player::Start()
     AddWeaponByName("weapon_tommy");
     AddWeaponByName("weapon_sniper");
 
-    SwitchWeaponOffhand("weapon_lefthand_empty");
+    SwitchWeaponOffhand("weapon_cane");
 
     cameraRotation.y = Rotation.y;
 

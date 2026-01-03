@@ -56,7 +56,10 @@ void WeaponFirearm::LoadAssets()
 	// LEFT HAND (always loaded)
 	viewmodelLeft = new SkeletalMesh(this);
 	armsLeft = new SkeletalMesh(this);
+
+	if (params.modelPath.empty() == false)
 	viewmodelLeft->LoadFromFile(params.modelPath);
+
 	if (!params.texturesLocation.empty())
 		viewmodelLeft->TexturesLocation = params.texturesLocation;
 	viewmodelLeft->PlayAnimation(params.drawAnimation);
@@ -76,7 +79,10 @@ void WeaponFirearm::LoadAssets()
 
 	// Third person model
 	Drawables.push_back(thirdPersonModel = new SkeletalMesh(owner));
-	thirdPersonModel->LoadFromFile(params.modelPathTp);
+
+	if(params.modelPathTp.empty()== false)
+		thirdPersonModel->LoadFromFile(params.modelPathTp);
+
 	thirdPersonModel->TexturesLocation = params.texturesLocationTp;
 
 	PreloadEntityType("bullet");

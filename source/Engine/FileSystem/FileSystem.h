@@ -26,4 +26,6 @@ namespace FileSystemEngine
     // returns true on success, false on failure
     bool WriteFile(const std::string& path, const std::string& content);
 
+    bool WriteFileBinary(const std::string& path, const std::vector<uint8_t>& data);
+
 } // namespace FileSystem

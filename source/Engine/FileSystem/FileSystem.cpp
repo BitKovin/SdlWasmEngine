@@ -3,7 +3,8 @@
 #include <stdexcept>
 #include <SDL2/SDL.h>
 #include <sstream>
-
+#include <filesystem>
+#include <fstream>
 #include "../Logger.hpp"
 
 #ifdef __EMSCRIPTEN__
@@ -57,6 +58,18 @@ EM_JS(void, MountPersistentFS, (), {
         if (err) console.error('IDBFS initial load failed:', err);
     });
     });
+
+#ifdef __EMSCRIPTEN__
+EM_JS(double, GetMTimeJS, (const char* p), {
+    try {
+        const stat = FS.stat(UTF8ToString(p));
+        return stat.mtime;  // mtime in seconds
+    }
+ catch (e) {
+  return 0;
+}
+    });
+#endif
 
 
 #else
@@ -292,17 +305,6 @@ namespace FileSystemEngine {
         }
 
         try {
-            // FS.stat returns an object with .mtime property (seconds)
-            // We need to call JS to get it
-            EM_JS(double, GetMTimeJS, (const char* p), {
-                try {
-                    const stat = FS.stat(UTF8ToString(p));
-                    return stat.mtime;  // mtime is in seconds (double)
-                }
-     catch (e) {
-      return 0;
-  }
-                });
 
             double mtime = GetMTimeJS(fullPath.c_str());
             return static_cast<uint32_t>(mtime);
@@ -371,6 +373,31 @@ namespace FileSystemEngine {
         }
 
 #endif
+    }
+
+    bool FileSystemEngine::WriteFileBinary(const std::string& path, const std::vector<uint8_t>& data)
+    {
+#ifdef __EMSCRIPTEN__
+        return false;
+#endif
+        auto rel = path;
+
+        try {
+            // === on-demand directory creation starts here ===
+            std::filesystem::path fsPath(rel);
+            if (auto parent = fsPath.parent_path(); !parent.empty() && !std::filesystem::exists(parent)) {
+                std::filesystem::create_directories(parent);
+            }
+            // === end directory logic ===
+            std::ofstream ofs(rel, std::ios::binary);
+            if (!ofs) return false;
+            ofs.write(reinterpret_cast<const char*>(data.data()), data.size());
+            return true;
+        }
+        catch (...) {
+            return false;
+        }
+
     }
 
     bool FileSystemEngine::WriteFile(const std::string& path, const std::string& content)

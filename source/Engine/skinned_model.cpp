@@ -388,9 +388,15 @@ namespace roj
 	{
 		resetLoader();
 
+		if (path.empty())
+		{
+			m_infoLog += "Skinned model loader: Empty path provided.\n";
+			return false;
+		}
+
 		Assimp::Importer importer;
 
-		const aiScene* m_scene;
+		const aiScene* m_scene = nullptr;
 
 		// Check if the requested scene is the same as the cached one
 		if (path == m_lastLoadedPath && m_cachedScene != nullptr) {
@@ -401,7 +407,13 @@ namespace roj
 		else
 		{
 
-			auto fileData = FileSystemEngine::ReadFileBinary(path);
+			std::vector<uint8_t> fileData = FileSystemEngine::ReadFileBinary(path);
+
+			if (fileData.empty())
+			{
+				m_infoLog += "Skinned model loader: Failed to read file: " + path + "\n";
+				return false;
+			}
 
 			m_scene = m_import.ReadFileFromMemory(fileData.data(), fileData.size(),
 				aiProcess_Triangulate |

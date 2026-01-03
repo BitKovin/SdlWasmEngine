@@ -1,11 +1,12 @@
 #include "NavigationFileHelper.h"
 #include "NavigationGenerationHelpers.hpp"
 #include "../Logger.hpp"
+#include "../FileSystem/FileSystem.h"
+#include "../Helpers/ByteCompressor.h"
 
 /* ========================================================= */
 /* ========================= SAVE =========================== */
 /* ========================================================= */
-
 bool NavigationFileHelper::Save(
     const char* filePath,
     dtNavMesh* navMesh,
@@ -13,146 +14,154 @@ bool NavigationFileHelper::Save(
 {
     if (!navMesh || !tileCache)
         return false;
-
 #ifdef __EMSCRIPTEN__
-
     Logger::Log("can't save file on this platform");
-
     return false;
-
 #endif // __EMSCRIPTEN__
 
+    std::vector<uint8_t> buffer;
 
-    FILE* fp = std::fopen(filePath, "wb");
-    if (!fp)
-        return false;
+    auto append = [&buffer](const void* data, size_t size) {
+        size_t old_size = buffer.size();
+        buffer.resize(old_size + size);
+        memcpy(buffer.data() + old_size, data, size);
+        };
 
     NavMeshFileHeader fileHeader{};
     fileHeader.magic = NAVMESH_FILE_MAGIC;
     fileHeader.version = version;
 
-    const long rootHeaderPos = ftell(fp);
-    fwrite(&fileHeader, sizeof(fileHeader), 1, fp);
+    // Reserve space for the root header
+    size_t rootHeaderPos = 0;
+    buffer.resize(sizeof(NavMeshFileHeader)); // Placeholder for header
 
     /* ================= NavMesh ================= */
-
-    fileHeader.navMeshOffset = (uint32_t)ftell(fp);
-
+    fileHeader.navMeshOffset = (uint32_t)buffer.size();
     NavMeshSetHeader nmHeader{};
     nmHeader.params = *navMesh->getParams();
     nmHeader.numTiles = 0;
-
     for (int i = 0; i < navMesh->getMaxTiles(); ++i)
     {
         const dtMeshTile* tile = navMesh->getTile(i);
         if (tile && tile->header && tile->dataSize)
             nmHeader.numTiles++;
     }
-
-    fwrite(&nmHeader, sizeof(nmHeader), 1, fp);
-
+    append(&nmHeader, sizeof(nmHeader));
     for (int i = 0; i < navMesh->getMaxTiles(); ++i)
     {
         const dtMeshTile* tile = navMesh->getTile(i);
         if (!tile || !tile->header || !tile->dataSize)
             continue;
-
         NavMeshTileHeader th{};
         th.tileRef = navMesh->getTileRef(tile);
         th.dataSize = tile->dataSize;
-
-        fwrite(&th, sizeof(th), 1, fp);
-        fwrite(tile->data, tile->dataSize, 1, fp);
+        append(&th, sizeof(th));
+        append(tile->data, tile->dataSize);
     }
 
     /* ================= TileCache ================= */
-
-    fileHeader.tileCacheOffset = (uint32_t)ftell(fp);
-
+    fileHeader.tileCacheOffset = (uint32_t)buffer.size();
     TileCacheSetHeader tcHeader{};
     tcHeader.params = *tileCache->getParams();
     tcHeader.numTiles = 0;
-
     for (int i = 0; i < tileCache->getTileCount(); ++i)
     {
         const dtCompressedTile* tile = tileCache->getTile(i);
         if (tile && tile->dataSize)
             tcHeader.numTiles++;
     }
-
-    fwrite(&tcHeader, sizeof(tcHeader), 1, fp);
-
+    append(&tcHeader, sizeof(tcHeader));
     for (int i = 0; i < tileCache->getTileCount(); ++i)
     {
         const dtCompressedTile* tile = tileCache->getTile(i);
         if (!tile || !tile->dataSize)
             continue;
-
         TileCacheTileHeader th{};
         th.tileRef = tileCache->getTileRef(tile);
         th.dataSize = tile->dataSize;
-
-        fwrite(&th, sizeof(th), 1, fp);
-        fwrite(tile->data, tile->dataSize, 1, fp);
+        append(&th, sizeof(th));
+        append(tile->data, tile->dataSize);
     }
 
     /* ================= Finalize ================= */
+    fileHeader.fileSize = (uint32_t)buffer.size();
 
-    fileHeader.fileSize = (uint32_t)ftell(fp);
+    // Overwrite the header at the beginning
+    memcpy(buffer.data() + rootHeaderPos, &fileHeader, sizeof(fileHeader));
 
-    fseek(fp, rootHeaderPos, SEEK_SET);
-    fwrite(&fileHeader, sizeof(fileHeader), 1, fp);
+    // Compress the buffer
+    buffer = ByteCompressor::CompressData(buffer);
 
-    fclose(fp);
-    return true;
+    // Write the compressed data to file (assuming FileSystemEngine has a WriteFileBinary method)
+    return FileSystemEngine::WriteFileBinary(filePath, buffer);
 }
 
 /* ========================================================= */
 /* ========================= LOAD =========================== */
 /* ========================================================= */
-
 bool NavigationFileHelper::Load(
     const char* filePath,
     dtNavMesh*& outNavMesh,
     dtTileCache*& outTileCache, uint32_t version)
 {
-    FILE* fp = std::fopen(filePath, "rb");
-    if (!fp)
+    std::vector<uint8_t> compressed = FileSystemEngine::ReadFileBinary(filePath);
+    if (compressed.empty())
         return false;
 
+    std::vector<uint8_t> buffer = ByteCompressor::DecompressData(compressed);
+    if (buffer.empty())
+        return false;
+
+    size_t pos = 0;
+
+    auto read = [&buffer, &pos](void* dest, size_t size) {
+        if (pos + size > buffer.size())
+            return false; // Error: out of bounds
+        memcpy(dest, buffer.data() + pos, size);
+        pos += size;
+        return true;
+        };
+
+    auto seek = [&pos](size_t offset) {
+        pos = offset;
+        };
+
     NavMeshFileHeader fileHeader{};
-    fread(&fileHeader, sizeof(fileHeader), 1, fp);
+    if (!read(&fileHeader, sizeof(fileHeader)))
+        return false;
 
     if (fileHeader.magic != NAVMESH_FILE_MAGIC ||
         fileHeader.version != version)
     {
-        fclose(fp);
         return false;
     }
 
     /* ===================== Load NavMesh ===================== */
-
-    fseek(fp, fileHeader.navMeshOffset, SEEK_SET);
-
+    seek(fileHeader.navMeshOffset);
     NavMeshSetHeader nmHeader{};
-    fread(&nmHeader, sizeof(nmHeader), 1, fp);
+    if (!read(&nmHeader, sizeof(nmHeader)))
+        return false;
 
     outNavMesh = dtAllocNavMesh();
     if (!outNavMesh ||
         dtStatusFailed(outNavMesh->init(&nmHeader.params)))
     {
-        fclose(fp);
         return false;
     }
 
     for (uint32_t i = 0; i < nmHeader.numTiles; ++i)
     {
         NavMeshTileHeader th{};
-        fread(&th, sizeof(th), 1, fp);
+        if (!read(&th, sizeof(th)))
+            return false;
 
         unsigned char* data =
             (unsigned char*)dtAlloc(th.dataSize, DT_ALLOC_PERM);
-        fread(data, th.dataSize, 1, fp);
+        if (!data || !read(data, th.dataSize))
+        {
+            dtFree(data);
+            return false;
+        }
 
         outNavMesh->addTile(
             data,
@@ -163,16 +172,14 @@ bool NavigationFileHelper::Load(
     }
 
     /* ===================== Load TileCache ===================== */
-
-    fseek(fp, fileHeader.tileCacheOffset, SEEK_SET);
-
+    seek(fileHeader.tileCacheOffset);
     TileCacheSetHeader tcHeader{};
-    fread(&tcHeader, sizeof(tcHeader), 1, fp);
+    if (!read(&tcHeader, sizeof(tcHeader)))
+        return false;
 
     // Create alloc & compressor
     dtTileCacheAlloc* talloc = new dtTileCacheAlloc();
     dtTileCacheCompressor* tcomp = new FastLZCompressor();
-
     outTileCache = dtAllocTileCache();
     if (!outTileCache ||
         dtStatusFailed(
@@ -180,22 +187,26 @@ bool NavigationFileHelper::Load(
                 &tcHeader.params,
                 talloc,
                 tcomp,
-                nullptr)))   // optional mesh processor
+                nullptr))) // optional mesh processor
     {
         delete talloc;
         delete tcomp;
-        fclose(fp);
         return false;
     }
 
     for (uint32_t i = 0; i < tcHeader.numTiles; ++i)
     {
         TileCacheTileHeader th{};
-        fread(&th, sizeof(th), 1, fp);
+        if (!read(&th, sizeof(th)))
+            return false;
 
         unsigned char* data =
             (unsigned char*)dtAlloc(th.dataSize, DT_ALLOC_PERM);
-        fread(data, th.dataSize, 1, fp);
+        if (!data || !read(data, th.dataSize))
+        {
+            dtFree(data);
+            return false;
+        }
 
         dtCompressedTileRef newRef = 0;
         outTileCache->addTile(
@@ -205,7 +216,5 @@ bool NavigationFileHelper::Load(
             &newRef);
     }
 
-    fclose(fp);
     return true;
 }
-
