@@ -9,6 +9,7 @@
 #include "FileSystem/FileSystem.h"
 
 #include "malloc_override.h"
+#include "Logger.hpp"
 
 class Texture {
 public:
