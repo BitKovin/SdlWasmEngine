@@ -19,4 +19,8 @@ namespace UiRenderer {
     void DrawText(std::string text, TTF_Font* font, const glm::vec2& pos, float rotation, vec2 pivot, const glm::vec4& color, const glm::vec2& scale, const string& shader = "");
     // Call at the end of each frame to update time and clean the cache
     void EndFrame();
+
+	inline bool customViewport = false;
+	inline ivec2 customViewportSize = ivec2(800, 600);
+
 }

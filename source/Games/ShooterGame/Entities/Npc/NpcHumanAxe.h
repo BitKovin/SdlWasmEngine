@@ -15,6 +15,9 @@
 
 #include "../Enemy/IEnemy.h"
 
+#include <UI/WorldSpace/UiBilboard.h>
+#include <UI/UiVideo.hpp>
+
 class NpcHumanAxe : public Entity, public IEnemy
 {
 
@@ -46,6 +49,8 @@ private:
 
 	void UpdateFleeTarget();
 
+	UiBilboard* statusWidget = nullptr;
+
 public:
 
 	SkeletalMesh* mesh;
@@ -56,6 +61,16 @@ public:
 	{
 		mesh = new SkeletalMesh(this);
 		Drawables.push_back(mesh);
+
+		statusWidget = new UiBilboard(this);
+		Drawables.push_back(statusWidget);
+
+		auto image = make_shared<UiVideo>();
+
+		image->VideoPath = "GameData/videos/meowl.mpg";
+		image->size = vec2(256, 256);
+
+		statusWidget->ContentBox.AddChild(image);
 
 		ClassName = "npc_human_axe";
 		SaveGame = true;
@@ -115,6 +130,7 @@ public:
 	void Serialize(json& target);
 	void Deserialize(json& source);
 
+	void UpdateStatusWidgets();
 
 	void UpdateDebugUI();
 

@@ -443,6 +443,7 @@
     <ClCompile Include="UI\UiElement.cpp" />
     <ClCompile Include="UI\UiRenderer.cpp" />
     <ClCompile Include="UI\UiVideo.hpp" />
+    <ClCompile Include="UI\WorldSpace\UiBilboard.cpp" />
     <ClCompile Include="utils.cpp" />
     <ClCompile Include="Video\Video.cpp" />
     <ClCompile Include="Video\VideoInstance.cpp" />
@@ -618,6 +619,7 @@
     <ClInclude Include="UI\UiText.hpp" />
     <ClInclude Include="UI\UiVerticalBox.hpp" />
     <ClInclude Include="UI\UiViewport.hpp" />
+    <ClInclude Include="UI\WorldSpace\UiBilboard.h" />
     <ClInclude Include="utility\hashed_string.hpp" />
     <ClInclude Include="utils.hpp" />
     <ClInclude Include="VertexData.h" />

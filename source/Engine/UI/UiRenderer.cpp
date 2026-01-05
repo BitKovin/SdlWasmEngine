@@ -82,6 +82,12 @@ namespace UiRenderer {
         float screenHeight = static_cast<float>(UiManager::GetScaledUiHeight()); // pixels
         float screenWidth = screenHeight * Camera::AspectRatio; // pixels (float!)
 
+        if(customViewport)
+        {
+            screenWidth = static_cast<float>(customViewportSize.x);
+            screenHeight = static_cast<float>(customViewportSize.y);
+		}
+
         // orthographic projection with top-left origin (y down)
         glm::mat4 uiProjection = glm::ortho(
             0.0f,
@@ -94,8 +100,6 @@ namespace UiRenderer {
 
         shader->SetUniform("u_Projection", uiProjection);
 
-        // expose device scale for snapping (optional: store in shader or global)
-        // but here we'll compute it in DrawTexturedRect as needed
     }
 
     void DrawTexturedRect(const glm::vec2& pos, const glm::vec2& size, float rotation, vec2 pivot, GLuint texture, const glm::vec4& color) {

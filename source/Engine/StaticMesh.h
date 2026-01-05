@@ -67,6 +67,9 @@ public:
 	Texture* ColorTexture = nullptr;
 	Texture* EmissiveTexture = nullptr;
 
+	uint32_t ColorTextureId = 0;
+	uint32_t EmissiveTextureId = 0;
+
 	vec3 Position = vec3(0);
 	vec3 Rotation = vec3(0);
 

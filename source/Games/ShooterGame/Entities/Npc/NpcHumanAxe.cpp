@@ -242,6 +242,8 @@ void NpcHumanAxe::AsyncUpdate()
 		return;
 	}
 
+	UpdateStatusWidgets();
+
 	//mesh->UpdatePose = mesh->WasRended;
 
 	UpdateDebuffs(Time::DeltaTimeF);
@@ -439,6 +441,15 @@ void NpcHumanAxe::Deserialize(json& source)
 	mesh->SetAnimationState(animationStateSaveData);
 	mesh->Update(0);
 	mesh->PullRootMotion();
+
+}
+
+void NpcHumanAxe::UpdateStatusWidgets()
+{
+
+	statusWidget->Position = Position + vec3(0, 1.5f, 0);
+	statusWidget->Rotation = Camera::rotation;
+	statusWidget->TwoSided = true;
 
 }
 

@@ -46,7 +46,7 @@ public:
     void OnApply(IEnemy& target) override { target_ = &target; }
 
 private:
-    IEnemy* target_ = nullptr; // stored to call Stun & Disbalance
+    IEnemy* target_ = nullptr;
 
 
 };

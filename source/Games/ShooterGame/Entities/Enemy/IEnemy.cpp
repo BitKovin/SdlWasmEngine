@@ -36,7 +36,7 @@ void IEnemy::AddDebuffStacks(const std::string& debuffName, float stacks)
 
     auto debuff = DebuffFactory::Instance().CreateDebuff(debuffName);
     AddDebuff(debuff);
-    debuff->AddStacks(stacks);
+    debuff->AddStacks(stacks - 1);
 
 }
 

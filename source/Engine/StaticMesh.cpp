@@ -144,7 +144,7 @@ void StaticMesh::DrawForward(mat4x4 view, mat4x4 projection)
 
 		if (finalMeshHideList.contains(mesh.name)) continue;
 
-		if (ColorTexture == nullptr)
+		if (ColorTexture == nullptr && ColorTextureId == 0)
 		{
 
 			string baseTextureName;
@@ -209,8 +209,24 @@ void StaticMesh::DrawForward(mat4x4 view, mat4x4 projection)
 		}
 		else
 		{
-			forward_shader_program->SetTexture("u_texture", ColorTexture);
-			forward_shader_program->SetTexture("u_textureEmissive", EmissiveTexture);
+
+			if (ColorTexture)
+			{
+				forward_shader_program->SetTexture("u_texture", ColorTexture);
+			}
+			else
+			{
+				forward_shader_program->SetTexture("u_texture", ColorTextureId);
+			}
+
+			if (EmissiveTexture)
+			{
+				forward_shader_program->SetTexture("u_textureEmissive", EmissiveTexture);
+			}
+			else
+			{
+				forward_shader_program->SetTexture("u_textureEmissive", EmissiveTextureId);
+			}
 		}
 
 		mesh.VAO->Bind();
