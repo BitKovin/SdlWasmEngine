@@ -207,6 +207,9 @@
     <ClCompile Include="Entities\Enemy\Debuffs\DisbalanceDebuff.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Entities\Enemy\Debuffs\QuicksilverDebuff.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Entities\Player\Player.hpp">

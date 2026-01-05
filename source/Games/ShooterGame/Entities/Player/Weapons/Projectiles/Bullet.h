@@ -17,6 +17,9 @@ public:
 
 	std::string OwnerTag = "player";
 
+	std::string debuffOnHit = "";
+	float debuffStacks = 0;
+
 	float Damage = 15;
 	float Speed = 100;
 	float MaxDistance = 100;

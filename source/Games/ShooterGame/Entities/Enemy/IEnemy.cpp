@@ -122,6 +122,21 @@ float IEnemy::GetDebuffStacksTotal(const std::string& debuffName) const
     return 0;
 }
 
+std::string IEnemy::GetDebuffsDebugInfo() const
+{
+    std::ostringstream ss;
+
+    for (size_t i = 0; i < debuffs_.size(); ++i)
+    {
+        ss << debuffs_[i]->GetDebugInfo();
+
+        if (i + 1 < debuffs_.size())
+            ss << '\n';
+    }
+
+    return ss.str();
+}
+
 void IEnemy::SortDebuffs()
 {
     std::sort(debuffs_.begin(), debuffs_.end(),

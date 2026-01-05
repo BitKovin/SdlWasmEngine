@@ -66,6 +66,8 @@ public:
 
 		Tags.push_back("enemy");
 
+		Poise = 100.f;
+
 	}
 
 
@@ -112,6 +114,9 @@ public:
 
 	void Serialize(json& target);
 	void Deserialize(json& source);
+
+
+	void UpdateDebugUI();
 
 protected:
 

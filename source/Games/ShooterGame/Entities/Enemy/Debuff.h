@@ -53,6 +53,12 @@ public:
 
     virtual void AddStacks(float amount)
     {
+
+        if(refreshOnReapply_)
+        {
+            remainingTime_ = duration_;
+		}
+
         // By default, integer stacks
         stacks_ += static_cast<int>(amount);
         if (stacks_ > maxStacks_) stacks_ = maxStacks_;
@@ -63,7 +69,8 @@ public:
         return {
             {"name", name_},
             {"remainingTime", remainingTime_},
-            {"stacks", stacks_}
+            {"stacks", stacks_},
+            {"duration_", duration_}
         };
     }
 
@@ -71,6 +78,25 @@ public:
     {
         if (j.contains("remainingTime")) remainingTime_ = j["remainingTime"].get<float>();
         if (j.contains("stacks")) stacks_ = j["stacks"].get<int>();
+		if (j.contains("duration_")) duration_ = j["duration_"].get<float>();
+    }
+
+    virtual std::string GetDebugInfo() const
+    {
+        std::ostringstream ss;
+        ss << name_;
+
+        if (stacks_ > 0)
+            ss << " | stacks: " << stacks_;
+
+        if (duration_ > 0.0f)
+        {
+            ss << " | time: "
+                << std::fixed << std::setprecision(2)
+                << remainingTime_ << " / " << duration_;
+        }
+
+        return ss.str();
     }
 
 protected:
@@ -81,6 +107,7 @@ protected:
 
     DebuffStage stage_;
     int priority_;
+
 
     float maxStacks_;
     float stacks_;

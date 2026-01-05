@@ -231,11 +231,15 @@ void WeaponFirearm::PerformAttack()
 	vec3 startLoc = MathHelper::DecomposeMatrix(boneMat).Position;
 	startLoc = mix(startLoc, Camera::position, params.muzzleMix) - Camera::Forward() * params.muzzleForwardOffset;
 
+	int c = 0;
+
 	// spread shooting
-	if (params.spreadType == "grid") {
+	if (params.spreadType == "grid") 
+	{
 		for (float y = -params.gridSpreadSize; y <= params.gridSpreadSize; y += params.gridStep) {
 			for (float x = -params.gridSpreadSize; x <= params.gridSpreadSize; x += params.gridStep) {
 				if (length(vec2(x, y)) > params.gridMaxLength) continue;
+				c++;
 				FireSingleBullet(startLoc, vec4(x, y, 0, 1));
 			}
 		}
@@ -245,7 +249,6 @@ void WeaponFirearm::PerformAttack()
 			FireSingleBullet(startLoc, vec4(0));
 	}
 
-	WeaponFireFlash::CreateAt(startLoc, 0.12, 10);
 
 	attackDelay.AddDelay(params.attackDelayTime * (akimbo ? 0.5f : 1.0f));
 }
@@ -254,6 +257,9 @@ void WeaponFirearm::FireSingleBullet(const vec3& startLoc, const vec4& gridOffse
 {
 	Bullet* bullet = new Bullet();
 	Level::Current->AddEntity(bullet);
+
+	bullet->debuffOnHit = params.debuffOnHit;
+	bullet->debuffStacks = params.debuffStacksOnHit;
 
 	vec3 offset;
 	if (params.spreadType == "grid")

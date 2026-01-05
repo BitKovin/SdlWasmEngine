@@ -343,6 +343,7 @@
     <ClCompile Include="Entities\Enemy\Debuff.cpp" />
     <ClCompile Include="Entities\Enemy\Debuffs\DisbalanceDebuff.cpp" />
     <ClCompile Include="Entities\Enemy\Debuffs\PoiseBreakDebuff.cpp" />
+    <ClCompile Include="Entities\Enemy\Debuffs\QuicksilverDebuff.cpp" />
     <ClCompile Include="Entities\Enemy\IEnemy.cpp" />
     <ClCompile Include="Entities\Enviroment\Door.cpp" />
     <ClCompile Include="Entities\NpcSimulationManager.cpp" />

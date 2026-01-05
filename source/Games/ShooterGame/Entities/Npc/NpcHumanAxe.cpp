@@ -173,6 +173,8 @@ void NpcHumanAxe::OnDamage(float Damage, Entity* DamageCauser, Entity* Weapon)
 
 	Damage = ModifyIncomingDamage(Damage);
 
+	Logger::Log("NpcHumanAxe took damage: " + std::to_string(Damage));
+
 	Health -= Damage;
 
 	if (Health <= 0)
@@ -437,6 +439,19 @@ void NpcHumanAxe::Deserialize(json& source)
 	mesh->SetAnimationState(animationStateSaveData);
 	mesh->Update(0);
 	mesh->PullRootMotion();
+
+}
+
+void NpcHumanAxe::UpdateDebugUI()
+{
+
+	ImGui::Begin(("NpcHumanAxe Debug: " + Id).c_str());
+
+	ImGui::Text(("Health: " + std::to_string(Health)).c_str());
+
+	ImGui::Text(GetDebuffsDebugInfo().c_str());
+
+	ImGui::End();
 
 }
 

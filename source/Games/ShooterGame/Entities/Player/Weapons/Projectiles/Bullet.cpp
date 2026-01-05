@@ -36,7 +36,7 @@ void Bullet::Start()
 	}
 
 
-}
+}	
 
 void Bullet::Update()
 {
@@ -73,7 +73,11 @@ void Bullet::Update()
 
 			if(enemy)
 			{
-				enemy->AddDebuffStacks("PoiseBreakDebuff", Damage);
+				if (debuffStacks > 0 && debuffOnHit != "")
+				{
+					enemy->AddDebuffStacks(debuffOnHit, debuffStacks);
+				}
+
 			}
 
 		}

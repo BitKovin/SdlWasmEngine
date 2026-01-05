@@ -16,7 +16,7 @@ public:
 
     float ModifyMovementSpeed(IEnemy&, float value) override
     {
-        return value * 0.5f;
+        return value * 0.75f;
     }
 
     float ModifyAnimationSpeed(IEnemy&, float value) override

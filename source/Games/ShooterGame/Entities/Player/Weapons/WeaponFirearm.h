@@ -61,6 +61,10 @@ struct FirearmParams {
 	float gridSpreadSize = 4.0f;
 	float gridStep = 2.0f;
 	float gridMaxLength = 4.7f;
+
+	std::string debuffOnHit = "";
+	float debuffStacksOnHit = 0.0f;
+
 };
 
 class WeaponFirearm : public Weapon {

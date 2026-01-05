@@ -36,6 +36,10 @@ public:
         params.gridSpreadSize = 4.0f;
         params.gridStep = 2.0f;
         params.gridMaxLength = 4.7f;
+
+        params.debuffOnHit = "PoiseBreakDebuff";
+		params.debuffStacksOnHit = 150 / 21.0f;
+
     }
 
     void Update() override {

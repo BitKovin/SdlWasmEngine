@@ -37,7 +37,7 @@ public:
                 target_->Stun();
                 target_->AddDebuffStacks("DisbalanceDebuff", 1);
                 target_->AddDebuff(std::make_shared<Debuff>(
-                    "PoiseBreakImmune", 2.0f, DebuffStage::PreClamp, 0, 1, false
+                    "PoiseBreakImmune", 1.5f, DebuffStage::PreClamp, 0, 1, false
                 ));
             }
             remainingTime_ = 0.0f;

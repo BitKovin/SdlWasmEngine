@@ -64,6 +64,7 @@ public:
             AddDebuff(debuff);
         }
     }
+    std::string GetDebuffsDebugInfo() const;
 
 
 protected:
