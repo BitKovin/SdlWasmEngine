@@ -11,7 +11,7 @@
 
 #include "model_animator.hpp"
 
-#define BAKED_FRAME_RATE 150.0f
+#define BAKED_FRAME_RATE 30.0f
 
 using namespace utils::assimp;
 

@@ -389,7 +389,7 @@
                 "y": 0.0,
                 "z": -85.0
             },
-            "damageMultiplier": 2.0,
+            "damageMultiplier": 1.5,
             "mass": 5.0,
             "parentBone": "spine_02",
             "position": {

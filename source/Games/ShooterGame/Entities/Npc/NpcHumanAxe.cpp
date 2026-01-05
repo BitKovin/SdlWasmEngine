@@ -34,6 +34,8 @@ void NpcHumanAxe::UpdateFleeTarget()
 void NpcHumanAxe::PlaySoundEffect(std::string eventName)
 {
 
+	if (soundPlayer == nullptr) return;
+
 	soundPlayer->SetSound(FmodEventInstance::Create(eventName));
 
 	soundPlayer->Play();
@@ -90,7 +92,7 @@ void NpcHumanAxe::Start()
 
 }
 
-void NpcHumanAxe::Stun(Entity* DamageCauser, Entity* Weapon)
+void NpcHumanAxe::Stun()
 {
 	stuned = true;
 	mesh->PlayAnimation("stun");
@@ -169,6 +171,8 @@ void NpcHumanAxe::OnPointDamage(float Damage, vec3 Point, vec3 Direction, string
 void NpcHumanAxe::OnDamage(float Damage, Entity* DamageCauser, Entity* Weapon)
 {
 
+	Damage = ModifyIncomingDamage(Damage);
+
 	Health -= Damage;
 
 	if (Health <= 0)
@@ -209,8 +213,8 @@ void NpcHumanAxe::UpdateAttackDamage()
 
 			if (NpcHelper::CheckParry(MathHelper::GetForwardVector(mesh->Rotation), hit.entity))
 			{
-				Stun(hit.entity, hit.entity);
 				OnPointDamage(10, hit.shapePosition, MathHelper::FastNormalize(Position - hit.shapePosition), "", this, this);
+				AddDebuffStacks("PoiseBreakDebuff", 100);
 				attackingDamage = false;
 				return;
 			}
@@ -229,9 +233,18 @@ void NpcHumanAxe::AsyncUpdate()
 {
 
 
+	if (dead)
+	{
+		mesh->UpdateHitboxes();
+
+		return;
+	}
+
 	//mesh->UpdatePose = mesh->WasRended;
 
-	mesh->Update();
+	UpdateDebuffs(Time::DeltaTimeF);
+
+	mesh->Update(ModifyAnimationSpeed(1.0f));
 
 
 	auto animEvents = mesh->PullAnimationEvents();
@@ -324,7 +337,7 @@ void NpcHumanAxe::AsyncUpdate()
 
 	speed += Time::DeltaTimeF * 6.5;
 
-	speed = glm::clamp(speed, 0.0f, maxSpeed);
+	speed = glm::clamp(speed, 0.0f, ModifyMovementSpeed(maxSpeed));
 
 	movingDirection = mix(movingDirection, desiredDirection, Time::DeltaTime * 10);
 
@@ -378,6 +391,10 @@ void NpcHumanAxe::Serialize(json& target)
 	SERIALIZE_FIELD(target, stuned);
 	SERIALIZE_FIELD(target, attackingDamage);
 	SERIALIZE_FIELD(target, fleeing);
+
+	auto debuffsJson = SerializeDebuffs();
+	SERIALIZE_FIELD(target, debuffsJson);
+
 }
 
 void NpcHumanAxe::Deserialize(json& source)
@@ -396,6 +413,9 @@ void NpcHumanAxe::Deserialize(json& source)
 	DESERIALIZE_FIELD(source, attackingDamage);
 	DESERIALIZE_FIELD(source, fleeing);
 
+	json debuffsJson;
+	DESERIALIZE_FIELD(source, debuffsJson);
+	DeserializeDebuffs(debuffsJson);
 
 	Physics::SetBodyPosition(LeadBody, Position);
 

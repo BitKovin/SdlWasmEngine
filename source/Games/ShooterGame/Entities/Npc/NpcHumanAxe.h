@@ -13,8 +13,9 @@
 #include <Entities/SoundPlayer.h>
 #include <Delay.hpp>
 
+#include "../Enemy/IEnemy.h"
 
-class NpcHumanAxe : public Entity
+class NpcHumanAxe : public Entity, public IEnemy
 {
 
 private:
@@ -86,7 +87,7 @@ public:
 
 	void Start();
 
-	void Stun(Entity* DamageCauser, Entity* Weapon);
+	void Stun() override;
 
 	void Attack();
 

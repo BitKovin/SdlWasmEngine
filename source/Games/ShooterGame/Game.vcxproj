@@ -340,6 +340,10 @@
     <ClCompile Include="Ai\BehaviorTreeTasks\SetLookTargetFromCurrentNavPoint.cpp" />
     <ClCompile Include="Ai\BehaviorTreeTasks\StopTargetFollow.cpp" />
     <ClCompile Include="Ai\BehaviorTreeTasks\Task_DestinationReached.cpp" />
+    <ClCompile Include="Entities\Enemy\Debuff.cpp" />
+    <ClCompile Include="Entities\Enemy\Debuffs\DisbalanceDebuff.cpp" />
+    <ClCompile Include="Entities\Enemy\Debuffs\PoiseBreakDebuff.cpp" />
+    <ClCompile Include="Entities\Enemy\IEnemy.cpp" />
     <ClCompile Include="Entities\Enviroment\Door.cpp" />
     <ClCompile Include="Entities\NpcSimulationManager.cpp" />
     <ClCompile Include="Entities\Npc\Ai\TaskPairedAction.cpp" />
@@ -393,8 +397,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Ai\NpcTasks\TaskState.h" />
+    <ClInclude Include="Entities\Enemy\Debuff.h" />
+    <ClInclude Include="Entities\Enemy\DebuffFactory.h" />
     <ClInclude Include="Entities\Enviroment\Door.h" />
-    <ClInclude Include="Entities\IEnemy.h" />
+    <ClInclude Include="Entities\Enemy\IEnemy.h" />
     <ClInclude Include="Entities\NpcSimulationManager.h" />
     <ClInclude Include="Entities\Npc\Ai\TaskPairedAction.h" />
     <ClInclude Include="Entities\Npc\Ai\TaskPhasedAction.h" />

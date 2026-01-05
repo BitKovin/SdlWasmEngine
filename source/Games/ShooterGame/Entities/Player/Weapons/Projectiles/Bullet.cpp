@@ -8,6 +8,7 @@
 
 #include "../../Player.hpp"
 
+#include "../../../Enemy/IEnemy.h"
 REGISTER_ENTITY(Bullet, "bullet")
 
 Bullet::Bullet()
@@ -67,6 +68,13 @@ void Bullet::Update()
 
 			hit.entity->OnPointDamage(Damage, hit.position, MathHelper::FastNormalize(Position - oldPos), hit.hitboxName, this, this);
 			Physics::AddImpulseAtLocation(hit.hitbody, forward * (Damage + 2) * 4.5f, hit.position);
+
+			IEnemy* enemy = dynamic_cast<IEnemy*>(hit.entity);
+
+			if(enemy)
+			{
+				enemy->AddDebuffStacks("PoiseBreakDebuff", Damage);
+			}
 
 		}
 
