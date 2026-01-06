@@ -1261,6 +1261,10 @@ void SkeletalMesh::StartedRendering()
 
 	if (model == nullptr) return;
 
+	if (InRagdoll) return;
+
+	if (IsAnimationPlaying() == false)return;
+
 	Update(0);
 
 	boneTransforms = animator.getBoneMatrices();

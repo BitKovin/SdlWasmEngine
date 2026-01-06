@@ -66,6 +66,10 @@ public:
     }
     std::string GetDebuffsDebugInfo() const;
 
+    std::vector<std::shared_ptr<Debuff>>& GetDebuffsList()
+    {
+        return debuffs_;
+	}   
 
 protected:
     std::vector<std::shared_ptr<Debuff>> debuffs_;

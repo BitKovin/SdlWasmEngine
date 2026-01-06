@@ -48,7 +48,7 @@ public:
 	string Name = "";
 
 	float Health = 1;
-
+	float MaxHealth = 100;
 
 	bool AssetsLoaded = false;
 

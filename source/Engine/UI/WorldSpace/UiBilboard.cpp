@@ -1,6 +1,7 @@
 #include "UiBilboard.h"
 
 #include "../UiRenderer.h"
+#include "../../Renderer/Renderer.h"
 
 UiBilboard::~UiBilboard()
 {
@@ -16,7 +17,91 @@ void UiBilboard::DrawForward(mat4x4 view, mat4x4 projection)
 
 	ColorTextureId = renderTexture->id();
 
-	StaticMesh::DrawForward(view, projection);
+
+
+
+	if (model == nullptr) return;
+
+	if (Transparent == false)
+	{
+		if (DepthWrite)
+		{
+			glDepthMask(GL_TRUE);
+		}
+		else
+		{
+			glDepthMask(GL_FALSE);
+		}
+	}
+
+
+	if (TwoSided)
+	{
+		glDisable(GL_CULL_FACE);
+	}
+	else
+	{
+		glEnable(GL_CULL_FACE);
+	}
+
+
+	if (forward_shader_program == nullptr)
+		forward_shader_program = ShaderManager::GetShaderProgram("default_vertex", PixelShader);
+
+	forward_shader_program->UseProgram();
+
+
+	forward_shader_program->SetUniform("masked", Masked);
+
+	forward_shader_program->SetUniform("brightness", 1.0f * Brightness);
+
+	mat4x4 world = finalizedWorld;
+
+
+	forward_shader_program->SetUniform("view", view);
+	forward_shader_program->SetUniform("projection", projection);
+	forward_shader_program->SetUniform("viewmodelScaleFactor", ViewmodelScaleFactor);
+
+	forward_shader_program->SetUniform("world", world);
+
+	forward_shader_program->SetUniform("isViewmodel", IsViewmodel);
+
+	forward_shader_program->SetUniform("view", view);
+
+	forward_shader_program->SetUniform("customId", CustomId);
+
+
+
+
+	if (ColorTexture)
+	{
+		forward_shader_program->SetTexture("u_texture", ColorTexture);
+	}
+	else
+	{
+		forward_shader_program->SetTexture("u_texture", ColorTextureId);
+	}
+
+	if (EmissiveTexture)
+	{
+		forward_shader_program->SetTexture("u_textureEmissive", EmissiveTexture);
+	}
+	else
+	{
+		forward_shader_program->SetTexture("u_textureEmissive", EmissiveTextureId);
+	}
+
+
+	model->meshes[0].VAO->Bind();
+
+	glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(model->meshes[0].VAO->IndexCount), GL_UNSIGNED_INT, 0);
+
+	VertexArrayObject::Unbind();
+
+
+
+	glEnable(GL_CULL_FACE);
+
 
 }
 
@@ -27,6 +112,9 @@ void UiBilboard::FinalizeFrameData()
 
 	Canvas.size = vec2((float)ViewportSize.x, (float)ViewportSize.y);
 
+	Scale.x = (float)ViewportSize.x / PixelPerMeter;
+	Scale.y = (float)ViewportSize.y / PixelPerMeter;
+
 	Canvas.FinalizeChildren();
 
 	StaticMesh::FinalizeFrameData();
@@ -35,6 +123,7 @@ void UiBilboard::FinalizeFrameData()
 void UiBilboard::Update()
 {
 	Canvas.Update();
+	Canvas.UpdateChildrenOffsetRecursive();
 }
 
 void UiBilboard::DrawUi()

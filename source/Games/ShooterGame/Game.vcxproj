@@ -427,6 +427,7 @@
     <ClInclude Include="Entities\TestBsp.h" />
     <ClInclude Include="Entities\TestNpc.hpp" />
     <ClInclude Include="Entities\TestParticleSystem.hpp" />
+    <ClInclude Include="UI\Enemy\UiNpcDebuffs.h" />
     <ClInclude Include="UI\LoadingScreen\UiDefaultLoadingScreen.h" />
     <ClInclude Include="UI\MobileControls\UiJoystick.h" />
     <ClInclude Include="UI\MobileControls\UiTouchMoveArea.h" />

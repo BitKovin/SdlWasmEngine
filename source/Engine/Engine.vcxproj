@@ -611,6 +611,7 @@
     <ClInclude Include="UI\UiButton.hpp" />
     <ClInclude Include="UI\UiCanvas.hpp" />
     <ClInclude Include="UI\UiContentBox.hpp" />
+    <ClInclude Include="UI\UiCustomShaderImage.hpp" />
     <ClInclude Include="UI\UiElement.h" />
     <ClInclude Include="UI\UiHorizontalBox.hpp" />
     <ClInclude Include="UI\UiImage.hpp" />

@@ -172,6 +172,51 @@ namespace UiRenderer {
         glDrawArrays(GL_TRIANGLES, 0, 6);
     }
 
+    void DrawTexturedRectShaderParams(const glm::vec2& pos, const glm::vec2& size, float rotation, vec2 pivot, std::unordered_map<std::string, GLuint>& textures, std::unordered_map<std::string, float>& scalars, const glm::vec4& color, const string& shader)
+    {
+        auto shaderProgram = ShaderManager::GetShaderProgram("ui", shader);
+        shaderProgram->UseProgram();
+
+        SetShaderProjection(shaderProgram);
+
+        glm::mat4 model(1.0f);
+
+        // 1. Final already-pivoted element position
+        model = glm::translate(model, glm::vec3(pos, 0.0f));
+
+        // 2. Pivot offset inside local space (needed for rotation)
+        glm::vec2 pivotOffset = pivot * size;
+
+        // 3. Move pivot → origin
+        model = glm::translate(model, glm::vec3(pivotOffset, 0.0f));
+
+        // 4. Apply rotation
+        model = glm::rotate(model, MathHelper::ToRadians(rotation), glm::vec3(0, 0, 1));
+
+        // 5. Move back after rotation
+        model = glm::translate(model, glm::vec3(-pivotOffset, 0.0f));
+
+        // 6. Apply scale
+        model = glm::scale(model, glm::vec3(size, 1.0f));
+
+        shaderProgram->SetUniform("u_Model", model);
+        shaderProgram->SetUniform("u_Color", color);
+
+        for (auto& tex : textures)
+        {
+            shaderProgram->SetTexture(tex.first, tex.second);
+        }
+
+        for (auto& scalar : scalars)
+        {
+            shaderProgram->SetUniform(scalar.first, scalar.second);
+        }
+        
+
+        glBindVertexArray(quadVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+    }
+
     void DrawBorderRect(const glm::vec2& pos, const glm::vec2& size, const glm::vec4& color) {
 #ifndef GL_ES_PROFILE
         flatColorShader->UseProgram();

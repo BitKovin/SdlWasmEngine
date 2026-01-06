@@ -10,6 +10,7 @@
 #include <UI/RmlUi/RmlUiEvents.h>
 #include <EngineMain.h>
 
+#include "Entities/Enemy/DebuffFactory.h"
 
 class GameStart : public Entity
 {
@@ -175,6 +176,16 @@ GameStart::GameStart()
     ConstructMenus();
 
     Spawn("npcSimulationManager");
+
+	auto debuffs = DebuffFactory::Instance().GetRegisteredDebuffNames();
+
+    for (auto& name : debuffs)
+    {
+		auto debuff = DebuffFactory::Instance().CreateDebuff(name);
+
+		AssetRegistry::GetTextureFromFile(debuff->iconPath);
+
+    }
 
     if (startedGame) return;
 

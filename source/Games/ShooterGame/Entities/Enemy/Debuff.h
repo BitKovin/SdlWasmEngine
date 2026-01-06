@@ -5,6 +5,7 @@
 
 #include <cstdint>
 #include <json.hpp>
+#include <glm.h>
 
 enum class DebuffStage : uint8_t
 {
@@ -24,7 +25,8 @@ public:
         DebuffStage stage,
         int priority,
         float maxStacks = 1,
-        bool refreshOnReapply = true);
+        bool refreshOnReapply = true,
+        std::string icon = "");
 
     virtual ~Debuff() = default;
 
@@ -50,6 +52,17 @@ public:
     DebuffStage GetStage() const { return stage_; }
     int GetPriority() const { return priority_; }
     int GetStacks() const { return stacks_; }
+
+    virtual float GetProgress() const
+    {
+        return 1;
+	}
+
+    virtual float GetTimeRel() const
+    {
+        if (duration_ <= 0.0f) return 0.0f;
+        return remainingTime_ / duration_;
+	}
 
     virtual void AddStacks(float amount)
     {
@@ -99,6 +112,12 @@ public:
         return ss.str();
     }
 
+	std::string iconPath = "";
+
+	float uiProgress = 0.0f;
+	bool uiShowStacks = false;
+	vec3 uiColor = vec3(1.0f, 1.0f, 1.0f);
+
 protected:
     std::string name_;
 
@@ -107,7 +126,6 @@ protected:
 
     DebuffStage stage_;
     int priority_;
-
 
     float maxStacks_;
     float stacks_;

@@ -10,8 +10,9 @@ public:
             DebuffStage::Multiply,
             15,                    // priority
             1,                     // max stacks
-            true)                  // refresh duration on reapply
+            true, "GameData/textures/ui/debuffs/disb.png")                  // refresh duration on reapply
     {
+		uiColor = vec3(0.2f, 0.2f, 0.2f);
     }
 
     float ModifyMovementSpeed(IEnemy&, float value) override

@@ -132,6 +132,9 @@ void NpcHumanAxe::Death()
 
 	PlaySoundEffect("event:/NPC/Enemy1/Enemy1Death");
 
+	GetDebuffsList().clear();
+	UpdateStatusWidgets();
+
 	//Physics::SetBodyType(LeadBody, BodyType::None);
 	//Physics::SetCollisionMask(LeadBody, BodyType::World);
 
@@ -173,7 +176,6 @@ void NpcHumanAxe::OnDamage(float Damage, Entity* DamageCauser, Entity* Weapon)
 
 	Damage = ModifyIncomingDamage(Damage);
 
-	Logger::Log("NpcHumanAxe took damage: " + std::to_string(Damage));
 
 	Health -= Damage;
 
@@ -185,12 +187,14 @@ void NpcHumanAxe::OnDamage(float Damage, Entity* DamageCauser, Entity* Weapon)
 	{
 		//Stun(DamageCauser, Weapon);
 	}
-
-	if (LeadBody)
+	if (DamageCauser != nullptr)
 	{
-		LeadBody->SetLinearVelocity(LeadBody->GetLinearVelocity() / 2.0f);
-		speed /= 2.0f;
-		PlaySoundEffect("event:/NPC/Enemy1/Enemy1Damage");
+		if (LeadBody)
+		{
+			LeadBody->SetLinearVelocity(LeadBody->GetLinearVelocity() / 2.0f);
+			speed /= 2.0f;
+			PlaySoundEffect("event:/NPC/Enemy1/Enemy1Damage");
+		}
 	}
 
 	if (Health < 30)
@@ -238,6 +242,8 @@ void NpcHumanAxe::AsyncUpdate()
 	if (dead)
 	{
 		mesh->UpdateHitboxes();
+
+		UpdateStatusWidgets();
 
 		return;
 	}
@@ -450,8 +456,19 @@ void NpcHumanAxe::UpdateStatusWidgets()
 	statusWidget->Position = Position + vec3(0, 1.0f, 0);
 
 	statusWidget->TwoSided = true;
-
 	statusWidget->Update();
+
+	statusWidget->Visible = !dead;
+
+	//if (GetDebuffsList().empty())
+	//{
+	//	statusWidget->Visible = false;
+	//}
+	//else
+	//{
+	//	statusWidget->Visible = true;
+	//	statusWidget->Update();
+	//}
 
 }
 

@@ -37,6 +37,7 @@ public:
     bool HitCheck = false;
 
     glm::vec4 color = vec4(1);
+	bool inheritParentColor = true;
 
     glm::vec2 size = glm::vec2(1.0f);
     glm::vec2 position = glm::vec2(0.0f);
@@ -76,6 +77,7 @@ public:
     virtual void UpdateChildren();
     virtual void UpdateOffsets();
     virtual void UpdateChildrenOffsets();
+	virtual void UpdateChildrenOffsetRecursive();
     virtual void FinalizeChildren();
 
     virtual std::shared_ptr<UiElement> GetHitElementUnderPosition(vec2 position);

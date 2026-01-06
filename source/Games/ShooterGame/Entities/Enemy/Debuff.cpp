@@ -6,7 +6,7 @@ Debuff::Debuff(std::string name,
     DebuffStage stage,
     int priority,
     float maxStacks,
-    bool refreshOnReapply)
+    bool refreshOnReapply, std::string icon)
     : name_(std::move(name))
     , duration_(durationSeconds)
     , remainingTime_(durationSeconds)
@@ -15,6 +15,7 @@ Debuff::Debuff(std::string name,
     , maxStacks_(maxStacks)
     , stacks_(1)
     , refreshOnReapply_(refreshOnReapply)
+	, iconPath(std::move(icon))
 {
 }
 

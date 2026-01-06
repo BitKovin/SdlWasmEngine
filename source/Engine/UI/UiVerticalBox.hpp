@@ -9,21 +9,18 @@ public:
 	
 	float ContentDistance = 5;
 
-	void Update()
-	{
-		int i = -1;
+    void Update()
+    {
+        float yOffset = 0.0f;
 
-		for (auto elem : children)
-		{
+        for (auto& elem : children)
+        {
+            elem->position = vec2(0.0f, yOffset);
+            yOffset += elem->GetSize().y + ContentDistance;
+        }
 
-			i++;
-
-			elem->position = vec2(0, elem->size.y + ContentDistance) * (float)i;
-
-		}
-
-		UiElement::Update();
-	}
+        UiElement::Update();
+    }
 
 private:
 

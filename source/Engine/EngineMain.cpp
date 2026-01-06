@@ -406,6 +406,7 @@ void EngineMain::MainLoop()
     Input::Update();
 
     Viewport.Update();
+    Viewport.UpdateChildrenOffsetRecursive();
     Viewport.FinalizeChildren();
 
     Input::UpdateMouse();

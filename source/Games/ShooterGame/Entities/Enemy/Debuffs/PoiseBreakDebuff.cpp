@@ -11,8 +11,9 @@ public:
             DebuffStage::PreClamp,
             0,
             999,        // max stacks effectively unlimited
-            true)       // refresh duration on stack add
+            true, "GameData/textures/ui/debuffs/stun.png")       // refresh duration on stack add
     {
+		uiColor = vec3(0.522f, 0.518f, 0.329f);
     }
 
     // Override to handle stack addition
@@ -21,14 +22,14 @@ public:
 
 		Debuff::AddStacks(amount);
 
-        remainingTime_ = 3.0f; // refresh duration
+
 
         if (target_->HasDebuff("PoiseBreakImmune"))
         {
-			stacks_ = 0;
+			stacks_ = -1;
             return;
         }
-
+        remainingTime_ = 3.0f; // refresh duration
         // Trigger if threshold reached
         if (stacks_ >= target_->GetPoise())
         {
@@ -37,12 +38,22 @@ public:
                 target_->Stun();
                 target_->AddDebuffStacks("DisbalanceDebuff", 1);
                 target_->AddDebuff(std::make_shared<Debuff>(
-                    "PoiseBreakImmune", 1.5f, DebuffStage::PreClamp, 0, 1, false
+                    "PoiseBreakImmune", 1.5f, DebuffStage::PreClamp, 0, 1, false, ""
                 ));
             }
-            remainingTime_ = 0.0f;
-            stacks_ = 0.0f;
+            remainingTime_ = 1.0f;
+			duration_ = 1.0f;
+            stacks_ = -1.0f;
         }
+    }
+
+    float GetProgress() const override
+    {
+
+        if (stacks_ < 0)
+            return 1;
+
+        return static_cast<float>(stacks_) / static_cast<float>(target_ ? target_->GetPoise() : 1);
     }
 
     void OnApply(IEnemy& target) override { target_ = &target; }

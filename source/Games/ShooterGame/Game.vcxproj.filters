@@ -320,5 +320,8 @@
     <ClInclude Include="Entities\Enemy\DebuffFactory.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="UI\Enemy\UiNpcDebuffs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -17,6 +17,7 @@
 
 #include <UI/WorldSpace/UiBilboard.h>
 #include <UI/UiVideo.hpp>
+#include "../../UI/Enemy/UiNpcDebuffs.h"
 
 class NpcHumanAxe : public Entity, public IEnemy
 {
@@ -65,12 +66,12 @@ public:
 		statusWidget = new UiBilboard(this);
 		Drawables.push_back(statusWidget);
 
-		auto image = make_shared<UiVideo>();
+		auto debuffs = make_shared<UiNpcStatus>(this);
+		statusWidget->ViewportSize = ivec2(1024, 256);
+		statusWidget->PixelPerMeter = 1024.0f;
+		//debuffs->Target = this;
 
-		image->VideoPath = "GameData/videos/meowl.mpg";
-		image->size = vec2(256, 256);
-
-		statusWidget->ContentBox->AddChild(image);
+		statusWidget->ContentBox->AddChild(debuffs);
 
 		ClassName = "npc_human_axe";
 		SaveGame = true;

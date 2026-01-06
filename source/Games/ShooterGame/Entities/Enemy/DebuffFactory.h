@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <functional>
 #include <memory>
+#include <vector>
 #include "Debuff.h"
 
 class DebuffFactory
@@ -31,6 +32,16 @@ public:
             return it->second();
         return nullptr;
     }
+
+    std::vector<std::string> GetRegisteredDebuffNames() const
+    {
+        std::vector<std::string> names;
+        for (const auto& pair : registry_)
+        {
+            names.push_back(pair.first);
+        }
+        return names;
+	}
 
 private:
     std::unordered_map<std::string, DebuffCreator> registry_;

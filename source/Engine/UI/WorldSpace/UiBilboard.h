@@ -38,6 +38,7 @@ public:
 	std::shared_ptr<UiContentBox> ContentBox;
 	UiCanvas Canvas;
 	ivec2 ViewportSize = ivec2(512, 512);
+	float PixelPerMeter = 100.0f;
 
 private:
 

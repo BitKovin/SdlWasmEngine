@@ -42,6 +42,15 @@ void UiElement::UpdateChildrenOffsets() {
     }
 }
 
+void UiElement::UpdateChildrenOffsetRecursive()
+{
+	UpdateOffsets();
+    UpdateChildrenOffsets();
+    for (auto& child : children) {
+        child->UpdateChildrenOffsetRecursive();
+	}
+}
+
 void UiElement::UpdateChildren() {
     for (auto& child : children) {
         child->parentTopLeft = topLeft;
@@ -133,6 +142,9 @@ glm::vec4 UiElement::GetFinalColor()
 
     vec4 finalColor = color;
 
+    if(inheritParentColor == false)
+		return finalColor;
+
     if (parent)
     {
         finalColor *= parent->color * parent->GetFinalColor();
@@ -145,13 +157,11 @@ glm::vec4 UiElement::GetFinalColor()
 
 void UiElement::Update() 
 {
-    for (int i = 0; i < 2; ++i)  //Fixes issue with offsets not following parent. Need to investigate issue better
-    {
-        UpdateChildrenOffsets();
-        UpdateOffsets();
-    }
-
+    UpdateOffsets();
     UpdateChildrenOffsets();
+	UpdateOffsets();
+    UpdateChildrenOffsets();
+
     UpdateChildren();
 
     if (Input::LockCursor)

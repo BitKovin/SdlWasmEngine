@@ -207,12 +207,15 @@ void NpcBase::OnDamage(float Damage, Entity* DamageCauser, Entity* Weapon)
 		Death();
 	}
 
-
-	if (LeadBody)
+	if (DamageCauser != nullptr)
 	{
-		LeadBody->SetLinearVelocity(LeadBody->GetLinearVelocity() / 2.0f);
-		speed /= 2.0f;
+		if (LeadBody)
+		{
+			LeadBody->SetLinearVelocity(LeadBody->GetLinearVelocity() / 2.0f);
+			speed /= 2.0f;
+		}
 	}
+
 
 
 }
