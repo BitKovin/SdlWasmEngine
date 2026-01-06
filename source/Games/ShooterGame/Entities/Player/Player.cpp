@@ -1055,6 +1055,33 @@ void Player::OnPointDamage(float Damage, vec3 Point, vec3 Direction, string bone
 {
     Entity::OnPointDamage(Damage, Point, Direction, bone, DamageCauser, Weapon);
 
+    vec3 right = Camera::Right();
+    vec3 forward = Camera::Forward();
+
+    float hitFromRight = dot(Direction, right);
+    float hitFromFront = dot(Direction, forward);
+
+    // Damage scaling (clamped)
+    float damageScale = lerp(glm::clamp(Damage / 3.0f, 0.2f, 1.0f), 0.5f, 0.2f);
+
+    vec3 rotationAmplitude;
+    rotationAmplitude.x = -hitFromFront * 4.0f * damageScale; // pitch
+    rotationAmplitude.y = 0.0f;                                // yaw (unused)
+    rotationAmplitude.z = -hitFromRight * 6.0f * damageScale;  // roll
+
+    CameraShake damageShake(
+        0.05f,                    // interp in (snappy)
+        0.6f,                    // duration
+        vec3(0.0f),               // position amplitude (none)
+        vec3(0.0f),               // position frequency
+        rotationAmplitude,        // rotation amplitude (degrees)
+        vec3(15.4f),              // rotation frequency (sharp)
+        1.0f,                     // falloff
+        CameraShake::SingleWave
+    );
+
+	Camera::AddCameraShake(damageShake);
+
     //GlobalParticleSystem::SpawnParticleAt("hit_flesh", Point - vec3(0,0.5f,0), MathHelper::FindLookAtRotation(vec3(0), -Direction - vec3(0, 1, 0)), vec3(0.2f));
 
 }

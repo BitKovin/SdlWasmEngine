@@ -31,6 +31,8 @@ public:
 
 	void FinalizeFrameData() override;
 
+	void Update();
+
 	void PreDraw();
 
 	std::shared_ptr<UiContentBox> ContentBox;

@@ -222,7 +222,7 @@ void NpcHumanAxe::UpdateAttackDamage()
 			}
 			else
 			{
-				hit.entity->OnPointDamage(20, hit.shapePosition, MathHelper::FastNormalize(hit.shapePosition - Position), "", this, this);
+				hit.entity->OnPointDamage(15, hit.shapePosition, MathHelper::FastNormalize(hit.shapePosition - Position), "", this, this);
 				attackingDamage = false;
 			}
 
@@ -312,8 +312,8 @@ void NpcHumanAxe::AsyncUpdate()
 
 	vec3 lookAtDir = MathHelper::FastNormalize(target->Position - Position);
 
-	if (distance(target->Position, Position) < 2.5f
-		&& dot(MathHelper::GetForwardVector(mesh->Rotation), lookAtDir) > 0.9)
+	if (distance(target->Position, Position) < 2.0f
+		&& dot(MathHelper::GetForwardVector(mesh->Rotation), lookAtDir) > 0.93)
 	{
 
 		Attack();
@@ -447,9 +447,11 @@ void NpcHumanAxe::Deserialize(json& source)
 void NpcHumanAxe::UpdateStatusWidgets()
 {
 
-	statusWidget->Position = Position + vec3(0, 1.5f, 0);
-	statusWidget->Rotation = Camera::rotation;
+	statusWidget->Position = Position + vec3(0, 1.0f, 0);
+
 	statusWidget->TwoSided = true;
+
+	statusWidget->Update();
 
 }
 

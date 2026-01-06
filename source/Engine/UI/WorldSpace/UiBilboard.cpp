@@ -32,6 +32,11 @@ void UiBilboard::FinalizeFrameData()
 	StaticMesh::FinalizeFrameData();
 }
 
+void UiBilboard::Update()
+{
+	Canvas.Update();
+}
+
 void UiBilboard::DrawUi()
 {
 
@@ -46,8 +51,6 @@ void UiBilboard::DrawUi()
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // alpha = 0
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
-	Canvas.Update();
 	Canvas.Draw();
 
 	UiRenderer::customViewport = false;
