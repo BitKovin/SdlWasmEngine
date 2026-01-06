@@ -7,11 +7,16 @@ public:
 	
 	vec2 GetSize()
 	{
+
+		if (parent == nullptr)
+			return size;
+
 		return parent->GetSize();
 	}
 
 	void Update()
 	{
+		
 		size = GetSize();
 
 		UiElement::Update();

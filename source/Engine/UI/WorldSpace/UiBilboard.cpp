@@ -25,9 +25,9 @@ void UiBilboard::FinalizeFrameData()
 
 	Rotation = Camera::rotation;
 
-	ContentBox.FinalizeChildren();
+	Canvas.size = vec2((float)ViewportSize.x, (float)ViewportSize.y);
 
-	DrawUi();
+	Canvas.FinalizeChildren();
 
 	StaticMesh::FinalizeFrameData();
 }
@@ -47,10 +47,18 @@ void UiBilboard::DrawUi()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
-	ContentBox.Update();
-	ContentBox.Draw();
+	Canvas.Update();
+	Canvas.Draw();
 
 	UiRenderer::customViewport = false;
+
+}
+
+void UiBilboard::PreDraw()
+{
+	StaticMesh::PreDraw();
+
+	DrawUi();
 
 }
 

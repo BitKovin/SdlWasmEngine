@@ -53,6 +53,12 @@ void Renderer::RenderLevel(Level* level)
         RenderDirectionalLightShadows(level->ShadowRenderList, *DirectionalShadowMapFBO, 4);
         RenderDirectionalLightShadows(level->DetailShadowRenderList, *DirectionalShadowMapFBO, 3);
     }
+
+    for (auto drawable : level->VissibleRenderList)
+    {
+		drawable->PreDraw();
+    }
+
 	RenderCameraForward(level->VissibleRenderList);
 
     ivec2 screenResolution = GetScreenResolution();

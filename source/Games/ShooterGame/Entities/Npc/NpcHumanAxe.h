@@ -70,7 +70,7 @@ public:
 		image->VideoPath = "GameData/videos/meowl.mpg";
 		image->size = vec2(256, 256);
 
-		statusWidget->ContentBox.AddChild(image);
+		statusWidget->ContentBox->AddChild(image);
 
 		ClassName = "npc_human_axe";
 		SaveGame = true;
