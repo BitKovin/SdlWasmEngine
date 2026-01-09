@@ -24,6 +24,8 @@
 #include "LevelTraversalSystem.h"
 #include "SaveSystem/GameSaveSystem.h"
 
+#include "SpatialSound/SpatialSoundManager.h"
+
 Level* Level::Current = nullptr;
 
 string Level::pendingLoadLevelPath = "";
@@ -202,6 +204,8 @@ Level* Level::OpenLevel(string filePath)
 
 		printf("generated nav mesh\n");
 	}
+
+	SpatialSoundManager::BuildWorld();
 
 	LoadingScreenSystem::Update(0.9f);
 

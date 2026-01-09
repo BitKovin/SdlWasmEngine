@@ -12,6 +12,8 @@
 
 #include <SaveSystem/GameSaveSystem.h>
 #include "../NpcSimulationManager.h"
+#include <SpatialSound/SpatialSoundManager.h>
+#include <SpatialSound/VoxelWorld/SimplePathfindingQuery.h>
 
 REGISTER_ENTITY(Player, "player")
 
@@ -466,11 +468,17 @@ void Player::UpdateDebugUI()
 
     if (ImGui::Button("calculate path to player"))
     {
-        auto path = NavigationSystem::FindSimplePath(Position, testStart);
 
-        path.insert(path.begin(), Position);
+		SimplePathfindingQuery query(SpatialSoundManager::voxelWorld);
 
-        DebugDraw::Path(path, 15, 0.05);
+
+        auto result = query.FindPath(testStart, Position);// NavigationSystem::FindSimplePath(Position, testStart);
+
+		Logger::Log("traveledDensity: " + to_string(result.traveledDensityCost));
+
+        //path.insert(path.begin(), Position);
+
+        DebugDraw::Path(result.path, 15, 0.05);
     }
 
     ImGui::End();
@@ -646,6 +654,15 @@ void Player::Update()
 
     if (EngineMain::MainInstance->SimulatingGameTicks) return;
 
+    size_t memBytes = SpatialSoundManager::voxelWorld.GetVoxelWorldMemoryBytes();
+    double memMB = double(memBytes) / (1024.0 * 1024.0);
+
+    //Logger::Log("Voxel world memory: " + std::to_string(memMB) + " MB");
+
+
+    int dencity = SpatialSoundManager::voxelWorld.SampleWorld(Camera::position).value;
+
+    //Logger::Log("player sound voxel: " + to_string(dencity));
 
     //printf("%i \n",SkeletalMesh::skelMeshes);
 

@@ -1,7 +1,6 @@
 #include "UiBilboard.h"
 
 #include "../UiRenderer.h"
-#include "../../Renderer/Renderer.h"
 
 UiBilboard::~UiBilboard()
 {

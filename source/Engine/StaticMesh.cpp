@@ -63,6 +63,8 @@ bool StaticMesh::IsCameraVisible()
 	{
 
 		int cameraC = Level::Current->BspData.FindClusterAtPosition(Camera::finalizedPosition);
+
+
 		int targetC = Level::Current->BspData.FindClusterAtPosition(Position + model->boundingSphere.offset / 2.0f);
 
 		if (Level::Current->BspData.IsClusterVisible(cameraC, targetC) == false)

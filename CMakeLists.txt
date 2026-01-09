@@ -189,7 +189,7 @@ set(WASM_COMMON_LINK_OPTIONS
     "SHELL:-s AGGRESSIVE_VARIABLE_ELIMINATION=1"
     "SHELL:-s ELIMINATE_DUPLICATE_FUNCTIONS=1"
 
-    "SHELL:--profiling-funcs"
+    #"SHELL:--profiling-funcs"
 )
 if (EMSCRIPTEN AND ENABLE_PTHREADS)
     # PTHREADS: threads require fixed TOTAL_MEMORY and thread flags. Remove memory-growth usage.
