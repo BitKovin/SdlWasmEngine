@@ -5,6 +5,7 @@
 
 #include "Projectiles/CaneProjectile.h"
 #include <SoundSystem/FmodEventInstance.h>
+#include "../../Enemy/IEnemy.h"
 
 
 class weapon_cane : public Weapon
@@ -30,7 +31,10 @@ public:
 
 	vec3 grabStartPos = vec3();
 
-	bool thrown;
+	bool thrown = false;
+
+
+	bool pendingMeleeAttack = false;
 
 	Delay parryDelay;
 
@@ -266,6 +270,8 @@ public:
 		if (viewmodel->GetAnimationTime() < 0.18)
 			viewmodel->SetAnimationTime(0.18f);
 
+		pendingMeleeAttack = false;
+
 	}
 
 	void PerformParry()
@@ -281,6 +287,30 @@ public:
 
 		attackDelay.AddDelay(0.75f);
 
+		pendingMeleeAttack = true;
+
+	}
+
+	void PerformMeleeAttack()
+	{
+
+		pendingMeleeAttack = false;
+		auto hit = Physics::SphereTrace(Camera::position, Camera::position + MathHelper::GetForwardVector(Camera::rotation) * 1.2f, 0.4f, BodyType::CharacterCapsule | BodyType::World, { Player::Instance->LeadBody }, { Player::Instance });
+		if (hit.hasHit)
+		{
+			if (hit.entity != nullptr)
+			{
+				hit.entity->OnPointDamage(25, hit.position, MathHelper::GetForwardVector(Camera::rotation), hit.hitboxName, Player::Instance, this);
+			}
+
+			IEnemy* enemy = dynamic_cast<IEnemy*>(hit.entity);
+
+			if (enemy != nullptr)
+			{
+				enemy->AddDebuffStacks("PoiseBreakDebuff", 30);
+			}
+
+		}
 	}
 
 	void Update()
@@ -291,6 +321,11 @@ public:
 		thrown = projectile != nullptr;
 
 		Parrying = parryDelay.Wait();
+
+		if (Parrying == false && pendingMeleeAttack)
+		{
+			PerformMeleeAttack();
+		}
 
 		if (Input::GetAction("attack2")->Pressed())
 		{

@@ -42,7 +42,7 @@ class Player : public Entity
 
 private:
 
-	float maxSpeed = 6.5f;
+	float maxSpeed = 6.0f;
 	float maxSpeedAir = 2;
 	float acceleration = 90;
 	float airAcceleration = 30;

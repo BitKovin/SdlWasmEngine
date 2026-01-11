@@ -4,7 +4,7 @@
 #include "VoxelWorld/TiledVoxelWorld.h"
 void SpatialSoundManager::BuildWorld()
 {
-
+	return;
 	auto mesh = Level::Current->GetStaticNavObstaclesMesh();
 
 
@@ -25,6 +25,6 @@ void SpatialSoundManager::BuildWorld()
 	// Create a builder (e.g., BspVoxelWorldBuilder)
 	BspVoxelWorldBuilder builder;
 	// Build the voxel world using the builder
-	voxelWorld.BuildStatic(builder, 2);
+	//voxelWorld.BuildStatic(builder, 2);
 	// The voxelWorld is now built and can be used for spatial sound calculations
 }

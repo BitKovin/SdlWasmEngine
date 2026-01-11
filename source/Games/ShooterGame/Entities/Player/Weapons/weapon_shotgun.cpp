@@ -14,8 +14,8 @@ public:
         params.switchDelayOnAttack = 0.2f;
         params.weaponOffset = vec3(0.013, 0.013, -0.13);
         params.bulletSpeed = 200.0f; // Assumed same
-        params.bulletDamage = 50.0f / 21.0f;
-        params.range = 80.0f;
+        params.bulletDamage = 90.0f / 21.0f;
+        params.range = 70.0f;
         params.fireAnimation = "attack";
         params.fireAnimInterpInTime = 0.15f; // No speed specified, assume default
         params.notifyNpcs = false;
@@ -38,7 +38,7 @@ public:
         params.gridMaxLength = 4.7f;
 
         params.debuffOnHit = "PoiseBreakDebuff";
-		params.debuffStacksOnHit = 150 / 21.0f;
+		params.debuffStacksOnHit = 100 / 21.0f;
 
     }
 

@@ -31,7 +31,7 @@ private:
 
 	SoundPlayer* soundPlayer = nullptr;
 
-	float maxSpeed = 6;
+	float maxSpeed = 6.0f;
 	float speed = 4;
 
 	bool dead = false;
@@ -76,7 +76,8 @@ public:
 		ClassName = "npc_human_axe";
 		SaveGame = true;
 
-		Health = 120;
+		Health = 130;
+		MaxHealth = 130;
 
 		mesh->UpdatePoseOnlyWhenRendered = true;
 

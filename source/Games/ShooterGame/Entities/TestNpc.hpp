@@ -12,9 +12,11 @@
 #include <SoundSystem/SoundManager.hpp>
 #include <Entities/SoundPlayer.h>
 #include <Delay.hpp>
+#include "Enemy/IEnemy.h"
+#include "../UI/Enemy/UiNpcDebuffs.h"
+#include <UI/WorldSpace/UiBilboard.h>
 
-
-class TestNpc : public Entity
+class TestNpc : public Entity, public IEnemy
 {
 
 private:
@@ -24,11 +26,7 @@ private:
 
 	PathFollowQuery pathFollow;
 
-	SoundPlayer* DeathSoundPlayer = nullptr;
-	SoundPlayer* HurtSoundPlayer = nullptr;
-	SoundPlayer* StunSoundPlayer = nullptr;
-	SoundPlayer* AttackSoundPlayer = nullptr;
-	SoundPlayer* AttackHitSoundPlayer = nullptr;
+	SoundPlayer* soundPlayer = nullptr;
 
 	float maxSpeed = 8;
 	float speed = 4;
@@ -49,6 +47,8 @@ private:
 
 	void UpdateFleeTarget();
 
+	UiBilboard* statusWidget = nullptr;
+
 public:
 
 	SkeletalMesh* mesh;
@@ -63,11 +63,23 @@ public:
 		ClassName = "testnpc";
 		SaveGame = true;
 
-		Health = 70;
+		Health = 80;
+		MaxHealth = 80;
 
 		mesh->UpdatePoseOnlyWhenRendered = true;
 
 		Tags.push_back("enemy");
+
+
+		statusWidget = new UiBilboard(this);
+		Drawables.push_back(statusWidget);
+
+		auto debuffs = make_shared<UiNpcStatus>(this);
+		statusWidget->ViewportSize = ivec2(1024, 256);
+		statusWidget->PixelPerMeter = 1024.0f;
+		//debuffs->Target = this;
+
+		statusWidget->ContentBox->AddChild(debuffs);
 
 	}
 
@@ -88,7 +100,7 @@ public:
 
 	void Start();
 
-	void Stun(Entity* DamageCauser, Entity* Weapon);
+	void Stun();
 
 	void Attack();
 
@@ -116,7 +128,11 @@ public:
 
 protected:
 
+	void UpdateStatusWidgets();
+
 	void LoadAssets();
+
+	void PlaySoundEffect(std::string eventName);
 
 
 };

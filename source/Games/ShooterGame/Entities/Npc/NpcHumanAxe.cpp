@@ -210,7 +210,7 @@ void NpcHumanAxe::UpdateAttackDamage()
 
 	if (attackingDamage == false) return;
 
-	auto hit = Physics::SphereTrace(Position, MathHelper::GetForwardVector(mesh->Rotation) * 1.1f + Position, 0.35f, BodyType::World | BodyType::CharacterCapsule, { LeadBody });
+	auto hit = Physics::SphereTrace(Position, MathHelper::GetForwardVector(mesh->Rotation) * 1.2f + Position, 0.45f, BodyType::World | BodyType::CharacterCapsule, { LeadBody });
 
 	if (hit.hasHit)
 	{
@@ -219,7 +219,7 @@ void NpcHumanAxe::UpdateAttackDamage()
 
 			if (NpcHelper::CheckParry(MathHelper::GetForwardVector(mesh->Rotation), hit.entity))
 			{
-				OnPointDamage(10, hit.shapePosition, MathHelper::FastNormalize(Position - hit.shapePosition), "", this, this);
+				OnPointDamage(20, hit.shapePosition, MathHelper::FastNormalize(Position - hit.shapePosition), "", this, this);
 				AddDebuffStacks("PoiseBreakDebuff", 100);
 				attackingDamage = false;
 				return;
@@ -318,7 +318,7 @@ void NpcHumanAxe::AsyncUpdate()
 
 	vec3 lookAtDir = MathHelper::FastNormalize(target->Position - Position);
 
-	if (distance(target->Position, Position) < 2.0f
+	if (distance(target->Position, Position) < 1.5f
 		&& dot(MathHelper::GetForwardVector(mesh->Rotation), lookAtDir) > 0.93)
 	{
 

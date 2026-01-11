@@ -74,25 +74,13 @@ void TestNpc::Start()
 
 	pathFollow.CalculatePathOnThread();
 
-	DeathSoundPlayer = SoundPlayer::Create();
-	HurtSoundPlayer = SoundPlayer::Create();
-	StunSoundPlayer = SoundPlayer::Create();
-	AttackSoundPlayer = SoundPlayer::Create();
-	AttackHitSoundPlayer = SoundPlayer::Create();
+	soundPlayer = SoundPlayer::Create();
 
-	SetupSoundPlayer(DeathSoundPlayer);
-	DeathSoundPlayer->MaxDistance *= 1.5f;
-	DeathSoundPlayer->Volume *= 2.0f;
-	SetupSoundPlayer(HurtSoundPlayer);
-	HurtSoundPlayer->Volume *= 1.5f;
-	SetupSoundPlayer(StunSoundPlayer);
-	SetupSoundPlayer(AttackSoundPlayer);
-	AttackSoundPlayer->Volume *= 0.7f;
-	SetupSoundPlayer(AttackHitSoundPlayer);
-	AttackHitSoundPlayer->Volume *= 1.2;
+
+	SetupSoundPlayer(soundPlayer);
 }
 
-void TestNpc::Stun(Entity* DamageCauser, Entity* Weapon)
+void TestNpc::Stun()
 {
 	stuned = true;
 	mesh->PlayAnimation("stun");
@@ -102,14 +90,14 @@ void TestNpc::Stun(Entity* DamageCauser, Entity* Weapon)
 
 	
 
-	StunSoundPlayer->Play();
+	PlaySoundEffect("event:/NPC/Dog/DogStun");
 
 }
 
 void TestNpc::Attack()
 {
 
-	AttackSoundPlayer->Play();
+	PlaySoundEffect("event:/NPC/Dog/DogAttackStart");
 
 	inAttackDelay.AddDelay(2.5f);
 	mesh->PlayAnimation("attack");
@@ -128,7 +116,7 @@ void TestNpc::Death()
 	mesh->SetAnimationPaused(true);
 	Physics::SetLinearVelocity(LeadBody, vec3(0));
 
-	DeathSoundPlayer->Play();
+	PlaySoundEffect("event:/NPC/Dog/DogDeath");
 
 	//Physics::SetBodyType(LeadBody, BodyType::None);
 	//Physics::SetCollisionMask(LeadBody, BodyType::World);
@@ -140,18 +128,6 @@ void TestNpc::Death()
 
 	dead = true;
 
-	if (DeathSoundPlayer)
-	{
-		DeathSoundPlayer->DestroyWithDelay(3);
-		HurtSoundPlayer->DestroyWithDelay(3);
-		StunSoundPlayer->DestroyWithDelay(3);
-		AttackSoundPlayer->DestroyWithDelay(3);
-		AttackHitSoundPlayer->DestroyWithDelay(3);
-		DeathSoundPlayer = nullptr;
-		HurtSoundPlayer = nullptr;
-		StunSoundPlayer = nullptr;
-		AttackSoundPlayer = nullptr;
-	}
 
 	//Tags.clear();
 
@@ -169,10 +145,14 @@ void TestNpc::OnPointDamage(float Damage, vec3 Point, vec3 Direction, string bon
 
 	GlobalParticleSystem::SpawnParticleAt("hit_flesh", Point, MathHelper::FindLookAtRotation(vec3(0), Direction), vec3(Damage/10.0f));
 
+	SoundPlayer::PlayOneshot("event:/NPC/General/FleshHit", 1, Damage / 20.0f, false, Point);
+
 }
 
 void TestNpc::OnDamage(float Damage, Entity* DamageCauser, Entity* Weapon)
 {
+
+	Damage = ModifyIncomingDamage(Damage);
 
 	Health -= Damage;
 
@@ -180,16 +160,15 @@ void TestNpc::OnDamage(float Damage, Entity* DamageCauser, Entity* Weapon)
 	{
 		Death();
 	}
-	else if(attacking)
-	{
-		Stun(DamageCauser, Weapon);
-	}
 
-	if (LeadBody)
+	if (DamageCauser != nullptr)
 	{
-		LeadBody->SetLinearVelocity(LeadBody->GetLinearVelocity() / 2.0f);
-		speed /= 2.0f;
-		HurtSoundPlayer->Play();
+		if (LeadBody)
+		{
+			LeadBody->SetLinearVelocity(LeadBody->GetLinearVelocity() / 2.0f);
+			speed /= 2.0f;
+			//HurtSoundPlayer->Play();
+		}
 	}
 
 	if (Health < 30)
@@ -214,18 +193,18 @@ void TestNpc::UpdateAttackDamage()
 
 			if (NpcHelper::CheckParry(MathHelper::GetForwardVector(mesh->Rotation), hit.entity))
 			{
-				Stun(hit.entity, hit.entity);
+				Stun();
 				OnPointDamage(10, hit.shapePosition, MathHelper::FastNormalize(Position - hit.shapePosition), "", this, this);
 				attackingDamage = false;
 				return;
 			}
 			else
 			{
-				hit.entity->OnPointDamage(20, hit.shapePosition, MathHelper::FastNormalize(hit.shapePosition - Position), "", this, this);
+				hit.entity->OnPointDamage(ModifyOutgoingDamage(10), hit.shapePosition, MathHelper::FastNormalize(hit.shapePosition - Position), "", this, this);
 				attackingDamage = false;
 
 
-				AttackHitSoundPlayer->Play();
+				PlaySoundEffect("event:/NPC/Dog/DogAttack");
 			}
 
 		}
@@ -237,9 +216,13 @@ void TestNpc::AsyncUpdate()
 {
 
 
+	UpdateStatusWidgets();
+
+	UpdateDebuffs(Time::DeltaTimeF);
+
 	//mesh->UpdatePose = mesh->WasRended;
 
-	mesh->Update();
+	mesh->Update(ModifyAnimationSpeed(1));
 	
 
 	auto animEvents = mesh->PullAnimationEvents();
@@ -285,17 +268,11 @@ void TestNpc::AsyncUpdate()
 
 	if (dead || stuned) return;
 
-	DeathSoundPlayer->Position = Position;
-	HurtSoundPlayer->Position = Position;
-	StunSoundPlayer->Position = Position;
-	AttackSoundPlayer->Position = Position;
-	AttackHitSoundPlayer->Position = Position;
+	soundPlayer->Position = Position;
 
-	DeathSoundPlayer->Velocity = FromPhysics(LeadBody->GetLinearVelocity());
-	HurtSoundPlayer->Velocity = FromPhysics(LeadBody->GetLinearVelocity());
-	StunSoundPlayer->Velocity = FromPhysics(LeadBody->GetLinearVelocity());
-	AttackSoundPlayer->Velocity = FromPhysics(LeadBody->GetLinearVelocity());
-	AttackHitSoundPlayer->Velocity = FromPhysics(LeadBody->GetLinearVelocity());
+
+	soundPlayer->Velocity = FromPhysics(LeadBody->GetLinearVelocity());
+
 
 	Entity* target = Player::Instance;
 
@@ -337,7 +314,7 @@ void TestNpc::AsyncUpdate()
 	
 	speed += Time::DeltaTimeF * 6.5;
 
-	speed = glm::clamp(speed, 0.0f, maxSpeed);
+	speed = glm::clamp(speed, 0.0f, ModifyMovementSpeed(maxSpeed));
 
 	movingDirection = mix(movingDirection, desiredDirection, Time::DeltaTime*5);
 
@@ -421,14 +398,9 @@ void TestNpc::Deserialize(json& source)
 		Physics::DestroyBody(LeadBody);
 		LeadBody = nullptr;
 
-		DeathSoundPlayer->Destroy();
-		HurtSoundPlayer->Destroy();
-		StunSoundPlayer->Destroy();
-		AttackSoundPlayer->Destroy();
-		DeathSoundPlayer = nullptr;
-		HurtSoundPlayer = nullptr;
-		StunSoundPlayer = nullptr;
-		AttackSoundPlayer = nullptr;
+		soundPlayer->Destroy();
+		soundPlayer = nullptr;
+
 
 	}
 
@@ -438,6 +410,18 @@ void TestNpc::Deserialize(json& source)
 	mesh->SetAnimationState(animationStateSaveData);
 	mesh->Update(0);
 	mesh->PullRootMotion();
+
+}
+
+void TestNpc::UpdateStatusWidgets()
+{
+
+	statusWidget->Position = Position + vec3(0, 1.0f, 0);
+
+	statusWidget->TwoSided = true;
+	statusWidget->Update();
+
+	statusWidget->Visible = !dead;
 
 }
 
@@ -452,11 +436,16 @@ void TestNpc::LoadAssets()
 	mesh->SetLooped(true);
 	mesh->ColorTexture = AssetRegistry::GetTextureFromFile("GameData/cat.png");
 
-	SET_SOUND_SAFE(DeathSoundPlayer, FmodEventInstance::Create("event:/NPC/Dog/DogDeath"));
-	SET_SOUND_SAFE(HurtSoundPlayer, SoundManager::GetSoundFromPath("GameData/sounds/dog/dog_hit.wav"));
-	SET_SOUND_SAFE(StunSoundPlayer, FmodEventInstance::Create("event:/NPC/Dog/DogStun"));
-	SET_SOUND_SAFE(AttackSoundPlayer, FmodEventInstance::Create("event:/NPC/Dog/DogAttackStart"));
-	SET_SOUND_SAFE(AttackHitSoundPlayer, FmodEventInstance::Create("event:/NPC/Dog/DogAttack"));
+}
+
+void TestNpc::PlaySoundEffect(std::string eventName)
+{
+
+	if (soundPlayer == nullptr) return;
+
+	soundPlayer->SetSound(FmodEventInstance::Create(eventName));
+
+	soundPlayer->Play();
 
 }
 
