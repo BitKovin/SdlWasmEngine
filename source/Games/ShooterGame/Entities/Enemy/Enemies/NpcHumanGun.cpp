@@ -66,7 +66,6 @@ void NpcHumanGun::Start()
 
 	LeadBody = Physics::CreateCharacterBody(this, Position, 0.5, 2, 50);
 
-	Logger::Log("started npc\n");
 
 	Physics::SetGravityFactor(LeadBody, 4);
 
@@ -273,7 +272,6 @@ void NpcHumanGun::AsyncUpdate()
 
 	accuracyModifier -= Time::DeltaTimeF / 3.0f;
 	accuracyModifier = glm::clamp(accuracyModifier, 0.0f, 5.0f);
-	Logger::Log("accuracyModifier " + to_string(accuracyModifier));
 
 	UpdateStatusWidgets();
 
