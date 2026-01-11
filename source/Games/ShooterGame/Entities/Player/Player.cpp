@@ -1079,7 +1079,7 @@ void Player::OnPointDamage(float Damage, vec3 Point, vec3 Direction, string bone
     float hitFromFront = dot(Direction, forward);
 
     // Damage scaling (clamped)
-    float damageScale = lerp(glm::clamp(Damage / 3.0f, 0.2f, 1.0f), 0.5f, 0.2f);
+    float damageScale = lerp(glm::clamp(Damage / 6.0f, 0.02f, 1.0f), 0.2f, 0.2f);
 
     vec3 rotationAmplitude;
     rotationAmplitude.x = -hitFromFront * 4.0f * damageScale; // pitch

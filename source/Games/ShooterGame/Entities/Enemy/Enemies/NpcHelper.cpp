@@ -1,5 +1,7 @@
 #include "NpcHelper.h"
 
+#include "../../Player/Player.hpp"
+
 
 bool NpcHelper::CheckParry(vec3 npcForward, Entity* entity)
 {

@@ -3,7 +3,6 @@
 #include <glm.h>
 #include <Entity.h>
 
-#include "../Player/Player.hpp"
 
 class NpcHelper
 {

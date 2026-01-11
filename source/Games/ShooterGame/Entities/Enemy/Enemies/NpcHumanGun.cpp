@@ -1,14 +1,17 @@
-#include "NpcHumanAxe.h"
-#include "../Player/Player.hpp"
+#include "NpcHumanGun.h"
+#include "../../Player/Player.hpp"
+#include "../../Player/Weapons/Projectiles/Bullet.h"
 
 #include <Particle/GlobalParticleSystem.hpp>
 #include <SoundSystem/FmodEventInstance.h>
 #include <Navigation/Navigation.hpp>
+#include <RandomHelper.h>
 #include "NpcHelper.h"
 
-REGISTER_ENTITY(NpcHumanAxe, "npc_human_axe")
 
-void NpcHumanAxe::UpdateFleeTarget()
+REGISTER_ENTITY(NpcHumanGun, "npc_human_gun")
+
+void NpcHumanGun::UpdateFleeTarget()
 {
 
 	if (fleeSearchDelay.Wait() == false)
@@ -31,7 +34,7 @@ void NpcHumanAxe::UpdateFleeTarget()
 
 }
 
-void NpcHumanAxe::PlaySoundEffect(std::string eventName)
+void NpcHumanGun::PlaySoundEffect(std::string eventName)
 {
 
 	if (soundPlayer == nullptr) return;
@@ -42,22 +45,9 @@ void NpcHumanAxe::PlaySoundEffect(std::string eventName)
 
 }
 
-void NpcHumanAxe::ProcessAnimationEvent(AnimationEvent& event)
+void NpcHumanGun::ProcessAnimationEvent(AnimationEvent& event)
 {
 
-	Logger::Log(event.eventName);
-
-	if (event.eventName == "attack_start")
-	{
-		attackingDamage = true;
-	}
-
-	if (event.eventName == "attack_end")
-	{
-		mesh->PlayAnimation("run", true, 0.5f);
-		attacking = false;
-		attackingDamage = false;
-	}
 	if (event.eventName == "stun_end")
 	{
 		stuned = false;
@@ -66,7 +56,7 @@ void NpcHumanAxe::ProcessAnimationEvent(AnimationEvent& event)
 
 }
 
-void NpcHumanAxe::Start()
+void NpcHumanGun::Start()
 {
 
 	mesh->Position = Position - vec3(0, 1, 0);
@@ -92,35 +82,78 @@ void NpcHumanAxe::Start()
 
 }
 
-void NpcHumanAxe::Stun()
+void NpcHumanGun::Stun()
 {
 	stuned = true;
 	mesh->PlayAnimation("stun");
 	mesh->PullRootMotion();
-	attacking = false;
-	attackingDamage = false;
-
-
 
 	PlaySoundEffect("event:/NPC/Enemy1/Enemy1Stun");
 
 }
 
-void NpcHumanAxe::Attack()
+void NpcHumanGun::Attack()
 {
-
+	if (cantAttackDelay.Wait())return;
 	if (inAttackDelay.Wait())return;
+
+
+	vec3 bonePos = mesh->GetBoneMatrixWorld("weapon_muzzle")[3];
+
+	Entity* targetRef = Player::Instance;
+
+	vec3 predictedTargetPosition = targetRef->Position;
+
+	if (AttackDirectionCheck(bonePos, predictedTargetPosition, targetRef) == false)
+	{
+		inAttackDelay.AddDelay(0.5f);
+	}
+
+	const float bulletSpeed = 50;
+
+	if (targetRef)
+	{
+
+		Player* playerRef = dynamic_cast<Player*>(targetRef);
+
+		if (playerRef)
+		{
+			predictedTargetPosition += playerRef->controller.GetVelocity() * distance(Position, targetRef->Position) / bulletSpeed;
+		}
+		else
+		{
+			if (targetRef->LeadBody)
+			{
+				predictedTargetPosition += FromPhysics(targetRef->LeadBody->GetLinearVelocity()) * distance(Position, targetRef->Position) / bulletSpeed;
+			}
+		}
+
+
+	}
+
+	predictedTargetPosition += RandomHelper::RandomPosition(distance(targetRef->Position, Position)/20.0f) * (accuracyModifier + 1.0f);
+
+	vec3 bulletRotation = MathHelper::FindLookAtRotation(bonePos, predictedTargetPosition);
+
+	Bullet* bullet = (Bullet*)Spawn("bullet");
+	bullet->LoadAssets();
+	bullet->Position = bonePos;
+	bullet->Rotation = bulletRotation;
+	bullet->Speed = bulletSpeed;
+	bullet->OwnerTag = "enemy";
+	bullet->Damage = 5;
+	bullet->owner = this;
+	bullet->Start();
 
 	PlaySoundEffect("event:/NPC/Enemy1/Enemy1AttackStart");
 
-	inAttackDelay.AddDelay(1.5f);
-	mesh->PlayAnimation("attack");
+	inAttackDelay.AddDelay(ModifyAnimationSpeed(0.5f));
+	mesh->PlayAnimation("fire");
 	mesh->PullRootMotion();
-	attacking = true;
 
 }
 
-void NpcHumanAxe::Death()
+void NpcHumanGun::Death()
 {
 
 	if (dead) return;
@@ -155,7 +188,7 @@ void NpcHumanAxe::Death()
 
 }
 
-void NpcHumanAxe::OnPointDamage(float Damage, vec3 Point, vec3 Direction, string bone, Entity* DamageCauser, Entity* Weapon)
+void NpcHumanGun::OnPointDamage(float Damage, vec3 Point, vec3 Direction, string bone, Entity* DamageCauser, Entity* Weapon)
 {
 	Damage *= mesh->GetHitboxDamageMultiplier(bone);
 	Entity::OnPointDamage(Damage, Point, Direction, bone, DamageCauser, Weapon);
@@ -167,15 +200,16 @@ void NpcHumanAxe::OnPointDamage(float Damage, vec3 Point, vec3 Direction, string
 
 	GlobalParticleSystem::SpawnParticleAt("hit_flesh", Point, MathHelper::FindLookAtRotation(vec3(0), Direction), vec3(Damage / 10.0f));
 
-	SoundPlayer::PlayOneshot("event:/NPC/General/FleshHit", 1, Damage/20.0f, false, Point);
+	SoundPlayer::PlayOneshot("event:/NPC/General/FleshHit", 1, Damage / 20.0f, false, Point);
 
 }
 
-void NpcHumanAxe::OnDamage(float Damage, Entity* DamageCauser, Entity* Weapon)
+void NpcHumanGun::OnDamage(float Damage, Entity* DamageCauser, Entity* Weapon)
 {
 
 	Damage = ModifyIncomingDamage(Damage);
 
+	accuracyModifier += Damage / 30.0f;
 
 	Health -= Damage;
 
@@ -183,10 +217,7 @@ void NpcHumanAxe::OnDamage(float Damage, Entity* DamageCauser, Entity* Weapon)
 	{
 		Death();
 	}
-	else if (attacking)
-	{
-		//Stun(DamageCauser, Weapon);
-	}
+
 	if (DamageCauser != nullptr)
 	{
 		if (LeadBody)
@@ -205,37 +236,29 @@ void NpcHumanAxe::OnDamage(float Damage, Entity* DamageCauser, Entity* Weapon)
 
 }
 
-void NpcHumanAxe::UpdateAttackDamage()
+bool NpcHumanGun::LineOfSightCheck(Entity* targetEntity)
 {
 
-	if (attackingDamage == false) return;
+	auto hit = Physics::SphereTrace(Position + vec3(0,0.4f,0), targetEntity->Position + vec3(0,0.3f,0),0.4,
+		BodyType::World,
+		{  }, {this, targetEntity});
 
-	auto hit = Physics::SphereTrace(Position, MathHelper::GetForwardVector(mesh->Rotation) * 1.2f + Position, 0.45f, BodyType::World | BodyType::CharacterCapsule, { LeadBody });
-
-	if (hit.hasHit)
-	{
-		if (hit.entity->HasTag("player"))
-		{
-
-			if (NpcHelper::CheckParry(MathHelper::GetForwardVector(mesh->Rotation), hit.entity))
-			{
-				OnPointDamage(20, hit.shapePosition, MathHelper::FastNormalize(Position - hit.shapePosition), "", this, this);
-				AddDebuffStacks("PoiseBreakDebuff", 100);
-				attackingDamage = false;
-				return;
-			}
-			else
-			{
-				hit.entity->OnPointDamage(15, hit.shapePosition, MathHelper::FastNormalize(hit.shapePosition - Position), "", this, this);
-				attackingDamage = false;
-			}
-
-		}
-	}
+	return hit.hasHit == false;
 
 }
 
-void NpcHumanAxe::AsyncUpdate()
+bool NpcHumanGun::AttackDirectionCheck(vec3 start, vec3 target, Entity* targetEntity)
+{
+	auto hit = Physics::SphereTrace(start, target, 0.2,
+		BodyType::GroupHitTest,
+		{  }, { this, targetEntity });
+
+	return hit.hasHit == false;
+}
+
+
+
+void NpcHumanGun::AsyncUpdate()
 {
 
 
@@ -247,6 +270,10 @@ void NpcHumanAxe::AsyncUpdate()
 
 		return;
 	}
+
+	accuracyModifier -= Time::DeltaTimeF / 3.0f;
+	accuracyModifier = glm::clamp(accuracyModifier, 0.0f, 5.0f);
+	Logger::Log("accuracyModifier " + to_string(accuracyModifier));
 
 	UpdateStatusWidgets();
 
@@ -296,7 +323,6 @@ void NpcHumanAxe::AsyncUpdate()
 
 	if (dead || stuned) return;
 
-	UpdateAttackDamage();
 
 	if (dead || stuned) return;
 
@@ -305,25 +331,64 @@ void NpcHumanAxe::AsyncUpdate()
 
 	soundPlayer->Velocity = FromPhysics(LeadBody->GetLinearVelocity());
 
+	auto animName = mesh->GetAnimationName();
+
+	if (animName == "run" || animName == "stun")
+	{
+		cantAttackDelay.AddDelay(0.7f);
+	}
 
 	Entity* target = Player::Instance;
 
-	if (attacking)
-	{
+	desiredTargetLocation = target->Position;
 
-		speed = 2;
-
-		return;
-	}
 
 	vec3 lookAtDir = MathHelper::FastNormalize(target->Position - Position);
 
-	if (distance(target->Position, Position) < 1.5f
-		&& dot(MathHelper::GetForwardVector(mesh->Rotation), lookAtDir) > 0.93)
+	bool hasLineOfSight = LineOfSightCheck(target);
+
+	float attackDistance = 17;
+
+	if (animName == "run")
+	{
+		attackDistance = 13;
+	}
+
+	if (distance2(target->Position, Position) > attackDistance * attackDistance)
+	{
+		hasLineOfSight = false;
+	}
+
+	if (hasLineOfSight)
 	{
 
-		Attack();
+		if (animName == "run")
+		{
+			mesh->PlayAnimation("aim", true, 0.3f);
+			
+		}
+		else
+		{
+			desiredDirection = lookAtDir;
+		}
+
+		if (cantAttackDelay.Wait() == false)
+		{
+			Attack();
+		}
+
 	}
+	else
+	{
+		if (animName != "run" && stuned == false)
+		{
+			mesh->PlayAnimation("run", true, 0.4f);
+		}
+		
+		cantAttackDelay.AddDelay(0.5f);
+
+	}
+
 
 	if (target)
 	{
@@ -333,21 +398,27 @@ void NpcHumanAxe::AsyncUpdate()
 		}
 		else
 		{
-
-			pathFollow.UpdateStartAndTarget(Position, target->Position);
+			pathFollow.WaitToFinish();
+			pathFollow.UpdateStartAndTarget(Position, desiredTargetLocation);
 			pathFollow.TryPerform();
 
 		}
 
 	}
-	if (pathFollow.FoundTarget)
+	if (pathFollow.FoundTarget && animName == "run")
 	{
 		desiredDirection = normalize(MathHelper::XZ(pathFollow.CalculatedTargetLocation - Position));
 	}
 
+
 	speed += Time::DeltaTimeF * 6.5;
 
 	speed = glm::clamp(speed, 0.0f, ModifyMovementSpeed(maxSpeed));
+
+	if (hasLineOfSight || inAttackDelay.Wait())
+	{
+		speed = 0;
+	}
 
 	movingDirection = mix(movingDirection, desiredDirection, Time::DeltaTime * 10);
 
@@ -382,7 +453,7 @@ void NpcHumanAxe::AsyncUpdate()
 
 }
 
-void NpcHumanAxe::Serialize(json& target)
+void NpcHumanGun::Serialize(json& target)
 {
 
 	Entity::Serialize(target);
@@ -397,17 +468,20 @@ void NpcHumanAxe::Serialize(json& target)
 	SERIALIZE_FIELD(target, speed);
 	SERIALIZE_FIELD(target, dead);
 	SERIALIZE_FIELD(target, animationStateSaveData);
-	SERIALIZE_FIELD(target, attacking);
 	SERIALIZE_FIELD(target, stuned);
-	SERIALIZE_FIELD(target, attackingDamage);
 	SERIALIZE_FIELD(target, fleeing);
+
+	SERIALIZE_FIELD(target, inAttackDelay);
+	SERIALIZE_FIELD(target, cantAttackDelay);
+	SERIALIZE_FIELD(target, desiredTargetLocation);
+
 
 	auto debuffsJson = SerializeDebuffs();
 	SERIALIZE_FIELD(target, debuffsJson);
 
 }
 
-void NpcHumanAxe::Deserialize(json& source)
+void NpcHumanGun::Deserialize(json& source)
 {
 
 	Entity::Deserialize(source);
@@ -418,10 +492,12 @@ void NpcHumanAxe::Deserialize(json& source)
 	DESERIALIZE_FIELD(source, speed);
 	DESERIALIZE_FIELD(source, dead);
 	DESERIALIZE_FIELD(source, animationStateSaveData);
-	DESERIALIZE_FIELD(source, attacking);
 	DESERIALIZE_FIELD(source, stuned);
-	DESERIALIZE_FIELD(source, attackingDamage);
 	DESERIALIZE_FIELD(source, fleeing);
+
+	DESERIALIZE_FIELD(source, inAttackDelay);
+	DESERIALIZE_FIELD(source, cantAttackDelay);
+	DESERIALIZE_FIELD(source, desiredTargetLocation);
 
 	json debuffsJson;
 	DESERIALIZE_FIELD(source, debuffsJson);
@@ -450,7 +526,7 @@ void NpcHumanAxe::Deserialize(json& source)
 
 }
 
-void NpcHumanAxe::UpdateStatusWidgets()
+void NpcHumanGun::UpdateStatusWidgets()
 {
 
 	statusWidget->Position = Position + vec3(0, 1.0f, 0);
@@ -472,7 +548,7 @@ void NpcHumanAxe::UpdateStatusWidgets()
 
 }
 
-void NpcHumanAxe::UpdateDebugUI()
+void NpcHumanGun::UpdateDebugUI()
 {
 
 	ImGui::Begin(("NpcHumanAxe Debug: " + Id).c_str());
@@ -485,19 +561,18 @@ void NpcHumanAxe::UpdateDebugUI()
 
 }
 
-void NpcHumanAxe::LoadAssets()
+void NpcHumanGun::LoadAssets()
 {
 
 	SoundManager::LoadBankFromPath("GameData/sounds/banks/Desktop/SFX.bank");
 
-	mesh->TexturesLocation = "GameData/models/enemies/humanAxe/humanAxe.glb/";
-	mesh->LoadFromFile("GameData/models/enemies/humanAxe/humanAxe.glb");
+	mesh->TexturesLocation = "GameData/models/enemies/humanGun/humanGun.glb/";
+	mesh->LoadFromFile("GameData/models/enemies/humanGun/humanGun.glb");
 	mesh->PreloadAssets();
 	mesh->CreateHitboxes(this);
 	mesh->PlayAnimation("run", true);
 	mesh->SetLooped(true);
+	mesh->Scale = vec3(1.15f);
 	//mesh->ColorTexture = AssetRegistry::GetTextureFromFile("GameData/cat.png");
 
 }
-
-

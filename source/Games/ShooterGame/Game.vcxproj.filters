@@ -18,7 +18,7 @@
     <ClCompile Include="Entities\Player\Player.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Entities\TestNpc.cpp">
+    <ClCompile Include="Entities\Enemy\Enemies\TestNpc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Entities\TestParticleSystem.cpp">
@@ -177,10 +177,10 @@
     <ClCompile Include="Entities\Player\Weapons\weapon_lefthand_empty.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Entities\Npc\NpcHelper.cpp">
+    <ClCompile Include="Entities\Enemy\Enemies\NpcHelper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Entities\Npc\NpcHumanAxe.cpp">
+    <ClCompile Include="Entities\Enemy\Enemies\NpcHumanAxe.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Entities\Player\player_start.cpp">
@@ -210,12 +210,15 @@
     <ClCompile Include="Entities\Enemy\Debuffs\QuicksilverDebuff.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Entities\Enemy\Enemies\NpcHumanGun.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Entities\Player\Player.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Entities\TestNpc.hpp">
+    <ClInclude Include="Entities\Enemy\Enemies\TestNpc.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Entities\TestParticleSystem.hpp">
@@ -305,10 +308,10 @@
     <ClInclude Include="Entities\Player\Weapons\Animators\Animator_OneHand.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Entities\Npc\NpcHelper.h">
+    <ClInclude Include="Entities\Enemy\Enemies\NpcHelper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Entities\Npc\NpcHumanAxe.h">
+    <ClInclude Include="Entities\Enemy\Enemies\NpcHumanAxe.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Entities\NpcSimulationManager.h">
@@ -321,6 +324,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="UI\Enemy\UiNpcDebuffs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Entities\Enemy\Enemies\NpcHumanGun.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

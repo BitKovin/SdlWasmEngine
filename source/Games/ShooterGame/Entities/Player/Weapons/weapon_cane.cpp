@@ -302,10 +302,12 @@ public:
 			float damage = 20.0f;
 
 			IEnemy* enemy = dynamic_cast<IEnemy*>(hit.entity);
-
-			if (enemy->HasDebuff("DisbalanceDebuff"))
+			if (enemy)
 			{
-				damage = 35;
+				if (enemy->HasDebuff("DisbalanceDebuff"))
+				{
+					damage = 35;
+				}
 			}
 
 

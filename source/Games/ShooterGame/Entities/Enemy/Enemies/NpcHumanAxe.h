@@ -13,11 +13,11 @@
 #include <Entities/SoundPlayer.h>
 #include <Delay.hpp>
 
-#include "../Enemy/IEnemy.h"
+#include "../IEnemy.h"
 
 #include <UI/WorldSpace/UiBilboard.h>
 #include <UI/UiVideo.hpp>
-#include "../../UI/Enemy/UiNpcDebuffs.h"
+#include "../../../UI/Enemy/UiNpcDebuffs.h"
 
 class NpcHumanAxe : public Entity, public IEnemy
 {
@@ -31,7 +31,7 @@ private:
 
 	SoundPlayer* soundPlayer = nullptr;
 
-	float maxSpeed = 6.0f;
+	float maxSpeed = 5.7f;
 	float speed = 4;
 
 	bool dead = false;

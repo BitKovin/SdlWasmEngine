@@ -12,8 +12,8 @@
 #include <SoundSystem/SoundManager.hpp>
 #include <Entities/SoundPlayer.h>
 #include <Delay.hpp>
-#include "Enemy/IEnemy.h"
-#include "../UI/Enemy/UiNpcDebuffs.h"
+#include "../IEnemy.h"
+#include "../../../UI/Enemy/UiNpcDebuffs.h"
 #include <UI/WorldSpace/UiBilboard.h>
 
 class TestNpc : public Entity, public IEnemy
@@ -28,7 +28,7 @@ private:
 
 	SoundPlayer* soundPlayer = nullptr;
 
-	float maxSpeed = 8;
+	float maxSpeed = 6.5f;
 	float speed = 4;
 
 	bool dead = false;

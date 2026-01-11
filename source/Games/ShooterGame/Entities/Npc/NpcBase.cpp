@@ -16,7 +16,6 @@
 
 #include "../Enviroment/Door.h"
 
-#include "NpcHelper.h"
 
 #include <EngineMain.h>
 
