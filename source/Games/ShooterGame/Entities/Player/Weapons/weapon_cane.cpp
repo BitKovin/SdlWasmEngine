@@ -295,7 +295,7 @@ public:
 	{
 
 		pendingMeleeAttack = false;
-		auto hit = Physics::SphereTrace(Camera::position, Camera::position + MathHelper::GetForwardVector(Camera::rotation) * 1.2f, 0.4f, BodyType::CharacterCapsule | BodyType::World, { Player::Instance->LeadBody }, { Player::Instance });
+		auto hit = Physics::SphereTrace(Camera::position, Camera::position + MathHelper::GetForwardVector(Camera::rotation) * 1.2f, 0.4f, BodyType::GroupHitTest, {Player::Instance->LeadBody}, {Player::Instance});
 		if (hit.hasHit)
 		{
 
@@ -314,7 +314,7 @@ public:
 			if (hit.entity != nullptr)
 			{
 				hit.entity->OnPointDamage(damage, hit.position, MathHelper::GetForwardVector(Camera::rotation), hit.hitboxName, Player::Instance, this);
-				Physics::AddImpulseAtLocation(hit.hitbody, MathHelper::GetForwardVector(Camera::rotation) * damage * 25.0f, hit.position);
+				Physics::AddImpulseAtLocation(hit.hitbody, MathHelper::GetForwardVector(Camera::rotation) * damage * 10.0f, hit.position);
 			}
 
 			if (enemy != nullptr)

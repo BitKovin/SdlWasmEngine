@@ -391,6 +391,7 @@
     <ClCompile Include="ParticleSystems\CaneTrail.cpp" />
     <ClCompile Include="ParticleSystems\Fog.cpp" />
     <ClCompile Include="ParticleSystems\HitBlood.cpp" />
+    <ClCompile Include="UI\General\UiLocationTileDrop.cpp" />
     <ClCompile Include="UI\LoadingScreen\UiDefaultLoadingScreen.cpp" />
     <ClCompile Include="UI\MobileControls\UiJoystick.cpp" />
     <ClCompile Include="UI\MobileControls\UiTouchMoveArea.cpp" />
@@ -430,6 +431,7 @@
     <ClInclude Include="Entities\Enemy\Enemies\TestNpc.hpp" />
     <ClInclude Include="Entities\TestParticleSystem.hpp" />
     <ClInclude Include="UI\Enemy\UiNpcDebuffs.h" />
+    <ClInclude Include="UI\General\UiLocationTileDrop.h" />
     <ClInclude Include="UI\LoadingScreen\UiDefaultLoadingScreen.h" />
     <ClInclude Include="UI\MobileControls\UiJoystick.h" />
     <ClInclude Include="UI\MobileControls\UiTouchMoveArea.h" />

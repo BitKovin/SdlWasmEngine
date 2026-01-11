@@ -213,6 +213,9 @@
     <ClCompile Include="Entities\Enemy\Enemies\NpcHumanGun.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="UI\General\UiLocationTileDrop.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Entities\Player\Player.hpp">
@@ -327,6 +330,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Entities\Enemy\Enemies\NpcHumanGun.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\General\UiLocationTileDrop.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

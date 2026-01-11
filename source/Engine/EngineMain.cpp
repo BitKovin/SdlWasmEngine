@@ -1,4 +1,4 @@
-#include "EngineMain.h"
+﻿#include "EngineMain.h"
 
 #include "LevelObjectFactory.h"
 #include "Time.hpp"
@@ -651,44 +651,93 @@ void EngineMain::Render()
     ivec2 uiResolution = ivec2(UiManager::GetScaledUiHeight() * Camera::AspectRatio , UiManager::GetScaledUiHeight());
 
 
-	if (UiRenderTexture == nullptr || UiRenderTexture->width() != uiResolution.x || UiRenderTexture->height() != uiResolution.y)
+    // Resize UI render target if needed
+    if (UiRenderTexture == nullptr ||
+        UiRenderTexture->width() != uiResolution.x ||
+        UiRenderTexture->height() != uiResolution.y)
     {
-        delete(UiRenderTexture);
-        UiRenderTexture = new RenderTexture(uiResolution.x, uiResolution.y, TextureFormat::RGBA8);
+        delete UiRenderTexture;
+        UiRenderTexture = new RenderTexture(
+            uiResolution.x,
+            uiResolution.y,
+            TextureFormat::RGBA8
+        );
     }
 
-    UiRenderTexture->bindFramebuffer();
+    /* ============================================================
+       UI PASS → render into transparent RT (PREMULTIPLIED ALPHA)
+       ============================================================ */
 
+    UiRenderTexture->bindFramebuffer();
     glViewport(0, 0, uiResolution.x, uiResolution.y);
 
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    glClearColor(0.f, 0.f, 0.f, 0.f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-
     glDisable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+
+    // Premultiplied alpha blending
+    glBlendFuncSeparate(
+        GL_ONE, GL_ONE_MINUS_SRC_ALPHA,
+        GL_ONE, GL_ONE_MINUS_SRC_ALPHA
+    );
 
     Viewport.Draw();
     UiRenderer::EndFrame();
 
-    //glDisable(GL_POLYGON_OFFSET_FILL);
-    //glPolygonOffset(1.0, 1.0);
+    /* ============================================================
+       RESTORE BLEND STATE BEFORE WORLD RENDER
+       ============================================================ */
 
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_BLEND);
     glEnable(GL_DEPTH_TEST);
+
+    /* ============================================================
+       WORLD PASS
+       ============================================================ */
 
     MainRenderer->RenderLevel(Level::Current);
 
+    /* ============================================================
+       COMPOSITE UI OVER SCENE (PREMULTIPLIED)
+       ============================================================ */
+
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    // Premultiplied alpha for fullscreen composite
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
     glViewport(0, 0, ScreenSize.x, ScreenSize.y);
 
-    auto fullscreenShader = ShaderManager::GetShaderProgram("fullscreen_vertex", "fxaa_simple");
+    auto fullscreenShader = ShaderManager::GetShaderProgram(
+        "fullscreen_vertex",
+        "fxaa_simple"
+    );
 
     fullscreenShader->UseProgram();
-    fullscreenShader->SetTexture("screenTexture", UiRenderTexture->id());
-	fullscreenShader->SetUniform("screenSize", vec2((float)ScreenSize.x, (float)ScreenSize.y));
+    fullscreenShader->SetTexture(
+        "screenTexture",
+        UiRenderTexture->id()
+    );
+    fullscreenShader->SetUniform(
+        "screenSize",
+        vec2((float)ScreenSize.x, (float)ScreenSize.y)
+    );
+
     MainRenderer->RenderFullscreenQuad();
+
+    /* ============================================================
+       FINAL STATE RESTORE (IMPORTANT)
+       ============================================================ */
+
+       // Restore default alpha blending for rest of frame / next frame
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDisable(GL_BLEND);
+    glEnable(GL_DEPTH_TEST);
+
 
     RmlContext->Render();
 

@@ -51,8 +51,12 @@ void UiElement::UpdateChildrenOffsetRecursive()
 	}
 }
 
-void UiElement::UpdateChildren() {
-    for (auto& child : children) {
+void UiElement::UpdateChildren() 
+{
+
+    auto currentChildren = children;
+
+    for (auto& child : currentChildren) {
         child->parentTopLeft = topLeft;
         child->parentBottomRight = bottomRight;
         child->parent = this;
@@ -147,7 +151,7 @@ glm::vec4 UiElement::GetFinalColor()
 
     if (parent)
     {
-        finalColor *= parent->color * parent->GetFinalColor();
+        finalColor *= parent->GetFinalColor();
     }
 
     return finalColor;

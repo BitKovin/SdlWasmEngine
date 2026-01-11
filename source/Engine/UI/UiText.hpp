@@ -8,6 +8,8 @@
 
 #include "../AssetRegistry.h"
 
+const float StaticFontSize = 200;
+
 class UiText : public UiElement {
 public:
     TTF_Font* font = nullptr;   // Assign your default font here or externally
@@ -16,7 +18,7 @@ public:
     glm::vec4 textColor = glm::vec4(1.0f); // White (RGBA)
 
     UiText() {
-        font = AssetRegistry::GetFontFromFile("GameData/fonts/Kingthings_Calligraphica_2.ttf", 72);
+        font = AssetRegistry::GetFontFromFile("GameData/fonts/Kingthings_Calligraphica_2.ttf", StaticFontSize);
     }
 
     virtual ~UiText() = default;
@@ -36,7 +38,7 @@ public:
             return glm::vec2(0.0f);
         }
         // Scale based on fontSize relative to a 72 DPI reference.
-        return glm::vec2(w, h) * (fontSize / 72.f);
+        return glm::vec2(w, h) * (fontSize / StaticFontSize);
     }
 
     // Draw renders the text using the Renderer::DrawText method.
@@ -45,7 +47,7 @@ public:
         glm::vec2 pos = position + offset;
 
         // Compute scale factor based on desired font size.
-        glm::vec2 scale(fontSize / 72.f);
+        glm::vec2 scale(fontSize / StaticFontSize);
 
         // Draw the text.
         UiRenderer::DrawText(text, font, pos, rotation, pivot, textColor * GetFinalColor(), scale);

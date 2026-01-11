@@ -101,7 +101,9 @@ void SoundPlayer::PlayOneshot(string soundPath,float destroyAfterSeconds,float v
 	auto player = Create(soundPath);
 	player->Volume = volume;
 	player->Position = position;
-	player->Sound->IsUISound = UiSound;
+
+	if(player->Sound)
+		player->Sound->IsUISound = UiSound;
 
 	player->DestroyWithDelay(destroyAfterSeconds);
 

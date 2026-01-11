@@ -220,6 +220,7 @@ void NpcHumanAxe::UpdateAttackDamage()
 			if (NpcHelper::CheckParry(MathHelper::GetForwardVector(mesh->Rotation), hit.entity))
 			{
 				OnPointDamage(20, hit.shapePosition, MathHelper::FastNormalize(Position - hit.shapePosition), "", this, this);
+				Physics::AddImpulse(mesh->FindHitboxByName("spine_02"), MathHelper::GetForwardVector(mesh->Rotation) * -500.0f);
 				AddDebuffStacks("PoiseBreakDebuff", 100);
 				attackingDamage = false;
 				return;

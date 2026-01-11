@@ -261,10 +261,10 @@ namespace UiRenderer {
         if (textureID == 0) {
             // Convert color from [0.0,1.0] to [0,255]
             SDL_Color sdlColor = {
-                static_cast<Uint8>(glm::clamp(color.r, 0.0f, 1.0f) * 255.0f),
-                static_cast<Uint8>(glm::clamp(color.g, 0.0f, 1.0f) * 255.0f),
-                static_cast<Uint8>(glm::clamp(color.b, 0.0f, 1.0f) * 255.0f),
-                static_cast<Uint8>(glm::clamp(color.a, 0.0f, 1.0f) * 255.0f)
+                static_cast<Uint8>(glm::clamp(1.0f, 0.0f, 1.0f) * 255.0f),
+                static_cast<Uint8>(glm::clamp(1.0f, 0.0f, 1.0f) * 255.0f),
+                static_cast<Uint8>(glm::clamp(1.0f, 0.0f, 1.0f) * 255.0f),
+                static_cast<Uint8>(glm::clamp(1.0f, 0.0f, 1.0f) * 255.0f)
             };
 
             SDL_Surface* surface = TTF_RenderUTF8_Blended(font, text.c_str(), sdlColor);

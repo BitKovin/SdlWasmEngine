@@ -15,6 +15,8 @@
 #include <SpatialSound/SpatialSoundManager.h>
 #include <SpatialSound/VoxelWorld/SimplePathfindingQuery.h>
 
+#include "../../UI/General/UiLocationTileDrop.h"
+
 REGISTER_ENTITY(Player, "player")
 
 Player* Player::Instance = nullptr;
@@ -236,6 +238,8 @@ bool Player::CanSwitchSlot(int slot)
 void Player::SwitchWeapon(const WeaponSlotData& data)
 {
     DestroyWeapon();
+
+    UiLocationTileDrop::PlayTitleCard(data.className);
 
     if (!data.className.empty())
     {

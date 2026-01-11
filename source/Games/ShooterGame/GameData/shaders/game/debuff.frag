@@ -88,5 +88,13 @@ void main()
 
     vec4 ringColor = vec4(0.949, 0.925, 0.922, ringAlpha);
 
-    FragColor = mix(baseColor, ringColor, ringColor.a);
+    vec4 outColor = mix(baseColor, ringColor, ringColor.a);
+
+    if(outColor.a<0.001)
+    {
+        discard;
+        return;
+    }
+
+    FragColor = vec4(outColor.rgb * outColor.a, outColor.a);
 }

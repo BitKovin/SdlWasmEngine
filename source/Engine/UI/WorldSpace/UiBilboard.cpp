@@ -17,8 +17,6 @@ void UiBilboard::DrawForward(mat4x4 view, mat4x4 projection)
 	ColorTextureId = renderTexture->id();
 
 
-
-
 	if (model == nullptr) return;
 
 	if (Transparent == false)
@@ -93,11 +91,13 @@ void UiBilboard::DrawForward(mat4x4 view, mat4x4 projection)
 
 	model->meshes[0].VAO->Bind();
 
+	glBlendFuncSeparate(GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+
 	glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(model->meshes[0].VAO->IndexCount), GL_UNSIGNED_INT, 0);
 
 	VertexArrayObject::Unbind();
 
-
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	glEnable(GL_CULL_FACE);
 
@@ -138,8 +138,13 @@ void UiBilboard::DrawUi()
 	glViewport(0, 0, ViewportSize.x, ViewportSize.y);
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // alpha = 0
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glDisable(GL_DEPTH_TEST);
+	glBlendFuncSeparate(GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
 	Canvas.Draw();
+
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_DEPTH_TEST);
 
 	UiRenderer::customViewport = false;
 
