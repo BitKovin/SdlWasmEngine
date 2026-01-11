@@ -1,6 +1,7 @@
 #include "../Debuff.h"
 #include "../DebuffFactory.h"
 #include "../IEnemy.h"
+#include <Entity.h>
 
 class PoiseBreakDebuff : public Debuff
 {
@@ -22,13 +23,25 @@ public:
 
 		Debuff::AddStacks(amount);
 
+        if (target_->HasDebuff("DisbalanceDebuff"))
+        {
+
+            Entity* targetEnt = dynamic_cast<Entity*>(target_);
+            if (targetEnt)
+            {
+                targetEnt->OnDamage(amount / 3.0f); // deal some damage instead
+            }
+
+        }
 
 
         if (target_->HasDebuff("PoiseBreakImmune"))
         {
+
 			stacks_ = -1;
             return;
         }
+
         remainingTime_ = 3.0f; // refresh duration
         // Trigger if threshold reached
         if (stacks_ >= target_->GetPoise())

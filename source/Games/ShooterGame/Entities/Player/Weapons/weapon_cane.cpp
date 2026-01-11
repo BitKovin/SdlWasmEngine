@@ -298,12 +298,22 @@ public:
 		auto hit = Physics::SphereTrace(Camera::position, Camera::position + MathHelper::GetForwardVector(Camera::rotation) * 1.2f, 0.4f, BodyType::CharacterCapsule | BodyType::World, { Player::Instance->LeadBody }, { Player::Instance });
 		if (hit.hasHit)
 		{
-			if (hit.entity != nullptr)
-			{
-				hit.entity->OnPointDamage(25, hit.position, MathHelper::GetForwardVector(Camera::rotation), hit.hitboxName, Player::Instance, this);
-			}
+
+			float damage = 20.0f;
 
 			IEnemy* enemy = dynamic_cast<IEnemy*>(hit.entity);
+
+			if (enemy->HasDebuff("DisbalanceDebuff"))
+			{
+				damage = 35;
+			}
+
+
+			if (hit.entity != nullptr)
+			{
+				hit.entity->OnPointDamage(damage, hit.position, MathHelper::GetForwardVector(Camera::rotation), hit.hitboxName, Player::Instance, this);
+				Physics::AddImpulseAtLocation(hit.hitbody, MathHelper::GetForwardVector(Camera::rotation) * damage * 25.0f, hit.position);
+			}
 
 			if (enemy != nullptr)
 			{
