@@ -159,7 +159,7 @@ namespace nlohmann {
         }
     };
 
-    template<> struct nlohmann::adl_serializer<glm::quat> {
+    template<> struct adl_serializer<glm::quat> {
         static void to_json(json& j, const glm::quat& q) {
             j = {
                 { "x", q.x },
