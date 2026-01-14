@@ -1,6 +1,5 @@
 ﻿#include "SoundInstance.hpp"
 
-#  include <AL/alext.h>
 #include "../EngineMain.h"
 #include "SoundManager.hpp"
 

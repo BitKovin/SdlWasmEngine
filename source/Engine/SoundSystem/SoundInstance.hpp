@@ -15,8 +15,7 @@
 #  define AL_ALEXT_PROTOTYPES
 #  include <AL/al.h>
 #  include <AL/alc.h>
-#  include <AL/efx.h>
-#  include <AL/efx-presets.h>
+#  include <AL/alext.h>
 #endif
 
 #include <cmath>
