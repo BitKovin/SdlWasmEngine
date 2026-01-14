@@ -7,6 +7,8 @@
 #include <json.hpp>
 #include <glm.h>
 
+#include <sstream>
+
 enum class DebuffStage : uint8_t
 {
     PreClamp = 0,   // additive, setup effects

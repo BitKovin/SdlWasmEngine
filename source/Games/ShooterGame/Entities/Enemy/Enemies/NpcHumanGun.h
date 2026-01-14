@@ -46,6 +46,8 @@ private:
 	Delay inAttackDelay;
 	Delay cantAttackDelay;
 
+	Delay stopMovingDelay;
+
 	bool stuned = false;
 
 	float accuracyModifier = 0;

@@ -195,6 +195,7 @@ void TestNpc::UpdateAttackDamage()
 			{
 				Stun();
 				OnPointDamage(10, hit.shapePosition, MathHelper::FastNormalize(Position - hit.shapePosition), "", this, this);
+				AddDebuffStacks("PoiseBreakDebuff", 100);
 				attackingDamage = false;
 				return;
 			}

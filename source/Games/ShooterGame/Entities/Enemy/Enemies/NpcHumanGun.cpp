@@ -345,12 +345,9 @@ void NpcHumanGun::AsyncUpdate()
 
 	bool hasLineOfSight = LineOfSightCheck(target);
 
-	float attackDistance = 17;
+	float attackDistance = 16;
 
-	if (animName == "run")
-	{
-		attackDistance = 13;
-	}
+	
 
 	if (distance2(target->Position, Position) > attackDistance * attackDistance)
 	{
@@ -359,33 +356,43 @@ void NpcHumanGun::AsyncUpdate()
 
 	if (hasLineOfSight)
 	{
-
-		if (animName == "run")
+		if (stopMovingDelay.Wait() == false)
 		{
-			mesh->PlayAnimation("aim", true, 0.3f);
-			
+
+			if (animName == "run")
+			{
+				mesh->PlayAnimation("aim", true, 0.3f);
+
+			}
+			else
+			{
+				desiredDirection = lookAtDir;
+			}
+
+			if (cantAttackDelay.Wait() == false)
+			{
+				Attack();
+			}
 		}
 		else
 		{
-			desiredDirection = lookAtDir;
+			cantAttackDelay.AddDelay(0.5f);
 		}
-
-		if (cantAttackDelay.Wait() == false)
-		{
-			Attack();
-		}
-
 	}
 	else
 	{
+
 		if (animName != "run" && stuned == false)
 		{
-			mesh->PlayAnimation("run", true, 0.4f);
+			mesh->PlayAnimation("run", true, 0.6f);
 		}
 		
 		cantAttackDelay.AddDelay(0.5f);
 
+		stopMovingDelay.AddDelay(RandomHelper::RandomFloat() * -0.5f + 0.5f);
+
 	}
+
 
 
 	if (target)
@@ -413,7 +420,7 @@ void NpcHumanGun::AsyncUpdate()
 
 	speed = glm::clamp(speed, 0.0f, ModifyMovementSpeed(maxSpeed));
 
-	if (hasLineOfSight || inAttackDelay.Wait())
+	if ((hasLineOfSight || inAttackDelay.Wait())&& stopMovingDelay.Wait() == false)
 	{
 		speed = 0;
 	}

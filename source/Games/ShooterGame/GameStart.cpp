@@ -229,7 +229,7 @@ GameStart::GameStart()
 
     Input::AddAction("slotMelee")->AddKeyboardKey(SDL_KeyCode::SDLK_f);
 
-    Input::AddAction("debug_ui_toggle")->AddKeyboardKey(SDL_KeyCode::SDLK_UP);
+    Input::AddAction("debug_ui_toggle")->AddKeyboardKey(SDL_KeyCode::SDLK_F2);
 
 	Input::AddAction("ui_confirm")->AddKeyboardKey(SDL_KeyCode::SDLK_RETURN)->AddButton(GamepadButton::A);
     Input::AddAction("ui_cancel")->AddKeyboardKey(SDL_KeyCode::SDLK_ESCAPE)->AddButton(GamepadButton::B);

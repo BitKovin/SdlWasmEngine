@@ -295,6 +295,8 @@ public:
 	{
 
 		pendingMeleeAttack = false;
+
+
 		auto hit = Physics::SphereTrace(Camera::position, Camera::position + MathHelper::GetForwardVector(Camera::rotation) * 1.2f, 0.4f, BodyType::GroupHitTest, {Player::Instance->LeadBody}, {Player::Instance});
 		if (hit.hasHit)
 		{

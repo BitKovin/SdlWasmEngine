@@ -239,7 +239,7 @@ void Player::SwitchWeapon(const WeaponSlotData& data)
 {
     DestroyWeapon();
 
-    UiLocationTileDrop::PlayTitleCard(data.className);
+    //UiLocationTileDrop::PlayTitleCard(data.className);
 
     if (!data.className.empty())
     {

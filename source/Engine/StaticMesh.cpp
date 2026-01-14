@@ -253,6 +253,8 @@ void StaticMesh::DrawForward(mat4x4 view, mat4x4 projection)
 void StaticMesh::DrawDepth(mat4x4 view, mat4x4 projection)
 {
 
+	if (model == nullptr) return;
+
 	if (DepthPrePath == false) return;
 
 	if (TwoSided)
@@ -342,7 +344,7 @@ void StaticMesh::DrawDepth(mat4x4 view, mat4x4 projection)
 
 void StaticMesh::DrawCustomId(mat4x4 view, mat4x4 projection)
 {
-
+	if (model == nullptr) return;
 	if (CustomId == 0) return;
 
 	bool mask = Transparent;
@@ -423,7 +425,7 @@ void StaticMesh::DrawCustomId(mat4x4 view, mat4x4 projection)
 
 void StaticMesh::DrawShadow(mat4x4 view, mat4x4 projection)
 {
-
+	if (model == nullptr) return;
 	bool mask = Transparent;
 
 	ShaderProgram* shader_program = ShaderManager::GetShaderProgram("default_vertex", mask ? "mask_pixel" : "empty_pixel");
