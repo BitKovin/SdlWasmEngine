@@ -40,9 +40,21 @@ void SoundManager::InitContext(ALCcontext* context)
     alDistanceModel(AL_INVERSE_DISTANCE_CLAMPED);
 }
 
+#define FMOD_CHECK(x)                                                     \
+    do {                                                                  \
+        FMOD_RESULT result = (x);                                         \
+        if (result != FMOD_OK) {                                          \
+            printf("[FMOD ERROR] %s failed: %s (%d)\n",                   \
+                   #x, FMOD_ErrorString(result), result);                \
+            return;                                                       \
+        }                                                                 \
+    } while (0)
+
+
 void SoundManager::InitFmod()
 {
-    FMOD::Studio::System::create(&studioSystem);
+    FMOD_CHECK(FMOD::Studio::System::create(&studioSystem));
+
 
     unsigned int flags = FMOD_STUDIO_INIT_ALLOW_MISSING_PLUGINS;
     flags |= FMOD_INIT_3D_RIGHTHANDED;
@@ -89,7 +101,12 @@ void SoundManager::InitFmod()
 #endif // __EMSCRIPTEN__
 
 
-    studioSystem->initialize(maxSounds, studioFlags, flags, nullptr);
+    FMOD_CHECK(studioSystem->initialize(
+        1024,               // max channels
+        studioFlags,
+        flags,
+        nullptr
+    ));
 
     /*
 
