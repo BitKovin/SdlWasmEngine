@@ -91,6 +91,8 @@ void SoundManager::InitFmod()
 
     studioSystem->initialize(maxSounds, studioFlags, flags, nullptr);
 
+    /*
+
     unsigned int version;
 
     coreSystem->getVersion(&version);
@@ -103,7 +105,7 @@ void SoundManager::InitFmod()
         << major << "."
         << minor << "."
         << patch << std::endl;
-
+        */
 }
 
 void SoundManager::UpdateContext(ALCcontext* context)
