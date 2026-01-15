@@ -8,6 +8,8 @@
 #include <vector>
 #include "FileSystem/FileSystem.h"
 
+#include "stb_lib/stb_image.h"
+
 #include "malloc_override.h"
 #include "Logger.hpp"
 
@@ -156,27 +158,19 @@ private:
 
 
     void loadFromMemoryCompressed(const unsigned char* data, size_t size, bool generateMipmaps) {
-        SDL_RWops* rw = SDL_RWFromConstMem(data, static_cast<int>(size));
-        if (!rw) {
-            std::cerr << "Error creating RWops: " << SDL_GetError() << std::endl;
+        int width, height, channels;
+        // force 4 channels (RGBA)
+        unsigned char* pixels = stbi_load_from_memory(data, static_cast<int>(size), &width, &height, &channels, 4);
+        if (!pixels) {
+            std::cerr << "Failed to load image from memory: " << stbi_failure_reason() << std::endl;
             return;
         }
 
-        SDL_Surface* surface = IMG_Load_RW(rw, 1); // 1 = free RWops automatically
-        if (!surface) {
-            std::cerr << "Error loading image from memory: " << IMG_GetError() << std::endl;
-            return;
-        }
+        // Upload texture
+        setupTexture(width, height, GL_RGBA, pixels, generateMipmaps);
 
-        SDL_Surface* converted_surface = SDL_ConvertSurfaceFormat(surface, SDL_PIXELFORMAT_RGBA32, 0);
-        SDL_FreeSurface(surface);
-        if (!converted_surface) {
-            std::cerr << "Error converting surface from memory: " << SDL_GetError() << std::endl;
-            return;
-        }
-
-        setupTexture(converted_surface->w, converted_surface->h, GL_RGBA, converted_surface->pixels, generateMipmaps);
-        SDL_FreeSurface(converted_surface);
+        // Free the loaded image
+        stbi_image_free(pixels);
     }
 
     void loadFromRawData(const unsigned char* data, int width, int height, GLenum format, bool generateMipmaps) {

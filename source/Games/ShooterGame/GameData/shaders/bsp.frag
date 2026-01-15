@@ -103,7 +103,7 @@ void main()
 
     vec3 normal = normalize(g_normal);
 
-    o_lightmap += clamp(dot(normal, normalize(direct_light_dir))*0.7 + 0.3,0.0,1.0) * vec3(direct_light_color) * 2.0;
+    o_lightmap += clamp(dot(normal, normalize(direct_light_dir))*0.7 + 0.3,0.0,1.0) * vec3(direct_light_color) * 2.0 * (useVertexLight ? vertexLightComp : 1.0);
 
     for (int i = 0; i < min(MAX_POINT_LIGHTS, PointLightsNumber); i++)
 	{
