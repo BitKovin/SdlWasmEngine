@@ -434,8 +434,9 @@
     <ClCompile Include="SoundSystem\SoundManager.cpp" />
     <ClCompile Include="SpatialSound\BspVoxelWorldBuilder.cpp" />
     <ClCompile Include="SpatialSound\SpatialSoundManager.cpp" />
-    <ClCompile Include="SpatialSound\VoxelWorld\SimplePathfindingQuery.cpp" />
-    <ClCompile Include="SpatialSound\VoxelWorld\TiledVoxelWorld.cpp" />
+    <ClCompile Include="SpatialSound\VoxelWorld\FixedVoxelWorld.cpp" />
+    <ClCompile Include="SpatialSound\Helpers.cpp" />
+    <ClCompile Include="SpatialSound\VoxelWorld\Raycast.cpp" />
     <ClCompile Include="StaticMesh.cpp" />
     <ClCompile Include="stb_lib\stb_image_implementation.cpp" />
     <ClCompile Include="ThreadPool.cpp" />
@@ -602,11 +603,10 @@
     <ClInclude Include="SoundSystem\SoundManager.hpp" />
     <ClInclude Include="SpatialSound\BspVoxelWorldBuilder.h" />
     <ClInclude Include="SpatialSound\SpatialSoundManager.h" />
-    <ClInclude Include="SpatialSound\VoxelWorld\SimplePathfindingQuery.h" />
-    <ClInclude Include="SpatialSound\VoxelWorld\TiledVoxelWorld.h" />
-    <ClInclude Include="SpatialSound\VoxelWorld\Voxel.h" />
-    <ClInclude Include="SpatialSound\VoxelWorld\VoxelObstacle.h" />
-    <ClInclude Include="SpatialSound\VoxelWorld\VoxelTile.h" />
+    <ClInclude Include="SpatialSound\VoxelWorld\FixedVoxelWorld.h" />
+    <ClInclude Include="SpatialSound\Helpers.h" />
+    <ClInclude Include="SpatialSound\VoxelWorld\MaterialProps.h" />
+    <ClInclude Include="SpatialSound\VoxelWorld\Raycast.h" />
     <ClInclude Include="SpatialSound\VoxelWorld\VoxelWorldBuilder.h" />
     <ClInclude Include="StaticMesh.h" />
     <ClInclude Include="stb_lib\stb_image.h" />

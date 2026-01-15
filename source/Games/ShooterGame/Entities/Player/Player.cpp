@@ -13,7 +13,6 @@
 #include <SaveSystem/GameSaveSystem.h>
 #include "../NpcSimulationManager.h"
 #include <SpatialSound/SpatialSoundManager.h>
-#include <SpatialSound/VoxelWorld/SimplePathfindingQuery.h>
 
 #include "../../UI/General/UiLocationTileDrop.h"
 
@@ -73,6 +72,8 @@ void Player::Start()
     SwitchWeaponOffhand("weapon_cane");
 
     cameraRotation.y = Rotation.y;
+
+    Spawn("TestSpatialSoundPlayer")->Start();
 
 }
 
@@ -473,16 +474,6 @@ void Player::UpdateDebugUI()
     if (ImGui::Button("calculate path to player"))
     {
 
-		SimplePathfindingQuery query(SpatialSoundManager::voxelWorld);
-
-
-        auto result = query.FindPath(testStart, Position);// NavigationSystem::FindSimplePath(Position, testStart);
-
-		Logger::Log("traveledDensity: " + to_string(result.traveledDensityCost));
-
-        //path.insert(path.begin(), Position);
-
-        DebugDraw::Path(result.path, 15, 0.05);
     }
 
     ImGui::End();
@@ -658,15 +649,13 @@ void Player::Update()
 
     if (EngineMain::MainInstance->SimulatingGameTicks) return;
 
-    size_t memBytes = SpatialSoundManager::voxelWorld.GetVoxelWorldMemoryBytes();
-    double memMB = double(memBytes) / (1024.0 * 1024.0);
 
     //Logger::Log("Voxel world memory: " + std::to_string(memMB) + " MB");
 
 
-    int dencity = SpatialSoundManager::voxelWorld.SampleWorld(Camera::position).value;
+    int value = SpatialSoundManager::GetVoxelValueAt(Camera::position);
 
-    //Logger::Log("player sound voxel: " + to_string(dencity));
+    //Logger::Log("player sound voxel: " + to_string(value));
 
     //printf("%i \n",SkeletalMesh::skelMeshes);
 
@@ -986,6 +975,8 @@ void Player::UpdateThirdPersonCamera()
     {
         Camera::position = targetCameraPos;
 	}
+
+
 
 }
 

@@ -1,13 +1,13 @@
 #pragma once
-#include <glm/glm.hpp>
-#include <cstdint>
 
-class VoxelWorldBuilder
-{
+#include <glm/glm.hpp>
+
+using namespace glm;
+
+class VoxelWorldBuilder {
 public:
     virtual ~VoxelWorldBuilder() = default;
-
     // worldPos is CENTER of voxel in world space
-    // return density / traversal price [0..255]
-    virtual uint8_t GetDensity(const glm::vec3& worldPos) const = 0;
+    // returns material ID
+    virtual uint8_t GetValue(const vec3& worldPos) const = 0;
 };
