@@ -125,6 +125,19 @@ elseif (LINUX)
           "${CMAKE_SOURCE_DIR}/libraries"     
     )
 
+    # --------------------------------------------------
+# RmlUi (vendored)
+# --------------------------------------------------
+set(RMLUI_BUILD_SAMPLES OFF CACHE BOOL "" FORCE)
+set(RMLUI_BUILD_TESTS   OFF CACHE BOOL "" FORCE)
+set(RMLUI_BUILD_LUA     OFF CACHE BOOL "" FORCE)
+set(RMLUI_ENABLE_DEBUGGER ON CACHE BOOL "" FORCE)
+
+add_subdirectory(
+    "${CMAKE_SOURCE_DIR}/sourceLibraries/RmlUi-6.1"
+    "${CMAKE_BINARY_DIR}/sourceLibraries/RmlUi-6.1/LinuxBinary"
+)
+
     # Link the rest as before
     target_link_libraries(engine PRIVATE
         Assimp::Assimp
@@ -138,6 +151,8 @@ elseif (LINUX)
         FMOD::Core
         FMOD::Studio 
         mimalloc::mimalloc 
+        RmlUi::RmlUi
+    	RmlUi::Debugger
     )
 endif()
 
