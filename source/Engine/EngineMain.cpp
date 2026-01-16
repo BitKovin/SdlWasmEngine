@@ -430,6 +430,7 @@ void EngineMain::MainLoop()
         FinishFrame();
     }
 
+    FinishRender();
 
     if (asyncGameUpdate)
     {
@@ -446,7 +447,6 @@ void EngineMain::MainLoop()
 
 	RmlContext->Update(Time::DeltaTimeFNoTimeScale);
 
-    FinishRender();
 
     Time::Update();
 

@@ -60,7 +60,7 @@ void PlayerHud::Init(Player* playerRef)
 void PlayerHud::Update()
 {
     text->text = std::to_string((int)player->Health);
-	frameRate->text = "FPS: " + to_string((int)(1.0f / Time::DeltaTimeF));
+	//frameRate->text = "FPS: " + to_string((int)(1.0f / Time::DeltaTimeF));
 
 }
 
