@@ -77,11 +77,11 @@ AudioSourceSpatialResult SpatialSoundManager::ComputeAudioSource(glm::vec3 posit
 
     AudioSourceSpatialResult result;
     result.occlusionGain = ComputeOcclusionGain(voxelWorld, source_voxel, listener_voxel, props);
-    result.reverb = ComputeReverb(voxelWorld, source_voxel, listener_voxel, 1024, 30, maxDist_voxel, props);
+    result.reverb = ComputeReverb(voxelWorld, source_voxel, listener_voxel, 512, 30, maxDist_voxel, props);
 
     // Scale back to world units
     result.reverb.averageDistance *= voxelSize;
-
+    result.reverb.averageTravelDistance *= voxelSize;
     return result;
 }
 

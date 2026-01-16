@@ -26,7 +26,7 @@ static ShaderProgram* flatColorShader = nullptr;
 static std::unordered_map<std::string, TextureCacheEntry> textTextureCache;
 static size_t totalCacheMemory = 0;                      // Total memory used by the cache
 static const size_t MAX_CACHE_MEMORY = 50 * 1024 * 1024; // 50 MB limit
-static const float MAX_UNUSED_SECONDS = 10.0f;           // Evict textures unused for 10 seconds
+static const float MAX_UNUSED_SECONDS = 2.0f;           // Evict textures unused for 10 seconds
 static float currentTime = 0.0f;                         // Current time in seconds
 
 static std::mutex textTextureCacheMutex;
@@ -327,22 +327,39 @@ namespace UiRenderer {
     void MaintainCache() {
         std::lock_guard<std::mutex> lock(textTextureCacheMutex);
 
+        // First, remove any textures that are too old
+        auto now = currentTime;
         for (auto it = textTextureCache.begin(); it != textTextureCache.end(); ) {
-            if (currentTime - it->second.lastUsedTime > MAX_UNUSED_SECONDS) {
-
+            if (now - it->second.lastUsedTime > MAX_UNUSED_SECONDS) {
                 GLuint texToDelete = it->second.textureID;
                 size_t mem = it->second.memorySize;
                 it = textTextureCache.erase(it);
                 glDeleteTextures(1, &texToDelete);
                 totalCacheMemory -= mem;
-
-                //printf("deleted texture %u from UiRenderer\n", texToDelete);
             }
             else {
                 ++it;
             }
         }
+
+        // If cache is still over limit, remove least recently used textures
+        while (totalCacheMemory > MAX_CACHE_MEMORY && !textTextureCache.empty()) {
+            // Find the least recently used element
+            auto lruIt = std::min_element(
+                textTextureCache.begin(), textTextureCache.end(),
+                [](const auto& a, const auto& b) {
+                    return a.second.lastUsedTime < b.second.lastUsedTime;
+                }
+            );
+
+            GLuint texToDelete = lruIt->second.textureID;
+            size_t mem = lruIt->second.memorySize;
+            glDeleteTextures(1, &texToDelete);
+            totalCacheMemory -= mem;
+            textTextureCache.erase(lruIt);
+        }
     }
+
 
 
     void EndFrame() {

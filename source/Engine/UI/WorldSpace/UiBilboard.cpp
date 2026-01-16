@@ -2,11 +2,15 @@
 
 #include "../UiRenderer.h"
 
+
+static std::map<hashed_string, std::vector<RenderTexture*>> bilboardRtCache;
+
 UiBilboard::~UiBilboard()
 {
 	if (renderTexture)
 	{
-		delete renderTexture;
+		hashed_string hs = to_string(renderTexture->width()) + ";" + to_string(renderTexture->height());
+		bilboardRtCache[hs].push_back(renderTexture); // store it in the vector
 		renderTexture = nullptr;
 	}
 }
@@ -158,17 +162,43 @@ void UiBilboard::PreDraw()
 
 }
 
+
 void UiBilboard::EnsureRenderTarget()
 {
+	hashed_string hs = to_string(ViewportSize.x) + ";" + to_string(ViewportSize.y);
 
+	// Try to reuse from cache first
+	auto& vec = bilboardRtCache[hs];
+	if (!vec.empty())
+	{
+		if (renderTexture)
+		{
+			// Push the old one back to cache before swapping
+			hashed_string oldHS = to_string(renderTexture->width()) + ";" + to_string(renderTexture->height());
+			bilboardRtCache[oldHS].push_back(renderTexture);
+		}
+
+		renderTexture = vec.back();
+		vec.pop_back();
+		return;
+	}
+
+	// No cached one found: either create new or resize existing
 	if (renderTexture == nullptr)
 	{
-		renderTexture = new RenderTexture(ViewportSize.x, ViewportSize.y, TextureFormat::RGBA8, TextureType::Texture2D, false, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE);
-
+		renderTexture = new RenderTexture(
+			ViewportSize.x,
+			ViewportSize.y,
+			TextureFormat::RGBA8,
+			TextureType::Texture2D,
+			false,
+			GL_LINEAR,
+			GL_LINEAR,
+			GL_CLAMP_TO_EDGE
+		);
 	}
 	else if (renderTexture->width() != ViewportSize.x || renderTexture->height() != ViewportSize.y)
 	{
 		renderTexture->resize(ViewportSize.x, ViewportSize.y);
 	}
-
 }

@@ -73,7 +73,7 @@ void Player::Start()
 
     cameraRotation.y = Rotation.y;
 
-    Spawn("TestSpatialSoundPlayer")->Start();
+    //Spawn("TestSpatialSoundPlayer")->Start();
 
 }
 

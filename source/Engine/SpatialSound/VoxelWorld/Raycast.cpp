@@ -4,6 +4,8 @@
 #include <glm/gtc/type_ptr.hpp> // Additional GLM support if needed
 #include <random> // For random offsets in occlusion
 
+#include "../../Physics.h"
+
 #include "../Helpers.h"
 
 #include "../../DebugDraw.hpp"
@@ -15,7 +17,21 @@ int GetMinAxis(const vec3& v) {
     return axis;
 }
 
-RayHit CastRay(const FixedVoxelWorld* world, const vec3& start, const vec3& dir, float maxDistance) {
+RayHit CastRay(const FixedVoxelWorld* world, const vec3& start, const vec3& dir, float maxDistance) 
+{
+    
+    auto physHit = Physics::LineTrace(VoxelToWorldPos(start), VoxelToWorldPos(start + normalize(dir) * maxDistance), BodyType::World);
+
+    RayHit rh;
+
+    rh.hit = physHit.hasHit;
+    rh.distance = physHit.fraction * maxDistance;
+    rh.material = 1;
+    rh.normal = physHit.normal;
+    rh.pos = WorldToVoxelPos(physHit.position);
+    return rh;
+    
+
     if (length(dir) < 0.001f) return {}; // Invalid dir
     vec3 rayDir = normalize(dir);
     float t = 0.0f;
@@ -60,7 +76,7 @@ float ComputeOcclusionGain(const FixedVoxelWorld* world, const vec3& source, con
     const int numOcclusionRays = 9;
     float maxGain = 0.0f; // Take the maximum gain (least occluded path)
     std::default_random_engine generator;
-    std::uniform_real_distribution<float> uniform(-0.5f, 0.5f); // Small offsets around source
+    std::uniform_real_distribution<float> uniform(-1.5f, 1.5f); // Small offsets around source
 
     for (int i = 0; i < numOcclusionRays; ++i) {
         vec3 offset = (i == 0) ? vec3(0.0f) : vec3(uniform(generator), uniform(generator), uniform(generator)) * 0.1f; // Central + random small offsets
@@ -108,72 +124,188 @@ float ComputeOcclusionGain(const FixedVoxelWorld* world, const vec3& source, con
     return maxGain;
 }
 
-ReverbStats ComputeReverb(const FixedVoxelWorld* world, const vec3& source, const vec3& listener, int numRays, int maxBounces, float maxRayDistance, const MaterialProps& props) {
-    ReverbStats stats;
-    float totalDist = 0.0f;
-    float totalEnergy = 0.0f;
-    float totalBounces = 0.0f;
-    vec3 totalDirections = vec3();
+ReverbStats ComputeReverb(
+    const FixedVoxelWorld* world,
+    const vec3& source,
+    const vec3& listener,
+    int numRays,
+    int maxBounces,
+    float maxRayDistance,
+    const MaterialProps& props)
+{
+    ReverbStats stats{};
+
+    // Weighted accumulators
+    float weightedDistSum = 0.0f;
+    float weightedBounceSum = 0.0f;
+    float weightedEnergySum = 0.0f;
+    float totalWeight = 0.0f;
+    vec3  weightedDirectionSum = vec3(0.0f);
+
     int validRays = 0;
+    float shortestTravelDist = std::numeric_limits<float>::max();
+
+    // RNG (seeded once)
     std::default_random_engine generator;
     std::normal_distribution<float> distribution(0.0f, 1.0f);
 
-    float traveledDistance = 0;
+    // Parameters for recursive branching:
+    // - raysPerBounce: how many rays to spawn at each bounce (user requested 32)
+    // - jitterStrength: how much child rays deviate from perfect reflection
+    const int raysPerBounce = 1;
+    const float jitterStrength = 0.75f; // tweak for roughness of scattering
+    const float EPS = 0.001f;
+    const float ENERGY_CUTOFF = 0.001f;
 
-    auto hit = CastRay(world, source, listener, maxRayDistance);
+    // small reflect helper (in case you don't have glm::reflect)
+    auto reflectVec = [](const vec3& v, const vec3& n) -> vec3 {
+        return v - 2.0f * dot(v, n) * n;
+        };
 
-    if (!hit.hit)
-    {
-        totalDirections += (listener - source) / hit.distance * maxRayDistance;
-    }
+    // Recursive ray tracer for a single "ray path" (this function traces one ray,
+    // then on hit spawns child rays recursively).
+    std::function<void(const vec3&, const vec3&, float, int, float)> traceRay;
+    traceRay = [&](const vec3& origin, const vec3& direction, float energy, int bounceCount, float traveledDistance) -> void {
+        // Limit by remaining distance
+        if (traveledDistance >= maxRayDistance) return;
 
-    for (int i = 0; i < numRays; ++i) {
-        // Random direction (approximate uniform on sphere)
-        vec3 rayDir = normalize(vec3(distribution(generator), distribution(generator), distribution(generator)));
-        float energy = 1.0f;
-        float rayDist = 0.0f;
-        vec3 currentPos = source;
-        int bounceCount = 0;
-        bool hadBounce = false;
-        for (int b = 0; b < maxBounces; ++b) {
-            RayHit hit = CastRay(world, currentPos, rayDir, maxRayDistance - rayDist);
-            if (!hit.hit) break; // Miss: break without *= (path to infinity, not absorbed)
-            energy *= props.GetReflectivity(hit.material);
-            if (energy < 0.001f) break; // Low energy: break (absorbed)
-            rayDist += hit.distance;
-            currentPos = hit.pos + 0.001f * hit.normal; // Epsilon offset
-            // Pseudo-reflect (flip component, like mod)
-            int axis = 0;
-            if (std::abs(hit.normal.y) > 0.5f) axis = 1;
-            else if (std::abs(hit.normal.z) > 0.5f) axis = 2;
-            rayDir[axis] = -rayDir[axis];
-            ++bounceCount;
-            hadBounce = true;
+        // Cast from origin along direction, up to remaining distance
+        RayHit hit = CastRay(world, origin, direction, maxRayDistance - traveledDistance);
+        if (!hit.hit) {
+            // Misses the scene entirely
+            return;
         }
-        if (hadBounce && energy >= 0.001f) {
-            // Final LOS check to listener (approximate original's shared airspace)
-            vec3 losDir = listener - currentPos;
-            float losDist = length(losDir);
-            RayHit losHit = CastRay(world, currentPos, losDir, losDist);
-            if (!losHit.hit) { // Clear path to listener
-                totalDist += rayDist + losDist; // Fixed: include the final segment distance in the total path length
-                totalEnergy += energy;
-                totalBounces += static_cast<float>(bounceCount);
 
-                //DebugDraw::Line(VoxelToWorldPos(currentPos), VoxelToWorldPos(source), 0.002f, 0.01f);
-                //DebugDraw::Line(VoxelToWorldPos(currentPos), VoxelToWorldPos(listener - vec3(0,2.5f,0)), 0.002f);
+        // Update travelled distance to the hit
+        float newTraveled = traveledDistance + hit.distance;
+        float reflectedEnergy = energy * props.GetReflectivity(hit.material);
+        if (reflectedEnergy < ENERGY_CUTOFF) {
+            // energy too small to matter
+            return;
+        }
 
-                totalDirections += normalize(losDir) / (rayDist * rayDist * rayDist) / ((float)(bounceCount* bounceCount* bounceCount));
+        // small offset to avoid self-intersection on next casts
+        vec3 hitPos = hit.pos + EPS * hit.normal;
+
+        // Check LOS from this bounce point to listener (immediate arrival after this bounce)
+        vec3 toListener = listener - hitPos;
+        float losDist = length(toListener);
+        if (losDist > 0.0f && (newTraveled + losDist) <= maxRayDistance) {
+            vec3 losDir = toListener / losDist;
+            RayHit losHit = CastRay(world, hitPos, losDir, losDist);
+            if (!losHit.hit) {
+                // Path reached listener
+                float totalPathDist = newTraveled + losDist;
+                float weight = reflectedEnergy / (totalPathDist * totalPathDist);
+
+                // accumulate weighted stats
+                weightedDistSum += totalPathDist * weight;
+                weightedBounceSum += static_cast<float>(bounceCount) * weight;
+                weightedEnergySum += reflectedEnergy * weight;
+                weightedDirectionSum += losDir * weight;
+                totalWeight += weight;
+
+                shortestTravelDist = std::min(shortestTravelDist, totalPathDist);
+                ++validRays;
+
+                // Note: we DO NOT "return" here - we still allow spawning children if bounceCount < maxBounces.
+                // But we do not trace further along this particular ray path to the "same" listener: child rays are additional paths.
+            }
+        }
+
+        // If we can still bounce further, spawn child rays from the hit point
+        if (bounceCount < maxBounces) {
+            // Get nominal perfect reflection direction
+            vec3 baseReflect = reflectVec(direction, hit.normal);
+            // Spawn 'raysPerBounce' children, each with jittered direction
+            for (int r = 0; r < raysPerBounce; ++r) {
+                // jitter - normal-distributed small vector around 0
+                vec3 jitter = vec3(
+                    distribution(generator),
+                    distribution(generator),
+                    distribution(generator)
+                );
+
+                // bias jitter to lie mostly in reflection hemisphere:
+                if (dot(jitter, hit.normal) < 0.0f) jitter = -jitter;
+
+                vec3 childDir = normalize(baseReflect + jitter * jitterStrength);
+
+                // Recurse: pass updated traveled distance and reflected energy
+                traceRay(hitPos, childDir, reflectedEnergy, bounceCount + 1, newTraveled);
+            }
+        }
+        };
+
+    // ---------------------------
+    // Direct sound (0 bounces)
+    // ---------------------------
+    {
+        vec3 toL = listener - source;
+        float directDist = length(toL);
+        if (directDist > 0.0f && directDist <= maxRayDistance) {
+            vec3 dir = toL / directDist;
+            RayHit hit = CastRay(world, source, dir, directDist);
+            if (!hit.hit) {
+                float energy = 1.0f;
+                float weight = energy / (directDist * directDist);
+
+                weightedDistSum += directDist * weight;
+                weightedBounceSum += 0.0f;
+                weightedEnergySum += energy * weight;
+                weightedDirectionSum += dir * weight;
+                totalWeight += weight;
+
+                shortestTravelDist = std::min(shortestTravelDist, directDist);
                 ++validRays;
             }
         }
     }
-    if (validRays > 0) {
-        stats.averageDistance = totalDist / static_cast<float>(validRays);
-        stats.averageEnergy = totalEnergy / static_cast<float>(validRays);
-        stats.averageBounces = totalBounces / static_cast<float>(validRays);
-        stats.bounceDirection = normalize(totalDirections / static_cast<float>(validRays));
+
+    // ---------------------------
+    // Initial sampled rays from source
+    // ---------------------------
+    for (int i = 0; i < numRays; ++i) {
+        // sample roughly-uniform direction with normal distribution and normalize
+        vec3 sampleDir = normalize(vec3(
+            distribution(generator),
+            distribution(generator),
+            distribution(generator)
+        ));
+
+        // Start a full recursive trace for this ray
+        traceRay(source, sampleDir, 1.0f, 1, 0.0f);
     }
+
+    // ---------------------------
+    // Final weighted averages
+    // ---------------------------
+    if (totalWeight > 0.0f) {
+        stats.averageDistance = weightedDistSum / totalWeight;
+        stats.averageBounces = weightedBounceSum / totalWeight;
+        stats.averageEnergy = weightedEnergySum / totalWeight;
+
+        // normalize direction properly (divide by weight first to get mean direction, then normalize)
+        vec3 meanDir = weightedDirectionSum / totalWeight;
+        if (length(meanDir) > 0.0f) stats.bounceDirection = normalize(meanDir);
+        else stats.bounceDirection = vec3(0.0f);
+
+        stats.averageTravelDistance = shortestTravelDist;
+    }
+    else {
+        stats.averageDistance = 0.0f;
+        stats.averageBounces = 0.0f;
+        stats.averageEnergy = 0.0f;
+        stats.bounceDirection = vec3(0.0f);
+        stats.averageTravelDistance = std::numeric_limits<float>::infinity();
+    }
+
+    // Keep same semantics as before: fraction of initial primary rays that produced at least one path.
+    // (If you prefer to use total spawned rays in denominator, I can change this.)
     stats.airspace = static_cast<float>(validRays) / static_cast<float>(numRays);
+
     return stats;
 }
+
+
+

@@ -25,7 +25,7 @@ public:
 		SpatialSoundManager::listener = Camera::position;
 
         vec3 entPos = Position;
-        float dist = distance(Position, SpatialSoundManager::listener);
+        float dist = result.reverb.averageTravelDistance;
 
         Position = SpatialSoundManager::listener - result.reverb.bounceDirection * dist;
 

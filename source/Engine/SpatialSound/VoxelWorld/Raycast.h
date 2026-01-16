@@ -22,6 +22,7 @@ struct RayHit {
 // Reverb stats (aggregated from rays, similar to mod's average energy decay for EFX params)
 struct ReverbStats {
     float averageDistance = 0.0f;
+    float averageTravelDistance = 0.0f;
     float averageEnergy = 0.0f;
     float averageBounces = 0;
     float airspace = 0;
