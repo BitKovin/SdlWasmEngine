@@ -1,12 +1,13 @@
 // Raycast.cpp
 #include "Raycast.h"
-#include <glm/gtx/component_wise.hpp> // For GLM functions
-#include <glm/gtc/type_ptr.hpp> // Additional GLM support if needed
+
 #include <random> // For random offsets in occlusion
 
 #include "../Helpers.h"
 
 #include "../../DebugDraw.hpp"
+
+#include "../../Physics.h"
 
 int GetMinAxis(const vec3& v) {
     int axis = 0;
@@ -15,43 +16,31 @@ int GetMinAxis(const vec3& v) {
     return axis;
 }
 
-RayHit CastRay(const FixedVoxelWorld* world, const vec3& start, const vec3& dir, float maxDistance) {
-    if (length(dir) < 0.001f) return {}; // Invalid dir
-    vec3 rayDir = normalize(dir);
-    float t = 0.0f;
-    ivec3 voxel = floor(start);
-    vec3 invDir = 1.0f / rayDir;
-    vec3 delta = abs(invDir);
-    ivec3 step = sign(rayDir);
-    // Initial tMax to next boundaries (fixed for negative directions)
-    vec3 floorStart = floor(start);
-    vec3 boundary = glm::mix(floorStart, floorStart + vec3(1.0f), glm::greaterThan(step, ivec3(0)));
-    vec3 tMax = (boundary - start) * invDir;
-    // Handle NaN/Inf if dir component zero (set large tMax)
-    if (std::abs(rayDir.x) < 0.0001f) tMax.x = std::numeric_limits<float>::max();
-    if (std::abs(rayDir.y) < 0.0001f) tMax.y = std::numeric_limits<float>::max();
-    if (std::abs(rayDir.z) < 0.0001f) tMax.z = std::numeric_limits<float>::max();
-    while (t < maxDistance) {
-        float tMin = std::min(tMax.x, std::min(tMax.y, tMax.z));
-        if (tMin > maxDistance) break;
-        int axis = GetMinAxis(tMax);
-        t = tMin;
-        voxel[axis] += step[axis];
-        tMax[axis] += delta[axis];
-        // Check if solid
-        vec3 center = vec3(voxel) + vec3(0.5f);
-        uint8_t mat = world->GetValue(center);
-        if (mat != 0) { // Solid
-            vec3 hitPos = start + t * rayDir;
-            vec3 normal(0.0f);
-            normal[axis] = -float(step[axis]); // Axis-aligned normal (outward from previous)
-            return { true, hitPos, normal, mat, t };
-        }
-    }
-    return {}; // No hit
+RayHit CastRay(BVH* world, const vec3& start, const vec3& dir, float maxDistance) 
+{
+
+	Ray ray(start, dir);
+
+    auto hit = world->Intersect(ray);
+
+    return hit;
+
 }
 
-float ComputeOcclusionGain(const FixedVoxelWorld* world, const vec3& source, const vec3& listener, const MaterialProps& props) {
+bool CastRayAny(BVH* world, const vec3& start, const vec3& dir, float maxDistance)
+{
+    Ray ray(start, dir);
+
+    auto hit = world->IntersectAny(ray, maxDistance);
+
+    return hit;
+}
+
+float ComputeOcclusionGain(BVH* world, const vec3& source, const vec3& listener, const MaterialProps& props) 
+{
+
+    /*
+
     vec3 deltaPos = listener - source;
     float totalDist = length(deltaPos);
     if (totalDist < 0.001f) return 1.0f; // Same position, no occlusion
@@ -106,9 +95,13 @@ float ComputeOcclusionGain(const FixedVoxelWorld* world, const vec3& source, con
         if (gain > maxGain) maxGain = gain;
     }
     return maxGain;
+    */
+
+    return 1;
+
 }
 
-ReverbStats ComputeReverb(const FixedVoxelWorld* world, const vec3& source, const vec3& listener, int numRays, int maxBounces, float maxRayDistance, const MaterialProps& props) {
+ReverbStats ComputeReverb(BVH* world, const vec3& source, const vec3& listener, int numRays, int maxBounces, float maxRayDistance, const MaterialProps& props) {
     ReverbStats stats;
     float totalDist = 0.0f;
     float totalEnergy = 0.0f;
@@ -117,6 +110,8 @@ ReverbStats ComputeReverb(const FixedVoxelWorld* world, const vec3& source, cons
     int validRays = 0;
     std::default_random_engine generator;
     std::normal_distribution<float> distribution(0.0f, 1.0f);
+
+    float closestDirect = 100000000;
 
     float traveledDistance = 0;
 
@@ -154,8 +149,8 @@ ReverbStats ComputeReverb(const FixedVoxelWorld* world, const vec3& source, cons
             // Final LOS check to listener (approximate original's shared airspace)
             vec3 losDir = listener - currentPos;
             float losDist = length(losDir);
-            RayHit losHit = CastRay(world, currentPos, losDir, losDist);
-            if (!losHit.hit) { // Clear path to listener
+            bool losHit = CastRayAny(world, currentPos, losDir, losDist);
+            if (!losHit) { // Clear path to listener
                 totalDist += rayDist + losDist; // Fixed: include the final segment distance in the total path length
                 totalEnergy += energy;
                 totalBounces += static_cast<float>(bounceCount);
@@ -163,7 +158,13 @@ ReverbStats ComputeReverb(const FixedVoxelWorld* world, const vec3& source, cons
                 //DebugDraw::Line(VoxelToWorldPos(currentPos), VoxelToWorldPos(source), 0.002f, 0.01f);
                 //DebugDraw::Line(VoxelToWorldPos(currentPos), VoxelToWorldPos(listener - vec3(0,2.5f,0)), 0.002f);
 
-                totalDirections += normalize(losDir) / (rayDist * rayDist * rayDist) / ((float)(bounceCount* bounceCount* bounceCount));
+                if (rayDist < closestDirect)
+                {
+                    totalDirections = losDir;
+                    closestDirect = rayDist;
+                }
+
+                //totalDirections += normalize(losDir) / (rayDist * rayDist * rayDist) / ((float)(bounceCount* bounceCount* bounceCount));
                 ++validRays;
             }
         }
@@ -172,7 +173,7 @@ ReverbStats ComputeReverb(const FixedVoxelWorld* world, const vec3& source, cons
         stats.averageDistance = totalDist / static_cast<float>(validRays);
         stats.averageEnergy = totalEnergy / static_cast<float>(validRays);
         stats.averageBounces = totalBounces / static_cast<float>(validRays);
-        stats.bounceDirection = normalize(totalDirections / static_cast<float>(validRays));
+        stats.bounceDirection = normalize(totalDirections);
     }
     stats.airspace = static_cast<float>(validRays) / static_cast<float>(numRays);
     return stats;

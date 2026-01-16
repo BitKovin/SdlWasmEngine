@@ -5,6 +5,8 @@
 #include "VoxelWorld/MaterialProps.h"
 #include "VoxelWorld/Raycast.h"
 
+#include "BVH/BVH.h"
+
 struct AudioSourceSpatialResult
 {
 	ReverbStats reverb;
@@ -28,6 +30,8 @@ public:
 	static inline vec3 worldMin = vec3();
 
 	static inline float voxelSize = 0.5f;
+
+	static inline BVH* worldBVH;
 
 private:
 

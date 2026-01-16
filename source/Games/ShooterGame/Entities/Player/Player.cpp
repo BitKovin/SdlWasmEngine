@@ -649,6 +649,14 @@ void Player::Update()
 
     if (EngineMain::MainInstance->SimulatingGameTicks) return;
 
+    Ray ray(Camera::position, Camera::Forward() * 100.0f);
+
+    auto bvhHit = SpatialSoundManager::worldBVH->Intersect(ray);
+
+    if (bvhHit.hit)
+    {
+        DebugDraw::Line(bvhHit.pos, bvhHit.pos + bvhHit.normal, 0.01f);
+    }
 
     //Logger::Log("Voxel world memory: " + std::to_string(memMB) + " MB");
 

@@ -43,6 +43,149 @@ public:
         return merged;
     }
 
+    static PositionVerticesIndices Subdivide(const PositionVerticesIndices& mesh, float maxTriangleArea)
+    {
+        // Helper function to compute triangle area using Heron's formula
+        auto TriangleArea = [](const vec3& a, const vec3& b, const vec3& c) -> float
+            {
+                vec3 ab = b - a;
+                vec3 ac = c - a;
+                vec3 crossProd = cross(ab, ac);
+                return length(crossProd) * 0.5f;
+            };
+
+        // Edge midpoint cache to maintain watertight mesh
+        struct Edge { uint32_t a, b; };
+        struct EdgeHash
+        {
+            size_t operator()(const Edge& e) const
+            {
+                // Symmetric hash: order doesn't matter
+                return e.a < e.b ?
+                    (std::hash<uint32_t>()(e.a) ^ (std::hash<uint32_t>()(e.b) << 1)) :
+                    (std::hash<uint32_t>()(e.b) ^ (std::hash<uint32_t>()(e.a) << 1));
+            }
+        };
+        struct EdgeEqual
+        {
+            bool operator()(const Edge& e1, const Edge& e2) const
+            {
+                return (e1.a == e2.a && e1.b == e2.b) || (e1.a == e2.b && e1.b == e2.a);
+            }
+        };
+
+        std::unordered_map<Edge, uint32_t, EdgeHash, EdgeEqual> edgeMidpointCache;
+
+        // Function to get or create edge midpoint
+        auto GetEdgeMidpoint = [&](uint32_t i1, uint32_t i2,
+            const std::vector<vec3>& vertices) -> uint32_t
+            {
+                Edge edge{ i1, i2 };
+                auto it = edgeMidpointCache.find(edge);
+                if (it != edgeMidpointCache.end())
+                    return it->second;
+
+                // Create new midpoint vertex
+                vec3 midpoint = (vertices[i1] + vertices[i2]) * 0.5f;
+                uint32_t newIndex = static_cast<uint32_t>(vertices.size());
+                edgeMidpointCache[edge] = newIndex;
+                return newIndex;
+            };
+
+        // Initial setup
+        PositionVerticesIndices result = mesh;
+        bool needsMoreSubdivision = true;
+
+        // We'll process in passes until all triangles meet the area requirement
+        while (needsMoreSubdivision)
+        {
+            needsMoreSubdivision = false;
+            PositionVerticesIndices nextPass;
+            edgeMidpointCache.clear();
+
+            // Prepare new vertices list (start with all current vertices)
+            nextPass.vertices = result.vertices;
+
+            // Process triangles in groups of 3 indices
+            for (size_t i = 0; i < result.indices.size(); i += 3)
+            {
+                uint32_t i0 = result.indices[i];
+                uint32_t i1 = result.indices[i + 1];
+                uint32_t i2 = result.indices[i + 2];
+
+                const vec3& v0 = result.vertices[i0];
+                const vec3& v1 = result.vertices[i1];
+                const vec3& v2 = result.vertices[i2];
+
+                float area = TriangleArea(v0, v1, v2);
+
+                if (area > maxTriangleArea)
+                {
+                    needsMoreSubdivision = true;
+
+                    // Get or create midpoints for each edge
+                    uint32_t m01 = GetEdgeMidpoint(i0, i1, nextPass.vertices);
+                    if (m01 >= nextPass.vertices.size())
+                    {
+                        nextPass.vertices.push_back((v0 + v1) * 0.5f);
+                    }
+
+                    uint32_t m12 = GetEdgeMidpoint(i1, i2, nextPass.vertices);
+                    if (m12 >= nextPass.vertices.size())
+                    {
+                        nextPass.vertices.push_back((v1 + v2) * 0.5f);
+                    }
+
+                    uint32_t m20 = GetEdgeMidpoint(i2, i0, nextPass.vertices);
+                    if (m20 >= nextPass.vertices.size())
+                    {
+                        nextPass.vertices.push_back((v2 + v0) * 0.5f);
+                    }
+
+                    // Create 4 new triangles (central triangle is flipped)
+                    // Triangle 1: v0, m01, m20
+                    nextPass.indices.push_back(i0);
+                    nextPass.indices.push_back(m01);
+                    nextPass.indices.push_back(m20);
+
+                    // Triangle 2: m01, v1, m12
+                    nextPass.indices.push_back(m01);
+                    nextPass.indices.push_back(i1);
+                    nextPass.indices.push_back(m12);
+
+                    // Triangle 3: m20, m12, v2
+                    nextPass.indices.push_back(m20);
+                    nextPass.indices.push_back(m12);
+                    nextPass.indices.push_back(i2);
+
+                    // Triangle 4: m01, m12, m20 (center triangle)
+                    nextPass.indices.push_back(m01);
+                    nextPass.indices.push_back(m12);
+                    nextPass.indices.push_back(m20);
+                }
+                else
+                {
+                    // Keep original triangle
+                    nextPass.indices.push_back(i0);
+                    nextPass.indices.push_back(i1);
+                    nextPass.indices.push_back(i2);
+                }
+            }
+
+            result = std::move(nextPass);
+
+            // Safety check to prevent infinite loops
+            static constexpr uint32_t MAX_PASSES = 20;
+            if (needsMoreSubdivision && result.indices.size() / 3 > mesh.indices.size() / 3 * (1 << MAX_PASSES))
+            {
+                //std::cerr << "Warning: Subdivision exceeded safety limit, stopping early." << std::endl;
+                break;
+            }
+        }
+
+        return result;
+    }
+
     static VerticesIndices MergeMeshes(const vector<VerticesIndices>& meshes)
     {
         MeshUtils::VerticesIndices mergedMesh;

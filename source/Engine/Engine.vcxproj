@@ -433,6 +433,7 @@
     <ClCompile Include="SoundSystem\SoundInstance.cpp" />
     <ClCompile Include="SoundSystem\SoundManager.cpp" />
     <ClCompile Include="SpatialSound\BspVoxelWorldBuilder.cpp" />
+    <ClCompile Include="SpatialSound\BVH\BVH.cpp" />
     <ClCompile Include="SpatialSound\SpatialSoundManager.cpp" />
     <ClCompile Include="SpatialSound\VoxelWorld\FixedVoxelWorld.cpp" />
     <ClCompile Include="SpatialSound\Helpers.cpp" />
@@ -602,6 +603,7 @@
     <ClInclude Include="SoundSystem\SoundInstanceBase.h" />
     <ClInclude Include="SoundSystem\SoundManager.hpp" />
     <ClInclude Include="SpatialSound\BspVoxelWorldBuilder.h" />
+    <ClInclude Include="SpatialSound\BVH\BVH.h" />
     <ClInclude Include="SpatialSound\SpatialSoundManager.h" />
     <ClInclude Include="SpatialSound\VoxelWorld\FixedVoxelWorld.h" />
     <ClInclude Include="SpatialSound\Helpers.h" />
