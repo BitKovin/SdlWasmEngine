@@ -135,6 +135,9 @@ void TestNpc::Death()
 
 void TestNpc::OnPointDamage(float Damage, vec3 Point, vec3 Direction, string bone, Entity* DamageCauser, Entity* Weapon)
 {
+
+	if (dead) return;
+
 	Damage *= mesh->GetHitboxDamageMultiplier(bone);
 	Entity::OnPointDamage(Damage, Point, Direction, bone, DamageCauser, Weapon);
 
@@ -216,6 +219,10 @@ void TestNpc::UpdateAttackDamage()
 void TestNpc::AsyncUpdate()
 {
 
+	if (dead)
+	{
+
+	}
 
 	UpdateStatusWidgets();
 

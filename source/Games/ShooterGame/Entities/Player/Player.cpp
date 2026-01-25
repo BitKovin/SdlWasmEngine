@@ -69,7 +69,8 @@ void Player::Start()
     AddWeaponByName("weapon_tommy");
     AddWeaponByName("weapon_sniper");
 
-    SwitchWeaponOffhand("weapon_cane");
+    offhandWeapons.push_back("weapon_cane");
+    desiredOffhandWeapon = 1;
 
     cameraRotation.y = Rotation.y;
 
@@ -259,12 +260,16 @@ void Player::SwitchWeapon(const WeaponSlotData& data)
 void Player::SwitchWeaponOffhand(const string& classname)
 {
 
+    if(currentOffhandWeapon)
+        if (classname == currentOffhandWeapon->ClassName) return;
+
     DestroyWeaponOffhand();
 
     if (!classname.empty())
     {
         currentOffhandWeapon = (Weapon*)Spawn(classname);
         currentOffhandWeapon->Start();
+        currentOffhandWeapon->LoadAssetsIfNeeded();
     }
 
 }
@@ -392,19 +397,21 @@ void Player::UpdateWeapon()
         observationTarget->tags.insert("violentCrime");
     }
 
-    if (currentWeapon != nullptr)
+    auto firearm = dynamic_cast<WeaponFirearm*>(currentWeapon);
+
+    if (firearm != nullptr)
     {
 
         if (Input::GetAction("test")->Pressed())
         {
-			auto firearm = dynamic_cast<WeaponFirearm*>(currentWeapon);
-
             if (firearm)
             {
                 firearm->SetAkimbo(!firearm->akimbo);
             }
 
         }
+
+        disableOffhandWeapon = firearm->akimbo;
 
         vec3 relativeWeaponPos = vec3();
             
@@ -883,6 +890,33 @@ void Player::Update()
     else
     {
         SwitchToSlot(currentSlot);
+    }
+
+
+
+    if (disableOffhandWeapon)
+    {
+        offhandWeapon = 0;
+    }
+    else
+    {
+        offhandWeapon = desiredOffhandWeapon;
+    }
+
+    if (currentOffhandWeapon != nullptr)
+    {
+        if (currentOffhandWeapon->ClassName != offhandWeapons[offhandWeapon])
+        {
+            if (currentOffhandWeapon->CanChangeSlot())
+            {
+                SwitchWeaponOffhand(offhandWeapons[offhandWeapon]);
+            }
+
+        }
+    }
+    else
+    {
+        SwitchWeaponOffhand(offhandWeapons[offhandWeapon]);
     }
 
     if (Input::GetAction("slotMelee")->Pressed())

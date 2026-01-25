@@ -206,6 +206,10 @@ public:
 	int currentSlot = 0;
 	std::vector<WeaponSlotData> weaponSlots;
 
+	std::vector<std::string> offhandWeapons = {"weapon_lefthand_empty"};
+	int offhandWeapon = 0;
+	int desiredOffhandWeapon = 0;
+
 	Delay violanceCrimeActiveDelay;
 
 	float RunProgress = 0;
@@ -213,6 +217,8 @@ public:
 	bool ThirdPersonView = false;
 
 	bool started = false;
+
+	bool disableOffhandWeapon = false;
 
 	Player()
 	{

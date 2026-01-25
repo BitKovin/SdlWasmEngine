@@ -4,7 +4,7 @@
 "classname" "worldspawn"
 "_tb_textures" "textures;textures\Ground;textures/brushes;textures\common;textures\delvenPack;textures\generic;textures\lq_conc;textures\lq_dev;textures\lq_flesh;textures\lq_greek;textures\lq_health_ammo;textures\lq_legacy;textures\lq_liquidsky;textures\lq_mayan;textures\lq_medieval;textures\lq_metal;textures\lq_palette;textures\lq_props;textures\lq_tech;textures\lq_terra;textures\lq_utility;textures\lq_wood;textures\metal;textures\noise;textures\particles;textures\skies;textures\tormentPack;textures\ui;textures\wall;textures\water;textures\wood"
 "_keeplights" "1"
-"_lightmapscale" "0.1"
+"_lightmapscale" "0.5"
 "gridsize" "32 32 48"
 "_tb_mod" "textures"
 // brush 0
@@ -245,12 +245,12 @@
 }
 // brush 26
 {
-( -576 272 16 ) ( -576 272 128 ) ( -576 160 16 ) generic/grass 0 0 0 0.5 0.5 0 0 0
 ( -1456 -880 -16 ) ( -1456 -880 -15 ) ( -1436.375 -880 -16 ) generic/grass 0 0 0 1 1 0 0 0
 ( -1456 -880 -16 ) ( -1436.375 -880 -16 ) ( -1456 -866.375 -16 ) generic/grass 0 0 0 1 1 0 0 0
 ( 993.8840994835 977.9420695305 16 ) ( 992.160217071 991.4575739205 16 ) ( 1013.3513856232 980.4250928219 16 ) generic/grass 0 0 0 1 1 0 0 0
 ( 1056 864 16 ) ( 1075.625 864 16 ) ( 1056 864 17 ) generic/grass 0 0 0 1 1 0 0 0
 ( 1056 864 16 ) ( 1056 864 17 ) ( 1056 877.625 16 ) generic/grass 0 0 0 1 1 0 0 0
+( 512 -480 16 ) ( 512 -464 16 ) ( 512 -480 32 ) common/caulk 0 0 0 0.5 0.5 0 0 0
 }
 // brush 27
 {
@@ -1324,6 +1324,42 @@
 ( -16 1184 -240 ) ( -16 1184 -224 ) ( 448 1184 -240 ) common/caulk 0 0 0 0.5 0.5 0 0 0
 ( -32 1184 -240 ) ( -32 1680 -240 ) ( -32 1184 -224 ) common/caulk 0 0 0 0.5 0.5 0 0 0
 ( -16 1184 -224 ) ( -16 1680 -240 ) ( -16 1184 -240 ) skies/skybox2_overcast_cube 0 0 0 0.5 0.5 0 0 0
+}
+// brush 146
+{
+( -1456 -880 -16 ) ( -1436.375 -880 -16 ) ( -1456 -866.375 -16 ) generic/grass 0 0 0 1 1 0 0 0
+( 993.8840994835 977.9420695305 16 ) ( 992.160217071 991.4575739205 16 ) ( 1013.3513856232 980.4250928219 16 ) generic/grass 0 0 0 1 1 0 0 0
+( 512 -480 16 ) ( 512 -480 32 ) ( 512 -464 16 ) common/caulk 0 0 0 0.5 0.5 0 0 0
+( 1056 864 16 ) ( 1075.625 864 16 ) ( 1056 864 17 ) generic/grass 0 0 0 1 1 0 0 0
+( 32 -464 16 ) ( 32 -272 16 ) ( 32 -464 208 ) common/caulk 0 0 0 0.5 0.5 0 0 0
+( 176 32 16 ) ( 64 32 16 ) ( 176 32 128 ) common/caulk 0 0 0 0.5 0.5 0 0 0
+}
+// brush 147
+{
+( -576 272 16 ) ( -576 272 128 ) ( -576 160 16 ) generic/grass 0 0 0 0.5 0.5 0 0 0
+( -1456 -880 -16 ) ( -1436.375 -880 -16 ) ( -1456 -866.375 -16 ) generic/grass 0 0 0 1 1 0 0 0
+( 993.8840994835 977.9420695305 16 ) ( 992.160217071 991.4575739205 16 ) ( 1013.3513856232 980.4250928219 16 ) generic/grass 0 0 0 1 1 0 0 0
+( 1056 864 16 ) ( 1075.625 864 16 ) ( 1056 864 17 ) generic/grass 0 0 0 1 1 0 0 0
+( 32 -464 16 ) ( 32 -464 208 ) ( 32 -272 16 ) common/caulk 0 0 0 0.5 0.5 0 0 0
+( 176 32 16 ) ( 64 32 16 ) ( 176 32 128 ) common/caulk 0 0 0 0.5 0.5 0 0 0
+}
+// brush 148
+{
+( -576 272 16 ) ( -576 272 128 ) ( -576 160 16 ) generic/grass 0 0 0 0.5 0.5 0 0 0
+( -1456 -880 -16 ) ( -1436.375 -880 -16 ) ( -1456 -866.375 -16 ) generic/grass 0 0 0 1 1 0 0 0
+( 993.8840994835 977.9420695305 16 ) ( 992.160217071 991.4575739205 16 ) ( 1013.3513856232 980.4250928219 16 ) generic/grass 0 0 0 1 1 0 0 0
+( -1456 -880 -16 ) ( -1456 -880 -15 ) ( -1436.375 -880 -16 ) generic/grass 0 0 0 1 1 0 0 0
+( 32 -464 16 ) ( 32 -464 208 ) ( 32 -272 16 ) common/caulk 0 0 0 0.5 0.5 0 0 0
+( 176 32 16 ) ( 176 32 128 ) ( 64 32 16 ) common/caulk 0 0 0 0.5 0.5 0 0 0
+}
+// brush 149
+{
+( -1456 -880 -16 ) ( -1436.375 -880 -16 ) ( -1456 -866.375 -16 ) generic/grass 0 0 0 1 1 0 0 0
+( 993.8840994835 977.9420695305 16 ) ( 992.160217071 991.4575739205 16 ) ( 1013.3513856232 980.4250928219 16 ) generic/grass 0 0 0 1 1 0 0 0
+( 512 -480 16 ) ( 512 -480 32 ) ( 512 -464 16 ) common/caulk 0 0 0 0.5 0.5 0 0 0
+( -1456 -880 -16 ) ( -1456 -880 -15 ) ( -1436.375 -880 -16 ) generic/grass 0 0 0 1 1 0 0 0
+( 32 -464 16 ) ( 32 -272 16 ) ( 32 -464 208 ) common/caulk 0 0 0 0.5 0.5 0 0 0
+( 176 32 16 ) ( 176 32 128 ) ( 64 32 16 ) common/caulk 0 0 0 0.5 0.5 0 0 0
 }
 }
 // entity 1
