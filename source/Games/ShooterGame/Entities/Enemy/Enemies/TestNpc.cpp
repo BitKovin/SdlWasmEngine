@@ -82,6 +82,9 @@ void TestNpc::Start()
 
 void TestNpc::Stun()
 {
+
+	if (dead) return;
+
 	stuned = true;
 	mesh->PlayAnimation("stun");
 	mesh->PullRootMotion();
@@ -89,7 +92,6 @@ void TestNpc::Stun()
 	attackingDamage = false;
 
 	
-
 	PlaySoundEffect("event:/NPC/Dog/DogStun");
 
 }
