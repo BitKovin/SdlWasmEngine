@@ -2598,16 +2598,15 @@ void NpcBase::FindClosestGuard()
 		for (auto& npc : npcsInRadius)
 		{
 
-			auto& foundID = npcsInRadius[0]->ownerId;
+			auto& foundID = npc->ownerId;
 
 			NpcBase* guardRef = dynamic_cast<NpcBase*>(Level::Current->FindEntityWithId(foundID));
 
 			if (guardRef == nullptr) continue;
 
-			if (guardRef->isGuard == false) continue;
-			if (guardRef->hostileTags.count(fractionTag)) continue;
+			if (guardRef->hostileTags.count(fractionTag)) continue; // hostile to us
 
-			closestGuard = npcsInRadius[0]->ownerId;
+			closestGuard = npc->ownerId;
 			found_guard = true;
 			break;
 		}
