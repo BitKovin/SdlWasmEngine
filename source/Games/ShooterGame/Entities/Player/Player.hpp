@@ -104,8 +104,8 @@ private:
 	vec3 weaponRunRotation = vec3(-8.9f, 30.0f, -9.21f);
 	vec3 runRotatePoint = vec3(-0.1f,-0.290f,0.45f);
 
-	float WalkSpeed = 4.5f;
-	float RunSpeed = 7.5f;
+	float WalkSpeed = 4.0f;
+	float RunSpeed = 6.5f;
 
 	glm::vec3 Friction(glm::vec3 vel, float factor = 60.0f) {
 		vel = MathHelper::XZ(vel);
@@ -206,7 +206,7 @@ public:
 	int currentSlot = 0;
 	std::vector<WeaponSlotData> weaponSlots;
 
-	std::vector<std::string> offhandWeapons = {"weapon_lefthand_empty"};
+	std::vector<std::string> offhandWeapons;// = { "weapon_lefthand_empty" };
 	int offhandWeapon = 0;
 	int desiredOffhandWeapon = 0;
 

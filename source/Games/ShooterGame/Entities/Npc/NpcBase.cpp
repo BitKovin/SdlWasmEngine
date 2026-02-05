@@ -857,6 +857,7 @@ void NpcBase::UpdateObserver()
 			}
 		}
 
+		//if weapon fire investigation, check for player proximity
 		if (currentInvestigation == InvestigationReason::WeaponFire && target->HasTag("player") && distance(target->position, investigation_target) < 4)
 		{
 			if (min_crime > Crime::WeaponFireSound)
@@ -2593,8 +2594,24 @@ void NpcBase::FindClosestGuard()
 
 	if (npcsInRadius.size() > 0)
 	{
-		closestGuard = npcsInRadius[0]->ownerId;
-		found_guard = true;
+
+		for (auto& npc : npcsInRadius)
+		{
+
+			auto& foundID = npcsInRadius[0]->ownerId;
+
+			NpcBase* guardRef = dynamic_cast<NpcBase*>(Level::Current->FindEntityWithId(foundID));
+
+			if (guardRef == nullptr) continue;
+
+			if (guardRef->isGuard == false) continue;
+			if (guardRef->hostileTags.count(fractionTag)) continue;
+
+			closestGuard = npcsInRadius[0]->ownerId;
+			found_guard = true;
+			break;
+		}
+
 	}
 	else
 	{

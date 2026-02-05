@@ -27,8 +27,8 @@ public:
         params.range = 80.0f;
         params.fireAnimation = "fire";
         params.fireAnimInterpInTime = 0.08f;
-        params.notifyNpcs = false;
-        params.activateViolenceCrime = false;
+        params.notifyNpcs = true;
+        params.activateViolenceCrime = true;
         params.hasRecoilModelOffset = false;
         params.hasRandomRecoilStrength = false;
         params.recoilShake = CameraShake(

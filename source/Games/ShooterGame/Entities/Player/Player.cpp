@@ -69,7 +69,7 @@ void Player::Start()
     AddWeaponByName("weapon_tommy");
     AddWeaponByName("weapon_sniper");
 
-    offhandWeapons.push_back("weapon_cane");
+    //offhandWeapons.push_back("weapon_cane");
     desiredOffhandWeapon = 1;
 
     cameraRotation.y = Rotation.y;
@@ -754,7 +754,7 @@ void Player::Update()
     if (length(input) > 1)
         input = normalize(input);
 
-	if (false)
+	if (true)
 	{
 
 		if (Input::GetAction("dash")->Holding() && input.y > 0.4f && OnGround())
@@ -769,7 +769,7 @@ void Player::Update()
 
     RunProgress = std::clamp(RunProgress, 0.0f, 1.0f);
 
-    //maxSpeed = mix(WalkSpeed, RunSpeed, RunProgress);
+    maxSpeed = mix(WalkSpeed, RunSpeed, RunProgress);
 
     if (on_bike == false)
     {
@@ -848,7 +848,7 @@ void Player::Update()
             controller.SetVelocity(normalize(dashVector) * Speed);
         }
 
-        if (Input::GetAction("dash")->Pressed())
+        if (Input::GetAction("dash")->Pressed() && false)
         {
 
             vec3 dashDir = right * input.x + playerForward * input.y;
@@ -903,21 +903,25 @@ void Player::Update()
         offhandWeapon = desiredOffhandWeapon;
     }
 
-    if (currentOffhandWeapon != nullptr)
-    {
-        if (currentOffhandWeapon->ClassName != offhandWeapons[offhandWeapon])
-        {
-            if (currentOffhandWeapon->CanChangeSlot())
-            {
-                SwitchWeaponOffhand(offhandWeapons[offhandWeapon]);
-            }
+	if (offhandWeapons.empty() == false)
+	{
 
-        }
-    }
-    else
-    {
-        SwitchWeaponOffhand(offhandWeapons[offhandWeapon]);
-    }
+		if (currentOffhandWeapon != nullptr)
+		{
+			if (currentOffhandWeapon->ClassName != offhandWeapons[offhandWeapon])
+			{
+				if (currentOffhandWeapon->CanChangeSlot())
+				{
+					SwitchWeaponOffhand(offhandWeapons[offhandWeapon]);
+				}
+
+			}
+		}
+		else
+		{
+			SwitchWeaponOffhand(offhandWeapons[offhandWeapon]);
+		}
+	}
 
     if (Input::GetAction("slotMelee")->Pressed())
         SwitchToMeleeWeapon();
