@@ -69,7 +69,7 @@ void Player::Start()
     AddWeaponByName("weapon_tommy");
     AddWeaponByName("weapon_sniper");
 
-    //offhandWeapons.push_back("weapon_cane");
+    offhandWeapons.push_back("weapon_cane");
     desiredOffhandWeapon = 1;
 
     cameraRotation.y = Rotation.y;
@@ -137,6 +137,21 @@ void Player::UpdateWalkMovement(vec2 input)
         velocity = movement * 20.0f;
 
     controller.SetVelocity(velocity);
+
+    if (Input::GetAction("crouch")->Pressed())
+    {
+        if (controller.isCrouched)
+        {
+            controller.UnCrouch();
+        }
+        else
+        {
+            controller.Crouch();
+        }
+
+    }
+
+
 
     if (OnGround()) 
     {
@@ -675,25 +690,32 @@ void Player::Update()
 	if (teleported == false && freeFly == false)
 	{
 
-        vec3 dir = normalize(controller.GetPosition() - oldPos);
+		vec3 dif = controller.GetPosition() - oldPos;
 
-
-		auto hit = Physics::LineTrace(oldPos - dir * 0.2f, controller.GetPosition(), BodyType::World | BodyType::WorldSkybox);
-
-		if (hit.hasHit)
+		if (length(dif) > 0.2)
 		{
-			controller.SetPosition(hit.position - dir * 0.3f);
+			vec3 dir = normalize(controller.GetPosition() - oldPos);
 
+
+
+			auto hit = Physics::LineTrace(oldPos - dir * 0.2f, controller.GetPosition(), BodyType::World | BodyType::WorldSkybox);
+
+			if (hit.hasHit)
+			{
+				controller.SetPosition(hit.position - dir * 0.3f);
+
+			}
+
+			vec3 offset = vec3(0, 0.5f, 0);
+
+			hit = Physics::SphereTrace(oldPos - dir * 0.1f + offset, controller.GetPosition() + offset, 0.1f, BodyType::World | BodyType::WorldSkybox);
+
+			if (hit.hasHit)
+			{
+				//controller.SetPosition(hit.shapePosition - offset);
+
+			}
 		}
-
-		hit = Physics::SphereTrace(oldPos - dir * 0.1f, controller.GetPosition(), 0.2f, BodyType::World | BodyType::WorldSkybox);
-
-		if (hit.hasHit)
-		{
-			controller.SetPosition(hit.shapePosition);
-
-		}
-
 
 	}
 	teleported = false;
@@ -754,7 +776,7 @@ void Player::Update()
     if (length(input) > 1)
         input = normalize(input);
 
-	if (true)
+	if (canRun)
 	{
 
 		if (Input::GetAction("dash")->Holding() && input.y > 0.4f && OnGround())
@@ -769,7 +791,8 @@ void Player::Update()
 
     RunProgress = std::clamp(RunProgress, 0.0f, 1.0f);
 
-    maxSpeed = mix(WalkSpeed, RunSpeed, RunProgress);
+    if(canRun)
+        maxSpeed = mix(WalkSpeed, RunSpeed, RunProgress);
 
     if (on_bike == false)
     {
@@ -848,7 +871,7 @@ void Player::Update()
             controller.SetVelocity(normalize(dashVector) * Speed);
         }
 
-        if (Input::GetAction("dash")->Pressed() && false)
+        if (Input::GetAction("dash")->Pressed() && canDash)
         {
 
             vec3 dashDir = right * input.x + playerForward * input.y;
@@ -1072,6 +1095,21 @@ void Player::UpdateBody()
     {
         Camera::position = MathHelper::DecomposeMatrix(bodyMesh->GetBoneMatrixWorld("head")).Position + playerForward * 0.3f;
 
+        float feetHeight = controller.GetSmoothPosition().y - controller.height / 2.0f;
+
+		Camera::position.y = feetHeight + controller.GetCameraHeight();
+
+        vec3 feetPos = controller.GetSmoothPosition();
+		feetPos.y = feetHeight;
+
+		float maxCameraHeight = 1.0f;
+
+        auto hit = Physics::SphereTrace(feetPos + vec3(0,0.5f,0), feetPos + vec3(0, maxCameraHeight, 0), 0.2, BodyType::World);
+
+		float distance = hit.fraction * (maxCameraHeight - 0.5f) + 0.5f;
+
+        controller.cameraHeightCrouching = distance;
+
     }
 
 
@@ -1167,7 +1205,13 @@ void Player::Serialize(json& target)
     SERIALIZE_FIELD(target, cameraRotation);
     SERIALIZE_FIELD(target, velocity);
     SERIALIZE_FIELD(target, currentSlot);
+    SERIALIZE_FIELD(target, weaponSlots);
+
     SERIALIZE_FIELD(target, NpcSimulationManager::worldSimulationState);
+
+    SERIALIZE_FIELD(target, offhandWeapons);
+    SERIALIZE_FIELD(target, offhandWeapon);
+    SERIALIZE_FIELD(target, desiredOffhandWeapon);
 
 }
 
@@ -1179,9 +1223,16 @@ void Player::Deserialize(json& source)
     DESERIALIZE_FIELD(source, cameraRotation);
     DESERIALIZE_FIELD(source, velocity);
     DESERIALIZE_FIELD(source, currentSlot);
+    DESERIALIZE_FIELD(source, weaponSlots);
+
     DESERIALIZE_FIELD(source, NpcSimulationManager::worldSimulationState);
 
+    DESERIALIZE_FIELD(source, offhandWeapons);
+    DESERIALIZE_FIELD(source, offhandWeapon);
+    DESERIALIZE_FIELD(source, desiredOffhandWeapon);
+
     SwitchToSlot(currentSlot, true);
+    SwitchWeaponOffhand(offhandWeapons[offhandWeapon]);
 
     controller.SetVelocity(velocity);
     Teleport(Position);

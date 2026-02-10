@@ -30,10 +30,10 @@ public:
 
 	float gravity = 25;
 
-	float stepHeight = 0.3;
+	float stepHeight = 0.35;
 
 	float height = 1.8;
-	float radius = 0.5;
+	float radius = 0.4;
 
 	float groundMaxAngle = 40;
 
@@ -41,6 +41,14 @@ public:
 
 	bool onGround = false;
 
+	float cameraHeightStanding = 1.8f;
+	float cameraHeightCrouching = 0.8f;
+	float crouchHeight = 0.80f;
+
+	float GetCameraHeight();
+
+	void Crouch();
+	void UnCrouch();
 
 	static float GroundAngleRad(const glm::vec3& normal);
 
@@ -51,7 +59,7 @@ public:
 
 	void SetCollisionMask(BodyType mask)
 	{
-		Physics::SetCollisionMask(body,mask);
+		Physics::SetCollisionMask(body, mask);
 	}
 
 	void SetBodyType(BodyType type)
@@ -59,7 +67,15 @@ public:
 		Physics::SetBodyType(body, type);
 	}
 
+	bool isCrouched = false;
+
 private:
+
+	Entity* owner = nullptr;
+	float standingHeight = 1.8f;
+
+	float currentCameraHeight = 0.0f;
+	float targetCameraHeight = 0.0f;
 
 	const Body* lastStandingOnBody = nullptr;
 	glm::vec3 baseLocalAttachPoint = glm::vec3(0.0f);
@@ -69,14 +85,12 @@ private:
 	glm::vec3 lastPlatformVelocity = glm::vec3(0.0f);
 	bool wasOnPlatform = false;
 
-
-
+	bool CanStandUp();
 
 	void UpdateGroundCheck(bool& hitsGround, float& calculatedCharacterHeight, bool& canStand, vec3& notWalkableNormal);
 
-	bool CheckGroundAt(vec3 location,float radius, float& height, bool& canStand, vec3& normal, const Body** hitBody);
+	bool CheckGroundAt(vec3 location, float radius, float& height, bool& canStand, vec3& normal, const Body** hitBody);
 
 	//vec3 velocity = vec3(0);
 
 };
-

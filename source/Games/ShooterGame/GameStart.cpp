@@ -196,6 +196,8 @@ GameStart::GameStart()
     Input::AddAction("left")->AddKeyboardKey(SDL_KeyCode::SDLK_a);
     Input::AddAction("right")->AddKeyboardKey(SDL_KeyCode::SDLK_d);
 
+    Input::AddAction("crouch")->AddKeyboardKey(SDL_KeyCode::SDLK_c);
+
     Input::AddAction("jump")->AddKeyboardKey(SDL_KeyCode::SDLK_SPACE)->AddButton(GamepadButton::A);
 
     Input::AddAction("attack")->AddButton(GamepadButton::RightTrigger)->LMB = true;

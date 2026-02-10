@@ -79,7 +79,7 @@ public:
 		viewmodel->LoadFromFile("GameData/models/player/weapons/cane/cane.glb");
 		//viewmodel->ColorTexture = AssetRegistry::GetTextureFromFile("GameData/textures/cat.png");
 		viewmodel->TexturesLocation = "GameData/models/player/weapons/cane/cane.glb/"; // to search in file:   
-		viewmodel->PlayAnimation("draw",true);
+		viewmodel->PlayAnimation("draw",false);
 		viewmodel->PreloadAssets();
 
 		viewmodel->IsViewmodel = true;

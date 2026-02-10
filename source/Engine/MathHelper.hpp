@@ -290,8 +290,8 @@ public:
 	inline static glm::vec3 ToYawPitchRoll(const glm::quat& q)
 	{
 		// Convert the quaternion to a rotation matrix in order to call the
-// next function.  (Presumably this entire procedure could be
-// optimized by inlining and simplifying the arithmetic.)
+		// next function.  (Presumably this entire procedure could be
+		// optimized by inlining and simplifying the arithmetic.)
 		glm::mat4 m = mat4_cast(q);
 
 		// Now get the YPR angles.  The `euler_angles.hpp` header contains

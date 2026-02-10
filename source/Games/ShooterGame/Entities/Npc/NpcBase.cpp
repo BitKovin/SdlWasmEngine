@@ -2587,32 +2587,33 @@ void NpcBase::FindClosestGuard()
 
 	if (findGuardCooldown.Wait()) return;
 
+	found_guard = false;
+
 	std::vector<std::shared_ptr<ObservationTarget>> npcsInRadius;
 
 	if (report_to_guard)
 		npcsInRadius = AiPerceptionSystem::GetTargetsInRadiusWithTagOrdered(Position, 150, "guard_safe");
 
-	if (npcsInRadius.size() > 0)
+	
+
+	for (auto& npc : npcsInRadius)
 	{
 
-		for (auto& npc : npcsInRadius)
-		{
+		auto& foundID = npc->ownerId;
 
-			auto& foundID = npc->ownerId;
+		NpcBase* guardRef = dynamic_cast<NpcBase*>(Level::Current->FindEntityWithId(foundID));
 
-			NpcBase* guardRef = dynamic_cast<NpcBase*>(Level::Current->FindEntityWithId(foundID));
+		if (guardRef == nullptr) continue;
 
-			if (guardRef == nullptr) continue;
+		if (guardRef->hostileTags.count(fractionTag)) continue; // hostile to us
 
-			if (guardRef->hostileTags.count(fractionTag)) continue; // hostile to us
-
-			closestGuard = npc->ownerId;
-			found_guard = true;
-			break;
-		}
-
+		closestGuard = npc->ownerId;
+		found_guard = true;
+		break;
 	}
-	else
+
+
+	if(found_guard == false)
 	{
 
 		if (target_follow == false && currentInvestigation == InvestigationReason::Body)
@@ -2622,7 +2623,7 @@ void NpcBase::FindClosestGuard()
 		}
 
 		closestGuard = "";
-		found_guard = false;
+
 
 		auto fleePath = NavigationSystem::FindFleePathSimple(Position, target_lastSeenPosition, target_follow ? 20 : 60, 4, speed);
 

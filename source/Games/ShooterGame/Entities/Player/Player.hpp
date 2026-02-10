@@ -49,6 +49,8 @@ private:
 
 	vec3 velocity = vec3(0);
 
+	bool canRun = false;
+	bool canDash = true;
 
 	vec3 oldPos = vec3();
 
@@ -206,7 +208,7 @@ public:
 	int currentSlot = 0;
 	std::vector<WeaponSlotData> weaponSlots;
 
-	std::vector<std::string> offhandWeapons;// = { "weapon_lefthand_empty" };
+	std::vector<std::string> offhandWeapons = { "weapon_lefthand_empty" };
 	int offhandWeapon = 0;
 	int desiredOffhandWeapon = 0;
 

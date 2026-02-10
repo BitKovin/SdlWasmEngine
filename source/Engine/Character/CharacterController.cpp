@@ -2,7 +2,8 @@
 
 CharacterController::CharacterController()
 {
-
+	currentCameraHeight = cameraHeightStanding;
+	targetCameraHeight = cameraHeightStanding;
 }
 
 CharacterController::~CharacterController()
@@ -14,8 +15,10 @@ CharacterController::~CharacterController()
 }
 
 
-void CharacterController::Init(Entity* owner, vec3 position,float radius, float height)
+void CharacterController::Init(Entity* owner, vec3 position, float radius, float height)
 {
+	this->owner = owner;
+	this->standingHeight = height;
 
 	Destroy();
 
@@ -186,7 +189,7 @@ void CharacterController::Update(float deltaTime)
 	if (standsOnGround && velocity.y <= 0)
 	{
 		vec3 currentPosition = FromPhysics(body->GetPosition());
-		float newVerticalPosition = verticalPosition + stepHeight + height / 2;
+		float newVerticalPosition = verticalPosition + stepHeight/2.0f + height / 2.0f;
 		Physics::SweepBody(body, vec3(currentPosition.x, newVerticalPosition, currentPosition.z));
 		heightSmoothOffset += (currentPosition.y - FromPhysics(body->GetPosition()).y);
 	}
@@ -250,6 +253,13 @@ void CharacterController::Update(float deltaTime)
 		vec3 worldOffset = baseRot * baseLocalAttachPoint;
 		lastPlatformVelocity = linearVel + glm::cross(angularVel, worldOffset);
 	}
+
+	// Update camera height target based on state
+	targetCameraHeight = (isCrouched) ? cameraHeightCrouching : cameraHeightStanding;
+
+	// Smooth camera height
+	float smoothFactor = 1.0f - std::exp(-stepSmoothingSpeed * deltaTime);
+	currentCameraHeight = glm::mix(currentCameraHeight, targetCameraHeight, smoothFactor);
 }
 
 
@@ -258,7 +268,7 @@ vec3 CharacterController::GetPosition()
 {
 	if (body)
 	{
-		return FromPhysics(body->GetPosition()) - vec3(0,stepHeight,0);
+		return FromPhysics(body->GetPosition()) - vec3(0, stepHeight*0.5f, 0);
 	}
 
 	return vec3();
@@ -266,7 +276,7 @@ vec3 CharacterController::GetPosition()
 
 vec3 CharacterController::GetSmoothPosition()
 {
-	return GetPosition() + vec3(0, heightSmoothOffset,0);
+	return GetPosition() + vec3(0, heightSmoothOffset, 0);
 }
 
 //sets center of character controller
@@ -274,7 +284,7 @@ void CharacterController::SetPosition(vec3 position)
 {
 	if (body)
 	{
-		Physics::SetBodyPosition(body, position + vec3(0, stepHeight, 0));
+		Physics::SetBodyPosition(body, position + vec3(0, stepHeight*0.5f, 0));
 	}
 }
 
@@ -298,7 +308,7 @@ void CharacterController::UpdateSmoothPosition(float deltaTime)
 		if (heightSmoothOffset > 0)
 		{
 			heightSmoothOffset -= deltaTime * stepSmoothingSpeed;
-			
+
 			heightSmoothOffset = glm::clamp(heightSmoothOffset, 0.0f, 0.4f);
 		}
 
@@ -325,9 +335,138 @@ void CharacterController::SetVelocity(vec3 vel)
 	Physics::SetLinearVelocity(body, vel);
 }
 
+float CharacterController::GetCameraHeight()
+{
+	return currentCameraHeight;
+}
+
+void CharacterController::Crouch()
+{
+	if (isCrouched) return;
+
+	vec3 oldVel = GetVelocity();
+
+	vec3 currentBodyPos = FromPhysics(body->GetPosition());
+	float oldHeight = height;
+	float newHeight = crouchHeight;
+	float delta = oldHeight - newHeight;
+	vec3 deltaPos(0.0f);
+
+
+	if (onGround)
+	{
+		deltaPos.y = -delta / 2.0f;
+	}
+	else
+	{
+		float oldCam = cameraHeightStanding;
+		float newCam = cameraHeightCrouching;
+
+		deltaPos.y =
+			(newHeight - oldHeight) * 0.5f +
+			(oldCam - newCam);
+
+		currentCameraHeight = cameraHeightCrouching;
+
+	}
+
+
+	vec3 newBodyPos = currentBodyPos + deltaPos;
+
+	Destroy();
+
+	stepHeight = 0.25f;
+
+	body = Physics::CreateCharacterCylinderBody(owner, newBodyPos, radius, newHeight - stepHeight, 30);
+	body->GetMotionProperties()->SetLinearDamping(0);
+	Physics::GetBodyData(body)->dynamicCollisionGroupOrMask = true;
+	Physics::SetGravityFactor(body, 0);
+
+	height = newHeight;
+	isCrouched = true;
 
 
 
+	SetVelocity(oldVel);
+}
+
+void CharacterController::UnCrouch()
+{
+	if (!isCrouched) return;
+
+	if (!CanStandUp()) return;
+
+	vec3 oldVel = GetVelocity();
+
+	vec3 currentBodyPos = FromPhysics(body->GetPosition());
+	float oldHeight = height;
+	float newHeight = standingHeight;
+	float delta = newHeight - oldHeight;
+	vec3 deltaPos(0.0f);
+
+	if (onGround)
+	{
+		deltaPos.y = delta / 2.0f;
+	}
+	else
+	{
+		float oldCam = cameraHeightCrouching;
+		float newCam = cameraHeightStanding;
+
+		deltaPos.y =
+			(newHeight - oldHeight) * 0.5f +
+			(oldCam - newCam);
+		currentCameraHeight = cameraHeightStanding;
+	}
+
+
+	vec3 newBodyPos = currentBodyPos + deltaPos;
+
+	Destroy();
+
+	stepHeight = 0.4f;
+
+	body = Physics::CreateCharacterCylinderBody(owner, newBodyPos, radius, newHeight - stepHeight, 30);
+	body->GetMotionProperties()->SetLinearDamping(0);
+	Physics::GetBodyData(body)->dynamicCollisionGroupOrMask = true;
+	Physics::SetGravityFactor(body, 0);
+
+	height = newHeight;
+	isCrouched = false;
+
+	SetVelocity(oldVel);
+}
+
+bool CharacterController::CanStandUp()
+{
+	if (!isCrouched) return true;
+
+	vec3 currentBodyPos = FromPhysics(body->GetPosition());
+	float oldHeight = height;
+	float newHeight = standingHeight;
+	float delta = newHeight - oldHeight;
+	vec3 deltaPos(0.0f);
+
+	if (onGround)
+	{
+		deltaPos.y = delta / 2.0f;
+	}
+	else
+	{
+		deltaPos.y = -delta / 2.0f;
+	}
+
+	vec3 newBodyPos = currentBodyPos + deltaPos;
+	float newPhysHalf = (newHeight - stepHeight * 2.0f) / 2.0f;
+	vec3 bottom = newBodyPos;
+	bottom -= vec3(0, 0.15f, 0); 
+	vec3 top = newBodyPos + vec3(0.0f, newPhysHalf, 0.0f);
+
+	Physics::HitResult result = Physics::CylinderTrace(bottom, top, radius - 0.05f, 0.05f, BodyType::GroupCollisionTest, { body });
+
+
+	return !result.hasHit;
+}
 
 
 float CharacterController::GroundAngleRad(const glm::vec3& normal)
@@ -351,7 +490,7 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 {
 	hitsGround = false;
 	calculatedGroundHeight = 0;
-	avgNormal = vec3(0,0,0);
+	avgNormal = vec3(0, 0, 0);
 	canStand = false;
 	standingOnBody = nullptr;
 
@@ -377,12 +516,12 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 	int nNotWalk = 0;
 
 	float startRadius = 0.1;
-	
+
 	float stepRadius = 0.3;
 
 	const Body* hitBody = nullptr;
 
-	if (ThreadPool::Supported() == false || true)
+	if (ThreadPool::Supported() == false)
 	{
 		startRadius = 0.405;
 
@@ -390,7 +529,7 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 
 	}
 
-	
+
 
 	for (float r = 0.1; r <= 1; r += 0.3)
 	{
@@ -402,7 +541,7 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 			vec3 offset = vec3(cos(angle), 0.0f, sin(angle)) * (radius * r - 0.11f);
 
 
-			if (CheckGroundAt(FromPhysics(body->GetPosition()) + offset - heightOffset,0.1f, outheight, outCanStand, outNormal, &hitBody))
+			if (CheckGroundAt(FromPhysics(body->GetPosition()) + offset - heightOffset, 0.1f, outheight, outCanStand, outNormal, &hitBody))
 			{
 
 				if (outCanStand)
@@ -427,20 +566,18 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 		}
 
 	}
-	
+
 
 	if (CheckGroundAt(FromPhysics(body->GetPosition()) - heightOffset, radius - 0.01f, outheight, outCanStand, outNormal, &hitBody))
 	{
 
-		/*if (Physics::GetBodyData(hitBody)->group == BodyType::CharacterCapsule)
+		if (Physics::GetBodyData(hitBody)->group == BodyType::CharacterCapsule)
 		{
 			Physics::AddImpulse(body, vec3(0, 1.1f, 0));
-		}*/
+		}
 
 		if (outCanStand)
 		{
-
-
 
 			canStand = true;
 
@@ -448,7 +585,7 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 
 
 		}
-		
+
 		avgNormal += outNormal;
 		nNotWalk++;
 
@@ -470,7 +607,7 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 			numOfHits += 3;
 		}
 
-		
+
 	}
 
 	if (nNotWalk)
@@ -478,7 +615,7 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 		avgNormal /= nNotWalk;
 	}
 
-	hitsGround = hitsGround && (numOfHits>0);
+	hitsGround = hitsGround && (numOfHits > 0);
 
 	canStand = hitsGround && (GroundAngleDeg(avgNormal) <= groundMaxAngle) && canStand;
 
@@ -486,22 +623,25 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 
 }
 
-bool CharacterController::CheckGroundAt(vec3 location,float checkRadius, float& outheight, bool& canStand, vec3& normal, const Body** hitBody)
+bool CharacterController::CheckGroundAt(vec3 location, float checkRadius, float& outheight, bool& canStand, vec3& normal, const Body** hitBody)
 {
 
 
 	Physics::HitResult result;
-	
+
+	vec3 start = location;// +vec3(0, 0.1f, 0);
+	vec3 end = location - vec3(0, height / 2.0f + stepHeight, 0);
+
 	if (checkRadius > 0)
 	{
-		result = Physics::CylinderTrace(location, location - vec3(0, height / 2 + stepHeight - 0.05f, 0), checkRadius, 0.05f, BodyType::GroupCollisionTest, { body });
+		result = Physics::CylinderTrace(start, end - vec3(0, 0.05f, 0), checkRadius, 0.05f, BodyType::GroupCollisionTest, { body });
 
-		result.position = result.shapePosition - vec3(0, 0.02f,0);
+		result.position = result.shapePosition - vec3(0, 0.02f, 0);
 
 	}
 	else
 	{
-		result = Physics::LineTrace(location, location - vec3(0, height / 2 + stepHeight, 0), BodyType::GroupCollisionTest, { body });
+		result = Physics::LineTrace(start, end, BodyType::GroupCollisionTest, { body });
 	}
 
 	*hitBody = result.hitbody;
