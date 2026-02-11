@@ -346,10 +346,6 @@ std::optional<std::vector<uint8_t>> ZipVFS::ReadFileAsBinary(const std::string& 
         return std::nullopt;
     }
 
-    if (virtualPath == "GameData/textures/generic/grass.png") {
-        printf("Debug breakpoint location\n");
-    }
-
     const auto& sources = it->second;
     if (sources.empty()) return std::nullopt;
 
