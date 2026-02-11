@@ -8,6 +8,7 @@
 "_lightmapscale" "0.5"
 "gridsize" "32 32 48"
 "_tb_mod" "textures"
+"_noshadersun" "1"
 // brush 0
 {
 ( -352 -480 304 ) ( -352 528 16 ) ( -352 528 304 ) generic/bricks 0 0 0 0.75 0.75 0 0 0

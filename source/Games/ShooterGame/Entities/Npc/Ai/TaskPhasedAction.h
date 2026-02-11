@@ -8,7 +8,7 @@ protected:
     float enterDur = 0.0f, exitDur = 0.0f;
     float blendDur = 1.0f;
     float loopDur = 0.0f;
-    float acceptanceRadius = 0.3f;
+    float acceptanceRadius = 0.4f;
 
     void UpdatePositionBlend(NpcBase* npc);
 

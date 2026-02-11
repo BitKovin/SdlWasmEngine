@@ -155,13 +155,13 @@ void NavigationSystem::GenerateNavData()
     // ---- Recast config (similar to yours)
     rcConfig cfg{};
     cfg.cs = 0.1f;
-    cfg.ch = 0.3f;
+    cfg.ch = 0.2f;
     cfg.walkableSlopeAngle = 40.0f;
     cfg.walkableHeight = static_cast<int>(ceilf(2.0f / cfg.ch));
     cfg.walkableClimb = static_cast<int>(ceilf(0.6f / cfg.ch));
     cfg.walkableRadius = static_cast<int>(ceilf(0.5f / cfg.cs));
     cfg.maxEdgeLen = static_cast<int>(12 / cfg.cs);
-    cfg.maxSimplificationError = 0.05f;
+    cfg.maxSimplificationError = 0.03f;
     cfg.minRegionArea = 0;
     cfg.mergeRegionArea = 200 * 200;
     cfg.maxVertsPerPoly = 6;
@@ -169,8 +169,8 @@ void NavigationSystem::GenerateNavData()
     cfg.borderSize = static_cast<int>(ceilf(0.5f / cfg.cs)) + 3;
     cfg.width = cfg.tileSize + cfg.borderSize * 2;
     cfg.height = cfg.tileSize + cfg.borderSize * 2;
-    cfg.detailSampleDist = 0.2f;
-    cfg.detailSampleMaxError = 0.2f;
+    cfg.detailSampleDist = 0.1f;
+    cfg.detailSampleMaxError = 0.1f;
 
     const float tileWorld = cfg.tileSize * cfg.cs;
     const int ntilesX = static_cast<int>(ceilf((bmax.x - bmin.x) / tileWorld));
@@ -589,6 +589,8 @@ std::vector<glm::vec3> NavigationSystem::FindSimplePath(glm::vec3 start, glm::ve
     if (hit.hasHit)
         start = hit.position + vec3(0, 0.3f, 0);
 
+	vec3 targetInitial = target;
+
     hit = Physics::LineTrace(target, target - vec3(0, 5, 0), BodyType::World);
     if (hit.hasHit)
         target = hit.position + vec3(0, 0.3f, 0);
@@ -623,9 +625,20 @@ std::vector<glm::vec3> NavigationSystem::FindSimplePath(glm::vec3 start, glm::ve
         return false;
         };
 
+    if (!findOnPoly(gPos, gRef, gNearest))
+    {
+        gPos[0] = targetInitial.x;
+		gPos[1] = targetInitial.y;
+        gPos[2] = targetInitial.z;
+        if (!findOnPoly(gPos, gRef, gNearest))
+        {
+            dtFreeNavMeshQuery(navQuery);
+            return outPath; // failed to localize goal
+		}
+    }
+
     // attempt to pick start & goal polys
-    if (!findOnPoly(sPos, sRef, sNearest) ||
-        !findOnPoly(gPos, gRef, gNearest))
+    if (!findOnPoly(sPos, sRef, sNearest))
     {
         dtFreeNavMeshQuery(navQuery);
         return outPath; // failed to localize start or goal
