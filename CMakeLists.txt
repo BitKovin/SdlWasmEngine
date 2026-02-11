@@ -81,13 +81,6 @@ elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
     find_package(ZLIB       REQUIRED)
 endif()
 
-# ——————————————————————————————————————————————————————————
-# Common includes
-# ——————————————————————————————————————————————————————————
-include_directories(
-    "${CMAKE_SOURCE_DIR}/libraries"
-    "${CMAKE_SOURCE_DIR}/source/Engine"
-)
 
 # ——————————————————————————————————————————————————————————————————————
 # Engine library
@@ -95,10 +88,14 @@ include_directories(
 file(GLOB_RECURSE ENGINE_SOURCES "${CMAKE_SOURCE_DIR}/source/Engine/*.cpp")
 
 add_library(engine STATIC ${ENGINE_SOURCES})
-target_include_directories(engine 
+
+# Engine must see itself as a root include folder
+target_include_directories(engine
     PUBLIC
-      "${CMAKE_SOURCE_DIR}/source/Engine"   
+        "${CMAKE_SOURCE_DIR}/source/Engine"   # <Renderer/...>
+        "${CMAKE_SOURCE_DIR}/libraries"       # third-party headers
 )
+
 
 if (EMSCRIPTEN)
     set(FMOD_SUFFIX "")
@@ -300,11 +297,11 @@ endif()
 add_executable(${GAME_TARGET_NAME} ${GAME_SOURCES})
 
 # include directories for the game
-target_include_directories(${GAME_TARGET_NAME} PUBLIC
-    "${CMAKE_SOURCE_DIR}/libraries"
-    "${CMAKE_SOURCE_DIR}/source/Engine"
-    "${GAME_DIR}"
+target_include_directories(${GAME_TARGET_NAME}
+    PUBLIC
+        "${GAME_DIR}"
 )
+
 
 # link engine
 target_link_libraries(${GAME_TARGET_NAME} PRIVATE engine)

@@ -143,28 +143,28 @@
     <LibraryPath>F:\Git\SdlWasmEngine\Lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(SolutionDir)../libraries/;$(SolutionDir)../emscriptenLibraries/;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)../libraries/;$(SolutionDir)../emscriptenLibraries/;$(ProjectDir);$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)../Lib/;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir>..\Intermediage\$(ShortProjectName)\$(Configuration)\</IntDir>
     <AllProjectIncludesArePublic>true</AllProjectIncludesArePublic>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(SolutionDir)../libraries/;$(SolutionDir)../emscriptenLibraries/;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)../libraries/;$(SolutionDir)../emscriptenLibraries/;$(ProjectDir);$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)../Lib/;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir>..\Intermediage\$(ShortProjectName)\$(Configuration)\</IntDir>
     <AllProjectIncludesArePublic>true</AllProjectIncludesArePublic>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Distribution|x64'">
-    <IncludePath>$(SolutionDir)../libraries/;$(SolutionDir)../emscriptenLibraries/;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)../libraries/;$(SolutionDir)../emscriptenLibraries/;$(ProjectDir);$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)../Lib/;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir>..\Intermediage\$(ShortProjectName)\$(Configuration)\</IntDir>
     <AllProjectIncludesArePublic>true</AllProjectIncludesArePublic>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='emscripten|x64'">
-    <IncludePath>$(SolutionDir)../libraries/;$(SolutionDir)../emscriptenLibraries/;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)../libraries/;$(SolutionDir)../emscriptenLibraries/;$(ProjectDir);$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)../Lib/;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir>..\Intermediage\$(ShortProjectName)\$(Configuration)\</IntDir>

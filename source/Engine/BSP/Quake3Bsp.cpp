@@ -27,6 +27,8 @@
 
 #include "../LightSystem/LightManager.h"
 
+#include <Physics.h>
+
 #ifndef _MSC_VER 
 
 #define strcpy_s strcpy
@@ -664,6 +666,17 @@ std::vector<uint32_t> CQuake3BSP::GetFaceIndices(int faceId)
     return Rbuffers.v_faceIDXs[faceId];
 }
 
+bool CQuake3BSP::CheckLightProbeAcess(const glm::vec3& position, const glm::vec3& volPosition)
+{
+
+	if (FindClusterAtPosition(volPosition) < 0) return false;
+
+	DebugDraw::Line(position, volPosition, 0.01f, 0.01f);
+
+    return Physics::LineTrace(position, volPosition, BodyType::WorldOpaque | BodyType::WorldSkybox).hasHit == false;
+
+}
+
 LightVolPointData CQuake3BSP::GetLightvolColorPoint(const glm::vec3& position, bool wallCheck) 
 {
     if (lightVols.size() == 0)
@@ -753,14 +766,14 @@ LightVolPointData CQuake3BSP::GetLightvolColorPoint(const glm::vec3& position, b
 
     if (wallCheck)
     {
-        valid000 = FindClusterAtPosition(getGridEnginePos(nx0, ny0, nz0) / MAP_SCALE) >= 0;
-        valid010 = FindClusterAtPosition(getGridEnginePos(nx0, ny1, nz0) / MAP_SCALE) >= 0;
-        valid100 = FindClusterAtPosition(getGridEnginePos(nx1, ny0, nz0) / MAP_SCALE) >= 0;
-        valid110 = FindClusterAtPosition(getGridEnginePos(nx1, ny1, nz0) / MAP_SCALE) >= 0;
-        valid001 = FindClusterAtPosition(getGridEnginePos(nx0, ny0, nz1) / MAP_SCALE) >= 0;
-        valid101 = FindClusterAtPosition(getGridEnginePos(nx1, ny0, nz1) / MAP_SCALE) >= 0;
-        valid011 = FindClusterAtPosition(getGridEnginePos(nx0, ny1, nz1) / MAP_SCALE) >= 0;
-        valid111 = FindClusterAtPosition(getGridEnginePos(nx1, ny1, nz1) / MAP_SCALE) >= 0;
+        valid000 = CheckLightProbeAcess(position / MAP_SCALE, getGridEnginePos(nx0, ny0, nz0) / MAP_SCALE);
+        valid010 = CheckLightProbeAcess(position / MAP_SCALE, getGridEnginePos(nx0, ny1, nz0) / MAP_SCALE);
+        valid100 = CheckLightProbeAcess(position / MAP_SCALE, getGridEnginePos(nx1, ny0, nz0) / MAP_SCALE);
+        valid110 = CheckLightProbeAcess(position / MAP_SCALE, getGridEnginePos(nx1, ny1, nz0) / MAP_SCALE);
+        valid001 = CheckLightProbeAcess(position / MAP_SCALE, getGridEnginePos(nx0, ny0, nz1) / MAP_SCALE);
+        valid101 = CheckLightProbeAcess(position / MAP_SCALE, getGridEnginePos(nx1, ny0, nz1) / MAP_SCALE);
+        valid011 = CheckLightProbeAcess(position / MAP_SCALE, getGridEnginePos(nx0, ny1, nz1) / MAP_SCALE);
+        valid111 = CheckLightProbeAcess(position / MAP_SCALE, getGridEnginePos(nx1, ny1, nz1) / MAP_SCALE);
     }
 
     // Define data and weights

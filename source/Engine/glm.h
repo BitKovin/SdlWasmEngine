@@ -1,3 +1,5 @@
+//this file includes all useful glm headers and their configurations. It also includes a modified version of the decompose function
+
 #pragma once
 #define GLM_ENABLE_EXPERIMENTAL
 #define GLM_FORCE_CXX17

@@ -425,6 +425,8 @@ class CQuake3BSP : public IDrawMesh
     std::vector<VertexData> GetFaceVertices(int faceId);
     std::vector<uint32_t> GetFaceIndices(int faceId);
 
+    bool CheckLightProbeAcess(const glm::vec3& position, const glm::vec3& volPosition);
+
     // Get lighting for a dynamic object at position (x, y, z)
     LightVolPointData GetLightvolColorPoint(const glm::vec3& position, bool wallCheck = false);
     LightVolPointData GetLightvolColor(const glm::vec3& position, bool wallCheck = false);

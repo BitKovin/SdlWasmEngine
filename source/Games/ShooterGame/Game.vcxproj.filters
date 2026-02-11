@@ -338,5 +338,8 @@
     <ClInclude Include="UI\General\UiLocationTileDrop.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Helpers\LightVisibilityHelper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

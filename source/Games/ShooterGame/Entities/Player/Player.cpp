@@ -16,6 +16,8 @@
 
 #include "../../UI/General/UiLocationTileDrop.h"
 
+#include <Helpers/LightVisibilityHelper.h>
+
 REGISTER_ENTITY(Player, "player")
 
 Player* Player::Instance = nullptr;
@@ -671,6 +673,11 @@ void Player::Update()
 
     if (EngineMain::MainInstance->SimulatingGameTicks) return;
 
+    auto lightData = Level::Current->BspData.GetLightvolColorPoint(Position * MAP_SCALE, true);
+
+	float lightLevel = LightVisibility::Compute(lightData);
+
+	printf("light level: %f \n", lightLevel);
 
     //Logger::Log("Voxel world memory: " + std::to_string(memMB) + " MB");
 

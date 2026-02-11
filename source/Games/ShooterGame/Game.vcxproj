@@ -144,7 +144,7 @@
     <LibraryPath>F:\Git\SdlWasmEngine\Lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(SolutionDir)../libraries/;$(SolutionDir)../emscriptenLibraries/;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)../libraries/;$(SolutionDir)../emscriptenLibraries/;$(ProjectDir);$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)../Lib/;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir>..\..\Intermediage\$(ShortProjectName)\$(Configuration)\</IntDir>
@@ -152,7 +152,7 @@
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(SolutionDir)../libraries/;$(SolutionDir)../emscriptenLibraries/;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)../libraries/;$(SolutionDir)../emscriptenLibraries/;$(ProjectDir);$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)../Lib/;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir>..\..\Intermediage\$(ShortProjectName)\$(Configuration)\</IntDir>
@@ -160,7 +160,7 @@
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Distribution|x64'">
-    <IncludePath>$(SolutionDir)../libraries/;$(SolutionDir)../emscriptenLibraries/;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)../libraries/;$(SolutionDir)../emscriptenLibraries/;$(ProjectDir);$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)../Lib/;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir>..\..\Intermediage\$(ShortProjectName)\$(Configuration)\</IntDir>
@@ -168,7 +168,7 @@
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='emscripten|x64'">
-    <IncludePath>$(SolutionDir)../libraries/;$(SolutionDir)../emscriptenLibraries/;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)../libraries/;$(SolutionDir)../emscriptenLibraries/;$(ProjectDir);$(IncludePath)</IncludePath>
     <LibraryPath>F:\Git\SdlWasmEngine\Lib;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir>..\..\Intermediage\$(ShortProjectName)\$(Configuration)\</IntDir>
@@ -431,6 +431,7 @@
     <ClInclude Include="Entities\TestBsp.h" />
     <ClInclude Include="Entities\Enemy\Enemies\TestNpc.hpp" />
     <ClInclude Include="Entities\TestParticleSystem.hpp" />
+    <ClInclude Include="Helpers\LightVisibilityHelper.h" />
     <ClInclude Include="UI\Enemy\UiNpcDebuffs.h" />
     <ClInclude Include="UI\General\UiLocationTileDrop.h" />
     <ClInclude Include="UI\LoadingScreen\UiDefaultLoadingScreen.h" />
