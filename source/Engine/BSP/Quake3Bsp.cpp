@@ -673,7 +673,7 @@ bool CQuake3BSP::CheckLightProbeAcess(const glm::vec3& position, const glm::vec3
 
     float maxDimention = std::max(std::max(lightVolGridSize.x, lightVolGridSize.x), lightVolGridSize.z);
 
-    return Physics::SphereTrace(position, volPosition, maxDimention / MAP_SCALE * 0.5f, BodyType::WorldOpaque).hasHit == false;
+    return Physics::SphereTrace(position, volPosition, maxDimention / MAP_SCALE * 0.3f, BodyType::WorldOpaque).hasHit == false;
 
 }
 

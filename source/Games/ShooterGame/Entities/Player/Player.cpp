@@ -700,7 +700,7 @@ void Player::Update()
 
 		vec3 dif = controller.GetPosition() - oldPos;
 
-		if (length(dif) > 0.0)
+		if (length(dif) > 0.25)
 		{
 			vec3 dir = normalize(controller.GetPosition() - oldPos);
 
@@ -710,17 +710,17 @@ void Player::Update()
 
 			if (hit.hasHit)
 			{
-				controller.SetPosition(hit.position - dir * 0.3f);
+				controller.SetPosition(hit.position - dir * 0.5f);
 
 			}
 
-			vec3 offset = vec3(0, 0.5f, 0);
+			vec3 offset = vec3(0, 0.1f, 0);
 
-			hit = Physics::SphereTrace(oldPos + offset, controller.GetPosition() + offset, 0.1f, BodyType::World | BodyType::WorldSkybox);
+			hit = Physics::SphereTrace(oldPos + offset, controller.GetPosition() + offset, 0.3f, BodyType::World | BodyType::WorldSkybox);
 
 			if (hit.hasHit)
 			{
-				//controller.SetPosition(hit.shapePosition - offset);
+				controller.SetPosition(hit.shapePosition - offset);
 
 			}
 		}

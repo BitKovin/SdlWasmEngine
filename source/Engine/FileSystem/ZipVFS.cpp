@@ -95,6 +95,42 @@ bool ZipVFS::indexSingleZip(const std::string& rootPath, const std::string& zipP
         return false;
     }
 
+    // Calculate the virtual path prefix for entries in this zip
+    std::string entryPrefix;
+
+    if (nestingDepth == 0) {
+        // Top-level zip: mount in a directory named after the zip file (without extension)
+        fs::path zipFilePath(zipPath);
+        std::string zipFileName = zipFilePath.stem().string();  // filename without extension
+
+        // Get relative path of zip file to rootPath
+        fs::path zipFsPath = zipFilePath.parent_path();
+        fs::path rootFsPath = fs::path(rootPath);
+        fs::path mountPath;
+
+        try {
+            mountPath = fs::relative(zipFsPath, rootFsPath);
+        }
+        catch (...) {
+            mountPath.clear();
+        }
+
+        // Construct: rootPath + relative_dir + zip_name_without_ext + /
+        entryPrefix = rootPath;
+
+        std::string relativeDir = mountPath.generic_string();
+        if (!relativeDir.empty() && relativeDir != ".") {
+            if (relativeDir.back() != '/') relativeDir += '/';
+            entryPrefix += relativeDir;
+        }
+
+        //entryPrefix += zipFileName + "/";
+    }
+    else {
+        // Nested zip: use provided virtual prefix
+        entryPrefix = virtualPrefix;
+    }
+
     int total = zip_entries_total(za);
     if (total < 0) total = 0;
 
@@ -114,16 +150,8 @@ bool ZipVFS::indexSingleZip(const std::string& rootPath, const std::string& zipP
 
         std::string entryName(name);
 
-        // Construct full virtual path
-        std::string vpath;
-        if (nestingDepth == 0) {
-            // Top-level zip: use original logic (rootPath + name)
-            vpath = rootPath + entryName;
-        }
-        else {
-            // Nested zip: use provided virtual prefix
-            vpath = virtualPrefix + entryName;
-        }
+        // Construct full virtual path using the calculated prefix
+        std::string vpath = entryPrefix + entryName;
 
         if (vpath.rfind("./", 0) == 0)
             vpath = vpath.substr(2);

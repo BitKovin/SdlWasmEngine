@@ -59,6 +59,8 @@ bool StaticMesh::IsCameraVisible()
 	if (model == nullptr)
 		return false;
 
+	if (IsViewmodel) return isVisible();
+
 	if (Level::Current->BspData.m_numOfVerts)
 	{
 

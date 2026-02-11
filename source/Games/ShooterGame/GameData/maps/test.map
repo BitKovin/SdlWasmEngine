@@ -5,7 +5,7 @@
 "_tb_textures" "textures;textures\Ground;textures/brushes;textures\common;textures\delvenPack;textures\generic;textures\lq_conc;textures\lq_dev;textures\lq_flesh;textures\lq_greek;textures\lq_health_ammo;textures\lq_legacy;textures\lq_liquidsky;textures\lq_mayan;textures\lq_medieval;textures\lq_metal;textures\lq_palette;textures\lq_props;textures\lq_tech;textures\lq_terra;textures\lq_utility;textures\lq_wood;textures\metal;textures\noise;textures\particles;textures\skies;textures\tormentPack;textures\ui;textures\wall;textures\water;textures\wood"
 "_keeplights" "1"
 "_lightmapscale" "0.5"
-"gridsize" "16 16 16"
+"gridsize" "32 32 32"
 "_tb_mod" "textures"
 // brush 0
 {
