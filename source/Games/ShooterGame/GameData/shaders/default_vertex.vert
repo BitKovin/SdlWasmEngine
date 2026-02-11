@@ -40,59 +40,9 @@ out vec4 v_shadowCoords4;
 
 out vec3 v_light;
 	
-#ifndef MAX_POINT_LIGHTS
-    #define MAX_POINT_LIGHTS 16
-#endif
 
-uniform int PointLightsNumber;
-uniform vec4 LightPositions[MAX_POINT_LIGHTS]; // xyz = position, w = inner cone (see note)
-uniform vec3 LightColors[MAX_POINT_LIGHTS];
-uniform float LightRadiuses[MAX_POINT_LIGHTS];
-uniform vec4 LightDirections[MAX_POINT_LIGHTS]; // xyz = direction, w = outer cone (see note)
 
-vec3 CalculateSimplePointLight(int i, vec3 pixelPosition, vec3 normal)
-{
-    // ensure normal is normalized
-    normal = normalize(normal);
 
-    // vector from pixel -> light
-    vec3 lightVector = LightPositions[i].xyz - pixelPosition;
-    float distanceToLight = length(lightVector);
-
-    // early-out if outside light radius or invalid radius
-    if (distanceToLight > LightRadiuses[i] || LightRadiuses[i] <= 0.0)
-        return vec3(0.0);
-
-    // normalized direction from pixel to light
-    vec3 lightDir = lightVector / distanceToLight; // avoids computing length twice
-
-    // dot between vector from light->pixel and the stored spotlight direction
-    // note: -lightDir is from light to pixel (since lightDir is pixel->light)
-    float lightDot = dot(-lightDir, normalize(LightDirections[i].xyz));
-
-    float innerCone = LightPositions[i].w;
-    float outerCone = LightDirections[i].w;
-
-    // smooth transition between outer and inner cones
-    float dirFactor = smoothstep(outerCone, innerCone, lightDot);
-
-    if (dirFactor <= 0.001)
-        return vec3(0.0);
-
-    // backface / lighting check (preserve original logic)
-    if (dot(normal, lightDir) < 0.0)
-        return vec3(0.0);
-
-    // simple radial attenuation (linear)
-    float dist = max((LightRadiuses[i] - distanceToLight) / LightRadiuses[i], 0.0);
-    float intense = dist; // original used just 'dist' (comment shows alternative)
-    intense *= max(dot(normal, lightDir), 0.0);
-    intense = max(intense, 0.0);    
-
-    vec3 L = LightColors[i] * intense;
-
-    return L * dirFactor;
-}
 
 mat4 GetBoneTransforms()
 {
@@ -155,9 +105,6 @@ void main()
 
 	v_light = vec3(0);
 
-	for (int i = 0; i < min(MAX_POINT_LIGHTS, PointLightsNumber); i++)
-	{
-		v_light += CalculateSimplePointLight(i, v_worldPosition, v_normal);
-	}
+
 
 }

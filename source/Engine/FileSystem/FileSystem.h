@@ -9,6 +9,8 @@ namespace FileSystemEngine
 
     void Init();
 
+	void Shutdown();
+
     // Read binary file (GameData or SaveData)
     // on failure: throws std::runtime_error
     std::vector<uint8_t> ReadFileBinary(const std::string& path);

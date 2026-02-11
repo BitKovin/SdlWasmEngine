@@ -511,6 +511,8 @@ int main(int argc, char* args[])
 
     desktop_render_loop();
 
+	delete engine;
+
     ShutdownDirectInput();
     SDL_GL_DeleteContext(glContext);
     SDL_DestroyWindow(window);

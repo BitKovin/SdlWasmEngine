@@ -36,10 +36,13 @@ namespace LightVisibility
     {
         glm::vec3 totalLight = data.directColor + data.ambientColor;
 
-        float brightness = (Luminance(totalLight) - 0.04f) * BrightnessScale;
+        float brightness = (Luminance(totalLight) - 0.05f) * BrightnessScale;
 
         float visibility = PerceptualCurve(brightness);
 		//visibility = powf(visibility, 1.5f);
+
+        if (visibility < 0.05)
+            return 0;
 
         return std::clamp(visibility, 0.0f, 1.0f);
     }

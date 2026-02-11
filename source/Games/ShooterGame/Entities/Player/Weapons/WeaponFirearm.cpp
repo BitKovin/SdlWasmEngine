@@ -212,6 +212,8 @@ void WeaponFirearm::PerformAttack()
 
 	SwitchDelay.AddDelay(params.switchDelayOnAttack * (akimbo ? 0.5f : 1));
 
+
+
 	bool fireLeft = akimbo && alternateFire && fireLeftNext;
 
 	if (akimbo)
@@ -230,6 +232,8 @@ void WeaponFirearm::PerformAttack()
 	mat4 boneMat = (akimbo && fireLeft ? viewmodelLeft : viewmodel)->GetBoneMatrixWorld(params.boneMuzzle);
 	vec3 startLoc = MathHelper::DecomposeMatrix(boneMat).Position;
 	startLoc = mix(startLoc, Camera::position, params.muzzleMix) - Camera::Forward() * params.muzzleForwardOffset;
+
+	WeaponFireFlash::CreateAt(startLoc);
 
 	int c = 0;
 

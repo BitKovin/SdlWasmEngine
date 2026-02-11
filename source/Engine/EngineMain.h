@@ -66,7 +66,7 @@ public:
 	}
 	~EngineMain()
 	{
-
+		FileSystemEngine::Shutdown();
 	}
 
 

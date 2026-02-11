@@ -79,6 +79,11 @@ void FileSystemEngine::Init()
     }
 }
 
+void FileSystemEngine::Shutdown()
+{
+	ZipVFS::Instance().Shutdown();
+}
+
 /* ============================
    READ FILE (TEXT)
    ============================ */

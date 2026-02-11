@@ -156,6 +156,8 @@ int main(int argc, char* args[]) {
 
     emscripten_set_main_loop(emscripten_render_loop, 0, 1);
 
+    delete engine;
+
     return 0;
 }
 
