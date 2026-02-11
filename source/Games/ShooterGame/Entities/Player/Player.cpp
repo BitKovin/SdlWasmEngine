@@ -285,6 +285,7 @@ void Player::SwitchWeaponOffhand(const string& classname)
     if (!classname.empty())
     {
         currentOffhandWeapon = (Weapon*)Spawn(classname);
+		currentOffhandWeapon->owner = this;
         currentOffhandWeapon->Start();
         currentOffhandWeapon->LoadAssetsIfNeeded();
     }
@@ -682,7 +683,7 @@ void Player::Update()
     //Logger::Log("Voxel world memory: " + std::to_string(memMB) + " MB");
 
 
-    int value = SpatialSoundManager::GetVoxelValueAt(Camera::position);
+    //int value = SpatialSoundManager::GetVoxelValueAt(Camera::position);
 
     //Logger::Log("player sound voxel: " + to_string(value));
 
@@ -699,13 +700,13 @@ void Player::Update()
 
 		vec3 dif = controller.GetPosition() - oldPos;
 
-		if (length(dif) > 0.2)
+		if (length(dif) > 0.0)
 		{
 			vec3 dir = normalize(controller.GetPosition() - oldPos);
 
 
 
-			auto hit = Physics::LineTrace(oldPos - dir * 0.2f, controller.GetPosition(), BodyType::World | BodyType::WorldSkybox);
+			auto hit = Physics::LineTrace(oldPos, controller.GetPosition(), BodyType::World | BodyType::WorldSkybox);
 
 			if (hit.hasHit)
 			{
@@ -715,7 +716,7 @@ void Player::Update()
 
 			vec3 offset = vec3(0, 0.5f, 0);
 
-			hit = Physics::SphereTrace(oldPos - dir * 0.1f + offset, controller.GetPosition() + offset, 0.1f, BodyType::World | BodyType::WorldSkybox);
+			hit = Physics::SphereTrace(oldPos + offset, controller.GetPosition() + offset, 0.1f, BodyType::World | BodyType::WorldSkybox);
 
 			if (hit.hasHit)
 			{

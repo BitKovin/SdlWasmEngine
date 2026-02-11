@@ -13,7 +13,7 @@ public:
 	}
 	~WorldSpawn() = default;
 	
-
+	static inline WorldSpawn* Instance = nullptr;
 
 	void FromData(EntityData data)
 	{
@@ -22,6 +22,8 @@ public:
 		printf("world spawn created\n");
 
 		CQuake3BSP::lightVolGridSize = data.GetPropertyVector("gridsize", vec3(32, 32, 64));
+
+		Instance = this;
 
 	}
 

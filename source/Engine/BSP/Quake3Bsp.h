@@ -429,6 +429,9 @@ class CQuake3BSP : public IDrawMesh
 
     // Get lighting for a dynamic object at position (x, y, z)
     LightVolPointData GetLightvolColorPoint(const glm::vec3& position, bool wallCheck = false);
+
+	//[DEPRECATED]
+    //samples light in bigger radius, but after all improvements to GetLightvolColorPoint it has no use case
     LightVolPointData GetLightvolColor(const glm::vec3& position, bool wallCheck = false);
     int FindClusterAtPosition(glm::vec3 cameraPos);
 

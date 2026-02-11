@@ -73,8 +73,8 @@ public:
 		SoundManager::LoadBankFromPath("GameData/sounds/banks/Desktop/Weapons.bank");
 		SoundManager::LoadBankFromPath("GameData/sounds/banks/Desktop/SFX.bank");
 
-		viewmodel = new SkeletalMesh(this);
-		arms = new SkeletalMesh(this);
+		viewmodel = new SkeletalMesh(owner);
+		arms = new SkeletalMesh(owner);
 
 		viewmodel->LoadFromFile("GameData/models/player/weapons/cane/cane.glb");
 		//viewmodel->ColorTexture = AssetRegistry::GetTextureFromFile("GameData/textures/cat.png");

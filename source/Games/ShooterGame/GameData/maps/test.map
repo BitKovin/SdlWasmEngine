@@ -5,7 +5,7 @@
 "_tb_textures" "textures;textures\Ground;textures/brushes;textures\common;textures\delvenPack;textures\generic;textures\lq_conc;textures\lq_dev;textures\lq_flesh;textures\lq_greek;textures\lq_health_ammo;textures\lq_legacy;textures\lq_liquidsky;textures\lq_mayan;textures\lq_medieval;textures\lq_metal;textures\lq_palette;textures\lq_props;textures\lq_tech;textures\lq_terra;textures\lq_utility;textures\lq_wood;textures\metal;textures\noise;textures\particles;textures\skies;textures\tormentPack;textures\ui;textures\wall;textures\water;textures\wood"
 "_keeplights" "1"
 "_lightmapscale" "0.5"
-"gridsize" "32 32 32"
+"gridsize" "16 16 16"
 "_tb_mod" "textures"
 // brush 0
 {
@@ -195,8 +195,8 @@
 ( -2608 -2496 -1008 ) ( -2608 -2496 -992 ) ( 1056 -2496 -1008 ) generic/cat 0 0 0 0.5 0.5 0 0 0
 ( -2608 -2784 -1024 ) ( 1056 -2784 -1024 ) ( -2608 608 -1024 ) generic/cat 0 0 0 0.5 0.5 0 0 0
 ( -2608 608 -1008 ) ( 1056 -2784 -1008 ) ( -2608 -2784 -1008 ) generic/cat 0 0 0 0.5 0.5 0 0 0
-( 1056 608 -992 ) ( -2608 608 -992 ) ( 1056 608 -1008 ) generic/cat 0 0 0 0.5 0.5 0 0 0
-( 1056 608 -992 ) ( 1056 608 -1008 ) ( 1056 -2784 -992 ) generic/cat 0 0 0 0.5 0.5 0 0 0
+( 1056 5440 -992 ) ( -2608 5440 -992 ) ( 1056 5440 -1008 ) generic/cat 0 0 0 0.5 0.5 0 0 0
+( 4752 608 -992 ) ( 4752 608 -1008 ) ( 4752 -2784 -992 ) generic/cat 0 0 0 0.5 0.5 0 0 0
 }
 // brush 21
 {

@@ -38,8 +38,8 @@ void WeaponFirearm::LoadAssets()
 	thirdPersonAnimator->LoadAssetsIfNeeded();
 
 	// RIGHT HAND
-	viewmodel = new SkeletalMesh(this);
-	arms = new SkeletalMesh(this);
+	viewmodel = new SkeletalMesh(owner);
+	arms = new SkeletalMesh(owner);
 	viewmodel->LoadFromFile(params.modelPath);
 	if (!params.texturesLocation.empty())
 		viewmodel->TexturesLocation = params.texturesLocation;

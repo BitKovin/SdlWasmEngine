@@ -671,9 +671,9 @@ bool CQuake3BSP::CheckLightProbeAcess(const glm::vec3& position, const glm::vec3
 
 	if (FindClusterAtPosition(volPosition) < 0) return false;
 
-	DebugDraw::Line(position, volPosition, 0.01f, 0.01f);
+    float maxDimention = std::max(std::max(lightVolGridSize.x, lightVolGridSize.x), lightVolGridSize.z);
 
-    return Physics::LineTrace(position, volPosition, BodyType::WorldOpaque | BodyType::WorldSkybox).hasHit == false;
+    return Physics::SphereTrace(position, volPosition, maxDimention / MAP_SCALE * 0.5f, BodyType::WorldOpaque).hasHit == false;
 
 }
 
@@ -853,7 +853,7 @@ LightVolPointData CQuake3BSP::GetLightvolColorPoint(const glm::vec3& position, b
 
                     // Respect wallCheck: if requested, require cluster check to pass
                     if (wallCheck) {
-                        if (FindClusterAtPosition(engPos / MAP_SCALE) < 0) continue;
+                        if (!CheckLightProbeAcess(position / MAP_SCALE, engPos / MAP_SCALE)) continue;
                     }
 
                     // Get sample data
@@ -904,7 +904,7 @@ LightVolPointData CQuake3BSP::GetLightvolColor(const glm::vec3& position, bool w
 
     if (lightVols.size() == 0)
     {
-        return { vec3(0), vec3(0.3f), vec3(0,-1,0) };
+		return { vec3(0), vec3(0.3f), vec3(0,-1,0) };
     }
 
     auto data = GetLightvolColorPoint(position);

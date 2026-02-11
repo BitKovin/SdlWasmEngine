@@ -8,6 +8,7 @@
 void SpatialSoundManager::BuildWorld() 
 {
 
+    return;
 
     props.absorption[1] = 0.1f;
     props.reflectivity[1] = 0.9f;
@@ -65,6 +66,9 @@ void SpatialSoundManager::BuildWorld()
 }
 
 AudioSourceSpatialResult SpatialSoundManager::ComputeAudioSource(glm::vec3 position, float maxDistance) {
+    
+    return {};
+
     // Transform source to voxel space
     glm::vec3 source_voxel = WorldToVoxelPos(position);
 
@@ -87,6 +91,9 @@ AudioSourceSpatialResult SpatialSoundManager::ComputeAudioSource(glm::vec3 posit
 
 uint8_t SpatialSoundManager::GetVoxelValueAt(vec3 pos)
 {
+
+    return 0;
+
     glm::vec3 source_voxel = WorldToVoxelPos(pos);
 
     return voxelWorld->GetValue(source_voxel);
