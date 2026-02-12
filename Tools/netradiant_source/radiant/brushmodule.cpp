@@ -321,10 +321,10 @@ public:
 	BrushQuake3API(){
 		g_multipleBrushTypes = true;
 		g_brushTypes[0] = eBrushTypeQuake3;
-		g_brushTypes[1] = eBrushTypeQuake3BP;
+		g_brushTypes[1] = eBrushTypeQuake3;
 		g_brushTypes[2] = eBrushTypeQuake3Valve220;
 
-		Brush_Construct( eBrushTypeQuake3BP );
+		Brush_Construct( eBrushTypeQuake3);
 
 		m_brushquake3 = &GetBrushCreator();
 	}

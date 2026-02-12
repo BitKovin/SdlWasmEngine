@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <game
-  type="custom"
+  type="quake3"
   index="0"
   name="Custom Engine Game (For BSP)"
   enginepath_win32="C:/Program Files (x86)/Quake III Arena/"
