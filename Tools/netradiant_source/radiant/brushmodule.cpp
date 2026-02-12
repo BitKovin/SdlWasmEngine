@@ -324,7 +324,7 @@ public:
 		g_brushTypes[1] = eBrushTypeQuake3;
 		g_brushTypes[2] = eBrushTypeQuake3Valve220;
 
-		Brush_Construct( eBrushTypeQuake3);
+		Brush_Construct( eBrushTypeQuake3Valve220);
 
 		m_brushquake3 = &GetBrushCreator();
 	}
