@@ -10,6 +10,8 @@
 #include <chrono>
 #include <imgui/imgui.h>
 
+#include <atomic>
+
 enum class ResourceType {
     Texture,
     TextureCube,
@@ -35,6 +37,11 @@ inline std::string resourceTypeToString(ResourceType type) {
 class ResourceStatistics 
 {
 public:
+
+    ~ResourceStatistics()
+    {
+        shutdown_ = true;
+    }
 
     static ResourceStatistics& Instance() {
         static ResourceStatistics instance;
@@ -66,7 +73,11 @@ public:
     }
 
     // Unregister a resource
-    bool unregisterResource(ResourceType type, uint64_t id) {
+    bool unregisterResource(ResourceType type, uint64_t id) 
+    {
+
+		if (shutdown_) return false; // Prevent modifications during shutdown
+
         auto typeIt = resources_.find(type);
         if (typeIt == resources_.end()) return false;
 
@@ -312,6 +323,8 @@ private:
         ResourceType type;
         std::chrono::steady_clock::time_point creationTime;
     };
+
+    static inline std::atomic<bool> shutdown_;
 
     // Type -> (ID -> ResourceEntry)
     std::unordered_map<ResourceType, std::unordered_map<uint64_t, ResourceEntry>> resources_;

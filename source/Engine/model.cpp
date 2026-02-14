@@ -108,11 +108,12 @@ namespace roj
 			// texture->achFormatHint gives you "png", "jpg" etc.
 			std::string format = texture->achFormatHint;
 
-			Texture* newTexture = new Texture(texData, texSize);
-
 			std::string fileName = string(texture->mFilename.C_Str()) + "." + format;
 
 			std::string texturePath = m_lastLoadedPath + "/" + fileName;
+
+
+			Texture* newTexture = new Texture(texData, texSize);
 
 			ResourceStatistics::Instance().setResourceName(ResourceType::Texture, newTexture->getID(), texturePath);
 

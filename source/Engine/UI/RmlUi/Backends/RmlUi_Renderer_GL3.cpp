@@ -38,6 +38,8 @@
 #include <algorithm>
 #include <string.h>
 
+#include <Profiling/ResourceStatistics.hpp>
+
 #if defined RMLUI_PLATFORM_WIN32_NATIVE
  // function call missing argument list
 #pragma warning(disable : 4551)
@@ -697,6 +699,8 @@ namespace Gfx {
 
 		CheckGLError("CreateFramebuffer");
 
+		ResourceStatistics::Instance().registerResource(ResourceType::RenderTexture, framebuffer, width * height * 4, "RMLUI frame buffer");
+
 		out_fb = {};
 		out_fb.width = width;
 		out_fb.height = height;
@@ -711,6 +715,9 @@ namespace Gfx {
 
 	static void DestroyFramebuffer(FramebufferData& fb)
 	{
+
+		ResourceStatistics::Instance().unregisterResource(ResourceType::RenderTexture, fb.framebuffer);
+
 		if (fb.framebuffer)
 			glDeleteFramebuffers(1, &fb.framebuffer);
 		if (fb.color_tex_buffer)
@@ -720,6 +727,7 @@ namespace Gfx {
 		if (fb.owns_depth_stencil_buffer && fb.depth_stencil_buffer)
 			glDeleteRenderbuffers(1, &fb.depth_stencil_buffer);
 		fb = {};
+
 	}
 
 	static GLuint CreateTexture(Rml::Span<const Rml::byte> source_data, Rml::Vector2i source_dimensions)
@@ -1307,6 +1315,10 @@ Rml::TextureHandle RenderInterface_GL3::GenerateTexture(Rml::Span<const Rml::byt
 		Rml::Log::Message(Rml::Log::LT_ERROR, "Failed to generate texture.");
 		return {};
 	}
+
+	ResourceStatistics::Instance().registerResource(ResourceType::Texture,texture_id, source_dimensions.x * source_dimensions.y * 4);
+	ResourceStatistics::Instance().setResourceName(ResourceType::Texture, texture_id, "RMLUI Texture");
+
 	return (Rml::TextureHandle)texture_id;
 }
 
@@ -1494,6 +1506,9 @@ void RenderInterface_GL3::RenderBlur(float sigma, const Gfx::FramebufferData& so
 void RenderInterface_GL3::ReleaseTexture(Rml::TextureHandle texture_handle)
 {
 	glDeleteTextures(1, (GLuint*)&texture_handle);
+
+	ResourceStatistics::Instance().unregisterResource(ResourceType::Texture, (GLuint)texture_handle);
+
 }
 
 void RenderInterface_GL3::SetTransform(const Rml::Matrix4f* new_transform)

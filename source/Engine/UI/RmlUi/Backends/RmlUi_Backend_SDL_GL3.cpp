@@ -35,7 +35,10 @@
 #include <RmlUi/Core/Log.h>
 #include <RmlUi/Core/Profiling.h>
 
-#include "../../../PlatformMains/PlatformWindowData.h"
+
+#include <PlatformMains/PlatformWindowData.h>
+
+#include <Profiling/ResourceStatistics.hpp>
 
 #if SDL_MAJOR_VERSION >= 3
 #include <SDL3_image/SDL_image.h>
@@ -117,6 +120,9 @@ public:
 		}
 
 		Rml::TextureHandle texture_handle = RenderInterface_GL3::GenerateTexture({ pixels, pixels_byte_size }, texture_dimensions);
+
+		ResourceStatistics::Instance().registerResource(ResourceType::Texture, texture_handle, pixels_byte_size, source);
+		ResourceStatistics::Instance().setResourceName(ResourceType::Texture, texture_handle, source);
 
 		DestroySurface(surface);
 

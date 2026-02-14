@@ -40,7 +40,7 @@ public:
 
         // Register with resource statistics
         ResourceStatistics::Instance().registerResource(
-            ResourceType::VertexBuffer,
+            (m_declaration.GetElements().size() < 6) ? ResourceType::IndexBuffer : ResourceType::VertexBuffer,
             m_id,
             m_bufferSize
         );
@@ -48,7 +48,7 @@ public:
 
     ~VertexBuffer() {
         // Unregister from resource statistics
-        ResourceStatistics::Instance().unregisterResource(ResourceType::VertexBuffer, m_id);
+        ResourceStatistics::Instance().unregisterResource((m_declaration.GetElements().size() < 6) ? ResourceType::IndexBuffer : ResourceType::VertexBuffer, m_id);
         glDeleteBuffers(1, &m_id);
     }
 

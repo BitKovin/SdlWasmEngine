@@ -235,6 +235,13 @@ CubemapTexture* AssetRegistry::GetTextureCubeFromFile(string filename)
 void AssetRegistry::RegisterTexture(Texture* texture, string path)
 {
 	MarkAsUsed(path);
+
+	if (textureCache.count(path))
+	{
+		Logger::Log("Warning: Texture already registered for path: " + path);
+		delete textureCache[path]; // Clean up existing texture to prevent memory leak
+	}
+
 	textureCache[path] = texture;
 
 }

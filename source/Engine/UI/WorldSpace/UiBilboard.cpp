@@ -196,6 +196,9 @@ void UiBilboard::EnsureRenderTarget()
 			GL_LINEAR,
 			GL_CLAMP_TO_EDGE
 		);
+
+		renderTexture->SetName("UiBilboard RT " + to_string(ViewportSize.x) + "x" + to_string(ViewportSize.y));
+
 	}
 	else if (renderTexture->width() != ViewportSize.x || renderTexture->height() != ViewportSize.y)
 	{
