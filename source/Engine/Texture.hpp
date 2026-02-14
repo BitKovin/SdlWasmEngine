@@ -13,6 +13,8 @@
 #include "malloc_override.h"
 #include "Logger.hpp"
 
+#include <Profiling/ResourceStatistics.hpp>
+
 class Texture {
 public:
     Texture(const std::string& filename, bool generateMipmaps = true) {
@@ -34,7 +36,11 @@ public:
         loadFromRawData(data, width, height, format, generateMipmaps);
     }
 
-    ~Texture() {
+    ~Texture() 
+    {
+
+		ResourceStatistics::Instance().unregisterResource(ResourceType::Texture, textureID);
+
         if (textureID != 0)
             glDeleteTextures(1, &textureID);
     }
@@ -72,6 +78,32 @@ private:
         const unsigned char* uploadPixels = reinterpret_cast<const unsigned char*>(pixels);
         std::vector<unsigned char> converted; // will hold converted data if needed
 
+        // Calculate bytes per pixel based on format
+        size_t bytesPerPixel = 4; // default RGBA
+        switch (format) {
+        case GL_RGB:
+        case GL_BGR:
+            bytesPerPixel = 3;
+            break;
+        case GL_RGBA:
+        case GL_BGRA:
+            bytesPerPixel = 4;
+            break;
+        case GL_RED:
+        case GL_ALPHA:
+        case GL_LUMINANCE:
+            bytesPerPixel = 1;
+            break;
+        case GL_LUMINANCE_ALPHA:
+            bytesPerPixel = 2;
+            break;
+        case GL_RG:
+            bytesPerPixel = 2;
+            break;
+        default:
+            bytesPerPixel = 4; // fallback
+            break;
+        }
 
         // NPOT handling: WebGL1 forbids mipmaps + repeat for NPOT textures.
         bool npot = false;// !isPowerOfTwo(width) || !isPowerOfTwo(height);
@@ -104,13 +136,54 @@ private:
         }
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+        GLfloat maxAniso = 0.0f;
+        glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAniso);
+        if (maxAniso > 0.0f) {
+            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAniso);
+        }
 
-		GLfloat maxAniso = 0.0f;
-		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAniso);
-		if (maxAniso > 0.0f) {
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAniso);
-		}
+        // Calculate accurate texture size
+        size_t textureSize = width * height * bytesPerPixel;
 
+        // Account for mipmaps (adds approximately 1/3 more memory)
+        if (useMips) {
+            textureSize += textureSize / 3;
+        }
+
+        // Create descriptive name
+        std::string textureName = "Texture_" + std::to_string(width) + "x" + std::to_string(height);
+        switch (format) {
+        case GL_RGB:
+        case GL_BGR:
+            textureName += "_RGB";
+            break;
+        case GL_RGBA:
+        case GL_BGRA:
+            textureName += "_RGBA";
+            break;
+        case GL_RED:
+            textureName += "_R";
+            break;
+        case GL_LUMINANCE:
+            textureName += "_L";
+            break;
+        case GL_LUMINANCE_ALPHA:
+            textureName += "_LA";
+            break;
+        case GL_RG:
+            textureName += "_RG";
+            break;
+        }
+        if (useMips) {
+            textureName += "_Mips";
+        }
+
+        ResourceStatistics::Instance().registerResource(
+            ResourceType::Texture,
+            textureID,
+            textureSize,
+            textureName
+        );
 
         valid = true;
     }
@@ -125,6 +198,9 @@ private:
         }
 
 		loadFromMemoryCompressed(fileData.data(), fileData.size(), generateMipmaps);
+
+		ResourceStatistics::Instance().setResourceName(ResourceType::Texture, textureID, filename);
+
         return;
 
         // 2. Allocate a buffer that SDL owns
@@ -165,7 +241,6 @@ private:
             std::cerr << "Failed to load image from memory: " << stbi_failure_reason() << std::endl;
             return;
         }
-
         // Upload texture
         setupTexture(width, height, GL_RGBA, pixels, generateMipmaps);
 

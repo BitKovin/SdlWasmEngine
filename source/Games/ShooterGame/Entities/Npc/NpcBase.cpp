@@ -1197,11 +1197,11 @@ void NpcBase::UpdateTargetFollow()
 
 		if (target_follow || currentInvestigation == InvestigationReason::WeaponFire)
 		{
-			observer->fovDeg = 400;
+			observer->fovDeg = 200;
 		}
 		else if (currentInvestigation <= InvestigationReason::Body)
 		{
-			observer->fovDeg = 200;
+			observer->fovDeg = 170;
 		}
 		else
 		{
@@ -1801,7 +1801,7 @@ void NpcBase::LoadAssets()
 void NpcBase::ShareTargetKnowlageWith(NpcBase* anotherNpc)
 {
 
-	if (anotherNpc->fractionTag != fractionTag) return;
+	if (anotherNpc->fractionTag != fractionTag && friendlyTags.count(anotherNpc->fractionTag) == 0) return;
 
 	// Generalized sharing across knownTargets
 	for (const auto& pair : knownTargets)
@@ -2573,6 +2573,8 @@ void NpcBase::UpdateDebugUI()
 		ImGui::Checkbox("Attack In Range", &target_attackInRange);
 
 		ImGui::LabelText("task", taskState.TaskName.c_str());
+
+		ImGui::LabelText("fov", to_string(observer->fovDeg).c_str());
 
 		ImGui::End();
 

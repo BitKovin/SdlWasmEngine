@@ -625,6 +625,10 @@ void CQuake3BSP::BuildMergedModels()
         data.referenceFace = keyPair.second[0];
         data.uId = mergedFacesData.size();
 
+        ResourceStatistics::Instance().setResourceName(ResourceType::VertexBuffer, data.vbo->m_id, "bsp merged");
+        ResourceStatistics::Instance().setResourceName(ResourceType::IndexBuffer, data.ibo->m_id, "bsp merged");
+
+
         data.bounds = BoundingBox::FromVertices(mergedMesh.vertices).Transform(glm::scale(vec3(1.0f / MAP_SCALE)));
 
         mergedFacesData.push_back(data);
@@ -1185,6 +1189,9 @@ void CQuake3BSP::BuildStaticOpaqueObstacles()
         modelVBO.ibo = new IndexBuffer(indices);
         modelVBO.vao = new VertexArrayObject(*modelVBO.vbo, *modelVBO.ibo);
 
+        ResourceStatistics::Instance().setResourceName(ResourceType::VertexBuffer, modelVBO.vbo->m_id, "bsp staticOpaque");
+        ResourceStatistics::Instance().setResourceName(ResourceType::IndexBuffer, modelVBO.ibo->m_id, "bsp staticOpaque");
+
         opaqueVBOs[i] = modelVBO;
 
     }
@@ -1440,6 +1447,10 @@ void CQuake3BSP::CreateRenderBuffers(int index) {
         vertices, VertexData::Declaration()
     );
     FB_array.FB_Idx[index].EBO = std::make_unique<IndexBuffer>(indices);
+
+    ResourceStatistics::Instance().setResourceName(ResourceType::VertexBuffer, FB_array.FB_Idx[index].VBO->m_id, "bsp raw buffer");
+    ResourceStatistics::Instance().setResourceName(ResourceType::IndexBuffer, FB_array.FB_Idx[index].EBO->m_id, "bsp raw buffer");
+
 
     // Create VAO linking them
     FB_array.FB_Idx[index].VAO = std::make_unique<VertexArrayObject>(

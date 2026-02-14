@@ -19,15 +19,19 @@ Renderer::Renderer()
     blurApplyShader = ShaderManager::GetShaderProgram("fullscreen_vertex", "motionBlur_apply");
 
     BlurResultBuffer = new RenderTexture(screenResolution.x, screenResolution.y, TextureFormat::RGBA16F);
+	BlurResultBuffer->SetName("BlurResultBuffer");
     BlurAccumulatedBuffer = new RenderTexture(screenResolution.x, screenResolution.y, TextureFormat::RGBA16F);
+	BlurAccumulatedBuffer->SetName("BlurAccumulatedBuffer");
 
     if (LightManager::DirectionalShadowsEnabled)
     {
         DirectionalShadowMap = new RenderTexture(LightManager::ShadowMapResolution, LightManager::ShadowMapResolution, TextureFormat::Depth32F, TextureType::Texture2D);
+		DirectionalShadowMap->SetName("DirectionalShadowMap");
         DirectionalShadowMapFBO = new Framebuffer();
         DirectionalShadowMapFBO->attachDepth(DirectionalShadowMap);
 
         DetailDirectionalShadowMap = new RenderTexture(LightManager::ShadowMapResolution, LightManager::ShadowMapResolution, TextureFormat::Depth32F, TextureType::Texture2D);
+		DetailDirectionalShadowMap->SetName("DetailDirectionalShadowMap");
         DetailDirectionalShadowMapFBO = new Framebuffer();
         DetailDirectionalShadowMapFBO->attachDepth(DetailDirectionalShadowMap);
     }
@@ -455,10 +459,12 @@ void Renderer::InitFrameBuffers()
 
     colorBuffer = new RenderTexture(screenResolution.x, screenResolution.y, colorTextureFormat, textureType, false, GL_LINEAR, GL_LINEAR,
         GL_CLAMP_TO_EDGE, 1);
+	colorBuffer->SetName("MainColorBuffer");
 
 
     depthBuffer = new RenderTexture(screenResolution.x, screenResolution.y, TextureFormat::Depth24, textureType, false, GL_LINEAR, GL_LINEAR,
         GL_CLAMP_TO_EDGE, 1);
+	depthBuffer->SetName("MainDepthBuffer");
 
     forwardFBO = new Framebuffer();
     forwardFBO->attachDepth(depthBuffer);
@@ -481,8 +487,11 @@ void Renderer::InitResolveFrameBuffers()
     //colorTextureFormat = TextureFormat::RGB8;
 
     colorResolveBuffer = new RenderTexture(screenResolution.x, screenResolution.y, colorTextureFormat, TextureType::Texture2D);
+	colorResolveBuffer->SetName("ColorResolveBuffer");
     customIdResolveBuffer = new RenderTexture(screenResolution.x, screenResolution.y, TextureFormat::RGB8, TextureType::Texture2D);
+	customIdResolveBuffer->SetName("CustomIdResolveBuffer");
     depthResolveBuffer = new RenderTexture(screenResolution.x, screenResolution.y, TextureFormat::Depth24, TextureType::Texture2D);
+	depthResolveBuffer->SetName("DepthResolveBuffer");
 
     forwardResolveFBO = new Framebuffer();
 

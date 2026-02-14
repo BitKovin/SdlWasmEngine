@@ -6,6 +6,8 @@
 
 #include "EObject.hpp"
 
+#include <Profiling/ResourceStatistics.hpp>
+
 #define OFFSET_OF(type, member) ((void*)offsetof(type, member))
 
 class VertexDeclaration {
@@ -31,62 +33,133 @@ class VertexBuffer : public EObject {
 public:
     template<typename T>
     VertexBuffer(const std::vector<T>& vertices, const VertexDeclaration& declaration, GLenum usage = GL_STATIC_DRAW)
-        : m_declaration(declaration), m_vertexCount(vertices.size()) {
+        : m_declaration(declaration), m_vertexCount(vertices.size()), m_bufferSize(vertices.size() * sizeof(T)) {
         glGenBuffers(1, &m_id);
         Bind();
-        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(T), vertices.data(), usage);
+        glBufferData(GL_ARRAY_BUFFER, m_bufferSize, vertices.data(), usage);
+
+        // Register with resource statistics
+        ResourceStatistics::Instance().registerResource(
+            ResourceType::VertexBuffer,
+            m_id,
+            m_bufferSize
+        );
     }
 
-    ~VertexBuffer() { glDeleteBuffers(1, &m_id); }
+    ~VertexBuffer() {
+        // Unregister from resource statistics
+        ResourceStatistics::Instance().unregisterResource(ResourceType::VertexBuffer, m_id);
+        glDeleteBuffers(1, &m_id);
+    }
 
     void Bind() const { glBindBuffer(GL_ARRAY_BUFFER, m_id); }
     static void Unbind() { glBindBuffer(GL_ARRAY_BUFFER, 0); }
 
     const VertexDeclaration& GetDeclaration() const { return m_declaration; }
     size_t GetVertexCount() const { return m_vertexCount; }
+    size_t GetBufferSize() const { return m_bufferSize; }
+
+    // Set name for resource tracking
+    void SetName(const std::string& name) {
+        m_name = name;
+        ResourceStatistics::Instance().setResourceName(ResourceType::VertexBuffer, m_id, name);
+    }
+
+    const std::string& GetName() const { return m_name; }
 
     // New method to update buffer data
     template<typename T>
     void UpdateData(const std::vector<T>& data, size_t offset = 0, GLenum usage = GL_DYNAMIC_DRAW) {
         Bind();
+        size_t newSize = data.size() * sizeof(T);
+
         // If the new data size differs from the currently allocated one, reallocate the buffer.
         if (data.size() != m_vertexCount) {
             m_vertexCount = data.size();
-            glBufferData(GL_ARRAY_BUFFER, m_vertexCount * sizeof(T), data.data(), usage);
+            m_bufferSize = newSize;
+            glBufferData(GL_ARRAY_BUFFER, m_bufferSize, data.data(), usage);
+
+            // Re-register with new size
+            ResourceStatistics::Instance().registerResource(
+                ResourceType::VertexBuffer,
+                m_id,
+                m_bufferSize,
+                m_name
+            );
         }
         else {
             glBufferSubData(GL_ARRAY_BUFFER, offset * sizeof(T), data.size() * sizeof(T), data.data());
         }
     }
 
-private:
     GLuint m_id;
+
+private:
     VertexDeclaration m_declaration;
     size_t m_vertexCount;
+    size_t m_bufferSize;
+    std::string m_name;
 };
 
 class IndexBuffer : public EObject {
 public:
     IndexBuffer(const std::vector<GLuint>& indices, GLenum usage = GL_STATIC_DRAW)
-        : m_indexCount(indices.size()) {
+        : m_indexCount(indices.size()), m_bufferSize(indices.size() * sizeof(GLuint)) {
         glGenBuffers(1, &m_id);
         Bind();
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), indices.data(), usage);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_bufferSize, indices.data(), usage);
+
+        // Register with resource statistics
+        ResourceStatistics::Instance().registerResource(
+            ResourceType::IndexBuffer,
+            m_id,
+            m_bufferSize
+        );
     }
 
-    ~IndexBuffer() { glDeleteBuffers(1, &m_id); }
+    ~IndexBuffer() {
+        // Unregister from resource statistics
+        ResourceStatistics::Instance().unregisterResource(ResourceType::IndexBuffer, m_id);
+        glDeleteBuffers(1, &m_id);
+    }
+
     void Bind() const { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_id); }
     static void Unbind() { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); }
+
     void UpdateData(const std::vector<GLuint>& data, GLenum usage = GL_STREAM_DRAW) {
         Bind();
+        size_t newSize = data.size() * sizeof(GLuint);
         m_indexCount = data.size();
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_indexCount * sizeof(GLuint), data.data(), usage);
+        m_bufferSize = newSize;
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_bufferSize, data.data(), usage);
+
+        // Re-register with new size
+        ResourceStatistics::Instance().registerResource(
+            ResourceType::IndexBuffer,
+            m_id,
+            m_bufferSize,
+            m_name
+        );
     }
+
     size_t GetIndexCount() const { return m_indexCount; }
+    size_t GetBufferSize() const { return m_bufferSize; }
+
+    // Set name for resource tracking
+    void SetName(const std::string& name) {
+        m_name = name;
+        ResourceStatistics::Instance().setResourceName(ResourceType::IndexBuffer, m_id, name);
+    }
+
+    const std::string& GetName() const { return m_name; }
+
+    GLuint m_id;
 
 private:
-    GLuint m_id;
+
     size_t m_indexCount;
+    size_t m_bufferSize;
+    std::string m_name;
 };
 
 // ------------------------------------------------------------
@@ -183,15 +256,6 @@ private:
 #else // GL_ES_2
 
 // --- GLES2 fallback: emulate VAO by replaying attribute setup ---
-// Behavior:
-//  - On Bind() we bind vertex/index buffers and call glEnableVertexAttribArray + glVertexAttribPointer for every element.
-//  - On Unbind() we disable the attributes that this VAO enabled and unbind buffers.
-//  - Integer attribute types (GL_INT etc.) are NOT supported in GLES2 => they are treated as GL_FLOAT here.
-//  - Instancing (divisor > 0) is NOT supported in core GLES2. If you enable ANGLE/EXT instanced arrays and have a loader,
-//    you can extend this code to call the corresponding glVertexAttribDivisor* functions.
-//
-// Usage: same as desktop path. Compilation: define GL_ES_2 to select this path.
-//
 class VertexArrayObject : public EObject {
 public:
     int IndexCount = 0;
@@ -210,26 +274,20 @@ public:
 
     ~VertexArrayObject() { /* nothing to free in GLES2 emulation */ }
 
-    // Bind: set up attributes (emulates binding a VAO)
     void Bind() const {
-        // Bind buffers first
         vertexBuffer->Bind();
         indexBuffer->Bind();
 
         m_enabledAttributes.clear();
 
-        // Vertex attributes
         for (const auto& element : vertexElements) {
-            // Enable attribute
             glEnableVertexAttribArray(element.index);
             m_enabledAttributes.push_back(element.index);
 
-            // GLES2: integer attribute types do not exist. Fallback to GL_FLOAT here.
             GLenum attrType = element.type;
             if (attrType == GL_INT || attrType == GL_UNSIGNED_INT ||
                 attrType == GL_SHORT || attrType == GL_UNSIGNED_SHORT ||
                 attrType == GL_BYTE || attrType == GL_UNSIGNED_BYTE) {
-                // integer types will be passed as floats to the shader
                 attrType = GL_FLOAT;
             }
 
@@ -241,14 +299,8 @@ public:
                 element.stride,
                 element.offset
             );
-
-            // NOTE: element.divisor is ignored in core GLES2. To support instancing you must:
-            //   1) have the ANGLE_instanced_arrays or EXT_instanced_arrays extension
-            //   2) load the extension functions (glVertexAttribDivisorANGLE / glDrawElementsInstancedANGLE etc.)
-            // This header does not attempt to load those function pointers automatically.
         }
 
-        // Instance attributes (emulated: attributes are enabled, but divisor is ignored unless you add extension loading)
         if (instanceBuffer) {
             instanceBuffer->Bind();
             for (const auto& element : instanceElements) {
@@ -270,25 +322,19 @@ public:
                     element.stride,
                     element.offset
                 );
-
-                // If element.divisor > 0: instancing requires extension; divisor not set here.
             }
         }
 
-        // record that *this* is bound (used by static Unbind)
         s_bound = this;
     }
 
-    // Unbind: disable attributes enabled by the last Bind() and unbind buffers
     static void Unbind() {
         if (!s_bound) {
-            // nothing bound
             VertexBuffer::Unbind();
             IndexBuffer::Unbind();
             return;
         }
 
-        // disable attributes that were enabled by the last Bind
         for (auto idx : s_bound->m_enabledAttributes) {
             glDisableVertexAttribArray(idx);
         }
@@ -301,8 +347,6 @@ public:
     }
 
     bool IsInstanced() const {
-        // Return true only if the instance buffer exists and at least one element uses a divisor.
-        // Note: without extension this will not actually perform instanced draws.
         if (!instanceBuffer) return false;
         for (const auto& el : instanceElements) {
             if (el.divisor > 0) return true;
@@ -311,20 +355,13 @@ public:
     }
 
     size_t GetInstanceCount() const {
-        // Instance counting needs actual instancing support to be meaningful.
-        // We return 0 to indicate "not supported" by default on GLES2 without extension.
         return 0;
     }
 
 private:
-    // attributes enabled during Bind() so we can disable them on Unbind()
     mutable std::vector<GLuint> m_enabledAttributes;
-
-    // cached copies of element declarations so Bind() doesn't access transient refs
     std::vector<VertexDeclaration::Element> vertexElements;
     std::vector<VertexDeclaration::Element> instanceElements;
-
-    // last bound emulated VAO instance (used by Unbind)
     inline static VertexArrayObject* s_bound = nullptr;
 };
 

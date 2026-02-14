@@ -4,6 +4,8 @@
 #include "AssetRegistry.h"
 #include "Texture.hpp"
 
+#include <Profiling/ResourceStatistics.hpp>s
+
 //#include "gl.h"
 
 namespace roj
@@ -112,6 +114,8 @@ namespace roj
 
 			std::string texturePath = m_lastLoadedPath + "/" + fileName;
 
+			ResourceStatistics::Instance().setResourceName(ResourceType::Texture, newTexture->getID(), texturePath);
+
 			::AssetRegistry::RegisterTexture(newTexture, texturePath);
 
 
@@ -124,6 +128,9 @@ namespace roj
 			int height = texture->mHeight;
 
 			Texture* newTexture = new Texture(texData, width, height);
+
+			ResourceStatistics::Instance().setResourceName(ResourceType::Texture, newTexture->getID(), m_lastLoadedPath);
+
 			::AssetRegistry::RegisterTexture(newTexture, m_lastLoadedPath);
 		}
 	}

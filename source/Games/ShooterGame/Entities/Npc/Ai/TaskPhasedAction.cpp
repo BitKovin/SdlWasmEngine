@@ -91,6 +91,7 @@ void TaskPhasedAction::NpcInterrupted(NpcBase* npc)
     auto& s = npc->GetTaskStateRef();
     
     s.AllowWeapon = true;
+    s.HasToLockPosition = false;
     
     StopTaskAnimation(npc);
 

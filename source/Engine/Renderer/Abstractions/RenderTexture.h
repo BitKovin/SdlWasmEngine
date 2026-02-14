@@ -57,6 +57,8 @@ public:
     GLuint framebuffer() const { return m_fbo; }
     void bindFramebuffer(GLenum target = GL_FRAMEBUFFER) const;
 
+    void SetName(std::string name);
+
 private:
     GLuint m_id;
     GLuint m_fbo = 0;
@@ -69,6 +71,8 @@ private:
     GLenum m_magFilter;
     GLenum m_wrapF;
 
+    std::string m_name = "";
+
     bool m_sampleDepth = false;
 
     GLenum m_attachment;
@@ -78,4 +82,7 @@ private:
     std::tuple<GLenum, GLenum, GLenum> getFormatInfo() const;
     void validateSampleCount() const;
     void setupFramebuffer();
+
+
+
 };

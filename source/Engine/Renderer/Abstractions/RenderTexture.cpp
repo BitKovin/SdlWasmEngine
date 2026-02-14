@@ -3,6 +3,8 @@
 #include "../../gl.h"
 #include <stdexcept>
 
+#include <Profiling/ResourceStatistics.hpp>
+
 //------------------------------------------------------------------------------
 // On WebGL (Emscripten) we must fall back to single‐sample 2D only
 #if defined(GL_ES_PROFILE)
@@ -54,6 +56,9 @@ RenderTexture::RenderTexture(uint32_t width, uint32_t height,
 RenderTexture::~RenderTexture() {
     if (m_fbo) glDeleteFramebuffers(1, &m_fbo);
     glDeleteTextures(1, &m_id);
+
+	ResourceStatistics::Instance().unregisterResource(ResourceType::RenderTexture, m_id);
+
 }
 
 void RenderTexture::bind(uint32_t unit) const {
@@ -132,6 +137,38 @@ void RenderTexture::allocateStorage() {
         );
         glBindTexture(target, 0);
 
+        int pixelSizeBytes = 4;
+
+        if (internalFmt == GL_R8 || internalFmt == GL_RG8 || internalFmt == GL_RGB8 || internalFmt == GL_RGBA8) {
+            pixelSizeBytes = 4; // Approximate for 8-bit formats
+        }
+        else if (internalFmt == GL_R16F || internalFmt == GL_RG16F || internalFmt == GL_RGB16F || internalFmt == GL_RGBA16F) {
+            pixelSizeBytes = 8; // Approximate for 16-bit float formats
+        }
+        else if (internalFmt == GL_R32F || internalFmt == GL_RG32F || internalFmt == GL_RGB32F || internalFmt == GL_RGBA32F) {
+            pixelSizeBytes = 16; // Approximate for 32-bit float formats
+        }
+        else if (internalFmt == GL_DEPTH_COMPONENT16) {
+            pixelSizeBytes = 2;
+        }
+        else if (internalFmt == GL_DEPTH_COMPONENT24) {
+            pixelSizeBytes = 3;
+        }
+        else if (internalFmt == GL_DEPTH_COMPONENT32F) {
+            pixelSizeBytes = 4;
+        }
+        else if (internalFmt == GL_DEPTH24_STENCIL8) {
+            pixelSizeBytes = 4;
+        }
+        else if (internalFmt == GL_DEPTH32F_STENCIL8) {
+            pixelSizeBytes = 5;
+        }
+
+		pixelSizeBytes *= m_samples; // Multisampling increases memory usage
+
+        ResourceStatistics::Instance().registerResource(ResourceType::RenderTexture, m_id, m_width * m_height * pixelSizeBytes); // Approximate size
+        ResourceStatistics::Instance().setResourceName(ResourceType::RenderTexture, m_id, m_name);
+
         // Reattach to FBO if exists
         if (m_fbo) {
             glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
@@ -172,6 +209,37 @@ void RenderTexture::allocateStorage() {
         glFramebufferTexture2D(GL_FRAMEBUFFER, m_attachment, target, m_id, 0);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
+
+	int pixelSizeBytes = 4;
+
+	if (internalFmt == GL_R8 || internalFmt == GL_RG8 || internalFmt == GL_RGB8 || internalFmt == GL_RGBA8) {
+        pixelSizeBytes = 4; // Approximate for 8-bit formats
+    }
+    else if (internalFmt == GL_R16F || internalFmt == GL_RG16F || internalFmt == GL_RGB16F || internalFmt == GL_RGBA16F) {
+        pixelSizeBytes = 8; // Approximate for 16-bit float formats
+    }
+    else if (internalFmt == GL_R32F || internalFmt == GL_RG32F || internalFmt == GL_RGB32F || internalFmt == GL_RGBA32F) {
+        pixelSizeBytes = 16; // Approximate for 32-bit float formats
+    }
+    else if (internalFmt == GL_DEPTH_COMPONENT16) {
+        pixelSizeBytes = 2;
+    }
+    else if (internalFmt == GL_DEPTH_COMPONENT24) {
+        pixelSizeBytes = 3;
+    }
+    else if (internalFmt == GL_DEPTH_COMPONENT32F) {
+        pixelSizeBytes = 4;
+    }
+    else if (internalFmt == GL_DEPTH24_STENCIL8) {
+        pixelSizeBytes = 4;
+    }
+    else if (internalFmt == GL_DEPTH32F_STENCIL8) {
+        pixelSizeBytes = 5;
+    }
+
+	ResourceStatistics::Instance().registerResource(ResourceType::RenderTexture, m_id, m_width * m_height * pixelSizeBytes); // Approximate size
+    ResourceStatistics::Instance().setResourceName(ResourceType::RenderTexture, m_id, m_name);
+
 }
 
 void RenderTexture::setParameters(GLenum minFilter,
@@ -333,6 +401,14 @@ void RenderTexture::setupFramebuffer() {
     // if (status != GL_FRAMEBUFFER_COMPLETE) { ... }
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void RenderTexture::SetName(std::string name)
+{
+    m_name = name;
+
+	ResourceStatistics::Instance().setResourceName(ResourceType::RenderTexture, m_id, name);
+
 }
 
 void RenderTexture::bindFramebuffer(GLenum target) const {

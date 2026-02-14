@@ -16,6 +16,8 @@
 #include "UI/RmlUi/RmlUiContext.h"
 #include "LevelTraversalSystem.h"
 
+#include <Profiling/ResourceStatistics.hpp>
+
 EngineMain* EngineMain::MainInstance = nullptr;
 
 UiViewport EngineMain::Viewport;
@@ -646,6 +648,7 @@ void EngineMain::GameUpdate()
 void EngineMain::Render()
 {
 
+
     glEnable(GL_DEPTH_TEST);
 
     ivec2 uiResolution = ivec2(UiManager::GetScaledUiHeight() * Camera::AspectRatio , UiManager::GetScaledUiHeight());
@@ -662,6 +665,8 @@ void EngineMain::Render()
             uiResolution.y,
             TextureFormat::RGBA8
         );
+
+        UiRenderTexture->SetName("UiRenderTexture");
     }
 
     /* ============================================================
@@ -747,8 +752,12 @@ void EngineMain::Render()
 
         bool open = true;
 
-        if(Paused)
-		    Console::Get().Draw("Console", &open);
+        if (Paused)
+        {
+            Console::Get().Draw("Console", &open);
+            ResourceStatistics::Instance().renderImGui();
+        }
+
 
         RenderImGui();
     }

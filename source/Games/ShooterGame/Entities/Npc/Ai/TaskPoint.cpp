@@ -58,7 +58,7 @@ void TaskPoint::NpcInterrupted(NpcBase* npc)
     npc->animator.StopTaskAnimation();
     
     TaskState& s = npc->GetTaskStateRef();
-
+    s.HasToLockPosition = false;
     s.DoingJob = false;
 
 }

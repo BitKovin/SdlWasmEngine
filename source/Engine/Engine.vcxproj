@@ -582,6 +582,7 @@
     <ClInclude Include="PlatformMains\linux_main.hpp" />
     <ClInclude Include="PlatformMains\PlatformWindowData.h" />
     <ClInclude Include="PlatformMains\windows_main.hpp" />
+    <ClInclude Include="Profiling\ResourceStatistics.hpp" />
     <ClInclude Include="RandomHelper.h" />
     <ClInclude Include="RegisterLevelObject.h" />
     <ClInclude Include="Renderer\Abstractions\FrameBuffer.h" />

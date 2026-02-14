@@ -274,8 +274,10 @@ namespace roj
 		skinMesh.name = mesh->mName.C_Str();
 
 		skinMesh.vertices = new VertexBuffer(vertices, VertexData::Declaration());
+		ResourceStatistics::Instance().setResourceName(ResourceType::VertexBuffer, skinMesh.vertices->m_id, m_lastLoadedPath + "|" + skinMesh.name + "_Vertices");
 
 		skinMesh.indices = new IndexBuffer(indices);
+		ResourceStatistics::Instance().setResourceName(ResourceType::IndexBuffer, skinMesh.indices->m_id, m_lastLoadedPath + "|" + skinMesh.name + "_Indices");
 
 		std::vector<MeshTexture> textures = getMeshTextures(scene->mMaterials[mesh->mMaterialIndex], scene);
 

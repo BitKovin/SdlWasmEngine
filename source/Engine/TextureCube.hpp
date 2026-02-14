@@ -11,6 +11,8 @@
 
 #include "Helpers/StringHelper.h"
 
+#include <Profiling/ResourceStatistics.hpp>
+
 class CubemapTexture 
 {
 
@@ -82,6 +84,7 @@ public:
 
     ~CubemapTexture() {
         glDeleteTextures(1, &textureID);
+		ResourceStatistics::Instance().unregisterResource(ResourceType::TextureCube, textureID);
     }
 
     void bind() const {
@@ -95,7 +98,7 @@ public:
 private:
     GLuint textureID = 0;
 
-    void loadFromFiles(const std::vector<std::string>& faces, bool generateMipmaps) 
+    void loadFromFiles(const std::vector<std::string>& faces, bool generateMipmaps)
     {
         if (faces.size() != 6) {
             std::cerr << "[Cubemap] Need 6 faces, got " << faces.size() << std::endl;
@@ -106,9 +109,12 @@ private:
         glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-        for (unsigned i = 0; i < 6; ++i) 
-        {
+        size_t totalSize = 0;
+        int faceWidth = 0;
+        int faceHeight = 0;
 
+        for (unsigned i = 0; i < 6; ++i)
+        {
             auto fileData = FileSystemEngine::ReadFileBinary(faces[i].c_str());
 
             // Create an SDL_RWops from memory
@@ -122,6 +128,7 @@ private:
             SDL_Surface* surf = IMG_Load_RW(rw, 1); // 1 = automatically free the RWops after loading
             if (!surf) {
                 SDL_Log("IMG_Load_RW failed: %s", IMG_GetError());
+                continue;
             }
 
             SDL_Surface* conv = SDL_ConvertSurfaceFormat(
@@ -130,7 +137,7 @@ private:
             if (!conv) {
                 std::cerr << "[Cubemap] Convert failed " << faces[i]
                     << ": " << SDL_GetError() << std::endl;
-                    continue;
+                continue;
             }
 
             // rotate +Y (index 2) 90° CW, –Y (index 3) 90° CCW
@@ -145,6 +152,16 @@ private:
                 }
                 conv = rot;
             }
+
+            // Store dimensions from first face
+            if (i == 0) {
+                faceWidth = conv->w;
+                faceHeight = conv->h;
+            }
+
+            // Calculate face size: width * height * 4 bytes (RGBA)
+            size_t faceSize = conv->w * conv->h * 4;
+            totalSize += faceSize;
 
             glTexImage2D(
                 GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
@@ -167,7 +184,37 @@ private:
 
         if (generateMipmaps) {
             glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+            // Mipmaps add approximately 1/3 more memory (sum of 1/4 + 1/16 + 1/64 + ...)
+            totalSize += totalSize / 3;
         }
+
+        // Find common prefix of all face paths
+        std::string resourceName = "Cubemap";
+        if (!faces.empty()) {
+            resourceName = faces[0];
+
+            // Find the longest common prefix among all faces
+            for (size_t i = 1; i < faces.size(); ++i) {
+                size_t minLen = std::min(resourceName.length(), faces[i].length());
+                size_t j = 0;
+                while (j < minLen && resourceName[j] == faces[i][j]) {
+                    j++;
+                }
+                resourceName = resourceName.substr(0, j);
+            }
+
+            // If the common prefix is empty or too short, use a default
+            if (resourceName.empty() || resourceName.length() < 3) {
+                resourceName = "Cubemap";
+            }
+        }
+
+        ResourceStatistics::Instance().registerResource(
+            ResourceType::TextureCube,
+            textureID,
+            totalSize,
+            resourceName
+        );
     }
 
 

@@ -5,6 +5,8 @@
 #include "../Physics.h"
 #include "../DebugDraw.hpp"
 
+#include <Level.hpp>
+
 void Observer::UpdateVisibility(const std::vector<std::shared_ptr<ObservationTarget>>& allTargets)
 {
     visibleTargets.clear();
@@ -34,6 +36,11 @@ void Observer::UpdateVisibility(const std::vector<std::shared_ptr<ObservationTar
 
         if (angle <= fovDeg * 0.5f)
         {
+
+			int observerCluster = Level::Current->BspData.FindClusterAtPosition(position);
+			int targetCluster = Level::Current->BspData.FindClusterAtPosition(target->position);
+
+            if (Level::Current->BspData.IsClusterVisible(observerCluster, targetCluster) == false) continue;
 
             auto hit = Physics::LineTrace(position, target->position, BodyType::WorldOpaque | BodyType::MainBody);
 
