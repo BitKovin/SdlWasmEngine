@@ -39,7 +39,6 @@ public:
 		doorFrameMesh->Rotation = Rotation;
 		doorMesh->Position = Position;
 		doorMesh->Rotation = Rotation;
-
 	}
 
 	void Start() override;

@@ -67,6 +67,7 @@ public:
 	~EngineMain()
 	{
 		FileSystemEngine::Shutdown();
+        Level::Current->CloseLevel();
 	}
 
 

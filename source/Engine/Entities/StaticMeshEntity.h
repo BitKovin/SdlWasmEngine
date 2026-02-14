@@ -31,6 +31,8 @@ public:
 		mesh->Position = Position;
 		mesh->Scale = scaleVec / 32.0f;
 
+		mesh->Brightness = 2;
+
 		mesh->ColorTexture = AssetRegistry::GetTextureFromFile("GameData/" + data.GetPropertyString("texture"));
 
 		Drawables.push_back(mesh);

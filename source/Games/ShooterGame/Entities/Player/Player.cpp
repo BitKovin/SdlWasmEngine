@@ -799,8 +799,7 @@ void Player::Update()
 
     RunProgress = std::clamp(RunProgress, 0.0f, 1.0f);
 
-    if(canRun)
-        maxSpeed = mix(WalkSpeed, RunSpeed, RunProgress);
+    maxSpeed = std::lerp(controller.isCrouched ? CrouchSpeed : WalkSpeed, RunSpeed, RunProgress);
 
     if (on_bike == false)
     {
