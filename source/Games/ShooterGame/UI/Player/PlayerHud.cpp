@@ -69,20 +69,50 @@ void WeaponSlots::Update()
 
     if (oldSlot == player->currentSlot && oldSlots == player->weaponSlots)
     {
-        UiHorizontalBox::Update();
-        return;
+        //UiHorizontalBox::Update();
+        //return;
     }
 
     children.clear();
 
-    for (WeaponSlotData data : player->weaponSlots)
+	std::vector<WeaponSlotData> slots = player->weaponSlots;
+
+	int currentSlot = player->currentSlot;
+
+	if (player->GetWeaponSystemMode() == WeaponSystemMode::Inventory)
+    {
+
+		currentSlot = player->currentInventoryIndex;
+
+        slots.clear();
+
+		int index = 0;
+
+        for (auto item : player->GetInventory())
+        {
+            if (item.mainWeaponData.className != "")
+            {
+                item.mainWeaponData.slot = index;
+                slots.push_back(item.mainWeaponData);
+            }
+            else if (item.offhandWeaponData.className != "")
+            {
+				item.offhandWeaponData.slot = index;
+                slots.push_back(item.offhandWeaponData);
+            }
+
+            index++;
+        }
+    }
+
+    for (WeaponSlotData& data : slots)
     {
         if (data.className == "") continue;
 
         auto img = make_shared<UiButton>();
         img->size = vec2(120,120);
 
-        if (data.slot == player->currentSlot)
+        if (data.slot == currentSlot)
         {
             img->color = vec4(1,0.5,0.5,1);
         }

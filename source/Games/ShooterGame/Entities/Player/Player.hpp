@@ -59,6 +59,8 @@ struct InventoryItem
 	std::string itemID;              // Unique item identifier for item database lookup
 	InventoryItemType itemType;      // What type of item this is
 	
+	std::string uid;                 // Unique instance ID (for tracking specific instances of items, if needed)
+
 	// Weapon data (used by MainWeapon, OffhandWeapon, DualWeapon types)
 	WeaponSlotData mainWeaponData;   // Main weapon data (ammo, className, etc.)
 	WeaponSlotData offhandWeaponData; // Offhand weapon data (for dual weapons or offhand items)
@@ -165,8 +167,7 @@ private:
 	// Inventory system
 	WeaponSystemMode weaponSystemMode = WeaponSystemMode::Inventory; // Default to inventory mode
 	std::vector<InventoryItem> inventory;
-	int currentInventoryIndex = -1;   // Currently equipped item from inventory
-	int desiredInventoryIndex = -1;   // Item player wants to switch to (for lazy switching)
+
 	int lastInventoryIndex = -1;      // Previously equipped inventory item (for quick switch)
 	bool pendingInventorySwitch = false;
 
@@ -264,6 +265,9 @@ private:
 
 
 public:
+
+	int desiredInventoryIndex = -1;   // Item player wants to switch to (for lazy switching)
+	int currentInventoryIndex = -1;   // Currently equipped item from inventory
 
 	vec3 cameraRotation = vec3(0);
 
