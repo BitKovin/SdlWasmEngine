@@ -66,13 +66,73 @@ void Player::Start()
 
     PreloadEntityType("weapon_cane");
 
-    AddWeaponByName("weapon_pistol");
-    AddWeaponByName("weapon_shotgun");
-    AddWeaponByName("weapon_tommy");
-    AddWeaponByName("weapon_sniper");
-
-    offhandWeapons.push_back("weapon_cane");
-    desiredOffhandWeapon = 1;
+    // Add weapons based on current weapon system mode
+    if (weaponSystemMode == WeaponSystemMode::Inventory)
+    {
+        // Inventory mode - add weapons to inventory
+        Weapon* tempWeapon;
+        WeaponSlotData weaponData;
+        
+        // Add pistol
+        tempWeapon = (Weapon*)LevelObjectFactory::instance().create("weapon_pistol");
+        weaponData = tempWeapon->GetDefaultData();
+        delete tempWeapon;
+        AddItemToInventory("weapon_pistol", weaponData);
+        
+        // Add shotgun
+        tempWeapon = (Weapon*)LevelObjectFactory::instance().create("weapon_shotgun");
+        weaponData = tempWeapon->GetDefaultData();
+        delete tempWeapon;
+        AddItemToInventory("weapon_shotgun", weaponData);
+        
+        // Add tommy gun
+        tempWeapon = (Weapon*)LevelObjectFactory::instance().create("weapon_tommy");
+        weaponData = tempWeapon->GetDefaultData();
+        delete tempWeapon;
+        AddItemToInventory("weapon_tommy", weaponData);
+        
+        // Add sniper
+        tempWeapon = (Weapon*)LevelObjectFactory::instance().create("weapon_sniper");
+        weaponData = tempWeapon->GetDefaultData();
+        delete tempWeapon;
+        AddItemToInventory("weapon_sniper", weaponData);
+        
+        // Add offhand weapons to inventory
+        WeaponSlotData caneData;
+        tempWeapon = (Weapon*)LevelObjectFactory::instance().create("weapon_cane");
+        caneData = tempWeapon->GetDefaultData();
+        delete tempWeapon;
+        AddItemToInventory("weapon_cane", InventoryItemType::OffhandWeapon, caneData);
+        
+        // Add dual weapon example (pistol + empty offhand for now)
+        WeaponSlotData pistolData, emptyOffhand;
+        tempWeapon = (Weapon*)LevelObjectFactory::instance().create("weapon_pistol");
+        pistolData = tempWeapon->GetDefaultData();
+        delete tempWeapon;
+        
+        tempWeapon = (Weapon*)LevelObjectFactory::instance().create("weapon_lefthand_empty");
+        emptyOffhand = tempWeapon->GetDefaultData();
+        delete tempWeapon;
+        AddItemToInventory("pistol_dual", pistolData, emptyOffhand);
+        
+        // Equip first weapon
+        if (!inventory.empty())
+        {
+            SwitchToInventoryItem(0, true);
+        }
+    }
+    else
+    {
+        // Slots mode - use original system
+        AddWeaponByName("weapon_pistol");
+        AddWeaponByName("weapon_shotgun");
+        AddWeaponByName("weapon_tommy");
+        AddWeaponByName("weapon_sniper");
+        
+        // Offhand weapons for slots mode
+        offhandWeapons.push_back("weapon_cane");
+        desiredOffhandWeapon = 1;
+    }
 
     cameraRotation.y = Rotation.y;
 
@@ -389,6 +449,372 @@ void Player::DestroyWeapon()
         currentWeapon = nullptr;
     }
 }
+
+// ============================================================================
+// INVENTORY SYSTEM IMPLEMENTATION
+// ============================================================================
+
+void Player::SetWeaponSystemMode(WeaponSystemMode mode)
+{
+	weaponSystemMode = mode;
+	
+	// When switching modes, clear the current weapon to avoid conflicts
+	if (mode == WeaponSystemMode::Inventory)
+	{
+		currentSlot = -1;
+		// Optionally preserve current weapon in inventory
+	}
+	else // Switching to Slots mode
+	{
+		currentInventoryIndex = -1;
+		desiredInventoryIndex = -1;
+		pendingInventorySwitch = false;
+	}
+}
+
+// Add main weapon only (backwards compatible)
+int Player::AddItemToInventory(const std::string& itemID, const WeaponSlotData& weaponData, int stackSize)
+{
+	return AddItemToInventory(itemID, InventoryItemType::MainWeapon, weaponData, stackSize);
+}
+
+// Add item with specific type
+int Player::AddItemToInventory(const std::string& itemID, InventoryItemType type, const WeaponSlotData& mainWeaponData, int stackSize)
+{
+	// Check if item already exists and can be stacked
+	int existingIndex = FindInventoryItemByID(itemID);
+	
+	if (existingIndex >= 0 && inventory[existingIndex].stackSize > 0)
+	{
+		// Stack with existing item
+		inventory[existingIndex].stackSize += stackSize;
+		return existingIndex;
+	}
+	
+	if (type == InventoryItemType::OffhandWeapon)
+    {
+        InventoryItem newItem(itemID, type, mainWeaponData, stackSize);
+		newItem.offhandWeaponData = mainWeaponData; // Store weapon data in offhand slot for offhand items
+		newItem.mainWeaponData = WeaponSlotData(); // Clear main weapon data for offhand items
+        inventory.push_back(newItem);
+        return inventory.size() - 1;
+    }
+    else
+    {
+        // Add as new item
+        InventoryItem newItem(itemID, type, mainWeaponData, stackSize);
+        inventory.push_back(newItem);
+        return inventory.size() - 1;
+    }
+
+
+}
+
+// Add dual weapon (both main and offhand)
+int Player::AddItemToInventory(const std::string& itemID, const WeaponSlotData& mainWeaponData, const WeaponSlotData& offhandWeaponData, int stackSize)
+{
+	// Check if item already exists and can be stacked
+	int existingIndex = FindInventoryItemByID(itemID);
+	
+	if (existingIndex >= 0 && inventory[existingIndex].stackSize > 0)
+	{
+		inventory[existingIndex].stackSize += stackSize;
+		return existingIndex;
+	}
+	
+	// Add as new dual weapon item
+	InventoryItem newItem(itemID, mainWeaponData, offhandWeaponData, stackSize);
+	inventory.push_back(newItem);
+	return inventory.size() - 1;
+}
+
+// Add custom logic item
+int Player::AddCustomItemToInventory(const std::string& itemID, InventoryItemCallback equipCallback, InventoryItemCallback useCallback, int stackSize)
+{
+	// Check if item already exists and can be stacked
+	int existingIndex = FindInventoryItemByID(itemID);
+	
+	if (existingIndex >= 0 && inventory[existingIndex].stackSize > 0)
+	{
+		inventory[existingIndex].stackSize += stackSize;
+		return existingIndex;
+	}
+	
+	// Add as new custom item
+	InventoryItem newItem(itemID, equipCallback, useCallback, stackSize);
+	inventory.push_back(newItem);
+	return inventory.size() - 1;
+}
+
+bool Player::RemoveItemFromInventory(int inventoryIndex)
+{
+	if (inventoryIndex < 0 || inventoryIndex >= inventory.size())
+		return false;
+	
+	// If this is the currently equipped item, unequip it first
+	if (inventoryIndex == currentInventoryIndex)
+	{
+		DestroyWeapon();
+		currentInventoryIndex = -1;
+	}
+	
+	// Adjust indices if removing an item before current
+	if (inventoryIndex < currentInventoryIndex)
+		currentInventoryIndex--;
+	if (inventoryIndex < desiredInventoryIndex)
+		desiredInventoryIndex--;
+	
+	inventory.erase(inventory.begin() + inventoryIndex);
+	return true;
+}
+
+bool Player::RemoveItemByID(const std::string& itemID)
+{
+	int index = FindInventoryItemByID(itemID);
+	if (index >= 0)
+	{
+		return RemoveItemFromInventory(index);
+	}
+	return false;
+}
+
+InventoryItem* Player::GetInventoryItem(int index)
+{
+	if (index >= 0 && index < inventory.size())
+		return &inventory[index];
+	return nullptr;
+}
+
+int Player::FindInventoryItemByID(const std::string& itemID)
+{
+	for (int i = 0; i < inventory.size(); i++)
+	{
+		if (inventory[i].itemID == itemID)
+			return i;
+	}
+	return -1;
+}
+
+bool Player::CanSwitchToInventoryItem(int inventoryIndex)
+{
+	if (inventoryIndex < 0 || inventoryIndex >= inventory.size())
+		return false;
+	
+	//if (inventoryIndex == currentInventoryIndex)
+	//	return false;
+	
+	if (!currentWeapon)
+		return true;
+	
+	return currentWeapon->CanChangeSlot();
+}
+
+void Player::SwitchToInventoryItem(int inventoryIndex, bool forceChange)
+{
+	// Validate index
+	if (inventoryIndex < 0 || inventoryIndex >= inventory.size())
+		return;
+	
+	// Check if we can switch
+	if (!forceChange && !CanSwitchToInventoryItem(inventoryIndex))
+	{
+		// Set up lazy switching - wait for weapon to allow change
+		desiredInventoryIndex = inventoryIndex;
+		pendingInventorySwitch = true;
+		return;
+	}
+	
+	// Clear any pending switch
+	pendingInventorySwitch = false;
+	desiredInventoryIndex = -1;
+	
+	// Save current weapon state back to inventory before switching
+	if (currentWeapon && currentInventoryIndex >= 0 && currentInventoryIndex < inventory.size())
+	{
+		InventoryItem& currentItem = inventory[currentInventoryIndex];
+		
+		// Save based on item type
+		if (currentItem.itemType == InventoryItemType::MainWeapon || 
+		    currentItem.itemType == InventoryItemType::DualWeapon)
+		{
+			currentItem.mainWeaponData = currentWeapon->Data;
+		}
+		
+		if (currentItem.itemType == InventoryItemType::DualWeapon && currentOffhandWeapon)
+		{
+			currentItem.offhandWeaponData = currentOffhandWeapon->Data;
+		}
+		else if (currentItem.itemType == InventoryItemType::OffhandWeapon && currentOffhandWeapon)
+		{
+			currentItem.offhandWeaponData = currentOffhandWeapon->Data;
+		}
+	}
+	
+    InventoryItem& item = inventory[inventoryIndex];
+
+    if (currentInventoryIndex == inventoryIndex)
+    {
+		// Handle different item types
+		switch (item.itemType)
+		{
+		    case InventoryItemType::MainWeapon:
+		    {
+			    // Equip main weapon only
+			    DestroyWeapon();
+			    currentInventoryIndex = -1;
+			    return;
+			    break;
+		    }
+
+		    case InventoryItemType::OffhandWeapon:
+		    {
+			    DestroyWeaponOffhand();
+			    currentInventoryIndex = -1;
+			    return;
+			    break;
+		    }
+
+		    case InventoryItemType::DualWeapon:
+		    {
+			    DestroyWeapon();
+			    DestroyWeaponOffhand();
+			    currentInventoryIndex = -1;
+			    return;
+		    }
+
+		    case InventoryItemType::CustomLogic:
+		    {
+
+		    }
+		}
+    }
+
+	// Track last inventory index for quick switching
+	if (inventoryIndex != currentInventoryIndex && currentInventoryIndex >= 0)
+	{
+		lastInventoryIndex = currentInventoryIndex;
+	}
+	
+	// Update current inventory index
+	currentInventoryIndex = inventoryIndex;
+
+	
+	// Handle different item types
+	switch (item.itemType)
+	{
+		case InventoryItemType::MainWeapon:
+		{
+			// Equip main weapon only
+			SwitchWeapon(item.mainWeaponData);
+			break;
+		}
+		
+		case InventoryItemType::OffhandWeapon:
+		{
+			// Equip offhand weapon only
+			//DestroyWeapon(); // Clear main weapon
+			if (!item.offhandWeaponData.className.empty())
+			{
+				SwitchWeaponOffhand(item.offhandWeaponData.className);
+				if (currentOffhandWeapon)
+				{
+					currentOffhandWeapon->SetData(item.offhandWeaponData);
+				}
+			}
+			break;
+		}
+		
+		case InventoryItemType::DualWeapon:
+		{
+			// Equip both main and offhand weapons
+			SwitchWeapon(item.mainWeaponData);
+			if (!item.offhandWeaponData.className.empty())
+			{
+				SwitchWeaponOffhand(item.offhandWeaponData.className);
+				if (currentOffhandWeapon)
+				{
+					currentOffhandWeapon->SetData(item.offhandWeaponData);
+				}
+			}
+			break;
+		}
+		
+		case InventoryItemType::CustomLogic:
+		{
+			// Execute custom equip logic
+			if (item.onEquipCallback)
+			{
+				item.onEquipCallback(this, &item);
+			}
+			break;
+		}
+	}
+}
+
+void Player::UseInventoryItem(int inventoryIndex)
+{
+	if (inventoryIndex < 0 || inventoryIndex >= inventory.size())
+		return;
+	
+	InventoryItem& item = inventory[inventoryIndex];
+	
+	// Call use callback if it exists
+	if (item.itemType == InventoryItemType::CustomLogic && item.onUseCallback)
+	{
+		item.onUseCallback(this, &item);
+		
+		// Optionally decrease stack size for consumables
+		if (item.stackSize > 0)
+		{
+			item.stackSize--;
+			if (item.stackSize <= 0)
+			{
+				RemoveItemFromInventory(inventoryIndex);
+			}
+		}
+	}
+}
+
+void Player::UpdateInventoryWeaponSwitch()
+{
+	// Only process in inventory mode
+	if (weaponSystemMode != WeaponSystemMode::Inventory)
+		return;
+	
+	// Check if there's a pending switch
+	if (pendingInventorySwitch && desiredInventoryIndex >= 0)
+	{
+		// Try to switch again
+		if (CanSwitchToInventoryItem(desiredInventoryIndex))
+		{
+			SwitchToInventoryItem(desiredInventoryIndex, true);
+		}
+	}
+	
+	// Update current weapon data in inventory based on item type
+	if (currentInventoryIndex >= 0 && currentInventoryIndex < inventory.size())
+	{
+		InventoryItem& currentItem = inventory[currentInventoryIndex];
+		
+		// Update main weapon data
+		if (currentWeapon && (currentItem.itemType == InventoryItemType::MainWeapon || 
+		                      currentItem.itemType == InventoryItemType::DualWeapon))
+		{
+			currentItem.mainWeaponData = currentWeapon->Data;
+		}
+		
+		// Update offhand weapon data
+		if (currentOffhandWeapon && (currentItem.itemType == InventoryItemType::OffhandWeapon || 
+		                             currentItem.itemType == InventoryItemType::DualWeapon))
+		{
+			currentItem.offhandWeaponData = currentOffhandWeapon->Data;
+		}
+	}
+}
+
+// ============================================================================
+// END INVENTORY SYSTEM
+// ============================================================================
 
 vec3 Player::GetBobForMainWeapon()
 {
@@ -906,73 +1332,143 @@ void Player::Update()
         GameSaveSystem::LoadGameFromFile("quicksave");
     }
 
-    if (currentWeapon != nullptr)
+    // Weapon switching logic based on current mode
+    if (weaponSystemMode == WeaponSystemMode::Slots)
     {
-        if (currentWeapon->Data.slot != currentSlot)
+        // Original slot-based weapon switching with lazy loading
+        if (currentWeapon != nullptr)
         {
-            if (currentWeapon->CanChangeSlot())
+            if (currentWeapon->Data.slot != currentSlot)
             {
-                SwitchWeapon(weaponSlots[currentSlot]);
+                if (currentWeapon->CanChangeSlot())
+                {
+                    SwitchWeapon(weaponSlots[currentSlot]);
+                }
             }
-            
+        }
+        else
+        {
+            SwitchToSlot(currentSlot);
         }
     }
-    else
+    else if (weaponSystemMode == WeaponSystemMode::Inventory)
     {
-        SwitchToSlot(currentSlot);
+        // Inventory-based weapon switching with lazy loading
+        UpdateInventoryWeaponSwitch();
     }
 
 
 
-    if (disableOffhandWeapon)
+    // Offhand weapon management (Slots mode only)
+    // In Inventory mode, offhand is managed through OffhandWeapon or DualWeapon items
+    if (weaponSystemMode == WeaponSystemMode::Slots)
     {
-        offhandWeapon = 0;
+        if (disableOffhandWeapon)
+        {
+            offhandWeapon = 0;
+        }
+        else
+        {
+            offhandWeapon = desiredOffhandWeapon;
+        }
+
+        if (offhandWeapons.empty() == false)
+        {
+
+            if (currentOffhandWeapon != nullptr)
+            {
+                if (currentOffhandWeapon->ClassName != offhandWeapons[offhandWeapon])
+                {
+                    if (currentOffhandWeapon->CanChangeSlot())
+                    {
+                        SwitchWeaponOffhand(offhandWeapons[offhandWeapon]);
+                    }
+
+                }
+            }
+            else
+            {
+                SwitchWeaponOffhand(offhandWeapons[offhandWeapon]);
+            }
+        }
     }
-    else
-    {
-        offhandWeapon = desiredOffhandWeapon;
-    }
-
-	if (offhandWeapons.empty() == false)
-	{
-
-		if (currentOffhandWeapon != nullptr)
-		{
-			if (currentOffhandWeapon->ClassName != offhandWeapons[offhandWeapon])
-			{
-				if (currentOffhandWeapon->CanChangeSlot())
-				{
-					SwitchWeaponOffhand(offhandWeapons[offhandWeapon]);
-				}
-
-			}
-		}
-		else
-		{
-			SwitchWeaponOffhand(offhandWeapons[offhandWeapon]);
-		}
-	}
 
     if (Input::GetAction("slotMelee")->Pressed())
         SwitchToMeleeWeapon();
 
-    if (Input::GetAction("slot1")->Pressed())
-        SwitchToSlot(0);
+    // Adaptive input handling - works with both Slots and Inventory modes
+    if (weaponSystemMode == WeaponSystemMode::Slots)
+    {
+        // Slot-based system (original behavior)
+        if (Input::GetAction("slot1")->Pressed())
+            SwitchToSlot(0);
 
-    if (Input::GetAction("slot2")->Pressed())
-        SwitchToSlot(1);
+        if (Input::GetAction("slot2")->Pressed())
+            SwitchToSlot(1);
 
-    if (Input::GetAction("slot3")->Pressed())
-        SwitchToSlot(2);
+        if (Input::GetAction("slot3")->Pressed())
+            SwitchToSlot(2);
 
-    if (Input::GetAction("slot4")->Pressed())
-        SwitchToSlot(3);
+        if (Input::GetAction("slot4")->Pressed())
+            SwitchToSlot(3);
 
-    if (Input::GetAction("slot5")->Pressed())
-        SwitchToSlot(4);
+        if (Input::GetAction("slot5")->Pressed())
+            SwitchToSlot(4);
 
-    if (Input::GetAction("lastSlot")->Pressed())
-        SwitchToSlot(lastSlot);
+        if (Input::GetAction("lastSlot")->Pressed())
+            SwitchToSlot(lastSlot);
+    }
+    else if (weaponSystemMode == WeaponSystemMode::Inventory)
+    {
+        // Inventory-based system (uses inventory indices)
+        // Pressing the same weapon key twice will hide/unequip the weapon
+        
+        if (Input::GetAction("slot1")->Pressed())
+        {
+            if (inventory.size() > 0)
+            {
+                SwitchToInventoryItem(0, false);
+            }
+        }
+
+        if (Input::GetAction("slot2")->Pressed())
+        {
+            if (inventory.size() > 1)
+            {
+                SwitchToInventoryItem(1, false);
+            }
+        }
+
+        if (Input::GetAction("slot3")->Pressed())
+        {
+            if (inventory.size() > 2)
+            {
+                SwitchToInventoryItem(2, false);
+            }
+        }
+
+        if (Input::GetAction("slot4")->Pressed())
+        {
+            if (inventory.size() > 3)
+            {
+                SwitchToInventoryItem(3, false);
+            }
+        }
+
+        if (Input::GetAction("slot5")->Pressed())
+        {
+            if (inventory.size() > 4)
+            {
+                SwitchToInventoryItem(4, false);
+            }
+        }
+
+        if (Input::GetAction("lastSlot")->Pressed())
+        {
+            if (lastInventoryIndex >= 0 && lastInventoryIndex < inventory.size())
+                SwitchToInventoryItem(lastInventoryIndex, false);
+        }
+    }
 
 }
 
@@ -1220,6 +1716,12 @@ void Player::Serialize(json& target)
     SERIALIZE_FIELD(target, offhandWeapon);
     SERIALIZE_FIELD(target, desiredOffhandWeapon);
 
+    // Serialize inventory system
+    target["weaponSystemMode"] = static_cast<int>(weaponSystemMode);
+    SERIALIZE_FIELD(target, inventory);
+    SERIALIZE_FIELD(target, currentInventoryIndex);
+    SERIALIZE_FIELD(target, lastInventoryIndex);
+
 }
 
 void Player::Deserialize(json& source)
@@ -1238,7 +1740,28 @@ void Player::Deserialize(json& source)
     DESERIALIZE_FIELD(source, offhandWeapon);
     DESERIALIZE_FIELD(source, desiredOffhandWeapon);
 
-    SwitchToSlot(currentSlot, true);
+    // Deserialize inventory system
+    if (source.contains("weaponSystemMode"))
+    {
+        weaponSystemMode = static_cast<WeaponSystemMode>(source["weaponSystemMode"].get<int>());
+    }
+    DESERIALIZE_FIELD(source, inventory);
+    DESERIALIZE_FIELD(source, currentInventoryIndex);
+    DESERIALIZE_FIELD(source, lastInventoryIndex);
+
+    // Restore weapon based on mode
+    if (weaponSystemMode == WeaponSystemMode::Slots)
+    {
+        SwitchToSlot(currentSlot, true);
+    }
+    else if (weaponSystemMode == WeaponSystemMode::Inventory)
+    {
+        if (currentInventoryIndex >= 0 && currentInventoryIndex < inventory.size())
+        {
+            SwitchToInventoryItem(currentInventoryIndex, true);
+        }
+    }
+    
     SwitchWeaponOffhand(offhandWeapons[offhandWeapon]);
 
     controller.SetVelocity(velocity);
