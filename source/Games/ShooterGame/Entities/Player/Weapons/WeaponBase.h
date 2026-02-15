@@ -11,6 +11,8 @@ struct WeaponSlotData
 	int slot = 0;
 	int priority = 0;
 
+	std::string inventoryUUID = ""; // For inventory system tracking
+
 	auto operator<=>(const WeaponSlotData&) const = default;
 
 	NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(WeaponSlotData, className,slot,priority)

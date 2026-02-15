@@ -73,12 +73,13 @@ void Player::Start()
 		// Inventory mode - add weapons to inventory
 		Weapon* tempWeapon;
 		WeaponSlotData weaponData;
+		std::string firstWeaponUUID;
 		
 		// Add pistol
 		tempWeapon = (Weapon*)LevelObjectFactory::instance().create("weapon_pistol");
 		weaponData = tempWeapon->GetDefaultData();
 		delete tempWeapon;
-		AddItemToInventory("weapon_pistol", weaponData);
+		firstWeaponUUID = AddItemToInventory("weapon_pistol", weaponData);
 		
 		// Add shotgun
 		tempWeapon = (Weapon*)LevelObjectFactory::instance().create("weapon_shotgun");
@@ -117,9 +118,9 @@ void Player::Start()
 		AddItemToInventory("pistol_dual", pistolData, emptyOffhand);
 		
 		// Equip first weapon
-		if (!inventory.empty())
+		if (!firstWeaponUUID.empty())
 		{
-			SwitchToInventoryItem(0, true);
+			SwitchToInventoryItem(firstWeaponUUID, true);
 		}
 	}
 	else
@@ -364,6 +365,9 @@ void Player::DestroyWeaponOffhand()
 
 	}
 
+	currentOffhandWeaponUUID = "";
+
+
 }
 
 void Player::SwitchToSlot(int slot, bool forceChange)
@@ -449,6 +453,7 @@ void Player::DestroyWeapon()
 		currentWeapon->Destroy();
 		currentWeapon = nullptr;
 	}
+	currentMainWeaponUUID = "";
 }
 
 // ============================================================================
@@ -467,20 +472,20 @@ void Player::SetWeaponSystemMode(WeaponSystemMode mode)
 	}
 	else // Switching to Slots mode
 	{
-		currentInventoryIndex = -1;
-		desiredInventoryIndex = -1;
+		currentInventoryUUID = "";
+		desiredInventoryUUID = "";
 		pendingInventorySwitch = false;
 	}
 }
 
 // Add main weapon only (backwards compatible)
-int Player::AddItemToInventory(const std::string& itemID, const WeaponSlotData& weaponData, int stackSize)
+std::string Player::AddItemToInventory(const std::string& itemID, const WeaponSlotData& weaponData, int stackSize)
 {
 	return AddItemToInventory(itemID, InventoryItemType::MainWeapon, weaponData, stackSize);
 }
 
 // Add item with specific type
-int Player::AddItemToInventory(const std::string& itemID, InventoryItemType type, const WeaponSlotData& mainWeaponData, int stackSize)
+std::string Player::AddItemToInventory(const std::string& itemID, InventoryItemType type, const WeaponSlotData& mainWeaponData, int stackSize)
 {
 	// Check if item already exists and can be stacked
 	int existingIndex = FindInventoryItemByID(itemID);
@@ -489,7 +494,7 @@ int Player::AddItemToInventory(const std::string& itemID, InventoryItemType type
 	{
 		// Stack with existing item
 		inventory[existingIndex].stackSize += stackSize;
-		return existingIndex;
+		return inventory[existingIndex].uid;
 	}
 	
 	if (type == InventoryItemType::OffhandWeapon)
@@ -497,24 +502,28 @@ int Player::AddItemToInventory(const std::string& itemID, InventoryItemType type
 		InventoryItem newItem(itemID, type, mainWeaponData, stackSize);
 		newItem.offhandWeaponData = mainWeaponData; // Store weapon data in offhand slot for offhand items
 		newItem.mainWeaponData = WeaponSlotData(); // Clear main weapon data for offhand items
-		newItem.uuid = UUID::generate_uuid(); // Assign unique instance ID
+		newItem.uid = UUID::generate_uuid(); // Assign unique instance ID
+		newItem.mainWeaponData.inventoryUUID = newItem.uid; // Link inventory item to weapon data for easy lookup when equipping
+		newItem.offhandWeaponData.inventoryUUID = newItem.uid; // Link inventory item to offhand weapon data as well
 		inventory.push_back(newItem);
-		return inventory.size() - 1;
+		return newItem.uid;
 	}
 	else
 	{
 		// Add as new item
 		InventoryItem newItem(itemID, type, mainWeaponData, stackSize);
-		newItem.uuid = UUID::generate_uuid(); // Assign unique instance ID
+		newItem.uid = UUID::generate_uuid(); // Assign unique instance ID
+		newItem.mainWeaponData.inventoryUUID = newItem.uid; // Link inventory item to weapon data for easy lookup when equipping
+		newItem.offhandWeaponData.inventoryUUID = newItem.uid; // Link inventory item to offhand weapon data as well
 		inventory.push_back(newItem);
-		return inventory.size() - 1;
+		return newItem.uid;
 	}
 
 
 }
 
 // Add dual weapon (both main and offhand)
-int Player::AddItemToInventory(const std::string& itemID, const WeaponSlotData& mainWeaponData, const WeaponSlotData& offhandWeaponData, int stackSize)
+std::string Player::AddItemToInventory(const std::string& itemID, const WeaponSlotData& mainWeaponData, const WeaponSlotData& offhandWeaponData, int stackSize)
 {
 	// Check if item already exists and can be stacked
 	int existingIndex = FindInventoryItemByID(itemID);
@@ -522,18 +531,20 @@ int Player::AddItemToInventory(const std::string& itemID, const WeaponSlotData& 
 	if (existingIndex >= 0 && inventory[existingIndex].stackSize > 0)
 	{
 		inventory[existingIndex].stackSize += stackSize;
-		return existingIndex;
+		return inventory[existingIndex].uid;
 	}
 	
 	// Add as new dual weapon item
 	InventoryItem newItem(itemID, mainWeaponData, offhandWeaponData, stackSize);
-	newItem.uuid = UUID::generate_uuid(); // Assign unique instance ID
+	newItem.uid = UUID::generate_uuid(); // Assign unique instance ID
+	newItem.mainWeaponData.inventoryUUID = newItem.uid; // Link inventory item to weapon data for easy lookup when equipping
+	newItem.offhandWeaponData.inventoryUUID = newItem.uid; // Link inventory item to offhand weapon data as well
 	inventory.push_back(newItem);
-	return inventory.size() - 1;
+	return newItem.uid;
 }
 
 // Add custom logic item
-int Player::AddCustomItemToInventory(const std::string& itemID, InventoryItemCallback equipCallback, InventoryItemCallback useCallback, int stackSize)
+std::string Player::AddCustomItemToInventory(const std::string& itemID, InventoryItemCallback equipCallback, InventoryItemCallback useCallback, int stackSize)
 {
 	// Check if item already exists and can be stacked
 	int existingIndex = FindInventoryItemByID(itemID);
@@ -541,34 +552,41 @@ int Player::AddCustomItemToInventory(const std::string& itemID, InventoryItemCal
 	if (existingIndex >= 0 && inventory[existingIndex].stackSize > 0)
 	{
 		inventory[existingIndex].stackSize += stackSize;
-		return existingIndex;
+		return inventory[existingIndex].uid;
 	}
 	
 	// Add as new custom item
 	InventoryItem newItem(itemID, equipCallback, useCallback, stackSize);
+	newItem.uid = UUID::generate_uuid(); // Assign unique instance ID
 	inventory.push_back(newItem);
-	return inventory.size() - 1;
+	return newItem.uid;
 }
 
-bool Player::RemoveItemFromInventory(int inventoryIndex)
+bool Player::RemoveItemFromInventory(const std::string& uuid)
 {
-	if (inventoryIndex < 0 || inventoryIndex >= inventory.size())
+	// Find the item by UUID
+	auto it = std::find_if(inventory.begin(), inventory.end(),
+		[&uuid](const InventoryItem& item) { return item.uid == uuid; });
+	
+	if (it == inventory.end())
 		return false;
 	
 	// If this is the currently equipped item, unequip it first
-	if (inventoryIndex == currentInventoryIndex)
+	if (uuid == currentInventoryUUID)
 	{
 		DestroyWeapon();
-		currentInventoryIndex = -1;
+		currentInventoryUUID = "";
 	}
 	
-	// Adjust indices if removing an item before current
-	if (inventoryIndex < currentInventoryIndex)
-		currentInventoryIndex--;
-	if (inventoryIndex < desiredInventoryIndex)
-		desiredInventoryIndex--;
+	// Update pending switch if it was pointing to this item
+	if (uuid == desiredInventoryUUID)
+	{
+		desiredInventoryUUID = "";
+		pendingInventorySwitch = false;
+	}
 	
-	inventory.erase(inventory.begin() + inventoryIndex);
+	// Remove the item
+	inventory.erase(it);
 	return true;
 }
 
@@ -577,15 +595,23 @@ bool Player::RemoveItemByID(const std::string& itemID)
 	int index = FindInventoryItemByID(itemID);
 	if (index >= 0)
 	{
-		return RemoveItemFromInventory(index);
+		return RemoveItemFromInventory(inventory[index].uid);
 	}
 	return false;
 }
 
-InventoryItem* Player::GetInventoryItem(int index)
+InventoryItem* Player::GetInventoryItem(const std::string& uuid)
 {
-	if (index >= 0 && index < inventory.size())
-		return &inventory[index];
+	return FindInventoryItemByUUID(uuid);
+}
+
+InventoryItem* Player::FindInventoryItemByUUID(const std::string& uuid)
+{
+	auto it = std::find_if(inventory.begin(), inventory.end(),
+		[&uuid](const InventoryItem& item) { return item.uid == uuid; });
+	
+	if (it != inventory.end())
+		return &(*it);
 	return nullptr;
 }
 
@@ -599,12 +625,17 @@ int Player::FindInventoryItemByID(const std::string& itemID)
 	return -1;
 }
 
-bool Player::CanSwitchToInventoryItem(int inventoryIndex)
+bool Player::CanSwitchToInventoryItem(const std::string& uuid)
 {
-	if (inventoryIndex < 0 || inventoryIndex >= inventory.size())
+	if (uuid.empty())
 		return false;
 	
-	//if (inventoryIndex == currentInventoryIndex)
+	// Check if item exists
+	InventoryItem* item = FindInventoryItemByUUID(uuid);
+	if (!item)
+		return false;
+	
+	//if (uuid == currentInventoryUUID)
 	//	return false;
 	
 	if (!currentWeapon)
@@ -613,50 +644,56 @@ bool Player::CanSwitchToInventoryItem(int inventoryIndex)
 	return currentWeapon->CanChangeSlot();
 }
 
-void Player::SwitchToInventoryItem(int inventoryIndex, bool forceChange)
+void Player::SwitchToInventoryItem(const std::string& uuid, bool forceChange)
 {
-	// Validate index
-	if (inventoryIndex < 0 || inventoryIndex >= inventory.size())
+	// Validate UUID and check if item exists
+	if (uuid.empty())
+		return;
+	
+	InventoryItem* itemPtr = FindInventoryItemByUUID(uuid);
+	if (!itemPtr)
 		return;
 	
 	// Check if we can switch
-	if (!forceChange && !CanSwitchToInventoryItem(inventoryIndex))
+	if (!forceChange && !CanSwitchToInventoryItem(uuid))
 	{
 		// Set up lazy switching - wait for weapon to allow change
-		desiredInventoryIndex = inventoryIndex;
+		desiredInventoryUUID = uuid;
 		pendingInventorySwitch = true;
 		return;
 	}
 	
 	// Clear any pending switch
 	pendingInventorySwitch = false;
-	desiredInventoryIndex = -1;
+	desiredInventoryUUID = "";
 	
 	// Save current weapon state back to inventory before switching
-	if (currentWeapon && currentInventoryIndex >= 0 && currentInventoryIndex < inventory.size())
+	if (currentWeapon && !currentInventoryUUID.empty())
 	{
-		InventoryItem& currentItem = inventory[currentInventoryIndex];
-		
-		// Save based on item type
-		if (currentItem.itemType == InventoryItemType::MainWeapon || 
-			currentItem.itemType == InventoryItemType::DualWeapon)
+		InventoryItem* currentItem = FindInventoryItemByUUID(currentInventoryUUID);
+		if (currentItem)
 		{
-			currentItem.mainWeaponData = currentWeapon->Data;
-		}
-		
-		if (currentItem.itemType == InventoryItemType::DualWeapon && currentOffhandWeapon)
-		{
-			currentItem.offhandWeaponData = currentOffhandWeapon->Data;
-		}
-		else if (currentItem.itemType == InventoryItemType::OffhandWeapon && currentOffhandWeapon)
-		{
-			currentItem.offhandWeaponData = currentOffhandWeapon->Data;
+			// Save based on item type
+			if (currentItem->itemType == InventoryItemType::MainWeapon || 
+				currentItem->itemType == InventoryItemType::DualWeapon)
+			{
+				currentItem->mainWeaponData = currentWeapon->Data;
+			}
+			
+			if (currentItem->itemType == InventoryItemType::DualWeapon && currentOffhandWeapon)
+			{
+				currentItem->offhandWeaponData = currentOffhandWeapon->Data;
+			}
+			else if (currentItem->itemType == InventoryItemType::OffhandWeapon && currentOffhandWeapon)
+			{
+				currentItem->offhandWeaponData = currentOffhandWeapon->Data;
+			}
 		}
 	}
 	
-	InventoryItem& item = inventory[inventoryIndex];
+	InventoryItem& item = *itemPtr;
 
-	if (currentInventoryIndex == inventoryIndex)
+	if (currentMainWeaponUUID == uuid || currentOffhandWeaponUUID == uuid)
 	{
 		// Handle different item types
 		switch (item.itemType)
@@ -665,7 +702,7 @@ void Player::SwitchToInventoryItem(int inventoryIndex, bool forceChange)
 			{
 				// Equip main weapon only
 				DestroyWeapon();
-				currentInventoryIndex = -1;
+				currentInventoryUUID = "";
 				return;
 				break;
 			}
@@ -673,7 +710,7 @@ void Player::SwitchToInventoryItem(int inventoryIndex, bool forceChange)
 			case InventoryItemType::OffhandWeapon:
 			{
 				DestroyWeaponOffhand();
-				currentInventoryIndex = -1;
+				currentInventoryUUID = "";
 				return;
 				break;
 			}
@@ -682,7 +719,7 @@ void Player::SwitchToInventoryItem(int inventoryIndex, bool forceChange)
 			{
 				DestroyWeapon();
 				DestroyWeaponOffhand();
-				currentInventoryIndex = -1;
+				currentInventoryUUID = "";
 				return;
 			}
 
@@ -693,14 +730,14 @@ void Player::SwitchToInventoryItem(int inventoryIndex, bool forceChange)
 		}
 	}
 
-	// Track last inventory index for quick switching
-	if (inventoryIndex != currentInventoryIndex && currentInventoryIndex >= 0)
+	// Track last inventory UUID for quick switching
+	if (uuid != currentInventoryUUID && !currentInventoryUUID.empty())
 	{
-		lastInventoryIndex = currentInventoryIndex;
+		lastInventoryUUID = currentInventoryUUID;
 	}
 	
-	// Update current inventory index
-	currentInventoryIndex = inventoryIndex;
+	// Update current inventory UUID
+	currentInventoryUUID = uuid;
 
 	
 	// Handle different item types
@@ -710,6 +747,7 @@ void Player::SwitchToInventoryItem(int inventoryIndex, bool forceChange)
 		{
 			// Equip main weapon only
 			SwitchWeapon(item.mainWeaponData);
+			currentMainWeaponUUID = uuid;
 			break;
 		}
 		
@@ -725,11 +763,15 @@ void Player::SwitchToInventoryItem(int inventoryIndex, bool forceChange)
 					currentOffhandWeapon->SetData(item.offhandWeaponData);
 				}
 			}
+
+			currentOffhandWeaponUUID = uuid;
+
 			break;
 		}
 		
 		case InventoryItemType::DualWeapon:
 		{
+
 			// Equip both main and offhand weapons
 			SwitchWeapon(item.mainWeaponData);
 			if (!item.offhandWeaponData.className.empty())
@@ -740,6 +782,10 @@ void Player::SwitchToInventoryItem(int inventoryIndex, bool forceChange)
 					currentOffhandWeapon->SetData(item.offhandWeaponData);
 				}
 			}
+
+			currentMainWeaponUUID = uuid;
+			currentOffhandWeaponUUID = uuid;
+
 			break;
 		}
 		
@@ -755,12 +801,16 @@ void Player::SwitchToInventoryItem(int inventoryIndex, bool forceChange)
 	}
 }
 
-void Player::UseInventoryItem(int inventoryIndex)
+void Player::UseInventoryItem(const std::string& uuid)
 {
-	if (inventoryIndex < 0 || inventoryIndex >= inventory.size())
+	if (uuid.empty())
 		return;
 	
-	InventoryItem& item = inventory[inventoryIndex];
+	InventoryItem* itemPtr = FindInventoryItemByUUID(uuid);
+	if (!itemPtr)
+		return;
+	
+	InventoryItem& item = *itemPtr;
 	
 	// Call use callback if it exists
 	if (item.itemType == InventoryItemType::CustomLogic && item.onUseCallback)
@@ -773,7 +823,7 @@ void Player::UseInventoryItem(int inventoryIndex)
 			item.stackSize--;
 			if (item.stackSize <= 0)
 			{
-				RemoveItemFromInventory(inventoryIndex);
+				RemoveItemFromInventory(uuid);
 			}
 		}
 	}
@@ -786,32 +836,34 @@ void Player::UpdateInventoryWeaponSwitch()
 		return;
 	
 	// Check if there's a pending switch
-	if (pendingInventorySwitch && desiredInventoryIndex >= 0)
+	if (pendingInventorySwitch && !desiredInventoryUUID.empty())
 	{
 		// Try to switch again
-		if (CanSwitchToInventoryItem(desiredInventoryIndex))
+		if (CanSwitchToInventoryItem(desiredInventoryUUID))
 		{
-			SwitchToInventoryItem(desiredInventoryIndex, true);
+			SwitchToInventoryItem(desiredInventoryUUID, true);
 		}
 	}
 	
 	// Update current weapon data in inventory based on item type
-	if (currentInventoryIndex >= 0 && currentInventoryIndex < inventory.size())
+	if (!currentInventoryUUID.empty())
 	{
-		InventoryItem& currentItem = inventory[currentInventoryIndex];
-		
-		// Update main weapon data
-		if (currentWeapon && (currentItem.itemType == InventoryItemType::MainWeapon || 
-							  currentItem.itemType == InventoryItemType::DualWeapon))
+		InventoryItem* currentItem = FindInventoryItemByUUID(currentInventoryUUID);
+		if (currentItem)
 		{
-			currentItem.mainWeaponData = currentWeapon->Data;
-		}
-		
-		// Update offhand weapon data
-		if (currentOffhandWeapon && (currentItem.itemType == InventoryItemType::OffhandWeapon || 
-									 currentItem.itemType == InventoryItemType::DualWeapon))
-		{
-			currentItem.offhandWeaponData = currentOffhandWeapon->Data;
+			// Update main weapon data
+			if (currentWeapon && (currentItem->itemType == InventoryItemType::MainWeapon || 
+								  currentItem->itemType == InventoryItemType::DualWeapon))
+			{
+				currentItem->mainWeaponData = currentWeapon->Data;
+			}
+			
+			// Update offhand weapon data
+			if (currentOffhandWeapon && (currentItem->itemType == InventoryItemType::OffhandWeapon || 
+										 currentItem->itemType == InventoryItemType::DualWeapon))
+			{
+				currentItem->offhandWeaponData = currentOffhandWeapon->Data;
+			}
 		}
 	}
 }
@@ -1431,7 +1483,7 @@ void Player::Update()
 		{
 			if (inventory.size() > 0)
 			{
-				SwitchToInventoryItem(0, false);
+				SwitchToInventoryItem(inventory[0].uid, false);
 			}
 		}
 
@@ -1439,7 +1491,7 @@ void Player::Update()
 		{
 			if (inventory.size() > 1)
 			{
-				SwitchToInventoryItem(1, false);
+				SwitchToInventoryItem(inventory[1].uid, false);
 			}
 		}
 
@@ -1447,7 +1499,7 @@ void Player::Update()
 		{
 			if (inventory.size() > 2)
 			{
-				SwitchToInventoryItem(2, false);
+				SwitchToInventoryItem(inventory[2].uid, false);
 			}
 		}
 
@@ -1455,7 +1507,7 @@ void Player::Update()
 		{
 			if (inventory.size() > 3)
 			{
-				SwitchToInventoryItem(3, false);
+				SwitchToInventoryItem(inventory[3].uid, false);
 			}
 		}
 
@@ -1463,14 +1515,13 @@ void Player::Update()
 		{
 			if (inventory.size() > 4)
 			{
-				SwitchToInventoryItem(4, false);
+				SwitchToInventoryItem(inventory[4].uid, false);
 			}
 		}
 
 		if (Input::GetAction("lastSlot")->Pressed())
 		{
-			if (lastInventoryIndex >= 0 && lastInventoryIndex < inventory.size())
-				SwitchToInventoryItem(lastInventoryIndex, false);
+				SwitchToInventoryItem(lastInventoryUUID, false);
 		}
 	}
 
@@ -1723,8 +1774,8 @@ void Player::Serialize(json& target)
 	// Serialize inventory system
 	target["weaponSystemMode"] = static_cast<int>(weaponSystemMode);
 	SERIALIZE_FIELD(target, inventory);
-	SERIALIZE_FIELD(target, currentInventoryIndex);
-	SERIALIZE_FIELD(target, lastInventoryIndex);
+	SERIALIZE_FIELD(target, currentInventoryUUID);
+	SERIALIZE_FIELD(target, lastInventoryUUID);
 
 }
 
@@ -1750,8 +1801,8 @@ void Player::Deserialize(json& source)
 		weaponSystemMode = static_cast<WeaponSystemMode>(source["weaponSystemMode"].get<int>());
 	}
 	DESERIALIZE_FIELD(source, inventory);
-	DESERIALIZE_FIELD(source, currentInventoryIndex);
-	DESERIALIZE_FIELD(source, lastInventoryIndex);
+	DESERIALIZE_FIELD(source, currentInventoryUUID);
+	DESERIALIZE_FIELD(source, lastInventoryUUID);
 
 	// Restore weapon based on mode
 	if (weaponSystemMode == WeaponSystemMode::Slots)
@@ -1760,9 +1811,9 @@ void Player::Deserialize(json& source)
 	}
 	else if (weaponSystemMode == WeaponSystemMode::Inventory)
 	{
-		if (currentInventoryIndex >= 0 && currentInventoryIndex < inventory.size())
+		if (!currentInventoryUUID.empty())
 		{
-			SwitchToInventoryItem(currentInventoryIndex, true);
+			SwitchToInventoryItem(currentInventoryUUID, true);
 		}
 	}
 	

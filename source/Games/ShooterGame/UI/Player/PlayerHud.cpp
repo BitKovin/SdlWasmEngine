@@ -82,7 +82,7 @@ void WeaponSlots::Update()
 	if (player->GetWeaponSystemMode() == WeaponSystemMode::Inventory)
     {
 
-		currentSlot = player->currentInventoryIndex;
+		//currentSlot = player->currentInventoryIndex;
 
         slots.clear();
 
@@ -112,7 +112,16 @@ void WeaponSlots::Update()
         auto img = make_shared<UiButton>();
         img->size = vec2(120,120);
 
-        if (data.slot == currentSlot)
+		bool equipped = (data.slot == currentSlot);
+
+        if (player->GetWeaponSystemMode() == WeaponSystemMode::Inventory)
+        {
+
+            equipped = data.inventoryUUID == player->currentMainWeaponUUID || data.inventoryUUID == player->currentOffhandWeaponUUID;
+            
+        }
+
+        if (equipped)
         {
             img->color = vec4(1,0.5,0.5,1);
         }
