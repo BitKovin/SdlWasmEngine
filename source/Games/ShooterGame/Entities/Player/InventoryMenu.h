@@ -16,6 +16,7 @@ class InventoryMenu : public Entity
 	float slotPosition = 0;
 	int currentSlotIndex = 0;
 	int oldSlot = 0;
+	float itemRotationTime = 0;
 
 	int GetCurrentVisualSlotIndex();
 

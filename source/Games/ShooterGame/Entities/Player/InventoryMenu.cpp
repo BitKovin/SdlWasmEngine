@@ -4,9 +4,10 @@
 
 #include <PauseGameManager.hpp>
 
+#include <ItemsDataBase.h>
+
 void InventoryMenu::Finalize()
 {
-
 	Entity::Finalize();
 
 	auto& inventory = Player::Instance->GetInventory();
@@ -15,7 +16,7 @@ void InventoryMenu::Finalize()
 
 	float totalItems = (float)inventory.size();
 	float anglePerItem = (2.0f * M_PI) / totalItems;
-	float radius = 0.25f; // Adjust this to change circle size
+	float radius = 0.7f; // Adjust this to change circle size
 
 	if (totalItems > 4)
 	{
@@ -39,14 +40,15 @@ void InventoryMenu::Finalize()
 
 	for (auto& item : inventory)
 	{
-
 		index++;
 
 		float offset = index - slotPosition;
 
 		SkeletalMesh* mesh = new SkeletalMesh(this);
 
-		std::string modelPath = "GameData/models/weapons/glock.glb";
+		ItemDbEntry itemData = ItemsDataBase::GetItemData(item.itemID);
+
+		std::string modelPath = itemData.modelPath;
 
 		mesh->LoadFromFile(modelPath);
 		mesh->TexturesLocation = modelPath + "/";
@@ -55,22 +57,43 @@ void InventoryMenu::Finalize()
 		mesh->ViewmodelScaleFactor = 0.2f;
 		Drawables.push_back(mesh);
 
+		mesh->FinalizeFrameData();
+
+		auto bounds = mesh->GetBoundingBox();
+		vec3 boundsCenter = bounds.Center();
+
 		// Calculate circular position
 		float angle = offset * anglePerItem;
 
-		vec3 circleCenter = Camera::position + Camera::Forward() * (radius + 0.45f) + Camera::Up() * -0.15f;
+		vec3 circleCenter = Camera::position + Camera::Forward() * (radius + 0.52f) + Camera::Up() * -0.15f;
 		vec3 circleOffset = Camera::Forward() * (cos(angle) * radius) * -1.0f + Camera::Right() * (sin(angle) * radius);
 		vec3 position = circleCenter + circleOffset;
 
-		mesh->Position = position;
+		float rotation = 90;
 
-		mesh->Rotation = Camera::rotation;
+		if (index == currentSlotIndex)
+		{
+			rotation += itemRotationTime * 180;
+		}
 
+		// Calculate final rotation (same as what will be applied to mesh)
+		quat cameraRotation = MathHelper::GetRotationQuaternion(Camera::rotation);
+		quat itemRotation = MathHelper::GetRotationQuaternion(vec3(0, rotation, 0));
+		quat finalRotation = cameraRotation * itemRotation;
 
+		// Transform bounds center by the rotation
+		vec3 rotatedBoundsCenter = finalRotation * boundsCenter;
+
+		// Center the mesh at its rotated bounds center
+		mesh->Position = position - rotatedBoundsCenter;
+		
+
+		mesh->Rotation = MathHelper::ToYawPitchRoll(finalRotation);
 	}
 
-	oldSlot = currentSlotIndex;
+	itemRotationTime += Time::DeltaTimeF;
 
+	oldSlot = currentSlotIndex;
 }
 
 void InventoryMenu::Start()
@@ -111,12 +134,17 @@ void InventoryMenu::Update()
 		if (currentSlotIndex >= Player::Instance->GetInventory().size())
 			currentSlotIndex = 0;
 
+		itemRotationTime = 0;
+
 	}
 	else if (Input::GetAction("ui_left")->Pressed() || Input::GetAction("left")->Pressed())
 	{
 		currentSlotIndex--;
 		if (currentSlotIndex < 0)
 			currentSlotIndex = Player::Instance->GetInventory().size() - 1;
+
+		itemRotationTime = 0;
+
 	}
 
 }

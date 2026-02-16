@@ -38,27 +38,18 @@
 
 #include "PlayerBodyAnimator.h"
 
+#include <ItemsDataBase.h>
+
 // Forward declaration for custom item logic
 class Player;
 
-// Item type defines what happens when the item is selected
-enum class InventoryItemType
-{
-	MainWeapon,      // Equips to main weapon slot only
-	OffhandWeapon,   // Equips to offhand slot only
-	DualWeapon,      // Equips to both main and offhand slots
-	CustomLogic      // Runs custom logic when selected (for future items like consumables, tools, etc.)
-};
 
-// Custom logic callback type - allows items to have custom behavior
-using InventoryItemCallback = std::function<void(Player* player, class InventoryItem* item)>;
 
 // Inventory system structures
 struct InventoryItem
 {
 	std::string itemID;              // Unique item identifier for item database lookup
-	InventoryItemType itemType;      // What type of item this is
-	
+
 	std::string uid;                 // Unique instance ID (for tracking specific instances of items, if needed)
 
 	// Weapon data (used by MainWeapon, OffhandWeapon, DualWeapon types)
@@ -66,34 +57,16 @@ struct InventoryItem
 	WeaponSlotData offhandWeaponData; // Offhand weapon data (for dual weapons or offhand items)
 	
 	int stackSize = 1;               // Number of items in stack (for stackable items)
-	
-	int maxStackSize = 1;            // Maximum stack size (for stackable items)
 
-	// Custom logic (used by CustomLogic type)
-	InventoryItemCallback onEquipCallback;   // Called when item is equipped
-	InventoryItemCallback onUseCallback;     // Called when item is used (for consumables, etc.)
-	
-	NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(InventoryItem, itemID, itemType, uid, mainWeaponData, offhandWeaponData, stackSize)
+	InventoryItem() = default;
 
-
-	// Constructors
-	InventoryItem() : itemType(InventoryItemType::MainWeapon) {}
+	InventoryItem(const std::string& itemID, int stackSize = 1)
+		: itemID(itemID), stackSize(stackSize)
+	{
+	}
 	
-	// Constructor for main weapon only
-	InventoryItem(const std::string& id, const WeaponSlotData& mainData, int stack = 1)
-		: itemID(id), itemType(InventoryItemType::MainWeapon), mainWeaponData(mainData), stackSize(stack) {}
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(InventoryItem, itemID, uid, mainWeaponData, offhandWeaponData, stackSize)
 	
-	// Constructor for specific item type
-	InventoryItem(const std::string& id, InventoryItemType type, const WeaponSlotData& mainData, int stack = 1)
-		: itemID(id), itemType(type), mainWeaponData(mainData), stackSize(stack) {}
-	
-	// Constructor for dual weapons (both main and offhand)
-	InventoryItem(const std::string& id, const WeaponSlotData& mainData, const WeaponSlotData& offhandData, int stack = 1)
-		: itemID(id), itemType(InventoryItemType::DualWeapon), mainWeaponData(mainData), offhandWeaponData(offhandData), stackSize(stack) {}
-	
-	// Constructor for custom logic items
-	InventoryItem(const std::string& id, InventoryItemCallback equipCallback, InventoryItemCallback useCallback = nullptr, int stack = 1)
-		: itemID(id), itemType(InventoryItemType::CustomLogic), onEquipCallback(equipCallback), onUseCallback(useCallback), stackSize(stack) {}
 };
 
 enum class WeaponSystemMode
@@ -262,6 +235,8 @@ private:
 	void SwitchWeaponOffhand(const string& classname);
 	void DestroyWeaponOffhand();
 
+	ItemDbEntry GetItemData(const std::string& itemID);
+
 	vec3 testStart;
 
 	friend class InventoryMenu;
@@ -358,11 +333,8 @@ public:
 	WeaponSystemMode GetWeaponSystemMode() const { return weaponSystemMode; }
 	
 	// Inventory management
-	std::string AddItemToInventory(const std::string& itemID, const WeaponSlotData& weaponData, int stackSize = 1);
-	std::string AddItemToInventory(const std::string& itemID, InventoryItemType type, const WeaponSlotData& mainWeaponData, int stackSize = 1);
-	std::string AddItemToInventory(const std::string& itemID, const WeaponSlotData& mainWeaponData, const WeaponSlotData& offhandWeaponData, int stackSize = 1);
-	std::string AddCustomItemToInventory(const std::string& itemID, InventoryItemCallback equipCallback, InventoryItemCallback useCallback = nullptr, int stackSize = 1);
-	
+	std::string AddItemToInventory(const std::string& itemID, int stackSize = 1);
+
 	bool RemoveItemFromInventory(const std::string& uuid);
 	bool RemoveItemByID(const std::string& itemID);
 	InventoryItem* GetInventoryItem(const std::string& uuid);
@@ -373,12 +345,10 @@ public:
 	int GetInventorySlotIdByUUID(const std::string& uuid);
 
 	// Inventory weapon switching (with lazy switching support)
-	void SwitchToInventoryItem(const std::string& uuid, bool forceChange = false);
+	void SwitchToInventoryItem(std::string uuid, bool forceChange = false);
 	bool CanSwitchToInventoryItem(const std::string& uuid);
 	void UpdateInventoryWeaponSwitch(); // Call in Update() to handle lazy switching
 	
-	// Use item (for custom logic items like consumables)
-	void UseInventoryItem(const std::string& uuid);
 
 	void CreateWeapon(const string& className);
 	void DestroyWeapon();

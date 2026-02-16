@@ -222,6 +222,9 @@
     <ClCompile Include="Entities\Player\InventoryMenu.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ItemsDataBase.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Entities\Player\Player.hpp">
@@ -348,6 +351,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="PauseGameManager.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ItemsDataBase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

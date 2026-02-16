@@ -389,6 +389,7 @@
     <ClCompile Include="Entities\Test\TestSpatialSound.cpp" />
     <ClCompile Include="Entities\Triggers\TriggerTravel.cpp" />
     <ClCompile Include="GameStart.cpp" />
+    <ClCompile Include="ItemsDataBase.cpp" />
     <ClCompile Include="ParticleSystems\BulletTrail.cpp" />
     <ClCompile Include="ParticleSystems\CaneTrail.cpp" />
     <ClCompile Include="ParticleSystems\Fog.cpp" />
@@ -434,6 +435,7 @@
     <ClInclude Include="Entities\Enemy\Enemies\TestNpc.hpp" />
     <ClInclude Include="Entities\TestParticleSystem.hpp" />
     <ClInclude Include="Helpers\LightVisibilityHelper.h" />
+    <ClInclude Include="ItemsDataBase.h" />
     <ClInclude Include="PauseGameManager.hpp" />
     <ClInclude Include="UI\Enemy\UiNpcDebuffs.h" />
     <ClInclude Include="UI\General\UiLocationTileDrop.h" />
