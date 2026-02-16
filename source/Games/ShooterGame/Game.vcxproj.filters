@@ -219,6 +219,9 @@
     <ClCompile Include="Entities\Test\TestSpatialSound.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Entities\Player\InventoryMenu.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Entities\Player\Player.hpp">
@@ -339,6 +342,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Helpers\LightVisibilityHelper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Entities\Player\InventoryMenu.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PauseGameManager.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

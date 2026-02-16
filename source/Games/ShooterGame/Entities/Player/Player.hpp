@@ -67,6 +67,8 @@ struct InventoryItem
 	
 	int stackSize = 1;               // Number of items in stack (for stackable items)
 	
+	int maxStackSize = 1;            // Maximum stack size (for stackable items)
+
 	// Custom logic (used by CustomLogic type)
 	InventoryItemCallback onEquipCallback;   // Called when item is equipped
 	InventoryItemCallback onUseCallback;     // Called when item is used (for consumables, etc.)
@@ -262,7 +264,7 @@ private:
 
 	vec3 testStart;
 
-
+	friend class InventoryMenu;
 
 public:
 
@@ -368,6 +370,8 @@ public:
 	int FindInventoryItemByID(const std::string& itemID);
 	const std::vector<InventoryItem>& GetInventory() const { return inventory; }
 	
+	int GetInventorySlotIdByUUID(const std::string& uuid);
+
 	// Inventory weapon switching (with lazy switching support)
 	void SwitchToInventoryItem(const std::string& uuid, bool forceChange = false);
 	bool CanSwitchToInventoryItem(const std::string& uuid);

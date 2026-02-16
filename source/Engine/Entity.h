@@ -132,7 +132,6 @@ public:
 		}
 
 		Drawables.clear();
-		Drawables.shrink_to_fit();
 	}
 
 	void FinalLevelRemove();

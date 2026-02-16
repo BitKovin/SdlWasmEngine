@@ -364,6 +364,7 @@
     <ClCompile Include="Entities\Npc\NpcGuardBase.cpp" />
     <ClCompile Include="Entities\Enemy\Enemies\NpcHelper.cpp" />
     <ClCompile Include="Entities\Enemy\Enemies\NpcHumanAxe.cpp" />
+    <ClCompile Include="Entities\Player\InventoryMenu.cpp" />
     <ClCompile Include="Entities\Player\Player.cpp" />
     <ClCompile Include="Entities\Player\player_start.cpp" />
     <ClCompile Include="Entities\Player\RestrictedArea.cpp" />
@@ -416,6 +417,7 @@
     <ClInclude Include="Entities\Npc\NpcBase.h" />
     <ClInclude Include="Entities\Enemy\Enemies\NpcHelper.h" />
     <ClInclude Include="Entities\Enemy\Enemies\NpcHumanAxe.h" />
+    <ClInclude Include="Entities\Player\InventoryMenu.h" />
     <ClInclude Include="Entities\Player\Player.hpp" />
     <ClInclude Include="Entities\Player\PlayerBodyAnimator.h" />
     <ClInclude Include="Entities\Player\RestrictedArea.h" />
@@ -432,6 +434,7 @@
     <ClInclude Include="Entities\Enemy\Enemies\TestNpc.hpp" />
     <ClInclude Include="Entities\TestParticleSystem.hpp" />
     <ClInclude Include="Helpers\LightVisibilityHelper.h" />
+    <ClInclude Include="PauseGameManager.hpp" />
     <ClInclude Include="UI\Enemy\UiNpcDebuffs.h" />
     <ClInclude Include="UI\General\UiLocationTileDrop.h" />
     <ClInclude Include="UI\LoadingScreen\UiDefaultLoadingScreen.h" />

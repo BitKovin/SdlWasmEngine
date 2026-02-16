@@ -19,6 +19,8 @@
 #include <Helpers/LightVisibilityHelper.h>
 #include <UUID.hpp>
 
+#include <PauseGameManager.hpp>
+
 REGISTER_ENTITY(Player, "player")
 
 Player* Player::Instance = nullptr;
@@ -86,6 +88,7 @@ void Player::Start()
 		weaponData = tempWeapon->GetDefaultData();
 		delete tempWeapon;
 		AddItemToInventory("weapon_shotgun", weaponData);
+
 		
 		// Add tommy gun
 		tempWeapon = (Weapon*)LevelObjectFactory::instance().create("weapon_tommy");
@@ -138,6 +141,7 @@ void Player::Start()
 
 	cameraRotation.y = Rotation.y;
 
+	
 	//Spawn("TestSpatialSoundPlayer")->Start();
 
 }
@@ -490,7 +494,7 @@ std::string Player::AddItemToInventory(const std::string& itemID, InventoryItemT
 	// Check if item already exists and can be stacked
 	int existingIndex = FindInventoryItemByID(itemID);
 	
-	if (existingIndex >= 0 && inventory[existingIndex].stackSize > 0)
+	if (existingIndex >= 0 && inventory[existingIndex].stackSize > 0 && inventory[existingIndex].stackSize < inventory[existingIndex].maxStackSize)
 	{
 		// Stack with existing item
 		inventory[existingIndex].stackSize += stackSize;
@@ -528,7 +532,7 @@ std::string Player::AddItemToInventory(const std::string& itemID, const WeaponSl
 	// Check if item already exists and can be stacked
 	int existingIndex = FindInventoryItemByID(itemID);
 	
-	if (existingIndex >= 0 && inventory[existingIndex].stackSize > 0)
+	if (existingIndex >= 0 && inventory[existingIndex].stackSize > 0 && inventory[existingIndex].stackSize < inventory[existingIndex].maxStackSize)
 	{
 		inventory[existingIndex].stackSize += stackSize;
 		return inventory[existingIndex].uid;
@@ -622,6 +626,26 @@ int Player::FindInventoryItemByID(const std::string& itemID)
 		if (inventory[i].itemID == itemID)
 			return i;
 	}
+	return -1;
+}
+
+int Player::GetInventorySlotIdByUUID(const std::string& uuid)
+{
+
+	if (uuid.empty())
+		return -1;
+
+	int index = 0;
+
+	for (auto& item : inventory)
+	{
+
+		if (item.uid == uuid) return index;
+
+		index++;
+
+	}
+
 	return -1;
 }
 
@@ -1471,6 +1495,9 @@ void Player::Update()
 		if (Input::GetAction("slot5")->Pressed())
 			SwitchToSlot(4);
 
+		if (Input::GetAction("slot6")->Pressed())
+			SwitchToSlot(5);
+
 		if (Input::GetAction("lastSlot")->Pressed())
 			SwitchToSlot(lastSlot);
 	}
@@ -1519,10 +1546,24 @@ void Player::Update()
 			}
 		}
 
+		if (Input::GetAction("slot6")->Pressed())
+		{
+			if (inventory.size() > 5)
+			{
+				SwitchToInventoryItem(inventory[5].uid, false);
+			}
+		}
+
 		if (Input::GetAction("lastSlot")->Pressed())
 		{
 				SwitchToInventoryItem(lastInventoryUUID, false);
 		}
+
+		if (Input::GetAction("inventory")->Pressed())
+		{
+			Spawn("inventory_menu")->Start();
+		}
+
 	}
 
 }
@@ -1550,13 +1591,9 @@ void Player::LateUpdate()
 	if(EngineMain::MainInstance->Paused == false)
 	if (Input::GetAction("pause")->Pressed())
 	{
-		EngineMain::MainInstance->Paused = !EngineMain::MainInstance->Paused;
-
-		Input::LockCursor = !EngineMain::MainInstance->Paused;
+		PauseGameManager::SetGamePaused(!PauseGameManager::GetGamePaused());
 
 	}
-
-	Input::LockCursor = !EngineMain::MainInstance->Paused;
 
 	UpdateWeapon();
 
@@ -1777,6 +1814,9 @@ void Player::Serialize(json& target)
 	SERIALIZE_FIELD(target, currentInventoryUUID);
 	SERIALIZE_FIELD(target, lastInventoryUUID);
 
+	SERIALIZE_FIELD(target, currentMainWeaponUUID);
+	SERIALIZE_FIELD(target, currentOffhandWeaponUUID);
+
 }
 
 void Player::Deserialize(json& source)
@@ -1795,6 +1835,9 @@ void Player::Deserialize(json& source)
 	DESERIALIZE_FIELD(source, offhandWeapon);
 	DESERIALIZE_FIELD(source, desiredOffhandWeapon);
 
+	DESERIALIZE_FIELD(source, currentMainWeaponUUID);
+	DESERIALIZE_FIELD(source, currentOffhandWeaponUUID);
+
 	// Deserialize inventory system
 	if (source.contains("weaponSystemMode"))
 	{
@@ -1811,13 +1854,37 @@ void Player::Deserialize(json& source)
 	}
 	else if (weaponSystemMode == WeaponSystemMode::Inventory)
 	{
-		if (!currentInventoryUUID.empty())
+
+		for (auto& item : inventory)
 		{
-			SwitchToInventoryItem(currentInventoryUUID, true);
+			item.mainWeaponData.inventoryUUID = item.uid;
+			item.offhandWeaponData.inventoryUUID = item.uid;
 		}
+
+		currentInventoryUUID = "";
+
+		if (currentMainWeaponUUID.empty() == false)
+		{
+
+			std::string mainWeaponUUIDToSwitch = currentMainWeaponUUID;
+			DestroyWeapon();
+			currentMainWeaponUUID = "";
+
+			SwitchToInventoryItem(mainWeaponUUIDToSwitch, true);
+		}
+
+		if (currentOffhandWeaponUUID.empty() == false)
+		{
+
+			std::string offhandWeaponUUIDToSwitch = currentOffhandWeaponUUID;
+			DestroyWeaponOffhand();
+			currentOffhandWeaponUUID = "";
+
+			SwitchToInventoryItem(offhandWeaponUUIDToSwitch, true);
+		}
+
 	}
 	
-	SwitchWeaponOffhand(offhandWeapons[offhandWeapon]);
 
 	controller.SetVelocity(velocity);
 	Teleport(Position);

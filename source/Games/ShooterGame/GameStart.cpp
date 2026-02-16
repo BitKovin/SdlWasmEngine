@@ -10,6 +10,8 @@
 #include <UI/RmlUi/RmlUiEvents.h>
 #include <EngineMain.h>
 
+#include <PauseGameManager.hpp>
+
 #include "Entities/Enemy/DebuffFactory.h"
 
 class GameStart : public Entity
@@ -114,7 +116,12 @@ public:
 
     void UpdatePaused()
     {
-        if (EngineMain::MainInstance->Paused)
+
+        Input::LockCursor = PauseGameManager::GetGamePaused() == false;
+
+		EngineMain::MainInstance->Paused = PauseGameManager::isGameAnyPaused();
+
+        if (PauseGameManager::GetGamePaused())
         {
             if (!pauseMenuDoc->IsVisible())
             {
@@ -137,7 +144,7 @@ public:
 
         RmlUiEvents::onClick(pauseMenuDoc, "backBtn", []()
             {
-				EngineMain::MainInstance->Paused = false;
+				PauseGameManager::SetGamePaused(false);
             });
         RmlUiEvents::onClick(pauseMenuDoc, "optionsBtn", [&]()
             {
@@ -223,7 +230,10 @@ GameStart::GameStart()
     Input::AddAction("slot3")->AddKeyboardKey(SDL_KeyCode::SDLK_3);
     Input::AddAction("slot4")->AddKeyboardKey(SDL_KeyCode::SDLK_4);
     Input::AddAction("slot5")->AddKeyboardKey(SDL_KeyCode::SDLK_5);
+    Input::AddAction("slot6")->AddKeyboardKey(SDL_KeyCode::SDLK_6);
     Input::AddAction("lastSlot")->AddKeyboardKey(SDL_KeyCode::SDLK_q);
+
+    Input::AddAction("inventory")->AddKeyboardKey(SDL_KeyCode::SDLK_TAB)->AddButton(GamepadButton::DPadUp);
 
     Input::AddAction("slotTest")->AddKeyboardKey(SDL_KeyCode::SDLK_t);
 
