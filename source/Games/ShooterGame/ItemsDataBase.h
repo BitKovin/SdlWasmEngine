@@ -27,6 +27,8 @@ struct ItemDbEntry
 	std::string weaponOffhandClassName; // For dual weapons or offhand items
 	std::string interactionEntityClassname; // For items that spawn an entity when used (like consumables, etc.)
 	
+	bool offhandCompatible = false; // whether this item can be equipped with offhand weapons (for main weapons)
+
 	InventoryItemType itemType = InventoryItemType::MainWeapon;
 };
 

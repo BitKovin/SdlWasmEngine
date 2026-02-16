@@ -759,6 +759,13 @@ void Player::SwitchToInventoryItem(std::string uuid, bool forceChange)
 		{
 			case InventoryItemType::MainWeapon:
 			{
+
+				if(itemData.offhandCompatible == false)
+				{
+					// If new main weapon is not compatible with offhand, destroy current offhand weapon
+					DestroyWeaponOffhand();
+				}
+
 				// Equip main weapon only
 				SwitchWeapon(currentItem->mainWeaponData);
 				currentMainWeaponUUID = uuid;

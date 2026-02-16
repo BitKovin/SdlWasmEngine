@@ -62,7 +62,10 @@ void ItemsDataBase::loadFromCSV(const std::string& csvText)
 
 		entry.weaponClassName = parser.at(row, 7).trimmed();
 		entry.weaponOffhandClassName = parser.at(row, 8).trimmed();
-		entry.interactionEntityClassname = parser.at(row, 9).trimmed();
+
+		std::string offhandCompatStr = parser.at(row, 9).trimmed();
+		entry.offhandCompatible = (offhandCompatStr == "TRUE" || offhandCompatStr == "true" || offhandCompatStr == "1" || offhandCompatStr == "t");
+		entry.interactionEntityClassname = parser.at(row, 10).trimmed();
 
 		if (entry.weaponOffhandClassName.empty() == false)
 		{

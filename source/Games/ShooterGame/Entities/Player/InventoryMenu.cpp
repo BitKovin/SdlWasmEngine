@@ -14,14 +14,29 @@ void InventoryMenu::Finalize()
 
 	DestroyDrawables();
 
+	StaticMesh* background = new StaticMesh(this);
+	background->LoadFromFile("GameData/models/engine/invSphere.obj");
+	background->SetPixelShader("game/inventory_menu_sphere");
+	background->IsViewmodel = true;
+	background->Position = Camera::position;
+	background->Transparent = true;
+	background->DepthPrePath = false;
+	background->DepthWrite = false;
+	background->ViewmodelScaleFactor = 0.05f;
+
+	Drawables.push_back(background);
+
+
 	float totalItems = (float)inventory.size();
-	float anglePerItem = (2.0f * M_PI) / totalItems;
-	float radius = 0.7f; // Adjust this to change circle size
+	float anglePerItem = (2.0f * glm::pi<float>()) / totalItems;
+	float radius = 1.0f; // Adjust this to change circle size
 
 	if (totalItems > 4)
 	{
 		radius += radius / 4 * (totalItems - 4); // Increase radius for more items to prevent overlap
 	}
+
+	background->Scale = vec3(radius * 2 + 1);
 
 	// Calculate target position using shortest circular path
 	float targetPosition = (float)currentSlotIndex;
@@ -54,7 +69,8 @@ void InventoryMenu::Finalize()
 		mesh->TexturesLocation = modelPath + "/";
 		mesh->PreloadAssets();
 		mesh->IsViewmodel = true;
-		mesh->ViewmodelScaleFactor = 0.2f;
+		mesh->ViewmodelScaleFactor = 0.05f;
+		mesh->MeshHideList.insert("muzzle");
 		Drawables.push_back(mesh);
 
 		mesh->FinalizeFrameData();
@@ -155,6 +171,18 @@ void InventoryMenu::Destroy()
 	Entity::Destroy();
 	PauseGameManager::SetGamePausedGameplay(false);
 
+}
+
+LightVolPointData InventoryMenu::GetLightVolData(bool wallCheck)
+{
+	LightVolPointData data;
+
+	data.directColor = vec3(0.2f);
+	data.ambientColor = vec3(0.1f);
+	data.direction = Camera::Forward() + Camera::Right() * 1.0f + Camera::Up() * 1.0f;
+	data.direction = normalize(data.direction);
+
+	return data;
 }
 
 int InventoryMenu::GetCurrentVisualSlotIndex()

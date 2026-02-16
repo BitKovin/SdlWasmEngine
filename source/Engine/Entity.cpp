@@ -80,6 +80,14 @@ void Entity::Serialize(json& target)
 
 }
 
+LightVolPointData Entity::GetLightVolData(bool wallCheck)
+{
+
+	auto light = Level::Current->BspData.GetLightvolColorPoint(Position * MAP_SCALE, wallCheck);
+
+	return light;
+}
+
 void Entity::Teleport(vec3 position)
 {
 

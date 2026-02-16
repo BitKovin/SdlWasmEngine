@@ -107,6 +107,8 @@ public:
 
 	}
 
+	virtual LightVolPointData GetLightVolData(bool wallCheck);
+
 	virtual void OnDamage(float Damage, Entity* DamageCauser = nullptr, Entity* Weapon = nullptr)
 	{
 		Health -= Damage;

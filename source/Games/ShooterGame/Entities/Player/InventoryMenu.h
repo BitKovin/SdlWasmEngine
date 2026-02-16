@@ -18,6 +18,8 @@ class InventoryMenu : public Entity
 	int oldSlot = 0;
 	float itemRotationTime = 0;
 
+	LightVolPointData GetLightVolData(bool wallCheck) override;
+
 	int GetCurrentVisualSlotIndex();
 
 };
