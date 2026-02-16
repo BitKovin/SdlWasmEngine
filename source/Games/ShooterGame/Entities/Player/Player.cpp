@@ -660,12 +660,20 @@ void Player::SwitchToInventoryItem(std::string uuid, bool forceChange)
 	pendingInventorySwitch = false;
 	desiredInventoryUUID = "";
 
+	auto newItemData = GetItemData(itemPtr->itemID);
+
 	InventoryItem* currentItem = FindInventoryItemByUUID(currentInventoryUUID);
 	auto itemData = ItemDbEntry();
 
 	if (currentItem)
 	{
 		itemData = GetItemData(currentItem->itemID);
+	}
+
+	if (itemData.offhandCompatible == false)
+	{
+		if (newItemData.itemType == InventoryItemType::OffhandWeapon)
+			return;
 	}
 
 	// Save current weapon state back to inventory before switching

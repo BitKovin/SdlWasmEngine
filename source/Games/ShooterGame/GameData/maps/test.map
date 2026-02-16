@@ -2053,3 +2053,9 @@
 "classname" "nav_point"
 "origin" "112 1552 -160"
 }
+// entity 76
+{
+"classname" "npc_guard"
+"origin" "0 128 48"
+"target" "np_0_e"
+}

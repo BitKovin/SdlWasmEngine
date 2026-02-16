@@ -95,7 +95,7 @@ void NpcBase::FromData(EntityData data)
 void NpcBase::Start()
 {
 
-	mesh->Position = Position - vec3(0, 1, 0);
+	mesh->Position = Position - vec3(0, 1, 0); 
 	mesh->Rotation = Rotation;
 
 	//Drawables.push_back(mesh);
@@ -342,7 +342,6 @@ void NpcBase::UpdateReturnFromRagdoll()
 		return;
 	}
 
-	printf("Updating return from ragdoll animation\n");
 
 	auto meshPose = mesh->GetAnimationPose();
 
@@ -1733,7 +1732,6 @@ void NpcBase::UpdateAnimations(bool forceFullUpdate)
 
 	//if (dead) return;
 
-	mesh->StopRagdoll();
 
 	if (isGuard)
 	{

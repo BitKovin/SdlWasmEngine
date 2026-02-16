@@ -251,3 +251,9 @@
 36	5083	7929739663843845	CMakeFiles/engine.dir/source/Engine/Level.cpp.o	554ebbc18513a463
 5084	5327	7929739714322230	ShooterGame/emscripten/lib/libengine.a	7eebd92f45253bc5
 5327	23594	7929739716754100	ShooterGame/emscripten/bin/main.html	94e05ed17d047dea
+22	4952	7929743517542761	CMakeFiles/engine.dir/source/Engine/Level.cpp.o	554ebbc18513a463
+4952	5199	7929743566845533	ShooterGame/emscripten/lib/libengine.a	7eebd92f45253bc5
+29	7811	7929743517613916	CMakeFiles/ShooterGame.dir/source/Games/ShooterGame/Entities/Npc/NpcBase.cpp.o	2ddd1500e4651487
+7811	25161	7929743595435177	ShooterGame/emscripten/bin/main.html	94e05ed17d047dea
+37	7700	7929744602480797	CMakeFiles/ShooterGame.dir/source/Games/ShooterGame/Entities/Npc/NpcBase.cpp.o	2ddd1500e4651487
+7700	25441	7929744679106601	ShooterGame/emscripten/bin/main.html	94e05ed17d047dea
