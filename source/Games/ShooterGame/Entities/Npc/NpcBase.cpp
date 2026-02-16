@@ -342,6 +342,8 @@ void NpcBase::UpdateReturnFromRagdoll()
 		return;
 	}
 
+	printf("Updating return from ragdoll animation\n");
+
 	auto meshPose = mesh->GetAnimationPose();
 
 	getFromRagdollAnimation->Update(1.0f);
@@ -1730,6 +1732,8 @@ void NpcBase::UpdateAnimations(bool forceFullUpdate)
 {
 
 	//if (dead) return;
+
+	mesh->StopRagdoll();
 
 	if (isGuard)
 	{

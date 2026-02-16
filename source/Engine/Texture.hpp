@@ -82,11 +82,9 @@ private:
         size_t bytesPerPixel = 4; // default RGBA
         switch (format) {
         case GL_RGB:
-        case GL_BGR:
             bytesPerPixel = 3;
             break;
         case GL_RGBA:
-        case GL_BGRA:
             bytesPerPixel = 4;
             break;
         case GL_RED:
@@ -154,11 +152,9 @@ private:
         std::string textureName = "Texture_" + std::to_string(width) + "x" + std::to_string(height);
         switch (format) {
         case GL_RGB:
-        case GL_BGR:
             textureName += "_RGB";
             break;
         case GL_RGBA:
-        case GL_BGRA:
             textureName += "_RGBA";
             break;
         case GL_RED:

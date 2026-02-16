@@ -38,6 +38,8 @@ void update_screen_size(int w, int h) {
     SDL_SetWindowSize(window, w, h);
 }
 
+ivec2 initial_screen_size = ivec2(800, 600);
+
 void InitImGui() {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -59,10 +61,14 @@ static EM_BOOL on_canvas_blur(int eventType, const EmscriptenFocusEvent* e, void
     return EM_TRUE;
 }
 
-void emscripten_render_loop() {
+void emscripten_render_loop() 
+{
     Input::PendingMouseDelta = vec2(0, 0);
     SDL_Event event;
     Input::StartEventsFrame();
+
+	vec2 screenSizeDifferenceFactor = vec2((float)EngineMain::MainInstance->ScreenSize.x / initial_screen_size.x, (float)EngineMain::MainInstance->ScreenSize.y / initial_screen_size.y);
+
     while (SDL_PollEvent(&event)) {
         ImGui_ImplSDL2_ProcessEvent(&event);
         switch (event.type) {
@@ -72,7 +78,16 @@ void emscripten_render_loop() {
             }
             break;
         case SDL_MOUSEMOTION:
-            Input::PendingMouseDelta += vec2(event.motion.xrel, event.motion.yrel) * 3.0f * vec2(Camera::AspectRatio,1);
+
+
+			event.motion.xrel = (int)((float)event.motion.xrel * screenSizeDifferenceFactor.x);
+			event.motion.yrel = (int)((float)event.motion.yrel * screenSizeDifferenceFactor.y);
+			event.motion.x = (int)((float)event.motion.x * screenSizeDifferenceFactor.x);
+			event.motion.y = (int)((float)event.motion.y * screenSizeDifferenceFactor.y);
+
+  
+
+            Input::PendingMouseDelta += vec2(event.motion.xrel, event.motion.yrel) * screenSizeDifferenceFactor;
 
             break;
         default:
@@ -135,6 +150,10 @@ int main(int argc, char* args[]) {
 #endif // ! __EMSCRIPTEN_PTHREADS__
 
     EngineMain::MainInstance = engine;
+
+    int h, w;
+	SDL_GetWindowSize(window, &w, &h);
+	initial_screen_size = ivec2(w, h);
 
     emscripten_sleep(300);//some time for js bounce back for correct start resolution
 

@@ -108,6 +108,8 @@ public:
 
     void Render();
 
+	void ForceUpdateScreenSize();
+
     void FinishRender();
 
 };

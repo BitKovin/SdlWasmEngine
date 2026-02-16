@@ -345,6 +345,7 @@ void EngineMain::MainLoop()
 
     if (frame == 5) //some platforms require it
     {
+        ForceUpdateScreenSize(); //hack to fix some rendering issues that happen on some platforms
         initGame();
     }
 
@@ -387,6 +388,8 @@ void EngineMain::MainLoop()
 
     if (loadedlevel || simulatedGameTicks)
     {
+
+        LoadingFrames = 0;
 
         if (loadedlevel)
         {
@@ -460,7 +463,7 @@ void EngineMain::MainLoop()
 
     }
 
-    if (LoadingFrames == 1)
+    if (LoadingFrames == 2)
     {
         AssetRegistry::EndLevelLoad();
     }
@@ -770,6 +773,41 @@ void EngineMain::Render()
         LoadingScreenSystem::Draw();
         return;
     }
+}
+
+void EngineMain::ForceUpdateScreenSize()
+{
+    int w, h;
+
+    SDL_GetWindowSize(Window, &w, &h);
+
+
+    ScreenSize.x = w;
+    ScreenSize.y = h;
+
+#if __EMSCRIPTEN__
+
+    int width, height;
+
+    EMSCRIPTEN_RESULT result = emscripten_get_canvas_element_size("#canvas", &width, &height);
+
+    if (result == EMSCRIPTEN_RESULT_SUCCESS)
+    {
+        ScreenSize = ivec2(width, height);
+    }
+    else
+    {
+        printf("failed to get screen resolution\n");
+    }
+
+#else
+
+#endif // __EMSCRIPTEN__
+
+
+	if (RmlContext)
+		RmlContext->OnResize(ScreenSize.x, ScreenSize.y);
+    
 }
 
 void EngineMain::FinishRender()

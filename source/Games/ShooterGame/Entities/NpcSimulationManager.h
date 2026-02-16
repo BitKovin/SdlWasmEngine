@@ -53,7 +53,7 @@ private:
 
 	static inline int time = 0;
 
-	int startDelay = 2;
+	int startDelay = 1;
 
 	int timeToMinutes(const std::string& timeStr);
 

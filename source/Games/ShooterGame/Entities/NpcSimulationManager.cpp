@@ -4,6 +4,8 @@
 #include <sstream>
 #include "Npc/NpcBase.h"
 
+#include <EngineMain.h>
+
 NpcSimulationManager::NpcSimulationManager()
 {
 
@@ -72,6 +74,8 @@ NpcSimulationManager::NpcSimulationManager()
 
 void NpcSimulationManager::Finalize()
 {
+
+	if (EngineMain::MainInstance->LoadingFrames < 3) return; //for some reason it spawns broken npcs without this check. Only on emscripten
 
 	if (startDelay > 0)
 	{
@@ -229,7 +233,7 @@ const SchedulePoint* NpcSimulationManager::GetActiveSchedulePoint(const std::map
 	if (it == schedule.begin())
 	{
 
-		it = schedule.upper_bound(10000000000000);//try end
+		it = schedule.upper_bound(1316134912);//try end
 		if (it == schedule.begin())
 		{
 			return nullptr;

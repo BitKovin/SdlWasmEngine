@@ -1170,7 +1170,7 @@ void Player::Update()
 
 	float lightLevel = LightVisibility::Compute(lightData);
 
-	printf("light level: %f \n", lightLevel);
+	//printf("light level: %f \n", lightLevel);
 
 	//Logger::Log("Voxel world memory: " + std::to_string(memMB) + " MB");
 

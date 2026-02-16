@@ -2,6 +2,7 @@
 #include "../../gl.h"
 #include <stdexcept>
 #include <unordered_map>
+#include <string>
 
 enum class TextureFormat {
     // Color formats
