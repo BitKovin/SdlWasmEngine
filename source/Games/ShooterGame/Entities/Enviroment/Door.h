@@ -94,6 +94,8 @@ public:
 	void OnBodyExited(Body* body, Entity* entity) override;
 
 	void Interact(Entity* interactingEntity) override;
+	void InteractSecondary(Entity* interactingEntity) override;
+	bool HasSecondaryInteraction() { return true; }
 
 private:
 

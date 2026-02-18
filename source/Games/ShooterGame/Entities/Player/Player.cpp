@@ -926,10 +926,24 @@ void Player::UpdateInteraction()
 		interactionProgress = 0;
 		currentInteractionObject = newInteractive;
 
-		Input::GetAction("interact")->CleanInput();
+		startedInteracting = false;
 	}
 
-	if (!currentInteractionObject) return;
+	if (!currentInteractionObject)
+	{
+
+		startedInteracting = false;
+		interactionProgress = 0;
+
+		return;
+	}
+
+	if (Input::GetAction("interact")->Pressed())
+	{
+		startedInteracting = true;
+	}
+
+	if (startedInteracting == false) return;
 
 	if (currentInteractionObject->HasSecondaryInteraction() == false)
 	{
@@ -940,6 +954,7 @@ void Player::UpdateInteraction()
 			if (currentInteractionObject->CanBeInteracted())
 			{
 				currentInteractionObject->Interact(this);
+				startedInteracting = false;
 			}
 
 		}
@@ -952,6 +967,7 @@ void Player::UpdateInteraction()
 		if (interactionProgress > 0)
 		{
 			currentInteractionObject->InterruptedSecondaryInteractionHold(interactionProgress);
+			interactionProgress = 0;
 		}
 		else
 		{
@@ -963,7 +979,7 @@ void Player::UpdateInteraction()
 				}
 			}
 		}
-
+		startedInteracting = false;
 	}
 	else if (Input::GetAction("interact")->Holding())
 	{
@@ -977,7 +993,7 @@ void Player::UpdateInteraction()
 
 				if (interactionProgress >= currentInteractionObject->GetSecondaryInteractionHoldTime())
 				{
-					Input::GetAction("interact")->CleanInput();
+					startedInteracting = false;
 
 					currentInteractionObject->InteractSecondary(this);
 

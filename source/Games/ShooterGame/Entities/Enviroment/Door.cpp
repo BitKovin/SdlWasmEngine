@@ -158,6 +158,11 @@ void Door::OnBodyExited(Body* body, Entity* entity)
     }
 }
 
+void Door::InteractSecondary(Entity* interactingEntity)
+{
+    Destroy();
+}
+
 void Door::Interact(Entity* interactingEntity)
 {
 

@@ -244,6 +244,7 @@ private:
 	friend class InventoryMenu;
 
 	IInteractive* currentInteractionObject = nullptr;
+	bool startedInteracting = false;
 	float interactionProgress = 0;
 
 public:
