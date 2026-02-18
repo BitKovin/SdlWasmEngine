@@ -1393,7 +1393,7 @@ void NpcBase::UpdateTargetAttack()
 	bullet->Rotation = bulletRotation;
 	bullet->Speed = bulletSpeed;
 	bullet->OwnerTag = fractionTag;
-	bullet->Damage = 10;
+	bullet->Damage = 5;
 	bullet->owner = this;
 	bullet->Start();
 

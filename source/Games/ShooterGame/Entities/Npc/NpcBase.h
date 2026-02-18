@@ -139,8 +139,8 @@ protected:
 
 	std::string fractionTag = "citizen";
 
-	float attackRange = 20;
-	float attackDesiredRange = 10;
+	float attackRange = 20; //enemy will perform attack in this range
+	float attackDesiredRange = 10; //enemy will try to keep this distance
 
 	std::shared_ptr<Observer> observer;
 
@@ -296,7 +296,7 @@ public:
 
 	void UpdateTargetFollow();
 
-	void UpdateTargetAttack();
+	virtual void UpdateTargetAttack();//updates all attack behavior. Like performing attack and setting attack location. By default is ranged
 
 	class NpcSimulationState* GetSimulationStateRef();
 
@@ -305,7 +305,7 @@ public:
 	//input are positions of attacker and target without vertical offset for fire point
 	bool CheckAttackLocation(vec3 location, vec3 targetLocation);
 
-	vec3 FindAttackLocation();
+	virtual vec3 FindAttackLocation(); //calculates attack location. By default for strafing
 
 	void Serialize(json& target);
 	void Deserialize(json& source);
