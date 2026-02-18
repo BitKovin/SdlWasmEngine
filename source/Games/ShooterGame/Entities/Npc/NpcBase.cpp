@@ -796,7 +796,11 @@ void NpcBase::UpdateObserver()
 		{
 			auto& info = knownTargets[target->ownerId];
 			info.id = target->ownerId;
+
+			
 			info.sees = true;
+			
+
 			info.lastSeenPosition = target->position;
 			info.lastSeenTime = Time::GameTime;
 		}
@@ -1066,7 +1070,7 @@ void NpcBase::SelectPrimaryAndCopy()
 		target_lastSeenPosition = info.lastSeenPosition;
 		target_stopUpdateLastSeenPositionDelay = info.stopUpdateLastSeenPositionDelay;
 		target_lastSeenTime = info.lastSeenTime;
-		target_sees = info.sees;
+		target_sees = info.sees && info.detection_progress >= 1.0f;
 		target_underArrest = info.underArrest;
 		target_attack = info.attack;
 		target_underArrestExpire = info.underArrestExpire;
@@ -1294,6 +1298,8 @@ void NpcBase::UpdateTargetFollow()
 void NpcBase::UpdateTargetAttack()
 {
 
+	vec3 desiredSpineRotation = vec3();
+
 	if (target_follow)
 	{
 		auto targetRef = Level::Current->FindEntityWithId(target_id);
@@ -1302,9 +1308,11 @@ void NpcBase::UpdateTargetAttack()
 
 		vec3 localVector = MathHelper::RotateVector(lookAtTargetVector, mesh->Rotation * -1.0f);
 
-		spineRotation = MathHelper::FindLookAtRotation(vec3(), localVector);
+		desiredSpineRotation = MathHelper::FindLookAtRotation(vec3(), localVector);
 
 	}
+
+	spineRotation = mix(spineRotation, desiredSpineRotation, Time::DeltaTimeF * 10);
 
 	if (auto stateRef = GetSimulationStateRef())
 	{

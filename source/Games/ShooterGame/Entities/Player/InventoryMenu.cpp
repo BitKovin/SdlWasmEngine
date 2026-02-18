@@ -137,7 +137,7 @@ void InventoryMenu::Update()
 		return;
 	}
 
-	if (Input::GetAction("ui_confirm")->Pressed())
+	if (Input::GetAction("ui_confirm")->Released())
 	{
 		Player::Instance->SwitchToInventoryItem(Player::Instance->inventory[currentSlotIndex].uid);
 		Destroy();
