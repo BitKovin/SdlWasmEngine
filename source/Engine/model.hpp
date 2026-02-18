@@ -161,10 +161,11 @@ namespace roj
 
 			const aiTexture* tex = scene->GetEmbeddedTexture(fileName.c_str());
 
+
 			// If the texture is embedded (starts with '*')
 			if (tex != nullptr)
 			{
-				LoadTextureFromScene(tex);
+				//LoadTextureFromScene(tex);
 
 			}
 

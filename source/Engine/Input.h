@@ -227,6 +227,8 @@ public:
     // Returns true if the action was pressed within the given buffer time.
     bool PressedBuffered(float bufferLength = 0.2f) const;
 
+    float GetHoldTime();
+
     // Call every frame to update the action state.
     void Update();
 

@@ -356,5 +356,8 @@
     <ClInclude Include="ItemsDataBase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="InteractionSystem\IInteractive.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -211,6 +211,7 @@ protected:
 	}
 
 	static inline unordered_map<string, SkeletalMeshMetaData> loaded_metas;
+	static inline set<string> invalid_meta_files;
 
 	bool dirtyPose = true;
 

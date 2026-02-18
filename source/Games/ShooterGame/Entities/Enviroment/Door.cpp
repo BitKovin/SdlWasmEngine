@@ -158,4 +158,20 @@ void Door::OnBodyExited(Body* body, Entity* entity)
     }
 }
 
+void Door::Interact(Entity* interactingEntity)
+{
+
+    if (IsOpen)
+    {
+        CloseDoor();
+    }
+    else
+    {
+        OpenFromPosition(interactingEntity->Position);
+    }
+
+
+
+}
+
 REGISTER_ENTITY(Door, "env_door")

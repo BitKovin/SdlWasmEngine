@@ -525,7 +525,12 @@ bool InputAction::Holding() const {
 }
 
 bool InputAction::PressedBuffered(float bufferLength) const {
-    return pressedTime + bufferLength >= Time::GameTime;
+    return pressedTime + bufferLength >= Time::GameTimeNoPause;
+}
+
+float InputAction::GetHoldTime()
+{
+    return Time::GameTimeNoPause - pressedTime;
 }
 
 void InputAction::Update() {
@@ -618,7 +623,7 @@ void InputAction::Update() {
 
     if (pressing && !oldPressing) {
         pressed = true;
-        pressedTime = Time::GameTime;
+        pressedTime = Time::GameTimeNoPause;
     }
     else if (!pressing && oldPressing) {
         released = true;

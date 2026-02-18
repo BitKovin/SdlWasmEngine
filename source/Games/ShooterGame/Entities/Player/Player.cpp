@@ -670,10 +670,9 @@ void Player::SwitchToInventoryItem(std::string uuid, bool forceChange)
 		itemData = GetItemData(currentItem->itemID);
 	}
 
-	if (itemData.offhandCompatible == false)
+	if (itemData.offhandCompatible == false && itemData.itemType != InventoryItemType::OffhandWeapon)
 	{
-		if (newItemData.itemType == InventoryItemType::OffhandWeapon)
-			return;
+		DestroyWeapon();
 	}
 
 	// Save current weapon state back to inventory before switching
@@ -682,8 +681,6 @@ void Player::SwitchToInventoryItem(std::string uuid, bool forceChange)
 
 		if (currentItem)
 		{
-
-
 
 			// Save based on item type
 			if (itemData.itemType == InventoryItemType::MainWeapon ||
@@ -899,6 +896,97 @@ vec3 Player::GetBobForMainWeapon()
 	bobT.x = (float)((sin(bobProgress * bobSpeed * 1)) - 0.15f) * 0.3f;
 
 	return bobT * 0.02f;
+}
+
+IInteractive* Player::UpdateInteractionRaycast()
+{
+
+	auto hit = Physics::LineTrace(Camera::position, Camera::position + Camera::Forward() * 2.0f, BodyType::GroupHitTest, {}, { this, currentWeapon, currentOffhandWeapon });
+
+	if (hit.hasHit == false) return nullptr;
+
+	auto interactive = dynamic_cast<IInteractive*>(hit.entity);
+
+	return interactive;
+
+}
+
+void Player::UpdateInteraction()
+{
+
+	IInteractive* newInteractive = UpdateInteractionRaycast();
+
+	if (newInteractive != currentInteractionObject)
+	{
+		if (currentInteractionObject)
+		{
+			currentInteractionObject->InterruptedSecondaryInteractionHold(interactionProgress);
+		}
+
+		interactionProgress = 0;
+		currentInteractionObject = newInteractive;
+
+		Input::GetAction("interact")->CleanInput();
+	}
+
+	if (!currentInteractionObject) return;
+
+	if (currentInteractionObject->HasSecondaryInteraction() == false)
+	{
+
+		if (Input::GetAction("interact")->Pressed())
+		{
+
+			if (currentInteractionObject->CanBeInteracted())
+			{
+				currentInteractionObject->Interact(this);
+			}
+
+		}
+
+		return;
+	}
+
+	if (Input::GetAction("interact")->Released())
+	{
+		if (interactionProgress > 0)
+		{
+			currentInteractionObject->InterruptedSecondaryInteractionHold(interactionProgress);
+		}
+		else
+		{
+			if (Input::GetAction("interact")->GetHoldTime() < 0.3f || true)
+			{
+				if (currentInteractionObject->CanBeInteracted())
+				{
+					currentInteractionObject->Interact(this);
+				}
+			}
+		}
+
+	}
+	else if (Input::GetAction("interact")->Holding())
+	{
+		if (Input::GetAction("interact")->GetHoldTime() > 0.2f)
+		{
+			if (currentInteractionObject->HasSecondaryInteraction() && currentInteractionObject->CanBeInteractedSecondary())
+			{
+				interactionProgress += Time::DeltaTimeF;
+
+				currentInteractionObject->PerformingSecondaryInteractionHold(interactionProgress);
+
+				if (interactionProgress >= currentInteractionObject->GetSecondaryInteractionHoldTime())
+				{
+					Input::GetAction("interact")->CleanInput();
+
+					currentInteractionObject->InteractSecondary(this);
+
+					interactionProgress = 0;
+				}
+			}
+		}
+	}
+
 }
 
 void Player::UpdateWeapon()
@@ -1559,6 +1647,8 @@ void Player::Update()
 		}
 
 	}
+
+	UpdateInteraction();
 
 }
 

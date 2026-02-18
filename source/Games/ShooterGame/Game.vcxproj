@@ -435,6 +435,7 @@
     <ClInclude Include="Entities\Enemy\Enemies\TestNpc.hpp" />
     <ClInclude Include="Entities\TestParticleSystem.hpp" />
     <ClInclude Include="Helpers\LightVisibilityHelper.h" />
+    <ClInclude Include="InteractionSystem\IInteractive.h" />
     <ClInclude Include="ItemsDataBase.h" />
     <ClInclude Include="PauseGameManager.hpp" />
     <ClInclude Include="UI\Enemy\UiNpcDebuffs.h" />

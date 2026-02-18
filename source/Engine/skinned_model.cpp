@@ -483,6 +483,13 @@ namespace roj
 
 		roj::Animator animator(&m_model);
 
+		for (size_t i = 0; i < m_scene->mNumTextures; i++)
+		{
+			auto texture = m_scene->mTextures[i];
+
+			LoadTextureFromScene(texture);
+
+		}
 		
 		for (auto& anim : m_model.animations)
 		{

@@ -8,7 +8,7 @@
 #include <vector>
 #include "FileSystem/FileSystem.h"
 
-#include "stb_lib/stb_image.h"
+#include <includedLibraries/stb_image.h>
 
 #include "malloc_override.h"
 #include "Logger.hpp"
@@ -227,7 +227,6 @@ private:
         setupTexture(converted->w, converted->h, GL_RGBA, converted->pixels, generateMipmaps);
         SDL_FreeSurface(converted);
     }
-
 
     void loadFromMemoryCompressed(const unsigned char* data, size_t size, bool generateMipmaps) {
         int width, height, channels;

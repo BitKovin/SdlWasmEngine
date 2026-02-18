@@ -1,20 +1,20 @@
 ﻿#include "EngineMain.h"
 
-#include "LevelObjectFactory.h"
-#include "Time.hpp"
-#include "Physics.h"
-#include "SoundSystem/SoundManager.hpp"
-#include "Particle/ParticleEmitter.h"
-#include "DebugDraw.hpp"
-#include "UI/UiRenderer.h"
-#include "LoadingScreen/LoadingScreenSystem.h"
-#include "FileSystem/FileSystem.h"
-#include "BehaviourTree/BehaviorTree.h"
-#include "AiPerception/AiPerceptionSystem.h"
-#include "Console/Console.h"
-#include "Console/ConsoleDefaultCommands.h"
-#include "UI/RmlUi/RmlUiContext.h"
-#include "LevelTraversalSystem.h"
+#include <LevelObjectFactory.h>
+#include <Time.hpp>
+#include <Physics.h>
+#include <SoundSystem/SoundManager.hpp>
+#include <Particle/ParticleEmitter.h>
+#include <DebugDraw.hpp>
+#include <UI/UiRenderer.h>
+#include <LoadingScreen/LoadingScreenSystem.h>
+#include <FileSystem/FileSystem.h>
+#include <BehaviourTree/BehaviorTree.h>
+#include <AiPerception/AiPerceptionSystem.h>
+#include <Console/Console.h>
+#include <Console/ConsoleDefaultCommands.h>
+#include <UI/RmlUi/RmlUiContext.h>
+#include <LevelTraversalSystem.h>
 
 #include <Profiling/ResourceStatistics.hpp>
 
@@ -164,6 +164,7 @@ void EngineMain::Init(std::vector<std::string> args)
 
 
     Arguments = ParseCommands(args);
+
 
     LevelObjectFactory::instance().registerDefaults();
     BehaviorTree::RegisterTypes();

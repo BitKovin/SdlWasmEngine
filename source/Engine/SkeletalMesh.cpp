@@ -1747,6 +1747,12 @@ void SkeletalMesh::LoadMetaFromFile()
 
 void SkeletalMesh::LoadMetaFromFile(const std::string& path)
 {
+
+	if (invalid_meta_files.find(path) != invalid_meta_files.end())
+	{
+		return;
+	}
+
 	auto foundData = loaded_metas.find(path);
 
 	SkeletalMeshMetaData data;
@@ -1761,6 +1767,8 @@ void SkeletalMesh::LoadMetaFromFile(const std::string& path)
 
 		if (file.size() < 3)
 		{
+
+			invalid_meta_files.insert(path);
 			return;
 		}
 

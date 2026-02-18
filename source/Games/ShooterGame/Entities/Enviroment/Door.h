@@ -4,10 +4,16 @@
 #include <Navigation/Navigation.hpp>
 #include <imgui/imgui.h>
 
+#include <InteractionSystem/IInteractive.h>
 
-class Door : public Entity
+class Door : public Entity , public IInteractive
 {
 public:
+
+	Door()
+	{
+		SaveGame = true;
+	}
 
 	StaticMesh* doorMesh = nullptr;
 	StaticMesh* doorFrameMesh = nullptr;
@@ -86,6 +92,8 @@ public:
 
 	void OnBodyEntered(Body* body, Entity* entity) override;
 	void OnBodyExited(Body* body, Entity* entity) override;
+
+	void Interact(Entity* interactingEntity) override;
 
 private:
 

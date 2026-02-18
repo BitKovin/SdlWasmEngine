@@ -40,6 +40,8 @@
 
 #include <ItemsDataBase.h>
 
+#include <InteractionSystem/IInteractive.h>
+
 // Forward declaration for custom item logic
 class Player;
 
@@ -241,6 +243,9 @@ private:
 
 	friend class InventoryMenu;
 
+	IInteractive* currentInteractionObject = nullptr;
+	float interactionProgress = 0;
+
 public:
 
 	std::string desiredInventoryUUID = "";   // Item player wants to switch to UUID (for lazy switching)
@@ -354,6 +359,9 @@ public:
 	void DestroyWeapon();
 
 	vec3 GetBobForMainWeapon();
+
+	IInteractive* UpdateInteractionRaycast();
+	void UpdateInteraction();
 
 	void Destroy()
 	{
