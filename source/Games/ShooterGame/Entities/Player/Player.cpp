@@ -670,7 +670,7 @@ void Player::SwitchToInventoryItem(std::string uuid, bool forceChange)
 		itemData = GetItemData(currentItem->itemID);
 	}
 
-	if (itemData.offhandCompatible == false && itemData.itemType != InventoryItemType::OffhandWeapon)
+	if (itemData.offhandCompatible == false && newItemData.itemType == InventoryItemType::OffhandWeapon)
 	{
 		DestroyWeapon();
 	}

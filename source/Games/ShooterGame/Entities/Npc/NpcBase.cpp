@@ -2554,6 +2554,8 @@ void NpcBase::UpdateDebugUI()
 
 		ImGui::Begin("look at npc info");
 
+		ImGui::DragFloat("Health", &Health);
+
 		ImGui::Checkbox("Follow", &target_follow);
 
 		ImGui::InputText(
