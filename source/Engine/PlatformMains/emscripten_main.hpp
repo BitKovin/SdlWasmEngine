@@ -80,8 +80,8 @@ void emscripten_render_loop()
         case SDL_MOUSEMOTION:
 
 
-			event.motion.xrel = (int)((float)event.motion.xrel * screenSizeDifferenceFactor.x);
-			event.motion.yrel = (int)((float)event.motion.yrel * screenSizeDifferenceFactor.y);
+			//event.motion.xrel = (int)((float)event.motion.xrel * screenSizeDifferenceFactor.x);
+			//event.motion.yrel = (int)((float)event.motion.yrel * screenSizeDifferenceFactor.y);
 			event.motion.x = (int)((float)event.motion.x * screenSizeDifferenceFactor.x);
 			event.motion.y = (int)((float)event.motion.y * screenSizeDifferenceFactor.y);
 
