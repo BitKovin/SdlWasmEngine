@@ -32,13 +32,30 @@ public:
     // GetSize measures the text using SDL_TTF and scales the result.
     virtual glm::vec2 GetSize() override {
         if (!font) return glm::vec2(0.0f);
-        int w = 0, h = 0;
-        if (TTF_SizeUTF8(font, text.c_str(), &w, &h) != 0) {
-            // If there's an error, return zero size.
-            return glm::vec2(0.0f);
+
+        int totalWidth = 0;
+        int totalHeight = 0;
+        int lineHeight = TTF_FontLineSkip(font);
+
+        std::stringstream ss(text);
+        std::string line;
+        int lineCount = 0;
+
+        while (std::getline(ss, line, '\n')) {
+            int w = 0, h = 0;
+            // Empty lines still contribute height but have no measurable width
+            const std::string& toMeasure = line.empty() ? " " : line;
+            if (TTF_SizeUTF8(font, toMeasure.c_str(), &w, &h) != 0)
+                return glm::vec2(0.0f);
+
+            totalWidth = std::max(totalWidth, w);
+            lineCount++;
         }
-        // Scale based on fontSize relative to a 72 DPI reference.
-        return glm::vec2(w, h) * (fontSize / StaticFontSize);
+
+        // Use lineSkip for consistent spacing (same logic as RenderMultilineText)
+        totalHeight = lineCount > 0 ? lineHeight * lineCount : 0;
+
+        return glm::vec2(totalWidth, totalHeight) * (fontSize / StaticFontSize);
     }
 
     // Draw renders the text using the Renderer::DrawText method.

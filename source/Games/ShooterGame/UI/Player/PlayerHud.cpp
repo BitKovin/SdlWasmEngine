@@ -55,6 +55,11 @@ void PlayerHud::Init(Player* playerRef)
     slots->position = vec2(0,20);
     hudCanvas->AddChild(slots);
 
+    useIndicator = make_shared<UseIndicator>(player);
+    useIndicator->origin = vec2(0.5f);
+
+    hudCanvas->AddChild(useIndicator);
+
 }
 
 void PlayerHud::Update()
@@ -155,5 +160,47 @@ void WeaponSlots::Update()
     oldSlots = player->weaponSlots;
 
     UiHorizontalBox::Update();
+
+}
+
+UseIndicator::UseIndicator(Player* player)
+{
+
+    ScaleToParent = false;
+
+    useIcon = make_shared<UiImage>();
+    useIcon->origin = vec2(0.0f);
+    useIcon->pivot = vec2(0.5f);
+    useIcon->size = vec2(40);
+
+    progressBar = make_shared<UiProgressBar>();
+    progressBar->position = vec2(60, 90);
+    progressBar->size = vec2(200,15);
+    progressBar->color = vec4(0.5f,0.2f,0.5f,1);
+
+    text = make_shared<UiText>();
+    text->text = "Press F to use\nHold F to use alt";
+    text->fontSize = 36;
+
+    text->position = vec2(15,15);
+
+    AddChild(useIcon);
+    AddChild(progressBar);
+    AddChild(text);
+
+    playerRef = player;
+
+
+
+}
+
+void UseIndicator::Update()
+{
+
+    UiCanvas::Update();
+
+    visible = playerRef->currentInteractionObject != nullptr;
+
+    progressBar->Progress = playerRef->interactionProgress;
 
 }

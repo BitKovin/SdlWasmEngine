@@ -9,8 +9,9 @@
 #include "Crosshair.h"
 #include <UI/UiVideo.hpp>
 #include <UI/UiHorizontalBox.hpp>
+#include <UI/UiProgressBar.hpp>
 #include <Entity.h>
-#include "../../Entities/Player/Weapons/WeaponBase.h"
+#include <Entities/Player/Weapons/WeaponBase.h>
 
 #include "ScreenMobileControls.h"
 
@@ -28,6 +29,23 @@ public:
 	void Update();
 
 private:
+
+};
+
+class UseIndicator : public UiCanvas
+{
+public:
+	UseIndicator(Player* player);
+
+	void Update() override;
+
+private:
+
+	std::shared_ptr<UiImage> useIcon;
+	std::shared_ptr<UiProgressBar> progressBar;
+	std::shared_ptr<UiText> text;
+
+	Player* playerRef = nullptr;
 
 };
 
@@ -59,5 +77,7 @@ private:
 	std::shared_ptr<UiCrosshair> crosshair;
 
 	std::shared_ptr<UiText> frameRate;
+
+	std::shared_ptr<UseIndicator> useIndicator;
 
 };

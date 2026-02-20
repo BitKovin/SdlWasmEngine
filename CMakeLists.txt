@@ -72,9 +72,6 @@ elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
     )
 
     # Find other Linux dependencies
-    find_package(SDL2       REQUIRED)
-    find_package(SDL2_image REQUIRED)
-    find_package(SDL2_ttf   REQUIRED)
     find_package(GLEW       REQUIRED)
     find_package(OpenGL     REQUIRED)
     find_package(OpenAL     REQUIRED)
@@ -109,8 +106,6 @@ if (EMSCRIPTEN)
         "${CMAKE_SOURCE_DIR}/libsEms/libJolt.a"
         "${CMAKE_SOURCE_DIR}/libsEms/fmod${FMOD_SUFFIX}_wasm.a"
         "${CMAKE_SOURCE_DIR}/libsEms/fmodstudio${FMOD_SUFFIX}_wasm.a"
-        "${CMAKE_SOURCE_DIR}/libsEms/librmlui.a"
-        "${CMAKE_SOURCE_DIR}/libsEms/librmlui_debugger.a"
     )
 
 elseif (LINUX)
@@ -122,7 +117,22 @@ elseif (LINUX)
           "${CMAKE_SOURCE_DIR}/libraries"     
     )
 
-    # --------------------------------------------------
+    # Link the rest as before
+    target_link_libraries(engine PRIVATE
+        Assimp::Assimp
+        Jolt::Jolt
+        GLEW::GLEW
+        OpenGL::GL
+        ZLIB::ZLIB
+        FMOD::Core
+        FMOD::Studio 
+        mimalloc::mimalloc 
+    )
+endif()
+
+
+
+# --------------------------------------------------
 # RmlUi (vendored)
 # --------------------------------------------------
 set(RMLUI_BUILD_SAMPLES OFF CACHE BOOL "" FORCE)
@@ -132,26 +142,49 @@ set(RMLUI_ENABLE_DEBUGGER ON CACHE BOOL "" FORCE)
 
 add_subdirectory(
     "${CMAKE_SOURCE_DIR}/sourceLibraries/RmlUi-6.1"
-    "${CMAKE_BINARY_DIR}/sourceLibraries/RmlUi-6.1/LinuxBinary"
 )
 
-    # Link the rest as before
-    target_link_libraries(engine PRIVATE
-        Assimp::Assimp
-        Jolt::Jolt
-        SDL2::SDL2
-        SDL2_image::SDL2_image
-        SDL2_ttf::SDL2_ttf
-        GLEW::GLEW
-        OpenGL::GL
-        ZLIB::ZLIB
-        FMOD::Core
-        FMOD::Studio 
-        mimalloc::mimalloc 
-        RmlUi::RmlUi
-    	RmlUi::Debugger
-    )
+target_link_libraries(engine PUBLIC
+    RmlUi::RmlUi
+	RmlUi::Debugger
+)
+# ——————————————————————————————————————————————————————————
+
+# Force static builds for all vendored libs on all platforms
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared libraries" FORCE)
+
+# --------------------------------------------------
+# SDL2 (vendored)
+# --------------------------------------------------
+add_subdirectory("${CMAKE_SOURCE_DIR}/sourceLibraries/SDL")
+
+target_link_libraries(engine PUBLIC SDL2::SDL2)
+
+# --------------------------------------------------
+# SDL2 TTF (vendored)
+# --------------------------------------------------
+add_subdirectory("${CMAKE_SOURCE_DIR}/sourceLibraries/SDL_ttf")
+
+# SDL_ttf only exports SDL2_ttf::SDL2_ttf for shared builds.
+# For static builds (including Emscripten), create the alias manually.
+if(NOT TARGET SDL2_ttf::SDL2_ttf)
+    if(TARGET SDL2_ttf)
+        add_library(SDL2_ttf::SDL2_ttf ALIAS SDL2_ttf)
+    elseif(TARGET SDL2_ttf-static)
+        add_library(SDL2_ttf::SDL2_ttf ALIAS SDL2_ttf-static)
+    else()
+        # Dump all targets to help debug
+        message(FATAL_ERROR 
+            "Could not find SDL2_ttf or SDL2_ttf-static after add_subdirectory. "
+            "Check what targets SDL_ttf actually exports by searching its CMakeLists.txt "
+            "for add_library calls."
+        )
+    endif()
 endif()
+
+target_link_libraries(engine PUBLIC SDL2_ttf::SDL2_ttf)
+
+
 
 # ——————————————————————————————————————————————————————————
 # Resolve GAME_DIR, create source/game folder if missing, save selection
@@ -178,7 +211,6 @@ message(STATUS "Using game source directory: ${GAME_DIR}")
 set(WASM_COMMON_LINK_OPTIONS
     "SHELL:-s USE_SDL=2"
     "SHELL:-s USE_SDL_IMAGE=2"
-    "SHELL:-s USE_SDL_TTF=2"
     "SHELL:-s SDL2_IMAGE_FORMATS=[\"png\",\"jpg\",\"tga\"]"
     "SHELL:-s USE_WEBGL2=1"
     "SHELL:-s MIN_WEBGL_VERSION=2"

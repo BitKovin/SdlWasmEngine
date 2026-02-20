@@ -14,16 +14,18 @@
 class UiCustomShaderImage : public UiElement
 {
 
-private:
+protected:
 
 	std::unordered_map<std::string, GLuint> texturesFinal;
 	std::unordered_map<std::string, float> scalarsFinal;
+	std::unordered_map<std::string, vec4> vec4Final;
 
 public:
 
 
 	std::unordered_map<std::string, GLuint> Textures;
 	std::unordered_map<std::string, float> Scalars;
+	std::unordered_map<std::string, vec4> Vector4s;
 
 	UiCustomShaderImage()
 	{
@@ -41,6 +43,7 @@ public:
 	{
 		texturesFinal = Textures;
 		scalarsFinal = Scalars;
+		vec4Final = Vector4s;
 		UiElement::FinalizeChildren();
 	}
 
@@ -56,7 +59,7 @@ public:
 		}
 		else
 		{
-			UiRenderer::DrawTexturedRectShaderParams(pos, finalizedSize, rotation, pivot, texturesFinal, scalarsFinal, GetFinalColor(), PixelShader);
+			UiRenderer::DrawTexturedRectShaderParams(pos, finalizedSize, rotation, pivot, texturesFinal, scalarsFinal,vec4Final, GetFinalColor(), PixelShader);
 		}
 
 

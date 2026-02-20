@@ -5,10 +5,13 @@ class UiCanvas : public UiElement
 {
 public:
 	
+	bool ScaleToParent = true;
+
 	vec2 GetSize()
 	{
 
-		if (parent == nullptr)
+
+		if (parent == nullptr || ScaleToParent == false)
 			return size;
 
 		return parent->GetSize();

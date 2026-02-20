@@ -172,7 +172,7 @@ namespace UiRenderer {
         glDrawArrays(GL_TRIANGLES, 0, 6);
     }
 
-    void DrawTexturedRectShaderParams(const glm::vec2& pos, const glm::vec2& size, float rotation, vec2 pivot, std::unordered_map<std::string, GLuint>& textures, std::unordered_map<std::string, float>& scalars, const glm::vec4& color, const string& shader)
+    void DrawTexturedRectShaderParams(const glm::vec2& pos, const glm::vec2& size, float rotation, glm::vec2 pivot, std::unordered_map<std::string, GLuint>& textures, std::unordered_map<std::string, float>& scalars, std::unordered_map<std::string, vec4>& vec4s, const glm::vec4& color, const string& shader)
     {
         auto shaderProgram = ShaderManager::GetShaderProgram("ui", shader);
         shaderProgram->UseProgram();
@@ -208,6 +208,11 @@ namespace UiRenderer {
         }
 
         for (auto& scalar : scalars)
+        {
+            shaderProgram->SetUniform(scalar.first, scalar.second);
+        }
+
+        for (auto& scalar : vec4s)
         {
             shaderProgram->SetUniform(scalar.first, scalar.second);
         }
@@ -267,7 +272,7 @@ namespace UiRenderer {
                 static_cast<Uint8>(glm::clamp(1.0f, 0.0f, 1.0f) * 255.0f)
             };
 
-            SDL_Surface* surface = TTF_RenderUTF8_Blended(font, text.c_str(), sdlColor);
+            SDL_Surface* surface = TTF_RenderUTF8_Blended_Wrapped(font, text.c_str(), sdlColor,0);
             if (!surface) {
                 std::cerr << "TTF_RenderUTF8_Blended Error: " << TTF_GetError() << std::endl;
                 return;

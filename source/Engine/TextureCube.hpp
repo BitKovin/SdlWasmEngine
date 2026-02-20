@@ -1,7 +1,6 @@
 ﻿#pragma once
 
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_image.h>
 #include "gl.h"
 #include <string>
 #include <vector>
@@ -19,40 +18,26 @@ class CubemapTexture
 private:
 
     // Helper: rotate an SDL_Surface 90° CW or CCW
-    static SDL_Surface* rotate90(SDL_Surface* src, bool clockwise) {
-        // Create a destination surface of swapped dimensions
-        SDL_Surface* dst = SDL_CreateRGBSurfaceWithFormat(
-            0, src->h, src->w, src->format->BitsPerPixel, src->format->format);
+// Allocates and returns a new RGBA buffer rotated 90° CW (cw=true) or CCW.
+// Caller must free with stbi_image_free().
+    static stbi_uc* rotate90_rgba(const stbi_uc* src, int w, int h, bool cw)
+    {
+        stbi_uc* dst = static_cast<stbi_uc*>(malloc(w * h * 4));
         if (!dst) return nullptr;
 
-        SDL_LockSurface(src);
-        SDL_LockSurface(dst);
-
-        int sw = src->w, sh = src->h;
-        int dw = dst->w, dh = dst->h;
-        int bpp = src->format->BytesPerPixel;
-
-        Uint8* sp = (Uint8*)src->pixels;
-        Uint8* dp = (Uint8*)dst->pixels;
-        int spitch = src->pitch;
-        int dpitch = dst->pitch;
-
-        for (int y = 0; y < sh; ++y) {
-            for (int x = 0; x < sw; ++x) {
-                // read pixel
-                Uint8* srcp = sp + y * spitch + x * bpp;
-
-                // compute dest coords
-                int dx = clockwise ? y : (sh - 1 - y);
-                int dy = clockwise ? (sw - 1 - x) : x;
-
-                Uint8* dstp = dp + dy * dpitch + dx * bpp;
-                memcpy(dstp, srcp, bpp);
+        for (int y = 0; y < h; ++y)
+        {
+            for (int x = 0; x < w; ++x)
+            {
+                const stbi_uc* s = src + (y * w + x) * 4;
+                stbi_uc* d;
+                if (cw)
+                    d = dst + (x * h + (h - 1 - y)) * 4; // CW:  dst(x, h-1-y)
+                else
+                    d = dst + ((w - 1 - x) * h + y) * 4; // CCW: dst(w-1-x, y)
+                d[0] = s[0]; d[1] = s[1]; d[2] = s[2]; d[3] = s[3];
             }
         }
-
-        SDL_UnlockSurface(src);
-        SDL_UnlockSurface(dst);
         return dst;
     }
 
@@ -117,66 +102,57 @@ private:
         {
             auto fileData = FileSystemEngine::ReadFileBinary(faces[i].c_str());
 
-            // Create an SDL_RWops from memory
-            SDL_RWops* rw = SDL_RWFromConstMem(fileData.data(), static_cast<int>(fileData.size()));
-            if (!rw) {
-                SDL_Log("Failed to create RWops: %s", SDL_GetError());
-                return;
-            }
+            int width = 0, height = 0, channels = 0;
+            stbi_uc* pixels = stbi_load_from_memory(
+                reinterpret_cast<const stbi_uc*>(fileData.data()),
+                static_cast<int>(fileData.size()),
+                &width, &height, &channels,
+                STBI_rgb_alpha
+            );
 
-            // Load the image from RWops
-            SDL_Surface* surf = IMG_Load_RW(rw, 1); // 1 = automatically free the RWops after loading
-            if (!surf) {
-                SDL_Log("IMG_Load_RW failed: %s", IMG_GetError());
-                continue;
-            }
-
-            SDL_Surface* conv = SDL_ConvertSurfaceFormat(
-                surf, SDL_PIXELFORMAT_RGBA32, 0);
-            SDL_FreeSurface(surf);
-            if (!conv) {
-                std::cerr << "[Cubemap] Convert failed " << faces[i]
-                    << ": " << SDL_GetError() << std::endl;
+            if (!pixels) {
+                std::cerr << "[Cubemap] stbi_load_from_memory failed for "
+                    << faces[i] << ": " << stbi_failure_reason() << std::endl;
                 continue;
             }
 
             // rotate +Y (index 2) 90° CW, –Y (index 3) 90° CCW
             if (i == 2 || i == 3) {
                 bool cw = (i == 2);
-                SDL_Surface* rot = rotate90(conv, !cw);
-                SDL_FreeSurface(conv);
-                if (!rot) {
+                stbi_uc* rotated = rotate90_rgba(pixels, width, height, cw);
+                stbi_image_free(pixels);
+                if (!rotated) {
                     std::cerr << "[Cubemap] Rotation failed for "
                         << faces[i] << std::endl;
                     continue;
                 }
-                conv = rot;
+                pixels = rotated;
+                // width and height swap after 90° rotation
+                std::swap(width, height);
             }
 
             // Store dimensions from first face
             if (i == 0) {
-                faceWidth = conv->w;
-                faceHeight = conv->h;
+                faceWidth = width;
+                faceHeight = height;
             }
 
-            // Calculate face size: width * height * 4 bytes (RGBA)
-            size_t faceSize = conv->w * conv->h * 4;
+            const size_t faceSize = static_cast<size_t>(width) * height * 4;
             totalSize += faceSize;
 
             glTexImage2D(
                 GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
                 0, GL_RGBA,
-                conv->w, conv->h,
+                width, height,
                 0, GL_RGBA, GL_UNSIGNED_BYTE,
-                conv->pixels
+                pixels
             );
-            SDL_FreeSurface(conv);
+
+            stbi_image_free(pixels);
         }
 
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER,
-            generateMipmaps
-            ? GL_LINEAR_MIPMAP_LINEAR
-            : GL_LINEAR);
+            generateMipmaps ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -184,7 +160,6 @@ private:
 
         if (generateMipmaps) {
             glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
-            // Mipmaps add approximately 1/3 more memory (sum of 1/4 + 1/16 + 1/64 + ...)
             totalSize += totalSize / 3;
         }
 
@@ -192,21 +167,15 @@ private:
         std::string resourceName = "Cubemap";
         if (!faces.empty()) {
             resourceName = faces[0];
-
-            // Find the longest common prefix among all faces
             for (size_t i = 1; i < faces.size(); ++i) {
                 size_t minLen = std::min(resourceName.length(), faces[i].length());
                 size_t j = 0;
-                while (j < minLen && resourceName[j] == faces[i][j]) {
-                    j++;
-                }
+                while (j < minLen && resourceName[j] == faces[i][j])
+                    ++j;
                 resourceName = resourceName.substr(0, j);
             }
-
-            // If the common prefix is empty or too short, use a default
-            if (resourceName.empty() || resourceName.length() < 3) {
+            if (resourceName.empty() || resourceName.length() < 3)
                 resourceName = "Cubemap";
-            }
         }
 
         ResourceStatistics::Instance().registerResource(

@@ -35,16 +35,12 @@
 #include <RmlUi/Core/Log.h>
 #include <RmlUi/Core/Profiling.h>
 
+#include <includedLibraries/stb_image.h>
 
 #include <PlatformMains/PlatformWindowData.h>
 
 #include <Profiling/ResourceStatistics.hpp>
 
-#if SDL_MAJOR_VERSION >= 3
-#include <SDL3_image/SDL_image.h>
-#else
-#include <SDL2/SDL_image.h>
-#endif
 
 #if defined RMLUI_PLATFORM_EMSCRIPTEN
 #include <emscripten.h>
@@ -77,41 +73,25 @@ public:
 		file_interface->Read(buffer.get(), buffer_size, file_handle);
 		file_interface->Close(file_handle);
 
-		const size_t i_ext = source.rfind('.');
-		Rml::String extension = (i_ext == Rml::String::npos ? Rml::String() : source.substr(i_ext + 1));
+		// Decode image with stb_image directly into RGBA8.
+		int width = 0, height = 0, channels = 0;
+		stbi_uc* pixels = stbi_load_from_memory(
+			reinterpret_cast<const stbi_uc*>(buffer.get()),
+			static_cast<int>(buffer_size),
+			&width, &height, &channels,
+			STBI_rgb_alpha  // force RGBA output
+		);
 
-#if SDL_MAJOR_VERSION >= 3
-		auto CreateSurface = [&]() { return IMG_LoadTyped_IO(SDL_IOFromMem(buffer.get(), int(buffer_size)), 1, extension.c_str()); };
-		auto GetSurfaceFormat = [](SDL_Surface* surface) { return surface->format; };
-		auto ConvertSurface = [](SDL_Surface* surface, SDL_PixelFormat format) { return SDL_ConvertSurface(surface, format); };
-		auto DestroySurface = [](SDL_Surface* surface) { SDL_DestroySurface(surface); };
-#else
-		auto CreateSurface = [&]() { return IMG_LoadTyped_RW(SDL_RWFromMem(buffer.get(), int(buffer_size)), 1, extension.c_str()); };
-		auto GetSurfaceFormat = [](SDL_Surface* surface) { return surface->format->format; };
-		auto ConvertSurface = [](SDL_Surface* surface, Uint32 format) { return SDL_ConvertSurfaceFormat(surface, format, 0); };
-		auto DestroySurface = [](SDL_Surface* surface) { SDL_FreeSurface(surface); };
-#endif
-
-		SDL_Surface* surface = CreateSurface();
-		if (!surface)
-			return {};
-
-		texture_dimensions = { surface->w, surface->h };
-
-		if (GetSurfaceFormat(surface) != SDL_PIXELFORMAT_RGBA32)
+		if (!pixels)
 		{
-			// Ensure correct format for premultiplied alpha conversion and GenerateTexture below.
-			SDL_Surface* converted_surface = ConvertSurface(surface, SDL_PIXELFORMAT_RGBA32);
-			DestroySurface(surface);
-			if (!converted_surface)
-				return {};
-
-			surface = converted_surface;
+			Rml::Log::Message(Rml::Log::LT_ERROR, "Failed to load texture '%s': %s", source.c_str(), stbi_failure_reason());
+			return {};
 		}
 
+		texture_dimensions = { width, height };
+
 		// Convert colors to premultiplied alpha, which is necessary for correct alpha compositing.
-		const size_t pixels_byte_size = surface->w * surface->h * 4;
-		byte* pixels = static_cast<byte*>(surface->pixels);
+		const size_t pixels_byte_size = static_cast<size_t>(width) * height * 4;
 		for (size_t i = 0; i < pixels_byte_size; i += 4)
 		{
 			const byte alpha = pixels[i + 3];
@@ -119,12 +99,15 @@ public:
 				pixels[i + j] = byte(int(pixels[i + j]) * int(alpha) / 255);
 		}
 
-		Rml::TextureHandle texture_handle = RenderInterface_GL3::GenerateTexture({ pixels, pixels_byte_size }, texture_dimensions);
+		Rml::TextureHandle texture_handle = RenderInterface_GL3::GenerateTexture(
+			{ reinterpret_cast<byte*>(pixels), pixels_byte_size },
+			texture_dimensions
+		);
 
 		ResourceStatistics::Instance().registerResource(ResourceType::Texture, texture_handle, pixels_byte_size, source);
 		ResourceStatistics::Instance().setResourceName(ResourceType::Texture, texture_handle, source);
 
-		DestroySurface(surface);
+		stbi_image_free(pixels);
 
 		return texture_handle;
 	}

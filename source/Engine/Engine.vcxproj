@@ -447,6 +447,7 @@
     <ClCompile Include="UI\RmlUi\Backends\RmlUi_Renderer_GL3.cpp" />
     <ClCompile Include="UI\RmlUi\RmlUiContext.cpp" />
     <ClCompile Include="UI\UiElement.cpp" />
+    <ClCompile Include="UI\UiProgressBar.hpp" />
     <ClCompile Include="UI\UiRenderer.cpp" />
     <ClCompile Include="UI\UiVideo.hpp" />
     <ClCompile Include="UI\WorldSpace\UiBilboard.cpp" />

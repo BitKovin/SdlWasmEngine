@@ -987,11 +987,11 @@ void Player::UpdateInteraction()
 		{
 			if (currentInteractionObject->HasSecondaryInteraction() && currentInteractionObject->CanBeInteractedSecondary())
 			{
-				interactionProgress += Time::DeltaTimeF;
+				interactionProgress += Time::DeltaTimeF / currentInteractionObject->GetSecondaryInteractionHoldTime();
 
 				currentInteractionObject->PerformingSecondaryInteractionHold(interactionProgress);
 
-				if (interactionProgress >= currentInteractionObject->GetSecondaryInteractionHoldTime())
+				if (interactionProgress >= 1.0f)
 				{
 					startedInteracting = false;
 

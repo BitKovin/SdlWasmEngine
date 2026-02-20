@@ -28,7 +28,7 @@ void TaskPoint::NpcEntered(NpcBase* npc)
             npc->taskState.TaskStage = "_waitingForTurn_";
             npc->taskState.HasToMoveToTarget = false;
 
-            Logger::Log("Task already occupied: " + Name);
+            //Logger::Log("Task already occupied: " + Name);
             return;
 		}
     }

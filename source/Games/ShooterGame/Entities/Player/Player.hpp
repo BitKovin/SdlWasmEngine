@@ -247,6 +247,8 @@ private:
 	bool startedInteracting = false;
 	float interactionProgress = 0;
 
+	friend class UseIndicator;
+
 public:
 
 	std::string desiredInventoryUUID = "";   // Item player wants to switch to UUID (for lazy switching)

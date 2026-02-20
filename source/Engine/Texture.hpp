@@ -1,7 +1,6 @@
 #pragma once
 
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_image.h>
 #include "gl.h"
 #include <string>
 #include <iostream>
@@ -196,36 +195,6 @@ private:
 		loadFromMemoryCompressed(fileData.data(), fileData.size(), generateMipmaps);
 
 		ResourceStatistics::Instance().setResourceName(ResourceType::Texture, textureID, filename);
-
-        return;
-
-        // 2. Allocate a buffer that SDL owns
-        SDL_RWops* rw = SDL_RWFromConstMem(fileData.data(), static_cast<int>(fileData.size()));
-        if (!rw) {
-            Logger::Log(filename);
-            SDL_Log("Failed to create RWops: %s", SDL_GetError());
-            return;
-        }
-
-        // 3. Load the surface from RWops
-        SDL_Surface* surface = IMG_Load_RW(rw, 1); // SDL frees RWops automatically
-        if (!surface) {
-            Logger::Log(filename);
-            SDL_Log("IMG_Load_RW failed: %s", IMG_GetError());
-            return;
-        }
-
-        // 4. Convert to RGBA32
-        SDL_Surface* converted = SDL_ConvertSurfaceFormat(surface, SDL_PIXELFORMAT_RGBA32, 0);
-        SDL_FreeSurface(surface);
-        if (!converted) {
-            std::cerr << "Failed to convert surface: " << SDL_GetError() << std::endl;
-            return;
-        }
-
-        // 5. Upload to GPU
-        setupTexture(converted->w, converted->h, GL_RGBA, converted->pixels, generateMipmaps);
-        SDL_FreeSurface(converted);
     }
 
     void loadFromMemoryCompressed(const unsigned char* data, size_t size, bool generateMipmaps) {
