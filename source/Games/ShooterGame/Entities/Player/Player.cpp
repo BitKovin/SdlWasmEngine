@@ -705,7 +705,7 @@ void Player::SwitchToInventoryItem(std::string uuid, bool forceChange)
 	if (currentMainWeaponUUID == uuid || (currentOffhandWeaponUUID == uuid))
 	{
 
-		auto itemData = GetItemData(itemPtr->itemID);
+		auto itemData = newItemData;
 
 		// Handle different item types
 		switch (itemData.itemType)

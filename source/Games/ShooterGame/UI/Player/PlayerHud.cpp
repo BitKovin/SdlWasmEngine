@@ -65,6 +65,9 @@ void PlayerHud::Init(Player* playerRef)
 void PlayerHud::Update()
 {
     text->text = std::to_string((int)player->Health);
+
+    crosshair->visible = !useIndicator->visible;
+
 	//frameRate->text = "FPS: " + to_string((int)(1.0f / Time::DeltaTimeF));
 
 }
