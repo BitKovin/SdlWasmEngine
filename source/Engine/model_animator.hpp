@@ -33,7 +33,7 @@ private:
 
     std::vector<glm::mat4> m_boneMatrices;
     
-    SkinnedModel* m_model;
+    SkinnedModel* m_model = nullptr;
 
     std::vector<roj::FrameBoneTransform> cachedFrameBoneTransforms; // Cached animation frame data
     std::vector<roj::BoneInfo> cachedBoneInfos;                    // Cached bone info data

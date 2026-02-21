@@ -19,7 +19,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # We'll put final runtime / archive / library outputs under Build/<GAME_NAME>/<platform>
 # (these are set later after we detect platform and GAME_DIR)
 # Global compile options (applies to all targets)
-add_compile_options(-O2 -DNDEBUG)
+add_compile_options(-O2 -DNDEBUG) #-g
 
 if (EMSCRIPTEN AND ENABLE_PTHREADS)
     message(STATUS "Emscripten pthreads: ENABLED")
@@ -217,7 +217,7 @@ set(WASM_COMMON_LINK_OPTIONS
     "SHELL:-s MAX_WEBGL_VERSION=2"
     #"SHELL:-s GL_PREINITIALIZED_CONTEXT=1"
     "SHELL:-s STACK_SIZE=500000"
-
+    #"SHELL:-fsanitize=address,undefined"
     "SHELL:-sFETCH"
     "SHELL:-sASYNCIFY"
 
@@ -232,6 +232,9 @@ set(WASM_COMMON_LINK_OPTIONS
 
     "SHELL:-s AGGRESSIVE_VARIABLE_ELIMINATION=1"
     "SHELL:-s ELIMINATE_DUPLICATE_FUNCTIONS=1"
+
+    #"SHELL:-gsource-map"
+    #"SHELL:--source-map-base http://localhost:8779/Build/ShooterGame/emscripten/bin/"
 
     #"SHELL:--profiling-funcs"
 )

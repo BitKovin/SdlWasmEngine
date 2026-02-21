@@ -379,7 +379,9 @@ roj::SkinnedModel* AssetRegistry::GetSkinnedAnimationFromFile(const string& path
 
 	modelLoader.load(path);
 
-	Logger::Log(modelLoader.getInfoLog());
+	if(modelLoader.getInfoLog().empty() == false)
+		std::cerr << modelLoader.getInfoLog() << endl;
+
 
 	skinnedModelAnimationCache[path] = new roj::SkinnedModel(modelLoader.get());
 

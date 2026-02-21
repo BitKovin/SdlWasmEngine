@@ -159,7 +159,9 @@ void NpcSimulationManager::UpdateNpc(NpcSimulationState& npcState)
 		Level::Current->AddEntity(npcRef);
 		npcRef->LoadAssetsIfNeeded();
 		npcRef->Start();
-		npcRef->Deserialize(npcState.entityState);
+
+		if(npcState.entityState.empty() == false)
+			npcRef->Deserialize(npcState.entityState);
 
 
 		auto task = Level::Current->FindEntityWithName(npcState.currentTask);

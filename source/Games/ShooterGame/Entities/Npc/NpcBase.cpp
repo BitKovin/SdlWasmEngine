@@ -2254,9 +2254,13 @@ void NpcBase::Deserialize(json& source)
 
 	mesh->Rotation = Rotation;
 
-	mesh->SetAnimationState(animationStateSaveData);
-	if(getFromRagdollAnimation)
-	getFromRagdollAnimation->SetAnimationState(getFromRagdollAnimationSaveState);
+	if (source.contains("animationStateSaveData"))
+	{
+		mesh->SetAnimationState(animationStateSaveData);
+		if (getFromRagdollAnimation)
+			getFromRagdollAnimation->SetAnimationState(getFromRagdollAnimationSaveState);
+	}
+
 
 	//mesh->Update(0);
 	//mesh->PullRootMotion();

@@ -95,19 +95,19 @@ struct AnimationPose
 
 struct AnimationState
 {
-	bool playing;
-	string animationName;
-	float animationTime;
-	float oldAnimationEventTime;
-	bool looping;
+	bool playing = false;
+	string animationName = "";
+	float animationTime = 0;
+	float oldAnimationEventTime = 0;
+	bool looping = false;
 
 
-	bool inRagdoll;
-	std::unordered_map<string, vec3> ragdollHitboxPositions;
-	std::unordered_map<string, quat> ragdollHitboxRotations;
+	bool inRagdoll = false;
+	std::unordered_map<string, vec3> ragdollHitboxPositions = {};
+	std::unordered_map<string, quat> ragdollHitboxRotations = {};
 
-	std::unordered_map<string, vec3> ragdollHitboxLinearVelocty;
-	std::unordered_map<string, vec3> ragdollHitboxAngularVelocty;
+	std::unordered_map<string, vec3> ragdollHitboxLinearVelocty = {};
+	std::unordered_map<string, vec3> ragdollHitboxAngularVelocty = {};
 
 	NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(AnimationState, playing, animationName, animationTime, oldAnimationEventTime,looping, 
 		inRagdoll, ragdollHitboxPositions, ragdollHitboxRotations, ragdollHitboxLinearVelocty, ragdollHitboxAngularVelocty)
@@ -254,7 +254,13 @@ public:
 	void PasteAnimationPose(AnimationPose pose)
 	{
 
-		if (model == nullptr) return;
+		if (model == nullptr)
+		{
+
+			cerr << "model is null" << endl;
+
+			return;
+		}
 
 		dirtyPose = true;
 
