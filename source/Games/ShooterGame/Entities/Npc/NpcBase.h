@@ -62,6 +62,9 @@ struct TargetInfo
 	Delay stopUpdateLastSeenPositionDelay = Delay();
 	float lastSeenTime = -1;
 	bool sees = false;
+
+	bool seesAndDetected = false;
+
 	bool underArrest = false;
 	bool attack = false;
 	float underArrestExpire = 5.0f;
@@ -70,6 +73,7 @@ struct TargetInfo
 	float detection_progress = 0.0f;
 
 	Crime lastMinCrime = Crime::None;
+	double lastTimeSpotedCrime = -100000;
 
 	void Serialize(json& target) const
 	{
@@ -79,12 +83,15 @@ struct TargetInfo
 		SERIALIZE_FIELD(target, stopUpdateLastSeenPositionDelay);
 		SERIALIZE_FIELD(target, lastSeenTime);
 		SERIALIZE_FIELD(target, sees);
+		SERIALIZE_FIELD(target, seesAndDetected);
 		SERIALIZE_FIELD(target, underArrest);
 		SERIALIZE_FIELD(target, attack);
 		SERIALIZE_FIELD(target, underArrestExpire);
 		SERIALIZE_FIELD(target, attackInRange);
 		SERIALIZE_FIELD(target, currentCrime);
 		SERIALIZE_FIELD(target, detection_progress);
+		SERIALIZE_FIELD(target, lastMinCrime);
+		SERIALIZE_FIELD(target, lastTimeSpotedCrime);
 	}
 
 	void Deserialize(const json& source)
@@ -95,12 +102,15 @@ struct TargetInfo
 		DESERIALIZE_FIELD(source, stopUpdateLastSeenPositionDelay);
 		DESERIALIZE_FIELD(source, lastSeenTime);
 		DESERIALIZE_FIELD(source, sees);
+		DESERIALIZE_FIELD(source, seesAndDetected);
 		DESERIALIZE_FIELD(source, underArrest);
 		DESERIALIZE_FIELD(source, attack);
 		DESERIALIZE_FIELD(source, underArrestExpire);
 		DESERIALIZE_FIELD(source, attackInRange);
 		DESERIALIZE_FIELD(source, currentCrime);
 		DESERIALIZE_FIELD(source, detection_progress);
+		DESERIALIZE_FIELD(source, lastMinCrime);
+		DESERIALIZE_FIELD(source, lastTimeSpotedCrime);
 	}
 };
 

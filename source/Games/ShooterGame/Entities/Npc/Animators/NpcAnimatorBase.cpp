@@ -93,16 +93,19 @@ void NpcAnimatorBase::PlayTaskAnimation(std::string animationName, bool loop)
 void NpcAnimatorBase::StopTaskAnimation()
 {
 
-	std::string currAnimationName = locomotion->currentAnimationData->animationName;
-	std::string currWeaponAnimationName = pistol->currentAnimationData->animationName;
+	if (taskAnimation->currentAnimationData)
+	{
 
-	auto taskPose = taskAnimation->GetAnimationPose();
+		std::string currAnimationName = locomotion->currentAnimationData->animationName;
+		std::string currWeaponAnimationName = pistol->currentAnimationData->animationName;
 
-	locomotion->PasteAnimationPose(taskPose);
-	locomotion->PlayAnimation(currAnimationName, true, 0.3f);
+		auto taskPose = taskAnimation->GetAnimationPose();
 
-	pistol->PasteAnimationPose(taskPose);
-	pistol->PlayAnimation(currWeaponAnimationName, true, 0.3f);
+		locomotion->PasteAnimationPose(taskPose);
+		pistol->PasteAnimationPose(taskPose);
+		locomotion->PlayAnimation(currAnimationName, true, 0.3f);
+		pistol->PlayAnimation(currWeaponAnimationName, true, 0.3f);
+	}
 
 	taskAnimation->StopAnimation();
 

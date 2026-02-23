@@ -916,10 +916,16 @@ void NpcBase::UpdateObserver()
 		if (min_crime != Crime::None)
 		{
 			auto& info = knownTargets[target->ownerId];
+
+			info.lastTimeSpotedCrime = Time::GameTime;
+
 			float speed = (neutral ? GetDetectionSpeed(min_crime) : 10000.0f);
 			info.detection_progress = std::min(1.0f, info.detection_progress + speed * Time::DeltaTimeF);
 			if (info.detection_progress >= 1.0f)
 			{
+
+				info.seesAndDetected = true;
+
 				if (TryCommitCrime(min_crime, target->ownerId, target->position))
 				{
 					info.detection_progress = 1.0f;
@@ -954,12 +960,16 @@ void NpcBase::UpdateObserver()
 			info.detection_progress = std::min(1.0f, info.detection_progress + passive_speed * Time::DeltaTimeF);
 			if (info.detection_progress >= 1.0f)
 			{
+				info.seesAndDetected = true;
 				info.follow = true;
 				PlayPhrace("target_found");
 				report_to_guard = true;
 			}
 		}
-		else if(info.sees == false || (info.underArrest == false && info.lastMinCrime == Crime::None))
+		else if(
+			info.sees == false  
+			|| (info.underArrest == false && info.lastMinCrime == Crime::None) //when we can forget a crime
+			)
 		{
 			// decrease detection when appropriate
 			bool shouldDecrease = (!info.follow && !(info.sees && info.underArrest && !info.follow))
@@ -969,6 +979,11 @@ void NpcBase::UpdateObserver()
 			{
 				info.detection_progress -= 0.5f * Time::DeltaTimeF;
 				info.detection_progress = std::max(0.0f, info.detection_progress);
+
+				if (info.detection_progress <= 0.0f)
+				{
+					info.seesAndDetected = false;
+				}
 
 				if (info.follow && info.detection_progress < 0.1f)
 				{
@@ -1073,7 +1088,7 @@ void NpcBase::SelectPrimaryAndCopy()
 		target_lastSeenPosition = info.lastSeenPosition;
 		target_stopUpdateLastSeenPositionDelay = info.stopUpdateLastSeenPositionDelay;
 		target_lastSeenTime = info.lastSeenTime;
-		target_sees = info.sees && info.detection_progress >= 1.0f;
+		target_sees = info.seesAndDetected;
 		target_underArrest = info.underArrest;
 		target_attack = info.attack;
 		target_underArrestExpire = info.underArrestExpire;

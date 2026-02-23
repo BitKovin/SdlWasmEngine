@@ -1818,14 +1818,16 @@
 // entity 10
 {
 "classname" "npc_guard"
-"origin" "240 232 -224"
+"origin" "272 264 -224"
 "angle" "270"
+"target" "sewer_wait_r01"
 }
 // entity 11
 {
 "classname" "npc_guard"
-"origin" "1816 320 -224"
+"origin" "1816 416 -224"
 "angle" "270"
+"target" "sewer_wait_l1"
 }
 // entity 12
 {
@@ -1862,4 +1864,20 @@
 "origin" "1536 32 -160"
 "light" "300"
 "radius" "128"
+}
+// entity 16
+{
+"classname" "nav_point"
+"origin" "288 224 -256"
+"angle" "-90"
+"targetname" "sewer_wait_r01"
+"waitTime" "100"
+}
+// entity 17
+{
+"classname" "nav_point"
+"origin" "1792 352 -256"
+"angle" "-90"
+"targetname" "sewer_wait_l1"
+"waitTime" "100"
 }
