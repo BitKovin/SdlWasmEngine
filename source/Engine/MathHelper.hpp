@@ -121,6 +121,20 @@ public:
 		return x;
 	}
 
+	inline static glm::vec3 ProjectVelocityOnNormal(const glm::vec3& velocity,
+		const glm::vec3& normal)
+	{
+		// Safety: ensure normal is normalized
+		float lenSq = glm::length2(normal);
+		if (lenSq < 1e-6f)
+			return velocity;
+
+		glm::vec3 n = normal * glm::inversesqrt(lenSq);
+
+		// Remove normal component
+		return velocity - n * glm::dot(velocity, n);
+	}
+
 	// Fast normalization of a vector using InvSqrt.
 	inline static glm::vec3 FastNormalize(const glm::vec3& v) 
 	{

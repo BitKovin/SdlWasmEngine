@@ -101,9 +101,9 @@ void NpcBase::Start()
 	//Drawables.push_back(mesh);
 
 	LeadBody = Physics::CreateCharacterBody(this, Position, 0.5, 2, 100);
+	LeadBody->SetFriction(0.2f);
 
-
-	Physics::SetGravityFactor(LeadBody, 4);
+	Physics::SetGravityFactor(LeadBody, 2.5f);
 
 	desiredDirection = MathHelper::XZ(MathHelper::GetForwardVector(Rotation));
 	movingDirection = desiredDirection;
@@ -473,6 +473,8 @@ void NpcBase::AsyncUpdate()
 		float gravity = LeadBody->GetLinearVelocity().GetY();
 
 		vec3 move = desiredDirection;
+
+
 		move.y = gravity;
 
 		Physics::SetLinearVelocity(LeadBody, move);
@@ -556,6 +558,8 @@ void NpcBase::AsyncUpdate()
 		float gravity = LeadBody->GetLinearVelocity().GetY();
 
 		vec3 move = desiredDirection;
+
+
 		move.y = gravity;
 
 		Physics::SetLinearVelocity(LeadBody, move);
@@ -972,8 +976,26 @@ void NpcBase::UpdateObserver()
 			)
 		{
 			// decrease detection when appropriate
-			bool shouldDecrease = (!info.follow && !(info.sees && info.underArrest && !info.follow))
-				|| (info.sees && info.follow && !info.underArrest);
+			bool shouldDecrease;
+
+			if (!info.underArrest)
+			{
+
+				if (info.sees)
+				{
+					shouldDecrease = !info.follow || !info.sees || (info.lastMinCrime == Crime::None); //if not following or sees
+				}
+				else
+				{
+					shouldDecrease = !info.follow || !info.sees || (info.lastMinCrime == Crime::None && pathFollow.reachedTarget == true); //if not following or sees
+				}
+
+				
+			}
+			else
+			{
+				shouldDecrease = !info.follow && !info.sees;
+			}
 
 			if (shouldDecrease)
 			{
@@ -985,7 +1007,7 @@ void NpcBase::UpdateObserver()
 					info.seesAndDetected = false;
 				}
 
-				if (info.follow && info.detection_progress < 0.1f)
+				if (info.follow && info.detection_progress <= 0.01f)
 				{
 					StopTargetFollow(info.id);
 				}
