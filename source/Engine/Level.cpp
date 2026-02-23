@@ -102,6 +102,8 @@ Level* Level::OpenLevel(string filePath)
 		delete(Current);
 	}
 
+	AssetRegistry::ClearMemory();
+
 	if (isNewLevel)
 	{
 		AssetRegistry::BeginLevelLoad();

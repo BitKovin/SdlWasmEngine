@@ -69,6 +69,8 @@ struct TargetInfo
 	Crime currentCrime = Crime::None;
 	float detection_progress = 0.0f;
 
+	Crime lastMinCrime = Crime::None;
+
 	void Serialize(json& target) const
 	{
 		SERIALIZE_FIELD(target, id);

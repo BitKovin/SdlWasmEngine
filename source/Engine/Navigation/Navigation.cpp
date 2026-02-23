@@ -673,7 +673,18 @@ std::vector<glm::vec3> NavigationSystem::FindSimplePath(glm::vec3 start, glm::ve
     // --- 3) Clamp goal if partial ---
     bool reached = (polyPath[polyCount - 1] == gRef);
     if (!reached)
+    {
         navQuery->closestPointOnPoly(polyPath[polyCount - 1], gPos, gNearest, nullptr);
+
+        // Check if the best reachable point is within acceptance radius of start
+        float partialDist = dtVdist(sPos, gNearest);
+        if (partialDist <= acceptanceRadius)
+        {
+            if (outReached) *outReached = true;
+            dtFreeNavMeshQuery(navQuery);
+            return {};
+        }
+    }
 
     // --- 4) StringPull / StraightPath ---
     const int MAX_STRAIGHT = 512;

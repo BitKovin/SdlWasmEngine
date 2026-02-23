@@ -187,7 +187,7 @@ float getAspectRatio()
 // --- Smooth posterization with large noise ---
 vec3 smoothPosterize(vec3 color, float steps, float softness, vec2 uv) {
     // Add smooth large-scale noise
-    float n = (smoothNoise(uv * 2.3) - 0.5) / steps * 0.6; // big noise, low frequency
+    float n = (smoothNoise(uv * 2.3) - 0.5) / steps * 0.7; // big noise, low frequency
     color += n;
 
     // Posterize with smooth transitions
@@ -252,7 +252,7 @@ void main()
 
     color = GetFromLUT(color);
 
-    color = smoothPosterize(color, 70.0,0.35,TexCoords*vec2(aspectRatio,1.0));
+    color = smoothPosterize(color, 75.0,0.35,TexCoords*vec2(aspectRatio,1.0));
 
 
     if(false) 

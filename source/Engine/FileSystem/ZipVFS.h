@@ -15,7 +15,7 @@ struct SourceEntry {
     std::string zipPath;  // Can be file path or "memory://..." identifier
     int entryIndex;
     uint64_t uncompressedSize;
-    uint32_t mtime;
+    uint32_t mtime; //modification time
     bool isNested = false;
 };
 

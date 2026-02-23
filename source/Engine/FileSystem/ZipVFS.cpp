@@ -7,6 +7,7 @@
 #include <unordered_set>
 #include <filesystem>
 #include "../Compression/zip/zip.h"
+#include <Compression/miniz.h>
 
 namespace fs = std::filesystem;
 
@@ -177,7 +178,16 @@ bool ZipVFS::indexSingleZip(const std::string& rootPath, const std::string& zipP
         src.zipPath = zipPath;
         src.entryIndex = i;
         src.uncompressedSize = static_cast<uint64_t>(zip_entry_size(za));
-        src.mtime = 0;
+        
+        mz_zip_archive* archive = reinterpret_cast<mz_zip_archive*>(za);
+        mz_zip_archive_file_stat fileStat{};
+        if (mz_zip_reader_file_stat(archive, static_cast<mz_uint>(i), &fileStat)) {
+            src.mtime = static_cast<uint64_t>(fileStat.m_time);
+        }
+        else {
+            src.mtime = 0;
+        }
+
         src.isNested = (nestingDepth > 0);
 
         m_index[vpath].push_back(src);

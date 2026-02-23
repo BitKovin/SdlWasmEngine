@@ -44,7 +44,7 @@ public:
         }
         else
         {
-            Level::LoadLevelFromFile("GameData/maps/test.bsp");
+            Level::LoadLevelFromFile("GameData/maps/l1_town.bsp");
         }
 		
 

@@ -909,6 +909,9 @@ void NpcBase::UpdateObserver()
 			TryStartInvestigation(InvestigationReason::NpcInTrouble, target->position, target->ownerId);
 		}
 
+		auto& targetInfo = knownTargets[target->ownerId];
+		targetInfo.lastMinCrime = min_crime;
+
 		// commit detection buildup per-target
 		if (min_crime != Crime::None)
 		{
@@ -956,7 +959,7 @@ void NpcBase::UpdateObserver()
 				report_to_guard = true;
 			}
 		}
-		else
+		else if(info.sees == false || (info.underArrest == false && info.lastMinCrime == Crime::None))
 		{
 			// decrease detection when appropriate
 			bool shouldDecrease = (!info.follow && !(info.sees && info.underArrest && !info.follow))
@@ -1253,6 +1256,10 @@ void NpcBase::UpdateTargetFollow()
 
 			}
 		}
+
+	}
+	else if(target_attack == false && currentCrime == Crime::Trespassing)
+	{
 
 	}
 
