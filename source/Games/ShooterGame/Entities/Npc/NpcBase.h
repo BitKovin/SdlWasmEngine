@@ -21,6 +21,8 @@
 #include <AiPerception/Observer.h>
 #include <AiPerception/ObservationTarget.h>
 
+#include <Character/CharacterController.h>
+
 #include "../../Ai/NpcTasks/TaskState.h"
 
 #include <unordered_map>
@@ -119,6 +121,8 @@ class NpcBase : public Entity
 {
 
 protected:
+
+	CharacterController* controller = nullptr;
 
 	vec3 desiredDirection = vec3();
 	vec3 movingDirection = vec3();

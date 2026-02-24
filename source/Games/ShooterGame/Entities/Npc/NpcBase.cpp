@@ -95,15 +95,10 @@ void NpcBase::FromData(EntityData data)
 void NpcBase::Start()
 {
 
-	mesh->Position = Position - vec3(0, 1, 0); 
+	mesh->Position = Position - vec3(0, controller->height, 0); 
 	mesh->Rotation = Rotation;
 
 	//Drawables.push_back(mesh);
-
-	LeadBody = Physics::CreateCharacterBody(this, Position, 0.5, 2, 100);
-	LeadBody->SetFriction(0.2f);
-
-	Physics::SetGravityFactor(LeadBody, 2.5f);
 
 	desiredDirection = MathHelper::XZ(MathHelper::GetForwardVector(Rotation));
 	movingDirection = desiredDirection;
@@ -136,6 +131,11 @@ void NpcBase::Start()
 
 	MoveToScheduledTask();
 
+	controller = new CharacterController();
+	controller->Init(this, Position, 0.45f);
+
+	
+
 }
 
 
@@ -151,16 +151,19 @@ void NpcBase::Death()
 	mesh->StartRagdoll();
 	mesh->RagdollPoseFollowStrength = 0.0f;
 	mesh->SetAnimationPaused(true);
-	Physics::SetLinearVelocity(LeadBody, vec3(0));
 
 	VoiceSoundPlayer->Stop();
 	VoiceSoundPlayer->Volume = 0;
 
-	//Physics::SetBodyType(LeadBody, BodyType::None);
-	//Physics::SetCollisionMask(LeadBody, BodyType::World);
 
-	Physics::DestroyBody(LeadBody);
-	LeadBody = nullptr;
+
+	if (controller)
+	{
+		delete controller;
+		controller = nullptr;
+	}
+
+
 
 	dead = true;
 
@@ -208,9 +211,9 @@ void NpcBase::OnDamage(float Damage, Entity* DamageCauser, Entity* Weapon)
 
 	if (DamageCauser != nullptr)
 	{
-		if (LeadBody)
+		if (controller)
 		{
-			LeadBody->SetLinearVelocity(LeadBody->GetLinearVelocity() / 2.0f);
+			controller->SetVelocity(controller->GetVelocity() / 2.0f);
 			speed /= 2.0f;
 		}
 	}
@@ -253,7 +256,7 @@ void NpcBase::UpdateStunnedReturn()
 
 	vec3 pelvisPos = FromPhysics(pelvisBody->GetPosition());
 
-	Physics::SetBodyPosition(LeadBody, pelvisPos + vec3(0, 0.4f, 0));
+	controller->SetPosition(pelvisPos + vec3(0, 0.4f, 0));
 
 	if (stunnedRagdollDelay.Wait()) return;
 
@@ -297,7 +300,7 @@ void NpcBase::StartReturnFromRagdoll()
 
 
 	Position = pelvisTransformWorld.Position + vec3(0, 1.0f, 0);
-	Physics::SetBodyPosition(LeadBody, Position);
+	controller->SetPosition(Position);
 
 	float oldRot = mesh->Rotation.y;
 
@@ -410,6 +413,9 @@ void NpcBase::Update()
 void NpcBase::AsyncUpdate()
 {
 
+	controller->Update(Time::DeltaTimeF);
+	Position = controller->GetPosition();
+
 	pathFollow.WaitToFinish();
 
 	if (dead == false)
@@ -453,16 +459,16 @@ void NpcBase::AsyncUpdate()
 	if (headHitbox)
 		VoiceSoundPlayer->Position = FromPhysics(headHitbox->GetPosition());
 
-	VoiceSoundPlayer->Velocity = FromPhysics(LeadBody->GetLinearVelocity());
+	VoiceSoundPlayer->Velocity = controller->GetVelocity();
 
-	vec3 curMove = MathHelper::XZ(FromPhysics(LeadBody->GetLinearVelocity()));
+	vec3 curMove = MathHelper::XZ(controller->GetVelocity());
 
 	if (isStunned() || mesh->InRagdoll)
 	{
 
 		UpdateStunnedReturn();
 
-		Physics::SetLinearVelocity(LeadBody, vec3(0, LeadBody->GetLinearVelocity().GetY(), 0));
+		controller->SetVelocity(vec3(0,controller->GetVelocity().y, 0));
 
 	}
 	else if (movementLockDelay.Wait())
@@ -470,14 +476,13 @@ void NpcBase::AsyncUpdate()
 
 		desiredDirection = MathHelper::Interp(curMove, vec3(), Time::DeltaTimeF, 5.0f);
 
-		float gravity = LeadBody->GetLinearVelocity().GetY();
+		float gravity = controller->GetVelocity().y;
 
 		vec3 move = desiredDirection;
 
-
 		move.y = gravity;
 
-		Physics::SetLinearVelocity(LeadBody, move);
+		controller->SetVelocity(move);
 
 	}
 	else
@@ -506,7 +511,7 @@ void NpcBase::AsyncUpdate()
 			{
 				vec3 newMove = normalize(dir) * speed;
 
-				vec3 curMove = MathHelper::XZ(FromPhysics(LeadBody->GetLinearVelocity()));
+				vec3 curMove = MathHelper::XZ(controller->GetVelocity());
 
 				desiredDirection = MathHelper::Interp(curMove, newMove, Time::DeltaTimeF, 5.0f);
 
@@ -522,7 +527,7 @@ void NpcBase::AsyncUpdate()
 		else
 		{
 
-			vec3 curMove = MathHelper::XZ(FromPhysics(LeadBody->GetLinearVelocity()));
+			vec3 curMove = MathHelper::XZ(controller->GetVelocity());
 
 			desiredDirection = MathHelper::Interp(curMove, vec3(0), Time::DeltaTimeF, 8.0f);
 
@@ -555,14 +560,14 @@ void NpcBase::AsyncUpdate()
 			movingDirection = normalize(movingDirection) * 0.3f;
 		}
 
-		float gravity = LeadBody->GetLinearVelocity().GetY();
+		float gravity = controller->GetVelocity().y;
 
 		vec3 move = desiredDirection;
 
 
 		move.y = gravity;
 
-		Physics::SetLinearVelocity(LeadBody, move);
+		controller->SetVelocity(move);
 
 
 	}
@@ -983,11 +988,11 @@ void NpcBase::UpdateObserver()
 
 				if (info.sees)
 				{
-					shouldDecrease = !info.follow || !info.sees || (info.lastMinCrime == Crime::None); //if not following or sees
+					shouldDecrease = !info.follow || (info.lastMinCrime == Crime::None); //if not following or sees
 				}
 				else
 				{
-					shouldDecrease = !info.follow || !info.sees || (info.lastMinCrime == Crime::None && pathFollow.reachedTarget == true); //if not following or sees
+					shouldDecrease = !info.follow || (info.lastMinCrime == Crime::None && pathFollow.reachedTarget == true); //if not following or sees
 				}
 
 				
@@ -1384,7 +1389,7 @@ void NpcBase::UpdateTargetAttack()
 
 	if (attackDelay.Wait()) return;
 
-	if (LeadBody->GetLinearVelocity().Length() > 2.2f)
+	if (length(controller->GetVelocity()) > 2.2f)
 	{
 
 		attackDelay.AddDelay(0.25f + RandomHelper::RandomFloat() * 0.1f);
@@ -1806,9 +1811,9 @@ void NpcBase::UpdateAnimations(bool forceFullUpdate)
 	{
 		animator.UpdatePose = mesh->WasRended && mesh->InRagdoll == false || forceFullUpdate;
 
-		if (LeadBody != nullptr)
+		if (controller != nullptr)
 		{
-			animator.movementSpeed = LeadBody->GetLinearVelocity().Length();
+			animator.movementSpeed = length(controller->GetVelocity());
 		}
 
 		animator.Update();
@@ -2275,13 +2280,19 @@ void NpcBase::Deserialize(json& source)
 	if (HasTag(fractionTag) == false)
 		Tags.push_back(fractionTag);
 
-	Physics::SetBodyPosition(LeadBody, Position);
+	controller->SetPosition(Position);
+
 
 
 	if (dead)
 	{
-		Physics::DestroyBody(LeadBody);
-		LeadBody = nullptr;
+		
+		if (controller)
+		{
+			delete controller;
+			controller = nullptr;
+		}
+
 		/*
 		DeathSoundPlayer->Destroy();
 		HurtSoundPlayer->Destroy();
@@ -2469,14 +2480,6 @@ void NpcBase::UpdateTask()
 {
 
 
-
-
-	if (LeadBody)
-	{
-		Physics::SetMotionType(LeadBody, JPH::EMotionType::Dynamic);
-	}
-
-
 	TaskPoint* taskPoint = nullptr;
 
 	if (taskState.TaskName.empty() == false)
@@ -2492,12 +2495,12 @@ void NpcBase::UpdateTask()
 
 	if (actualDoingTask)
 	{
-		if (LeadBody != nullptr)
+		if (controller != nullptr)
 		{
 			if (taskState.HasToLockPosition)
 			{
-				Physics::SetMotionType(LeadBody, JPH::EMotionType::Kinematic);
-				Physics::SetBodyPosition(LeadBody, taskState.LockPosition);
+				//Physics::SetMotionType(LeadBody, JPH::EMotionType::Kinematic);
+				controller->SetPosition(taskState.LockPosition);
 				Position = taskState.LockPosition;
 			}
 			else
