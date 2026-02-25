@@ -95,8 +95,7 @@ void NpcBase::FromData(EntityData data)
 void NpcBase::Start()
 {
 
-	mesh->Position = Position - vec3(0, controller->height, 0); 
-	mesh->Rotation = Rotation;
+
 
 	//Drawables.push_back(mesh);
 
@@ -132,9 +131,11 @@ void NpcBase::Start()
 	MoveToScheduledTask();
 
 	controller = new CharacterController();
+	controller->movementQuality = CharacterControllerMovementQuality::NpcGeneric;
 	controller->Init(this, Position, 0.45f);
 
-	
+	mesh->Position = Position - vec3(0, controller->height / 2.0f, 0);
+	mesh->Rotation = Rotation;
 
 }
 
@@ -413,8 +414,12 @@ void NpcBase::Update()
 void NpcBase::AsyncUpdate()
 {
 
-	controller->Update(Time::DeltaTimeF);
-	Position = controller->GetPosition();
+	if (controller)
+	{
+		controller->Update(Time::DeltaTimeF);
+		Position = controller->GetPosition();
+	}
+
 
 	pathFollow.WaitToFinish();
 
@@ -428,6 +433,7 @@ void NpcBase::AsyncUpdate()
 		UpdateScheduledTask();
 
 	}
+
 
 	auto animEvents = mesh->PullAnimationEvents();
 
@@ -578,7 +584,7 @@ void NpcBase::AsyncUpdate()
 	UpdateReturnFromRagdoll();
 
 
-	mesh->Position = Position - vec3(0, 1, 0);
+	mesh->Position = Position - vec3(0, controller->height / 2.0f, 0);
 	mesh->Rotation = vec3(0, MathHelper::FindLookAtRotation(vec3(), movingDirection).y, 0);
 
 	if (mesh->WasRended)

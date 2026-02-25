@@ -2,6 +2,14 @@
 #include "../Physics.h"
 #include "../Entity.h"
 
+enum class CharacterControllerMovementQuality
+{
+
+	Player = 0,
+	NpcGeneric = 1
+
+};
+
 class CharacterController
 {
 public:
@@ -44,6 +52,8 @@ public:
 	float cameraHeightStanding = 1.7f;
 	float cameraHeightCrouching = 0.8f;
 	float crouchHeight = 0.80f;
+
+	CharacterControllerMovementQuality movementQuality = CharacterControllerMovementQuality::Player;
 
 	float GetCameraHeight();
 

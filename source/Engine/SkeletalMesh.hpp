@@ -37,7 +37,8 @@ struct AnimationPose
 
 	roj::BoneNode* boneTreeRoot = nullptr;
 
-	static AnimationPose Lerp(AnimationPose a, AnimationPose b, float progress);
+	static AnimationPose Lerp(const AnimationPose& a,
+		const AnimationPose& b, float progress);
 
 	static AnimationPose LayeredLerp(const hashed_string& startBoneName,
 		roj::BoneNode* rootNode,

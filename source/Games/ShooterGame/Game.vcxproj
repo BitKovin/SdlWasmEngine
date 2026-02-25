@@ -344,6 +344,7 @@
     <ClCompile Include="Entities\Enemy\Debuffs\DisbalanceDebuff.cpp" />
     <ClCompile Include="Entities\Enemy\Debuffs\PoiseBreakDebuff.cpp" />
     <ClCompile Include="Entities\Enemy\Debuffs\QuicksilverDebuff.cpp" />
+    <ClCompile Include="Entities\Enemy\Enemies\NpcHumanBase.cpp" />
     <ClCompile Include="Entities\Enemy\Enemies\NpcHumanGun.cpp" />
     <ClCompile Include="Entities\Enemy\IEnemy.cpp" />
     <ClCompile Include="Entities\Enviroment\Door.cpp" />
@@ -405,6 +406,7 @@
     <ClInclude Include="Ai\NpcTasks\TaskState.h" />
     <ClInclude Include="Entities\Enemy\Debuff.h" />
     <ClInclude Include="Entities\Enemy\DebuffFactory.h" />
+    <ClInclude Include="Entities\Enemy\Enemies\NpcHumanBase.h" />
     <ClInclude Include="Entities\Enemy\Enemies\NpcHumanGun.h" />
     <ClInclude Include="Entities\Enviroment\Door.h" />
     <ClInclude Include="Entities\Enemy\IEnemy.h" />

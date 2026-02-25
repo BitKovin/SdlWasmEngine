@@ -529,9 +529,16 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 
 	}
 
+	if (movementQuality == CharacterControllerMovementQuality::NpcGeneric)
+	{
+		numOfIterations = 4;
+
+		startRadius = 1;
+
+	}
 
 
-	for (float r = 0.1; r <= 1; r += 0.3)
+	for (float r = startRadius; r <= 1; r += 0.3)
 	{
 
 		for (int i = 0; i < numOfIterations; i++)
