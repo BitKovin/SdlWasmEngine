@@ -192,7 +192,11 @@ void NpcHumanBase::StartReturnFromRagdoll()
 
     ragdollPose.boneTransforms["pelvis"] = pelvisTransform.ToMatrix();
 
+    ragdollPelvisWorldPos = pelvisPos;
+    pelvisBlendTimer = 0.0f;
+
     mesh->StopRagdoll();
+    mesh->PasteAnimationPose(ragdollPose);
 
     returningFromRagdoll = true;
 
@@ -234,6 +238,21 @@ void NpcHumanBase::UpdateReturnFromRagdoll()
     newPose = AnimationPose::Lerp(meshPose, newPose, 1.0f - lerpProgressFromEnd);
 
     mesh->PasteAnimationPose(newPose);
+
+    if (pelvisBlendTimer < 0.5f)
+    {
+        pelvisBlendTimer += Time::DeltaTimeF;
+        float t = saturate(pelvisBlendTimer / 0.5f);
+
+        // Where the animation wants the pelvis right now
+        vec3 animPelvisWorldPos = MathHelper::DecomposeMatrix(mesh->GetBoneMatrixWorld("pelvis")).Position;
+
+        // Lerp from the saved ragdoll position toward the animation's position
+        vec3 targetPelvisWorldPos = mix(ragdollPelvisWorldPos, animPelvisWorldPos, t);
+
+        // Shift the entire mesh so the pelvis lands where we want it
+        mesh->Position += targetPelvisWorldPos - animPelvisWorldPos;
+    }
 
     if (getFromRagdollAnimation->IsAnimationPlaying() == false)
     {

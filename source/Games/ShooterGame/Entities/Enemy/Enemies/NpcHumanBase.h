@@ -61,6 +61,9 @@ protected:
     AnimationPose ragdollPose;
     AnimationState getFromRagdollAnimationSaveState;
 
+    vec3 ragdollPelvisWorldPos = vec3();
+    float pelvisBlendTimer = 0.0f;
+
     void UpdateFleeTarget();
 
     void SetupSoundPlayer(SoundPlayer* soundPlayer);
