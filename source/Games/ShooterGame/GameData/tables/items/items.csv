@@ -3,7 +3,7 @@ testId;test item;this item is a test;GameData/textures/cat.png;GameData/models/w
 weapon_cane;cane;you can use this cane to parry attacks;GameData/textures/cat.png;GameData/models/player/weapons/cane/cane.glb;FALSE;1;;weapon_cane;TRUE;
 weapon_pistol;pistol;pistol. It can shoot and stuff;GameData/textures/cat.png;GameData/models/player/weapons/pistol/pistol.glb;FALSE;1;weapon_pistol;;TRUE;
 weapon_swords;swords;dual swords for melee combat;GameData/textures/cat.png;GameData/models/player/weapons/swords/swords_tp.glb;FALSE;1;weapon_swords;;TRUE;
-weapon_mpsd;mpsd;submachine gun with suppressor;GameData/textures/cat.png;GameData/models/player/weapons/mpsd/mpsd.glb;FALSE;1;weapon_mpsd;;TRUE;
+weapon_mpsd;mpsd;submachine gun with suppressor;GameData/textures/cat.png;GameData/models/player/weapons/stg44/stg44.glb;FALSE;1;weapon_mpsd;;TRUE;
 weapon_sniper;sniper;sniper rifle for long-range shots;GameData/textures/cat.png;GameData/models/player/weapons/sniper/sniper.glb;FALSE;1;weapon_sniper;;FALSE;
 weapon_shotgun;shotgun;shotgun for close-range combat;GameData/textures/cat.png;GameData/models/player/weapons/shotgun/shotgun.glb;FALSE;1;weapon_shotgun;;TRUE;
 weapon_tommy;tommy;tommy gun for rapid fire;GameData/textures/cat.png;GameData/models/player/weapons/tommy/tommy.glb;FALSE;1;weapon_tommy;;TRUE;

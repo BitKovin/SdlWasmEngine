@@ -301,11 +301,19 @@ void WeaponFirearm::NotifyNpcs() {
 
 void WeaponFirearm::AsyncUpdate()
 {
+
+	float hide = HideWeapon;
+
+	if (akimbo)
+	{
+		hide = 1;
+	}
+
 	// RIGHT GUN
 	viewmodel->Update();
 	auto pose = viewmodel->GetAnimationPose();
 	auto leftHandPose = pose.GetBoneTransform("clavicle_l");
-	leftHandPose.Rotation += vec3(50, 0, 0) * HideWeapon;
+	leftHandPose.Rotation += vec3(50, 0, 0) * hide;
 	pose.SetBoneTransformEuler("clavicle_l", leftHandPose);
 	arms->PasteAnimationPose(pose);
 
@@ -315,7 +323,7 @@ void WeaponFirearm::AsyncUpdate()
 		viewmodelLeft->Update();
 		auto poseL = viewmodelLeft->GetAnimationPose();
 		auto leftHandPose = poseL.GetBoneTransform("clavicle_l");
-		leftHandPose.Rotation += vec3(50, 0, 0) * HideWeapon;
+		leftHandPose.Rotation += vec3(50, 0, 0) * hide;
 		poseL.SetBoneTransformEuler("clavicle_l", leftHandPose);
 		armsLeft->PasteAnimationPose(poseL);
 	}
@@ -362,7 +370,7 @@ WeaponSlotData WeaponFirearm::GetDefaultData() {
 
 AnimationPose WeaponFirearm::ApplyWeaponAnimation(AnimationPose thirdPersonPose)
 {
-	thirdPersonAnimator->weaponAim = weaponAim;
+	thirdPersonAnimator->weaponAim = std::clamp(weaponAim,0.0f, 1.0f);
 	thirdPersonAnimator->inPose = thirdPersonPose;
 	thirdPersonAnimator->Update();
 	lastAppliedPose = thirdPersonAnimator->GetResultPose();

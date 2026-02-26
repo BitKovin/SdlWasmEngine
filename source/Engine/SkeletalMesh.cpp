@@ -12,6 +12,18 @@ const AnimationPose& b,
 	if (progress > 0.995f)
 		return b;
 
+	if (progress < 0.005f)
+	{
+		AnimationPose result = a;
+
+		// Root always comes from B, even at progress=0
+		auto bRootIt = b.boneTransforms.find("root");
+		if (bRootIt != b.boneTransforms.end())
+			result.boneTransforms["root"] = bRootIt->second;
+
+		return result;
+	}
+
 	AnimationPose result;
 	auto& out = result.boneTransforms;
 

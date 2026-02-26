@@ -4,7 +4,7 @@
 class weapon_mpsd : public WeaponFirearm {
 public:
     weapon_mpsd() : WeaponFirearm() {
-        params.modelPath = "GameData/models/player/weapons/mpsd/mpsd.glb";
+        params.modelPath = "GameData/models/player/weapons/stg44/stg44.glb";
         params.fireSoundEvent = "event:/Weapons/pistol/pistol_fire";
         params.modelPathTp = "GameData/models/player/weapons/mpsd/mpsd_tp.glb";
         params.texturesLocationTp = "GameData/models/player/weapons/mpsd/mpsd_tp.glb/";
@@ -23,6 +23,7 @@ public:
         params.bulletDamage = 20.0f;
         params.range = 50.0f;
         params.fireAnimation = "fire";
+        params.drawAnimation = "reload";
         params.fireAnimInterpInTime = 0.08f;
         params.notifyNpcs = true;
         params.activateViolenceCrime = true;

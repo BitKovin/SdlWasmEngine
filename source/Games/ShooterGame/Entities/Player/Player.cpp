@@ -64,6 +64,7 @@ void Player::Start()
 	PreloadEntityType("weapon_tommy");
 	PreloadEntityType("weapon_sniper");
 	PreloadEntityType("weapon_swords");
+	PreloadEntityType("weapon_mpsd");
 
 	PreloadEntityType("weapon_lefthand_empty");
 
@@ -82,6 +83,7 @@ void Player::Start()
 		AddItemToInventory("weapon_tommy");
 		AddItemToInventory("weapon_sniper");
 		AddItemToInventory("weapon_cane");
+		AddItemToInventory("weapon_mpsd");
 
 		/*
 		// Add pistol
