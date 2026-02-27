@@ -15,11 +15,19 @@ const AnimationPose& b,
 	if (progress < 0.005f)
 	{
 		AnimationPose result = a;
+		auto& out = result.boneTransforms;
 
-		// Root always comes from B, even at progress=0
+		// Insert bones that only exist in B (no interpolation, same as slow path)
+		for (const auto& [bone, bMat] : b.boneTransforms)
+		{
+			if (out.find(bone) == out.end())
+				out[bone] = bMat;
+		}
+
+		// Root always comes from B
 		auto bRootIt = b.boneTransforms.find("root");
 		if (bRootIt != b.boneTransforms.end())
-			result.boneTransforms["root"] = bRootIt->second;
+			out["root"] = bRootIt->second;
 
 		return result;
 	}

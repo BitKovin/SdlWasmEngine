@@ -151,17 +151,17 @@ void NpcHumanGun::AsyncUpdate()
     }
 
 
-
     UpdateStunnedReturn();
     UpdateReturnFromRagdoll();
 
     mesh->UpdateHitboxes();
 
-    if (dead || stuned || stunnedRagdoll || returningFromRagdoll) return;
-
-    soundPlayer->Position = Position;
+    soundPlayer->Position = vec3(mesh->GetBoneMatrixWorld("head")[3]);
 
     soundPlayer->Velocity = FromPhysics(LeadBody->GetLinearVelocity());
+
+    if (dead || stuned || stunnedRagdoll || returningFromRagdoll) return;
+
 
     auto animName = mesh->GetAnimationName();
 

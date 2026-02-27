@@ -129,6 +129,10 @@ void NpcHumanBase::UpdateStunnedReturn()
     vec3 vel = FromPhysics(LeadBody->GetLinearVelocity());
     Physics::SetLinearVelocity(LeadBody, vec3(0, vel.y, 0));
 
+    Position = pelvisPos + vec3(0, 1.5f, 0);
+    Physics::SetBodyPosition(LeadBody, Position);
+    Physics::SetLinearVelocity(LeadBody, vec3());
+
     if (stunnedRagdollDelay.Wait()) return;
 
     bool hitsGround = Physics::LineTrace(pelvisPos, pelvisPos - vec3(0, 0.5f, 0), BodyType::World).hasHit;
@@ -180,7 +184,6 @@ void NpcHumanBase::StartReturnFromRagdoll()
         mesh->Rotation = vec3(0, MathHelper::FindLookAtRotation(spinePos, pelvisPos).y, 0);
     }
 
-    DebugDraw::Line(mesh->Position + vec3(0, 0.7f, 0), mesh->Position + MathHelper::GetForwardVector(mesh->Rotation) + vec3(0, 0.7f, 0), 2.05f);
 
 
     movingDirection = MathHelper::GetForwardVector(mesh->Rotation);
@@ -351,6 +354,8 @@ void NpcHumanBase::Serialize(json& target)
 
     Rotation = mesh->Rotation;
 
+    getFromRagdollAnimationSaveState = getFromRagdollAnimation->GetAnimationState();
+
     SERIALIZE_FIELD(target, Rotation);
     SERIALIZE_FIELD(target, desiredDirection);
     SERIALIZE_FIELD(target, movingDirection);
@@ -370,6 +375,9 @@ void NpcHumanBase::Serialize(json& target)
     SERIALIZE_FIELD(target, returningFromRagdoll);
     SERIALIZE_FIELD(target, ragdollPose);
     SERIALIZE_FIELD(target, getFromRagdollAnimationSaveState);
+
+    SERIALIZE_FIELD(target, ragdollPelvisWorldPos);
+    SERIALIZE_FIELD(target, pelvisBlendTimer);
 }
 
 void NpcHumanBase::Deserialize(json& source)
@@ -418,6 +426,10 @@ void NpcHumanBase::Deserialize(json& source)
     if (returningFromRagdoll) {
         getFromRagdollAnimation->SetAnimationState(getFromRagdollAnimationSaveState);
     }
+
+    DESERIALIZE_FIELD(source, ragdollPelvisWorldPos);
+    DESERIALIZE_FIELD(source, pelvisBlendTimer);
+
 }
 
 void NpcHumanBase::UpdateStatusWidgets()

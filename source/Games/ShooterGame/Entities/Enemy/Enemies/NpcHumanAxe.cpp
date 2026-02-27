@@ -145,13 +145,14 @@ void NpcHumanAxe::AsyncUpdate()
 
     mesh->UpdateHitboxes();
 
+    soundPlayer->Position = vec3(mesh->GetBoneMatrixWorld("head")[3]);
+
+    soundPlayer->Velocity = FromPhysics(LeadBody->GetLinearVelocity());
+
     if (dead || stuned || stunnedRagdoll || returningFromRagdoll) return;
 
     UpdateAttackDamage();
 
-    soundPlayer->Position = Position;
-
-    soundPlayer->Velocity = FromPhysics(LeadBody->GetLinearVelocity());
 
     Entity* target = Player::Instance;
 
