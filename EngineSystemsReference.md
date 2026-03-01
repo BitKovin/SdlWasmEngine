@@ -650,7 +650,7 @@ Centralized cache and lifecycle manager for all GPU and CPU assets.
 
 Namespace `FileSystemEngine` abstracts file access across:
 - **Physical filesystem** — for `GameData/` and `SaveData/` directories.
-- **ZipVFS** — a virtual filesystem backed by `.zip` archives, useful for shipping assets in a single file.
+- **ZipVFS** — a virtual filesystem backed by `.zip` archives, useful for shipping assets in a single or multiple zip files. Zip files can be nested.
 
 ### API
 
