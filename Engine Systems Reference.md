@@ -1,5 +1,7 @@
 # REngine 2.0 — Engine Systems Reference
 
+keep in mind that this file might not always be up to date. While general design of described system will probably stay the same - some minor changes or bug fixes can probably stay unmentioned.
+
 > Language: **C++17**, Graphics: **OpenGL (ES-compatible)**, Window/Input: **SDL2**, Math: **GLM**, Physics: **JoltPhysics**, Navigation: **Recast/Detour**, Sound: **OpenAL + FMOD Studio**, UI: **Custom + RmlUi**.
 
 ---
