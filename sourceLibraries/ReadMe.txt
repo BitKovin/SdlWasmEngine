@@ -1,1 +1,0 @@
-sometimes there is need for small change in library. It's messy way, but I just store them here.

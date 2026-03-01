@@ -2,7 +2,7 @@
 #define SDL_REVISION_NUMBER 0
 
 #ifdef SDL_VENDOR_INFO
-#define SDL_REVISION "SDL-2.32.10-gf12ed716 (" SDL_VENDOR_INFO ")"
+#define SDL_REVISION "SDL-2.32.10-ge4b1de66 (" SDL_VENDOR_INFO ")"
 #else
-#define SDL_REVISION "SDL-2.32.10-gf12ed716"
+#define SDL_REVISION "SDL-2.32.10-ge4b1de66"
 #endif

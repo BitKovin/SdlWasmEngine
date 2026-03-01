@@ -44,27 +44,12 @@ elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
     set(LINUX TRUE)
     message(STATUS "Building for Linux")
 
-    # Imported Assimp static library
-    add_library(Assimp::Assimp STATIC IMPORTED GLOBAL)
-    set_target_properties(Assimp::Assimp PROPERTIES
-        IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/Lib/Linux/libassimp.a"
-    )
-
     # Imported Jolt static library
     add_library(Jolt::Jolt STATIC IMPORTED GLOBAL)
     set_target_properties(Jolt::Jolt PROPERTIES
         IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/Lib/Linux/libJolt.a"
     )
     
-    add_library(FMOD::Core SHARED IMPORTED GLOBAL)
-    set_target_properties(FMOD::Core PROPERTIES
-        IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/Lib/Linux/libfmod.so"
-    )
-
-    add_library(FMOD::Studio SHARED IMPORTED GLOBAL)
-    set_target_properties(FMOD::Studio PROPERTIES
-        IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/Lib/Linux/libfmodstudio.so"
-    )
     
     add_library(mimalloc::mimalloc STATIC IMPORTED GLOBAL)
     set_target_properties(mimalloc::mimalloc PROPERTIES
@@ -119,18 +104,15 @@ elseif (LINUX)
 
     # Link the rest as before
     target_link_libraries(engine PRIVATE
-        Assimp::Assimp
         Jolt::Jolt
         GLEW::GLEW
         OpenGL::GL
         ZLIB::ZLIB
-        FMOD::Core
-        FMOD::Studio 
         mimalloc::mimalloc 
     )
 endif()
 
-
+set(LIB_DIR "${CMAKE_SOURCE_DIR}/sourceLibraries")
 
 # --------------------------------------------------
 # RmlUi (vendored)
@@ -141,7 +123,7 @@ set(RMLUI_BUILD_LUA     OFF CACHE BOOL "" FORCE)
 set(RMLUI_ENABLE_DEBUGGER ON CACHE BOOL "" FORCE)
 
 add_subdirectory(
-    "${CMAKE_SOURCE_DIR}/sourceLibraries/RmlUi-6.1"
+    "${LIB_DIR}/RmlUi-6.1"
 )
 
 target_link_libraries(engine PUBLIC
@@ -156,14 +138,14 @@ set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared libraries" FORCE)
 # --------------------------------------------------
 # SDL2 (vendored)
 # --------------------------------------------------
-add_subdirectory("${CMAKE_SOURCE_DIR}/sourceLibraries/SDL")
+add_subdirectory("${LIB_DIR}/SDL")
 
 target_link_libraries(engine PUBLIC SDL2::SDL2)
 
 # --------------------------------------------------
 # SDL2 TTF (vendored)
 # --------------------------------------------------
-add_subdirectory("${CMAKE_SOURCE_DIR}/sourceLibraries/SDL_ttf")
+add_subdirectory("${LIB_DIR}/SDL_ttf")
 
 # SDL_ttf only exports SDL2_ttf::SDL2_ttf for shared builds.
 # For static builds (including Emscripten), create the alias manually.
@@ -184,6 +166,18 @@ endif()
 
 target_link_libraries(engine PUBLIC SDL2_ttf::SDL2_ttf)
 
+add_subdirectory(${LIB_DIR}/fmod)
+target_link_libraries(engine PUBLIC fmod)
+
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_ASSIMP_TOOLS OFF CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_SAMPLES OFF CACHE BOOL "" FORCE)
+set(ASSIMP_NO_EXPORT ON CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_DLL_EXPORT OFF)
+
+add_subdirectory(${LIB_DIR}/assimp)
+target_link_libraries(engine PUBLIC assimp)
 
 
 # ——————————————————————————————————————————————————————————
