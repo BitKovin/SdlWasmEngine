@@ -23,7 +23,8 @@
 #pragma comment(lib, "Dbghelp.lib")
 
 extern "C" {
-    _declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
+    __declspec(dllexport) unsigned long NvOptimusEnablement = 0x00000001UL;
+    __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
 }
 
 #include "../EngineMain.h"
