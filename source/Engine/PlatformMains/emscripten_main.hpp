@@ -155,7 +155,11 @@ int main(int argc, char* args[]) {
 	SDL_GetWindowSize(window, &w, &h);
 	initial_screen_size = ivec2(w, h);
 
+#ifdef emscripten_sleep
     emscripten_sleep(300);//some time for js bounce back for correct start resolution
+#endif // emscripten_sleep
+
+
 
     engine->Init();
 
@@ -171,7 +175,9 @@ int main(int argc, char* args[]) {
     //emscripten_set_focus_callback("#canvas", nullptr, EM_FALSE, on_canvas_focus);
     //emscripten_set_blur_callback("#canvas", nullptr, EM_FALSE, on_canvas_blur);
 
+#ifdef emscripten_sleep
     emscripten_sleep(300);//some time for js bounce back for correct start resolution
+#endif // emscripten_sleep
 
     emscripten_set_main_loop(emscripten_render_loop, 0, 1);
 

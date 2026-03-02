@@ -277,7 +277,9 @@ bool Backend::ProcessEvents(Rml::Context* context, KeyDownCallback key_down_call
 	// The above is the recommended approach. However, as we don't control the main loop here we have to make due with another approach. Instead, use
 	// Asyncify to yield by sleeping.
 	// Important: Must be linked with option -sASYNCIFY
-	emscripten_sleep(1);
+#ifdef emscripten_sleep
+	emscripten_sleep(1);//some time for js bounce back for correct start resolution
+#endif // emscripten_sleep
 
 #endif
 

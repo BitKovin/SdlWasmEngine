@@ -851,7 +851,7 @@ void RenderInterface_GL3::SetViewport(int width, int height, int offset_x, int o
 void RenderInterface_GL3::BeginFrame()
 {
 	RMLUI_ASSERT(viewport_width >= 1 && viewport_height >= 1);
-
+	/*
 	// Backup GL state.
 	glstate_backup.enable_cull_face = glIsEnabled(GL_CULL_FACE);
 	glstate_backup.enable_blend = glIsEnabled(GL_BLEND);
@@ -890,6 +890,8 @@ void RenderInterface_GL3::BeginFrame()
 	glGetIntegerv(GL_STENCIL_BACK_FAIL, &glstate_backup.stencil_back.fail);
 	glGetIntegerv(GL_STENCIL_BACK_PASS_DEPTH_FAIL, &glstate_backup.stencil_back.pass_depth_fail);
 	glGetIntegerv(GL_STENCIL_BACK_PASS_DEPTH_PASS, &glstate_backup.stencil_back.pass_depth_pass);
+	*/
+
 
 	// Setup expected GL state.
 	glViewport(0, 0, viewport_width, viewport_height);
@@ -955,6 +957,59 @@ void RenderInterface_GL3::EndFrame()
 	DrawFullscreenQuad();
 
 	render_layers.EndFrame();
+
+	glstate_backup = {
+		// Enable flags — all disabled by default except none
+		.enable_cull_face = false,
+		.enable_blend = false,
+		.enable_stencil_test = false,
+		.enable_scissor_test = false,
+		.enable_depth_test = false,
+
+		// Viewport — implementation-defined, typically window size; (0,0,w,h)
+		.viewport = { 0, 0, 0, 0 },
+
+		// Scissor box — initial value is the window size, commonly zeroed until set
+		.scissor = { 0, 0, 0, 0 },
+
+		// GL_TEXTURE0
+		.active_texture = 0x84C0, // GL_TEXTURE0
+
+		// Clear values
+		.stencil_clear_value = 0,
+		.color_clear_value = { 0.0f, 0.0f, 0.0f, 0.0f },
+		.color_writemask = { GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE },
+
+		// Blend — default equation is ADD, factors are ONE / ZERO
+		.blend_equation_rgb = 0x8006, // GL_FUNC_ADD
+		.blend_equation_alpha = 0x8006, // GL_FUNC_ADD
+		.blend_src_rgb = 1,      // GL_ONE
+		.blend_dst_rgb = 0,      // GL_ZERO
+		.blend_src_alpha = 1,      // GL_ONE
+		.blend_dst_alpha = 0,      // GL_ZERO
+
+		// Stencil front — func=ALWAYS, ref=0, masks=all 1s, ops=KEEP
+		.stencil_front = {
+			.func = 0x0207, // GL_ALWAYS
+			.ref = 0,
+			.value_mask = -1,
+			.writemask = -1,
+			.fail = 0x1E00, // GL_KEEP
+			.pass_depth_fail = 0x1E00, // GL_KEEP
+			.pass_depth_pass = 0x1E00, // GL_KEEP
+		},
+
+		// Stencil back — same defaults as front
+		.stencil_back = {
+			.func = 0x0207, // GL_ALWAYS
+			.ref = 0,
+			.value_mask = -1,
+			.writemask = -1,
+			.fail = 0x1E00, // GL_KEEP
+			.pass_depth_fail = 0x1E00, // GL_KEEP
+			.pass_depth_pass = 0x1E00, // GL_KEEP
+		},
+	};
 
 	// Restore GL state.
 	if (glstate_backup.enable_cull_face)
