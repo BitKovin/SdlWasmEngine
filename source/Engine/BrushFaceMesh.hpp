@@ -59,7 +59,7 @@ public:
 
 	static vector<BrushFaceMesh*> GetMeshesFromName(Entity* owner, string filePath, string name, roj::ModelLoader<roj::SkinnedMesh>* modelLoader)
 	{
-
+        /*
 		roj::LoaderGlobalParams::MeshNameLimit = name;
 		roj::LoaderGlobalParams::Size = 1 / 32.0f;
 
@@ -113,6 +113,9 @@ public:
 		roj::LoaderGlobalParams::MeshNameLimit = "";
 
 		return faces;
+        */
+
+		return vector<BrushFaceMesh*>();
 	}
 
 

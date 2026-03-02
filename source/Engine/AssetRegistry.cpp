@@ -354,7 +354,7 @@ roj::SkinnedModel* AssetRegistry::GetSkinnedModelFromFile(const string& path)
 
     Logger::Log(modelLoader.getInfoLog());
 
-    skinnedModelCache[path] = new roj::SkinnedModel(modelLoader.get());
+	skinnedModelCache[path] = new roj::SkinnedModel(std::move(modelLoader.get()));
 
 	if (IsAssetUsed(path) == false)
 	{
@@ -383,7 +383,7 @@ roj::SkinnedModel* AssetRegistry::GetSkinnedAnimationFromFile(const string& path
 		std::cerr << modelLoader.getInfoLog() << endl;
 
 
-	skinnedModelAnimationCache[path] = new roj::SkinnedModel(modelLoader.get());
+	skinnedModelAnimationCache[path] = new roj::SkinnedModel(std::move(modelLoader.get()));
 
 
 	return skinnedModelAnimationCache[path];

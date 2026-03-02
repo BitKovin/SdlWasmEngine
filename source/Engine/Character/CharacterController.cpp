@@ -494,140 +494,124 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 	canStand = false;
 	standingOnBody = nullptr;
 
-	if (GetVelocity().y > 0)
-	{
-
-		//return;
-
-	}
-
-	int numOfIterations = 16;
-
-	float accumulatedHeight = 0;
-	int numOfHits = 0;
-
+	vec3 heightOffset = vec3(0, stepHeight, 0);
 	float outheight = 0;
 	bool outCanStand = false;
-
-	vec3 heightOffset = vec3(0, stepHeight, 0);
-
 	vec3 outNormal = vec3();
+	const Body* hitBody = nullptr;
 
+	// -------------------------------------------------------
+	// NPC fast path: single center cast, skip ring samples
+	// if surface is flat (normal.y close to 1.0)
+	// -------------------------------------------------------
+	if (movementQuality == CharacterControllerMovementQuality::NpcGeneric)
+	{
+		constexpr float flatThreshold = 0.997f; // ~cos(4.4 degrees)
+
+		bool centerHit = CheckGroundAt(
+			FromPhysics(body->GetPosition()) - heightOffset,
+			radius - 0.01f,
+			outheight, outCanStand, outNormal, &hitBody);
+
+		if (centerHit && outNormal.y >= flatThreshold)
+		{
+			// Perfectly flat ground - no need to sample around ring
+			if (hitBody && Physics::GetBodyData(hitBody)->group == BodyType::CharacterCapsule)
+			{
+				Physics::AddImpulse(body, vec3(0, 1.1f, 0));
+			}
+
+			avgNormal = outNormal;
+			float heightComp = GetPosition().y - height / 2.0f - 0.001f;
+			hitsGround = (outheight > heightComp);
+			canStand = hitsGround && outCanStand;
+			calculatedGroundHeight = outheight;
+
+			if (outCanStand)
+				standingOnBody = hitBody;
+
+			return; // ← fast path exit
+		}
+
+		// Sloped or missed — fall through to reduced NPC sample loop below
+	}
+
+	// -------------------------------------------------------
+	// Full / reduced sample loop (existing logic)
+	// -------------------------------------------------------
+	int numOfIterations = 16;
+	float startRadius = 0.1f;
+	float accumulatedHeight = 0;
+	int numOfHits = 0;
 	int nNotWalk = 0;
 
-	float startRadius = 0.1;
-
-	float stepRadius = 0.3;
-
-	const Body* hitBody = nullptr;
+	float rayRadius = 0.1f;
 
 	if (ThreadPool::Supported() == false)
 	{
-		startRadius = 0.405;
-
+		startRadius = 0.405f;
 		numOfIterations = 4;
-
 	}
 
 	if (movementQuality == CharacterControllerMovementQuality::NpcGeneric)
 	{
 		numOfIterations = 4;
-
 		startRadius = 1;
-
+		rayRadius = 0;
 	}
 
-
-	for (float r = startRadius; r <= 1; r += 0.3)
+	for (float r = startRadius; r <= 1; r += 0.3f)
 	{
-
 		for (int i = 0; i < numOfIterations; i++)
 		{
-			float angle = (2.0f * M_PI / numOfIterations) * i; // Full circle in radians
-
+			float angle = (2.0f * M_PI / numOfIterations) * i;
 			vec3 offset = vec3(cos(angle), 0.0f, sin(angle)) * (radius * r - 0.11f);
 
 
-			if (CheckGroundAt(FromPhysics(body->GetPosition()) + offset - heightOffset, 0.1f, outheight, outCanStand, outNormal, &hitBody))
+
+			if (CheckGroundAt(FromPhysics(body->GetPosition()) + offset - heightOffset,
+				rayRadius, outheight, outCanStand, outNormal, &hitBody))
 			{
-
-				if (outCanStand)
-				{
-					canStand = true;
-				}
-
+				if (outCanStand) canStand = true;
 				avgNormal += outNormal;
 				nNotWalk++;
 
 				float heightComp = GetPosition().y - height / 2.0f - 0.001f;
-
-				if (outheight > heightComp)
-				{
-					hitsGround = true;
-				}
+				if (outheight > heightComp) hitsGround = true;
 
 				accumulatedHeight += outheight;
 				numOfHits++;
 			}
-
 		}
-
 	}
 
-
-	if (CheckGroundAt(FromPhysics(body->GetPosition()) - heightOffset, radius - 0.01f, outheight, outCanStand, outNormal, &hitBody))
+	if (CheckGroundAt(FromPhysics(body->GetPosition()) - heightOffset,
+		radius - 0.01f, outheight, outCanStand, outNormal, &hitBody))
 	{
-
-		if (Physics::GetBodyData(hitBody)->group == BodyType::CharacterCapsule)
-		{
+		if (hitBody && Physics::GetBodyData(hitBody)->group == BodyType::CharacterCapsule)
 			Physics::AddImpulse(body, vec3(0, 1.1f, 0));
-		}
 
 		if (outCanStand)
 		{
-
 			canStand = true;
-
 			standingOnBody = hitBody;
-
-
 		}
 
 		avgNormal += outNormal;
 		nNotWalk++;
 
 		float heightComp = GetPosition().y - height / 2.0f - 0.001f;
+		if (outheight > heightComp) hitsGround = true;
 
-		if (outheight > heightComp)
-		{
-			hitsGround = true;
-		}
-
-		if (numOfHits > 0 && false)
-		{
-			accumulatedHeight += outheight * numOfHits;
-			numOfHits *= 2;
-		}
-		else
-		{
-			accumulatedHeight += outheight * 3;
-			numOfHits += 3;
-		}
-
-
+		accumulatedHeight += outheight * 3;
+		numOfHits += 3;
 	}
 
-	if (nNotWalk)
-	{
-		avgNormal /= nNotWalk;
-	}
+	if (nNotWalk) avgNormal /= nNotWalk;
 
 	hitsGround = hitsGround && (numOfHits > 0);
-
 	canStand = hitsGround && (GroundAngleDeg(avgNormal) <= groundMaxAngle) && canStand;
-
-	calculatedGroundHeight = accumulatedHeight / numOfHits;
-
+	calculatedGroundHeight = (numOfHits > 0) ? accumulatedHeight / numOfHits : 0;
 }
 
 bool CharacterController::CheckGroundAt(vec3 location, float checkRadius, float& outheight, bool& canStand, vec3& normal, const Body** hitBody)

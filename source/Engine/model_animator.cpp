@@ -1,534 +1,594 @@
-﻿#include "model_animator.hpp"
-
+#include "model_animator.hpp"
 #include "Level.hpp"
-
 #include "glm.h"
 
+#include <algorithm>    // std::lower_bound, std::for_each
+#include <execution>    // std::execution::par_unseq   (C++20 / TBB / PSTL)
+#include <numeric>      // std::iota
+#include <cstring>      // std::memcpy
+#include <cassert>
+#include <span>
 
-int roj::Animator::getKeyTransformIdx(std::vector<float>& timestamps)
-{
-    if (timestamps.size() < 2)
-        return -1;
-
-    float adjustedTime = m_currTime;
-
-    // Non-looping: clamp to last segment if time exceeds last timestamp
-    if (!Loop && adjustedTime >= timestamps.back()) {
-        return timestamps.size() - 2;
-    }
-
-    // Find segment containing current time
-    for (int index = 0; index < timestamps.size() - 1; ++index) {
-        if (adjustedTime < timestamps[index + 1]) {
-            return index;
-        }
-    }
-
-    return timestamps.size() - 2; // Fallback (shouldn't reach here for looping)
-}
-
-float roj::Animator::getScaleFactor(float lastTimeStamp, float nextTimeStamp, float animationTime)
-{
-    if (m_currTime < lastTimeStamp) return 0.f;
-    float midWayLength = m_currTime - lastTimeStamp;
-    float framesDiff = nextTimeStamp - lastTimeStamp;
-    return midWayLength / framesDiff;
-}
-
-glm::mat4 roj::Animator::interpolatePosition(roj::FrameBoneTransform& boneTransform)
-{
-    // if there are no position keys, return identity
-    if (boneTransform.positionTimestamps.empty() || boneTransform.positions.empty())
-        return glm::translate(glm::mat4(1.0f), glm::vec3(0.0f));
-
-    int posIdx = getKeyTransformIdx(boneTransform.positionTimestamps);
-    if (posIdx == -1) {
-        // no earlier key — use first key (discrete)
-        return glm::translate(glm::mat4(1.0f), boneTransform.positions[0]);
-    }
-
-    // If interpolation is disabled, return the discrete key value at posIdx
-    if (!InterpolatePosition) {
-        // posIdx will be valid index into positions
-        return glm::translate(glm::mat4(1.0f), boneTransform.positions[posIdx]);
-    }
-
-    // Loop wrap interpolation (blend last -> first across animation boundary)
-    if (Loop && posIdx == static_cast<int>(boneTransform.positionTimestamps.size()) - 1)
-    {
-        float lastTime = boneTransform.positionTimestamps.back();
-        float nextTime = boneTransform.positionTimestamps[0] + m_currAnim->duration;
-        float scaleFactor = (m_currTime - lastTime) / (nextTime - lastTime);
-        glm::vec3 finalPosition = glm::mix(
-            boneTransform.positions.back(),
-            boneTransform.positions[0],
-            scaleFactor
-        );
-        return glm::translate(glm::mat4(1.0f), finalPosition);
-    }
-
-    // Normal interpolation between posIdx and posIdx + 1
-    float scaleFactor = getScaleFactor(
-        boneTransform.positionTimestamps[posIdx],
-        boneTransform.positionTimestamps[posIdx + 1],
-        m_currTime
-    );
-    glm::vec3 finalPosition = glm::mix(
-        boneTransform.positions[posIdx],
-        boneTransform.positions[posIdx + 1],
-        scaleFactor
-    );
-    return glm::translate(glm::mat4(1.0f), finalPosition);
-}
-
-glm::mat4 roj::Animator::interpolateRotation(roj::FrameBoneTransform& boneTransform)
-{
-    if (boneTransform.rotationTimestamps.empty() || boneTransform.rotations.empty())
-        return glm::toMat4(glm::quat(1.0f, 0.0f, 0.0f, 0.0f)); // identity rotation
-
-    int posIdx = getKeyTransformIdx(boneTransform.rotationTimestamps);
-    if (posIdx == -1)
-        return glm::toMat4(glm::normalize(boneTransform.rotations[0]));
-
-    // If interpolation disabled, use the discrete rotation at posIdx
-    if (!InterpolateRotation) {
-        return glm::toMat4(glm::normalize(boneTransform.rotations[posIdx]));
-    }
-
-    if (Loop && posIdx == static_cast<int>(boneTransform.rotationTimestamps.size()) - 1)
-    {
-        float lastTime = boneTransform.rotationTimestamps.back();
-        float nextTime = boneTransform.rotationTimestamps[0] + m_currAnim->duration;
-        float scaleFactor = (m_currTime - lastTime) / (nextTime - lastTime);
-        glm::quat finalRotation = glm::slerp(
-            boneTransform.rotations.back(),
-            boneTransform.rotations[0],
-            scaleFactor
-        );
-        return glm::toMat4(glm::normalize(finalRotation));
-    }
-
-    float scaleFactor = getScaleFactor(
-        boneTransform.rotationTimestamps[posIdx],
-        boneTransform.rotationTimestamps[posIdx + 1],
-        m_currTime
-    );
-    glm::quat finalRotation = glm::slerp(
-        boneTransform.rotations[posIdx],
-        boneTransform.rotations[posIdx + 1],
-        scaleFactor
-    );
-    return glm::toMat4(glm::normalize(finalRotation));
-}
-
-glm::mat4 roj::Animator::interpolateScaling(roj::FrameBoneTransform& boneTransform)
-{
-    if (boneTransform.scaleTimestamps.empty() || boneTransform.scales.empty())
-        return glm::scale(glm::mat4(1.0f), glm::vec3(1.0f)); // identity scale
-
-    int posIdx = getKeyTransformIdx(boneTransform.scaleTimestamps);
-    if (posIdx == -1)
-        return glm::scale(glm::mat4(1.0f), boneTransform.scales[0]);
-
-    // If interpolation disabled, use discrete scale at posIdx
-    if (!InterpolateScale) {
-        return glm::scale(glm::mat4(1.0f), boneTransform.scales[posIdx]);
-    }
-
-    if (Loop && posIdx == static_cast<int>(boneTransform.scaleTimestamps.size()) - 1)
-    {
-        float lastTime = boneTransform.scaleTimestamps.back();
-        float nextTime = boneTransform.scaleTimestamps[0] + m_currAnim->duration;
-        float scaleFactor = (m_currTime - lastTime) / (nextTime - lastTime);
-        glm::vec3 finalScale = glm::mix(
-            boneTransform.scales.back(),
-            boneTransform.scales[0],
-            scaleFactor
-        );
-        return glm::scale(glm::mat4(1.0f), finalScale);
-    }
-
-    float scaleFactor = getScaleFactor(
-        boneTransform.scaleTimestamps[posIdx],
-        boneTransform.scaleTimestamps[posIdx + 1],
-        m_currTime
-    );
-    glm::vec3 finalScale = glm::mix(
-        boneTransform.scales[posIdx],
-        boneTransform.scales[posIdx + 1],
-        scaleFactor
-    );
-
-    return glm::scale(glm::mat4(1.0f), finalScale);
-}
-
-
-void roj::Animator::calcBoneTransform(BoneNode& node, glm::mat4 offset, bool stopAfterRoot) {
-    // Check if we have cached FrameBoneTransform data for this bone
-    if (node.id < cachedFrameBoneTransforms.size()) {
-        auto& boneTransform = cachedFrameBoneTransforms[node.id];
-        glm::mat4 translation = interpolatePosition(boneTransform);
-        glm::mat4 rotation = interpolateRotation(boneTransform);
-        glm::mat4 scale = interpolateScaling(boneTransform);
-
-        currentPose[node.name] = translation * rotation * scale;
-        offset *= currentPose[node.name];
-    }
-    else {
-        // Fallback to node transform if no animation data
-        currentPose[node.name] = node.transform;
-        offset *= node.transform;
-    }
-
-    // Check if we have cached BoneInfo data for this bone
-    if (node.id < cachedBoneInfos.size()) {
-        auto& boneInfo = cachedBoneInfos[node.id];
-        m_boneMatrices[boneInfo.id] = offset * boneInfo.offset;
-    }
-
-    // Handle root bone special case
-    if (node.name == "root") {
-        auto trans = MathHelper::DecomposeMatrix(offset);
-        rootBoneTransform = trans;
-        if (stopAfterRoot) return;
-    }
-
-    // Recursively process children
-    for (roj::BoneNode& child : node.children) {
-        calcBoneTransform(child, offset, stopAfterRoot);
-    }
-}
-
-void roj::Animator::useBakedFrame(float time)
+namespace roj
 {
 
-	int currentFrame = static_cast<int>(time / m_currAnim->ticksPerSec / m_currAnim->bakedFrameInterval);
+// ─────────────────────────────────────────────────────────────────────────────
+// keyIdx — binary search over a span<const float>
+//
+// std::span carries both pointer and size as a unit.  The compiler knows the
+// memory is contiguous (a guarantee raw pointers alone don't carry), enabling
+// better alias analysis and auto-vectorisation of lower_bound when inlined.
+// ─────────────────────────────────────────────────────────────────────────────
 
-    if (currentFrame >= m_currAnim->bakedFrames.size())
-    {
-        currentFrame = m_currAnim->bakedFrames.size() - 1;
-	}
+[[nodiscard]] static inline int keyIdx(std::span<const float> ts, float time, bool loop) noexcept
+{
+    const int n = static_cast<int>(ts.size());
+    if (n < 2) [[unlikely]] return -1;
 
-	auto& BakedFrameData = m_currAnim->bakedFrames[currentFrame];
+    if (!loop && time >= ts.back()) [[unlikely]]
+        return n - 2;
 
-    currentPose = BakedFrameData.boneTransforms;
-    m_boneMatrices = BakedFrameData.modelTransform;
-    totalRootMotionPosition = BakedFrameData.totalRootMotionPosition;
-	totalRootMotionRotation = BakedFrameData.totalRootMotionRotation;
-
+    const auto it = std::lower_bound(ts.begin(), ts.end(), time);
+    if (it == ts.end())   [[unlikely]] return n - 2;
+    if (it == ts.begin()) [[unlikely]] return 0;
+    return static_cast<int>(it - ts.begin()) - 1;
 }
 
-void roj::Animator::ApplyNodePose(BoneNode& node, glm::mat4 offset, std::unordered_map<hashed_string, mat4>& pose)
+// ─────────────────────────────────────────────────────────────────────────────
+// sampleBone<TLoop>
+//
+// TLoop is a compile-time constant. When false, the loop-wrap block is
+// entirely dead code — no branches, no comparisons.
+//
+// The evaluateClipImpl caller is itself templated on TLoop, so this branch
+// is resolved at compile time, once per translation unit, not once per
+// bone per frame at runtime.
+//
+// All three TRS channels are sampled in the same call so the compiler keeps
+// 'time', 'dur', and the span base pointers in registers across channels.
+//
+// Result is built directly from TRS — no intermediate mat4s, no multiplications.
+// ─────────────────────────────────────────────────────────────────────────────
+
+template<bool TLoop>
+[[nodiscard]] static glm::mat4 sampleBone(
+    const BoneTrack& t,
+    float  time,
+    float  dur,
+    bool   interpPos,
+    bool   interpRot,
+    bool   interpScale) noexcept
 {
-
-    auto poseRes = pose.find(node.name);
-    if (poseRes != pose.end())
+    // ── Position ─────────────────────────────────────────────────────────────
+    glm::vec3 pos(0.f);
+    if (t.posValues.size() == 1) [[likely]]
     {
-        currentPose[node.name] = pose[node.name];
+        pos = t.posValues[0];
     }
-    else
+    else if (!t.posValues.empty()) [[likely]]
     {
-        currentPose[node.name] = node.transform;
-    }
-    
-    offset *= currentPose[node.name];
-
-    auto it2 = m_model->boneInfoMap.find(node.name);
-    if (it2 != m_model->boneInfoMap.end())
-    {
-        auto& boneInfo = it2->second;
-
-        m_boneMatrices[boneInfo.id] = offset * boneInfo.offset;
-    }
-
-    for (roj::BoneNode& child : node.children)
-    {
-        ApplyNodePose(child, offset, pose);
-    }
-}
-
-void roj::Animator::ApplyNodePoseLocalSpace(BoneNode& node, glm::mat4 offset, std::unordered_map<hashed_string, mat4>& pose, std::unordered_map<hashed_string, mat4>& overrideBones)
-{
-
-    bool hasLocalPose = false;
-
-    mat4 localPose;
-
-    auto overRes = overrideBones.find(node.name);
-    
-    if (overRes != overrideBones.end())
-    {
-
-        localPose = overRes->second;
-
-        hasLocalPose = true;
-
-    }
-
-    auto poseRes = pose.find(node.name);
-    if (poseRes != pose.end())
-    {
-        currentPose[node.name] = pose[node.name];
-    }
-    else
-    {
-        currentPose[node.name] = node.transform;
-    }
-
-
-    if (hasLocalPose)
-    {
-
-        currentPose[node.name] = inverse(offset) * localPose;
-
-        offset = localPose;
-        
-
-    }
-    else
-    {
-        offset *= currentPose[node.name];
-    }
-
-    
-
-
-
-    auto it2 = m_model->boneInfoMap.find(node.name);
-    if (it2 != m_model->boneInfoMap.end())
-    {
-        auto& boneInfo = it2->second;
-
-        m_boneMatrices[boneInfo.id] = offset * boneInfo.offset;
-    }
-
-    for (roj::BoneNode& child : node.children)
-    {
-        ApplyNodePoseLocalSpace(child, offset, pose, overrideBones);
-    }
-}
-
-roj::Animator::Animator(SkinnedModel* model)
-    : m_model(model)
-{
-    m_boneMatrices.resize(model->boneInfoMap.size());
-
-    for (int i = 0; i < m_boneMatrices.size(); i++)
-    {
-        m_boneMatrices[i] = glm::identity<mat4>();
-    }
-
-}
-
-roj::Animator::~Animator()
-{
-
-}
-
-void roj::Animator::set(const hashed_string& name)
-{
-
-    auto it = m_model->animations.find(name);
-    if (it != m_model->animations.end()) {
-        m_currAnim = &it->second;
-        m_currTime = 0.0f;
-        currentAnimationName = name.str();
-
-        precacheAnimation();
-
-    }
-}
-std::vector<std::string> roj::Animator::get()
-{
-    std::vector<std::string> animNames;
-    animNames.reserve(m_model->animations.size());
-    for (auto& anim : m_model->animations)
-    {
-        animNames.emplace_back(anim.first.str());
-    }
-
-    return animNames;
-}
-
-std::vector<glm::mat4>& roj::Animator::getBoneMatrices()
-{
-    return m_boneMatrices;
-}
-
-std::unordered_map<hashed_string, mat4> roj::Animator::GetBonePoseArray()
-{
-
-    return currentPose;
-    /*
-    std::unordered_map<hashed_string, mat4> outVector = std::unordered_map<hashed_string, mat4>();
-
-    if (m_currAnim) 
-    {
-        PopulateBonePoseArray(m_currAnim->rootBone, glm::mat4(1.0f), outVector);
-    }
-
-    return outVector;
-    */
-}
-
-void roj::Animator::ApplyBonePoseArray(std::unordered_map<hashed_string, mat4> pose)
-{
-
-    ApplyNodePose(m_model->defaultRoot, glm::identity<mat4>(), pose);
-}
-
-void roj::Animator::ApplyLocalSpacePoseArray(std::unordered_map<hashed_string, mat4> pose, std::unordered_map<hashed_string, mat4> overridePose)
-{
-
-    ApplyNodePoseLocalSpace(m_model->defaultRoot, glm::identity<mat4>(), pose, overridePose);
-
-}
-
-void roj::Animator::PopulateBonePoseArray(BoneNode& node, glm::mat4 offset, std::unordered_map<hashed_string, mat4>& outVector)
-{
-    
-    outVector[node.name] = currentPose[node.name];
-
-    for (roj::BoneNode& child : node.children)
-    {
-        PopulateBonePoseArray(child, offset, outVector);
-    }
-}
-
-void roj::Animator::UpdateAnimationPose()
-{
-    if (m_currAnim)
-    {
-        calcBoneTransform(m_currAnim->rootBone, glm::identity<mat4>(), false);
-    }
-    
-}
-
-void roj::Animator::update(float dt)
-{
-    if (m_model == nullptr) return;
-
-    if (m_currAnim && m_playing)
-    {
-        m_currTime += m_currAnim->ticksPerSec * dt;
-
-        // Simplified time management
-        if (Loop) 
+        const int i = keyIdx(t.posTimes, time, TLoop);
+        if (i < 0) [[unlikely]]
+            pos = t.posValues[0];
+        else if (!interpPos) [[unlikely]]
+            pos = t.posValues[i];
+        else if constexpr (TLoop)
         {
-
-
-
-            if (m_currTime > m_currAnim->duration)
+            if (i == static_cast<int>(t.posTimes.size()) - 1) [[unlikely]]
             {
-                m_currTime -= m_currAnim->duration;// -m_currAnim->frameTime;
+                const float lt = t.posTimes.back();
+                pos = glm::mix(t.posValues.back(), t.posValues[0],
+                               (time - lt) / (t.posTimes[0] + dur - lt));
             }
-
+            else [[likely]]
+            {
+                pos = glm::mix(t.posValues[i], t.posValues[i + 1],
+                               (time - t.posTimes[i]) / (t.posTimes[i + 1] - t.posTimes[i]));
+            }
         }
-        else {
-            m_currTime = glm::min(m_currTime, m_currAnim->duration);
-        }
-
-        m_playing = Loop || (m_currTime < m_currAnim->duration);
-
-        if (UsePrecomputedFrames)
+        else [[likely]]
         {
-			useBakedFrame(m_currTime);
+            pos = glm::mix(t.posValues[i], t.posValues[i + 1],
+                           (time - t.posTimes[i]) / (t.posTimes[i + 1] - t.posTimes[i]));
         }
-        else
+    }
+
+    // ── Rotation ─────────────────────────────────────────────────────────────
+    glm::quat rot(1.f, 0.f, 0.f, 0.f);
+    if (t.rotValues.size() == 1) [[likely]]
+    {
+        rot = t.rotValues[0];
+    }
+    else if (!t.rotValues.empty()) [[likely]]
+    {
+        const int i = keyIdx(t.rotTimes, time, TLoop);
+        if (i < 0) [[unlikely]]
+            rot = glm::normalize(t.rotValues[0]);
+        else if (!interpRot) [[unlikely]]
+            rot = t.rotValues[i];
+        else if constexpr (TLoop)
         {
-            calcBoneTransform(m_currAnim->rootBone, glm::identity<mat4>(), UpdatePose == false);
+            if (i == static_cast<int>(t.rotTimes.size()) - 1) [[unlikely]]
+            {
+                const float lt = t.rotTimes.back();
+                rot = glm::normalize(glm::slerp(t.rotValues.back(), t.rotValues[0],
+                                                (time - lt) / (t.rotTimes[0] + dur - lt)));
+            }
+            else [[likely]]
+            {
+                rot = glm::normalize(glm::slerp(t.rotValues[i], t.rotValues[i + 1],
+                                                (time - t.rotTimes[i]) / (t.rotTimes[i + 1] - t.rotTimes[i])));
+            }
+        }
+        else [[likely]]
+        {
+            rot = glm::normalize(glm::slerp(t.rotValues[i], t.rotValues[i + 1],
+                                            (time - t.rotTimes[i]) / (t.rotTimes[i + 1] - t.rotTimes[i])));
+        }
+    }
+
+    // ── Scale — single key is the overwhelmingly common case ─────────────────
+    glm::vec3 scl(1.f);
+    if (t.scaleValues.size() == 1) [[likely]]
+    {
+        scl = t.scaleValues[0];
+    }
+    else if (!t.scaleValues.empty()) [[unlikely]]
+    {
+        const int i = keyIdx(t.scaleTimes, time, TLoop);
+        if (i < 0) [[unlikely]]
+            scl = t.scaleValues[0];
+        else if (!interpScale) [[unlikely]]
+            scl = t.scaleValues[i];
+        else if constexpr (TLoop)
+        {
+            if (i == static_cast<int>(t.scaleTimes.size()) - 1) [[unlikely]]
+            {
+                const float lt = t.scaleTimes.back();
+                scl = glm::mix(t.scaleValues.back(), t.scaleValues[0],
+                               (time - lt) / (t.scaleTimes[0] + dur - lt));
+            }
+            else [[likely]]
+            {
+                scl = glm::mix(t.scaleValues[i], t.scaleValues[i + 1],
+                               (time - t.scaleTimes[i]) / (t.scaleTimes[i + 1] - t.scaleTimes[i]));
+            }
+        }
+        else [[likely]]
+        {
+            scl = glm::mix(t.scaleValues[i], t.scaleValues[i + 1],
+                           (time - t.scaleTimes[i]) / (t.scaleTimes[i + 1] - t.scaleTimes[i]));
+        }
+    }
+
+    // ── TRS → mat4 in place — no intermediate matrices ───────────────────────
+    glm::mat4 m = glm::toMat4(rot);
+    m[0] *= scl.x;
+    m[1] *= scl.y;
+    m[2] *= scl.z;
+    m[3]  = glm::vec4(pos, 1.f);
+    return m;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// worldAndSkinPass — loops 2 and 3
+//
+// Loop 2 (world accumulation): strict parent→child dependency chain.
+//   parentIdx[i] < i by topological order, so the forward pass is always
+//   correct with no branches.  Cannot be parallelised.
+//
+// Loop 3 (skinning output): each bone writes to a unique skinIdx slot.
+//   par_unseq — parallel threads + SIMD.  mat4 * mat4 is 16 FMAs per bone,
+//   which is exactly the kind of work execution::par_unseq benefits from.
+// ─────────────────────────────────────────────────────────────────────────────
+
+void Animator::worldAndSkinPass()
+{
+    const FlatSkeleton& skel = m_model->skeleton;
+    const uint16_t n = skel.boneCount;
+
+    // Loop 2 — sequential
+    m_worldPose[0] = m_localPose[0];
+    for (uint16_t i = 1; i < n; ++i)
+    {
+        const uint16_t p = skel.bones[i].parentIdx;
+        m_worldPose[i] = m_worldPose[p] * m_localPose[i];
+    }
+
+    // Loop 3 — par_unseq: independent writes to unique skinIdx slots
+    glm::mat4*          boneMatrices = m_boneMatrices.data();
+    const glm::mat4*    worldPose    = m_worldPose;
+    const SkeletonBone* bones        = skel.bones;
+
+    std::for_each(
+        std::execution::par_unseq,
+        m_boneIndices.begin(), m_boneIndices.end(),
+        [boneMatrices, worldPose, bones](uint16_t i)
+        {
+            const int16_t si = bones[i].skinIdx;
+            if (si >= 0) [[likely]]
+                boneMatrices[si] = worldPose[i] * bones[i].invBind;
+        });
+
+    if (skel.rootMotionBoneIdx != INVALID_BONE_IDX) [[likely]]
+        rootBoneTransform = MathHelper::DecomposeMatrix(m_worldPose[skel.rootMotionBoneIdx]);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// evaluateClipImpl<TLoop>
+//
+// Loop 1 — par_unseq: each bone's TRS sample is fully independent.
+// The lambda captures raw pointers (not 'this') so the execution policy can
+// dispatch it on any thread without touching the Animator object itself.
+//
+// 'Loop' is hoisted out of the lambda as the compile-time TLoop parameter.
+// ─────────────────────────────────────────────────────────────────────────────
+
+template<bool TLoop>
+void Animator::evaluateClipImpl(float time)
+{
+    const float         dur    = m_currClip->duration;
+    const bool          iPos   = InterpolatePosition;
+    const bool          iRot   = InterpolateRotation;
+    const bool          iScl   = InterpolateScale;
+    const BoneTrack*    tracks = m_currClip->tracks;
+    glm::mat4*          lp     = m_localPose;
+
+    std::for_each(
+        std::execution::par_unseq,
+        m_boneIndices.begin(), m_boneIndices.end(),
+        [lp, tracks, time, dur, iPos, iRot, iScl](uint16_t i)
+        {
+            lp[i] = sampleBone<TLoop>(tracks[i], time, dur, iPos, iRot, iScl);
+        });
+
+    m_localPoseDirty = true;
+    worldAndSkinPass();
+}
+
+void Animator::evaluateClip(float time)
+{
+    // Single branch per frame — not per bone.
+    if (Loop) evaluateClipImpl<true>(time);
+    else      evaluateClipImpl<false>(time);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// applyBakedFrame
+// ─────────────────────────────────────────────────────────────────────────────
+
+void Animator::applyBakedFrame(float time)
+{
+    int frame = static_cast<int>(time / m_currClip->ticksPerSec / m_currClip->bakedFrameInterval);
+    const int maxFrame = static_cast<int>(m_currClip->bakedFrames.size()) - 1;
+    frame = glm::clamp(frame, 0, maxFrame);
+
+    const auto& bf = m_currClip->bakedFrames[frame];
+    std::memcpy(m_boneMatrices.data(), bf.skinMatrices.data(),
+                m_boneMatrices.size() * sizeof(glm::mat4));
+
+    const uint16_t n = m_model->skeleton.boneCount;
+    if (static_cast<uint16_t>(bf.localPoses.size()) == n)
+        std::memcpy(m_localPose, bf.localPoses.data(), n * sizeof(glm::mat4));
+
+    m_localPoseDirty        = true;
+    totalRootMotionPosition = bf.rootMotionPos;
+    totalRootMotionRotation = bf.rootMotionRot;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// buildCurrentPose — lazy, par_unseq
+//
+// Called only when SkeletalMesh needs a pose snapshot (blend-out, ragdoll).
+// currentPose keys were pre-inserted at construction so no rehashing occurs.
+// ─────────────────────────────────────────────────────────────────────────────
+
+void Animator::buildCurrentPose()
+{
+    if (!m_localPoseDirty) return;
+
+    const SkeletonBone* bones = m_model->skeleton.bones;
+    const glm::mat4*    lp    = m_localPose;
+
+    std::for_each(
+        std::execution::par_unseq,
+        m_boneIndices.begin(), m_boneIndices.end(),
+        [&](uint16_t i)
+        {
+            currentPose[bones[i].name] = lp[i];
+        });
+
+    m_localPoseDirty = false;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// update
+// ─────────────────────────────────────────────────────────────────────────────
+
+void Animator::update(float dt)
+{
+    if (!m_model || !m_currClip || !m_playing) [[unlikely]] return;
+
+    m_currTime += m_currClip->ticksPerSec * dt;
+
+    if (Loop)
+    {
+        if (m_currTime > m_currClip->duration) [[unlikely]]
+            m_currTime -= m_currClip->duration;
+    }
+    else
+    {
+        m_currTime = glm::min(m_currTime, m_currClip->duration);
+    }
+
+    m_playing = Loop || (m_currTime < m_currClip->duration);
+
+    if (UsePrecomputedFrames) [[unlikely]]
+        applyBakedFrame(m_currTime);
+    else
+    {
+        evaluateClip(m_currTime);
+        if (UpdatePose) [[likely]]
             updateRootMotion();
-        }
-
-
     }
 }
 
-void roj::Animator::updateRootMotion()
+void Animator::updateRootMotion()
 {
-
-    vec3 motionPos = rootBoneTransform.Position - oldRootBoneTransform.Position;
-    vec3 motionRot = MathHelper::ToYawPitchRoll(inverse(oldRootBoneTransform.RotationQuaternion) * rootBoneTransform.RotationQuaternion);
-
+    const glm::vec3 motionPos =
+        rootBoneTransform.Position - oldRootBoneTransform.Position;
+    const glm::vec3 motionRot = MathHelper::ToYawPitchRoll(
+        glm::inverse(oldRootBoneTransform.RotationQuaternion) *
+        rootBoneTransform.RotationQuaternion);
 
     totalRootMotionPosition += motionPos;
     totalRootMotionRotation += motionRot;
-
-    oldRootBoneTransform = rootBoneTransform;
-    
-
+    oldRootBoneTransform     = rootBoneTransform;
 }
 
-void roj::Animator::play()
+// ─────────────────────────────────────────────────────────────────────────────
+// ApplyBonePoseArray — par_unseq fill, then world+skin pass
+// ─────────────────────────────────────────────────────────────────────────────
+
+void Animator::ApplyBonePoseArray(std::unordered_map<hashed_string, glm::mat4> pose)
 {
-    m_playing = true;
+    const SkeletonBone* bones = m_model->skeleton.bones;
+    glm::mat4*          lp   = m_localPose;
 
-    if (m_currAnim && Loop && false)
-    {
-        m_currTime = m_currAnim->frameTime;
-    }
-    else
-    {
-        m_currTime = 0;
-    }
+    std::for_each(
+        std::execution::par_unseq,
+        m_boneIndices.begin(), m_boneIndices.end(),
+        [lp, bones, &pose](uint16_t i)
+        {
+            const auto it = pose.find(bones[i].name);
+            lp[i] = (it != pose.end()) ? it->second : bones[i].localBind;
+        });
 
-
+    m_localPoseDirty = true;
+    worldAndSkinPass();
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// ApplyLocalSpacePoseArray
+// Step 1 (fill): par_unseq.  Step 2 (world+snap): sequential.
+// Step 3 (skin): par_unseq inside worldAndSkinPass → extracted inline here
+// because the override path writes m_worldPose[] mid-loop.
+// ─────────────────────────────────────────────────────────────────────────────
 
-void roj::Animator::reset()
+void Animator::ApplyLocalSpacePoseArray(
+    std::unordered_map<hashed_string, glm::mat4> pose,
+    std::unordered_map<hashed_string, glm::mat4> overridePose)
 {
-    m_currTime = 0.0f;
-    currentPose.clear();
-	totalRootMotionPosition = vec3();
-	totalRootMotionRotation = vec3();
-	m_playing = false;
+    const FlatSkeleton& skel = m_model->skeleton;
+    const uint16_t      n    = skel.boneCount;
+    const SkeletonBone* bones = skel.bones;
+    glm::mat4*          lp   = m_localPose;
+
+    // Step 1: fill local pose — par_unseq
+    std::for_each(
+        std::execution::par_unseq,
+        m_boneIndices.begin(), m_boneIndices.end(),
+        [lp, bones, &pose](uint16_t i)
+        {
+            const auto it = pose.find(bones[i].name);
+            lp[i] = (it != pose.end()) ? it->second : bones[i].localBind;
+        });
+
+    // Step 2: world pass with world-space snaps — sequential
+    m_worldPose[0] = lp[0];
+    {
+        const auto it = overridePose.find(bones[0].name);
+        if (it != overridePose.end())
+            m_worldPose[0] = lp[0] = it->second;
+    }
+
+    for (uint16_t i = 1; i < n; ++i)
+    {
+        const uint16_t p = bones[i].parentIdx;
+        const auto it = overridePose.find(bones[i].name);
+        if (it != overridePose.end()) [[unlikely]]
+        {
+            m_worldPose[i] = it->second;
+            lp[i] = glm::inverse(m_worldPose[p]) * m_worldPose[i];
+        }
+        else [[likely]]
+        {
+            m_worldPose[i] = m_worldPose[p] * lp[i];
+        }
+    }
+
+    // Step 3: skin pass — par_unseq
+    glm::mat4*       boneMatrices = m_boneMatrices.data();
+    const glm::mat4* worldPose    = m_worldPose;
+
+    std::for_each(
+        std::execution::par_unseq,
+        m_boneIndices.begin(), m_boneIndices.end(),
+        [boneMatrices, worldPose, bones](uint16_t i)
+        {
+            const int16_t si = bones[i].skinIdx;
+            if (si >= 0) [[likely]]
+                boneMatrices[si] = worldPose[i] * bones[i].invBind;
+        });
+
+    if (skel.rootMotionBoneIdx != INVALID_BONE_IDX)
+        rootBoneTransform = MathHelper::DecomposeMatrix(m_worldPose[skel.rootMotionBoneIdx]);
+
+    m_localPoseDirty = true;
 }
 
-void roj::Animator::precacheAnimation() {
-    if (!m_currAnim) return;
+// ─────────────────────────────────────────────────────────────────────────────
+// Constructor
+//
+// m_boneIndices is filled with iota once and reused every frame.
+// currentPose is pre-populated so buildCurrentPose never rehashes.
+// ─────────────────────────────────────────────────────────────────────────────
 
-    cachedFrameBoneTransforms.clear();
-    cachedBoneInfos.clear();
+Animator::Animator(SkinnedModel* model) : m_model(model)
+{
+    const uint16_t n = model->skeleton.boneCount;
 
-    cachedFrameBoneTransforms = std::vector<roj::FrameBoneTransform>();
-	cachedFrameBoneTransforms.reserve(m_model->boneInfoMap.size());
-	cachedBoneInfos = std::vector<roj::BoneInfo>();
-	cachedBoneInfos.reserve(m_model->boneInfoMap.size());
+    m_localPose = new glm::mat4[n];
+    m_worldPose = new glm::mat4[n];
 
-    std::function<void(BoneNode&, uint16_t&)> assignIdsAndCache =
-        [&](BoneNode& node, uint16_t& currentId) {
-        node.id = currentId++;
+    for (uint16_t i = 0; i < n; ++i)
+    {
+        m_localPose[i] = model->skeleton.bones[i].localBind;
+        m_worldPose[i] = glm::mat4(1.f);
+    }
 
-        auto frameIt = m_currAnim->animationFrames.find(node.name);
-        if (frameIt != m_currAnim->animationFrames.end()) {
-            cachedFrameBoneTransforms.push_back(frameIt->second);
-        }
-        else {
-            roj::FrameBoneTransform defaultTransform;
-            auto defaultTrans = MathHelper::DecomposeMatrix(node.transform);
-            defaultTransform.positionTimestamps = { 0.0f };
-            defaultTransform.positions = { defaultTrans.Position };
-            defaultTransform.rotationTimestamps = { 0.0f };
-            defaultTransform.rotations = { defaultTrans.RotationQuaternion };
-            defaultTransform.scaleTimestamps = { 0.0f };
-            defaultTransform.scales = { defaultTrans.Scale };
-            cachedFrameBoneTransforms.push_back(defaultTransform);
-        }
+    m_boneIndices.resize(n);
+    std::iota(m_boneIndices.begin(), m_boneIndices.end(), uint16_t{0});
 
-        auto boneIt = m_model->boneInfoMap.find(node.name);
-        if (boneIt != m_model->boneInfoMap.end()) {
-            cachedBoneInfos.push_back(boneIt->second);
-        }
-        else {
-            cachedBoneInfos.push_back(roj::BoneInfo());
-        }
+    currentPose.reserve(n);
+    for (uint16_t i = 0; i < n; ++i)
+        currentPose[model->skeleton.bones[i].name] = model->skeleton.bones[i].localBind;
 
-        for (BoneNode& child : node.children) {
-            assignIdsAndCache(child, currentId);
-        }
-        };
-
-    uint16_t idCounter = 0;
-    assignIdsAndCache(m_currAnim->rootBone, idCounter);
+    m_boneMatrices.assign(MAX_SKINNED_BONES, glm::identity<glm::mat4>());
 }
+
+Animator::Animator(Animator&& o) noexcept
+    : m_model              (o.m_model)
+    , m_currClip           (o.m_currClip)
+    , m_localPose          (o.m_localPose)
+    , m_worldPose          (o.m_worldPose)
+    , m_boneIndices        (std::move(o.m_boneIndices))
+    , m_boneMatrices       (std::move(o.m_boneMatrices))
+    , m_localPoseDirty     (o.m_localPoseDirty)
+    , Loop                 (o.Loop)
+    , m_currTime           (o.m_currTime)
+    , m_playing            (o.m_playing)
+    , InterpolateRotation  (o.InterpolateRotation)
+    , InterpolatePosition  (o.InterpolatePosition)
+    , InterpolateScale     (o.InterpolateScale)
+    , oldRootBoneTransform (o.oldRootBoneTransform)
+    , rootBoneTransform    (o.rootBoneTransform)
+    , totalRootMotionPosition(o.totalRootMotionPosition)
+    , totalRootMotionRotation(o.totalRootMotionRotation)
+    , UpdatePose           (o.UpdatePose)
+    , UsePrecomputedFrames (o.UsePrecomputedFrames)
+    , m_currAnim           (o.m_currAnim)
+    , currentAnimationName (std::move(o.currentAnimationName))
+    , currentPose          (std::move(o.currentPose))
+{
+    o.m_model     = nullptr;
+    o.m_localPose = nullptr;
+    o.m_worldPose = nullptr;
+    o.m_currClip  = nullptr;
+    o.m_currAnim  = nullptr;
+}
+
+Animator& Animator::operator=(Animator&& o) noexcept
+{
+    if (this != &o)
+    {
+        delete[] m_localPose;
+        delete[] m_worldPose;
+        m_model            = o.m_model;             o.m_model      = nullptr;
+        m_currClip         = o.m_currClip;          o.m_currClip   = nullptr;
+        m_localPose        = o.m_localPose;         o.m_localPose  = nullptr;
+        m_worldPose        = o.m_worldPose;         o.m_worldPose  = nullptr;
+        m_boneIndices      = std::move(o.m_boneIndices);
+        m_boneMatrices     = std::move(o.m_boneMatrices);
+        m_localPoseDirty   = o.m_localPoseDirty;
+        Loop               = o.Loop;
+        m_currTime         = o.m_currTime;
+        m_playing          = o.m_playing;
+        InterpolateRotation  = o.InterpolateRotation;
+        InterpolatePosition  = o.InterpolatePosition;
+        InterpolateScale     = o.InterpolateScale;
+        oldRootBoneTransform    = o.oldRootBoneTransform;
+        rootBoneTransform       = o.rootBoneTransform;
+        totalRootMotionPosition = o.totalRootMotionPosition;
+        totalRootMotionRotation = o.totalRootMotionRotation;
+        UpdatePose              = o.UpdatePose;
+        UsePrecomputedFrames    = o.UsePrecomputedFrames;
+        m_currAnim              = o.m_currAnim;     o.m_currAnim   = nullptr;
+        currentAnimationName    = std::move(o.currentAnimationName);
+        currentPose             = std::move(o.currentPose);
+    }
+    return *this;
+}
+
+Animator::~Animator()
+{
+    delete[] m_localPose;
+    delete[] m_worldPose;
+}
+
+void Animator::set(const hashed_string& name)
+{
+    auto it = m_model->clips.find(name);
+    if (it == m_model->clips.end()) return;
+    m_currClip = it->second;
+    m_currTime = 0.f;
+    currentAnimationName = name.str();
+    auto legacyIt = m_model->animations.find(name);
+    if (legacyIt != m_model->animations.end())
+        m_currAnim = &legacyIt->second;
+}
+
+void Animator::play()  { m_playing = true; m_currTime = 0.f; }
+
+void Animator::reset()
+{
+    m_currTime = 0.f;
+    m_playing  = false;
+    totalRootMotionPosition = glm::vec3(0.f);
+    totalRootMotionRotation = glm::vec3(0.f);
+    m_localPoseDirty = true;
+}
+
+void Animator::UpdateAnimationPose()
+{
+    if (m_currClip) evaluateClip(m_currTime);
+}
+
+std::vector<std::string> Animator::get()
+{
+    std::vector<std::string> names;
+    names.reserve(m_model->clips.size());
+    for (const auto& [k, _] : m_model->clips)
+        names.emplace_back(k.str());
+    return names;
+}
+
+std::vector<glm::mat4>& Animator::getBoneMatrices() { return m_boneMatrices; }
+
+std::unordered_map<hashed_string, glm::mat4> Animator::GetBonePoseArray()
+{
+    buildCurrentPose();
+    return currentPose;
+}
+
+void Animator::PopulateBonePoseArray(BoneNode& node, glm::mat4,
+                                     std::unordered_map<hashed_string, glm::mat4>& out)
+{
+    buildCurrentPose();
+    const auto it = currentPose.find(node.name);
+    out[node.name] = (it != currentPose.end()) ? it->second : glm::mat4(1.f);
+    for (auto& child : node.children)
+        PopulateBonePoseArray(child, glm::mat4(1.f), out);
+}
+
+} // namespace roj
