@@ -530,7 +530,7 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 			if (outCanStand)
 				standingOnBody = hitBody;
 
-			return; // ← fast path exit
+			return; 
 		}
 
 		// Sloped or missed — fall through to reduced NPC sample loop below

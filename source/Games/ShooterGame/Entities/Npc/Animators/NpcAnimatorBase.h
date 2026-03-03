@@ -20,7 +20,7 @@ public:
 
 	bool scared = false;
 
-	vec3 spineRotation;
+	vec3 spineRotation = vec3();
 
 	void Update();
 

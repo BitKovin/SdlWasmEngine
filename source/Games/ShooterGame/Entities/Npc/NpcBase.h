@@ -239,6 +239,8 @@ private:
 
 public:
 
+	float Height = 1.8f;
+
 	bool DoingTask = true;
 	bool DoingTaskOld = true;
 

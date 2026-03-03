@@ -13,9 +13,12 @@
 
 #define SUPPORTED_FOR_EXECUTION 
 
+#define SUPPORTED_FOR_PAR_EXECUTION 
+
 #else
 
-#define SUPPORTED_FOR_EXECUTION std::execution::par_unseq,
+#define SUPPORTED_FOR_EXECUTION std::execution::unseq,
+#define SUPPORTED_FOR_PAR_EXECUTION std::execution::par_unseq,
 
 #endif // __EMSCRIPTEN__
 
@@ -215,7 +218,7 @@ void Animator::worldAndSkinPass()
     const SkeletonBone* bones        = skel.bones;
 
     std::for_each(
-        SUPPORTED_FOR_EXECUTION
+        SUPPORTED_FOR_PAR_EXECUTION
         m_boneIndices.begin(), m_boneIndices.end(),
         [boneMatrices, worldPose, bones](uint16_t i)
         {
@@ -249,7 +252,7 @@ void Animator::evaluateClipImpl(float time)
     glm::mat4*          lp     = m_localPose;
 
     std::for_each(
-        SUPPORTED_FOR_EXECUTION
+        SUPPORTED_FOR_PAR_EXECUTION
         m_boneIndices.begin(), m_boneIndices.end(),
         [lp, tracks, time, dur, iPos, iRot, iScl](uint16_t i)
         {
@@ -278,14 +281,17 @@ void Animator::applyBakedFrame(float time)
     frame = glm::clamp(frame, 0, maxFrame);
 
     const auto& bf = m_currClip->bakedFrames[frame];
+
+
+    const size_t copyCount = std::min(m_boneMatrices.size(), bf.skinMatrices.size());
     std::memcpy(m_boneMatrices.data(), bf.skinMatrices.data(),
-                m_boneMatrices.size() * sizeof(glm::mat4));
+        copyCount * sizeof(glm::mat4));
 
     const uint16_t n = m_model->skeleton.boneCount;
     if (static_cast<uint16_t>(bf.localPoses.size()) == n)
         std::memcpy(m_localPose, bf.localPoses.data(), n * sizeof(glm::mat4));
 
-    m_localPoseDirty        = true;
+    m_localPoseDirty = true;
     totalRootMotionPosition = bf.rootMotionPos;
     totalRootMotionRotation = bf.rootMotionRot;
 }
@@ -304,13 +310,8 @@ void Animator::buildCurrentPose()
     const SkeletonBone* bones = m_model->skeleton.bones;
     const glm::mat4*    lp    = m_localPose;
 
-    std::for_each(
-        SUPPORTED_FOR_EXECUTION
-        m_boneIndices.begin(), m_boneIndices.end(),
-        [&](uint16_t i)
-        {
-            currentPose[bones[i].name] = lp[i];
-        });
+    for (uint16_t i : m_boneIndices)
+        currentPose[bones[i].name] = lp[i];
 
     m_localPoseDirty = false;
 }
@@ -327,8 +328,9 @@ void Animator::update(float dt)
 
     if (Loop)
     {
-        if (m_currTime > m_currClip->duration) [[unlikely]]
-            m_currTime -= m_currClip->duration;
+        m_currTime = std::fmod(m_currTime, m_currClip->duration);
+        if (m_currTime < 0.f) m_currTime += m_currClip->duration; // guard for negative dt
+
     }
     else
     {
@@ -436,7 +438,7 @@ void Animator::ApplyLocalSpacePoseArray(
     const glm::mat4* worldPose    = m_worldPose;
 
     std::for_each(
-        SUPPORTED_FOR_EXECUTION
+        SUPPORTED_FOR_PAR_EXECUTION
         m_boneIndices.begin(), m_boneIndices.end(),
         [boneMatrices, worldPose, bones](uint16_t i)
         {

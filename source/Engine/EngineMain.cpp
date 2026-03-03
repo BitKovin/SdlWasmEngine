@@ -203,6 +203,9 @@ void EngineMain::Init(std::vector<std::string> args)
 
     Level::Current = new Level();
 
+    ImStartFrame();
+	RenderImGui();
+
 }
 
 #include <map>

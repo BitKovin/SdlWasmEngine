@@ -435,14 +435,6 @@ void NpcBase::AsyncUpdate()
 	}
 
 
-	auto animEvents = mesh->PullAnimationEvents();
-
-	for (auto& event : animEvents)
-	{
-		ProcessAnimationEvent(event);
-	}
-
-
 	if (dead)
 	{
 		UpdateAnimations();

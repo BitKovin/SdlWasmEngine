@@ -44,7 +44,7 @@ public:
         }
         else
         {
-            Level::LoadLevelFromFile("GameData/maps/l1_town.bsp");
+            Level::LoadLevelFromFile("GameData/maps/test.bsp");
         }
 		
 
@@ -70,6 +70,12 @@ public:
 
     void Finalize()
     {
+
+        if (Input::GetAction("debug_ui_toggle")->Pressed())
+        {
+            EngineMain::MainInstance->DebugUiEnabled = !EngineMain::MainInstance->DebugUiEnabled;
+        }
+
         if (Input::GetAction("reload_shaders")->Pressed())
         {
             AssetRegistry::ReloadShaders();
@@ -93,11 +99,6 @@ public:
         if (Input::MouseDelta != vec2())
         {
             UiManager::UiScale = 1;
-        }
-
-        if (Input::GetAction("debug_ui_toggle")->Pressed())
-        {
-            EngineMain::MainInstance->DebugUiEnabled = !EngineMain::MainInstance->DebugUiEnabled;
         }
 
     }
