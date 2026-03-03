@@ -47,7 +47,7 @@ public:
 
     bool Paused = false;
 
-    bool DebugUiEnabled = true;
+    bool DebugUiEnabled = false;
 
     int LoadingFrames = 0;
 

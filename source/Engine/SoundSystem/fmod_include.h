@@ -2,10 +2,10 @@
 
 #ifdef __EMSCRIPTEN__
 
-#include <Fmod_ems/fmod.hpp>
-#include <Fmod_ems/fmod_common.h>
-#include <Fmod_ems/fmod_errors.h>
-#include <Fmod_ems/fmod_studio.hpp>
+#include <fmod.hpp>
+#include <fmod_common.h>
+#include <fmod_errors.h>
+#include <fmod_studio.hpp>
 
 #else
 

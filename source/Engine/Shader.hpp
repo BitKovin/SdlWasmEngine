@@ -206,24 +206,7 @@ public:
     }
 
     // Activates the program.
-    void UseProgram()
-    {
-        // Unbind previously bound textures
-        for (const auto& pair : m_textureUnits)
-        {
-            GLuint unit = pair.second;
-
-            glActiveTexture(GL_TEXTURE0 + unit);
-            glBindTexture(GL_TEXTURE_2D, 0);         // Unbind 2D texture
-            glBindTexture(GL_TEXTURE_CUBE_MAP, 0);   // Unbind cube map
-        }
-
-        // Activate this shader program
-        glUseProgram(program);
-
-        ApplyTextureBindings();
-
-    }
+    void UseProgram();
 
     // Fills the attributes vector by querying the linked program.
     void FillAttributes()

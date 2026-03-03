@@ -137,6 +137,50 @@ bool Shader::Reload()
     return true;
 }
 
+static GLuint gMissingTexture = 0;
+
+static void CreateMissingTexture()
+{
+    glGenTextures(1, &gMissingTexture);
+    glBindTexture(GL_TEXTURE_2D, gMissingTexture);
+
+    uint32_t pink[4] = {
+        0, 0,
+        0, 0
+    };
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
+        2, 2, 0,
+        GL_RGBA, GL_UNSIGNED_BYTE,
+        pink);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+}
+
+void ShaderProgram::UseProgram()
+{
+
+    if (gMissingTexture == 0)
+        CreateMissingTexture();
+
+    // Unbind previously bound textures
+    for (const auto& pair : m_textureUnits)
+    {
+        GLuint unit = pair.second;
+
+        glActiveTexture(GL_TEXTURE0 + unit);
+        glBindTexture(GL_TEXTURE_2D, gMissingTexture);         // Unbind 2D texture
+        glBindTexture(GL_TEXTURE_CUBE_MAP, 0);   // Unbind cube map
+    }
+
+    // Activate this shader program
+    glUseProgram(program);
+
+    ApplyTextureBindings();
+
+}
+
 std::unordered_map<hashed_string, std::string> ShaderProgram::ParseTextureBindings(const std::string& shaderCode)
 {
     std::unordered_map<hashed_string, std::string> result;

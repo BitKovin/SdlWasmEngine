@@ -3,12 +3,26 @@
 #include "glm.h"
 
 #include <algorithm>    // std::lower_bound, std::for_each
-#include <execution>    // std::execution::par_unseq   (C++20 / TBB / PSTL)
+#include <execution>    
 #include <numeric>      // std::iota
 #include <cstring>      // std::memcpy
 #include <cassert>
 #include <span>
 
+#ifdef __EMSCRIPTEN__
+
+#define SUPPORTED_FOR_EXECUTION 
+
+#else
+
+#define SUPPORTED_FOR_EXECUTION std::execution::par_unseq,
+
+#endif // __EMSCRIPTEN__
+
+
+
+
+    
 namespace roj
 {
 
@@ -201,13 +215,13 @@ void Animator::worldAndSkinPass()
     const SkeletonBone* bones        = skel.bones;
 
     std::for_each(
-        std::execution::par_unseq,
+        SUPPORTED_FOR_EXECUTION
         m_boneIndices.begin(), m_boneIndices.end(),
         [boneMatrices, worldPose, bones](uint16_t i)
         {
             const int16_t si = bones[i].skinIdx;
-            if (si >= 0) [[likely]]
-                boneMatrices[si] = worldPose[i] * bones[i].invBind;
+            if (si >= 0)
+                [[likely]] boneMatrices[si] = worldPose[i] * bones[i].invBind;
         });
 
     if (skel.rootMotionBoneIdx != INVALID_BONE_IDX) [[likely]]
@@ -235,7 +249,7 @@ void Animator::evaluateClipImpl(float time)
     glm::mat4*          lp     = m_localPose;
 
     std::for_each(
-        std::execution::par_unseq,
+        SUPPORTED_FOR_EXECUTION
         m_boneIndices.begin(), m_boneIndices.end(),
         [lp, tracks, time, dur, iPos, iRot, iScl](uint16_t i)
         {
@@ -291,7 +305,7 @@ void Animator::buildCurrentPose()
     const glm::mat4*    lp    = m_localPose;
 
     std::for_each(
-        std::execution::par_unseq,
+        SUPPORTED_FOR_EXECUTION
         m_boneIndices.begin(), m_boneIndices.end(),
         [&](uint16_t i)
         {
@@ -356,7 +370,7 @@ void Animator::ApplyBonePoseArray(std::unordered_map<hashed_string, glm::mat4> p
     glm::mat4*          lp   = m_localPose;
 
     std::for_each(
-        std::execution::par_unseq,
+        SUPPORTED_FOR_EXECUTION
         m_boneIndices.begin(), m_boneIndices.end(),
         [lp, bones, &pose](uint16_t i)
         {
@@ -386,7 +400,7 @@ void Animator::ApplyLocalSpacePoseArray(
 
     // Step 1: fill local pose — par_unseq
     std::for_each(
-        std::execution::par_unseq,
+        SUPPORTED_FOR_EXECUTION
         m_boneIndices.begin(), m_boneIndices.end(),
         [lp, bones, &pose](uint16_t i)
         {
@@ -422,7 +436,7 @@ void Animator::ApplyLocalSpacePoseArray(
     const glm::mat4* worldPose    = m_worldPose;
 
     std::for_each(
-        std::execution::par_unseq,
+        SUPPORTED_FOR_EXECUTION
         m_boneIndices.begin(), m_boneIndices.end(),
         [boneMatrices, worldPose, bones](uint16_t i)
         {

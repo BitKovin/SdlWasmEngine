@@ -433,3 +433,4 @@ source/MauiPlayer/Resources/Raw/main.data
 source/Intermediage/
 Build/sourceLibraries/assimp/lib/libassimp.a
 Build/sourceLibraries/assimp/lib/libassimp.a
+/Build/sourceLibraries/assimp/lib
