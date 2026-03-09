@@ -56,6 +56,18 @@ elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
     find_package(OpenGL     REQUIRED)
     find_package(OpenAL     REQUIRED)
     find_package(ZLIB       REQUIRED)
+
+    # Link OpenAL via imported target
+    target_link_libraries(engine PRIVATE OpenAL::OpenAL)
+
+    # Link the rest as before
+    target_link_libraries(engine PRIVATE
+        GLEW::GLEW
+        OpenGL::GL
+        ZLIB::ZLIB
+        mimalloc::mimalloc 
+    )
+
 endif()
 
 
@@ -74,24 +86,6 @@ target_include_directories(engine
 )
 
 
-if (LINUX)
-    # Link OpenAL via imported target
-    target_link_libraries(engine PRIVATE OpenAL::OpenAL)
-
-    target_include_directories(engine 
-        PUBLIC
-          "${CMAKE_SOURCE_DIR}/libraries"     
-    )
-
-    # Link the rest as before
-    target_link_libraries(engine PRIVATE
-        Jolt::Jolt
-        GLEW::GLEW
-        OpenGL::GL
-        ZLIB::ZLIB
-        mimalloc::mimalloc 
-    )
-endif()
 
 set(LIB_DIR "${CMAKE_SOURCE_DIR}/sourceLibraries")
 
@@ -354,9 +348,9 @@ set_target_properties(${GAME_TARGET_NAME} PROPERTIES
 if (EMSCRIPTEN)
     message(STATUS "Applying WASM linker flags to final '${GAME_TARGET_NAME}' target")
     target_link_options(${GAME_TARGET_NAME} PRIVATE ${WASM_COMMON_LINK_OPTIONS})
-endif()
 
-if (LINUX)
+else()
+
     target_link_options(${GAME_TARGET_NAME} PRIVATE -pthread -ldl)
     install(TARGETS ${GAME_TARGET_NAME} DESTINATION bin)
 endif()
