@@ -64,7 +64,7 @@ public:
         bobScale = 1.0f - aimProgress;
 
         params.weaponOffset = mix(vec3(0.0, 0.00, 0.0), weaponAimOffset, aimProgress);
-        Camera::FOV = mix(60.0f, 10.0f, aimProgress);
+        Camera::FOV = mix(65.0f, 10.0f, aimProgress);
 
 
         ForceFirstPerson = aimProgress > 0.9;

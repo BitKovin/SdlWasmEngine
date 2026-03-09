@@ -16,8 +16,8 @@ protected:
 
 	void LoadAssets()
 	{
-		idle = AddAnimation("GameData/animations/player/body/idle.glb");
-		run_f = AddAnimation("GameData/animations/player/body/run_f.glb");
+		idle = AddAnimation("GameData/animations/player/body/idle.glb", "idle");
+		run_f = AddAnimation("GameData/animations/player/body/run_f.glb", "run");
 	}
 
 	AnimationPose ProcessResultPose()

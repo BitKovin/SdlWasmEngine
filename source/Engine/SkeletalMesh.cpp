@@ -1122,8 +1122,7 @@ LightVolPointData SkeletalMesh::GetLightVolData()
 
 	auto box = BoundingBox::FromPoints(bonePositions);
 
-	if (model == nullptr ||
-		Level::Current->BspData.lightVols.size() == 0) return LightVolPointData{ vec3(0),vec3(1),vec3(0) };
+	if (model == nullptr) return LightVolPointData{ vec3(0),vec3(1),vec3(0) };
 
 	vec3 samplePos = box.Center() + vec3(0, 0.5, 0);
 
