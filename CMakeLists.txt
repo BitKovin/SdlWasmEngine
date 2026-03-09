@@ -74,14 +74,7 @@ target_include_directories(engine
 )
 
 
-if (EMSCRIPTEN)
-    set(FMOD_SUFFIX "")
-    if (ENABLE_PTHREADS)
-        set(FMOD_SUFFIX "P")
-    endif()
-
-
-elseif (LINUX)
+if (LINUX)
     # Link OpenAL via imported target
     target_link_libraries(engine PRIVATE OpenAL::OpenAL)
 
