@@ -219,3 +219,9 @@ glm::vec2 UiElement::WorldToScreenSpace(const glm::vec3& pos, bool& inScreen) {
     return screenPos;
     */
 }
+
+void UiElement::RemoveFromParent()
+{
+    if(parent) parent->RemoveChild(shared_from_this());
+		
+}

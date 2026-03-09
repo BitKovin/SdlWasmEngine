@@ -17,8 +17,8 @@
 
 #else
 
-#define SUPPORTED_FOR_EXECUTION std::execution::unseq,
-#define SUPPORTED_FOR_PAR_EXECUTION std::execution::par_unseq,
+#define SUPPORTED_FOR_EXECUTION std::execution::unseq, //when parallel logic will break stuff
+#define SUPPORTED_FOR_PAR_EXECUTION std::execution::par_unseq, 
 
 #endif // __EMSCRIPTEN__
 

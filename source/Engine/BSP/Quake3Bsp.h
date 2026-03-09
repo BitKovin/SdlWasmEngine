@@ -42,7 +42,7 @@ struct tBSPVertex {
     glm::vec2 vTextureCoord;  // (u, v) texture coordinate
     glm::vec2 vLightmapCoord; // (u, v) lightmap coordinate
     glm::vec3 vNormal;        // (x, y, z) normal vector
-    unsigned char color[4];       // RGBA color for the vertex
+    uint8_t color[4];       // RGBA color for the vertex
 };
 
 // This is our BSP face structure
@@ -71,7 +71,7 @@ struct tBSPTexture {
 };
 
 struct tBSPLightmap {
-    unsigned char imageBits[128][128][3]; // The RGB data in a 128x128 image
+    uint8_t imageBits[128][128][3]; // The RGB data in a 128x128 image
 };
 
 // Plane structure
@@ -137,16 +137,16 @@ struct tBSPEffect {
 
 // Light volume structure
 struct tBSPLightvol {
-    unsigned char ambient[3];
-    unsigned char directional[3];
-    unsigned char dir[2];
+    uint8_t ambient[3];
+    uint8_t directional[3];
+    uint8_t dir[2];
 };
 
 // Visdata structure
 struct tBSPVisData {
     int n_vecs;
     int sz_vecs;
-    std::vector<unsigned char> vecs;
+    std::vector<uint8_t> vecs;
 };
 
 struct FaceBuffers {
@@ -403,7 +403,10 @@ class CQuake3BSP : public IDrawMesh
     std::vector<tBSPBrushSide> brushSides;
     std::vector<tBSPMeshVert> meshVerts;
     std::vector<tBSPEffect> effects;
+
     std::vector<tBSPLightvol> lightVols;
+    std::vector<tBSPLightvol> lightVolPalette;
+    std::vector<uint32_t>     lightVolIndices;
 
     std::vector<OpaqueModelVBO> opaqueVBOs;
 
@@ -424,6 +427,10 @@ class CQuake3BSP : public IDrawMesh
 
     std::vector<VertexData> GetFaceVertices(int faceId);
     std::vector<uint32_t> GetFaceIndices(int faceId);
+
+    inline tBSPLightvol GetLightVol(int i) const {
+        return lightVolPalette[lightVolIndices[i]];
+    }
 
     bool CheckLightProbeAcess(const glm::vec3& position, const glm::vec3& volPosition);
 

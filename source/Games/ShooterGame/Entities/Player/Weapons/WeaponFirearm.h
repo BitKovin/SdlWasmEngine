@@ -24,8 +24,8 @@ struct FirearmParams {
 	float baseSpread = 0.1f;
 	float spreadIncreasePerShot = 0.1f;
 	float spreadDecreaseSpeed = 2.0f;
-	float maxActiveSpread = 1.2f;
-	float velocitySpreadDivisor = 17.0f;
+	float maxActiveSpread = 0.5f;
+	float velocitySpreadDivisor = 57.0f;
 	float attackDelayTime = 0.3f;
 	float switchDelayTime = 0.35f;
 	float switchDelayOnAttack = 0.2f;

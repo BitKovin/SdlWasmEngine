@@ -211,7 +211,7 @@ void WeaponFirearm::PerformAttack()
 	}
 
 	SwitchDelay.AddDelay(params.switchDelayOnAttack * (akimbo ? 0.5f : 1));
-
+	attackDelay.AddDelay(params.attackDelayTime * (akimbo ? 0.5f : 1.0f));
 
 
 	bool fireLeft = akimbo && alternateFire && fireLeftNext;
@@ -253,8 +253,6 @@ void WeaponFirearm::PerformAttack()
 			FireSingleBullet(startLoc, vec4(0));
 	}
 
-
-	attackDelay.AddDelay(params.attackDelayTime * (akimbo ? 0.5f : 1.0f));
 }
 
 void WeaponFirearm::FireSingleBullet(const vec3& startLoc, const vec4& gridOffset)

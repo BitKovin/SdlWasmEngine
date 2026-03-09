@@ -1,3 +1,5 @@
+#pragma once
+
 #include "UiCustomShaderImage.hpp"
 
 class UiProgressBar : public UiCustomShaderImage

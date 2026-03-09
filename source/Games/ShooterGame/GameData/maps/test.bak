@@ -2056,6 +2056,6 @@
 // entity 76
 {
 "classname" "npc_guard"
-"origin" "-32 -64 48"
-"target" "np_guard_wait_1"
+"origin" "0 128 48"
+"target" "np_0_e"
 }

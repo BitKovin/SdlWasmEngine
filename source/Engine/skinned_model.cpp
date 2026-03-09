@@ -9,7 +9,7 @@
 #include <cassert>
 #include <span>         // C++20
 
-#define BAKED_FRAME_RATE 30.0f
+#define BAKED_FRAME_RATE 10.0f
 
 using namespace utils::assimp;
 

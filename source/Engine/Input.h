@@ -201,7 +201,7 @@ public:
     bool RMB = false;
     bool MMB = false;
 
-    double pressedTime = 0.0;
+    double pressedTime = -10000.0;
 
     InputAction();
 

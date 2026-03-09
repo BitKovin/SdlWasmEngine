@@ -95,6 +95,8 @@ public:
     static glm::vec2 WorldToScreenSpace(const glm::vec3& pos);
     static glm::vec2 WorldToScreenSpace(const glm::vec3& pos, bool& inScreen);
 
+	void RemoveFromParent();
+
 protected:
 
     vec2 finalizedPosition = vec2(0);

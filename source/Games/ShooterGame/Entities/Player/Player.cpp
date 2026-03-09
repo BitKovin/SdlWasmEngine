@@ -41,6 +41,7 @@ void Player::Start()
 	observationTarget = AiPerceptionSystem::CreateTarget(Position, Id, { "player" });
 
 	controller.Init(this, Position, 0.4f);
+	controller.gravity = 24;
 	oldPos = controller.GetPosition();
 
 	ParticleSystem::PreloadSystemAssets("decal_blood");
@@ -141,7 +142,7 @@ void Player::Start()
 		// Slots mode - use original system
 		AddWeaponByName("weapon_pistol");
 		AddWeaponByName("weapon_shotgun");
-		AddWeaponByName("weapon_tommy");
+		AddWeaponByName("weapon_mpsd");
 		AddWeaponByName("weapon_sniper");
 
 		// Offhand weapons for slots mode
@@ -231,13 +232,35 @@ void Player::UpdateWalkMovement(vec2 input)
 
 
 
-	if (OnGround())
+	if (Input::GetAction("jump")->PressedBuffered())
 	{
-		if (Input::GetAction("jump")->Holding())
-		{
-			Jump();
 
+		if (dashProgress.Wait() && HasStamina() && OnGround()) // dash jump
+		{
+			wasDashing = false;
+			dashProgress.AddDelay(-1);
+			ConsumeStamina();
+			controller.SetVelocity(dashVector);
 		}
+		else
+		{
+			if (OnGround())
+			{
+				Jump();
+			}
+			else
+			{
+				TryWallJump();
+
+				velocity = controller.GetVelocity();
+
+				dashVector = normalize(dashVector) * 20.0f;
+
+				controller.SetVelocity(velocity);
+
+			}
+		}
+
 	}
 }
 
@@ -311,16 +334,57 @@ void Player::UpdateBikeMovement(vec2 input)
 	bikeArmsMesh->PasteAnimationPose(bikeMesh->GetAnimationPose());
 	bikeArmsMesh->Rotation = bikeMesh->Rotation;
 
-
-	if (OnGround())
+	if (Input::GetAction("jump")->Holding())
 	{
-		if (Input::GetAction("jump")->Holding())
+		if (OnGround())
 		{
 			Jump();
-
+		}
+		else
+		{
+			TryWallJump();
 		}
 	}
 
+
+
+}
+
+void Player::TryWallJump()
+{
+	if (jumpDelay.Wait()) return;
+
+
+	auto hit = Physics::SphereTrace(Position, Position + vec3(0, -0.1f, 0), 0.6f, BodyType::GroupCollisionTest & ~BodyType::CharacterCapsule, {}, { this });
+
+	if (hit.hasHit)
+	{
+
+		if (HasStamina() == false) return;
+
+		ConsumeStamina();
+
+		vec3 wallNormal = hit.normal;
+
+		vec3 velocity = controller.GetVelocity();
+
+		// Decompose velocity into parallel and perpendicular components relative to the wall
+		float perpMagnitude = glm::dot(velocity, wallNormal);
+		vec3 perpComponent = wallNormal * perpMagnitude;   // into/away from wall
+		vec3 paraComponent = velocity - perpComponent;     // sliding along wall
+
+		// Keep all parallel (tangent) velocity, set perpendicular to a fixed launch speed
+		const float wallJumpOutSpeed = 5.0f;
+		const float wallJumpUpSpeed = 9.5f;
+
+		vec3 newVelocity = paraComponent;                        // preserve lateral momentum
+		newVelocity += wallNormal * wallJumpOutSpeed;        // fixed push off wall
+		newVelocity.y = wallJumpUpSpeed;                      // override vertical
+
+		controller.SetVelocity(newVelocity);
+
+		jumpDelay.AddDelay(0.3f);
+	}
 }
 
 bool Player::CanSwitchSlot(int slot)
@@ -641,6 +705,10 @@ bool Player::CanSwitchToInventoryItem(const std::string& uuid)
 
 void Player::SwitchToInventoryItem(std::string uuid, bool forceChange)
 {
+
+	Logger::Log("Attempting to switch to inventory (UUID: " + uuid + ")");
+
+
 	// Validate UUID and check if item exists
 	if (uuid.empty())
 		return;
@@ -648,6 +716,7 @@ void Player::SwitchToInventoryItem(std::string uuid, bool forceChange)
 	InventoryItem* itemPtr = FindInventoryItemByUUID(uuid);
 	if (!itemPtr)
 		return;
+
 
 	// Check if we can switch
 	if (!forceChange && !CanSwitchToInventoryItem(uuid))
@@ -1007,6 +1076,33 @@ void Player::UpdateInteraction()
 
 }
 
+bool Player::HasStamina()
+{
+	return stamina >= 0.99;
+}
+
+void Player::ConsumeStamina(float amount)
+{
+	stamina = std::max(stamina - amount, 0.0f);
+	disableStaminaRegenUntilGrounded = true;
+}
+
+void Player::UpdateStamina()
+{
+
+	if (dashProgress.Wait()) return;
+
+	if (OnGround())
+	{
+		disableStaminaRegenUntilGrounded = false;
+	}
+
+	if (disableStaminaRegenUntilGrounded) return;
+
+	stamina = std::min(stamina + Time::DeltaTimeF * 1.0f, 4.0f);
+
+}
+
 void Player::UpdateWeapon()
 {
 
@@ -1280,6 +1376,8 @@ void Player::Update()
 
 	if (EngineMain::MainInstance->SimulatingGameTicks) return;
 
+	UpdateStamina();
+
 	auto lightData = Level::Current->BspData.GetLightvolColorPoint(Position * MAP_SCALE, true);
 
 	float lightLevel = LightVisibility::Compute(lightData);
@@ -1481,10 +1579,10 @@ void Player::Update()
 
 		if (dashEnded)
 		{
-			controller.SetVelocity(normalize(dashVector) * Speed);
+			controller.SetVelocity(normalize(dashVector) * WalkSpeed);
 		}
 
-		if (Input::GetAction("dash")->Pressed() && canDash)
+		if (Input::GetAction("dash")->Pressed() && canDash && HasStamina())
 		{
 
 			vec3 dashDir = right * input.x + playerForward * input.y;
@@ -1494,9 +1592,12 @@ void Player::Update()
 				dashDir = playerForward;
 			}
 
-			dashVector = dashDir * 20.0f;
+			dashVector = dashDir * 15.0f;
 
-			dashProgress.AddDelay(0.2f);
+			dashProgress.AddDelay(0.25f);
+
+			ConsumeStamina();
+
 		}
 	}
 
@@ -1648,6 +1749,9 @@ void Player::Update()
 
 		if (Input::GetAction("slot6")->Pressed())
 		{
+
+			Logger::Log("Inventory size: " + to_string(inventory.size()));
+
 			if (inventory.size() > 5)
 			{
 				SwitchToInventoryItem(inventory[5].uid, false);

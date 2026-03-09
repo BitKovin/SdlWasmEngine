@@ -309,8 +309,31 @@ bool CQuake3BSP::LoadBSP(const char* filename) {
             memcpy(lightVols.data(),
                 base + lumps[kLightVolumes].offset,
                 cnt * sizeof(tBSPLightvol));
+
+            // Build palette
+            std::unordered_map<uint64_t, uint32_t> lookup;
+            lookup.reserve(cnt);
+            lightVolIndices.reserve(cnt);
+
+            for (const auto& lv : lightVols) {
+                uint64_t key = 0;
+                memcpy(&key, &lv, sizeof(tBSPLightvol));
+                auto [it, inserted] = lookup.emplace(key, (uint32_t)lightVolPalette.size());
+                if (inserted)
+                    lightVolPalette.push_back(lv);
+                lightVolIndices.push_back(it->second);
+            }
+
+			lightVolIndices.shrink_to_fit();
+			lightVolPalette.shrink_to_fit();
+
+			Logger::Log("Compressed light volumes from " + std::to_string(lightVols.size()) + " to " + std::to_string(lightVolPalette.size()));
+
+            lightVols.clear();
+            lightVols.shrink_to_fit();
         }
     }
+
 
     // 15) VisData
     if (lumps[kVisData].length >= 2 * sizeof(int)) {
@@ -670,6 +693,7 @@ std::vector<uint32_t> CQuake3BSP::GetFaceIndices(int faceId)
     return Rbuffers.v_faceIDXs[faceId];
 }
 
+
 bool CQuake3BSP::CheckLightProbeAcess(const glm::vec3& position, const glm::vec3& volPosition)
 {
 
@@ -683,7 +707,7 @@ bool CQuake3BSP::CheckLightProbeAcess(const glm::vec3& position, const glm::vec3
 
 LightVolPointData CQuake3BSP::GetLightvolColorPoint(const glm::vec3& position, bool wallCheck) 
 {
-    if (lightVols.size() == 0)
+    if (lightVolIndices.size() == 0)
     {
         return { vec3(0), vec3(0.3f), vec3(0,-1,0) };
     }
@@ -734,7 +758,7 @@ LightVolPointData CQuake3BSP::GetLightvolColorPoint(const glm::vec3& position, b
     // Fetch light volumes at the eight corners
     auto getLightVolData = [&](int x, int y, int z) -> std::tuple<glm::vec3, glm::vec3, glm::vec3> {
         int index = z * (lightVolGridDims.x * lightVolGridDims.y) + y * lightVolGridDims.x + x;
-        const tBSPLightvol& vol = lightVols[index];
+        const tBSPLightvol& vol = GetLightVol(index);
         glm::vec3 ambient(
             static_cast<float>(vol.ambient[0]) / 255.0f,
             static_cast<float>(vol.ambient[1]) / 255.0f,
@@ -862,7 +886,7 @@ LightVolPointData CQuake3BSP::GetLightvolColorPoint(const glm::vec3& position, b
 
                     // Get sample data
                     int index = z * (lightVolGridDims.x * lightVolGridDims.y) + y * lightVolGridDims.x + x;
-                    const tBSPLightvol& vol = lightVols[index];
+                    const tBSPLightvol& vol = GetLightVol(index);
                     LightData ld{
                         glm::vec3(static_cast<float>(vol.ambient[0]) / 255.0f,
                                   static_cast<float>(vol.ambient[1]) / 255.0f,
@@ -906,7 +930,7 @@ LightVolPointData CQuake3BSP::GetLightvolColorPoint(const glm::vec3& position, b
 LightVolPointData CQuake3BSP::GetLightvolColor(const glm::vec3& position, bool wallCheck)
 {
 
-    if (lightVols.size() == 0)
+    if (lightVolIndices.size() == 0)
     {
 		return { vec3(0), vec3(0.3f), vec3(0,-1,0) };
     }

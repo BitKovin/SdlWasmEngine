@@ -189,9 +189,14 @@ void CharacterController::Update(float deltaTime)
 	if (standsOnGround && velocity.y <= 0)
 	{
 		vec3 currentPosition = FromPhysics(body->GetPosition());
-		float newVerticalPosition = verticalPosition + stepHeight/2.0f + height / 2.0f;
+		float newVerticalPosition = verticalPosition + stepHeight / 2.0f + height / 2.0f;
 		Physics::SweepBody(body, vec3(currentPosition.x, newVerticalPosition, currentPosition.z));
-		heightSmoothOffset += (currentPosition.y - FromPhysics(body->GetPosition()).y);
+
+		float moved = currentPosition.y - FromPhysics(body->GetPosition()).y;
+		if (std::abs(moved) > 0.001f)   // ignore float drift / already-snapped frames
+		{
+			heightSmoothOffset += moved;
+		}
 	}
 
 	if (onGround)

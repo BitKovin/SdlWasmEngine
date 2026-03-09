@@ -12,8 +12,7 @@ LightVolPointData StaticMesh::GetLightVolData()
 {
 
 	if (OwnerEntity == nullptr || 
-		model == nullptr||
-		Level::Current->BspData.lightVols.size() == 0) return LightVolPointData{ vec3(0),vec3(1),vec3(0) };
+		model == nullptr) return LightVolPointData{ vec3(0),vec3(1),vec3(0) };
 
 	return OwnerEntity->GetLightVolData(IsViewmodel);
 

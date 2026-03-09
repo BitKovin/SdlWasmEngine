@@ -64,7 +64,7 @@ void PlayerHud::Init(Player* playerRef)
 
 void PlayerHud::Update()
 {
-    text->text = std::to_string((int)player->Health);
+    text->text = std::to_string((int)player->Health) + "\n" + to_string(player->stamina);
 
     crosshair->visible = !useIndicator->visible;
 

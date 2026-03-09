@@ -85,12 +85,12 @@ private:
 	float maxSpeed = 6.0f;
 	float maxSpeedAir = 2;
 	float acceleration = 90;
-	float airAcceleration = 30;
+	float airAcceleration = 10;
 
 	vec3 velocity = vec3(0);
 
-	bool canRun = true;
-	bool canDash = false;
+	bool canRun = false;
+	bool canDash = true;
 
 	vec3 oldPos = vec3();
 
@@ -142,7 +142,7 @@ private:
 	int CurrentClearance = 0;
 
 	// Inventory system
-	WeaponSystemMode weaponSystemMode = WeaponSystemMode::Inventory; // Default to inventory mode
+	WeaponSystemMode weaponSystemMode = WeaponSystemMode::Slots; // Default to inventory mode
 	std::vector<InventoryItem> inventory;
 
 	std::string lastInventoryUUID = "";      // Previously equipped inventory item UUID (for quick switch)
@@ -153,7 +153,7 @@ private:
 	vec3 weaponRunRotation = vec3(-8.9f, 30.0f, -9.21f);
 	vec3 runRotatePoint = vec3(-0.1f,-0.290f,0.45f);
 
-	float WalkSpeed = 5.0f;
+	float WalkSpeed = 6.0f;
 	float CrouchSpeed = 2.5f;
 	float RunSpeed = 7.5f;
 
@@ -172,7 +172,7 @@ private:
 
 	glm::vec3 UpdateGroundVelocity(glm::vec3 withDir, glm::vec3 vel) {
 		vel = MathHelper::XZ(vel);
-		vel = Friction(vel);
+		vel = Friction(vel, 40);
 
 		// Project current velocity onto the direction
 		float currentSpeed = glm::dot(vel, withDir);
@@ -208,13 +208,16 @@ private:
 		return vel + accelspeed * wishdir;
 	}
 
+	void TryWallJump();
+
 	void Jump()
 	{
 		vec3 velocity = controller.GetVelocity();
-		velocity.y = 7.5;
+		velocity.y = 8.0;
 		controller.SetVelocity(velocity);
 
 		jumpDelay.AddDelay(0.3);
+
 	}
 
 	bool CheckGroundAt(vec3 location)
@@ -250,6 +253,9 @@ private:
 	friend class UseIndicator;
 
 public:
+
+	float stamina = 3;
+	bool disableStaminaRegenUntilGrounded = false;
 
 	std::string desiredInventoryUUID = "";   // Item player wants to switch to UUID (for lazy switching)
 	std::string currentInventoryUUID = "";   // Currently equipped item UUID from inventory
@@ -373,6 +379,10 @@ public:
 		Instance = nullptr;
 
 	}
+
+	bool HasStamina();
+	void ConsumeStamina(float amount = 1.0f);
+	void UpdateStamina();
 
 	dtObstacleRef playerObstacle = 0;
 
