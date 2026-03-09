@@ -44,11 +44,6 @@ elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
     set(LINUX TRUE)
     message(STATUS "Building for Linux")
 
-    # Imported Jolt static library
-    add_library(Jolt::Jolt STATIC IMPORTED GLOBAL)
-    set_target_properties(Jolt::Jolt PROPERTIES
-        IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/Lib/Linux/libJolt.a"
-    )
     
     
     add_library(mimalloc::mimalloc STATIC IMPORTED GLOBAL)
@@ -85,9 +80,6 @@ if (EMSCRIPTEN)
         set(FMOD_SUFFIX "P")
     endif()
 
-    target_link_libraries(engine PRIVATE
-        "${CMAKE_SOURCE_DIR}/libsEms/libJolt.a"
-    )
 
 elseif (LINUX)
     # Link OpenAL via imported target
@@ -165,12 +157,31 @@ target_link_libraries(engine PUBLIC SDL2_ttf::SDL2_ttf)
 add_subdirectory(${LIB_DIR}/fmod)
 target_link_libraries(engine PUBLIC fmod)
 
+
+
+# Jolt shipping configuration
+set(ENABLE_ASSERTS              OFF CACHE BOOL "Enable asserts"                    FORCE)
+set(ENABLE_ALL_WARNINGS         OFF CACHE BOOL "Enable all warnings"               FORCE)
+set(INTERPROCEDURAL_OPTIMIZATION ON  CACHE BOOL "Enable link-time optimization"    FORCE)
+
+# Disable debug features not needed in shipping
+set(DEBUG_RENDERER_IN_DEBUG_AND_RELEASE OFF CACHE BOOL "" FORCE)
+set(PROFILER_IN_DEBUG_AND_RELEASE       OFF CACHE BOOL "" FORCE)
+add_subdirectory(${LIB_DIR}/JoltPhysics-5.3.0/Build/)
+target_link_libraries(engine PUBLIC Jolt::Jolt)
+
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(ASSIMP_BUILD_ASSIMP_TOOLS OFF CACHE BOOL "" FORCE)
 set(ASSIMP_BUILD_SAMPLES OFF CACHE BOOL "" FORCE)
 set(ASSIMP_NO_EXPORT ON CACHE BOOL "" FORCE)
 set(ASSIMP_BUILD_DLL_EXPORT OFF)
+
+set(ASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT OFF CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_OBJ_IMPORTER ON CACHE BOOL "" FORCE)   # .obj
+set(ASSIMP_BUILD_GLTF_IMPORTER ON CACHE BOOL "" FORCE)  # .glb / .gltf
+
+set(ASSIMP_BUILD_ZLIB OFF CACHE BOOL "" FORCE)
 
 add_subdirectory(${LIB_DIR}/assimp)
 target_link_libraries(engine PUBLIC assimp)

@@ -146,7 +146,9 @@ void desktop_render_loop() {
         Input::StartEventsFrame();
         while (SDL_PollEvent(&event)) 
         {
-            ImGui_ImplSDL2_ProcessEvent(&event);
+            if (EngineMain::MainInstance->DebugUiEnabled)
+                ImGui_ImplSDL2_ProcessEvent(&event);
+
             if (event.type == SDL_QUIT) quit = 1;
 
             Input::ReceiveSdlEvent(event);

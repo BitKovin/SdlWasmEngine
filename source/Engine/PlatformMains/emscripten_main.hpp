@@ -69,8 +69,10 @@ void emscripten_render_loop()
 
 	vec2 screenSizeDifferenceFactor = vec2((float)EngineMain::MainInstance->ScreenSize.x / initial_screen_size.x, (float)EngineMain::MainInstance->ScreenSize.y / initial_screen_size.y);
 
-    while (SDL_PollEvent(&event)) {
-        ImGui_ImplSDL2_ProcessEvent(&event);
+    while (SDL_PollEvent(&event)) 
+    {
+		if (EngineMain::MainInstance->DebugUiEnabled)
+            ImGui_ImplSDL2_ProcessEvent(&event);
         switch (event.type) {
         case SDL_WINDOWEVENT:
             if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
@@ -84,8 +86,6 @@ void emscripten_render_loop()
 			//event.motion.yrel = (int)((float)event.motion.yrel * screenSizeDifferenceFactor.y);
 			event.motion.x = (int)((float)event.motion.x * screenSizeDifferenceFactor.x);
 			event.motion.y = (int)((float)event.motion.y * screenSizeDifferenceFactor.y);
-
-  
 
             Input::PendingMouseDelta += vec2(event.motion.xrel, event.motion.yrel) * screenSizeDifferenceFactor;
 
