@@ -12,7 +12,7 @@ public:
         params.attackDelayTime = 1.0f; // Note: Added in PerformAttack, but set here
         params.switchDelayTime = 0.35f;
         params.switchDelayOnAttack = 0.2f;
-        params.weaponOffset = vec3(0.012, 0.012, -0.06);
+        params.weaponOffset = vec3(0.013, 0.013, -0.096);
         params.bulletSpeed = 200.0f; // Assumed same
         params.bulletDamage = 90.0f / 21.0f;
         params.range = 70.0f;
@@ -55,7 +55,7 @@ public:
     {
         WeaponFirearm::LateUpdate();
 
-		const float perspectiveScale = 0.75f;
+		const float perspectiveScale = 0.82f;
 
         viewmodel->Scale.z = perspectiveScale;
 		viewmodelLeft->Scale.z = perspectiveScale;

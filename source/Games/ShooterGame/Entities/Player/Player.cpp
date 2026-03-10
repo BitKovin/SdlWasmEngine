@@ -241,6 +241,7 @@ void Player::UpdateWalkMovement(vec2 input)
 			dashProgress.AddDelay(-1);
 			ConsumeStamina();
 			controller.SetVelocity(dashVector);
+			Jump();
 		}
 		else
 		{
