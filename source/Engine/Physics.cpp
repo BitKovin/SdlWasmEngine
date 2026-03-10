@@ -213,9 +213,6 @@ void Physics::DestroyBody(Body* body)
 
 	bodyIdMap.erase(body->GetID());
 
-	bodyInterface->RemoveBody(body->GetID());
-
-	bodyInterface->DestroyBody(body->GetID());
 
 	// Retrieve and delete collision properties if present.
 	auto* props = reinterpret_cast<BodyData*>(body->GetUserData());
@@ -225,6 +222,11 @@ void Physics::DestroyBody(Body* body)
 	{
 		delete props;
 	}
+
+	bodyInterface->RemoveBody(body->GetID());
+
+	bodyInterface->DestroyBody(body->GetID());
+
 
 	// Remove body from existingBodies
 	auto it = std::find(existingBodies.begin(), existingBodies.end(), body);

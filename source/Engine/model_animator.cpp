@@ -203,6 +203,12 @@ void Animator::worldAndSkinPass()
     const FlatSkeleton& skel = m_model->skeleton;
     const uint16_t n = skel.boneCount;
 
+    if (n == 0)
+    {
+        Logger::Log("Trying to apply pose, but model doesn't have bones");
+        return;
+    }
+
     // Loop 2 — sequential
     m_worldPose[0] = m_localPose[0];
     for (uint16_t i = 1; i < n; ++i)
@@ -398,6 +404,12 @@ void Animator::ApplyLocalSpacePoseArray(
     const uint16_t      n    = skel.boneCount;
     const SkeletonBone* bones = skel.bones;
     glm::mat4*          lp   = m_localPose;
+
+    if (n == 0)
+    {
+        Logger::Log("Trying to apply pose, but model doesn't have bones");
+        return;
+    }
 
     // Step 1: fill local pose — par_unseq
     std::for_each(

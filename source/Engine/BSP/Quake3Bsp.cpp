@@ -539,9 +539,15 @@ void CQuake3BSP::PreloadFace(int index)
         faceTexture = AssetRegistry::GetTextureFromFile(texturePath)->getID();
     }
 
-    GLuint lightmapId = (pFace->lightmapID >= 0)
-        ? m_lightmap_gen_IDs[pFace->lightmapID]
-        : missing_LM_id;
+    GLuint lightmapId = 0;
+    
+    if (m_numOfLightmaps)
+    {
+        GLuint lightmapId = (pFace->lightmapID >= 0)
+            ? m_lightmap_gen_IDs[pFace->lightmapID]
+            : missing_LM_id;
+    }
+
 
     if (m_numOfLightmaps == 0 && isCube == false)
     {

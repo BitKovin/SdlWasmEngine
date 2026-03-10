@@ -147,7 +147,7 @@ void Player::Start()
 
 		// Offhand weapons for slots mode
 		offhandWeapons.push_back("weapon_cane");
-		desiredOffhandWeapon = 1;
+		desiredOffhandWeapon = 0;
 	}
 
 	cameraRotation.y = Rotation.y;
