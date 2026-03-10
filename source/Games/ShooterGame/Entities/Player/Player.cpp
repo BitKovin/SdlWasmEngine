@@ -147,7 +147,7 @@ void Player::Start()
 
 		// Offhand weapons for slots mode
 		offhandWeapons.push_back("weapon_cane");
-		desiredOffhandWeapon = 0;
+		desiredOffhandWeapon = 2;
 	}
 
 	cameraRotation.y = Rotation.y;
@@ -1131,7 +1131,8 @@ void Player::UpdateWeapon()
 
 		}
 
-		disableOffhandWeapon = firearm->akimbo;
+		disableOffhandWeapon = firearm->akimbo 
+			|| (currentWeapon && currentWeapon->SupportsOffhandWeapon == false);
 
 		vec3 relativeWeaponPos = vec3();
 

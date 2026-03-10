@@ -30,7 +30,7 @@ public:
 
 	}
 
-	static void CreateAt(vec3 position, float duration = 0.1f, float radius = 6, float intencity = 0.3)
+	static void CreateAt(vec3 position, float duration = 0.15f, float radius = 16, float intencity = 0.4)
 	{
 
 		WeaponFireFlash* flash = new WeaponFireFlash();

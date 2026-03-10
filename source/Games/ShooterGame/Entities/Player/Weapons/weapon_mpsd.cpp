@@ -89,6 +89,9 @@ public:
         Illegal = true;
 
         thirdPersonAnimator = make_unique<Animator_Rifle>(this);
+
+		SupportsOffhandWeapon = false;
+
     }
 
     void Start() override

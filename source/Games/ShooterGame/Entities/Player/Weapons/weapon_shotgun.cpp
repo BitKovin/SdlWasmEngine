@@ -55,7 +55,7 @@ public:
     {
         WeaponFirearm::LateUpdate();
 
-		const float perspectiveScale = 0.7f;
+		const float perspectiveScale = 0.75f;
 
         viewmodel->Scale.z = perspectiveScale;
 		viewmodelLeft->Scale.z = perspectiveScale;

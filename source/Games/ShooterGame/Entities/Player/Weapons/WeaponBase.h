@@ -49,6 +49,8 @@ public:
 
 	bool Parrying = false;
 
+	bool SupportsOffhandWeapon = true;
+
 	virtual void OnParried(){}
 
 	virtual bool IsMelee()

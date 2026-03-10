@@ -45,6 +45,8 @@ public:
 
         thirdPersonAnimator = make_unique<Animator_Rifle>(this);
 
+        SupportsOffhandWeapon = false;
+
     }
 
     void Update() override {
