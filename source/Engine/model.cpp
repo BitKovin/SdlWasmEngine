@@ -4,9 +4,7 @@
 #include "AssetRegistry.h"
 #include "Texture.hpp"
 
-#include <Profiling/ResourceStatistics.hpp>s
-
-//#include "gl.h"
+#include <Profiling/ResourceStatistics.hpp>
 
 namespace roj
 {
