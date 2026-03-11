@@ -196,9 +196,14 @@ void EngineMain::Init(std::vector<std::string> args)
 
     Level::Current = new Level();
 
+    bgfx::touch(0);
+	bgfx::frame();
+
+
     ImStartFrame();
 	RenderImGui();
-
+    bgfx::touch(0);
+    bgfx::frame();
 }
 
 #include <map>
@@ -425,7 +430,7 @@ void EngineMain::MainLoop()
         GameUpdate();
     }
 
-    //Render();
+    Render();
 
     if (asyncGameUpdate == false)
     {
