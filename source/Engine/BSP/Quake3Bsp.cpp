@@ -1129,7 +1129,7 @@ bool CQuake3BSP::RenderMergedFace(int mergedIndex, bool lightmap,
     if (faceTexture == 0) return false;
 
     Shader* shader = ShaderManager::GetShaderProgram(
-        "bsp", data.isCube ? "bsp_cube" : "bsp");
+        "vs_bsp", data.isCube ? "fs_bsp_cube" : "fs_bsp");
     shader->UseProgram();
 
     shader->SetUniform("useVertexLight",
@@ -1635,7 +1635,7 @@ void BSPModelRef::DrawDepth(mat4x4 view, mat4x4 projection)
     const auto& vbo = bsp->opaqueVBOs[id];
     if (!bgfx::isValid(vbo.vbo) || !bgfx::isValid(vbo.ibo)) return;
 
-    Shader* shader = ShaderManager::GetShaderProgram("bsp", "empty_pixel");
+    Shader* shader = ShaderManager::GetShaderProgram("vs_bsp", "fs_empty");
     shader->UseProgram();
     shader->SetUniform("view", view);
     shader->SetUniform("projection", projection);
