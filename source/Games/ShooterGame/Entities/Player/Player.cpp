@@ -361,9 +361,18 @@ void Player::TryWallJump()
 	if (hit.hasHit)
 	{
 
-		if (HasStamina() == false) return;
+		if (freeWalljumps > 0)
+		{
+			freeWalljumps--;
+		}
+		else
+		{
+			if (HasStamina() == false) return;
 
-		ConsumeStamina();
+			ConsumeStamina();
+		}
+
+
 
 		vec3 wallNormal = hit.normal;
 
@@ -1096,11 +1105,12 @@ void Player::UpdateStamina()
 	if (OnGround())
 	{
 		disableStaminaRegenUntilGrounded = false;
+		freeWalljumps = 1;
 	}
 
 	if (disableStaminaRegenUntilGrounded) return;
 
-	stamina = std::min(stamina + Time::DeltaTimeF * 1.0f, 4.0f);
+	stamina = std::min(stamina + Time::DeltaTimeF * 1.0f, 3.0f);
 
 }
 

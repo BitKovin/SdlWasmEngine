@@ -254,6 +254,7 @@ private:
 
 public:
 
+	int freeWalljumps = 1;
 	float stamina = 3;
 	bool disableStaminaRegenUntilGrounded = false;
 

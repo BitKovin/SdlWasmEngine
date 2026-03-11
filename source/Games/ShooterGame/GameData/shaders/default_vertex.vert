@@ -3,7 +3,7 @@
 layout(location = 0) in vec3 Position;
 layout(location = 1) in vec3 Normal;
 layout(location = 2) in vec2 TextureCoordinate;
-layout(location = 5) in ivec4 boneIds; 
+layout(location = 5) in vec4 boneIds; 
 layout(location = 6) in vec4 weights;
 layout(location = 7) in vec3 smoothNormals;
 layout(location = 8) in vec4 color;
@@ -21,8 +21,8 @@ uniform float brightness;
 
 uniform float viewmodelScaleFactor;
 
-const int MAX_BONES = 128;
-const int MAX_BONE_INFLUENCE = 4;
+#define MAX_BONES  128
+#define MAX_BONE_INFLUENCE 4
 uniform mat4 finalBonesMatrices[MAX_BONES];
 	
 uniform bool isViewmodel;
@@ -60,10 +60,10 @@ mat4 GetBoneTransforms()
 		return identity;
 
 	mat4 mbones =
-		finalBonesMatrices[boneIds.x] * weights.x / sum +
-		finalBonesMatrices[boneIds.y] * weights.y / sum +
-		finalBonesMatrices[boneIds.z] * weights.z / sum +
-		finalBonesMatrices[boneIds.w] * weights.w / sum;
+		finalBonesMatrices[int(boneIds.x)] * weights.x / sum +
+		finalBonesMatrices[int(boneIds.y)] * weights.y / sum +
+		finalBonesMatrices[int(boneIds.z)] * weights.z / sum +
+		finalBonesMatrices[int(boneIds.w)] * weights.w / sum;
 
 	return mbones;
 }

@@ -373,7 +373,7 @@ struct VertexData {
     glm::vec2 TextureCoordinate = glm::vec2();
     glm::vec3 Tangent = glm::vec3();
     glm::vec3 BiTangent = glm::vec3();
-    int BlendIndices[4] = { 0, 0, 0, 0 };
+    float BlendIndices[4] = { 0, 0, 0, 0 };
     glm::vec4 BlendWeights = glm::vec4();
     glm::vec3 SmoothNormal = glm::vec3();
     glm::vec4 Color = glm::vec4(1);
@@ -386,7 +386,7 @@ struct VertexData {
             {2, 2, GL_FLOAT, GL_FALSE, sizeof(VertexData), OFFSET_OF(VertexData, TextureCoordinate), 0},
             {3, 3, GL_FLOAT, GL_FALSE, sizeof(VertexData), OFFSET_OF(VertexData, Tangent), 0},
             {4, 3, GL_FLOAT, GL_FALSE, sizeof(VertexData), OFFSET_OF(VertexData, BiTangent), 0},
-            {5, 4, GL_INT, GL_FALSE, sizeof(VertexData), OFFSET_OF(VertexData, BlendIndices), 0},
+            {5, 4, GL_FLOAT, GL_FALSE, sizeof(VertexData), OFFSET_OF(VertexData, BlendIndices), 0},
             {6, 4, GL_FLOAT, GL_FALSE, sizeof(VertexData), OFFSET_OF(VertexData, BlendWeights), 0},
             {7, 3, GL_FLOAT, GL_FALSE, sizeof(VertexData), OFFSET_OF(VertexData, SmoothNormal), 0},
             {8, 4, GL_FLOAT, GL_FALSE, sizeof(VertexData), OFFSET_OF(VertexData, Color), 0},

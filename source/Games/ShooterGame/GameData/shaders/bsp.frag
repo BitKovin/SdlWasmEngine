@@ -31,54 +31,48 @@ out vec4 FragColor;
     #define MAX_POINT_LIGHTS 16
 #endif
 
-uniform int PointLightsNumber;
-uniform vec4 LightPositions[MAX_POINT_LIGHTS]; // xyz = position, w = inner cone (see note)
-uniform vec3 LightColors[MAX_POINT_LIGHTS];
-uniform float LightRadiuses[MAX_POINT_LIGHTS];
-uniform vec4 LightDirections[MAX_POINT_LIGHTS]; // xyz = direction, w = outer cone (see note)
+uniform float PointLightsNumber;
+
+uniform mat4 PointLights[MAX_POINT_LIGHTS];
 
 vec3 CalculateSimplePointLight(int i, vec3 pixelPosition, vec3 normal)
 {
-    // ensure normal is normalized
+    // unpack columns
+    vec4  col0      = PointLights[i][0];
+    vec4  col1      = PointLights[i][1];
+    vec4  col2      = PointLights[i][2];
+
+    vec3  lightPos  = col0.xyz;
+    float innerCone = col0.w;
+
+    vec3  lightCol  = col1.rgb;
+    float radius    = col1.w;
+
+    vec3  lightFwd  = col2.xyz;
+    float outerCone = col2.w;
+
+    // early-out on bad radius
+    if (radius <= 0.0) return vec3(0.0);
+
     normal = normalize(normal);
 
-    // vector from pixel -> light
-    vec3 lightVector = LightPositions[i].xyz - pixelPosition;
+    vec3  lightVector    = lightPos - pixelPosition;
     float distanceToLight = length(lightVector);
 
-    // early-out if outside light radius or invalid radius
-    if (distanceToLight > LightRadiuses[i] || LightRadiuses[i] <= 0.0)
-        return vec3(0.0);
+    if (distanceToLight > radius) return vec3(0.0);
 
-    // normalized direction from pixel to light
-    vec3 lightDir = lightVector / distanceToLight; // avoids computing length twice
+    vec3  lightDir = lightVector / distanceToLight;
 
-    // dot between vector from light->pixel and the stored spotlight direction
-    // note: -lightDir is from light to pixel (since lightDir is pixel->light)
-    float lightDot = dot(-lightDir, normalize(LightDirections[i].xyz));
-
-    float innerCone = LightPositions[i].w;
-    float outerCone = LightDirections[i].w;
-
-    // smooth transition between outer and inner cones
+    float lightDot  = dot(-lightDir, normalize(lightFwd));
     float dirFactor = smoothstep(outerCone, innerCone, lightDot);
 
-    if (dirFactor <= 0.001)
-        return vec3(0.0);
+    if (dirFactor <= 0.001)              return vec3(0.0);
+    if (dot(normal, lightDir) < 0.0)    return vec3(0.0);
 
-    // backface / lighting check (preserve original logic)
-    if (dot(normal, lightDir) < 0.0)
-        return vec3(0.0);
+    float dist    = max((radius - distanceToLight) / radius, 0.0);
+    float intense = dist * max(dot(normal, lightDir), 0.0);
 
-    // simple radial attenuation (linear)
-    float dist = max((LightRadiuses[i] - distanceToLight) / LightRadiuses[i], 0.0);
-    float intense = dist; // original used just 'dist' (comment shows alternative)
-    intense *= max(dot(normal, lightDir), 0.0);
-    intense = max(intense, 0.0);    
-
-    vec3 L = LightColors[i] * intense;
-
-    return L * dirFactor;
+    return lightCol * intense * dirFactor;
 }
 
 vec4 ApplyFog(vec4 fragColor);
@@ -105,7 +99,7 @@ void main()
 
     o_lightmap += clamp(dot(normal, normalize(direct_light_dir))*0.7 + 0.3,0.0,1.0) * vec3(direct_light_color) * 2.0 * (useVertexLight ? vertexLightComp : 1.0);
 
-    for (int i = 0; i < min(MAX_POINT_LIGHTS, PointLightsNumber); i++)
+    for (int i = 0; i < min(MAX_POINT_LIGHTS, int(PointLightsNumber)); i++)
 	{
 		o_lightmap += CalculateSimplePointLight(i, g_world.xyz, normal);
 	}

@@ -138,25 +138,25 @@ void LightManager::ApplyPointLightToShader(ShaderProgram* shader, vec3 boundsMin
 {
     if (!shader) return;
 
-    // Inline AABB extents for fast intersection test (we avoid calling box.Intersects)
     const float minX = boundsMin.x, minY = boundsMin.y, minZ = boundsMin.z;
     const float maxX = boundsMax.x, maxY = boundsMax.y, maxZ = boundsMax.z;
 
     constexpr size_t MAX_LIGHTS = 16u;
     const int maxLights = static_cast<int>(MAX_LIGHTS);
 
-    // Pre-size to MAX_LIGHTS to avoid push_back / allocations in the tight loop.
-    std::vector<vec4> positions;    positions.assign(MAX_LIGHTS, vec4(0.0f)); // xyz = pos, w = innerCos
-    std::vector<vec3> colors;       colors.assign(MAX_LIGHTS, vec3(0.0f));
-    std::vector<vec4> directions;   directions.assign(MAX_LIGHTS, vec4(0.0f)); // xyz = dir, w = outerCos
-    std::vector<float> radiuses;    radiuses.assign(MAX_LIGHTS, 0.0f);
+    // mat4 column layout:
+    //   [0] = vec4(position.xyz, innerCos)
+    //   [1] = vec4(color.rgb,    radius)
+    //   [2] = vec4(direction.xyz, outerCos)
+    //   [3] = vec4(reserved)
+    std::vector<mat4> pointLights;
+    pointLights.assign(MAX_LIGHTS, mat4(0.0f));
 
-    // constants
     const float DEG2RAD = 3.14159265358979323846f / 180.0f;
     const float MAX_SAFE_DEG = 179.999f;
-    const float EPS_LEN_SQ = 1e-12f; // compare squared length
+    const float EPS_LEN_SQ = 1e-12f;
 
-    int added = 0;
+    float added = 0;
     const auto& lights = m_finalLights;
     const size_t nLights = lights.size();
 
@@ -164,92 +164,50 @@ void LightManager::ApplyPointLightToShader(ShaderProgram* shader, vec3 boundsMin
     {
         const auto& L = lights[i];
 
-        // --- inline AABB-sphere intersection (fast, avoids a function call) ---
-        // closest point on AABB to L.position
-        const float cx = L.position.x;
-        const float cy = L.position.y;
-        const float cz = L.position.z;
-
+        // AABB-sphere intersection
+        const float cx = L.position.x, cy = L.position.y, cz = L.position.z;
         const float closestX = (cx < minX) ? minX : ((cx > maxX) ? maxX : cx);
         const float closestY = (cy < minY) ? minY : ((cy > maxY) ? maxY : cy);
         const float closestZ = (cz < minZ) ? minZ : ((cz > maxZ) ? maxZ : cz);
-
-        const float dx = closestX - cx;
-        const float dy = closestY - cy;
-        const float dz = closestZ - cz;
-
+        const float dx = closestX - cx, dy = closestY - cy, dz = closestZ - cz;
         const float distSq = dx * dx + dy * dy + dz * dz;
         const float radius = L.radius;
-        if (distSq > radius * radius) continue; // no intersection
+        if (distSq > radius * radius) continue;
 
-        // --- cone angle sanitization (inlined, float ops)
+        // cone sanitization
         float innerDeg = L.innerConeAngleDegrees;
         float outerDeg = L.outerConeAngleDegrees;
-
-        if (innerDeg >= 360.0f) innerDeg = MAX_SAFE_DEG;
-        else if (innerDeg < 0.0f) innerDeg = 0.0f;
-
-        if (outerDeg >= 360.0f) outerDeg = MAX_SAFE_DEG;
-        else if (outerDeg < 0.0f) outerDeg = 0.0f;
-
+        if (innerDeg >= 360.0f) innerDeg = MAX_SAFE_DEG; else if (innerDeg < 0.0f) innerDeg = 0.0f;
+        if (outerDeg >= 360.0f) outerDeg = MAX_SAFE_DEG; else if (outerDeg < 0.0f) outerDeg = 0.0f;
         if (innerDeg > outerDeg) { float t = innerDeg; innerDeg = outerDeg; outerDeg = t; }
 
-        // compute cosines using float versions
-        const float innerCos = cosf(innerDeg * DEG2RAD);
-        const float outerCos = cosf(outerDeg * DEG2RAD);
+        float innerCos = cosf(innerDeg * DEG2RAD);
+        float outerCos = cosf(outerDeg * DEG2RAD);
+        if (innerCos < outerCos) { float t = innerCos; innerCos = outerCos; outerCos = t; }
 
-        // numeric safety: ensure innerCos >= outerCos
-        float finalInnerCos = innerCos;
-        float finalOuterCos = outerCos;
-        if (finalInnerCos < finalOuterCos) { float t = finalInnerCos; finalInnerCos = finalOuterCos; finalOuterCos = t; }
-
-        // --- write into presized arrays (no push_back)
-        positions[added].x = L.position.x;
-        positions[added].y = L.position.y;
-        positions[added].z = L.position.z;
-        positions[added].w = finalInnerCos;
-
-        colors[added].x = L.color.r;
-        colors[added].y = L.color.g;
-        colors[added].z = L.color.b;
-
-        // normalize direction (use squared len and sqrtf)
+        // normalize direction
         vec3 dir = L.direction;
         const float lenSq = dir.x * dir.x + dir.y * dir.y + dir.z * dir.z;
         if (lenSq > EPS_LEN_SQ)
         {
             const float invLen = 1.0f / sqrtf(lenSq);
-            dir.x *= invLen;
-            dir.y *= invLen;
-            dir.z *= invLen;
+            dir.x *= invLen; dir.y *= invLen; dir.z *= invLen;
         }
-        else
-        {
-            // degenerate direction -> fallback +Z
-            dir.x = 0.0f;
-            dir.y = 0.0f;
-            dir.z = 1.0f;
-        }
+        else { dir.x = 0.0f; dir.y = 0.0f; dir.z = 1.0f; }
 
-        directions[added].x = dir.x;
-        directions[added].y = dir.y;
-        directions[added].z = dir.z;
-        directions[added].w = finalOuterCos;
-
-        radiuses[added] = radius;
+        // pack into mat4 columns
+        mat4& m = pointLights[added];
+        m[0] = vec4(L.position.x, L.position.y, L.position.z, innerCos);
+        m[1] = vec4(L.color.r, L.color.g, L.color.b, radius);
+        m[2] = vec4(dir.x, dir.y, dir.z, outerCos);
+        m[3] = vec4(0.0f);  // reserved
 
         ++added;
     }
 
-    // upload (we kept vectors at MAX_LIGHTS so no padding loop needed)
     shader->SetUniform("PointLightsNumber", added);
-    shader->SetUniform("LightPositions", positions);
-    shader->SetUniform("LightColors", colors);
-    shader->SetUniform("LightRadiuses", radiuses);
-    shader->SetUniform("LightDirections", directions);
+    shader->SetUniform("PointLights", pointLights);
 }
-
-
 
 
 void LightManager::CalculateLightMatrices(

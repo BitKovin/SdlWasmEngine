@@ -405,7 +405,9 @@ std::vector<VertexData> ModelLoader<SkinnedMesh>::getMeshVertices(aiMesh* mesh)
         if (cc >= 0)
             v.Color = { mesh->mColors[cc][i].r, mesh->mColors[cc][i].g,
                         mesh->mColors[cc][i].b, mesh->mColors[cc][i].a };
+
         std::fill(v.BlendIndices, v.BlendIndices + MAX_BONE_INFLUENCE, 0);
+
         v.BlendWeights = glm::vec4(0.f);
         vertexPositions.push_back(v.Position);
         vertices.push_back(v);
