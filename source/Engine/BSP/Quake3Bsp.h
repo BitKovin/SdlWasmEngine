@@ -6,13 +6,16 @@
 #include <string>
 #include <vector>
 
-#include "../VertexData.h"
+#include <VertexData.h>
 
-#include "../IDrawMesh.h"
+#include <IDrawMesh.h>
 
-#include "../glm.h"
-#include "../ShaderManager.h"
-#include "../BoundingBox.hpp"
+#include <glm.h>
+#include <ShaderManager.h>
+#include <BoundingBox.hpp>
+
+// Texture abstraction – replaces raw GLuint texture handles
+#include <Texture.hpp>
 
 #include <cstddef>
 
@@ -157,7 +160,7 @@ struct FaceBuffArray {
     std::map<int, FaceBuffers> FB_Idx;
 };
 
-struct RenderBuffers // m_renderBuffers.m_faceVBOs[idx].m_vertexBuffer
+struct RenderBuffers
 {
     std::map<int, std::vector<VertexData>> v_faceVBOs; // Changed to VertexData
     std::map<int, std::vector<GLuint>> v_faceIDXs;
@@ -167,6 +170,10 @@ struct RenderBuffers // m_renderBuffers.m_faceVBOs[idx].m_vertexBuffer
 
 struct CachedFaceTextureData
 {
+    // Texture ID used as an opaque handle for the renderer.
+    // Obtain the underlying native ID via Texture::getID() only where the
+    // rendering backend actually needs it.  All other code stores/compares
+    // this integer handle without touching OpenGL directly.
     int textureId = 0;
     string textureName = "";
     bool isCube = false;
@@ -246,21 +253,18 @@ struct LightVolPointData {
     }
 
     // Lerp between two LightVolPointData:
-// - directColor & ambientColor: linear interpolation
-// - direction: spherical linear interpolation (then normalized)
+    // - directColor & ambientColor: linear interpolation
+    // - direction: spherical linear interpolation (then normalized)
     static LightVolPointData Lerp(const LightVolPointData& a,
         const LightVolPointData& b,
         float t)
     {
         LightVolPointData result;
-        // linear interp for colors
         result.directColor = glm::mix(a.directColor, b.directColor, t);
         result.ambientColor = glm::mix(a.ambientColor, b.ambientColor, t);
-        // spherical interp for direction
         result.direction = glm::normalize(glm::slerp(a.direction, b.direction, t));
         return result;
     }
-
 };
 
 // This is our lumps enumeration
@@ -307,41 +311,41 @@ struct MergedModelFacesData
     IndexBuffer* ibo = nullptr;
     VertexArrayObject* vao = nullptr;
 
-    uint32 referenceFace = 0; //stores face data that will be referenced (for example for texturing)
-
-    uint32 uId = 0; //unique id to avoid drawing same faces multiple times
+    uint32 referenceFace = 0; // stores face data that will be referenced (e.g. for texturing)
+    uint32 uId = 0; // unique id to avoid drawing same faces multiple times
 
     BoundingBox bounds;
-
 };
 
 class BSPModelRef;
-// This is our Quake3 BSP class
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CQuake3BSP
+// ─────────────────────────────────────────────────────────────────────────────
 class CQuake3BSP : public IDrawMesh
 {
-
-  public:
-    // Our constructor
+public:
     CQuake3BSP();
     ~CQuake3BSP();
 
-    // This loads a .bsp file by it's file name (Returns true if successful)
+    // Loads a .bsp file by its file name.  Returns true on success.
     bool LoadBSP(const char* filename);
-    int m_numOfVerts; // The number of verts in the model
 
+    int m_numOfVerts;
     int count;
     int indcount;
     int tcoordcount;
 
     char   tname[MAX_TEXTURES][64];
-    int    textureID; // The index into the texture array
-    GLuint texture[MAX_TEXTURES];
+    int    textureID;
+
+    // Per-face texture objects – lifetime managed here.
+    // Index i corresponds to the BSP texture slot i.
+    std::vector<std::shared_ptr<Texture>> m_faceTextures;
 
     string filePath = "";
 
-    // private:
-
-    // r3c:: new functions
+    // ── new functions ─────────────────────────────────────────────────────────
     void GenerateTexture();
     void GenerateLightmap();
     bool RenderSingleFace(int index, bool lightmap, LightVolPointData lightData, mat4 model);
@@ -361,53 +365,52 @@ class CQuake3BSP : public IDrawMesh
 
     void BuildMergedModels();
 
-    int m_numOfFaces;    // The number of faces in the model
-    int m_numOfIndices;  // The number of indices for the model
-    int m_numOfTextures; // The number of texture maps
+    int m_numOfFaces;
+    int m_numOfIndices;
+    int m_numOfTextures;
     int m_numOfLightmaps;
-    int m_textures[MAX_TEXTURES];  // The texture and lightmap array for the level
-    int m_lightmaps[MAX_TEXTURES]; // The lightmap texture array
     int numVisibleFaces;
     int skipindices;
 
-    static inline vec3 lightVolGridSize = vec3(64,64,128);
+    static inline vec3 lightVolGridSize = vec3(64, 64, 128);
 
-    GLuint* m_lightmap_gen_IDs;
-    GLuint* m_Textures;
-    GLuint  missing_LM_id;
-    GLuint  white_LM_id;
-    GLuint  missing_id;
+    // ── Lightmap textures ─────────────────────────────────────────────────────
+    // Each entry wraps a single 128×128 RGB lightmap generated from BSP data.
+    // The Texture class owns the GPU resource; no manual glDeleteTextures needed.
+    std::vector<std::shared_ptr<Texture>> m_lightmapTextures;
 
-    int*        m_pIndices; // The object's indices for rendering
-    tBSPVertex* m_pVerts;   // The object's vertices
-    tBSPFace*   m_pFaces;   // The faces information of the object
+    // Fallback / utility lightmaps (missing / white)
+    std::shared_ptr<Texture> m_missingLightmap;
+    std::shared_ptr<Texture> m_whiteLightmap;
+
+    int* m_pIndices;
+    tBSPVertex* m_pVerts;
+    tBSPFace* m_pFaces;
 
     FaceBuffArray FB_array;
     RenderBuffers Rbuffers;
-    tBSPTexture*  pTextures;
+    tBSPTexture* pTextures;
     tBSPLightmap* pLightmaps;
 
     std::string entities;
-    std::vector<tBSPPlane> planes;
-    std::vector<tBSPNode> nodes;
-    std::vector<tBSPLeaf> leafs;
-    std::vector<int> leafFaces;
-    std::vector<int> leafBrushes;
-    std::vector<tBSPModel> models;
-    std::vector<tBSPBrush> brushes;
+    std::vector<tBSPPlane>     planes;
+    std::vector<tBSPNode>      nodes;
+    std::vector<tBSPLeaf>      leafs;
+    std::vector<int>           leafFaces;
+    std::vector<int>           leafBrushes;
+    std::vector<tBSPModel>     models;
+    std::vector<tBSPBrush>     brushes;
     std::vector<tBSPBrushSide> brushSides;
-    std::vector<tBSPMeshVert> meshVerts;
-    std::vector<tBSPEffect> effects;
+    std::vector<tBSPMeshVert>  meshVerts;
+    std::vector<tBSPEffect>    effects;
 
     std::vector<tBSPLightvol> lightVols;
     std::vector<tBSPLightvol> lightVolPalette;
     std::vector<uint32_t>     lightVolIndices;
 
-    std::vector<OpaqueModelVBO> opaqueVBOs;
-
+    std::vector<OpaqueModelVBO>      opaqueVBOs;
     std::vector<MergedModelFacesData> mergedFacesData;
-
-    vector<int> mergedFacesMapping;
+    vector<int>                      mergedFacesMapping;
 
     CachedFaceTextureData* cachedFaces;
 
@@ -417,11 +420,11 @@ class CQuake3BSP : public IDrawMesh
 
     vector<FaceRenderData> facesToDrawTransparent;
 
-    glm::vec3 originalMins; // Original model bounds in Z-up (before transformation)
+    glm::vec3 originalMins;
     glm::vec3 originalMaxs;
 
-    std::vector<VertexData> GetFaceVertices(int faceId);
-    std::vector<uint32_t> GetFaceIndices(int faceId);
+    std::vector<VertexData>   GetFaceVertices(int faceId);
+    std::vector<uint32_t>     GetFaceIndices(int faceId);
 
     inline tBSPLightvol GetLightVol(int i) const {
         return lightVolPalette[lightVolIndices[i]];
@@ -429,43 +432,52 @@ class CQuake3BSP : public IDrawMesh
 
     bool CheckLightProbeAcess(const glm::vec3& position, const glm::vec3& volPosition);
 
-    // Get lighting for a dynamic object at position (x, y, z)
+    // Get lighting for a dynamic object at world position.
     LightVolPointData GetLightvolColorPoint(const glm::vec3& position, bool wallCheck = false);
 
-	//[DEPRECATED]
-    //samples light in bigger radius, but after all improvements to GetLightvolColorPoint it has no use case
+    // [DEPRECATED] Samples light in a larger radius; superseded by GetLightvolColorPoint.
     LightVolPointData GetLightvolColor(const glm::vec3& position, bool wallCheck = false);
-    int FindClusterAtPosition(glm::vec3 cameraPos);
 
+    int  FindClusterAtPosition(glm::vec3 cameraPos);
     bool IsClusterVisible(int sourceCluster, int testCluster);
 
     void DrawForward(mat4x4 view, mat4x4 projection);
 
-    // Optimized rendering loop
-    void RenderBSP(const glm::vec3& cameraPos, tBSPModel& model, mat4 modelMatrix, bool useClusterVis, bool lightmap);
+    // Optimised rendering loop
+    void RenderBSP(const glm::vec3& cameraPos, tBSPModel& model,
+        mat4 modelMatrix, bool useClusterVis, bool lightmap);
 
     void RenderTransparentFaces();
-
     bool IsFaceTransparent(int index);
 
-    vector <BSPModelRef> GetAllModelRefs();
+    vector<BSPModelRef> GetAllModelRefs();
 
     void BuildStaticOpaqueObstacles();
-
     void LoadToLevel();
 
+    // ── Internal helpers ──────────────────────────────────────────────────────
+
+    // Returns the native texture ID for a cached face's albedo texture.
+    // Use this instead of storing raw GLuint in calling code.
+    int GetFaceTextureNativeId(int cachedTextureId) const;
+
+    // Returns the native texture ID for a lightmap slot.
+    // Pass -1 to get the missing-lightmap fallback.
+    int GetLightmapNativeId(int lightmapSlot) const;
+
+    // Returns the native ID of the white (no-lightmap) fallback texture.
+    int GetWhiteLightmapNativeId() const;
 };
 
 
+// ─────────────────────────────────────────────────────────────────────────────
+// BSPModelRef
+// ─────────────────────────────────────────────────────────────────────────────
 class BSPModelRef : public IDrawMesh
 {
-private:
-
-
 public:
-
     CQuake3BSP* bsp = nullptr;
-    int id = -1;
+    int         id = -1;
 
     tBSPModel& model;
 
@@ -475,7 +487,6 @@ public:
     vec3 Position = vec3(0);
     vec3 Rotation = vec3(0);
     vec3 Scale = vec3(1);
-
     vec3 avgPosition = vec3(0);
 
     mat4 finalWorldMatrix;
@@ -483,38 +494,30 @@ public:
     BoundingBox bounds;
 
     BoundingBox GetTransformedBounds();
-
-    mat4 GetWorldMatrix();
+    mat4        GetWorldMatrix();
 
     BSPModelRef(CQuake3BSP* bsp_ptr, int model_id, tBSPModel& model_ref);
-    
     ~BSPModelRef();
 
-    void BuildVisBlocker();
-
+    void  BuildVisBlocker();
     float GetDistanceToCamera();
-
-    void CalculateAveragePosition();
+    void  CalculateAveragePosition();
 
     bool IsCameraVisible();
-
     bool IsInFrustrum(Frustum frustrum);
-
     bool IsBspVisible();
-
     bool CheckPointBspVisible(int cameraCluster, vec3 position);
 
     vector<tBSPFace> GetFaces();
 
     vector<MeshUtils::PositionVerticesIndices> GetNavObstacleMeshes();
-    vector<VertexData> GetVertices(bool collisionOnly = false, bool opaqueOnly = false);
-    vector<uint32_t> GetIndices(bool collisionOnly = false, bool opaqueOnly = false);
-    
+    vector<VertexData>  GetVertices(bool collisionOnly = false, bool opaqueOnly = false);
+    vector<uint32_t>    GetIndices(bool collisionOnly = false, bool opaqueOnly = false);
+
     void FinalizeFrameData();
 
     void DrawForward(mat4x4 view, mat4x4 projection);
     void DrawDepth(mat4x4 view, mat4x4 projection);
-
 };
 
 #endif
