@@ -245,7 +245,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <AdditionalOptions>/arch:SSE2 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/arch:SSE2 /Zc:__cplusplus /Zc:preprocessor %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard_C>stdclatest</LanguageStandard_C>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
@@ -266,7 +266,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <WholeProgramOptimization>false</WholeProgramOptimization>
-      <AdditionalOptions>/arch:SSE2 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/arch:SSE2 /Zc:__cplusplus /Zc:preprocessor %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard_C>stdclatest</LanguageStandard_C>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
@@ -290,7 +290,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <WholeProgramOptimization>false</WholeProgramOptimization>
-      <AdditionalOptions>/arch:SSE2 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/arch:SSE2 /Zc:__cplusplus /Zc:preprocessor %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard_C>stdclatest</LanguageStandard_C>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
@@ -312,7 +312,7 @@
       <PreprocessorDefinitions>__EMSCRIPTEN__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalOptions>/arch:SSE2 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/arch:SSE2 /Zc:__cplusplus /Zc:preprocessor %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard_C>stdclatest</LanguageStandard_C>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
@@ -354,7 +354,14 @@
     <ClCompile Include="Helpers\CSVParser.cpp" />
     <ClCompile Include="http\http_client_emscripten.cpp" />
     <ClCompile Include="http\http_client_httplib.cpp" />
+    <ClCompile Include="imgui\imgui.cpp" />
+    <ClCompile Include="imgui\imgui_demo.cpp" />
+    <ClCompile Include="imgui\imgui_draw.cpp" />
+    <ClCompile Include="imgui\imgui_impl_bgfx.cpp" />
+    <ClCompile Include="imgui\imgui_impl_sdl2.cpp" />
     <ClCompile Include="imgui\imgui_stdlib.cpp" />
+    <ClCompile Include="imgui\imgui_tables.cpp" />
+    <ClCompile Include="imgui\imgui_widgets.cpp" />
     <ClCompile Include="includedLibraries\stb_image_implementation.cpp" />
     <ClCompile Include="LevelTraversalSystem.cpp" />
     <ClCompile Include="LoadingScreen\LoadingScreenSystem.cpp" />
@@ -368,13 +375,6 @@
     <ClCompile Include="Entities\SoundPlayer.cpp" />
     <ClCompile Include="Entity.cpp" />
     <ClCompile Include="EObject.hpp" />
-    <ClCompile Include="imgui\imgui.cpp" />
-    <ClCompile Include="imgui\imgui_demo.cpp" />
-    <ClCompile Include="imgui\imgui_draw.cpp" />
-    <ClCompile Include="imgui\imgui_impl_opengl3.cpp" />
-    <ClCompile Include="imgui\imgui_impl_sdl2.cpp" />
-    <ClCompile Include="imgui\imgui_tables.cpp" />
-    <ClCompile Include="imgui\imgui_widgets.cpp" />
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="Input.h" />
     <ClCompile Include="Level.cpp" />
@@ -441,10 +441,6 @@
     <ClCompile Include="StaticMesh.cpp" />
     <ClCompile Include="ThreadPool.cpp" />
     <ClCompile Include="Time.cpp" />
-    <ClCompile Include="UI\RmlUi\Backends\RmlUi_Backend_SDL_GL3.cpp" />
-    <ClCompile Include="UI\RmlUi\Backends\RmlUi_Platform_SDL.cpp" />
-    <ClCompile Include="UI\RmlUi\Backends\RmlUi_Renderer_GL2.cpp" />
-    <ClCompile Include="UI\RmlUi\Backends\RmlUi_Renderer_GL3.cpp" />
     <ClCompile Include="UI\RmlUi\RmlUiContext.cpp" />
     <ClCompile Include="UI\UiElement.cpp" />
     <ClCompile Include="UI\UiProgressBar.hpp" />
@@ -501,8 +497,18 @@
     <ClInclude Include="Helpers\CSVParser.h" />
     <ClInclude Include="http\http_client.h" />
     <ClInclude Include="imgui\FA6FreeSolidFontData.h" />
+    <ClInclude Include="imgui\fs_ocornut_imgui.bin.h" />
     <ClInclude Include="imgui\IconsFontAwesome6.h" />
+    <ClInclude Include="imgui\imconfig.h" />
+    <ClInclude Include="imgui\imgui.h" />
+    <ClInclude Include="imgui\imgui_impl_bgfx.h" />
+    <ClInclude Include="imgui\imgui_impl_sdl2.h" />
+    <ClInclude Include="imgui\imgui_internal.h" />
     <ClInclude Include="imgui\imgui_stdlib.h" />
+    <ClInclude Include="imgui\imstb_rectpack.h" />
+    <ClInclude Include="imgui\imstb_textedit.h" />
+    <ClInclude Include="imgui\imstb_truetype.h" />
+    <ClInclude Include="imgui\vs_ocornut_imgui.bin.h" />
     <ClInclude Include="includedLibraries\stb_image.h" />
     <ClInclude Include="LevelTraversalSystem.h" />
     <ClInclude Include="LoadingScreen\LoadingScreenSystem.h" />
@@ -529,15 +535,6 @@
     <ClInclude Include="Helpers\StringHelper.h" />
     <ClInclude Include="IDrawMesh.h" />
     <ClInclude Include="ImGuiEngineImpl.h" />
-    <ClInclude Include="imgui\imconfig.h" />
-    <ClInclude Include="imgui\imgui.h" />
-    <ClInclude Include="imgui\imgui_impl_opengl3.h" />
-    <ClInclude Include="imgui\imgui_impl_opengl3_loader.h" />
-    <ClInclude Include="imgui\imgui_impl_sdl2.h" />
-    <ClInclude Include="imgui\imgui_internal.h" />
-    <ClInclude Include="imgui\imstb_rectpack.h" />
-    <ClInclude Include="imgui\imstb_textedit.h" />
-    <ClInclude Include="imgui\imstb_truetype.h" />
     <ClInclude Include="json.hpp" />
     <ClInclude Include="LevelObject.hpp" />
     <ClInclude Include="Level.hpp" />
@@ -588,6 +585,7 @@
     <ClInclude Include="RandomHelper.h" />
     <ClInclude Include="RegisterLevelObject.h" />
     <ClInclude Include="Renderer\Abstractions\FrameBuffer.h" />
+    <ClInclude Include="Renderer\Abstractions\ViewIdManager.h" />
     <ClInclude Include="Renderer\Renderer.h" />
     <ClInclude Include="Renderer\Abstractions\RenderTexture.h" />
     <ClInclude Include="SaveSystem\EntitySaveData.h" />
@@ -618,10 +616,6 @@
     <ClInclude Include="Time.hpp" />
     <ClInclude Include="UI\RmlUi\Backends\MyFileInterface.h" />
     <ClInclude Include="UI\RmlUi\Backends\RmlUi_Backend.h" />
-    <ClInclude Include="UI\RmlUi\Backends\RmlUi_Include_GL3.h" />
-    <ClInclude Include="UI\RmlUi\Backends\RmlUi_Platform_SDL.h" />
-    <ClInclude Include="UI\RmlUi\Backends\RmlUi_Renderer_GL2.h" />
-    <ClInclude Include="UI\RmlUi\Backends\RmlUi_Renderer_GL3.h" />
     <ClInclude Include="UI\RmlUi\RmlUiContext.h" />
     <ClInclude Include="UI\RmlUi\RmlUiEvents.h" />
     <ClInclude Include="UI\UiButton.hpp" />

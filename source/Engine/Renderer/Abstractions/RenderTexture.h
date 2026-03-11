@@ -1,89 +1,140 @@
 #pragma once
-#include "../../gl.h"
+
+#include <bgfx/bgfx.h>
 #include <stdexcept>
-#include <unordered_map>
 #include <string>
+#include <cstdint>
+
+// -----------------------------------------------------------------------
+// Enums — no longer backed by GL constants
+// -----------------------------------------------------------------------
 
 enum class TextureFormat {
-    // Color formats
-    R8 = GL_R8, RG8 = GL_RG8, RGB8 = GL_RGB8, RGBA8 = GL_RGBA8,
-    R16F = GL_R16F, RG16F = GL_RG16F, RGB16F = GL_RGB16F, RGBA16F = GL_RGBA16F,
-    R32F = GL_R32F, RG32F = GL_RG32F, RGB32F = GL_RGB32F, RGBA32F = GL_RGBA32F,
-
-    // Depth/stencil
-    Depth16 = GL_DEPTH_COMPONENT16,
-    Depth24 = GL_DEPTH_COMPONENT24,
-    Depth32F = GL_DEPTH_COMPONENT32F,
-    Depth24Stencil8 = GL_DEPTH24_STENCIL8,
-    Depth32FStencil8 = GL_DEPTH32F_STENCIL8
+    // 8-bit unsigned
+    R8, RG8, RGB8, RGBA8,
+    // 16-bit float
+    R16F, RG16F, RGB16F, RGBA16F,
+    // 32-bit float
+    R32F, RG32F, RGB32F, RGBA32F,
+    // Depth / stencil
+    Depth16,
+    Depth24,          // maps to D24 in bgfx
+    Depth32F,
+    Depth24Stencil8,
+    Depth32FStencil8
 };
 
 enum class TextureType {
-    Texture2D = GL_TEXTURE_2D,
-    Cubemap = GL_TEXTURE_CUBE_MAP,
-    Texture2DMultisample = GL_TEXTURE_2D_MULTISAMPLE
+    Texture2D,
+    Cubemap,
+    Texture2DMultisample   // resolved via MSAA flags in bgfx
 };
+
+// -----------------------------------------------------------------------
+// RenderTexture
+// Each instance owns:
+//   - one bgfx::TextureHandle     (the GPU texture / attachment)
+//   - one bgfx::FrameBufferHandle (wraps the texture as a render target,
+//                                   BGFX_INVALID_HANDLE for cubemaps when
+//                                   no face is selected)
+//   - one bgfx::ViewId            (dedicated view for rendering into this RT)
+//
+// Usage pattern:
+//   rt.setAsRenderTarget();          // configures the internal view
+//   bgfx::setViewClear(rt.viewId(), BGFX_CLEAR_COLOR|BGFX_CLEAR_DEPTH, ...);
+//   // ... submit draw calls with encoder->submit(rt.viewId(), program);
+//   rt.bind(0, s_texSampler);        // later, sample the result
+// -----------------------------------------------------------------------
 
 class RenderTexture {
 public:
-    // Add samples parameter to constructor
-    RenderTexture(uint32_t width, uint32_t height, TextureFormat format,
-        TextureType type = TextureType::Texture2D, bool sampleDepth = false,
-        GLenum minFilter = GL_LINEAR,
-        GLenum magFilter = GL_LINEAR,
-        GLenum wrap = GL_CLAMP_TO_EDGE,
-        uint32_t samples = 1);  // New parameter
+    RenderTexture(uint32_t width, uint32_t height,
+        TextureFormat format,
+        TextureType   type = TextureType::Texture2D,
+        bool          sampleDepth = false,
+        uint64_t      samplerFlags = BGFX_SAMPLER_U_CLAMP
+        | BGFX_SAMPLER_V_CLAMP
+        | BGFX_SAMPLER_MIN_POINT
+        | BGFX_SAMPLER_MAG_POINT,
+        uint32_t      samples = 0);
 
     ~RenderTexture();
 
-    void bind(uint32_t unit = 0) const;
-    void unbind() const;
+    // Non-copyable, movable
+    RenderTexture(const RenderTexture&) = delete;
+    RenderTexture& operator=(const RenderTexture&) = delete;
+    RenderTexture(RenderTexture&&) = default;
+    RenderTexture& operator=(RenderTexture&&) = default;
+
+    // -----------------------------------------------------------------------
+    // Render-target path
+    //   Configures the owned view so that subsequent draw calls submitted
+    //   to viewId() render into this texture.
+    //   rect defaults to the full texture; supply non-zero args to override.
+    // -----------------------------------------------------------------------
+    void setAsRenderTarget(uint16_t x = 0, uint16_t y = 0,
+        uint16_t w = 0, uint16_t h = 0) const;
+
+    // Set the cubemap face that subsequent renders go into.
+    // Only meaningful for TextureType::Cubemap.
+    void setCubemapFace(uint8_t face);   // face 0-5
+
+    // -----------------------------------------------------------------------
+    // Resize — recreates internal resources
+    // -----------------------------------------------------------------------
     bool resize(uint32_t width, uint32_t height);
 
-    void setTextureType(TextureType newType);
-
-    // Add sample management
-    void setSamples(uint32_t samples);
-    uint32_t samples() const { return m_samples; }
-
-    GLuint id() const { return m_id; }
-    TextureFormat format() const { return m_format; }
-    TextureType type() const { return m_type; }
-    uint32_t width() const { return m_width; }
-    uint32_t height() const { return m_height; }
-
+    // -----------------------------------------------------------------------
+    // Copy (blit) the contents of src into this texture.
+    // Both must have identical dimensions, format, type, and sample count.
+    // Destination texture is created with BGFX_TEXTURE_BLIT_DST automatically.
+    // -----------------------------------------------------------------------
     void copyFrom(const RenderTexture* src);
 
-    // New methods for FBO management
-    GLuint framebuffer() const { return m_fbo; }
-    void bindFramebuffer(GLenum target = GL_FRAMEBUFFER) const;
+    // -----------------------------------------------------------------------
+    // Accessors
+    // -----------------------------------------------------------------------
+    bgfx::TextureHandle     textureHandle()     const { return m_texture; }
+    bgfx::FrameBufferHandle frameBufferHandle() const { return m_frameBuffer; }
+    bgfx::ViewId            viewId()            const { return m_viewId; }
 
-    void SetName(std::string name);
+    uint32_t      width()   const { return m_width; }
+    uint32_t      height()  const { return m_height; }
+    TextureFormat format()  const { return m_format; }
+    TextureType   type()    const { return m_type; }
+    uint32_t      samples() const { return m_samples; }
+
+    // Legacy numeric ID used by ResourceStatistics
+    uint16_t id() const { return m_texture.idx; }
+
+    void setSamples(uint32_t samples);
+    void setTextureType(TextureType newType);
+    void SetName(const std::string& name);
 
 private:
-    GLuint m_id;
-    GLuint m_fbo = 0;
-    uint32_t m_width, m_height;
+    // -----------------------------------------------------------------------
+    // Internal helpers
+    // -----------------------------------------------------------------------
+    void createResources();
+    void destroyResources();
+
+    static bgfx::TextureFormat::Enum toBgfxFormat(TextureFormat fmt);
+    static size_t                    bytesPerPixel(TextureFormat fmt);
+    static uint64_t                  msaaFlag(uint32_t samples);
+
+    // -----------------------------------------------------------------------
+    // State
+    // -----------------------------------------------------------------------
+    uint32_t      m_width;
+    uint32_t      m_height;
     TextureFormat m_format;
-    TextureType m_type;
-    uint32_t m_samples;  // Add sample count
+    TextureType   m_type;
+    uint32_t      m_samples;
+    uint64_t      m_samplerFlags;
+    bool          m_sampleDepth;
+    std::string   m_name;
 
-    GLenum m_minFilter;
-    GLenum m_magFilter;
-    GLenum m_wrapF;
-
-    std::string m_name = "";
-
-    bool m_sampleDepth = false;
-
-    GLenum m_attachment;
-
-    void allocateStorage();
-    void setParameters(GLenum minFilter, GLenum magFilter, GLenum wrap);
-    std::tuple<GLenum, GLenum, GLenum> getFormatInfo() const;
-    void validateSampleCount() const;
-    void setupFramebuffer();
-
-
-
+    bgfx::TextureHandle     m_texture{ BGFX_INVALID_HANDLE };
+    bgfx::FrameBufferHandle m_frameBuffer{ BGFX_INVALID_HANDLE };
+    bgfx::ViewId            m_viewId{ 0 };
 };

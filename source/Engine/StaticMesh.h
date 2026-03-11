@@ -29,14 +29,14 @@ private:
 
 protected:
 
-	virtual void ApplyAdditionalShaderParams(ShaderProgram* shader_program)
+	virtual void ApplyAdditionalShaderParams(Shader* shader_program)
 	{
 
 	}
 
 	string PixelShader = "default_pixel";
 
-	ShaderProgram* forward_shader_program = nullptr;
+	Shader* forward_shader_program = nullptr;
 
 	int numInstances = -1;
 
@@ -138,9 +138,9 @@ public:
 
 			MeshUtils::PositionVerticesIndices meshData;
 
-			meshData.indices = mesh.vertexIndices;
+			meshData.indices = mesh.indices;
 
-			for (auto& vertex : mesh.vertexLocations)
+			for (auto& vertex : mesh.vertices)
 			{
 				meshData.vertices.push_back(world * vertex.Position);
 			}

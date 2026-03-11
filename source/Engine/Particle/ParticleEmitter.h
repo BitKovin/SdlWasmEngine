@@ -175,7 +175,6 @@ private:
 
 
 
-	static VertexArrayObject* bilboardVAO;
 
 	std::vector<InstanceData> instances;
 

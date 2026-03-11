@@ -42,7 +42,6 @@ public:
     static void ClearUnusedMemory();
     static bool IsAssetUsed(std::string filename);
 
-    static Shader* GetShaderByName(const std::string& name, ShaderType shaderType);
 
     static void ReloadShaders();
 

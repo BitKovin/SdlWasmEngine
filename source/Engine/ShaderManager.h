@@ -7,10 +7,10 @@
 class ShaderManager
 {
 private:
-    static std::unordered_map<std::string, ShaderProgram> shaderProgramCache;
+    static std::unordered_map<std::string, Shader*> shaderProgramCache;
 
 public:
-    static ShaderProgram* GetShaderProgram(const std::string& vertexShaderName = "default_vertex", const std::string& pixelShaderName = "default_pixel")
+    static Shader* GetShaderProgram(const std::string& vertexShaderName = "default_vertex", const std::string& pixelShaderName = "default_pixel")
     {
         std::string key = vertexShaderName + pixelShaderName; // Unique key for shader program
 
@@ -18,21 +18,15 @@ public:
         auto it = shaderProgramCache.find(key);
         if (it != shaderProgramCache.end())
         {
-            return &(it->second); // Return cached program
+            return (it->second); // Return cached program
         }
 
 		Logger::Log("Creating new ShaderProgram: " + key);
 
-        // Load shaders
-        Shader* vertexShader = AssetRegistry::GetShaderByName(vertexShaderName, ShaderType::VertexShader);
-        Shader* pixelShader = AssetRegistry::GetShaderByName(pixelShaderName, ShaderType::PixelShader);
+		Shader* program = Shader::FromFiles(vertexShaderName.c_str(), pixelShaderName.c_str());
 
-        // Create and link the shader program
-        ShaderProgram& program = shaderProgramCache[key];
-        program.AttachShader(vertexShader)->AttachShader(pixelShader)->LinkProgram();
+		shaderProgramCache[key] = program; // Cache the newly created program
 
-        program.name = key;
-
-        return &program;
+        return program;
     }
 };

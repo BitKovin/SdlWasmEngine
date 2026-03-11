@@ -64,18 +64,18 @@ public:
 		// Make sure we have a valid frame
 		if (!frame.empty() && w > 0 && h > 0) {
 			// RGB format (3 bytes per pixel)
-			tex = std::make_unique<Texture>(frame.data(), w, h, GL_RGB, false);
+			tex = std::make_unique<Texture>(frame.data(), w, h, bgfx::TextureFormat::RGB8, false);
 		}
 
 		if (tex)
 		{
 			if (PixelShader.empty())
 			{
-				UiRenderer::DrawTexturedRect(pos, finalizedSize, rotation, pivot, tex->getID(), GetFinalColor());
+				UiRenderer::DrawTexturedRect(pos, finalizedSize, rotation, pivot, tex->getHandle(), GetFinalColor());
 			}
 			else
 			{
-				UiRenderer::DrawTexturedRectShader(pos, finalizedSize, rotation, pivot, tex->getID(), GetFinalColor(), PixelShader);
+				UiRenderer::DrawTexturedRectShader(pos, finalizedSize, rotation, pivot, tex->getHandle(), GetFinalColor(), PixelShader);
 			}
 		}
 

@@ -87,8 +87,6 @@ void EngineMain::ToggleFullscreen()
     Uint32 FullscreenFlag = SDL_WINDOW_FULLSCREEN_DESKTOP;
     bool IsFullscreen = SDL_GetWindowFlags(Window) & FullscreenFlag;
 
-    // Ensure pending GL commands are done
-    glFinish();
 
 
     // Toggle fullscreen
@@ -147,11 +145,6 @@ void EngineMain::InitInputs()
 
     Input::AddAction("click")->LMB = true;
 
-    int maxUniforms;
-
-    glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &maxUniforms);
-
-    printf("max uniforms: %i \n", maxUniforms);
 
 }
 
@@ -654,19 +647,25 @@ void EngineMain::GameUpdate()
 
 void EngineMain::Render()
 {
+    const uint16_t UI_VIEW = 0;
+    const uint16_t WORLD_VIEW = 1;
+    const uint16_t COMPOSITE_VIEW = 2;
 
+    ivec2 uiResolution = ivec2(
+        UiManager::GetScaledUiHeight() * Camera::AspectRatio,
+        UiManager::GetScaledUiHeight()
+    );
 
-    glEnable(GL_DEPTH_TEST);
+    /* ============================================================
+       CREATE / RESIZE UI RENDER TARGET
+       ============================================================ */
 
-    ivec2 uiResolution = ivec2(UiManager::GetScaledUiHeight() * Camera::AspectRatio , UiManager::GetScaledUiHeight());
-
-
-    // Resize UI render target if needed
     if (UiRenderTexture == nullptr ||
         UiRenderTexture->width() != uiResolution.x ||
         UiRenderTexture->height() != uiResolution.y)
     {
         delete UiRenderTexture;
+
         UiRenderTexture = new RenderTexture(
             uiResolution.x,
             uiResolution.y,
@@ -677,78 +676,90 @@ void EngineMain::Render()
     }
 
     /* ============================================================
-       UI PASS → render into transparent RT (PREMULTIPLIED ALPHA)
+       UI PASS → render to transparent RT
        ============================================================ */
 
-    UiRenderTexture->bindFramebuffer();
-    glViewport(0, 0, uiResolution.x, uiResolution.y);
+    bgfx::setViewFrameBuffer(UI_VIEW, UiRenderTexture->frameBufferHandle());
 
-    glClearColor(0.f, 0.f, 0.f, 0.f);
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    glDisable(GL_DEPTH_TEST);
-    glEnable(GL_BLEND);
-
-    // Premultiplied alpha blending
-    glBlendFuncSeparate(
-        GL_ONE, GL_ONE_MINUS_SRC_ALPHA,
-        GL_ONE, GL_ONE_MINUS_SRC_ALPHA
+    bgfx::setViewRect(
+        UI_VIEW,
+        0,
+        0,
+        (uint16_t)uiResolution.x,
+        (uint16_t)uiResolution.y
     );
+
+    bgfx::setViewClear(
+        UI_VIEW,
+        BGFX_CLEAR_COLOR,
+        0x00000000, // transparent
+        1.0f,
+        0
+    );
+
+    // UI renderer should submit draw calls with:
+    // BGFX_STATE_BLEND_ONE | BGFX_STATE_BLEND_INV_SRC_ALPHA
 
     Viewport.Draw();
     UiRenderer::EndFrame();
 
     /* ============================================================
-       RESTORE BLEND STATE BEFORE WORLD RENDER
-       ============================================================ */
-
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_BLEND);
-    glEnable(GL_DEPTH_TEST);
-
-    /* ============================================================
        WORLD PASS
        ============================================================ */
+
+    bgfx::setViewFrameBuffer(WORLD_VIEW, BGFX_INVALID_HANDLE);
+
+    bgfx::setViewRect(
+        WORLD_VIEW,
+        0,
+        0,
+        (uint16_t)ScreenSize.x,
+        (uint16_t)ScreenSize.y
+    );
+
+    bgfx::setViewClear(
+        WORLD_VIEW,
+        BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH,
+        0x000000ff,
+        1.0f,
+        0
+    );
 
     MainRenderer->RenderLevel(Level::Current);
 
     /* ============================================================
-       COMPOSITE UI OVER SCENE (PREMULTIPLIED)
+       COMPOSITE UI OVER SCENE
        ============================================================ */
 
-    glDisable(GL_DEPTH_TEST);
-    glEnable(GL_BLEND);
-
-    // Premultiplied alpha for fullscreen composite
-    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-
-    glViewport(0, 0, ScreenSize.x, ScreenSize.y);
+    bgfx::setViewRect(
+        COMPOSITE_VIEW,
+        0,
+        0,
+        (uint16_t)ScreenSize.x,
+        (uint16_t)ScreenSize.y
+    );
 
     auto fullscreenShader = ShaderManager::GetShaderProgram(
         "fullscreen_vertex",
         "fxaa_simple"
     );
 
-    fullscreenShader->UseProgram();
-    fullscreenShader->SetTexture(
-        "screenTexture",
-        UiRenderTexture->id()
-    );
+    fullscreenShader->SetTexture("screenTexture", UiRenderTexture->textureHandle());
+
     fullscreenShader->SetUniform(
         "screenSize",
         vec2((float)ScreenSize.x, (float)ScreenSize.y)
     );
 
-    MainRenderer->RenderFullscreenQuad();
+    uint64_t state =
+        BGFX_STATE_WRITE_RGB |
+        BGFX_STATE_WRITE_A |
+        BGFX_STATE_BLEND_ONE |
+        BGFX_STATE_BLEND_INV_SRC_ALPHA;
 
-    /* ============================================================
-       FINAL STATE RESTORE (IMPORTANT)
-       ============================================================ */
+    bgfx::setState(state);
 
-       // Restore default alpha blending for rest of frame / next frame
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glDisable(GL_BLEND);
-    glEnable(GL_DEPTH_TEST);
+    MainRenderer->RenderFullscreenQuad(fullscreenShader);
 
 
     RmlContext->Render();
@@ -817,8 +828,6 @@ void EngineMain::ForceUpdateScreenSize()
 void EngineMain::FinishRender()
 {
 
-    SDL_GL_SwapWindow(Window);
-    glFinish();
-    glFlush();
+	bgfx::frame();
 
 }

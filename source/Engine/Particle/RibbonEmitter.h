@@ -26,17 +26,12 @@ public:
 
 
 private:
-    void GenerateIndices(std::vector<GLuint>& dst, int count);
+    void GenerateIndices(std::vector<int>& dst, int count);
 
 
     std::vector<VertexData> verts;
-    std::vector<GLuint>     idxs;
+    std::vector<int>     idxs;
 
-    VertexArrayObject* vao = nullptr;
-
-    VertexDeclaration decl;
-    VertexBuffer* vb = nullptr;
-    IndexBuffer* ib = nullptr;
 
     int lastCount = 0;
     int primitiveCount = 0;

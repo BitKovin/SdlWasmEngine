@@ -70,8 +70,7 @@ private:
     int width_, height_;
     bool enable_debugger_;
 
-    SystemInterface_SDL* system_interface_ = nullptr;
-    RenderInterface_GL3* render_interface_ = nullptr;
+
     Rml::Context* context_ = nullptr;
 
     std::unordered_map<std::string, Rml::ElementDocument*> loaded_docs_;

@@ -1,192 +1,215 @@
-// Framebuffer.cpp
+﻿// FrameBuffer.cpp — bgfx port
 #include "FrameBuffer.h"
 #include "RenderTexture.h"
-#include "../../gl.h"
+#include "ViewIdManager.h"
 #include <stdexcept>
 #include <algorithm>
-#include <string>
 
-//------------------------------------------------------------------------------
-// On WebGL only COLOR_ATTACHMENT0 is allowed, no MRT
-#if defined(GL_ES_PROFILE)
-#define DISABLE_MRT
-#endif
-
+// -----------------------------------------------------------------------
+// Constructor / destructor
+// -----------------------------------------------------------------------
 Framebuffer::Framebuffer() {
-    glGenFramebuffers(1, &m_id);
+    m_viewId = ViewIdManager::allocateViewId();
 }
 
 Framebuffer::~Framebuffer() {
-    glDeleteFramebuffers(1, &m_id);
+    destroyFrameBuffer();
+    ViewIdManager::deallocateViewId(m_viewId);
 }
 
-void Framebuffer::attachColor(RenderTexture* texture,
-    uint32_t attachmentIndex)
-{
-    if (!texture) throw std::invalid_argument("Color attachment is null");
+// -----------------------------------------------------------------------
+// Internal helpers
+// -----------------------------------------------------------------------
+void Framebuffer::destroyFrameBuffer() {
+    if (bgfx::isValid(m_frameBuffer)) {
+        bgfx::destroy(m_frameBuffer);
+        m_frameBuffer = BGFX_INVALID_HANDLE;
+    }
+}
+
+void Framebuffer::rebuild() {
+    destroyFrameBuffer();
+
+    // ---- Cubemap-face path ----
+    if (m_cubemapSource && m_cubemapFace >= 0) {
+        bgfx::Attachment att;
+        att.init(m_cubemapSource->textureHandle(),
+            bgfx::Access::Write,
+            static_cast<uint16_t>(m_cubemapFace));
+        m_frameBuffer = bgfx::createFrameBuffer(1, &att);
+
+        if (!bgfx::isValid(m_frameBuffer))
+            throw std::runtime_error(
+                "Framebuffer: bgfx failed to create cubemap-face framebuffer");
+
+        bgfx::setViewFrameBuffer(m_viewId, m_frameBuffer);
+        return;
+    }
+
+    // ---- General path: collect all attachments ----
+    std::vector<bgfx::Attachment> attachments;
+
+    for (size_t i = 0; i < m_colorAttachments.size(); ++i) {
+        if (!m_colorAttachments[i]) continue;
+        bgfx::Attachment att;
+        att.init(m_colorAttachments[i]->textureHandle(),
+            bgfx::Access::Write,
+            0 /*layer*/,
+            1 /*numMips*/,
+            0 /*mip*/,
+            BGFX_RESOLVE_AUTO_GEN_MIPS);
+        attachments.push_back(att);
+    }
+
+    if (m_depthAttachment) {
+        bgfx::Attachment att;
+        att.init(m_depthAttachment->textureHandle(),
+            bgfx::Access::Write,
+            0, 1, 0,
+            BGFX_RESOLVE_AUTO_GEN_MIPS);
+        attachments.push_back(att);
+    }
+
+    if (attachments.empty())
+        return; // nothing attached yet; defer creation
+
+    m_frameBuffer = bgfx::createFrameBuffer(
+        static_cast<uint8_t>(attachments.size()),
+        attachments.data()
+    );
+
+    if (!bgfx::isValid(m_frameBuffer))
+        throw std::runtime_error(
+            "Framebuffer: bgfx failed to create framebuffer");
+
+    bgfx::setViewFrameBuffer(m_viewId, m_frameBuffer);
+
+    // Set the view rect to the first color attachment's dimensions, or
+    // the depth attachment if no color attachments exist.
+    RenderTexture* primary = nullptr;
+    for (auto* c : m_colorAttachments) {
+        if (c) { primary = c; break; }
+    }
+    if (!primary) primary = m_depthAttachment;
+    if (primary) {
+        bgfx::setViewRect(m_viewId, 0, 0,
+            static_cast<uint16_t>(primary->width()),
+            static_cast<uint16_t>(primary->height()));
+    }
+}
+
+// -----------------------------------------------------------------------
+// Attachment management
+// -----------------------------------------------------------------------
+void Framebuffer::attachColor(RenderTexture* texture, uint32_t attachmentIndex) {
+    if (!texture)
+        throw std::invalid_argument("Framebuffer::attachColor: texture is null");
+
+    // Clear any pending cubemap-face state
+    m_cubemapFace = -1;
+    m_cubemapSource = nullptr;
+    m_cubemapIsDepth = false;
 
     if (attachmentIndex >= m_colorAttachments.size())
         m_colorAttachments.resize(attachmentIndex + 1, nullptr);
+
     m_colorAttachments[attachmentIndex] = texture;
-
-    bind();
-    GLenum target = static_cast<GLenum>(texture->type());
-    glFramebufferTexture2D(
-        GL_FRAMEBUFFER,
-        GL_COLOR_ATTACHMENT0 + attachmentIndex,
-        target,
-        texture->id(),
-        0
-    );
-
-#if !defined(DISABLE_MRT)
-    updateDrawBuffers();
-#endif
-
-    validate();
-    unbind();
+    rebuild();
 }
 
 void Framebuffer::attachDepth(RenderTexture* texture) {
-    if (!texture) throw std::invalid_argument("Depth attachment is null");
+    if (!texture)
+        throw std::invalid_argument("Framebuffer::attachDepth: texture is null");
+
+    // Clear any pending cubemap-face state
+    m_cubemapFace = -1;
+    m_cubemapSource = nullptr;
+    m_cubemapIsDepth = false;
+
     m_depthAttachment = texture;
-
-    bind();
-    GLenum target = static_cast<GLenum>(texture->type());
-    GLenum attach = (texture->format() == TextureFormat::Depth24Stencil8 ||
-        texture->format() == TextureFormat::Depth32FStencil8)
-        ? GL_DEPTH_STENCIL_ATTACHMENT
-        : GL_DEPTH_ATTACHMENT;
-
-    glFramebufferTexture2D(
-        GL_FRAMEBUFFER,
-        attach,
-        target,
-        texture->id(),
-        0
-    );
-
-    validate();
-    unbind();
+    rebuild();
 }
 
 void Framebuffer::attachCubemapFace(RenderTexture* cubemap,
-    uint32_t face,
-    bool isDepth)
+    uint32_t        face,
+    bool            isDepth)
 {
-    if (!cubemap) throw std::invalid_argument("Cubemap is null");
+    if (!cubemap)
+        throw std::invalid_argument("Framebuffer::attachCubemapFace: cubemap is null");
     if (cubemap->type() != TextureType::Cubemap)
-        throw std::invalid_argument("Not a cubemap texture");
-    if (face > 5) throw std::out_of_range("Cubemap face index 0�5");
+        throw std::invalid_argument("Framebuffer::attachCubemapFace: texture is not a cubemap");
+    if (face > 5)
+        throw std::out_of_range("Framebuffer::attachCubemapFace: face index must be 0-5");
 
-    bind();
-    GLenum targetFace = GL_TEXTURE_CUBE_MAP_POSITIVE_X + face;
-    GLenum attachPt = isDepth
-        ? GL_DEPTH_ATTACHMENT
-        : GL_COLOR_ATTACHMENT0;
+    m_cubemapFace = static_cast<int32_t>(face);
+    m_cubemapSource = cubemap;
+    m_cubemapIsDepth = isDepth;
 
-    glFramebufferTexture2D(
-        GL_FRAMEBUFFER,
-        attachPt,
-        targetFace,
-        cubemap->id(),
-        0
-    );
-
-    if (isDepth) {
+    if (isDepth)
         m_depthAttachment = cubemap;
-    }
     else {
         if (m_colorAttachments.empty())
             m_colorAttachments.resize(1, nullptr);
         m_colorAttachments[0] = cubemap;
     }
 
-#if !defined(DISABLE_MRT)
-    if (!isDepth)
-        updateDrawBuffers();
-#endif
-
-    validate();
-    unbind();
+    rebuild();
 }
 
-void Framebuffer::resolve(Framebuffer& target,
-    GLbitfield mask,
-    GLenum filter)
+// -----------------------------------------------------------------------
+// Resolve MSAA → single-sample
+// bgfx has no explicit "blit framebuffer" call; we delegate to
+// RenderTexture::copyFrom() which issues bgfx::blit on the destination
+// texture's view (so ordering relative to this framebuffer's view is
+// automatically correct as long as viewIds are sequenced properly).
+// -----------------------------------------------------------------------
+void Framebuffer::resolve(Framebuffer& target) {
+    // Resolve color attachments
+    for (size_t i = 0; i < m_colorAttachments.size(); ++i) {
+        if (!m_colorAttachments[i]) continue;
+
+        RenderTexture* dst = target.colorAttachment(static_cast<uint32_t>(i));
+        dst->copyFrom(m_colorAttachments[i]);
+    }
+
+    // Resolve depth (if both sides have one)
+    if (m_depthAttachment && target.m_depthAttachment)
+        target.m_depthAttachment->copyFrom(m_depthAttachment);
+}
+
+// -----------------------------------------------------------------------
+// Bind — configure this framebuffer's view for upcoming draw calls.
+// -----------------------------------------------------------------------
+void Framebuffer::bind(uint16_t x, uint16_t y,
+    uint16_t w, uint16_t h) const
 {
-    glBindFramebuffer(GL_READ_FRAMEBUFFER, m_id);
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, target.m_id);
+    if (!bgfx::isValid(m_frameBuffer))
+        return; // nothing attached yet
 
-    GLsizei srcW = m_colorAttachments[0]->width();
-    GLsizei srcH = m_colorAttachments[0]->height();
-    GLsizei dstW = target.m_colorAttachments[0]->width();
-    GLsizei dstH = target.m_colorAttachments[0]->height();
+    bgfx::setViewFrameBuffer(m_viewId, m_frameBuffer);
 
-    // Color
-    if (mask & GL_COLOR_BUFFER_BIT) {
-        glBlitFramebuffer(
-            0, 0, srcW, srcH,
-            0, 0, dstW, dstH,
-            GL_COLOR_BUFFER_BIT,
-            filter
-        );
+    // Determine effective dimensions
+    uint16_t rw = w, rh = h;
+    if (rw == 0 || rh == 0) {
+        RenderTexture* primary = nullptr;
+        for (auto* c : m_colorAttachments) {
+            if (c) { primary = c; break; }
+        }
+        if (!primary) primary = m_depthAttachment;
+        if (primary) {
+            rw = static_cast<uint16_t>(primary->width());
+            rh = static_cast<uint16_t>(primary->height());
+        }
     }
-    // Depth
-    if (mask & GL_DEPTH_BUFFER_BIT) {
-        glBlitFramebuffer(
-            0, 0, srcW, srcH,
-            0, 0, dstW, dstH,
-            GL_DEPTH_BUFFER_BIT,
-            GL_NEAREST
-        );
-    }
-    // Stencil
-    if (mask & GL_STENCIL_BUFFER_BIT) {
-        glBlitFramebuffer(
-            0, 0, srcW, srcH,
-            0, 0, dstW, dstH,
-            GL_STENCIL_BUFFER_BIT,
-            GL_NEAREST
-        );
-    }
-
-    glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+    bgfx::setViewRect(m_viewId, x, y, rw, rh);
 }
 
+// -----------------------------------------------------------------------
+// Accessors
+// -----------------------------------------------------------------------
 RenderTexture* Framebuffer::colorAttachment(uint32_t index) const {
     if (index >= m_colorAttachments.size() || !m_colorAttachments[index])
-        throw std::out_of_range("No color attachment at index");
+        throw std::out_of_range("Framebuffer: no color attachment at index "
+            + std::to_string(index));
     return m_colorAttachments[index];
-}
-
-void Framebuffer::validate() const {
-    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-    if (status != GL_FRAMEBUFFER_COMPLETE) {
-        throw std::runtime_error(
-            "Framebuffer incomplete: status code " +
-            std::to_string(status)
-        );
-    }
-}
-
-void Framebuffer::updateDrawBuffers() const {
-#if defined(DISABLE_MRT)
-    // WebGL only has a single COLOR_ATTACHMENT0 by default � skip
-#else
-    std::vector<GLenum> buffers;
-    buffers.reserve(m_colorAttachments.size());
-    for (size_t i = 0; i < m_colorAttachments.size(); ++i) {
-        buffers.push_back(
-            m_colorAttachments[i]
-            ? GL_COLOR_ATTACHMENT0 + (GLenum)i
-            : GL_NONE
-        );
-    }
-    glDrawBuffers(
-        static_cast<GLsizei>(buffers.size()),
-        buffers.data()
-    );
-#endif
 }

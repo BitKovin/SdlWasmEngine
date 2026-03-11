@@ -30,27 +30,37 @@ void LoadingScreenSystem::Update(float newProgress)
 
 void LoadingScreenSystem::Draw()
 {
+    if (uiCanvas == nullptr)
+        return;
 
-	if (uiCanvas == nullptr) return;
+    uiCanvas->LoadingProgress = Progress;
 
+    const uint16_t viewId = 0; // loading screen view
 
-	Framebuffer::unbind();
+    const uint16_t width = EngineMain::MainInstance->ScreenSize.x;
+    const uint16_t height = EngineMain::MainInstance->ScreenSize.y;
 
-	uiCanvas->LoadingProgress = Progress;
+    // Configure view
+    bgfx::setViewRect(viewId, 0, 0, width, height);
+    bgfx::setViewClear(
+        viewId,
+        BGFX_CLEAR_COLOR,
+        0x000000ff, // black
+        1.0f,
+        0
+    );
 
-	glViewport(0, 0, EngineMain::MainInstance->ScreenSize.x, EngineMain::MainInstance->ScreenSize.y);
+    bgfx::touch(viewId); // ensure view clears even if nothing submitted
 
-	glClearColor(0, 0, 0, 1);
-	glDisable(GL_DEPTH_TEST);
+    // Update and draw UI
+    viewport.Update();
+    viewport.FinalizeChildren();
+    viewport.Draw(); // must submit bgfx draw calls internally
 
-	viewport.Update();
-	viewport.FinalizeChildren();
-	viewport.Draw();
+    // Process events (still needed for SDL)
+    SDL_PollEvent(nullptr);
 
-	glFinish();
-	glFlush();
-	SDL_PollEvent(nullptr);
-	SDL_GL_SwapWindow(EngineMain::MainInstance->Window);
-
+    // Present frame
+    bgfx::frame();
 }
 

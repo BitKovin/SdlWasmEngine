@@ -4,6 +4,8 @@
 
 #include <vector>
 
+#include <Shader.hpp>
+
 class ShaderProgram;
 
 class LightManager
@@ -26,7 +28,7 @@ public:
 	static void Update();
 	static void UpdateLightSource(PointLightInfo light);
 
-	static void ApplyPointLightToShader(ShaderProgram* shader, vec3 boundsMin, vec3 boundsMax);
+	static void ApplyPointLightToShader(Shader* shader, vec3 boundsMin, vec3 boundsMax);
 
 	static vec3 LightDirection;
 

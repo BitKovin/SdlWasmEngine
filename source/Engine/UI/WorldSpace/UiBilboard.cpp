@@ -19,7 +19,7 @@ void UiBilboard::DrawForward(mat4x4 view, mat4x4 projection)
 {
 
 	ColorTextureId = renderTexture->id();
-
+	/*
 
 	if (model == nullptr) return;
 
@@ -105,7 +105,7 @@ void UiBilboard::DrawForward(mat4x4 view, mat4x4 projection)
 
 	glEnable(GL_CULL_FACE);
 
-
+	*/
 }
 
 void UiBilboard::FinalizeFrameData()
@@ -131,7 +131,7 @@ void UiBilboard::Update()
 
 void UiBilboard::DrawUi()
 {
-
+	/*
 	EnsureRenderTarget();
 
 	UiRenderer::customViewport = true;
@@ -151,7 +151,7 @@ void UiBilboard::DrawUi()
 	glEnable(GL_DEPTH_TEST);
 
 	UiRenderer::customViewport = false;
-
+	*/
 }
 
 void UiBilboard::PreDraw()
@@ -191,10 +191,10 @@ void UiBilboard::EnsureRenderTarget()
 			ViewportSize.y,
 			TextureFormat::RGBA8,
 			TextureType::Texture2D,
-			false,
-			GL_LINEAR,
-			GL_LINEAR,
-			GL_CLAMP_TO_EDGE
+			false, BGFX_SAMPLER_U_CLAMP
+			| BGFX_SAMPLER_V_CLAMP
+			| BGFX_SAMPLER_MIN_POINT
+			| BGFX_SAMPLER_MAG_POINT
 		);
 
 		renderTexture->SetName("UiBilboard RT " + to_string(ViewportSize.x) + "x" + to_string(ViewportSize.y));

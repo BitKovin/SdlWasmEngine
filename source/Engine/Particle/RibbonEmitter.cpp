@@ -4,16 +4,14 @@
 #include "../Renderer/Renderer.h"
 
 RibbonEmitter::RibbonEmitter()
-    : decl(VertexData::Declaration())
+
 {
     DepthSorting = false;
 }
 
 RibbonEmitter::~RibbonEmitter()
 {
-    delete vao;
-    delete vb;
-    delete ib;
+
 }
 
 void RibbonEmitter::RenderRibbon(const std::vector<Particle>& inParticles)
@@ -22,7 +20,7 @@ void RibbonEmitter::RenderRibbon(const std::vector<Particle>& inParticles)
 
     if (inParticles.size() < 1 || destroyed)
         return;
-
+    /*
     VertexArrayObject::Unbind();
 
     // Initialize with empty buffers since data is dynamic
@@ -115,6 +113,7 @@ void RibbonEmitter::RenderRibbon(const std::vector<Particle>& inParticles)
     vb->Unbind();
     ib->Unbind();
     VertexArrayObject::Unbind();
+    */
 }
 
 void RibbonEmitter::FinalizeFrameData()
@@ -130,7 +129,7 @@ void RibbonEmitter::DrawForward(mat4x4 view, mat4x4 projection)
         savedTexture = AssetRegistry::GetTextureFromFile(texture);
         savedTextureName = texture;
     }
-
+    /*
     glDepthMask(GL_FALSE);
 
     glDisable(GL_CULL_FACE);
@@ -161,18 +160,10 @@ void RibbonEmitter::DrawForward(mat4x4 view, mat4x4 projection)
 
     glDepthMask(GL_TRUE);
     glEnable(GL_CULL_FACE);
+    */
 }
 
 
-void RibbonEmitter::GenerateIndices(std::vector<GLuint>& dst, int n) {
-    for (int i = 1; i < n; ++i) {
-        int io = (i - 1) * 6;
-        int vo = i * 2;
-        dst[io + 0] = GLuint(vo);
-        dst[io + 1] = GLuint(vo - 1);
-        dst[io + 2] = GLuint(vo - 2);
-        dst[io + 3] = GLuint(vo);
-        dst[io + 4] = GLuint(vo + 1);
-        dst[io + 5] = GLuint(vo - 1);
-    }
+void RibbonEmitter::GenerateIndices(std::vector<int>& dst, int n) {
+
 }

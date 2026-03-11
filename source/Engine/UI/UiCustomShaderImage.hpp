@@ -16,14 +16,14 @@ class UiCustomShaderImage : public UiElement
 
 protected:
 
-	std::unordered_map<std::string, GLuint> texturesFinal;
+	std::unordered_map<std::string, bgfx::TextureHandle> texturesFinal;
 	std::unordered_map<std::string, float> scalarsFinal;
 	std::unordered_map<std::string, vec4> vec4Final;
 
 public:
 
 
-	std::unordered_map<std::string, GLuint> Textures;
+	std::unordered_map<std::string, bgfx::TextureHandle> Textures;
 	std::unordered_map<std::string, float> Scalars;
 	std::unordered_map<std::string, vec4> Vector4s;
 

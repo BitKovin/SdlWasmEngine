@@ -11,7 +11,7 @@
 
 #include "../BSP/Quake3Bsp.h"
 
-VertexArrayObject* ParticleEmitter::bilboardVAO = nullptr;
+
 
 mat4 GetWorldMatrix(const Particle& particle)
 {
@@ -89,7 +89,7 @@ void ParticleEmitter::DrawForward(mat4x4 view, mat4x4 projection)
         savedTexture = AssetRegistry::GetTextureFromFile(texture);
         savedTextureName = texture;
     }
-
+    /*
 	glDepthMask(GL_FALSE);
 	
     glDisable(GL_CULL_FACE);
@@ -124,6 +124,7 @@ void ParticleEmitter::DrawForward(mat4x4 view, mat4x4 projection)
 
     glDepthMask(GL_TRUE);
     glEnable(GL_CULL_FACE);
+    */
 }
 
 void ParticleEmitter::FinalizeFrameData()
@@ -238,7 +239,7 @@ void ParticleEmitter::FinalizeFrameData()
 
 void ParticleEmitter::InitBilboardVaoIfNeeded()
 {
-
+    /*
     if (bilboardVAO) return;
 
     // Define billboard vertices (a quad centered at the origin with size 1x1 meter)
@@ -287,7 +288,7 @@ void ParticleEmitter::InitBilboardVaoIfNeeded()
     VertexArrayObject::Unbind();
     IndexBuffer::Unbind();
     VertexBuffer::Unbind();
-
+    */
 }
 
 vec3 ParticleEmitter::GetLightForParticle(const Particle& particle)
@@ -309,6 +310,7 @@ vec3 ParticleEmitter::GetLightForParticle(const Particle& particle)
 
 void ParticleEmitter::SetInstanceData(std::vector<InstanceData>& instanceData)
 {
+    /*
     if (bilboardVAO == nullptr)
     {
         Logger::Log("null bilboard vao");
@@ -322,5 +324,6 @@ void ParticleEmitter::SetInstanceData(std::vector<InstanceData>& instanceData)
     }
 
     bilboardVAO->instanceBuffer->UpdateData(instanceData);
+    */
 
 }

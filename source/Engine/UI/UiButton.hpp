@@ -105,11 +105,11 @@ public:
 
 		if (PixelShader.empty())
 		{
-			UiRenderer::DrawTexturedRect(pos, finalizedSize, rotation, pivot, tex->getID(), GetFinalColor());
+			UiRenderer::DrawTexturedRect(pos, finalizedSize, rotation, pivot, tex->getHandle(), GetFinalColor());
 		}
 		else
 		{
-			UiRenderer::DrawTexturedRectShader(pos, finalizedSize, rotation, pivot, tex->getID(), GetFinalColor(), PixelShader);
+			UiRenderer::DrawTexturedRectShader(pos, finalizedSize, rotation, pivot, tex->getHandle(), GetFinalColor(), PixelShader);
 		}
 
 		UiElement::Draw();

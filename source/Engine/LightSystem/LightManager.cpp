@@ -134,7 +134,7 @@ void LightManager::UpdateLightSource(PointLightInfo light)
 
 }
 
-void LightManager::ApplyPointLightToShader(ShaderProgram* shader, vec3 boundsMin, vec3 boundsMax)
+void LightManager::ApplyPointLightToShader(Shader* shader, vec3 boundsMin, vec3 boundsMax)
 {
     if (!shader) return;
 

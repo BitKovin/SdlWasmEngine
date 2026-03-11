@@ -38,13 +38,17 @@ namespace roj
 
 	struct Mesh
 	{
+		bgfx::VertexBufferHandle vbh = BGFX_INVALID_HANDLE;
+		bgfx::IndexBufferHandle  ibh = BGFX_INVALID_HANDLE;
 
-		VertexBuffer* vertexBuffer;
-		IndexBuffer* indexBuffer;
+		bgfx::VertexLayout layout;
 
-		std::vector<MeshTexture> textures;
-		VertexArrayObject* VAO;
+		std::vector<MeshTexture> textures; // usually uniforms + sampler handles
 
+		std::vector<VertexData> vertices;
+		std::vector<uint32_t> indices;
+
+		uint32_t numIndices = 0;
 	};
 
 	template<typename mesh_t>

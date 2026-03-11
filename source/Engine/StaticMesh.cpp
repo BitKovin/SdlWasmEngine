@@ -74,7 +74,7 @@ bool StaticMesh::IsCameraVisible()
 
 void StaticMesh::DrawForward(mat4x4 view, mat4x4 projection)
 {
-
+	/*
 	if (model == nullptr) return;
 
 	if (Transparent == false)
@@ -242,13 +242,13 @@ void StaticMesh::DrawForward(mat4x4 view, mat4x4 projection)
 
 	}
 
-	glEnable(GL_CULL_FACE);
-
+	glEnable(GL_CULL_FACE); finishthiscode
+	*/
 }
 
 void StaticMesh::DrawDepth(mat4x4 view, mat4x4 projection)
 {
-
+	/*
 	if (model == nullptr) return;
 
 	if (DepthPrePath == false) return;
@@ -336,10 +336,12 @@ void StaticMesh::DrawDepth(mat4x4 view, mat4x4 projection)
 		VertexArrayObject::Unbind();
 
 	}
+	*/
 }
 
 void StaticMesh::DrawCustomId(mat4x4 view, mat4x4 projection)
 {
+	/*
 	if (model == nullptr) return;
 	if (CustomId == 0) return;
 
@@ -416,11 +418,12 @@ void StaticMesh::DrawCustomId(mat4x4 view, mat4x4 projection)
 
 		VertexArrayObject::Unbind();
 
-	}
+	}*/
 }
 
 void StaticMesh::DrawShadow(mat4x4 view, mat4x4 projection)
 {
+	/*
 	if (model == nullptr) return;
 	bool mask = Transparent;
 
@@ -494,6 +497,7 @@ void StaticMesh::DrawShadow(mat4x4 view, mat4x4 projection)
 		VertexArrayObject::Unbind();
 
 	}
+	*/
 }
 
 void StaticMesh::PreloadAssets()

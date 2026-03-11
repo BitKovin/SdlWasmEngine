@@ -1,5 +1,5 @@
 ﻿#include "UiRenderer.h"
-#include "../gl.h"
+#include <bgfx/bgfx.h>
 #include "../ShaderManager.h"
 #include "../Camera.h"
 #include <unordered_map>
@@ -9,366 +9,366 @@
 #include <mutex>
 #include "UiManager.h"
 
-// Cache entry structure
+#include <Renderer/Abstractions/ViewIdManager.h>
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Cache entry
+// ─────────────────────────────────────────────────────────────────────────────
+
 struct TextureCacheEntry {
-    GLuint textureID;      // OpenGL texture ID
-    float lastUsedTime;    // Last time used (seconds)
-    size_t memorySize;     // Memory size in bytes
-    int width;             // Texture width for rendering
-    int height;            // Texture height for rendering
+    bgfx::TextureHandle textureHandle = BGFX_INVALID_HANDLE; // bgfx texture handle
+    float  lastUsedTime = 0.0f; // Last time used (seconds)
+    size_t memorySize = 0;    // Memory size in bytes
+    int    width = 0;    // Texture width for rendering
+    int    height = 0;    // Texture height for rendering
 };
 
-// Static variables for renderer state and cache
-static GLuint quadVAO = 0;
-static GLuint quadVBO = 0;
-static ShaderProgram* texturedShader = nullptr;
-static ShaderProgram* flatColorShader = nullptr;
+// ─────────────────────────────────────────────────────────────────────────────
+// Quad vertex layout & static GPU resources
+// ─────────────────────────────────────────────────────────────────────────────
+
+struct QuadVertex {
+    float x, y; // position
+    float u, v; // texcoord
+};
+
+static bgfx::VertexLayout       s_quadLayout;
+static bgfx::VertexBufferHandle s_quadVB = BGFX_INVALID_HANDLE;
+static Shader* s_texturedShader = nullptr;
+static Shader* s_flatColorShader = nullptr;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Text-texture cache
+// ─────────────────────────────────────────────────────────────────────────────
+
 static std::unordered_map<std::string, TextureCacheEntry> textTextureCache;
-static size_t totalCacheMemory = 0;                      // Total memory used by the cache
-static const size_t MAX_CACHE_MEMORY = 50 * 1024 * 1024; // 50 MB limit
-static const float MAX_UNUSED_SECONDS = 2.0f;           // Evict textures unused for 10 seconds
-static float currentTime = 0.0f;                         // Current time in seconds
+static size_t       totalCacheMemory = 0;
+static const size_t MAX_CACHE_MEMORY = 50 * 1024 * 1024; // 50 MB
+static const float  MAX_UNUSED_SECONDS = 2.0f;
+static float        currentTime = 0.0f;
+static std::mutex   textTextureCacheMutex;
 
-static std::mutex textTextureCacheMutex;
-
+// ─────────────────────────────────────────────────────────────────────────────
 namespace UiRenderer {
 
-    void Init() {
-        float quadVertices[] = {
-            // pos      // uv
-            0.0f, 1.0f,  0.0f, 1.0f,
-            1.0f, 0.0f,  1.0f, 0.0f,
-            0.0f, 0.0f,  0.0f, 0.0f,
-            0.0f, 1.0f,  0.0f, 1.0f,
-            1.0f, 1.0f,  1.0f, 1.0f,
-            1.0f, 0.0f,  1.0f, 0.0f,
+    // ── Init ──────────────────────────────────────────────────────────────────────
+
+    void Init()
+    {
+        // Vertex layout: float2 position + float2 texcoord
+        s_quadLayout
+            .begin()
+            .add(bgfx::Attrib::Position, 2, bgfx::AttribType::Float)
+            .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
+            .end();
+
+        // Unit quad [0,1]x[0,1], two CCW triangles, y-down origin
+        static const QuadVertex quadVertices[6] = {
+            { 0.0f, 1.0f,  0.0f, 1.0f },
+            { 1.0f, 0.0f,  1.0f, 0.0f },
+            { 0.0f, 0.0f,  0.0f, 0.0f },
+            { 0.0f, 1.0f,  0.0f, 1.0f },
+            { 1.0f, 1.0f,  1.0f, 1.0f },
+            { 1.0f, 0.0f,  1.0f, 0.0f },
         };
 
-        glGenVertexArrays(1, &quadVAO);
-        glGenBuffers(1, &quadVBO);
+        s_quadVB = bgfx::createVertexBuffer(
+            bgfx::makeRef(quadVertices, sizeof(quadVertices)),
+            s_quadLayout);
 
-        glBindVertexArray(quadVAO);
-        glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
-
-        glEnableVertexAttribArray(0); // position
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-
-        glEnableVertexAttribArray(1); // texcoord
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
-
-        glBindVertexArray(0);
-
-        texturedShader = ShaderManager::GetShaderProgram("ui", "ui_textured");
-        flatColorShader = ShaderManager::GetShaderProgram("ui", "ui_flatcolor");
+        s_texturedShader = ShaderManager::GetShaderProgram("ui", "ui_textured");
+        s_flatColorShader = ShaderManager::GetShaderProgram("ui", "ui_flatcolor");
     }
 
-    void Shutdown() {
-        glDeleteVertexArrays(1, &quadVAO);
-        glDeleteBuffers(1, &quadVBO);
-        delete texturedShader;
-        delete flatColorShader;
+    // ── Shutdown ──────────────────────────────────────────────────────────────────
 
-        // Clean up cached textures
-        for (auto& pair : textTextureCache) {
-            glDeleteTextures(1, &pair.second.textureID);
+    void Shutdown()
+    {
+        if (bgfx::isValid(s_quadVB))
+        {
+            bgfx::destroy(s_quadVB);
+            s_quadVB = BGFX_INVALID_HANDLE;
         }
-        textTextureCache.clear();
-        totalCacheMemory = 0;
+
+        // Shaders are owned by ShaderManager – do not delete here.
+        s_texturedShader = nullptr;
+        s_flatColorShader = nullptr;
+
+        // Destroy all cached text textures
+        {
+            std::lock_guard<std::mutex> lock(textTextureCacheMutex);
+            for (auto& pair : textTextureCache)
+            {
+                if (bgfx::isValid(pair.second.textureHandle))
+                    bgfx::destroy(pair.second.textureHandle);
+            }
+            textTextureCache.clear();
+            totalCacheMemory = 0;
+        }
     }
 
-    void SetShaderProjection(ShaderProgram* shader) {
-        // use floats — avoid integer truncation
-        float screenHeight = static_cast<float>(UiManager::GetScaledUiHeight()); // pixels
-        float screenWidth = screenHeight * Camera::AspectRatio; // pixels (float!)
+    // ── Projection helper ─────────────────────────────────────────────────────────
 
-        if(customViewport)
+    static void SetShaderProjection(Shader* shader)
+    {
+        float screenHeight = static_cast<float>(UiManager::GetScaledUiHeight());
+        float screenWidth = screenHeight * Camera::AspectRatio;
+
+        if (customViewport)
         {
             screenWidth = static_cast<float>(customViewportSize.x);
             screenHeight = static_cast<float>(customViewportSize.y);
-		}
+        }
 
-        // orthographic projection with top-left origin (y down)
+        // Orthographic projection: top-left origin, y-down
         glm::mat4 uiProjection = glm::ortho(
-            0.0f,
-            screenWidth,
-            screenHeight,
-            0.0f,
-            -1.0f,
-            1.0f
-        );
+            0.0f, screenWidth,
+            screenHeight, 0.0f,
+            -1.0f, 1.0f);
 
         shader->SetUniform("u_Projection", uiProjection);
-
     }
 
-    void DrawTexturedRect(const glm::vec2& pos, const glm::vec2& size, float rotation, vec2 pivot, GLuint texture, const glm::vec4& color) {
-        texturedShader->UseProgram();
+    // ── Shared model-matrix builder ───────────────────────────────────────────────
 
-        SetShaderProjection(texturedShader);
-
-        glm::vec2 pivotLocal = pivot * size;
-
-        glm::mat4 model(1.0f);
-
-        // place top-left of image
-        model = glm::translate(model, glm::vec3(pos, 0.0f));
-
-        // move pivot to origin
-        model = glm::translate(model, glm::vec3(pivotLocal, 0.0f));
-
-        // rotate around pivot
-        model = glm::rotate(model, glm::radians(rotation), glm::vec3(0, 0, 1));
-
-        // move pivot back
-        model = glm::translate(model, glm::vec3(-pivotLocal, 0.0f));
-
-        // scale quad to size
-        model = glm::scale(model, glm::vec3(size, 1.0f));
-
-        texturedShader->SetUniform("u_Model", model);
-
-        texturedShader->SetUniform("u_Color", color);
-
-        texturedShader->SetTexture("u_Texture", texture);
-
-        glBindVertexArray(quadVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 6);
-    }
-
-    void DrawTexturedRectShader(const glm::vec2& pos, const glm::vec2& size, float rotation, vec2 pivot, GLuint texture, const glm::vec4& color, const string& shader)
+    static glm::mat4 BuildQuadModel(const glm::vec2& pos, const glm::vec2& size,
+        float rotation, glm::vec2 pivot)
     {
-        auto shaderProgram = ShaderManager::GetShaderProgram("ui", shader); 
-        shaderProgram->UseProgram();
-
-        SetShaderProjection(shaderProgram);
-
-        glm::mat4 model(1.0f);
-
-        // 1. Final already-pivoted element position
-        model = glm::translate(model, glm::vec3(pos, 0.0f));
-
-        // 2. Pivot offset inside local space (needed for rotation)
-        glm::vec2 pivotOffset = pivot * size;
-
-        // 3. Move pivot → origin
-        model = glm::translate(model, glm::vec3(pivotOffset, 0.0f));
-
-        // 4. Apply rotation
-        model = glm::rotate(model, MathHelper::ToRadians(rotation), glm::vec3(0, 0, 1));
-
-        // 5. Move back after rotation
-        model = glm::translate(model, glm::vec3(-pivotOffset, 0.0f));
-
-        // 6. Apply scale
-        model = glm::scale(model, glm::vec3(size, 1.0f));
-        
-        shaderProgram->SetUniform("u_Model", model);
-        shaderProgram->SetUniform("u_Color", color);
-
-        shaderProgram->SetTexture("u_Texture", texture);
-
-        glBindVertexArray(quadVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 6);
+        const glm::vec2 pivotOffset = pivot * size;
+        glm::mat4 m(1.0f);
+        m = glm::translate(m, glm::vec3(pos, 0.0f));
+        m = glm::translate(m, glm::vec3(pivotOffset, 0.0f));
+        m = glm::rotate(m, glm::radians(rotation), glm::vec3(0.f, 0.f, 1.f));
+        m = glm::translate(m, glm::vec3(-pivotOffset, 0.0f));
+        m = glm::scale(m, glm::vec3(size, 1.0f));
+        return m;
     }
 
-    void DrawTexturedRectShaderParams(const glm::vec2& pos, const glm::vec2& size, float rotation, glm::vec2 pivot, std::unordered_map<std::string, GLuint>& textures, std::unordered_map<std::string, float>& scalars, std::unordered_map<std::string, vec4>& vec4s, const glm::vec4& color, const string& shader)
+    // ── Shared submit: bind the unit quad VB and dispatch ────────────────────────
+
+    static void SubmitQuad(Shader* shader)
     {
-        auto shaderProgram = ShaderManager::GetShaderProgram("ui", shader);
-        shaderProgram->UseProgram();
-
-        SetShaderProjection(shaderProgram);
-
-        glm::mat4 model(1.0f);
-
-        // 1. Final already-pivoted element position
-        model = glm::translate(model, glm::vec3(pos, 0.0f));
-
-        // 2. Pivot offset inside local space (needed for rotation)
-        glm::vec2 pivotOffset = pivot * size;
-
-        // 3. Move pivot → origin
-        model = glm::translate(model, glm::vec3(pivotOffset, 0.0f));
-
-        // 4. Apply rotation
-        model = glm::rotate(model, MathHelper::ToRadians(rotation), glm::vec3(0, 0, 1));
-
-        // 5. Move back after rotation
-        model = glm::translate(model, glm::vec3(-pivotOffset, 0.0f));
-
-        // 6. Apply scale
-        model = glm::scale(model, glm::vec3(size, 1.0f));
-
-        shaderProgram->SetUniform("u_Model", model);
-        shaderProgram->SetUniform("u_Color", color);
-
-        for (auto& tex : textures)
-        {
-            shaderProgram->SetTexture(tex.first, tex.second);
-        }
-
-        for (auto& scalar : scalars)
-        {
-            shaderProgram->SetUniform(scalar.first, scalar.second);
-        }
-
-        for (auto& scalar : vec4s)
-        {
-            shaderProgram->SetUniform(scalar.first, scalar.second);
-        }
-        
-
-        glBindVertexArray(quadVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 6);
+        bgfx::setVertexBuffer(0, s_quadVB);
+        shader->Submit(ViewIdManager::getCurrentViewId());
     }
 
-    void DrawBorderRect(const glm::vec2& pos, const glm::vec2& size, const glm::vec4& color) {
-#ifndef GL_ES_PROFILE
-        flatColorShader->UseProgram();
-        SetShaderProjection(flatColorShader);
-        glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(pos, 0.0f));
-        model = glm::scale(model, glm::vec3(size, 1.0f));
-        flatColorShader->SetUniform("u_Model", model);
-        flatColorShader->SetUniform("u_Color", color);
+    // ── DrawTexturedRect ──────────────────────────────────────────────────────────
 
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        glBindVertexArray(quadVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 6);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-#endif // !GL_ES_PROFILE
+    void DrawTexturedRect(const glm::vec2& pos, const glm::vec2& size,
+        float rotation, vec2 pivot,
+        bgfx::TextureHandle texture, const glm::vec4& color)
+    {
+        s_texturedShader->UseProgram();
+        SetShaderProjection(s_texturedShader);
+
+        s_texturedShader->SetUniform("u_Model", BuildQuadModel(pos, size, rotation, pivot));
+        s_texturedShader->SetUniform("u_Color", color);
+        s_texturedShader->SetTexture("u_Texture", texture);
+
+        SubmitQuad(s_texturedShader);
     }
 
-    void DrawText(std::string text, TTF_Font* font, const glm::vec2& pos, float rotation, glm::vec2 pivot,
-        const glm::vec4& color, const glm::vec2& scale, const std::string& shader) {
-        if (!font) {
+    // ── DrawTexturedRectShader ────────────────────────────────────────────────────
+
+    void DrawTexturedRectShader(const glm::vec2& pos, const glm::vec2& size,
+        float rotation, glm::vec2 pivot,
+        bgfx::TextureHandle texture, const glm::vec4& color,
+        const string& shader)
+    {
+        auto* sp = ShaderManager::GetShaderProgram("ui", shader);
+        sp->UseProgram();
+        SetShaderProjection(sp);
+
+        sp->SetUniform("u_Model", BuildQuadModel(pos, size, rotation, pivot));
+        sp->SetUniform("u_Color", color);
+        sp->SetTexture("u_Texture", texture);
+
+        SubmitQuad(sp);
+    }
+
+    // ── DrawTexturedRectShaderParams ──────────────────────────────────────────────
+
+    void DrawTexturedRectShaderParams(const glm::vec2& pos, const glm::vec2& size,
+        float rotation, glm::vec2 pivot,
+        std::unordered_map<std::string, bgfx::TextureHandle>& textures,
+        std::unordered_map<std::string, float>& scalars,
+        std::unordered_map<std::string, vec4>& vec4s,
+        const glm::vec4& color, const string& shader)
+    {
+        auto* sp = ShaderManager::GetShaderProgram("ui", shader);
+        sp->UseProgram();
+        SetShaderProjection(sp);
+
+        sp->SetUniform("u_Model", BuildQuadModel(pos, size, rotation, pivot));
+        sp->SetUniform("u_Color", color);
+
+        for (auto& tex : textures) sp->SetTexture(tex.first, tex.second);
+        for (auto& scalar : scalars)  sp->SetUniform(scalar.first, scalar.second);
+        for (auto& v4 : vec4s)    sp->SetUniform(v4.first, v4.second);
+
+        SubmitQuad(sp);
+    }
+
+    // ── DrawBorderRect ────────────────────────────────────────────────────────────
+    // bgfx has no glPolygonMode equivalent; wireframe is expressed as a render-
+    // state override (BGFX_STATE_PT_LINESTRIP) passed before Submit.
+
+    void DrawBorderRect(const glm::vec2& pos, const glm::vec2& size, const glm::vec4& color)
+    {
+        s_flatColorShader->UseProgram();
+        SetShaderProjection(s_flatColorShader);
+
+        s_flatColorShader->SetUniform("u_Model", BuildQuadModel(pos, size, 0.0f, glm::vec2(0.0f)));
+        s_flatColorShader->SetUniform("u_Color", color);
+
+        // Wireframe: write colour only, alpha-blend, line topology
+        bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_PT_LINESTRIP | BGFX_STATE_BLEND_ALPHA);
+
+        bgfx::setVertexBuffer(0, s_quadVB);
+        s_flatColorShader->Submit(ViewIdManager::getCurrentViewId());
+    }
+
+    // ── DrawText ──────────────────────────────────────────────────────────────────
+
+    void DrawText(std::string text, TTF_Font* font,
+        const glm::vec2& pos, float rotation, glm::vec2 pivot,
+        const glm::vec4& color, const glm::vec2& scale,
+        const std::string& shader)
+    {
+        if (!font)
+        {
             std::cerr << "No font provided for DrawText." << std::endl;
             return;
         }
+        if (text.empty()) return;
 
-        if (text.empty())return;
-
-        GLuint textureID = 0;
+        bgfx::TextureHandle cachedHandle = BGFX_INVALID_HANDLE;
         int textureWidth = 0;
         int textureHeight = 0;
 
-        // Lock cache for read/update
+        // ── Cache lookup ──────────────────────────────────────────────────────────
         {
             std::lock_guard<std::mutex> lock(textTextureCacheMutex);
             auto it = textTextureCache.find(text);
-            if (it != textTextureCache.end()) {
-                textureID = it->second.textureID;
+            if (it != textTextureCache.end())
+            {
+                cachedHandle = it->second.textureHandle;
                 textureWidth = it->second.width;
                 textureHeight = it->second.height;
-                it->second.lastUsedTime = currentTime; // update usage
+                it->second.lastUsedTime = currentTime;
             }
         }
 
-        if (textureID == 0) {
-            // Convert color from [0.0,1.0] to [0,255]
+        // ── Cache miss: rasterise via SDL_TTF and upload to bgfx ─────────────────
+        if (!bgfx::isValid(cachedHandle))
+        {
+            // Render the glyph at the requested tint colour; the shader will
+            // multiply it again by u_Color – use white here if you prefer.
             SDL_Color sdlColor = {
-                static_cast<Uint8>(glm::clamp(1.0f, 0.0f, 1.0f) * 255.0f),
-                static_cast<Uint8>(glm::clamp(1.0f, 0.0f, 1.0f) * 255.0f),
-                static_cast<Uint8>(glm::clamp(1.0f, 0.0f, 1.0f) * 255.0f),
-                static_cast<Uint8>(glm::clamp(1.0f, 0.0f, 1.0f) * 255.0f)
+                static_cast<Uint8>(glm::clamp(color.r, 0.0f, 1.0f) * 255.0f),
+                static_cast<Uint8>(glm::clamp(color.g, 0.0f, 1.0f) * 255.0f),
+                static_cast<Uint8>(glm::clamp(color.b, 0.0f, 1.0f) * 255.0f),
+                static_cast<Uint8>(glm::clamp(color.a, 0.0f, 1.0f) * 255.0f)
             };
 
-            SDL_Surface* surface = TTF_RenderUTF8_Blended_Wrapped(font, text.c_str(), sdlColor,0);
-            if (!surface) {
+            SDL_Surface* surface = TTF_RenderUTF8_Blended_Wrapped(font, text.c_str(), sdlColor, 0);
+            if (!surface)
+            {
                 std::cerr << "TTF_RenderUTF8_Blended Error: " << TTF_GetError() << std::endl;
                 return;
             }
 
-            // (Optional) Convert surface to a well-known pixel format to avoid format surprises.
-            // SDL_PIXELFORMAT_RGBA32 is usually safe for uploading as GL_RGBA + GL_UNSIGNED_BYTE.
+            // Normalise to contiguous RGBA32 before uploading
             SDL_Surface* formatted = SDL_ConvertSurfaceFormat(surface, SDL_PIXELFORMAT_RGBA32, 0);
-            if (!formatted) {
-                // fallback to original surface
-                formatted = surface;
-            }
+            if (!formatted)
+                formatted = surface; // fallback
 
-            size_t textureMemory = static_cast<size_t>(formatted->w) * static_cast<size_t>(formatted->h) * 4;
+            const int    w = formatted->w;
+            const int    h = formatted->h;
+            const size_t pixelBytes = static_cast<size_t>(w) * static_cast<size_t>(h) * 4;
 
-            glGenTextures(1, &textureID);
-            glBindTexture(GL_TEXTURE_2D, textureID);
-            glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-            // no need to set UNPACK_ROW_LENGTH here if using contiguous formatted->pixels
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            // bgfx::copy allocates and copies the pixel data before Upload.
+            const bgfx::Memory* mem = bgfx::copy(
+                formatted->pixels, static_cast<uint32_t>(pixelBytes));
 
-            // We converted to RGBA32 -> use GL_RGBA
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, formatted->w, formatted->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, formatted->pixels);
+            bgfx::TextureHandle handle = bgfx::createTexture2D(
+                static_cast<uint16_t>(w),
+                static_cast<uint16_t>(h),
+                false,  // no mipmaps
+                1,      // one layer
+                bgfx::TextureFormat::RGBA8,
+                BGFX_TEXTURE_NONE |
+                BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT |
+                BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP,
+                mem);
 
-            // cache the texture metadata
             {
                 std::lock_guard<std::mutex> lock(textTextureCacheMutex);
-                textTextureCache[text] = { textureID, currentTime, textureMemory, formatted->w, formatted->h };
-                totalCacheMemory += textureMemory;
+                textTextureCache[text] = { handle, currentTime, pixelBytes, w, h };
+                totalCacheMemory += pixelBytes;
             }
 
-            textureWidth = formatted->w;
-            textureHeight = formatted->h;
+            cachedHandle = handle;
+            textureWidth = w;
+            textureHeight = h;
 
             if (formatted != surface) SDL_FreeSurface(formatted);
             SDL_FreeSurface(surface);
         }
 
-        // Enable blending for alpha support
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        // ── Dispatch draw (alpha blending handled inside shader Submit state) ─────
+        const glm::vec2 drawSize(scale.x * static_cast<float>(textureWidth),
+            scale.y * static_cast<float>(textureHeight));
 
-        glm::vec2 drawSize(scale.x * textureWidth, scale.y * textureHeight);
-
-        if (shader.empty()) {
-            DrawTexturedRect(pos, drawSize, rotation, pivot, textureID, color);
-        }
-        else {
-            DrawTexturedRectShader(pos, drawSize, rotation, pivot, textureID, color, shader);
-        }
+        if (shader.empty())
+            DrawTexturedRect(pos, drawSize, rotation, pivot, cachedHandle, color);
+        else
+            DrawTexturedRectShader(pos, drawSize, rotation, pivot, cachedHandle, color, shader);
     }
 
+    // ── MaintainCache ─────────────────────────────────────────────────────────────
 
-    void MaintainCache() {
+    static void MaintainCache()
+    {
         std::lock_guard<std::mutex> lock(textTextureCacheMutex);
 
-        // First, remove any textures that are too old
-        auto now = currentTime;
-        for (auto it = textTextureCache.begin(); it != textTextureCache.end(); ) {
-            if (now - it->second.lastUsedTime > MAX_UNUSED_SECONDS) {
-                GLuint texToDelete = it->second.textureID;
-                size_t mem = it->second.memorySize;
+        // Evict stale entries
+        const float now = currentTime;
+        for (auto it = textTextureCache.begin(); it != textTextureCache.end(); )
+        {
+            if (now - it->second.lastUsedTime > MAX_UNUSED_SECONDS)
+            {
+                if (bgfx::isValid(it->second.textureHandle))
+                    bgfx::destroy(it->second.textureHandle);
+                totalCacheMemory -= it->second.memorySize;
                 it = textTextureCache.erase(it);
-                glDeleteTextures(1, &texToDelete);
-                totalCacheMemory -= mem;
             }
-            else {
+            else
+            {
                 ++it;
             }
         }
 
-        // If cache is still over limit, remove least recently used textures
-        while (totalCacheMemory > MAX_CACHE_MEMORY && !textTextureCache.empty()) {
-            // Find the least recently used element
+        // Evict LRU entries until we're back under the memory budget
+        while (totalCacheMemory > MAX_CACHE_MEMORY && !textTextureCache.empty())
+        {
             auto lruIt = std::min_element(
                 textTextureCache.begin(), textTextureCache.end(),
                 [](const auto& a, const auto& b) {
                     return a.second.lastUsedTime < b.second.lastUsedTime;
-                }
-            );
+                });
 
-            GLuint texToDelete = lruIt->second.textureID;
-            size_t mem = lruIt->second.memorySize;
-            glDeleteTextures(1, &texToDelete);
-            totalCacheMemory -= mem;
+            if (bgfx::isValid(lruIt->second.textureHandle))
+                bgfx::destroy(lruIt->second.textureHandle);
+            totalCacheMemory -= lruIt->second.memorySize;
             textTextureCache.erase(lruIt);
         }
     }
 
+    // ── EndFrame ──────────────────────────────────────────────────────────────────
 
-
-    void EndFrame() {
-        // Update current time (SDL_GetTicks returns milliseconds, convert to seconds)
+    void EndFrame()
+    {
         currentTime = Time::GameTimeNoPause;
         MaintainCache();
     }

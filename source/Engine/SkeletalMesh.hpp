@@ -206,7 +206,7 @@ private:
 
 protected:
 
-	void ApplyAdditionalShaderParams(ShaderProgram* shader_program)
+	void ApplyAdditionalShaderParams(Shader* shader_program)
 	{
 		shader_program->SetUniform("finalBonesMatrices", finalizedBoneTransforms);
 	}

@@ -428,19 +428,29 @@ SkinnedMesh ModelLoader<SkinnedMesh>::processMesh(aiMesh* mesh, const aiScene* s
     }
     extractBoneVertexData(vertices, mesh, m_model);
 
-    SkinnedMesh sm;
-    sm.name     = mesh->mName.C_Str();
-    sm.vertices = new VertexBuffer(vertices, VertexData::Declaration());
-    ResourceStatistics::Instance().setResourceName(ResourceType::VertexBuffer, sm.vertices->m_id,
-                                                    m_lastLoadedPath + "|" + sm.name + "_Vertices");
-    sm.indices  = new IndexBuffer(indices);
-    ResourceStatistics::Instance().setResourceName(ResourceType::IndexBuffer, sm.indices->m_id,
-                                                    m_lastLoadedPath + "|" + sm.name + "_Indices");
-    sm.textures        = getMeshTextures(scene->mMaterials[mesh->mMaterialIndex], scene);
-    sm.materialName    = scene->mMaterials[mesh->mMaterialIndex]->GetName().C_Str();
-    sm.vertexIndices   = indices;
-    sm.vertexLocations = vertices;
-    return sm;
+    SkinnedMesh skinMesh = SkinnedMesh();
+
+    skinMesh.name = mesh->mName.C_Str();
+
+    std::vector<MeshTexture> textures = getMeshTextures(scene->mMaterials[mesh->mMaterialIndex], scene);
+
+    skinMesh.materialName = scene->mMaterials[mesh->mMaterialIndex]->GetName().C_Str();
+
+    skinMesh.textures = textures;
+
+    skinMesh.indices = indices;
+    skinMesh.vertices = vertices;
+
+    skinMesh.layout = VertexData::Declaration();
+
+    const bgfx::Memory* vbMem = bgfx::copy(skinMesh.vertices.data(), sizeof(VertexData) * skinMesh.vertices.size());
+    skinMesh.vbh = bgfx::createVertexBuffer(vbMem, skinMesh.layout);
+
+    const bgfx::Memory* ibMem = bgfx::copy(skinMesh.indices.data(), sizeof(uint32_t) * skinMesh.indices.size());
+    skinMesh.ibh = bgfx::createIndexBuffer(ibMem, BGFX_BUFFER_INDEX32);
+
+
+    return skinMesh;
 }
 
 template<>
@@ -519,8 +529,7 @@ bool ModelLoader<SkinnedMesh>::load(const std::string& path)
 
     // Step 1: build meshes + populate boneInfoMap
     processNode(m_scene->mRootNode, m_scene);
-    for (SkinnedMesh& mesh : m_model)
-        mesh.VAO = new VertexArrayObject(*mesh.vertices, *mesh.indices);
+
 
     // Step 2: extract animations into legacy map (for m_currAnim->duration etc.)
     extractAnimations(m_scene, m_model);
@@ -559,13 +568,6 @@ bool ModelLoader<SkinnedMesh>::load(const std::string& path)
         LoadTextureFromScene(m_scene->mTextures[i]);
 
     return true;
-}
-
-void SkinnedMesh::DestroyBuffers()
-{
-    delete vertices; vertices = nullptr;
-    delete indices;  indices  = nullptr;
-    delete VAO;      VAO      = nullptr;
 }
 
 void SkinnedMesh::ProcessDefaultTextures()

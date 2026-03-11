@@ -7,7 +7,7 @@
 #define BX_CONFIG_H_HEADER_GUARD
 
 #ifndef BX_CONFIG_DEBUG
-#	error "BX_CONFIG_DEBUG must be defined in build script!"
+#define BX_CONFIG_DEBUG TRUE
 #endif // BX_CONFIG_DEBUG
 
 #ifndef BX_CONFIG_ALLOCATOR_DEBUG
