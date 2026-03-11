@@ -174,6 +174,28 @@ add_subdirectory(${LIB_DIR}/assimp)
 target_link_libraries(engine PUBLIC assimp)
 
 
+# BGFX
+
+set(BGFX_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+
+if(WIN32)
+    set(BGFX_BUILD_TOOLS    ON CACHE BOOL "" FORCE)
+else()
+    set(BGFX_BUILD_TOOLS    OFF CACHE BOOL "" FORCE)
+endif()
+
+if(EMSCRIPTEN)
+    set(BGFX_CONFIG_MULTITHREADED OFF CACHE BOOL "" FORCE)
+    set(BX_CONFIG_SUPPORTS_THREADING OFF CACHE BOOL "" FORCE)
+    set(BGFX_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
+endif()
+
+set(BGFX_INSTALL        OFF CACHE BOOL "" FORCE)
+
+add_subdirectory(${LIB_DIR}/bgfx/bgfx.cmake)
+target_link_libraries(engine PUBLIC bgfx)
+target_link_libraries(engine PUBLIC bx)
+
 # ——————————————————————————————————————————————————————————
 # Resolve GAME_DIR, create source/game folder if missing, save selection
 # ——————————————————————————————————————————————————————————
