@@ -54,6 +54,10 @@ public:
         return textureID;
     }
 
+    void setName(const std::string& name) {
+        ResourceStatistics::Instance().setResourceName(ResourceType::Texture, textureID, name);
+    }
+
 private:
     GLuint textureID = 0;
 
@@ -182,6 +186,8 @@ private:
 
         valid = true;
     }
+
+
 
     void loadFromFile(const std::string& filename, bool generateMipmaps)
     {

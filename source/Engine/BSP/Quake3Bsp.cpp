@@ -441,6 +441,7 @@ void CQuake3BSP::GenerateLightmap()
         };
         // Texture(data, width, height, format, generateMipmaps)
         m_missingLightmap = std::make_shared<Texture>(pixels, 2, 2, GL_RGBA, false);
+		m_missingLightmap->setName("Missing Lightmap");
     }
 
     // ── White lightmap (full-bright 2×2 RGBA) ────────────────────────────────
@@ -450,6 +451,7 @@ void CQuake3BSP::GenerateLightmap()
             255,255,255,255,  255,255,255,255
         };
         m_whiteLightmap = std::make_shared<Texture>(pixels, 2, 2, GL_RGBA, false);
+		m_whiteLightmap->setName("White Lightmap");
     }
 
     // ── Per-BSP-lightmap textures (128×128 RGB) ───────────────────────────────
@@ -464,6 +466,7 @@ void CQuake3BSP::GenerateLightmap()
 
         // generateMipmaps = true to match original glGenerateMipmap call
         auto tex = std::make_shared<Texture>(pixels, 128, 128, GL_RGB, true);
+		tex->setName("BSP Lightmap " + std::to_string(i));
         m_lightmapTextures.push_back(std::move(tex));
     }
 }
