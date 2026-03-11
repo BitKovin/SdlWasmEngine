@@ -10,8 +10,6 @@
 
 #include "../IDrawMesh.h"
 
-#include "../gl.h"
-
 #include "../glm.h"
 #include "../ShaderManager.h"
 #include "../BoundingBox.hpp"
@@ -165,9 +163,6 @@ struct RenderBuffers // m_renderBuffers.m_faceVBOs[idx].m_vertexBuffer
     std::map<int, std::vector<GLuint>> v_faceIDXs;
     std::map<int, std::string>          texvec;
     std::vector<tBSPLightmap>           G_lightMaps;
-
-    std::map<GLuint, GLuint> tx_ID; // optimized texture IDs
-    std::map<GLuint, GLuint> lm_ID; // optimized lightmap IDs
 };
 
 struct CachedFaceTextureData
@@ -352,7 +347,7 @@ class CQuake3BSP : public IDrawMesh
     bool RenderSingleFace(int index, bool lightmap, LightVolPointData lightData, mat4 model);
     bool RenderMergedFace(int index, bool lightmap, LightVolPointData lightData, mat4 model);
     void renderFaces();
-    void VBOFiller(int index);
+
     void BuildVBO();
     void CreateVBO(int m_numOfFaces);
     void BSPDebug(int index);

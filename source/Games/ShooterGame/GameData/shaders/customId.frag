@@ -7,7 +7,7 @@ in vec4 v_color;
 out vec4 FragColor;
 uniform sampler2D u_texture; 
 
-uniform int customId;
+uniform float customId;
 
 vec3 encodeId24(int id)
 {
@@ -40,5 +40,5 @@ void main() {
     }
         
 
-    FragColor = vec4(encodeId24(customId), 1);
+    FragColor = vec4(encodeId24(int(customId)), 1);
 }

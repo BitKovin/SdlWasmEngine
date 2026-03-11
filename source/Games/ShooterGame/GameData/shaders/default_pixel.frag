@@ -12,10 +12,7 @@ uniform sampler2D u_textureEmissive;
 
 uniform vec3 cameraPosition;
 
-uniform bool masked;
-
-uniform bool is_particle;
-uniform bool is_decal;
+uniform float masked;
 
 uniform vec3 light_color; 
 uniform vec3 direct_light_color; 
@@ -31,10 +28,6 @@ uniform vec3  fog_color;
 #endif
 
 uniform float PointLightsNumber;
-uniform vec4 LightPositions[MAX_POINT_LIGHTS]; // xyz = position, w = inner cone (see note)
-uniform vec3 LightColors[MAX_POINT_LIGHTS];
-uniform float LightRadiuses[MAX_POINT_LIGHTS];
-uniform vec4 LightDirections[MAX_POINT_LIGHTS]; // xyz = direction, w = outer cone (see note)
 
 uniform mat4 PointLights[MAX_POINT_LIGHTS];
 
@@ -93,7 +86,7 @@ void main() {
     float alpha = texColor.a;
 
 
-    if(masked)
+    if(masked>0.0)
     {
 
         if(alpha < 0.5f) 

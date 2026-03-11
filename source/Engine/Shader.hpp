@@ -348,11 +348,18 @@ public:
 
     // === Uniform setting functions with cached locations ===
     
-        // Set uniform integer
+    // Set uniform integer
     void SetUniform(const std::string& name, int value)
     {
         GLint location = GetUniformLocation(name);
-        if (location != -1) glUniform1i(location, value);
+        if (location != -1) 
+            Logger::Log("Using int uniform. They are not allowed during transition process");
+		SetUniform(name, static_cast<float>(value));
+    }
+
+    void SetUniform(const std::string& name, bool value)
+    {
+		SetUniform(name, value ? 1.0f : 0.0f);
     }
 
     // Set uniform float
@@ -410,14 +417,6 @@ public:
         GLint location = GetUniformLocation(name);
         if (location != -1)
             glUniform1fv(location, static_cast<GLsizei>(values.size()), values.data());
-    }
-
-    // Set uniform array of ints
-    void SetUniform(const std::string& name, const std::vector<int>& values)
-    {
-        GLint location = GetUniformLocation(name);
-        if (location != -1)
-            glUniform1iv(location, static_cast<GLsizei>(values.size()), values.data());
     }
 
     // Set uniform array of vec2
