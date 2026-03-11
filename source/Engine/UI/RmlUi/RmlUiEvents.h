@@ -18,6 +18,7 @@ namespace RmlUiEvents {
     inline void onEvent(Rml::ElementDocument* doc, const std::string& element_id,
                         const std::string& event, std::function<void(Rml::Element*)> callback)
     {
+        return;
         Rml::Element* elem = doc->GetElementById(element_id);
         if (elem)
             elem->AddEventListener(event.c_str(), new LambdaListener(callback));

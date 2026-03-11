@@ -207,6 +207,8 @@ Shader* Shader::FromFiles(const char* vsName, const char* fsName)
     // Parse @texture annotations from source files
     s->textureBindings = s->ParseAllTextureBindings();
 
+    EnsureMissingTexture();
+
     return s;
 }
 
@@ -281,12 +283,48 @@ const UniformMeta* Shader::FindUniform(const std::string& uname) const
 {
     auto it = m_uniforms.find(uname);
     if (it != m_uniforms.end())
+    {
+        // Guard against a handle that was destroyed externally or never created
+        if (!bgfx::isValid(it->second.handle))
+        {
+            Logger::Log("Shader error: uniform \"" + uname + "\" has invalid handle in " + m_vsName);
+            return nullptr;
+        }
         return &it->second;
+    }
 
     if (!AllowMissingUniforms)
         Logger::Log("Shader warning: uniform \"" + uname + "\" not found in " + m_vsName);
 
     return nullptr;
+}
+
+// ---------------------------------------------------------------------------
+// Internal helper: safe num clamped against declared capacity
+// ---------------------------------------------------------------------------
+static uint16_t SafeUniformNum(const UniformMeta* u, size_t requested, const std::string& uname)
+{
+    if (requested == 0) return 0;
+
+    // uint16_t overflow guard
+    constexpr size_t kMax = std::numeric_limits<uint16_t>::max();
+    if (requested > kMax)
+    {
+        Logger::Log("Shader error: uniform \"" + uname + "\" requested count " +
+            std::to_string(requested) + " exceeds uint16_t max, clamping");
+        requested = kMax;
+    }
+
+    // Clamp to declared capacity — exceeding this corrupts the uniform cache
+    if (u->num > 0 && requested > static_cast<size_t>(u->num))
+    {
+        Logger::Log("Shader error: uniform \"" + uname + "\" requested " +
+            std::to_string(requested) + " slots but was created with " +
+            std::to_string(u->num) + ", clamping");
+        requested = u->num;
+    }
+
+    return static_cast<uint16_t>(requested);
 }
 
 // ---------------------------------------------------------------------------
@@ -381,11 +419,14 @@ void Shader::SetUniform(const std::string& uname, const std::vector<float>& valu
     const UniformMeta* u = FindUniform(uname);
     if (!u || values.empty()) return;
 
-    std::vector<float> padded(values.size() * 4, 0.0f);
-    for (size_t i = 0; i < values.size(); ++i)
+    const uint16_t num = SafeUniformNum(u, values.size(), uname);
+    if (num == 0) return;
+
+    std::vector<float> padded(num * 4, 0.0f);
+    for (uint16_t i = 0; i < num; ++i)
         padded[i * 4] = values[i];
 
-    bgfx::setUniform(u->handle, padded.data(), uint16_t(values.size()));
+    bgfx::setUniform(u->handle, padded.data(), num);
 }
 
 void Shader::SetUniform(const std::string& uname, const std::vector<glm::vec2>& values)
@@ -393,14 +434,17 @@ void Shader::SetUniform(const std::string& uname, const std::vector<glm::vec2>& 
     const UniformMeta* u = FindUniform(uname);
     if (!u || values.empty()) return;
 
-    std::vector<float> padded(values.size() * 4, 0.0f);
-    for (size_t i = 0; i < values.size(); ++i)
+    const uint16_t num = SafeUniformNum(u, values.size(), uname);
+    if (num == 0) return;
+
+    std::vector<float> padded(num * 4, 0.0f);
+    for (uint16_t i = 0; i < num; ++i)
     {
         padded[i * 4 + 0] = values[i].x;
         padded[i * 4 + 1] = values[i].y;
     }
 
-    bgfx::setUniform(u->handle, padded.data(), uint16_t(values.size()));
+    bgfx::setUniform(u->handle, padded.data(), num);
 }
 
 void Shader::SetUniform(const std::string& uname, const std::vector<glm::vec3>& values)
@@ -408,15 +452,18 @@ void Shader::SetUniform(const std::string& uname, const std::vector<glm::vec3>& 
     const UniformMeta* u = FindUniform(uname);
     if (!u || values.empty()) return;
 
-    std::vector<float> padded(values.size() * 4, 0.0f);
-    for (size_t i = 0; i < values.size(); ++i)
+    const uint16_t num = SafeUniformNum(u, values.size(), uname);
+    if (num == 0) return;
+
+    std::vector<float> padded(num * 4, 0.0f);
+    for (uint16_t i = 0; i < num; ++i)
     {
         padded[i * 4 + 0] = values[i].x;
         padded[i * 4 + 1] = values[i].y;
         padded[i * 4 + 2] = values[i].z;
     }
 
-    bgfx::setUniform(u->handle, padded.data(), uint16_t(values.size()));
+    bgfx::setUniform(u->handle, padded.data(), num);
 }
 
 void Shader::SetUniform(const std::string& uname, const std::vector<glm::vec4>& values)
@@ -424,7 +471,12 @@ void Shader::SetUniform(const std::string& uname, const std::vector<glm::vec4>& 
     const UniformMeta* u = FindUniform(uname);
     if (!u || values.empty()) return;
 
-    bgfx::setUniform(u->handle, glm::value_ptr(values[0]), uint16_t(values.size()));
+    const uint16_t num = SafeUniformNum(u, values.size(), uname);
+    if (num == 0) return;
+
+    // glm::vec4 is guaranteed contiguous, safe to use pointer arithmetic
+    static_assert(sizeof(glm::vec4) == 4 * sizeof(float), "glm::vec4 layout assumption broken");
+    bgfx::setUniform(u->handle, glm::value_ptr(values[0]), num);
 }
 
 // mat2 array: each mat2 → one Vec4 slot
@@ -433,8 +485,11 @@ void Shader::SetUniform(const std::string& uname, const std::vector<glm::mat2>& 
     const UniformMeta* u = FindUniform(uname);
     if (!u || values.empty()) return;
 
-    std::vector<float> packed(values.size() * 4);
-    for (size_t i = 0; i < values.size(); ++i)
+    const uint16_t num = SafeUniformNum(u, values.size(), uname);
+    if (num == 0) return;
+
+    std::vector<float> packed(num * 4);
+    for (uint16_t i = 0; i < num; ++i)
     {
         packed[i * 4 + 0] = values[i][0][0];
         packed[i * 4 + 1] = values[i][0][1];
@@ -442,7 +497,7 @@ void Shader::SetUniform(const std::string& uname, const std::vector<glm::mat2>& 
         packed[i * 4 + 3] = values[i][1][1];
     }
 
-    bgfx::setUniform(u->handle, packed.data(), uint16_t(values.size()));
+    bgfx::setUniform(u->handle, packed.data(), num);
 }
 
 // mat3 array: each mat3 → 3 Vec4 rows (12 floats)
@@ -451,8 +506,11 @@ void Shader::SetUniform(const std::string& uname, const std::vector<glm::mat3>& 
     const UniformMeta* u = FindUniform(uname);
     if (!u || values.empty()) return;
 
-    std::vector<float> packed(values.size() * 12, 0.0f);
-    for (size_t i = 0; i < values.size(); ++i)
+    const uint16_t num = SafeUniformNum(u, values.size(), uname);
+    if (num == 0) return;
+
+    std::vector<float> packed(num * 12, 0.0f);
+    for (uint16_t i = 0; i < num; ++i)
     {
         const float* src = glm::value_ptr(values[i]);
         float* dst = packed.data() + i * 12;
@@ -464,7 +522,7 @@ void Shader::SetUniform(const std::string& uname, const std::vector<glm::mat3>& 
         dst[8] = src[2]; dst[9] = src[5]; dst[10] = src[8]; dst[11] = 0.0f;
     }
 
-    bgfx::setUniform(u->handle, packed.data(), uint16_t(values.size()));
+    bgfx::setUniform(u->handle, packed.data(), num);
 }
 
 void Shader::SetUniform(const std::string& uname, const std::vector<glm::mat4>& values)
@@ -472,7 +530,11 @@ void Shader::SetUniform(const std::string& uname, const std::vector<glm::mat4>& 
     const UniformMeta* u = FindUniform(uname);
     if (!u || values.empty()) return;
 
-    bgfx::setUniform(u->handle, glm::value_ptr(values[0]), uint16_t(values.size()));
+    const uint16_t num = SafeUniformNum(u, values.size(), uname);
+    if (num == 0) return;
+
+    static_assert(sizeof(glm::mat4) == 16 * sizeof(float), "glm::mat4 layout assumption broken");
+    bgfx::setUniform(u->handle, glm::value_ptr(values[0]), num);
 }
 
 // ---------------------------------------------------------------------------
@@ -483,6 +545,14 @@ void Shader::SetTexture(const std::string& uname, bgfx::TextureHandle texture)
     const UniformMeta* u = FindUniform(uname);
     if (!u) return;
 
+    if (!bgfx::isValid(texture))
+    {
+        Logger::Log("Shader warning: invalid texture handle for \"" + uname + "\" in " + m_vsName + ", using missing texture");
+        EnsureMissingTexture();
+        texture = s_missingTexture;
+        if (!bgfx::isValid(texture)) return; // EnsureMissingTexture failed somehow
+    }
+
     bgfx::setTexture(u->samplerSlot, u->handle, texture);
 }
 
@@ -491,16 +561,31 @@ void Shader::SetTexture(const hashed_string& uname, Texture* texture)
     const UniformMeta* u = FindUniform(uname.str());
     if (!u) return;
 
-    bgfx::TextureHandle handle =
-        (texture && texture->valid) ? texture->getHandle() : s_missingTexture;
+    bgfx::TextureHandle handle = BGFX_INVALID_HANDLE;
+
+    if (texture && texture->valid)
+    {
+        handle = texture->getHandle();
+        if (!bgfx::isValid(handle))
+        {
+            Logger::Log("Shader warning: Texture object reports valid but handle is invalid for \"" +
+                uname.str() + "\" in " + m_vsName + ", using missing texture");
+            handle = BGFX_INVALID_HANDLE;
+        }
+    }
+
+    if (!bgfx::isValid(handle))
+    {
+        EnsureMissingTexture();
+        handle = s_missingTexture;
+        if (!bgfx::isValid(handle)) return; // EnsureMissingTexture failed somehow
+    }
 
     bgfx::setTexture(u->samplerSlot, u->handle, handle);
 }
 
 void Shader::SetCubemapTexture(const std::string& uname, bgfx::TextureHandle texture)
 {
-    // In bgfx the sampler type is opaque; cube vs 2D is encoded in the texture handle.
-    // The API call is identical to SetTexture.
     SetTexture(uname, texture);
 }
 
@@ -526,6 +611,13 @@ void Shader::EnsureMissingTexture()
         BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT,
         mem
     );
+
+    if (!bgfx::isValid(s_missingTexture))
+    {
+        Logger::Log("Shader error: failed to create missing texture fallback");
+        return;
+    }
+
     bgfx::setName(s_missingTexture, "missing_texture");
 }
 

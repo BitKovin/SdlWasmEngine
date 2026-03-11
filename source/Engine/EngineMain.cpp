@@ -425,7 +425,7 @@ void EngineMain::MainLoop()
         GameUpdate();
     }
 
-    Render();
+    //Render();
 
     if (asyncGameUpdate == false)
     {
@@ -740,8 +740,8 @@ void EngineMain::Render()
     );
 
     auto fullscreenShader = ShaderManager::GetShaderProgram(
-        "fullscreen_vertex",
-        "fxaa_simple"
+        "vs_fullscreen",
+        "fs_fxaa_simple"
     );
 
     fullscreenShader->SetTexture("screenTexture", UiRenderTexture->textureHandle());

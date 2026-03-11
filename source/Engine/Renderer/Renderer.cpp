@@ -26,9 +26,9 @@ Renderer::Renderer()
     InitFrameBuffers();
     InitResolveFrameBuffers();
 
-    fullscreenShader = ShaderManager::GetShaderProgram("fullscreen_vertex", "postprocessing");
-    blurShader = ShaderManager::GetShaderProgram("fullscreen_vertex", "motionBlur");
-    blurApplyShader = ShaderManager::GetShaderProgram("fullscreen_vertex", "motionBlur_apply");
+    fullscreenShader = ShaderManager::GetShaderProgram("vs_fullscreen", "fs_postprocessing");
+    blurShader = ShaderManager::GetShaderProgram("vs_fullscreen", "fs_motionBlur");
+    blurApplyShader = ShaderManager::GetShaderProgram("vs_fullscreen", "fs_motionBlur_apply");
 
     BlurResultBuffer = new RenderTexture(screenResolution.x, screenResolution.y,
         TextureFormat::RGBA16F);
@@ -137,7 +137,7 @@ void Renderer::RenderLevel(Level* level)
     fullscreenShader->UseProgram();
     fullscreenShader->SetTexture("screenTexture", resultTex);
     fullscreenShader->SetUniform("screenResolution", nativeRes);
-    RenderFullscreenQuad(0);
+    RenderFullscreenQuad(fullscreenShader);
 }
 
 // -----------------------------------------------------------------------

@@ -76,8 +76,8 @@ namespace UiRenderer {
             bgfx::makeRef(quadVertices, sizeof(quadVertices)),
             s_quadLayout);
 
-        s_texturedShader = ShaderManager::GetShaderProgram("ui", "ui_textured");
-        s_flatColorShader = ShaderManager::GetShaderProgram("ui", "ui_flatcolor");
+        s_texturedShader = ShaderManager::GetShaderProgram("vs_ui", "fs_ui_textured");
+        s_flatColorShader = ShaderManager::GetShaderProgram("vs_ui", "fs_ui_flatcolor");
     }
 
     // ── Shutdown ──────────────────────────────────────────────────────────────────

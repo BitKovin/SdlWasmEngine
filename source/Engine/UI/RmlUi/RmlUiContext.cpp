@@ -63,7 +63,7 @@ void RmlUiContext::ProcessEvent(SDL_Event& event) {
 void RmlUiContext::Update(float delta_seconds) 
 {
 
-   
+    return;
 
     context_->Update();
 
@@ -143,7 +143,7 @@ void RmlUiContext::ClearModals()
 void RmlUiContext::OnResize(int new_width, int new_height) 
 {
 
-
+    return;
     float ui_scale_factor = static_cast<float>(new_height) / 1080.0f;
     context_->SetDensityIndependentPixelRatio(ui_scale_factor);
 
@@ -154,7 +154,11 @@ void RmlUiContext::OnResize(int new_width, int new_height)
 
 }
 
-Rml::ElementDocument* RmlUiContext::LoadDocument(const std::string& filename) {
+Rml::ElementDocument* RmlUiContext::LoadDocument(const std::string& filename) 
+{
+
+    return nullptr;
+
     auto* doc = context_->LoadDocument(filename.c_str());
     if (doc) {
         loaded_docs_[filename] = doc;
