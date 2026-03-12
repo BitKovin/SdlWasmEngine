@@ -336,8 +336,8 @@ int main(int argc, char* args[])
 
     // ====================== BGFX INITIALIZATION (replaces all OpenGL) ======================
     bgfx::Init init;
-    init.type = bgfx::RendererType::Direct3D12;   // auto-select best renderer (D3D11/Vulkan/etc.)
-    init.debug = true;
+    init.type = bgfx::RendererType::OpenGL;   // auto-select best renderer (D3D11/Vulkan/etc.)
+    init.debug = false;
 
     SDL_SysWMinfo wmInfo;
     SDL_VERSION(&wmInfo.version);
@@ -355,7 +355,7 @@ int main(int argc, char* args[])
         fprintf(stderr, "bgfx::init failed!\n");
         return 1;
     }
-    bgfx::setDebug(BGFX_DEBUG_STATS);
+    //bgfx::setDebug(BGFX_DEBUG_STATS);
     // Default clear + views
     bgfx::setViewClear(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x000000ff, 1.0f, 0);
     bgfx::setViewRect(0, 0, 0, 800, 600);
