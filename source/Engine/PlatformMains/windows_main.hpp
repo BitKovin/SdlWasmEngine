@@ -157,8 +157,6 @@ void desktop_render_loop() {
 
         engine->MainLoop();
 
-        // Present everything (replaces SDL_GL_SwapWindow)
-        bgfx::frame();
     }
 }
 
@@ -338,7 +336,7 @@ int main(int argc, char* args[])
 
     // ====================== BGFX INITIALIZATION (replaces all OpenGL) ======================
     bgfx::Init init;
-    init.type = bgfx::RendererType::Direct3D11;   // auto-select best renderer (D3D11/Vulkan/etc.)
+    init.type = bgfx::RendererType::Direct3D12;   // auto-select best renderer (D3D11/Vulkan/etc.)
     init.debug = true;
 
     SDL_SysWMinfo wmInfo;
@@ -357,7 +355,7 @@ int main(int argc, char* args[])
         fprintf(stderr, "bgfx::init failed!\n");
         return 1;
     }
-
+    bgfx::setDebug(BGFX_DEBUG_STATS);
     // Default clear + views
     bgfx::setViewClear(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x000000ff, 1.0f, 0);
     bgfx::setViewRect(0, 0, 0, 800, 600);
