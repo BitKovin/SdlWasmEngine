@@ -37,7 +37,7 @@ if (CMAKE_SYSTEM_NAME MATCHES "Emscripten")
     set(EMSCRIPTEN TRUE)
     message(STATUS "Building for Emscripten")
     include_directories(SYSTEM ${EMSCRIPTEN_SYSROOT}/include)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse -msse2 -msimd128 -msse4.2")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse -msse2 -msimd128")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse -msse2 -msimd128 -msse4.2")
 
 elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
@@ -147,13 +147,21 @@ target_link_libraries(engine PUBLIC fmod)
 
 
 # Jolt shipping configuration
-set(ENABLE_ASSERTS              OFF CACHE BOOL "Enable asserts"                    FORCE)
-set(ENABLE_ALL_WARNINGS         OFF CACHE BOOL "Enable all warnings"               FORCE)
-set(INTERPROCEDURAL_OPTIMIZATION ON  CACHE BOOL "Enable link-time optimization"    FORCE)
 
-# Disable debug features not needed in shipping
+# Jolt shipping configuration
+set(ENABLE_ASSERTS              OFF CACHE BOOL "" FORCE)
+set(ENABLE_ALL_WARNINGS         OFF CACHE BOOL "" FORCE)
+set(INTERPROCEDURAL_OPTIMIZATION ON  CACHE BOOL "" FORCE)
+
+# Disable debug features...
 set(DEBUG_RENDERER_IN_DEBUG_AND_RELEASE OFF CACHE BOOL "" FORCE)
 set(PROFILER_IN_DEBUG_AND_RELEASE       OFF CACHE BOOL "" FORCE)
+
+
+if(EMSCRIPTEN)
+    set(USE_WASM_SIMD ON CACHE BOOL "Enable SIMD on Emscripten WASM build" FORCE)
+endif()
+
 add_subdirectory(${LIB_DIR}/JoltPhysics-5.3.0/Build/)
 target_link_libraries(engine PUBLIC Jolt::Jolt)
 
@@ -195,6 +203,14 @@ set(BGFX_INSTALL        OFF CACHE BOOL "" FORCE)
 add_subdirectory(${LIB_DIR}/bgfx/bgfx.cmake)
 target_link_libraries(engine PUBLIC bgfx)
 target_link_libraries(engine PUBLIC bx)
+if(EMSCRIPTEN)
+    if(TARGET bimg_encode)
+        # Undefine the macros only for this target so it skips the broken #include <x86intrin.h>
+        # Jolt and everything else still get the full SSE4.2 intrinsics.
+        target_compile_options(bimg_encode PRIVATE -U__SSE4_1__ -U__SSE4_2__)
+        message(STATUS "bimg_encode: disabled SSE4.1/4.2 intrinsics to avoid x86intrin.h errors on Emscripten")
+    endif()
+endif()
 
 # ——————————————————————————————————————————————————————————
 # Resolve GAME_DIR, create source/game folder if missing, save selection
@@ -225,6 +241,8 @@ set(WASM_COMMON_LINK_OPTIONS
     "SHELL:-s USE_WEBGL2=1"
     "SHELL:-s MIN_WEBGL_VERSION=2"
     "SHELL:-s MAX_WEBGL_VERSION=2"
+
+
     #"SHELL:-s GL_PREINITIALIZED_CONTEXT=1"
     "SHELL:-s STACK_SIZE=500000"
     #"SHELL:-fsanitize=address,undefined"

@@ -137,6 +137,11 @@ void Renderer::RenderLevel(Level* level)
         ? BlurResultBuffer->textureHandle()
         : colorResolveBuffer->textureHandle();
 
+#if __EMSCRIPTEN__
+	resultTex = colorBuffer->textureHandle();
+#endif // __EMSCRIPTEN__
+
+
     ivec2 nativeRes = GetNativeScreenResolution();
 
     ViewIdManager::GiveNextId();

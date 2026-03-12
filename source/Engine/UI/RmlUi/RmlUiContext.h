@@ -8,7 +8,7 @@
 #include <SDL2/SDL.h>
 
 class SystemInterface_SDL;
-class RenderInterface_GL3;
+class RenderInterface_BGFX;
 
 class RmlUiContext 
 {
@@ -70,7 +70,8 @@ private:
     int width_, height_;
     bool enable_debugger_;
 
-
+    SystemInterface_SDL* system_interface_ = nullptr;
+    RenderInterface_BGFX* render_interface_ = nullptr;
     Rml::Context* context_ = nullptr;
 
     std::unordered_map<std::string, Rml::ElementDocument*> loaded_docs_;

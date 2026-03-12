@@ -165,8 +165,9 @@ vec3 GetFromLUT(vec3 color)
 // ---------------------------------------------------------------------------
 void main()
 {
-    int x     = int(gl_FragCoord.x) % 4;
-    int y     = int(gl_FragCoord.y) % 4;
+
+    int x = int(mod(gl_FragCoord.x, 4.0));
+    int y = int(mod(gl_FragCoord.y, 4.0));
     float bayer_value = bayer4x4(y * 4 + x);
 
     float aspectRatio = getAspectRatio();

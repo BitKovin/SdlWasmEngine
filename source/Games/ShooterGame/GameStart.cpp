@@ -123,7 +123,7 @@ public:
         Input::LockCursor = PauseGameManager::GetGamePaused() == false;
 
 		EngineMain::MainInstance->Paused = PauseGameManager::isGameAnyPaused();
-        return;
+
         if (PauseGameManager::GetGamePaused())
         {
             if (!pauseMenuDoc->IsVisible())

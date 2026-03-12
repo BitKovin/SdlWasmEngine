@@ -2,7 +2,8 @@
 #include "../../gl.h"
 #include <RmlUi/Debugger.h>
 #include "Backends/RmlUi_Backend.h"
-
+#include "Backends/RmlUi_Renderer_BGFX.h"
+#include "Backends/RmlUi_Platform_SDL.h"
 #include "RmlUiEvents.h"
 #include "../../Input.h"
 #include "Backends/MyFileInterface.h"
@@ -23,16 +24,20 @@ RmlUiContext::~RmlUiContext() {
 
     Rml::Shutdown();
 
-
+    delete render_interface_;
+    delete system_interface_;
 }
 
 bool RmlUiContext::Initialize() 
 {
 
-	//Backend::Initialize("RmlUi SDL2 OpenGL Context", width_, height_, true);
+	Backend::Initialize("RmlUi SDL2 OpenGL Context", width_, height_, true);
 
+    system_interface_ = (SystemInterface_SDL*)Backend::GetSystemInterface();
+    Rml::SetSystemInterface(system_interface_);
 
-    Rml::SetRenderInterface(nullptr);
+    render_interface_ = (RenderInterface_BGFX*)Backend::GetRenderInterface();
+    Rml::SetRenderInterface(render_interface_);
     
     Rml::SetFileInterface(new RmlFileInterface());
 
@@ -57,13 +62,39 @@ bool RmlUiContext::Initialize()
 }
 
 void RmlUiContext::ProcessEvent(SDL_Event& event) {
-
+	RmlSDL::InputEventHandler(context_, window_, event);
 }
 
 void RmlUiContext::Update(float delta_seconds) 
 {
 
-    return;
+    if (Input::GetAction("ui_confirm")->Pressed())
+    {
+        context_->ProcessKeyDown(Rml::Input::KeyIdentifier::KI_RETURN, RmlSDL::GetKeyModifierState());
+    }
+    if (Input::GetAction("ui_cancel")->Pressed())
+    {
+        //context_->ProcessKeyDown(Rml::Input::KeyIdentifier::KI_ESCAPE, RmlSDL::GetKeyModifierState());
+		PerformModalBackAction();
+	}
+    if(Input::GetAction("ui_up")->Pressed())
+    {
+        context_->ProcessKeyDown(Rml::Input::KeyIdentifier::KI_UP, RmlSDL::GetKeyModifierState());
+	}
+    if (Input::GetAction("ui_down")->Pressed())
+    {
+        context_->ProcessKeyDown(Rml::Input::KeyIdentifier::KI_DOWN, RmlSDL::GetKeyModifierState());
+    }
+    if (Input::GetAction("ui_left")->Pressed())
+    {
+        context_->ProcessKeyDown(Rml::Input::KeyIdentifier::KI_LEFT, RmlSDL::GetKeyModifierState());
+    }
+    if (Input::GetAction("ui_right")->Pressed())
+    {
+        context_->ProcessKeyDown(Rml::Input::KeyIdentifier::KI_RIGHT, RmlSDL::GetKeyModifierState());
+	}
+
+
 
     context_->Update();
 
@@ -73,7 +104,10 @@ void RmlUiContext::Update(float delta_seconds)
 }
 
 void RmlUiContext::Render() {
-
+    if (pre_render_cb_) pre_render_cb_();  // Optional: e.g., dim screen on pause
+	render_interface_->BeginFrame();
+    context_->Render();
+	render_interface_->EndFrame();
 }
 
 void RmlUiContext::PushModal(Rml::ElementDocument* doc)
@@ -143,7 +177,7 @@ void RmlUiContext::ClearModals()
 void RmlUiContext::OnResize(int new_width, int new_height) 
 {
 
-    return;
+
     float ui_scale_factor = static_cast<float>(new_height) / 1080.0f;
     context_->SetDensityIndependentPixelRatio(ui_scale_factor);
 
@@ -151,14 +185,10 @@ void RmlUiContext::OnResize(int new_width, int new_height)
     height_ = new_height;
     //glViewport(0, 0, width_, height_);
     if (context_) context_->SetDimensions(Rml::Vector2i(width_, height_));
-
+    if (render_interface_) render_interface_->SetViewport(width_, height_);
 }
 
-Rml::ElementDocument* RmlUiContext::LoadDocument(const std::string& filename) 
-{
-
-    return nullptr;
-
+Rml::ElementDocument* RmlUiContext::LoadDocument(const std::string& filename) {
     auto* doc = context_->LoadDocument(filename.c_str());
     if (doc) {
         loaded_docs_[filename] = doc;

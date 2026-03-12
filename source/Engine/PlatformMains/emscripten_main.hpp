@@ -1,4 +1,4 @@
-#if __EMSCRIPTEN__ //so it doesn't results in errors on other platforms
+#if __EMSCRIPTEN__
 
 #define DISTRIBUTION
 
@@ -9,179 +9,235 @@
 #include <SDL2/SDL_ttf.h>
 #include <emscripten.h>
 #include <emscripten/html5.h>
+
 #include "../imgui/imgui.h"
-#include "../imgui/imgui_impl_opengl3.h"
+#include "../imgui/imgui_impl_bgfx.h"
 #include "../imgui/imgui_impl_sdl2.h"
-#include "../gl.h"
+
+#include <bgfx/bgfx.h>
+#include <bgfx/platform.h>          // ← REQUIRED for PlatformData on Emscripten
+
 #include <deque>
 #include <algorithm>
 #include <array>
 
 #include "../EngineMain.h"
-
-// Global variables
-
 #include "PlatformWindowData.h"
+
 using namespace PlatformWindowData;
 
+// ------------------------------------------------------------
+// Globals
+// ------------------------------------------------------------
 EngineMain* engine = nullptr;
 std::deque<vec2> delta_history;
 const size_t history_size = 3;
 
-// Function declarations
-void update_screen_size(int w, int h);
-void InitImGui();
-void emscripten_render_loop();
+ivec2 initial_screen_size = ivec2(800, 600);
 
-// Function implementations
-void update_screen_size(int w, int h) {
+// ------------------------------------------------------------
+void update_screen_size(int w, int h)
+{
     SDL_SetWindowSize(window, w, h);
 }
 
-ivec2 initial_screen_size = ivec2(800, 600);
-
-void InitImGui() {
+void InitImGui()
+{
+     
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
+
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+
     ImGui::StyleColorsDark();
-    ImGui_ImplSDL2_InitForOpenGL(window, glContext);
-    ImGui_ImplOpenGL3_Init();
+
+    ImGui_ImplSDL2_InitForOpenGL(window, nullptr);
+    ImGui_Implbgfx_Init(255);
 }
 
-static EM_BOOL on_canvas_focus(int eventType, const EmscriptenFocusEvent* e, void* userData) {
-    EngineMain::MainInstance->Paused = false;
-    return EM_TRUE; // we handled it
-}
-
-static EM_BOOL on_canvas_blur(int eventType, const EmscriptenFocusEvent* e, void* userData) {
-    EngineMain::MainInstance->Paused = true;
-    return EM_TRUE;
-}
-
-void emscripten_render_loop() 
+// ------------------------------------------------------------
+void emscripten_render_loop()
 {
     Input::PendingMouseDelta = vec2(0, 0);
+
     SDL_Event event;
     Input::StartEventsFrame();
 
-	vec2 screenSizeDifferenceFactor = vec2((float)EngineMain::MainInstance->ScreenSize.x / initial_screen_size.x, (float)EngineMain::MainInstance->ScreenSize.y / initial_screen_size.y);
+    vec2 screenSizeDifferenceFactor =
+        vec2(
+            (float)EngineMain::MainInstance->ScreenSize.x / initial_screen_size.x,
+            (float)EngineMain::MainInstance->ScreenSize.y / initial_screen_size.y
+        );
 
-    while (SDL_PollEvent(&event)) 
+    while (SDL_PollEvent(&event))
     {
-		if (EngineMain::MainInstance->DebugUiEnabled)
+        if (EngineMain::MainInstance->DebugUiEnabled)
             ImGui_ImplSDL2_ProcessEvent(&event);
-        switch (event.type) {
+
+        switch (event.type)
+        {
         case SDL_WINDOWEVENT:
-            if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
-                update_screen_size(event.window.data1, event.window.data2);
+        {
+            if (event.window.event == SDL_WINDOWEVENT_RESIZED ||
+                event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
+            {
+                int w, h;
+                SDL_GetWindowSize(window, &w, &h);
+
+                bgfx::reset(w, h, BGFX_RESET_NONE);
+                bgfx::setViewRect(0, 0, 0, w, h);
+                bgfx::setViewRect(255, 0, 0, w, h);
+
+                update_screen_size(w, h);
             }
             break;
+        }
+
         case SDL_MOUSEMOTION:
+        {
+            event.motion.x =
+                (int)((float)event.motion.x * screenSizeDifferenceFactor.x);
+            event.motion.y =
+                (int)((float)event.motion.y * screenSizeDifferenceFactor.y);
 
-
-			//event.motion.xrel = (int)((float)event.motion.xrel * screenSizeDifferenceFactor.x);
-			//event.motion.yrel = (int)((float)event.motion.yrel * screenSizeDifferenceFactor.y);
-			event.motion.x = (int)((float)event.motion.x * screenSizeDifferenceFactor.x);
-			event.motion.y = (int)((float)event.motion.y * screenSizeDifferenceFactor.y);
-
-            Input::PendingMouseDelta += vec2(event.motion.xrel, event.motion.yrel) * screenSizeDifferenceFactor;
+            Input::PendingMouseDelta +=
+                vec2(event.motion.xrel, event.motion.yrel) *
+                screenSizeDifferenceFactor;
 
             break;
+        }
+
         default:
             break;
         }
 
         Input::ReceiveSdlEvent(event);
-
     }
 
     engine->MainLoop();
+
+    bgfx::frame();
 }
 
-// Main function
-int main(int argc, char* args[]) {
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_JOYSTICK) < 0) {
+// ------------------------------------------------------------
+// Main
+// ------------------------------------------------------------
+int main(int argc, char* args[])
+{
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_JOYSTICK) < 0)
+    {
         fprintf(stderr, "SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
         return 1;
     }
 
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
-    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 2);
+    int flags = SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_OPENGL;
 
-    int flags = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI;
-    window = SDL_CreateWindow("Image", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600, flags);
-    if (!window) {
+    window = SDL_CreateWindow(
+        "Image",
+        SDL_WINDOWPOS_CENTERED,
+        SDL_WINDOWPOS_CENTERED,
+        800,
+        600,
+        flags
+    );
+
+    if (!window)
+    {
         fprintf(stderr, "Window could not be created! SDL_Error: %s\n", SDL_GetError());
         return 1;
     }
 
-
     TTF_Init();
-    glContext = SDL_GL_CreateContext(window);
-    if (!glContext) {
-        fprintf(stderr, "OpenGL context could not be created! SDL_Error: %s\n", SDL_GetError());
+
+    // ------------------------------------------------------------
+    // BGFX INIT (fixed for Emscripten)
+    // ------------------------------------------------------------
+    int w, h;
+    SDL_GetWindowSize(window, &w, &h);
+
+    // === EMSCRIPTEN PLATFORM DATA (this is what was missing) ===
+    bgfx::PlatformData platformData{};
+    platformData.nwh = (void*)"#canvas";   // Emscripten's default canvas ID when using SDL2 + USE_SDL=2
+    platformData.context = nullptr;
+    platformData.backBuffer = nullptr;
+    platformData.backBufferDS = nullptr;
+
+    // === INIT ===
+    bgfx::Init init;
+    init.type = bgfx::RendererType::OpenGL;   // WebGL2 (matches your existing -s USE_WEBGL2=1)
+    // init.type            = bgfx::RendererType::Count;   // you can also use this for auto-select
+    init.debug = true;
+    init.resolution.width = w;
+    init.resolution.height = h;
+    init.resolution.reset = BGFX_RESET_NONE;
+    init.platformData = platformData;                 // ← THIS MAKES IT WORK ON WEB
+
+    if (!bgfx::init(init))
+    {
+        printf("bgfx init failed\n");
         return 1;
     }
 
+    printf("bgfx initialized successfully! Renderer type: %d\n", (int)bgfx::getRendererType());
+
+    bgfx::setViewClear(
+        0,
+        BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH,
+        0x000000ff,
+        1.0f,
+        0
+    );
+
+    bgfx::setViewRect(0, 0, 0, w, h);
+    bgfx::setViewRect(255, 0, 0, w, h);
+
+    // ------------------------------------------------------------
+
     InitImGui();
-    SDL_SetHintWithPriority(SDL_HINT_MOUSE_RELATIVE_MODE_CENTER, "1", SDL_HINT_OVERRIDE);
+
+    SDL_SetHintWithPriority(
+        SDL_HINT_MOUSE_RELATIVE_MODE_CENTER,
+        "1",
+        SDL_HINT_OVERRIDE
+    );
+
     SDL_SetRelativeMouseMode(SDL_TRUE);
-
-    printf("GL Version={%s}\n", glGetString(GL_VERSION));
-    printf("GLSL Version={%s}\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
-
-
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    SDL_GL_SetSwapInterval(0);
 
     engine = new EngineMain(window);
 
-#ifndef  __EMSCRIPTEN_PTHREADS__
-
+#ifndef __EMSCRIPTEN_PTHREADS__
     engine->asyncGameUpdate = false;
-
-#endif // ! __EMSCRIPTEN_PTHREADS__
+#endif
 
     EngineMain::MainInstance = engine;
 
-    int h, w;
-	SDL_GetWindowSize(window, &w, &h);
-	initial_screen_size = ivec2(w, h);
+    SDL_GetWindowSize(window, &w, &h);
+    initial_screen_size = ivec2(w, h);
 
 #ifdef emscripten_sleep
-    emscripten_sleep(300);//some time for js bounce back for correct start resolution
-#endif // emscripten_sleep
-
-
+    emscripten_sleep(300);
+#endif
 
     engine->Init();
 
-    Input::AddAction("fullscreen")->AddKeyboardKey(SDL_GetScancodeFromKey(SDLK_F11));
-
-    EmscriptenFullscreenStrategy strategy;
-    strategy.scaleMode = EMSCRIPTEN_FULLSCREEN_SCALE_STRETCH;
-    strategy.filteringMode = EMSCRIPTEN_FULLSCREEN_FILTERING_DEFAULT;
-    strategy.canvasResolutionScaleMode = EMSCRIPTEN_FULLSCREEN_CANVAS_SCALE_STDDEF;
-    strategy.canvasResizedCallback = 0;
-    //emscripten_enter_soft_fullscreen("canvas", &strategy); //not an error
-
-    //emscripten_set_focus_callback("#canvas", nullptr, EM_FALSE, on_canvas_focus);
-    //emscripten_set_blur_callback("#canvas", nullptr, EM_FALSE, on_canvas_blur);
+    Input::AddAction("fullscreen")
+        ->AddKeyboardKey(SDL_GetScancodeFromKey(SDLK_F11));
 
 #ifdef emscripten_sleep
-    emscripten_sleep(300);//some time for js bounce back for correct start resolution
-#endif // emscripten_sleep
+    emscripten_sleep(300);
+#endif
 
     emscripten_set_main_loop(emscripten_render_loop, 0, 1);
 
     delete engine;
+
+    bgfx::frame();
+    bgfx::shutdown();
+
+    SDL_DestroyWindow(window);
+    SDL_Quit();
 
     return 0;
 }

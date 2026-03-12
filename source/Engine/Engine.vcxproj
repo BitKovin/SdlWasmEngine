@@ -441,6 +441,9 @@
     <ClCompile Include="StaticMesh.cpp" />
     <ClCompile Include="ThreadPool.cpp" />
     <ClCompile Include="Time.cpp" />
+    <ClCompile Include="UI\RmlUi\Backends\RmlUi_Backend_SDL_BGFX.cpp" />
+    <ClCompile Include="UI\RmlUi\Backends\RmlUi_Platform_SDL.cpp" />
+    <ClCompile Include="UI\RmlUi\Backends\RmlUi_Renderer_BGFX.cpp" />
     <ClCompile Include="UI\RmlUi\RmlUiContext.cpp" />
     <ClCompile Include="UI\UiElement.cpp" />
     <ClCompile Include="UI\UiProgressBar.hpp" />
@@ -617,6 +620,8 @@
     <ClInclude Include="Time.hpp" />
     <ClInclude Include="UI\RmlUi\Backends\MyFileInterface.h" />
     <ClInclude Include="UI\RmlUi\Backends\RmlUi_Backend.h" />
+    <ClInclude Include="UI\RmlUi\Backends\RmlUi_Platform_SDL.h" />
+    <ClInclude Include="UI\RmlUi\Backends\RmlUi_Renderer_BGFX.h" />
     <ClInclude Include="UI\RmlUi\RmlUiContext.h" />
     <ClInclude Include="UI\RmlUi\RmlUiEvents.h" />
     <ClInclude Include="UI\UiButton.hpp" />
