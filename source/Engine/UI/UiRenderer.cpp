@@ -203,7 +203,7 @@ namespace UiRenderer {
         std::unordered_map<std::string, vec4>& vec4s,
         const glm::vec4& color, const string& shader)
     {
-        auto* sp = ShaderManager::GetShaderProgram("ui", shader);
+        auto* sp = ShaderManager::GetShaderProgram("vs_ui", shader);
         sp->UseProgram();
         SetShaderProjection(sp);
 

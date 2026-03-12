@@ -8,7 +8,7 @@ public:
 
 	UiProgressBar()
 	{
-		PixelShader = "ui/progressBar";
+		PixelShader = "ui/fs_progressBar";
 	}
 
 	std::string BackgroundImage = "GameData/cat.png";
