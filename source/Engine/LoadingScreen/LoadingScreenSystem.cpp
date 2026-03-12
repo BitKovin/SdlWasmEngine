@@ -44,11 +44,12 @@ void LoadingScreenSystem::Draw()
     bgfx::setViewRect(viewId, 0, 0, width, height);
     bgfx::setViewClear(
         viewId,
-        BGFX_CLEAR_COLOR,
+        BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH,
         0x000000ff, // black
         1.0f,
         0
     );
+    bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A);
 
     bgfx::touch(viewId); // ensure view clears even if nothing submitted
 

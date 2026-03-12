@@ -21,7 +21,8 @@
 //   bgfx::setViewRect (fb.viewId(), 0, 0, w, h);
 //   encoder->submit(fb.viewId(), program);
 //
-// To resolve MSAA, use RenderTexture::copyFrom() (bgfx::blit).
+// To resolve MSAA, use resolve() for a full blit, or resolveDepthOnly()
+// after a depth-only pre-pass before color has been written.
 // -----------------------------------------------------------------------
 
 class Framebuffer {
@@ -36,6 +37,10 @@ public:
     // -----------------------------------------------------------------------
     // Attachment management
     // All attach* calls rebuild the underlying bgfx framebuffer.
+    //
+    // Recommended attachment order: attachColor() before attachDepth().
+    // This ensures the first rebuild() has a valid color attachment from
+    // which to derive the view rect, avoiding a transient depth-only phase.
     // -----------------------------------------------------------------------
     void attachColor(RenderTexture* texture, uint32_t attachmentIndex = 0);
     void attachDepth(RenderTexture* texture);
@@ -46,10 +51,19 @@ public:
         bool isDepth = false);
 
     // -----------------------------------------------------------------------
-    // Resolve MSAA color → single-sample target.
+    // Resolve MSAA color+depth → single-sample target.
     // Internally delegates to RenderTexture::copyFrom() (bgfx::blit).
+    //
+    // IMPORTANT: Only call resolve() after ALL attachments have been written
+    // for the current pass. If you only want to copy depth (e.g. after a
+    // depth pre-pass before any color writes), call resolveDepthOnly()
+    // instead to avoid blitting uninitialized color data.
     // -----------------------------------------------------------------------
     void resolve(Framebuffer& target);
+
+    // Resolve only the depth attachment.
+    // Safe to call after a depth-only pre-pass when color is not yet written.
+    void resolveDepthOnly(Framebuffer& target);
 
     // -----------------------------------------------------------------------
     // Bind helpers — configure the owned bgfx view.

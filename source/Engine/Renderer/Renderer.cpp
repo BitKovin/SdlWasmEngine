@@ -1,4 +1,4 @@
-﻿// Renderer.cpp — bgfx port
+// Renderer.cpp — bgfx port
 #include "Renderer.h"
 
 #include "../EngineMain.h"
@@ -13,7 +13,7 @@
 // -----------------------------------------------------------------------
 // bgfx clear-color helper  (RGBA packed as uint32_t 0xRRGGBBAA)
 // -----------------------------------------------------------------------
-static constexpr uint32_t kClearBlack = 0x000000ff;
+static constexpr uint32_t kClearBlack  = 0x000000ff;
 static constexpr uint32_t kClearAlpha1 = 0x000000ff; // alpha = 1, RGB = 0
 
 // -----------------------------------------------------------------------
@@ -26,9 +26,9 @@ Renderer::Renderer()
     InitFrameBuffers();
     InitResolveFrameBuffers();
 
-    fullscreenShader = ShaderManager::GetShaderProgram("vs_fullscreen", "fs_postprocessing");
-    blurShader = ShaderManager::GetShaderProgram("vs_fullscreen", "fs_motionBlur");
-    blurApplyShader = ShaderManager::GetShaderProgram("vs_fullscreen", "fs_motionBlur_apply");
+    fullscreenShader  = ShaderManager::GetShaderProgram("vs_fullscreen", "fs_postprocessing");
+    blurShader        = ShaderManager::GetShaderProgram("vs_fullscreen", "fs_motionBlur");
+    blurApplyShader   = ShaderManager::GetShaderProgram("vs_fullscreen", "fs_motionBlur_apply");
 
     BlurResultBuffer = new RenderTexture(screenResolution.x, screenResolution.y,
         TextureFormat::RGBA16F);
@@ -74,7 +74,7 @@ void Renderer::RenderLevel(Level* level)
 {
     if (LightManager::DirectionalShadowsEnabled)
     {
-        RenderDirectionalLightShadows(level->ShadowRenderList, *DirectionalShadowMapFBO, 4);
+        RenderDirectionalLightShadows(level->ShadowRenderList,       *DirectionalShadowMapFBO, 4);
         RenderDirectionalLightShadows(level->DetailShadowRenderList, *DetailDirectionalShadowMapFBO, 3);
     }
 
@@ -98,14 +98,14 @@ void Renderer::RenderLevel(Level* level)
             BGFX_CLEAR_COLOR, kClearBlack, 1.0f, 0);
 
         blurShader->UseProgram();
-        blurShader->SetTexture("uAccumulated", BlurAccumulatedBuffer->textureHandle());
-        blurShader->SetTexture("uCustomIdTex", customIdResolveBuffer->textureHandle());
-        blurShader->SetUniform("uDeltaTime", EngineMain::MainInstance->Paused
-            ? 0.0f
-            : Time::DeltaTimeFNoTimeScale);
-        blurShader->SetUniform("GameTime", (float)Time::GameTime);
-        blurShader->SetUniform("uPersistence", 0.20f);
-        blurShader->SetUniform("uMotionScale", 3.0f);
+        blurShader->SetTexture("uAccumulated",  BlurAccumulatedBuffer->textureHandle());
+        blurShader->SetTexture("uCustomIdTex",  customIdResolveBuffer->textureHandle());
+        blurShader->SetUniform("uDeltaTime",    EngineMain::MainInstance->Paused
+                                                    ? 0.0f
+                                                    : Time::DeltaTimeFNoTimeScale);
+        blurShader->SetUniform("GameTime",      (float)Time::GameTime);
+        blurShader->SetUniform("uPersistence",  0.20f);
+        blurShader->SetUniform("uMotionScale",  3.0f);
         blurShader->SetTexture("screenTexture", colorResolveBuffer->textureHandle());
         RenderFullscreenQuad(blurShader);
 
@@ -116,7 +116,7 @@ void Renderer::RenderLevel(Level* level)
         BlurResultBuffer->setAsRenderTarget();
         blurApplyShader->UseProgram();
         blurApplyShader->SetTexture("screenTexture", colorResolveBuffer->textureHandle());
-        blurApplyShader->SetTexture("blurTexture", BlurAccumulatedBuffer->textureHandle());
+        blurApplyShader->SetTexture("blurTexture",   BlurAccumulatedBuffer->textureHandle());
         RenderFullscreenQuad(blurApplyShader);
     }
 
@@ -133,9 +133,10 @@ void Renderer::RenderLevel(Level* level)
         static_cast<uint16_t>(nativeRes.x),
         static_cast<uint16_t>(nativeRes.y));
     bgfx::setViewFrameBuffer(0, BGFX_INVALID_HANDLE); // default backbuffer
+    ViewIdManager::setCurrentViewId(0);
 
     fullscreenShader->UseProgram();
-    fullscreenShader->SetTexture("screenTexture", resultTex);
+    fullscreenShader->SetTexture("screenTexture",  resultTex);
     fullscreenShader->SetUniform("screenResolution", nativeRes);
     RenderFullscreenQuad(fullscreenShader);
 }
@@ -187,18 +188,18 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
             static_cast<uint16_t>(res.x),
             static_cast<uint16_t>(res.y));
 
+        // FIX #4: Clear both color and depth at the start of the frame so
+        // colorBuffer is never in an undefined state. Color will be
+        // overwritten in Pass B; clearing it here costs nothing meaningful.
         bgfx::setViewClear(vid,
-            BGFX_CLEAR_DEPTH,
+            BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH,
             kClearBlack, 1.0f, 0);
 
-        // Depth pre-pass state:
-        //   - No color writes
-        //   - Depth write + less
+        // Depth pre-pass draw state:
+        //   - No color writes  (WRITE_Z only)
+        //   - Depth write + less-than test
         //   - Back-face culling
-        //   - Polygon offset (slope=3, units=3) → encode as depth bias in
-        //     material state; bgfx has no global polygon offset, so meshes
-        //     that need it must include BGFX_STATE_DEPTH_TEST_LESS with a
-        //     per-draw bias uniform. Here we set the shared view state.
+        // FIX #6: Actually set the state before each draw so depth is written.
         uint64_t depthPassState =
             BGFX_STATE_WRITE_Z
             | BGFX_STATE_DEPTH_TEST_LESS
@@ -206,6 +207,7 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
 
         for (auto* mesh : VissibleRenderList)
         {
+            bgfx::setState(depthPassState); // FIX #6: set state per draw
             const mat4& P = mesh->IsViewmodel
                 ? Camera::finalizedProjectionViewmodel
                 : Camera::finalizedProjection;
@@ -213,8 +215,12 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
         }
     }
 
-    // Resolve depth pre-pass → single-sample (needed for sampling later)
-    forwardFBO->resolve(*forwardResolveFBO);
+    // FIX #3: After the depth pre-pass, only resolve depth — do NOT blit
+    // the color attachment here because colorBuffer hasn't been written yet.
+    // Blitting uninitialized color data would corrupt colorResolveBuffer
+    // before Pass B has a chance to write it.
+    if (forwardFBO->depthAttachment() && forwardResolveFBO->depthAttachment())
+        forwardResolveFBO->depthAttachment()->copyFrom(forwardFBO->depthAttachment());
 
     // ====================================================================
     // Pass B — Opaque + transparent color pass
@@ -225,12 +231,16 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
             static_cast<uint16_t>(res.x),
             static_cast<uint16_t>(res.y));
 
-        // Clear only color (depth already populated by pre-pass)
+        // FIX #4: Clear only color here (depth already populated by pre-pass).
+        // We must NOT use BGFX_CLEAR_NONE — color was cleared in Pass A but
+        // the view is reused, so we need to re-declare the clear intent to
+        // BGFX_CLEAR_COLOR to prevent stale view-state from carrying over.
         bgfx::setViewClear(vid,
-            BGFX_CLEAR_NONE,   // depth kept, color NOT cleared here
+            BGFX_CLEAR_COLOR,
             kClearBlack, 1.0f, 0);
 
         // Opaque: color write, no depth write, depth == (lequal)
+        // FIX #6: state defined and used per draw.
         uint64_t opaqueState =
             BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A
             | BGFX_STATE_DEPTH_TEST_LEQUAL
@@ -239,6 +249,7 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
         for (auto* mesh : VissibleRenderList)
         {
             if (mesh->Transparent) continue;
+            bgfx::setState(opaqueState); // FIX #6: set state per draw
             const mat4& P = mesh->IsViewmodel
                 ? Camera::finalizedProjectionViewmodel
                 : Camera::finalizedProjection;
@@ -256,6 +267,7 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
         for (auto* mesh : VissibleRenderList)
         {
             if (!mesh->Transparent) continue;
+            bgfx::setState(transparentState); // FIX #6: set state per draw
             const mat4& P = mesh->IsViewmodel
                 ? Camera::finalizedProjectionViewmodel
                 : Camera::finalizedProjection;
@@ -265,7 +277,8 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
         DebugDraw::Draw();
     }
 
-    // Resolve color + depth → single-sample resolve FBO
+    // Resolve color + depth → single-sample resolve FBO (safe now that
+    // both attachments have been fully written by Pass A and Pass B).
     forwardFBO->resolve(*forwardResolveFBO);
 
     // ====================================================================
@@ -280,12 +293,15 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
         bgfx::setViewClear(vid,
             BGFX_CLEAR_COLOR, kClearBlack, 1.0f, 0);
 
+        // FIX #6: state defined and used per draw.
+        // DEPTH_TEST_ALWAYS — depth already resolved; just write color IDs.
         uint64_t idState =
             BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A
-            | BGFX_STATE_DEPTH_TEST_ALWAYS;   // depth already resolved; just write color
+            | BGFX_STATE_DEPTH_TEST_ALWAYS;
 
         for (auto* mesh : VissibleRenderList)
         {
+            bgfx::setState(idState); // FIX #6: set state per draw
             const mat4& P = mesh->IsViewmodel
                 ? Camera::finalizedProjectionViewmodel
                 : Camera::finalizedProjection;
@@ -302,8 +318,8 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
 // submission within the view).
 // -----------------------------------------------------------------------
 void Renderer::RenderDirectionalLightShadows(vector<IDrawMesh*>& ShadowRenderList,
-    Framebuffer& fbo,
-    int                 /*numCascades*/)
+                                              Framebuffer&        fbo,
+                                              int                 /*numCascades*/)
 {
 
 }
@@ -370,13 +386,13 @@ void Renderer::SetSurfaceShaderUniforms(Shader* shader, float brightnessScale)
     shader->SetTexture("depthTexture",
         EngineMain::MainInstance->MainRenderer->depthResolveBuffer->textureHandle());
 
-    shader->SetUniform("fog_start", FogManager::StartDistance);
-    shader->SetUniform("fog_end", FogManager::EndDistance);
+    shader->SetUniform("fog_start",   FogManager::StartDistance);
+    shader->SetUniform("fog_end",     FogManager::EndDistance);
     shader->SetUniform("fog_opacity", FogManager::Opacity);
-    shader->SetUniform("fog_color", FogManager::Color);
+    shader->SetUniform("fog_color",   FogManager::Color);
 
-    shader->SetUniform("cameraPosition", Camera::finalizedPosition);
-    shader->SetUniform("shadowMapSize", LightManager::ShadowMapResolution);
+    shader->SetUniform("cameraPosition",     Camera::finalizedPosition);
+    shader->SetUniform("shadowMapSize",      LightManager::ShadowMapResolution);
     shader->SetUniform("shaddowOffsetScale", LightManager::ShaddowOffsetScale);
 }
 
@@ -386,13 +402,13 @@ void Renderer::SetSurfaceShaderUniforms(Shader* shader, float brightnessScale)
 inline ivec2 Renderer::GetScreenResolution() const
 {
     return ivec2(EngineMain::MainInstance->ScreenSize.x * ResolutionScale,
-        EngineMain::MainInstance->ScreenSize.y * ResolutionScale);
+                 EngineMain::MainInstance->ScreenSize.y * ResolutionScale);
 }
 
 inline ivec2 Renderer::GetNativeScreenResolution() const
 {
     return ivec2(EngineMain::MainInstance->ScreenSize.x,
-        EngineMain::MainInstance->ScreenSize.y);
+                 EngineMain::MainInstance->ScreenSize.y);
 }
 
 // -----------------------------------------------------------------------
@@ -404,7 +420,7 @@ void Renderer::InitFullscreenBuffers()
 {
     // Vertex layout: pos(x,y) + uv(u,v)
     m_fullscreenLayout.begin()
-        .add(bgfx::Attrib::Position, 2, bgfx::AttribType::Float)
+        .add(bgfx::Attrib::Position,  2, bgfx::AttribType::Float)
         .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
         .end();
 
@@ -433,7 +449,7 @@ void Renderer::InitFrameBuffers()
 
     delete colorBuffer;  colorBuffer = nullptr;
     delete depthBuffer;  depthBuffer = nullptr;
-    delete forwardFBO;   forwardFBO = nullptr;
+    delete forwardFBO;   forwardFBO  = nullptr;
 
     TextureType texType = (MultiSampleCount > 0)
         ? TextureType::Texture2DMultisample
@@ -460,9 +476,13 @@ void Renderer::InitFrameBuffers()
         MultiSampleCount > 0 ? MultiSampleCount : 0);
     depthBuffer->SetName("MainDepthBuffer");
 
+    // FIX #1: Attach color first, then depth so the first valid rebuild()
+    // already has a color attachment and sets the view rect from it.
+    // (Both orderings ultimately produce the same final FBO, but attaching
+    // color first means the intermediate depth-only FBO phase is skipped.)
     forwardFBO = new Framebuffer();
-    forwardFBO->attachDepth(depthBuffer);
     forwardFBO->attachColor(colorBuffer, 0u);
+    forwardFBO->attachDepth(depthBuffer);
 
     // resize() is a no-op when dims haven't changed, but call for consistency
     colorBuffer->resize(screenResolution.x, screenResolution.y);
@@ -500,14 +520,16 @@ void Renderer::InitResolveFrameBuffers()
     depthResolveBuffer->SetName("DepthResolveBuffer");
 
     forwardResolveFBO = new Framebuffer();
-    forwardResolveFBO->attachDepth(depthResolveBuffer);
     forwardResolveFBO->attachColor(colorResolveBuffer, 0u);
+    forwardResolveFBO->attachDepth(depthResolveBuffer);
 
     colorResolveBuffer->resize(screenResolution.x, screenResolution.y);
     customIdResolveBuffer->resize(screenResolution.x, screenResolution.y);
     depthResolveBuffer->resize(screenResolution.x, screenResolution.y);
 
+
+
     customIdFBO = new Framebuffer();
-    customIdFBO->attachDepth(depthResolveBuffer);
     customIdFBO->attachColor(customIdResolveBuffer, 0u);
+    //customIdFBO->attachDepth(customIdDepthBuffer);
 }

@@ -111,23 +111,15 @@ void RenderTexture::createResources() {
     uint64_t flags = rtFlag | blitFlag | m_samplerFlags | samplerExtra;
 
     if (m_type == TextureType::Cubemap) {
-        // bgfx cubemap: all 6 faces in one handle, width == height
         m_texture = bgfx::createTextureCube(
             (uint16_t)m_width,
-            false,          // no mips for RT
-            1,              // layers
+            false,
+            1,
             bgfxFmt,
             flags
         );
-
-        // Build a framebuffer from face 0 as the initial target.
-        // Call setCubemapFace() to switch faces before rendering.
-        bgfx::Attachment att;
-        att.init(m_texture, bgfx::Access::Write, 0 /*layer = face 0*/);
-        m_frameBuffer = bgfx::createFrameBuffer(1, &att);
     }
     else {
-        // Texture2D or Texture2DMultisample (MSAA handled via flags)
         m_texture = bgfx::createTexture2D(
             (uint16_t)m_width,
             (uint16_t)m_height,
@@ -136,24 +128,10 @@ void RenderTexture::createResources() {
             bgfxFmt,
             flags
         );
-
-        // *** Validate BEFORE passing to createFrameBuffer ***
-        if (!bgfx::isValid(m_texture))
-            throw std::runtime_error("RenderTexture: bgfx failed to create texture");
-
-        m_frameBuffer = bgfx::createFrameBuffer(1, &m_texture, false);
     }
 
     if (!bgfx::isValid(m_texture))
         throw std::runtime_error("RenderTexture: bgfx failed to create texture");
-
-    if (!bgfx::isValid(m_frameBuffer))
-        throw std::runtime_error("RenderTexture: bgfx failed to create framebuffer");
-
-    // Wire the view to this framebuffer
-    bgfx::setViewFrameBuffer(m_viewId, m_frameBuffer);
-    bgfx::setViewRect(m_viewId, 0, 0,
-        (uint16_t)m_width, (uint16_t)m_height);
 
     // Resource statistics
     size_t texSize = (size_t)m_width * m_height * bytesPerPixel(m_format) * m_samples;
@@ -167,13 +145,6 @@ void RenderTexture::destroyResources() {
     ResourceStatistics::Instance().unregisterResource(
         ResourceType::RenderTexture, m_texture.idx);
 
-    if (bgfx::isValid(m_frameBuffer)) {
-        bgfx::destroy(m_frameBuffer);
-        m_frameBuffer = BGFX_INVALID_HANDLE;
-    }
-    // NOTE: framebuffer destruction also destroys internally-owned textures
-    // when created via createFrameBuffer(1, &handle, /*destroyTextures=*/false).
-    // We passed false, so we destroy the texture ourselves:
     if (bgfx::isValid(m_texture)) {
         bgfx::destroy(m_texture);
         m_texture = BGFX_INVALID_HANDLE;
@@ -186,11 +157,12 @@ void RenderTexture::destroyResources() {
 void RenderTexture::setAsRenderTarget(uint16_t x, uint16_t y,
     uint16_t w, uint16_t h) const
 {
+    // setAsRenderTarget is only valid when the texture has its own
+    // framebuffer (e.g. cubemap face). For textures attached to a
+    // Framebuffer, use Framebuffer::bind() instead — it owns the FB handle.
     ViewIdManager::setCurrentViewId(m_viewId);
-    bgfx::setViewFrameBuffer(m_viewId, m_frameBuffer);
     bgfx::setViewRect(m_viewId,
-        x,
-        y,
+        x, y,
         w ? w : (uint16_t)m_width,
         h ? h : (uint16_t)m_height);
 }
@@ -199,7 +171,6 @@ void RenderTexture::setCubemapFace(uint8_t face) {
     if (m_type != TextureType::Cubemap)
         return;
 
-    // Rebuild the framebuffer pointing at the requested face
     if (bgfx::isValid(m_frameBuffer))
         bgfx::destroy(m_frameBuffer);
 
@@ -207,6 +178,7 @@ void RenderTexture::setCubemapFace(uint8_t face) {
     att.init(m_texture, bgfx::Access::Write, face);
     m_frameBuffer = bgfx::createFrameBuffer(1, &att);
 
+    ViewIdManager::setCurrentViewId(m_viewId);
     bgfx::setViewFrameBuffer(m_viewId, m_frameBuffer);
 }
 
@@ -238,13 +210,14 @@ void RenderTexture::copyFrom(const RenderTexture* src) {
 
     if (m_width != src->width() ||
         m_height != src->height() ||
-        m_type != src->type() ||
-        m_format != src->format() ||
-        m_samples != src->samples())
+        m_format != src->format())
     {
         throw std::runtime_error(
-            "RenderTexture::copyFrom: source/destination mismatch");
+            "RenderTexture::copyFrom: source/destination dimension or format mismatch");
     }
+
+    // Sample counts are intentionally allowed to differ —
+    // resolving MSAA → single-sample is the primary use-case here.
 
     // bgfx::blit(viewId, dst, dstMip, dstX, dstY, dstZ,
     //            src, srcMip, srcX, srcY, srcZ, w, h, d)

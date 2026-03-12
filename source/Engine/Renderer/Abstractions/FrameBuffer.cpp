@@ -1,4 +1,4 @@
-﻿// FrameBuffer.cpp — bgfx port
+// FrameBuffer.cpp — bgfx port
 #include "FrameBuffer.h"
 #include "RenderTexture.h"
 #include "ViewIdManager.h"
@@ -43,10 +43,16 @@ void Framebuffer::rebuild() {
                 "Framebuffer: bgfx failed to create cubemap-face framebuffer");
 
         bgfx::setViewFrameBuffer(m_viewId, m_frameBuffer);
+
+        // Set the view rect from the cubemap source dimensions.
+        bgfx::setViewRect(m_viewId, 0, 0,
+            static_cast<uint16_t>(m_cubemapSource->width()),
+            static_cast<uint16_t>(m_cubemapSource->height()));
         return;
     }
 
     // ---- General path: collect all attachments ----
+    // Color attachments first, depth last — this is the order bgfx expects.
     std::vector<bgfx::Attachment> attachments;
 
     for (size_t i = 0; i < m_colorAttachments.size(); ++i) {
@@ -106,7 +112,7 @@ void Framebuffer::attachColor(RenderTexture* texture, uint32_t attachmentIndex) 
         throw std::invalid_argument("Framebuffer::attachColor: texture is null");
 
     // Clear any pending cubemap-face state
-    m_cubemapFace = -1;
+    m_cubemapFace   = -1;
     m_cubemapSource = nullptr;
     m_cubemapIsDepth = false;
 
@@ -122,7 +128,7 @@ void Framebuffer::attachDepth(RenderTexture* texture) {
         throw std::invalid_argument("Framebuffer::attachDepth: texture is null");
 
     // Clear any pending cubemap-face state
-    m_cubemapFace = -1;
+    m_cubemapFace   = -1;
     m_cubemapSource = nullptr;
     m_cubemapIsDepth = false;
 
@@ -141,8 +147,8 @@ void Framebuffer::attachCubemapFace(RenderTexture* cubemap,
     if (face > 5)
         throw std::out_of_range("Framebuffer::attachCubemapFace: face index must be 0-5");
 
-    m_cubemapFace = static_cast<int32_t>(face);
-    m_cubemapSource = cubemap;
+    m_cubemapFace    = static_cast<int32_t>(face);
+    m_cubemapSource  = cubemap;
     m_cubemapIsDepth = isDepth;
 
     if (isDepth)
@@ -158,6 +164,12 @@ void Framebuffer::attachCubemapFace(RenderTexture* cubemap,
 
 // -----------------------------------------------------------------------
 // Resolve MSAA → single-sample
+//
+// FIX #3 (partial): Callers must NOT invoke resolve() for color attachments
+// before color has been written. The depth-only resolve after the pre-pass
+// is now done explicitly in RenderCameraForward rather than calling
+// resolve() on the full FBO.
+//
 // bgfx has no explicit "blit framebuffer" call; we delegate to
 // RenderTexture::copyFrom() which issues bgfx::blit on the destination
 // texture's view (so ordering relative to this framebuffer's view is
@@ -178,6 +190,16 @@ void Framebuffer::resolve(Framebuffer& target) {
 }
 
 // -----------------------------------------------------------------------
+// resolveDepthOnly — resolve only the depth attachment.
+// Use this after a depth-pre-pass before color has been written to avoid
+// blitting uninitialized color data into the resolve target.
+// -----------------------------------------------------------------------
+void Framebuffer::resolveDepthOnly(Framebuffer& target) {
+    if (m_depthAttachment && target.m_depthAttachment)
+        target.m_depthAttachment->copyFrom(m_depthAttachment);
+}
+
+// -----------------------------------------------------------------------
 // Bind — configure this framebuffer's view for upcoming draw calls.
 // -----------------------------------------------------------------------
 void Framebuffer::bind(uint16_t x, uint16_t y,
@@ -185,6 +207,9 @@ void Framebuffer::bind(uint16_t x, uint16_t y,
 {
     if (!bgfx::isValid(m_frameBuffer))
         return; // nothing attached yet
+
+    // Tell the draw-call layer which view to submit to.
+    ViewIdManager::setCurrentViewId(m_viewId);
 
     bgfx::setViewFrameBuffer(m_viewId, m_frameBuffer);
 

@@ -95,6 +95,7 @@ public:
     // Accessors
     // -----------------------------------------------------------------------
     bgfx::TextureHandle     textureHandle()     const { return m_texture; }
+    // Only valid after setCubemapFace(); Texture2D RTs are owned by Framebuffer.
     bgfx::FrameBufferHandle frameBufferHandle() const { return m_frameBuffer; }
     bgfx::ViewId            viewId()            const { return m_viewId; }
 
