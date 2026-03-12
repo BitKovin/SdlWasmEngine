@@ -25,7 +25,7 @@ struct VertexData {
             .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)   // a_texcoord0  (UV)
             .add(bgfx::Attrib::Tangent, 3, bgfx::AttribType::Float)   // (unused in shader, but keeps stride)
             .add(bgfx::Attrib::Bitangent, 3, bgfx::AttribType::Float)   // (unused in shader, but keeps stride)
-            .add(bgfx::Attrib::TexCoord3, 4, bgfx::AttribType::Float)   // a_indices (bone indices as float)
+            .add(bgfx::Attrib::Indices, 4, bgfx::AttribType::Float)   // a_indices (bone indices as float)
             .add(bgfx::Attrib::Weight, 4, bgfx::AttribType::Float)   // a_weight
             .add(bgfx::Attrib::TexCoord1, 3, bgfx::AttribType::Float)   // a_smoothNormal
             .add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Float)   // a_color0

@@ -8,6 +8,9 @@
 
 #include "LightSystem/LightManager.h"
 
+#include <BgfxStateManager.h>
+#include <Renderer/Abstractions/ViewIdManager.h>
+
 LightVolPointData StaticMesh::GetLightVolData()
 {
 
@@ -74,34 +77,24 @@ bool StaticMesh::IsCameraVisible()
 
 void StaticMesh::DrawForward(mat4x4 view, mat4x4 projection)
 {
-	/*
+	
 	if (model == nullptr) return;
+
+	auto startState = BgfxStateManager::GetState();
 
 	if (Transparent == false)
 	{
-		if (DepthWrite)
-		{
-			glDepthMask(GL_TRUE);
-		}
-		else
-		{
-			glDepthMask(GL_FALSE);
-		}
+
+		BgfxStateManager::SetWriteDepth(DepthWrite);
+
 	}
 
 
-	if (TwoSided)
-	{
-		glDisable(GL_CULL_FACE);
-	}
-	else
-	{
-		glEnable(GL_CULL_FACE);
-	}
+	BgfxStateManager::SetCull(TwoSided ? BgfxStateManager::Cull::None : BgfxStateManager::Cull::CW);
 
 
 	if (forward_shader_program == nullptr)
-		forward_shader_program = ShaderManager::GetShaderProgram("default_vertex", PixelShader);
+		forward_shader_program = ShaderManager::GetShaderProgram("vs_default", PixelShader);
 
 	forward_shader_program->UseProgram();
 
@@ -191,14 +184,9 @@ void StaticMesh::DrawForward(mat4x4 view, mat4x4 projection)
 
 			if (Transparent)
 			{
-				if (mesh.transparentTexture)
-				{
-					glDepthMask(GL_FALSE);
-				}
-				else
-				{
-					glDepthMask(GL_TRUE);
-				}
+
+				BgfxStateManager::SetWriteDepth(mesh.transparentTexture == false);
+
 			}
 
 
@@ -217,6 +205,7 @@ void StaticMesh::DrawForward(mat4x4 view, mat4x4 projection)
 				forward_shader_program->SetTexture("u_texture", ColorTextureId);
 			}
 
+			forward_shader_program->SetTexture("u_textureEmissive", 0);
 			if (EmissiveTexture)
 			{
 				forward_shader_program->SetTexture("u_textureEmissive", EmissiveTexture);
@@ -227,23 +216,17 @@ void StaticMesh::DrawForward(mat4x4 view, mat4x4 projection)
 			}
 		}
 
-		mesh.VAO->Bind();
+		bgfx::setVertexBuffer(0, mesh.vbh);
+		bgfx::setIndexBuffer(mesh.ibh);
 
-		if (mesh.VAO->IsInstanced())
-		{
-			glDrawElementsInstanced(GL_TRIANGLES, static_cast<unsigned int>(mesh.VAO->IndexCount), GL_UNSIGNED_INT, 0, mesh.VAO->GetInstanceCount());
-		}
-		else if (numInstances < 0)
-		{
-			glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(mesh.VAO->IndexCount), GL_UNSIGNED_INT, 0);
-		}
+		BgfxStateManager::Apply();
 
-		VertexArrayObject::Unbind();
+		forward_shader_program->Submit(ViewIdManager::GetCurrentId());
 
 	}
 
-	glEnable(GL_CULL_FACE); finishthiscode
-	*/
+	BgfxStateManager::SetState(startState);
+	
 }
 
 void StaticMesh::DrawDepth(mat4x4 view, mat4x4 projection)

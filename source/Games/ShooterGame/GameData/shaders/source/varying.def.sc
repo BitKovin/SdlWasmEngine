@@ -11,5 +11,5 @@ vec4 a_color0    : COLOR0;
 vec2 a_texcoord0 : TEXCOORD0;
 vec3 a_smoothNormal : TEXCOORD1;
 vec2 a_texcoord2 : TEXCOORD2;
-vec4 a_indices   : TEXCOORD3;
+vec4 a_indices   : BLENDINDICES0;
 vec4 a_weight    : BLENDWEIGHT0;

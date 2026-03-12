@@ -349,7 +349,7 @@ void Renderer::RenderDirectionalLightShadows(vector<IDrawMesh*>& ShadowRenderLis
 void Renderer::RenderFullscreenQuad(Shader* shader)
 {
     bgfx::setVertexBuffer(0, m_fullscreenVB);
-    bgfx::submit(ViewIdManager::GetCurrentId(), shader->GetProgram());
+	shader->Submit(ViewIdManager::GetCurrentId());
 }
 
 // -----------------------------------------------------------------------

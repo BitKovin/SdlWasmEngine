@@ -28,6 +28,24 @@ struct UniformMeta
     uint16_t          num = 1;   // array element count
 };
 
+// ---------------------------------------------------------------------------
+// UniformEntry — buffered uniform value (packed float data, bgfx-ready layout)
+// ---------------------------------------------------------------------------
+struct UniformEntry
+{
+    std::vector<float> data; // packed floats in bgfx-ready layout
+    uint16_t           num = 1; // array element count passed to bgfx::setUniform
+};
+
+// ---------------------------------------------------------------------------
+// TextureEntry — buffered texture binding
+// ---------------------------------------------------------------------------
+struct TextureEntry
+{
+    uint8_t             slot = 0;
+    bgfx::UniformHandle samplerHandle = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle texture = BGFX_INVALID_HANDLE;
+};
 
 
 class Shader
@@ -54,6 +72,7 @@ public:
     // -----------------------------------------------------------------------
     // Uniform setters — scalar / vector / matrix
     // -----------------------------------------------------------------------
+    // Values are buffered and applied just before bgfx::submit() in Submit().
     // bgfx maps everything float to Vec4 or Mat3/Mat4.
     // Smaller types (float, vec2, vec3, mat2) are padded to fit.
 
@@ -90,6 +109,7 @@ public:
     // Texture setters
     // -----------------------------------------------------------------------
     void SetTexture(const std::string& uname, bgfx::TextureHandle texture);
+    void SetTexture(const std::string& uname, int texture);
     void SetTexture(const hashed_string& uname, Texture* texture);
     void SetCubemapTexture(const std::string& uname, bgfx::TextureHandle texture);
 
@@ -101,7 +121,9 @@ public:
     // Call this once per draw call before Submit().
     void UseProgram();
 
-    // Submit draw call to bgfx view.
+    // Flush all buffered uniforms and textures to bgfx, then submit the draw
+    // call to the given view. SetUniform / SetTexture values are re-applied
+    // every Submit() so they persist across frames without re-setting.
     void Submit(uint16_t viewId) const;
 
     // -----------------------------------------------------------------------
@@ -111,6 +133,8 @@ public:
     // Destroys and recreates the program from disk.
     // All previously set uniforms remain valid because handles are
     // re-created with the same names during reflection.
+    // The uniform/texture buffers are preserved across reload so callers
+    // do not need to re-set values.
     bool Reload();
 
     // -----------------------------------------------------------------------
@@ -150,9 +174,23 @@ private:
     std::string m_fsSourcePath;
 
     // -----------------------------------------------------------------------
-    // Missing-texture fallback (shared across all Shader instances)
+    // Deferred uniform / texture buffers
+    // Marked mutable so Submit() const can flush them.
+    // Buffers persist across frames — last-written value is re-applied every
+    // Submit() call, matching bgfx's per-draw-call state model.
     // -----------------------------------------------------------------------
-    static bgfx::TextureHandle s_missingTexture;
+    mutable std::unordered_map<std::string, UniformEntry> m_uniformBuffer;
+    mutable std::unordered_map<std::string, TextureEntry> m_textureBuffer;
+
+    // Apply all buffered uniforms and textures to bgfx state.
+    // Called internally by Submit() before bgfx::submit().
+    void FlushBuffers() const;
+
+    // -----------------------------------------------------------------------
+    // Shared texture fallbacks (all Shader instances)
+    // -----------------------------------------------------------------------
+    static bgfx::TextureHandle s_missingTexture; // magenta — set but invalid
+    static bgfx::TextureHandle s_blackTexture;   // black   — sampler with no binding
     static void                EnsureMissingTexture();
 
     // -----------------------------------------------------------------------

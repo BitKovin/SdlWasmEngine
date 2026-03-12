@@ -34,7 +34,7 @@ protected:
 
 	}
 
-	string PixelShader = "default_pixel";
+	string PixelShader = "fs_default";
 
 	Shader* forward_shader_program = nullptr;
 

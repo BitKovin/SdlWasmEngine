@@ -128,6 +128,7 @@ public:
     static void AddFlags(uint64_t flags) { s_state |= flags; }
     static void RemoveFlags(uint64_t flags) { s_state &= ~flags; }
     static uint64_t GetState() { return s_state; }
+	static void SetState(uint64_t state) { s_state = state; }
 
     // -----------------------------------------------------------------------
     // Apply — calls bgfx::setState with the accumulated state.

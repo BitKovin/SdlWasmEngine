@@ -1,4 +1,4 @@
-﻿#include "Shader.hpp"
+#include "Shader.hpp"
 
 #include "AssetRegistry.h"
 
@@ -10,6 +10,7 @@
 // Static member definitions
 // ---------------------------------------------------------------------------
 bgfx::TextureHandle Shader::s_missingTexture = BGFX_INVALID_HANDLE;
+bgfx::TextureHandle Shader::s_blackTexture = BGFX_INVALID_HANDLE;
 
 // ---------------------------------------------------------------------------
 // Path resolution helpers
@@ -50,13 +51,13 @@ static std::string GetPlatformRendererFolder()
     return platform + renderer;
 }
 
-// Compiled binary: GameData/shaders/compiled/<platform>/<renderer>/<name>.bin
+// Compiled binary: GameData/shaders/compiled/<platform>/<renderer>/<n>.bin
 std::string Shader::ResolveCompiledPath(const std::string& shaderName)
 {
     return "GameData/shaders/compiled/" + GetPlatformRendererFolder() + shaderName + ".bin";
 }
 
-// Source .sh file: GameData/shaders/source/<name>.sh
+// Source .sh file: GameData/shaders/source/<n>.sh
 std::string Shader::ResolveSourcePath(const std::string& shaderName)
 {
     return "GameData/shaders/source/" + shaderName + ".sh";
@@ -272,6 +273,10 @@ bool Shader::Reload()
     m_program = newProgram;
     textureBindings = ParseAllTextureBindings();
 
+    // Note: m_uniformBuffer and m_textureBuffer are intentionally preserved.
+    // The new uniform handles have the same names, so buffered values will be
+    // re-applied correctly on the next Submit() call.
+
     Logger::Log("Shader::Reload succeeded for: " + m_vsName + " / " + m_fsName);
     return true;
 }
@@ -342,73 +347,76 @@ void Shader::SetUniform(const std::string& uname, bool value)
 
 void Shader::SetUniform(const std::string& uname, float value)
 {
-    const UniformMeta* u = FindUniform(uname);
-    if (!u) return;
+    if (!FindUniform(uname)) return;
 
-    float data[4] = { value, 0.0f, 0.0f, 0.0f };
-    bgfx::setUniform(u->handle, data);
+    auto& entry = m_uniformBuffer[uname];
+    entry.data = { value, 0.0f, 0.0f, 0.0f };
+    entry.num = 1;
 }
 
 void Shader::SetUniform(const std::string& uname, const glm::vec2& value)
 {
-    const UniformMeta* u = FindUniform(uname);
-    if (!u) return;
+    if (!FindUniform(uname)) return;
 
-    float data[4] = { value.x, value.y, 0.0f, 0.0f };
-    bgfx::setUniform(u->handle, data);
+    auto& entry = m_uniformBuffer[uname];
+    entry.data = { value.x, value.y, 0.0f, 0.0f };
+    entry.num = 1;
 }
 
 void Shader::SetUniform(const std::string& uname, const glm::vec3& value)
 {
-    const UniformMeta* u = FindUniform(uname);
-    if (!u) return;
+    if (!FindUniform(uname)) return;
 
-    float data[4] = { value.x, value.y, value.z, 0.0f };
-    bgfx::setUniform(u->handle, data);
+    auto& entry = m_uniformBuffer[uname];
+    entry.data = { value.x, value.y, value.z, 0.0f };
+    entry.num = 1;
 }
 
 void Shader::SetUniform(const std::string& uname, const glm::vec4& value)
 {
-    const UniformMeta* u = FindUniform(uname);
-    if (!u) return;
+    if (!FindUniform(uname)) return;
 
-    bgfx::setUniform(u->handle, glm::value_ptr(value));
+    auto& entry = m_uniformBuffer[uname];
+    entry.data.assign(glm::value_ptr(value), glm::value_ptr(value) + 4);
+    entry.num = 1;
 }
 
 // mat2 → pack column-major into one Vec4: [m00, m10, m01, m11]
 void Shader::SetUniform(const std::string& uname, const glm::mat2& value)
 {
-    const UniformMeta* u = FindUniform(uname);
-    if (!u) return;
+    if (!FindUniform(uname)) return;
 
-    float data[4] = {
+    auto& entry = m_uniformBuffer[uname];
+    entry.data = {
         value[0][0], value[0][1],
         value[1][0], value[1][1]
     };
-    bgfx::setUniform(u->handle, data);
+    entry.num = 1;
 }
 
 void Shader::SetUniform(const std::string& uname, const glm::mat3& value)
 {
-    const UniformMeta* u = FindUniform(uname);
-    if (!u) return;
+    if (!FindUniform(uname)) return;
 
-    // bgfx Mat3 layout: 3 Vec4 rows, column-major, last component of each row is padding.
-    float data[12];
+    // bgfx Mat3 layout: 3 Vec4 rows, column-major source, last component of each row is padding.
     const float* src = glm::value_ptr(value); // column-major: col0[3], col1[3], col2[3]
-    // Transpose to row-major for bgfx Mat3 (row0, row1, row2, each padded to vec4)
-    data[0] = src[0]; data[1] = src[3]; data[2] = src[6]; data[3] = 0.0f; // row 0
-    data[4] = src[1]; data[5] = src[4]; data[6] = src[7]; data[7] = 0.0f; // row 1
-    data[8] = src[2]; data[9] = src[5]; data[10] = src[8]; data[11] = 0.0f; // row 2
-    bgfx::setUniform(u->handle, data);
+
+    auto& entry = m_uniformBuffer[uname];
+    entry.data.resize(12);
+    float* d = entry.data.data();
+    d[0] = src[0]; d[1] = src[3]; d[2] = src[6]; d[3] = 0.0f; // row 0
+    d[4] = src[1]; d[5] = src[4]; d[6] = src[7]; d[7] = 0.0f; // row 1
+    d[8] = src[2]; d[9] = src[5]; d[10] = src[8]; d[11] = 0.0f; // row 2
+    entry.num = 1;
 }
 
 void Shader::SetUniform(const std::string& uname, const glm::mat4& value)
 {
-    const UniformMeta* u = FindUniform(uname);
-    if (!u) return;
+    if (!FindUniform(uname)) return;
 
-    bgfx::setUniform(u->handle, glm::value_ptr(value));
+    auto& entry = m_uniformBuffer[uname];
+    entry.data.assign(glm::value_ptr(value), glm::value_ptr(value) + 16);
+    entry.num = 1;
 }
 
 // ---------------------------------------------------------------------------
@@ -422,11 +430,11 @@ void Shader::SetUniform(const std::string& uname, const std::vector<float>& valu
     const uint16_t num = SafeUniformNum(u, values.size(), uname);
     if (num == 0) return;
 
-    std::vector<float> padded(num * 4, 0.0f);
+    auto& entry = m_uniformBuffer[uname];
+    entry.data.assign(num * 4, 0.0f);
     for (uint16_t i = 0; i < num; ++i)
-        padded[i * 4] = values[i];
-
-    bgfx::setUniform(u->handle, padded.data(), num);
+        entry.data[i * 4] = values[i];
+    entry.num = num;
 }
 
 void Shader::SetUniform(const std::string& uname, const std::vector<glm::vec2>& values)
@@ -437,14 +445,14 @@ void Shader::SetUniform(const std::string& uname, const std::vector<glm::vec2>& 
     const uint16_t num = SafeUniformNum(u, values.size(), uname);
     if (num == 0) return;
 
-    std::vector<float> padded(num * 4, 0.0f);
+    auto& entry = m_uniformBuffer[uname];
+    entry.data.assign(num * 4, 0.0f);
     for (uint16_t i = 0; i < num; ++i)
     {
-        padded[i * 4 + 0] = values[i].x;
-        padded[i * 4 + 1] = values[i].y;
+        entry.data[i * 4 + 0] = values[i].x;
+        entry.data[i * 4 + 1] = values[i].y;
     }
-
-    bgfx::setUniform(u->handle, padded.data(), num);
+    entry.num = num;
 }
 
 void Shader::SetUniform(const std::string& uname, const std::vector<glm::vec3>& values)
@@ -455,15 +463,15 @@ void Shader::SetUniform(const std::string& uname, const std::vector<glm::vec3>& 
     const uint16_t num = SafeUniformNum(u, values.size(), uname);
     if (num == 0) return;
 
-    std::vector<float> padded(num * 4, 0.0f);
+    auto& entry = m_uniformBuffer[uname];
+    entry.data.assign(num * 4, 0.0f);
     for (uint16_t i = 0; i < num; ++i)
     {
-        padded[i * 4 + 0] = values[i].x;
-        padded[i * 4 + 1] = values[i].y;
-        padded[i * 4 + 2] = values[i].z;
+        entry.data[i * 4 + 0] = values[i].x;
+        entry.data[i * 4 + 1] = values[i].y;
+        entry.data[i * 4 + 2] = values[i].z;
     }
-
-    bgfx::setUniform(u->handle, padded.data(), num);
+    entry.num = num;
 }
 
 void Shader::SetUniform(const std::string& uname, const std::vector<glm::vec4>& values)
@@ -474,9 +482,11 @@ void Shader::SetUniform(const std::string& uname, const std::vector<glm::vec4>& 
     const uint16_t num = SafeUniformNum(u, values.size(), uname);
     if (num == 0) return;
 
-    // glm::vec4 is guaranteed contiguous, safe to use pointer arithmetic
     static_assert(sizeof(glm::vec4) == 4 * sizeof(float), "glm::vec4 layout assumption broken");
-    bgfx::setUniform(u->handle, glm::value_ptr(values[0]), num);
+
+    auto& entry = m_uniformBuffer[uname];
+    entry.data.assign(glm::value_ptr(values[0]), glm::value_ptr(values[0]) + num * 4);
+    entry.num = num;
 }
 
 // mat2 array: each mat2 → one Vec4 slot
@@ -488,16 +498,16 @@ void Shader::SetUniform(const std::string& uname, const std::vector<glm::mat2>& 
     const uint16_t num = SafeUniformNum(u, values.size(), uname);
     if (num == 0) return;
 
-    std::vector<float> packed(num * 4);
+    auto& entry = m_uniformBuffer[uname];
+    entry.data.resize(num * 4);
     for (uint16_t i = 0; i < num; ++i)
     {
-        packed[i * 4 + 0] = values[i][0][0];
-        packed[i * 4 + 1] = values[i][0][1];
-        packed[i * 4 + 2] = values[i][1][0];
-        packed[i * 4 + 3] = values[i][1][1];
+        entry.data[i * 4 + 0] = values[i][0][0];
+        entry.data[i * 4 + 1] = values[i][0][1];
+        entry.data[i * 4 + 2] = values[i][1][0];
+        entry.data[i * 4 + 3] = values[i][1][1];
     }
-
-    bgfx::setUniform(u->handle, packed.data(), num);
+    entry.num = num;
 }
 
 // mat3 array: each mat3 → 3 Vec4 rows (12 floats)
@@ -509,11 +519,12 @@ void Shader::SetUniform(const std::string& uname, const std::vector<glm::mat3>& 
     const uint16_t num = SafeUniformNum(u, values.size(), uname);
     if (num == 0) return;
 
-    std::vector<float> packed(num * 12, 0.0f);
+    auto& entry = m_uniformBuffer[uname];
+    entry.data.assign(num * 12, 0.0f);
     for (uint16_t i = 0; i < num; ++i)
     {
         const float* src = glm::value_ptr(values[i]);
-        float* dst = packed.data() + i * 12;
+        float* dst = entry.data.data() + i * 12;
         // row 0
         dst[0] = src[0]; dst[1] = src[3]; dst[2] = src[6]; dst[3] = 0.0f;
         // row 1
@@ -521,8 +532,7 @@ void Shader::SetUniform(const std::string& uname, const std::vector<glm::mat3>& 
         // row 2
         dst[8] = src[2]; dst[9] = src[5]; dst[10] = src[8]; dst[11] = 0.0f;
     }
-
-    bgfx::setUniform(u->handle, packed.data(), num);
+    entry.num = num;
 }
 
 void Shader::SetUniform(const std::string& uname, const std::vector<glm::mat4>& values)
@@ -534,19 +544,39 @@ void Shader::SetUniform(const std::string& uname, const std::vector<glm::mat4>& 
     if (num == 0) return;
 
     static_assert(sizeof(glm::mat4) == 16 * sizeof(float), "glm::mat4 layout assumption broken");
-    bgfx::setUniform(u->handle, glm::value_ptr(values[0]), num);
+
+    auto& entry = m_uniformBuffer[uname];
+    entry.data.assign(glm::value_ptr(values[0]), glm::value_ptr(values[0]) + num * 16);
+    entry.num = num;
 }
 
 // ---------------------------------------------------------------------------
-// Texture setters
+// Texture setters — buffer the binding; applied in FlushBuffers()
 // ---------------------------------------------------------------------------
 void Shader::SetTexture(const std::string& uname, bgfx::TextureHandle texture)
 {
     const UniformMeta* u = FindUniform(uname);
     if (!u) return;
 
+    auto& entry = m_textureBuffer[uname];
+    entry.slot = u->samplerSlot;
+    entry.samplerHandle = u->handle;
+    entry.texture = texture;
+}
 
-    bgfx::setTexture(u->samplerSlot, u->handle, texture);
+void Shader::SetTexture(const std::string& uname, int texture)
+{
+    const UniformMeta* u = FindUniform(uname);
+    if (!u) return;
+
+    bgfx::TextureHandle handle = (texture == 0)
+        ? s_blackTexture
+        : bgfx::TextureHandle{ static_cast<uint16_t>(texture) };
+
+    auto& entry = m_textureBuffer[uname];
+    entry.slot = u->samplerSlot;
+    entry.samplerHandle = u->handle;
+    entry.texture = handle;
 }
 
 void Shader::SetTexture(const hashed_string& uname, Texture* texture)
@@ -566,6 +596,11 @@ void Shader::SetTexture(const hashed_string& uname, Texture* texture)
             handle = BGFX_INVALID_HANDLE;
         }
     }
+    else
+    {
+		SetTexture(uname.str(), 0); // bind black texture for null/invalid Texture objects
+        return;
+    }
 
     if (!bgfx::isValid(handle))
     {
@@ -574,7 +609,10 @@ void Shader::SetTexture(const hashed_string& uname, Texture* texture)
         if (!bgfx::isValid(handle)) return; // EnsureMissingTexture failed somehow
     }
 
-    bgfx::setTexture(u->samplerSlot, u->handle, handle);
+    auto& entry = m_textureBuffer[uname.str()];
+    entry.slot = u->samplerSlot;
+    entry.samplerHandle = u->handle;
+    entry.texture = handle;
 }
 
 void Shader::SetCubemapTexture(const std::string& uname, bgfx::TextureHandle texture)
@@ -583,35 +621,88 @@ void Shader::SetCubemapTexture(const std::string& uname, bgfx::TextureHandle tex
 }
 
 // ---------------------------------------------------------------------------
+// FlushBuffers — push all buffered state to bgfx (called by Submit)
+// ---------------------------------------------------------------------------
+void Shader::FlushBuffers() const
+{
+    // Flush uniform values
+    for (const auto& [uname, entry] : m_uniformBuffer)
+    {
+        auto it = m_uniforms.find(uname);
+        if (it == m_uniforms.end()) continue;
+
+        const UniformMeta& u = it->second;
+        if (!bgfx::isValid(u.handle)) continue;
+        if (entry.data.empty())       continue;
+
+        bgfx::setUniform(u.handle, entry.data.data(), entry.num);
+    }
+
+    // Flush texture bindings.
+    // For every reflected sampler uniform, either use the buffered binding or
+    // fall back to the default black texture so the slot is never left unbound.
+    for (const auto& [uname, u] : m_uniforms)
+    {
+        if (u.kind != UniformMeta::Kind::Sampler) continue;
+        if (!bgfx::isValid(u.handle))             continue;
+
+        auto it = m_textureBuffer.find(uname);
+        if (it != m_textureBuffer.end())
+        {
+            bgfx::setTexture(it->second.slot, it->second.samplerHandle, it->second.texture);
+        }
+        else
+        {
+            // No texture was set for this sampler — bind black as a safe default.
+            bgfx::setTexture(u.samplerSlot, u.handle, s_blackTexture);
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Missing texture fallback
 // ---------------------------------------------------------------------------
 void Shader::EnsureMissingTexture()
 {
-    if (bgfx::isValid(s_missingTexture))
-        return;
-
-    // 2×2 magenta checkerboard as a placeholder
-    const uint32_t M = 0xFFFF00FF; // RGBA magenta
-    const uint32_t B = 0xFF000000; // RGBA black
-    uint32_t pixels[4] = { M, B, B, M };
-
-    const bgfx::Memory* mem = bgfx::copy(pixels, sizeof(pixels));
-    s_missingTexture = bgfx::createTexture2D(
-        2, 2,
-        /*hasMips=*/false,
-        /*numLayers=*/1,
-        bgfx::TextureFormat::RGBA8,
-        BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT,
-        mem
-    );
-
     if (!bgfx::isValid(s_missingTexture))
     {
-        Logger::Log("Shader error: failed to create missing texture fallback");
-        return;
+        // 2×2 magenta checkerboard — used when a texture is set but invalid
+        const uint32_t M = 0xFFFF00FF;
+        const uint32_t B = 0xFF000000;
+        uint32_t pixels[4] = { M, B, B, M };
+
+        const bgfx::Memory* mem = bgfx::copy(pixels, sizeof(pixels));
+        s_missingTexture = bgfx::createTexture2D(
+            2, 2, false, 1,
+            bgfx::TextureFormat::RGBA8,
+            BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT,
+            mem
+        );
+
+        if (!bgfx::isValid(s_missingTexture))
+            Logger::Log("Shader error: failed to create missing texture fallback");
+        else
+            bgfx::setName(s_missingTexture, "missing_texture");
     }
 
-    bgfx::setName(s_missingTexture, "missing_texture");
+    if (!bgfx::isValid(s_blackTexture))
+    {
+        // 1×1 opaque black — bound to any sampler that has no explicit texture set
+        uint32_t pixel = 0xFF000000;
+
+        const bgfx::Memory* mem = bgfx::copy(&pixel, sizeof(pixel));
+        s_blackTexture = bgfx::createTexture2D(
+            1, 1, false, 1,
+            bgfx::TextureFormat::RGBA8,
+            BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT,
+            mem
+        );
+
+        if (!bgfx::isValid(s_blackTexture))
+            Logger::Log("Shader error: failed to create black texture fallback");
+        else
+            bgfx::setName(s_blackTexture, "default_black_texture");
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -620,11 +711,19 @@ void Shader::EnsureMissingTexture()
 void Shader::UseProgram()
 {
     EnsureMissingTexture();
-    ApplyTextureBindings();
+
+    // Clear all buffered state so stale values from the previous draw don't
+    // bleed into this one. ApplyTextureBindings() will repopulate the texture
+    // buffer from @texture annotations immediately after.
+    m_uniformBuffer.clear();
+    m_textureBuffer.clear();
+
+    ApplyTextureBindings();  // writes into m_textureBuffer via SetTexture()
 }
 
 void Shader::Submit(uint16_t viewId) const
 {
+    FlushBuffers();                    // setUniform + setTexture for everything buffered
     bgfx::submit(viewId, m_program);
 }
 
@@ -675,6 +774,7 @@ Shader::ParseAllTextureBindings() const
 }
 
 // Apply all auto-bindings: resolve each path via AssetRegistry, call SetTexture.
+// SetTexture now writes into m_textureBuffer rather than calling bgfx directly.
 void Shader::ApplyTextureBindings()
 {
     for (const auto& [uniformName, path] : textureBindings)
