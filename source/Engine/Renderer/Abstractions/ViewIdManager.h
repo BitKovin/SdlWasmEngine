@@ -10,47 +10,27 @@
 class ViewIdManager
 {
 public:
-
-    static inline bgfx::ViewId allocateViewId()
+    static void Reset()
     {
-        {
-            std::lock_guard<std::mutex> lock(s_viewIdMutex);
-            if (!s_freeViewIds.empty())
-            {
-                uint16_t id = s_freeViewIds.back();
-                s_freeViewIds.pop_back();
-                return static_cast<bgfx::ViewId>(id);
-            }
-        }
+        s_nextViewId = 1;
+        s_currentViewId = 0;
+    }
 
-        uint16_t id = s_nextViewId.fetch_add(1, std::memory_order_relaxed);
+    static bgfx::ViewId GiveNextId()
+    {
+        uint16_t id = s_nextViewId++;
         assert(id < 256 && "Exceeded maximum bgfx view count");
+        s_currentViewId = id;
         return static_cast<bgfx::ViewId>(id);
     }
 
-    static inline void deallocateViewId(bgfx::ViewId id)
+    static bgfx::ViewId GetCurrentId()
     {
-        assert(id > 0 && id < 256);
-
-        std::lock_guard<std::mutex> lock(s_viewIdMutex);
-        s_freeViewIds.push_back(id);
+        return s_currentViewId;
     }
 
-    static inline bgfx::ViewId getCurrentViewId() {
-        return currentViewId;
-	}
-
-    static inline void setCurrentViewId(bgfx::ViewId id) {
-        currentViewId = id;
-	}
-
 private:
-
-    static inline std::atomic<uint16_t> s_nextViewId{ 10 }; // 0-9 reserved
-    static inline std::vector<uint16_t> s_freeViewIds;
-    static inline std::mutex s_viewIdMutex;
-
-	static inline bgfx::ViewId currentViewId = 0;
-
+    static inline uint16_t s_nextViewId = 1;
+    static inline bgfx::ViewId s_currentViewId = 0;
 };
 

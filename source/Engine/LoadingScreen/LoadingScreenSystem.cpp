@@ -3,7 +3,9 @@
 #include "../EngineMain.h"
 #include "../AssetRegistry.h"
 
+#include <BgfxStateManager.h>
 
+#include <Renderer/Abstractions/ViewIdManager.h>
 
 void LoadingScreenSystem::Init()
 {
@@ -33,9 +35,11 @@ void LoadingScreenSystem::Draw()
     if (uiCanvas == nullptr)
         return;
 
+	BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Always);
+
     uiCanvas->LoadingProgress = Progress;
 
-    const uint16_t viewId = 0; // loading screen view
+    const uint16_t viewId = ViewIdManager::GetCurrentId(); // loading screen view
 
     const uint16_t width = EngineMain::MainInstance->ScreenSize.x;
     const uint16_t height = EngineMain::MainInstance->ScreenSize.y;
@@ -62,5 +66,8 @@ void LoadingScreenSystem::Draw()
 
     // Present frame
     bgfx::frame();
+
+    ViewIdManager::Reset();
+
 }
 

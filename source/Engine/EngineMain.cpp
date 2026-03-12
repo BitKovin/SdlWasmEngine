@@ -655,6 +655,9 @@ void EngineMain::GameUpdate()
 
 void EngineMain::Render()
 {
+
+	ViewIdManager::Reset();
+
     ivec2 uiResolution = ivec2(
         UiManager::GetScaledUiHeight() * Camera::AspectRatio,
         UiManager::GetScaledUiHeight()
@@ -685,19 +688,16 @@ void EngineMain::Render()
        UI PASS → render to transparent RT
        ============================================================ */
 
-    bgfx::ViewId uiView = UiRenderTexture->viewId();
+	UiRenderTexture->setAsRenderTarget();
 
-
-    bgfx::setViewFrameBuffer(uiView, UiRenderTexture->frameBufferHandle());
-    bgfx::setViewRect(uiView, 0, 0,
-        (uint16_t)uiResolution.x,
-        (uint16_t)uiResolution.y);
-    bgfx::setViewClear(uiView,
+    bgfx::setViewClear(ViewIdManager::GetCurrentId(),
         BGFX_CLEAR_COLOR,
         0x00000000, // transparent black
         1.0f, 0);
 
-    ViewIdManager::setCurrentViewId(uiView);
+	BgfxStateManager::Reset();
+    BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Always);
+
 
     Viewport.Draw();
     UiRenderer::EndFrame();
@@ -712,12 +712,11 @@ void EngineMain::Render()
        COMPOSITE UI OVER SCENE → swapchain (view 0)
        ============================================================ */
 
-    bgfx::setViewRect(0, 0, 0,
+    bgfx::setViewRect(ViewIdManager::GetCurrentId(), 0, 0,
         (uint16_t)ScreenSize.x,
         (uint16_t)ScreenSize.y);
-    bgfx::setViewFrameBuffer(0, BGFX_INVALID_HANDLE); // default backbuffer
+    bgfx::setViewFrameBuffer(ViewIdManager::GetCurrentId(), BGFX_INVALID_HANDLE); // default backbuffer
 
-    ViewIdManager::setCurrentViewId(0);
 
     auto compositeShader = ShaderManager::GetShaderProgram(
         "vs_fullscreen",
@@ -735,7 +734,6 @@ void EngineMain::Render()
     BgfxStateManager::Apply();
 
     MainRenderer->RenderFullscreenQuad(compositeShader);
-
 
     RmlContext->Render();
 

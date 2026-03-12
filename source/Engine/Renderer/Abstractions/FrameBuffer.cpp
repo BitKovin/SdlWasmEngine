@@ -9,12 +9,11 @@
 // Constructor / destructor
 // -----------------------------------------------------------------------
 Framebuffer::Framebuffer() {
-    m_viewId = ViewIdManager::allocateViewId();
+    m_viewId = -1;
 }
 
 Framebuffer::~Framebuffer() {
     destroyFrameBuffer();
-    ViewIdManager::deallocateViewId(m_viewId);
 }
 
 // -----------------------------------------------------------------------
@@ -88,7 +87,7 @@ void Framebuffer::rebuild() {
         throw std::runtime_error(
             "Framebuffer: bgfx failed to create framebuffer");
 
-    bgfx::setViewFrameBuffer(m_viewId, m_frameBuffer);
+    //bgfx::setViewFrameBuffer(m_viewId, m_frameBuffer);
 
     // Set the view rect to the first color attachment's dimensions, or
     // the depth attachment if no color attachments exist.
@@ -96,12 +95,7 @@ void Framebuffer::rebuild() {
     for (auto* c : m_colorAttachments) {
         if (c) { primary = c; break; }
     }
-    if (!primary) primary = m_depthAttachment;
-    if (primary) {
-        bgfx::setViewRect(m_viewId, 0, 0,
-            static_cast<uint16_t>(primary->width()),
-            static_cast<uint16_t>(primary->height()));
-    }
+
 }
 
 // -----------------------------------------------------------------------
@@ -203,13 +197,13 @@ void Framebuffer::resolveDepthOnly(Framebuffer& target) {
 // Bind — configure this framebuffer's view for upcoming draw calls.
 // -----------------------------------------------------------------------
 void Framebuffer::bind(uint16_t x, uint16_t y,
-    uint16_t w, uint16_t h) const
+    uint16_t w, uint16_t h)
 {
     if (!bgfx::isValid(m_frameBuffer))
         return; // nothing attached yet
 
     // Tell the draw-call layer which view to submit to.
-    ViewIdManager::setCurrentViewId(m_viewId);
+    m_viewId = ViewIdManager::GiveNextId();
 
     bgfx::setViewFrameBuffer(m_viewId, m_frameBuffer);
 

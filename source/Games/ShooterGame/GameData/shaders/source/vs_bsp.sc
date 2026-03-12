@@ -1,4 +1,4 @@
-$input a_position, a_normal, a_texcoord0, a_texcoord1, a_color0
+$input a_position, a_normal, a_texcoord0, a_texcoord2, a_color0
 $output v_texcoord0, v_texcoord1, v_normal, v_color0, v_world
 
 #include <bgfx_shader.sh>
@@ -40,6 +40,6 @@ void main()
     v_normal    = normalize(mul(normalMatrix, a_normal));
 
     v_texcoord0 = a_texcoord0;
-    v_texcoord1 = a_texcoord1;
+    v_texcoord1 = a_texcoord2;
     v_color0    = a_color0;
 }

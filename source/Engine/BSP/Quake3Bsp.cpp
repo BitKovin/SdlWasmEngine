@@ -555,10 +555,21 @@ void CQuake3BSP::PreloadFace(int index)
     else if (!isCube)
     {
         string lightMapPath = GetLightMapFilePathFromId(pFace->lightmapID, filePath);
-        auto   lmTex = AssetRegistry::GetTextureFromFile(lightMapPath);
-        lightmapId = (lmTex && lmTex->getID() != 0)
-            ? (int)lmTex->getID()
-            : GetLightmapNativeId(-1); // missing fallback
+
+        if (lightMapPath.empty())
+        {
+            // No lightmap file found for this face; use missing-lightmap fallback.
+			lightmapId = GetLightmapNativeId(-1);
+        }
+        else
+        {
+            auto   lmTex = AssetRegistry::GetTextureFromFile(lightMapPath);
+            lightmapId = (lmTex && lmTex->getID() != 0)
+                ? (int)lmTex->getID()
+                : GetLightmapNativeId(-1); // missing fallback
+        }
+
+
     }
 
     CachedFaceTextureData data;
@@ -1101,7 +1112,7 @@ bool CQuake3BSP::RenderSingleFace(int index, bool lightmap,
     bgfx::setVertexBuffer(0, buffers.VBO);
     bgfx::setIndexBuffer(buffers.EBO);
 
-    shader->Submit(ViewIdManager::getCurrentViewId());
+    shader->Submit(ViewIdManager::GetCurrentId());
     return true;
 }
 
@@ -1162,7 +1173,7 @@ bool CQuake3BSP::RenderMergedFace(int mergedIndex, bool lightmap,
 
     BgfxStateManager::Apply();
 
-    shader->Submit(ViewIdManager::getCurrentViewId());
+    shader->Submit(ViewIdManager::GetCurrentId());
     return true;
 }
 
@@ -1246,6 +1257,10 @@ std::string CQuake3BSP::GetLightMapFilePathFromId(int id, const std::string& fil
         digits[i] = char('0' + (tmp % 10));
         tmp /= 10;
     }
+
+    if(digits[3] == '-')
+		return ""; // invalid ID
+
     result.append(digits, 4);
     result += ".tga";
     return result;
@@ -1650,5 +1665,5 @@ void BSPModelRef::DrawDepth(mat4x4 view, mat4x4 projection)
 
     BgfxStateManager::Apply();
 
-    shader->Submit(ViewIdManager::getCurrentViewId());
+    shader->Submit(ViewIdManager::GetCurrentId());
 }

@@ -18,8 +18,8 @@ UiBilboard::~UiBilboard()
 void UiBilboard::DrawForward(mat4x4 view, mat4x4 projection)
 {
 
-	ColorTextureId = renderTexture->id();
-	/*
+	/*ColorTextureId = renderTexture->id();
+	
 
 	if (model == nullptr) return;
 

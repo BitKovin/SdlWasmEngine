@@ -70,7 +70,7 @@ public:
     // Call before submitting draw calls for this framebuffer.
     // -----------------------------------------------------------------------
     void bind(uint16_t x = 0, uint16_t y = 0,
-        uint16_t w = 0, uint16_t h = 0) const;
+        uint16_t w = 0, uint16_t h = 0);
 
     // No-op in bgfx (views are statically assigned); provided for API parity.
     static void unbind() {}
@@ -82,7 +82,6 @@ public:
     RenderTexture* depthAttachment() const { return m_depthAttachment; }
 
     bgfx::FrameBufferHandle frameBufferHandle() const { return m_frameBuffer; }
-    bgfx::ViewId            viewId()            const { return m_viewId; }
 
 private:
     // Destroy and recreate m_frameBuffer from current attachment list.

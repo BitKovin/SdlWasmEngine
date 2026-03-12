@@ -545,13 +545,6 @@ void Shader::SetTexture(const std::string& uname, bgfx::TextureHandle texture)
     const UniformMeta* u = FindUniform(uname);
     if (!u) return;
 
-    if (!bgfx::isValid(texture))
-    {
-        Logger::Log("Shader warning: invalid texture handle for \"" + uname + "\" in " + m_vsName + ", using missing texture");
-        EnsureMissingTexture();
-        texture = s_missingTexture;
-        if (!bgfx::isValid(texture)) return; // EnsureMissingTexture failed somehow
-    }
 
     bgfx::setTexture(u->samplerSlot, u->handle, texture);
 }

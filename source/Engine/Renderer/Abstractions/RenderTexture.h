@@ -73,7 +73,7 @@ public:
     //   rect defaults to the full texture; supply non-zero args to override.
     // -----------------------------------------------------------------------
     void setAsRenderTarget(uint16_t x = 0, uint16_t y = 0,
-        uint16_t w = 0, uint16_t h = 0) const;
+        uint16_t w = 0, uint16_t h = 0);
 
     // Set the cubemap face that subsequent renders go into.
     // Only meaningful for TextureType::Cubemap.
@@ -95,7 +95,6 @@ public:
     // Accessors
     // -----------------------------------------------------------------------
     bgfx::TextureHandle     textureHandle()     const { return m_texture; }
-    // Only valid after setCubemapFace(); Texture2D RTs are owned by Framebuffer.
     bgfx::FrameBufferHandle frameBufferHandle() const { return m_frameBuffer; }
     bgfx::ViewId            viewId()            const { return m_viewId; }
 

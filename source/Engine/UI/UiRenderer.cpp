@@ -157,7 +157,7 @@ namespace UiRenderer {
         BgfxStateManager::Apply();
 
         bgfx::setVertexBuffer(0, s_quadVB);
-        shader->Submit(ViewIdManager::getCurrentViewId());
+        shader->Submit(ViewIdManager::GetCurrentId());
     }
 
     // ── DrawTexturedRect ──────────────────────────────────────────────────────────
@@ -233,7 +233,7 @@ namespace UiRenderer {
         bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_PT_LINESTRIP | BGFX_STATE_BLEND_ALPHA);
 
         bgfx::setVertexBuffer(0, s_quadVB);
-        s_flatColorShader->Submit(ViewIdManager::getCurrentViewId());
+        s_flatColorShader->Submit(ViewIdManager::GetCurrentId());
     }
 
     // ── DrawText ──────────────────────────────────────────────────────────────────

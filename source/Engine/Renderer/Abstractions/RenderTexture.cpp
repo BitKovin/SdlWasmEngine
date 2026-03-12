@@ -83,14 +83,12 @@ RenderTexture::RenderTexture(uint32_t width, uint32_t height,
     , m_samplerFlags(samplerFlags)
     , m_sampleDepth(sampleDepth)
 {
-    m_viewId = ViewIdManager::allocateViewId();
     createResources();
 }
 
-RenderTexture::~RenderTexture() 
+RenderTexture::~RenderTexture()
 {
     destroyResources();
-	ViewIdManager::deallocateViewId(m_viewId);
 }
 
 // -----------------------------------------------------------------------
@@ -118,6 +116,14 @@ void RenderTexture::createResources() {
             bgfxFmt,
             flags
         );
+
+        if (!bgfx::isValid(m_texture))
+            throw std::runtime_error("RenderTexture: bgfx failed to create cubemap texture");
+
+        // Default to face 0; call setCubemapFace() to switch.
+        bgfx::Attachment att;
+        att.init(m_texture, bgfx::Access::Write, 0);
+        m_frameBuffer = bgfx::createFrameBuffer(1, &att);
     }
     else {
         m_texture = bgfx::createTexture2D(
@@ -128,10 +134,17 @@ void RenderTexture::createResources() {
             bgfxFmt,
             flags
         );
+
+        if (!bgfx::isValid(m_texture))
+            throw std::runtime_error("RenderTexture: bgfx failed to create texture");
+
+        // Pass false so the framebuffer does NOT own the texture —
+        // we destroy them independently in destroyResources().
+        m_frameBuffer = bgfx::createFrameBuffer(1, &m_texture, false);
     }
 
-    if (!bgfx::isValid(m_texture))
-        throw std::runtime_error("RenderTexture: bgfx failed to create texture");
+    if (!bgfx::isValid(m_frameBuffer))
+        throw std::runtime_error("RenderTexture: bgfx failed to create framebuffer");
 
     // Resource statistics
     size_t texSize = (size_t)m_width * m_height * bytesPerPixel(m_format) * m_samples;
@@ -145,6 +158,10 @@ void RenderTexture::destroyResources() {
     ResourceStatistics::Instance().unregisterResource(
         ResourceType::RenderTexture, m_texture.idx);
 
+    if (bgfx::isValid(m_frameBuffer)) {
+        bgfx::destroy(m_frameBuffer);
+        m_frameBuffer = BGFX_INVALID_HANDLE;
+    }
     if (bgfx::isValid(m_texture)) {
         bgfx::destroy(m_texture);
         m_texture = BGFX_INVALID_HANDLE;
@@ -155,12 +172,10 @@ void RenderTexture::destroyResources() {
 // Render-target configuration
 // -----------------------------------------------------------------------
 void RenderTexture::setAsRenderTarget(uint16_t x, uint16_t y,
-    uint16_t w, uint16_t h) const
+    uint16_t w, uint16_t h)
 {
-    // setAsRenderTarget is only valid when the texture has its own
-    // framebuffer (e.g. cubemap face). For textures attached to a
-    // Framebuffer, use Framebuffer::bind() instead — it owns the FB handle.
-    ViewIdManager::setCurrentViewId(m_viewId);
+    m_viewId = ViewIdManager::GiveNextId();
+    bgfx::setViewFrameBuffer(m_viewId, m_frameBuffer);
     bgfx::setViewRect(m_viewId,
         x, y,
         w ? w : (uint16_t)m_width,
@@ -178,7 +193,7 @@ void RenderTexture::setCubemapFace(uint8_t face) {
     att.init(m_texture, bgfx::Access::Write, face);
     m_frameBuffer = bgfx::createFrameBuffer(1, &att);
 
-    ViewIdManager::setCurrentViewId(m_viewId);
+    m_viewId = ViewIdManager::GiveNextId();
     bgfx::setViewFrameBuffer(m_viewId, m_frameBuffer);
 }
 

@@ -338,7 +338,7 @@ int main(int argc, char* args[])
 
     // ====================== BGFX INITIALIZATION (replaces all OpenGL) ======================
     bgfx::Init init;
-    init.type = bgfx::RendererType::Count;   // auto-select best renderer (D3D11/Vulkan/etc.)
+    init.type = bgfx::RendererType::OpenGL;   // auto-select best renderer (D3D11/Vulkan/etc.)
     init.debug = true;
 
     SDL_SysWMinfo wmInfo;
@@ -347,7 +347,7 @@ int main(int argc, char* args[])
         fprintf(stderr, "SDL_GetWindowWMInfo failed: %s\n", SDL_GetError());
         return 1;
     }
-    init.platformData.nwh = wmInfo.info.win.window;   // Windows native handle
+    init.platformData.nwh = wmInfo.info.win.window;   // Windows native handle  
 
     init.resolution.width = 800;
     init.resolution.height = 600;

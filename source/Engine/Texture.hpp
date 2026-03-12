@@ -48,7 +48,14 @@ public:
     }
 
     // Backward-compat: return numeric ID for ResourceStatistics etc.
-    uint16_t getID() const {
+    uint16_t getID() const 
+    {
+
+		if (bgfx::isValid(m_handle))
+            return m_handle.idx;
+        else
+            return 0; // or some invalid ID value
+
         return m_handle.idx;
     }
 

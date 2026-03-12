@@ -47,7 +47,7 @@ public:
     // -----------------------------------------------------------------------
     static void Reset()
     {
-        s_state = BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A;
+        s_state = BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_WRITE_Z;
     }
 
     // -----------------------------------------------------------------------

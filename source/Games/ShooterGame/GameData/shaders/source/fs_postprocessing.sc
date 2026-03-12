@@ -175,7 +175,7 @@ void main()
 
     vec3 color = applyFxaa(screenTexture, gl_FragCoord.xy, res).rgb;
 
-    color = GetFromLUT(color);
+    //color = GetFromLUT(color);
 
     //color = smoothPosterize(color, 75.0, 0.35, v_texcoord0 * vec2(aspectRatio, 1.0));
 

@@ -9,14 +9,13 @@
 #include "Abstractions/ViewIdManager.h"
 
 #include <bgfx/bgfx.h>
-
 #include <BgfxStateManager.h>
 
 // -----------------------------------------------------------------------
 // bgfx clear-color helper  (RGBA packed as uint32_t 0xRRGGBBAA)
 // -----------------------------------------------------------------------
 static constexpr uint32_t kClearBlack = 0x000000ff;
-static constexpr uint32_t kClearAlpha1 = 0x000000ff; // alpha = 1, RGB = 0
+static constexpr uint32_t kClearAlpha1 = 0x000000ff;
 
 // -----------------------------------------------------------------------
 // Constructor / destructor
@@ -96,7 +95,7 @@ void Renderer::RenderLevel(Level* level)
         // ---- Motion blur accumulate pass ----
         BlurResultBuffer->setAsRenderTarget();
 
-        bgfx::setViewClear(BlurResultBuffer->viewId(),
+        bgfx::setViewClear(ViewIdManager::GetCurrentId(),
             BGFX_CLEAR_COLOR, kClearBlack, 1.0f, 0);
 
         blurShader->UseProgram();
@@ -109,9 +108,12 @@ void Renderer::RenderLevel(Level* level)
         blurShader->SetUniform("uPersistence", 0.20f);
         blurShader->SetUniform("uMotionScale", 3.0f);
         blurShader->SetTexture("screenTexture", colorResolveBuffer->textureHandle());
+
+        BgfxStateManager::Reset();
+        BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Always);
+        BgfxStateManager::Apply();
         RenderFullscreenQuad(blurShader);
 
-        // Copy accumulate result back
         BlurAccumulatedBuffer->copyFrom(BlurResultBuffer);
 
         // ---- Motion blur apply pass ----
@@ -119,25 +121,39 @@ void Renderer::RenderLevel(Level* level)
         blurApplyShader->UseProgram();
         blurApplyShader->SetTexture("screenTexture", colorResolveBuffer->textureHandle());
         blurApplyShader->SetTexture("blurTexture", BlurAccumulatedBuffer->textureHandle());
+
+        BgfxStateManager::Reset();
+        BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Always);
+        BgfxStateManager::Apply();
         RenderFullscreenQuad(blurApplyShader);
     }
 
     // ---- Final blit to backbuffer ----
+    // FIX: Use m_finalBlitViewId (a high view ID, allocated after all FBO views)
+    // so bgfx executes this AFTER the scene FBO passes, not before them.
+    // View 0 executes first in bgfx's default order, so we must NOT use view 0
+    // for a pass that depends on FBO results.
     bgfx::TextureHandle resultTex = blurEnabled
         ? BlurResultBuffer->textureHandle()
         : colorResolveBuffer->textureHandle();
 
     ivec2 nativeRes = GetNativeScreenResolution();
 
-    bgfx::setViewRect(0, 0, 0,
+    ViewIdManager::GiveNextId();
+
+    bgfx::setViewRect(ViewIdManager::GetCurrentId(), 0, 0,
         static_cast<uint16_t>(nativeRes.x),
         static_cast<uint16_t>(nativeRes.y));
-    bgfx::setViewFrameBuffer(0, BGFX_INVALID_HANDLE);
-    ViewIdManager::setCurrentViewId(0);
+    bgfx::setViewFrameBuffer(ViewIdManager::GetCurrentId(), BGFX_INVALID_HANDLE);
+
 
     fullscreenShader->UseProgram();
     fullscreenShader->SetTexture("screenTexture", resultTex);
     fullscreenShader->SetUniform("screenResolution", nativeRes);
+
+    BgfxStateManager::Reset();
+    BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Always);
+    BgfxStateManager::Apply();
     RenderFullscreenQuad(fullscreenShader);
 }
 
@@ -150,7 +166,7 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
 
     // ---- MSAA bookkeeping ----
 #if defined(BGFX_PLATFORM_EMSCRIPTEN)
-    MultiSampleCount = 0; // WebGL: no MSAA
+    MultiSampleCount = 0;
 #endif
 
     if (MultiSampleCount)
@@ -171,36 +187,59 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
     }
 
     // ---- Resize all buffers ----
-    colorBuffer->resize(res.x, res.y);
-    depthBuffer->resize(res.x, res.y);
-    colorResolveBuffer->resize(res.x, res.y);
-    customIdResolveBuffer->resize(res.x, res.y);
-    depthResolveBuffer->resize(res.x, res.y);
+    // If any texture is resized its handle changes, so we must rebuild the
+    // FBOs that reference it immediately after resizing.
+    bool resized = false;
+    resized |= colorBuffer->resize(res.x, res.y);
+    resized |= depthBuffer->resize(res.x, res.y);
+    if (resized)
+    {
+        // Texture handles changed — rebuild both FBOs that reference them.
+        //forwardDepthFBO->attachDepth(depthBuffer);
+        forwardFBO->attachColor(colorBuffer, 0u);
+        forwardFBO->attachDepth(depthBuffer);
+    }
+
+    bool resolveResized = false;
+    resolveResized |= colorResolveBuffer->resize(res.x, res.y);
+    resolveResized |= customIdResolveBuffer->resize(res.x, res.y);
+    resolveResized |= depthResolveBuffer->resize(res.x, res.y);
+    if (resolveResized)
+    {
+        forwardResolveFBO->attachColor(colorResolveBuffer, 0u);
+        forwardResolveFBO->attachDepth(depthResolveBuffer);
+        customIdFBO->attachColor(customIdResolveBuffer, 0u);
+    }
 
     // ====================================================================
     // Pass A — Depth pre-pass
+    // Uses forwardDepthFBO — its own dedicated view ID, separate from
+    // forwardFBO. This is critical: if both passes share a view, the second
+    // setViewClear call overwrites the first (depth clear is lost) and bgfx
+    // may reorder draws within the view, breaking the pre-pass.
     // ====================================================================
     {
-        bgfx::ViewId vid = forwardFBO->viewId();
+
         forwardFBO->bind(0, 0,
             static_cast<uint16_t>(res.x),
             static_cast<uint16_t>(res.y));
 
-        bgfx::setViewClear(vid,
-            BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH,
-            kClearBlack, 1.0f, 0);
+        bgfx::ViewId vid = ViewIdManager::GetCurrentId();
 
-        // Depth write only — no color writes, less-than test, back-face cull.
+
+        // Clear depth only — no color attachment on this FBO.
+        bgfx::setViewClear(vid, BGFX_CLEAR_DEPTH, kClearBlack, 1.0f, 0);
+
+        // Depth write only, less-than test, back-face cull.
         BgfxStateManager::Reset();
         BgfxStateManager::SetWriteRGB(false);
         BgfxStateManager::SetWriteAlpha(false);
         BgfxStateManager::SetWriteDepth(true);
-        BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Less);
+        BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Always);
         BgfxStateManager::SetCull(BgfxStateManager::Cull::CW);
 
         for (auto* mesh : VissibleRenderList)
         {
-            BgfxStateManager::Apply();
             const mat4& P = mesh->IsViewmodel
                 ? Camera::finalizedProjectionViewmodel
                 : Camera::finalizedProjection;
@@ -208,22 +247,26 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
         }
     }
 
-    // Only resolve depth — color hasn't been written yet.
-    if (forwardFBO->depthAttachment() && forwardResolveFBO->depthAttachment())
-        forwardResolveFBO->depthAttachment()->copyFrom(forwardFBO->depthAttachment());
+    // Resolve depth pre-pass → single-sample. Safe here because we haven't
+    // written any color yet and forwardDepthFBO has no color attachment.
+    forwardFBO->resolveDepthOnly(*forwardResolveFBO);
 
     // ====================================================================
     // Pass B — Opaque + transparent color pass
+    // Uses forwardFBO — a different view ID from Pass A. This guarantees
+    // the GPU executes Pass A fully before Pass B begins.
     // ====================================================================
     {
-        bgfx::ViewId vid = forwardFBO->viewId();
+
         forwardFBO->bind(0, 0,
             static_cast<uint16_t>(res.x),
             static_cast<uint16_t>(res.y));
 
-        bgfx::setViewClear(vid,
-            BGFX_CLEAR_COLOR,
-            kClearBlack, 1.0f, 0);
+        bgfx::ViewId vid = ViewIdManager::GetCurrentId();
+
+
+        // Clear color only — depth was already written by Pass A.
+        bgfx::setViewClear(vid, BGFX_CLEAR_COLOR, kClearBlack, 1.0f, 0);
 
         // Opaque: RGB+A write, no depth write, lequal test, back-face cull.
         BgfxStateManager::Reset();
@@ -233,7 +276,6 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
         for (auto* mesh : VissibleRenderList)
         {
             if (mesh->Transparent) continue;
-            BgfxStateManager::Apply();
             const mat4& P = mesh->IsViewmodel
                 ? Camera::finalizedProjectionViewmodel
                 : Camera::finalizedProjection;
@@ -250,7 +292,6 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
         for (auto* mesh : VissibleRenderList)
         {
             if (!mesh->Transparent) continue;
-            BgfxStateManager::Apply();
             const mat4& P = mesh->IsViewmodel
                 ? Camera::finalizedProjectionViewmodel
                 : Camera::finalizedProjection;
@@ -267,21 +308,22 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
     // Pass C — Custom ID pass  (single-sample, no depth write)
     // ====================================================================
     {
-        bgfx::ViewId vid = customIdFBO->viewId();
+
         customIdFBO->bind(0, 0,
             static_cast<uint16_t>(res.x),
             static_cast<uint16_t>(res.y));
 
-        bgfx::setViewClear(vid,
-            BGFX_CLEAR_COLOR, kClearBlack, 1.0f, 0);
+        bgfx::ViewId vid = ViewIdManager::GetCurrentId();
 
-        // Depth already resolved; write color IDs only, no depth test.
+
+        bgfx::setViewClear(vid, BGFX_CLEAR_COLOR, kClearBlack, 1.0f, 0);
+
+        // No depth test — write color IDs only.
         BgfxStateManager::Reset();
         BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Always);
 
         for (auto* mesh : VissibleRenderList)
         {
-            BgfxStateManager::Apply();
             const mat4& P = mesh->IsViewmodel
                 ? Camera::finalizedProjectionViewmodel
                 : Camera::finalizedProjection;
@@ -302,12 +344,12 @@ void Renderer::RenderDirectionalLightShadows(vector<IDrawMesh*>& ShadowRenderLis
 
 // -----------------------------------------------------------------------
 // RenderFullscreenQuad
+// State must be set by the caller via BgfxStateManager before calling this.
 // -----------------------------------------------------------------------
 void Renderer::RenderFullscreenQuad(Shader* shader)
 {
     bgfx::setVertexBuffer(0, m_fullscreenVB);
-
-    bgfx::submit(ViewIdManager::getCurrentViewId(), shader->GetProgram());
+    bgfx::submit(ViewIdManager::GetCurrentId(), shader->GetProgram());
 }
 
 // -----------------------------------------------------------------------
@@ -389,12 +431,23 @@ void Renderer::InitFullscreenBuffers()
         .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
         .end();
 
-    struct QuadVertex { float x, y, u, v; };
-    static const QuadVertex kVerts[4] = {
-        { -1.0f,  1.0f,  0.0f, 1.0f },
-        { -1.0f, -1.0f,  0.0f, 0.0f },
-        {  1.0f,  1.0f,  1.0f, 1.0f },
-        {  1.0f, -1.0f,  1.0f, 0.0f },
+    // Single oversized triangle covering the entire NDC clip space.
+    // bgfx default state is TRIANGLE_LIST, so the old 4-vertex strip
+    // only drew one triangle (verts 0-1-2; vert 3 was ignored).
+    // A 3-vertex oversized triangle needs no BGFX_STATE_PT_TRISTRIP,
+    // no index buffer, and has no diagonal seam.
+    //
+    //   (-1, 3)
+    //     |\
+    //     |  \         clips to the [-1,+1] viewport on the GPU
+    //     |    \
+    //  (-1,-1)---(3,-1)
+    //
+    struct FullscreenVertex { float x, y, u, v; };
+    static const FullscreenVertex kVerts[3] = {
+        { -1.0f,  3.0f,   0.0f,  2.0f },   // top-left  (oversized)
+        { -1.0f, -1.0f,   0.0f,  0.0f },   // bottom-left
+        {  3.0f, -1.0f,   2.0f,  0.0f },   // bottom-right (oversized)
     };
 
     m_fullscreenVB = bgfx::createVertexBuffer(
@@ -411,9 +464,9 @@ void Renderer::InitFrameBuffers()
     ivec2 screenResolution = GetScreenResolution();
     TextureFormat colorFmt = TextureFormat::RGBA16F;
 
-    delete colorBuffer;  colorBuffer = nullptr;
-    delete depthBuffer;  depthBuffer = nullptr;
-    delete forwardFBO;   forwardFBO = nullptr;
+    delete colorBuffer;      colorBuffer = nullptr;
+    delete depthBuffer;      depthBuffer = nullptr;
+    delete forwardFBO;       forwardFBO = nullptr;
 
     TextureType texType = (MultiSampleCount > 0)
         ? TextureType::Texture2DMultisample
@@ -439,12 +492,15 @@ void Renderer::InitFrameBuffers()
         MultiSampleCount > 0 ? MultiSampleCount : 0);
     depthBuffer->SetName("MainDepthBuffer");
 
+    // FIX: Depth pre-pass gets its own FBO with its own view ID.
+    // This is a depth-only FBO — no color attachment.
+    // bgfx will execute this view before forwardFBO's view because its
+    // ID is allocated first (lower number).
+
+    // Color pass FBO — color + the same depth buffer written by the pre-pass.
     forwardFBO = new Framebuffer();
     forwardFBO->attachColor(colorBuffer, 0u);
     forwardFBO->attachDepth(depthBuffer);
-
-    colorBuffer->resize(screenResolution.x, screenResolution.y);
-    depthBuffer->resize(screenResolution.x, screenResolution.y);
 }
 
 // -----------------------------------------------------------------------
@@ -481,11 +537,6 @@ void Renderer::InitResolveFrameBuffers()
     forwardResolveFBO->attachColor(colorResolveBuffer, 0u);
     forwardResolveFBO->attachDepth(depthResolveBuffer);
 
-    colorResolveBuffer->resize(screenResolution.x, screenResolution.y);
-    customIdResolveBuffer->resize(screenResolution.x, screenResolution.y);
-    depthResolveBuffer->resize(screenResolution.x, screenResolution.y);
-
     customIdFBO = new Framebuffer();
     customIdFBO->attachColor(customIdResolveBuffer, 0u);
-    //customIdFBO->attachDepth(customIdDepthBuffer);
 }
