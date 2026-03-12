@@ -1214,6 +1214,7 @@ void CQuake3BSP::BuildStaticOpaqueObstacles()
 
         OpaqueModelVBO modelVBO;
 
+		if (vertices.size() > 0 && indices.size() > 0)
         {
             const bgfx::Memory* vMem = bgfx::copy(
                 vertices.data(),
@@ -1652,6 +1653,9 @@ void BSPModelRef::DrawForward(mat4x4 view, mat4x4 projection)
 void BSPModelRef::DrawDepth(mat4x4 view, mat4x4 projection)
 {
     const auto& vbo = bsp->opaqueVBOs[id];
+	if (vbo.IndexCount == 0)
+        return;
+
     if (!bgfx::isValid(vbo.vbo) || !bgfx::isValid(vbo.ibo)) return;
 
     Shader* shader = ShaderManager::GetShaderProgram("vs_bsp", "fs_empty");

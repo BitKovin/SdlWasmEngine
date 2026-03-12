@@ -47,6 +47,7 @@ public:
             Level::LoadLevelFromFile("GameData/maps/test.bsp");
         }
 		
+        AssetRegistry::GetSkinnedModelFromFile("GameData/models/arms.glb");
 
         for (size_t i = 0; i < 000; i++)
         {

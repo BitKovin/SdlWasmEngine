@@ -668,7 +668,7 @@ void Shader::FlushBuffers() const
         else
         {
             // No texture was set for this sampler — bind black as a safe default.
-            bgfx::setTexture(u.samplerSlot, u.handle, s_blackTexture);
+            //bgfx::setTexture(u.samplerSlot, u.handle, s_blackTexture);
         }
     }
 }

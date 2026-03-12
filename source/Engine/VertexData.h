@@ -35,16 +35,11 @@ struct VertexData {
     }
 };
 
-struct InstanceData {
-    glm::mat4 ModelMatrix;  // i_data0..i_data3 (4x vec4)
-    glm::vec4 Color;        // i_data4          (1x vec4)
+struct InstanceData{
+    glm::vec4 model[4];     // exactly i_data0..i_data3 (columns, shader expects this order)
+    glm::vec4 Color;        // i_data4
 
     // Allocates a bgfx instance buffer and returns a typed pointer to fill.
-    // Usage:
-    //   bgfx::InstanceDataBuffer idb;
-    //   InstanceData* instances = InstanceData::Alloc(idb, count);
-    //   instances[0] = { matrix, color };
-    //   bgfx::setInstanceDataBuffer(&idb);
     static InstanceData* Alloc(bgfx::InstanceDataBuffer& idb, uint32_t count) {
         assert(bgfx::getAvailInstanceDataBuffer(count, sizeof(InstanceData)) == count
             && "Not enough instance buffer space");
@@ -54,5 +49,5 @@ struct InstanceData {
     }
 };
 
-static_assert(sizeof(InstanceData) % 16 == 0,
-    "bgfx requires instance data stride to be a multiple of 16 bytes");
+static_assert(sizeof(InstanceData) == 80,
+    "InstanceData must be exactly 80 bytes (4×vec4 + vec4) — no padding allowed on any platform!");

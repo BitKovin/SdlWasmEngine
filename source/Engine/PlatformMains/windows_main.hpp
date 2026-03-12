@@ -338,7 +338,7 @@ int main(int argc, char* args[])
 
     // ====================== BGFX INITIALIZATION (replaces all OpenGL) ======================
     bgfx::Init init;
-    init.type = bgfx::RendererType::OpenGLES;   // auto-select best renderer (D3D11/Vulkan/etc.)
+    init.type = bgfx::RendererType::Direct3D11;   // auto-select best renderer (D3D11/Vulkan/etc.)
     init.debug = true;
 
     SDL_SysWMinfo wmInfo;

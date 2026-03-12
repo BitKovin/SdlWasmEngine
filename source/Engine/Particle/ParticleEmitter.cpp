@@ -90,32 +90,28 @@ void ParticleEmitter::InitBilboardVaoIfNeeded()
 {
     if (bgfx::isValid(s_billboardVbh)) return;
 
-    // Vertex layout: position (vec3) + texcoord0 (vec2)
+    // Exact match to shader $input — this is what the official bgfx example does
     s_billboardLayout.begin()
-        .add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
+        .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
         .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
         .end();
 
-    struct BillboardVertex { float x, y, z, u, v; };
-
-    // 1x1 quad centered at origin
-    BillboardVertex vertices[4] = {
-        { -0.5f, -0.5f, 0.0f,  0.0f, 1.0f },  // bottom-left
-        {  0.5f, -0.5f, 0.0f,  1.0f, 1.0f },  // bottom-right
-        {  0.5f,  0.5f, 0.0f,  1.0f, 0.0f },  // top-right
-        { -0.5f,  0.5f, 0.0f,  0.0f, 0.0f },  // top-left
+    struct BillboardVertex {
+        float x, y, z;
+        float u, v;
     };
 
-    uint16_t indices[6] = { 0, 1, 2,  2, 3, 0 };
+    BillboardVertex vertices[4] = {
+        {-0.5f, -0.5f, 0.0f, 0.0f, 1.0f},
+        { 0.5f, -0.5f, 0.0f, 1.0f, 1.0f},
+        { 0.5f,  0.5f, 0.0f, 1.0f, 0.0f},
+        {-0.5f,  0.5f, 0.0f, 0.0f, 0.0f}
+    };
 
-    s_billboardVbh = bgfx::createVertexBuffer(
-        bgfx::copy(vertices, sizeof(vertices)),
-        s_billboardLayout
-    );
+    uint16_t indices[6] = { 0, 1, 2, 2, 3, 0 };
 
-    s_billboardIbh = bgfx::createIndexBuffer(
-        bgfx::copy(indices, sizeof(indices))
-    );
+    s_billboardVbh = bgfx::createVertexBuffer(bgfx::copy(vertices, sizeof(vertices)), s_billboardLayout);
+    s_billboardIbh = bgfx::createIndexBuffer(bgfx::copy(indices, sizeof(indices)));
 }
 
 // ---------------------------------------------------------------------------
@@ -144,26 +140,34 @@ void ParticleEmitter::DrawForward(mat4x4 view, mat4x4 projection)
     Shader* shader = ShaderManager::GetShaderProgram("vs_instanced_billboard", PixelShader);
     if (shader == nullptr) return;
 
-    // Allocate bgfx transient instance buffer — InstanceData must be 16-byte aligned.
-    // InstanceData: mat4 (64 bytes) + vec4 color (16 bytes) = 80 bytes.
-    static_assert(sizeof(InstanceData) % 16 == 0, "InstanceData stride must be a multiple of 16");
-
-    const uint32_t instanceCount = static_cast<uint32_t>(instances.size());
+    // -----------------------------------------------------------------------
+    // Instance buffer handling – exactly as in the bgfx instancing example
+    // -----------------------------------------------------------------------
+    const uint32_t totalInstances = static_cast<uint32_t>(instances.size());
     const uint16_t instanceStride = static_cast<uint16_t>(sizeof(InstanceData));
 
-    if (bgfx::getAvailInstanceDataBuffer(instanceCount, instanceStride) < instanceCount)
-        return;
+    // Query how many instances we can fit in the transient instance buffer
+    uint32_t drawInstances = bgfx::getAvailInstanceDataBuffer(totalInstances, instanceStride);
+    if (drawInstances == 0)
+        return; // nothing to draw this frame
 
+    // Allocate the transient instance buffer
     bgfx::InstanceDataBuffer idb;
-    bgfx::allocInstanceDataBuffer(&idb, instanceCount, instanceStride);
-    memcpy(idb.data, instances.data(), instanceCount * instanceStride);
+    bgfx::allocInstanceDataBuffer(&idb, drawInstances, instanceStride);
+
+    // Copy instance data (only the first drawInstances entries)
+    memcpy(idb.data, instances.data(), drawInstances * instanceStride);
+
+    // Optional: report if we couldn't draw all instances (for debugging)
+    // uint32_t missing = totalInstances - drawInstances;
+    // if (missing > 0) DBG("ParticleEmitter: dropped %u instances", missing);
+    // -----------------------------------------------------------------------
 
     shader->UseProgram();
 
-    shader->SetUniform("view",       view);
+    shader->SetUniform("view", view);
     shader->SetUniform("projection", projection);
-    shader->SetUniform("is_particle", isDecal == false);
-    shader->SetUniform("is_decal",    isDecal);
+    shader->SetUniform("is_decal", isDecal);          // only is_decal needed
     shader->SetUniform("isViewmodel", false);
 
     Renderer::SetSurfaceShaderUniforms(shader);
@@ -224,8 +228,11 @@ void ParticleEmitter::FinalizeFrameData()
                     cameraForward, cameraRight, cameraUp,
                     vec3(particle.Size), particle.rotation);
 
-            InstanceData data;
-            data.ModelMatrix = world;
+            InstanceData data{};
+            data.model[0] = world[0];  // column 0
+            data.model[1] = world[1];
+            data.model[2] = world[2];
+            data.model[3] = world[3];
             data.Color = particle.Color * vec4(GetLightForParticle(particle), 1.0f);
             data.Color.a *= particle.Transparency;
 
@@ -264,12 +271,16 @@ void ParticleEmitter::FinalizeFrameData()
                     cameraForward, cameraRight, cameraUp,
                     vec3(particle.Size), particle.rotation);
 
-            InstanceData data;
-            data.ModelMatrix = world;
+            InstanceData data{};
+            data.model[0] = world[0];  // column 0
+            data.model[1] = world[1];
+            data.model[2] = world[2];
+            data.model[3] = world[3];
             data.Color = particle.Color * vec4(GetLightForParticle(particle), 1.0f);
             data.Color.a *= particle.Transparency;
             instances.push_back(std::move(data));
         }
+
     }
 }
 
