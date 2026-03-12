@@ -286,6 +286,7 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
         BgfxStateManager::Reset();
         BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::LEqual);
         BgfxStateManager::SetBlend(BgfxStateManager::Blend::Alpha);
+        BgfxStateManager::SetCull(BgfxStateManager::Cull::CW);
 
         Level::Current->BspData.RenderTransparentFaces();
 

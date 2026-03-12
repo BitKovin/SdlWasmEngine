@@ -4,6 +4,8 @@
 #include "../VertexData.h"
 #include "../Camera.h"
 #include "../glm.h"
+
+#include <bgfx/bgfx.h>
 #include <vector>
 
 class RibbonEmitter : public ParticleEmitter {
@@ -13,26 +15,22 @@ public:
 
     bool SimpleRibbon = false;
 
-    void RenderRibbon(const std::vector<Particle>& particles);
+    // Builds ribbon geometry and uploads it into transient bgfx buffers.
+    // Returns false if there is nothing to draw.
+    bool RenderRibbon(const std::vector<Particle>& particles);
 
     int GetPrimitiveCount() const { return primitiveCount; }
 
     void FinalizeFrameData();
-
     void DrawForward(mat4x4 view, mat4x4 projection);
 
     bool IsCameraVisible() { return true; }
 
-
-
 private:
-    void GenerateIndices(std::vector<int>& dst, int count);
+    void GenerateIndices(std::vector<uint32_t>& dst, int n);
 
+    std::vector<VertexData>  verts;
+    std::vector<uint32_t>    idxs;
 
-    std::vector<VertexData> verts;
-    std::vector<int>     idxs;
-
-
-    int lastCount = 0;
     int primitiveCount = 0;
 };

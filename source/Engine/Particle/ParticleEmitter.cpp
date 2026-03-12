@@ -1,23 +1,33 @@
 #include "ParticleEmitter.h"
 
 #include "../MathHelper.hpp"
-
 #include "../ShaderManager.h"
-
 #include "../FrustrumCull.hpp"
 #include "../BoundingSphere.hpp"
-
 #include "../Renderer/Renderer.h"
-
 #include "../BSP/Quake3Bsp.h"
 
+#include <BgfxStateManager.h>
+#include <Renderer/Abstractions/ViewIdManager.h>
 
+// ---------------------------------------------------------------------------
+// Static member definitions
+// ---------------------------------------------------------------------------
+bgfx::VertexBufferHandle ParticleEmitter::s_billboardVbh   = BGFX_INVALID_HANDLE;
+bgfx::IndexBufferHandle  ParticleEmitter::s_billboardIbh   = BGFX_INVALID_HANDLE;
+bgfx::VertexLayout       ParticleEmitter::s_billboardLayout = {};
 
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 mat4 GetWorldMatrix(const Particle& particle)
 {
     return translate(particle.position) * MathHelper::GetRotationMatrix(particle.globalRotation) * scale(vec3(particle.Size));
 }
 
+// ---------------------------------------------------------------------------
+// Spawn / Update
+// ---------------------------------------------------------------------------
 void ParticleEmitter::SpawnParticles(int num)
 {
     std::lock_guard<std::recursive_mutex> lock(particlesMutex);
@@ -39,7 +49,6 @@ void ParticleEmitter::Update(float deltaTime)
     if (elapsedTime > Duration)
         Emitting = false;
 
-    // Spawn new particles at a fixed spawn rate.
     const float spawnInterval = (SpawnRate > 0.0f) ? (1.0f / SpawnRate) : 0.0f;
 
     if (SpawnRate > 0.0f && Emitting && spawnInterval > 0.0f)
@@ -51,102 +60,146 @@ void ParticleEmitter::Update(float deltaTime)
         }
     }
 
-    // Update lifetime.
     for (auto& p : Particles)
         p.lifeTime += deltaTime;
 
-    // Remove expired particles.
     Particles.erase(
         std::remove_if(Particles.begin(), Particles.end(),
             [](const Particle& p) { return p.lifeTime >= p.deathTime; }),
         Particles.end());
 
-    // Enforce MaxParticles (0 => unlimited). Remove oldest first.
     if (MaxParticles > 0 && Particles.size() > MaxParticles)
     {
         const size_t excess = Particles.size() - MaxParticles;
-        // Oldest are at the front because we push_back() new ones.
         Particles.erase(
             Particles.begin(),
             Particles.begin() + static_cast<std::ptrdiff_t>(excess));
     }
 
-    // Update each remaining particle.
     for (auto& p : Particles)
         p = UpdateParticle(p, deltaTime);
 
-    // If we are no longer emitting and there are no particles left, mark as destroyed.
     if (!Emitting && Particles.empty())
         destroyed = true;
 }
 
+// ---------------------------------------------------------------------------
+// InitBilboardVaoIfNeeded
+// ---------------------------------------------------------------------------
+void ParticleEmitter::InitBilboardVaoIfNeeded()
+{
+    if (bgfx::isValid(s_billboardVbh)) return;
 
+    // Vertex layout: position (vec3) + texcoord0 (vec2)
+    s_billboardLayout.begin()
+        .add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
+        .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
+        .end();
+
+    struct BillboardVertex { float x, y, z, u, v; };
+
+    // 1x1 quad centered at origin
+    BillboardVertex vertices[4] = {
+        { -0.5f, -0.5f, 0.0f,  0.0f, 1.0f },  // bottom-left
+        {  0.5f, -0.5f, 0.0f,  1.0f, 1.0f },  // bottom-right
+        {  0.5f,  0.5f, 0.0f,  1.0f, 0.0f },  // top-right
+        { -0.5f,  0.5f, 0.0f,  0.0f, 0.0f },  // top-left
+    };
+
+    uint16_t indices[6] = { 0, 1, 2,  2, 3, 0 };
+
+    s_billboardVbh = bgfx::createVertexBuffer(
+        bgfx::copy(vertices, sizeof(vertices)),
+        s_billboardLayout
+    );
+
+    s_billboardIbh = bgfx::createIndexBuffer(
+        bgfx::copy(indices, sizeof(indices))
+    );
+}
+
+// ---------------------------------------------------------------------------
+// DrawForward
+// ---------------------------------------------------------------------------
 void ParticleEmitter::DrawForward(mat4x4 view, mat4x4 projection)
 {
+    if (instances.empty()) return;
 
+    InitBilboardVaoIfNeeded();
+
+    if (!bgfx::isValid(s_billboardVbh) || !bgfx::isValid(s_billboardIbh)) return;
+
+    // Resolve texture
     if (savedTextureName != texture)
     {
         savedTexture = AssetRegistry::GetTextureFromFile(texture);
         savedTextureName = texture;
     }
-    /*
-	glDepthMask(GL_FALSE);
-	
-    glDisable(GL_CULL_FACE);
 
-	ShaderProgram* forward_shader_program = nullptr;
+    auto startState = BgfxStateManager::GetState();
 
-	if (forward_shader_program == nullptr)
-		forward_shader_program = ShaderManager::GetShaderProgram("instanced_bilboard_vertex", PixelShader);
+    BgfxStateManager::SetWriteDepth(false);
+    BgfxStateManager::SetCull(BgfxStateManager::Cull::None);
 
-	forward_shader_program->UseProgram();
+    Shader* shader = ShaderManager::GetShaderProgram("vs_instanced_billboard", PixelShader);
+    if (shader == nullptr) return;
 
-    forward_shader_program->SetUniform("view", view);
-    forward_shader_program->SetUniform("projection", projection);
+    // Allocate bgfx transient instance buffer — InstanceData must be 16-byte aligned.
+    // InstanceData: mat4 (64 bytes) + vec4 color (16 bytes) = 80 bytes.
+    static_assert(sizeof(InstanceData) % 16 == 0, "InstanceData stride must be a multiple of 16");
 
-    forward_shader_program->SetUniform("is_particle", isDecal == false);
-    forward_shader_program->SetUniform("is_decal", isDecal);
-    forward_shader_program->SetUniform("isViewmodel", false);
+    const uint32_t instanceCount = static_cast<uint32_t>(instances.size());
+    const uint16_t instanceStride = static_cast<uint16_t>(sizeof(InstanceData));
 
-    Renderer::SetSurfaceShaderUniforms(forward_shader_program);
+    if (bgfx::getAvailInstanceDataBuffer(instanceCount, instanceStride) < instanceCount)
+        return;
 
-    forward_shader_program->SetTexture("u_texture", savedTexture);
+    bgfx::InstanceDataBuffer idb;
+    bgfx::allocInstanceDataBuffer(&idb, instanceCount, instanceStride);
+    memcpy(idb.data, instances.data(), instanceCount * instanceStride);
 
-    SetInstanceData(instances);
+    shader->UseProgram();
 
-	bilboardVAO->Bind();
-	
-    int instanceCount = static_cast<int>(instances.size());
-    glDrawElementsInstanced(GL_TRIANGLES, static_cast<GLsizei>(bilboardVAO->IndexCount), GL_UNSIGNED_INT, 0, instanceCount);
+    shader->SetUniform("view",       view);
+    shader->SetUniform("projection", projection);
+    shader->SetUniform("is_particle", isDecal == false);
+    shader->SetUniform("is_decal",    isDecal);
+    shader->SetUniform("isViewmodel", false);
 
-    forward_shader_program->SetUniform("is_particle", false);
-    forward_shader_program->SetUniform("is_decal", false);
+    Renderer::SetSurfaceShaderUniforms(shader);
 
-    glDepthMask(GL_TRUE);
-    glEnable(GL_CULL_FACE);
-    */
+    shader->SetTexture("u_texture", savedTexture);
+
+    bgfx::setVertexBuffer(0, s_billboardVbh);
+    bgfx::setIndexBuffer(s_billboardIbh);
+    bgfx::setInstanceDataBuffer(&idb);
+
+    BgfxStateManager::Apply();
+
+    shader->Submit(ViewIdManager::GetCurrentId());
+
+    BgfxStateManager::SetState(startState);
 }
 
+// ---------------------------------------------------------------------------
+// FinalizeFrameData
+// ---------------------------------------------------------------------------
 void ParticleEmitter::FinalizeFrameData()
 {
-    // 1) Snapshot particles quickly under a short lock (one copy) and release the lock.
     {
         std::lock_guard<std::recursive_mutex> lock(particlesMutex);
-        finalizedParticles = Particles; // single copy while locked
+        finalizedParticles = Particles;
     }
 
-    // 2) Read camera once
     const vec3 cameraPosition = Camera::finalizedPosition;
     const vec3 cameraRotation = Camera::finalizedRotation;
-    const vec3 cameraForward = MathHelper::GetForwardVector(cameraRotation);
-    const vec3 cameraRight = MathHelper::GetRightVector(cameraRotation);
-    const vec3 cameraUp = MathHelper::GetUpVector(cameraRotation);
+    const vec3 cameraForward  = MathHelper::GetForwardVector(cameraRotation);
+    const vec3 cameraRight    = MathHelper::GetRightVector(cameraRotation);
+    const vec3 cameraUp       = MathHelper::GetUpVector(cameraRotation);
 
     const int cameraC = Level::Current->BspData.FindClusterAtPosition(cameraPosition);
 
-    // 3) Prepare containers
     instances.clear();
-
 
     if (DepthSorting)
     {
@@ -155,43 +208,33 @@ void ParticleEmitter::FinalizeFrameData()
 
         for (const auto& particle : finalizedParticles)
         {
-            // Frustum - cheap reject
             if (!Camera::frustum.IsSphereVisible(particle.position, particle.Size))
                 continue;
 
-            // PVS / cluster visibility
             int targetC = Level::Current->BspData.FindClusterAtPosition(particle.position);
             if (!Level::Current->BspData.IsClusterVisible(cameraC, targetC))
                 continue;
 
-            // Create world/billboard matrix only for visible particles
             mat4x4 world;
             if (particle.UseWorldRotation)
                 world = GetWorldMatrix(particle);
             else
                 world = MathHelper::CreateBillboardMatrix(
-                    particle.position,
-                    cameraPosition,
-                    cameraForward,
-                    cameraRight,
-                    cameraUp,
-                    vec3(particle.Size),
-                    particle.rotation
-                );
+                    particle.position, cameraPosition,
+                    cameraForward, cameraRight, cameraUp,
+                    vec3(particle.Size), particle.rotation);
 
             InstanceData data;
             data.ModelMatrix = world;
             data.Color = particle.Color * vec4(GetLightForParticle(particle), 1.0f);
             data.Color.a *= particle.Transparency;
 
-            // compute depth only for visible particles
             float depth = glm::dot(cameraForward, particle.position - cameraPosition);
             visible.emplace_back(depth, std::move(data));
         }
 
         if (!visible.empty())
         {
-            // sort visible set by depth (farthest first)
             std::sort(visible.begin(), visible.end(),
                 [](const auto& a, const auto& b) { return a.first > b.first; });
 
@@ -202,7 +245,6 @@ void ParticleEmitter::FinalizeFrameData()
     }
     else
     {
-        // No depth sorting: build instances in one pass (no sorting overhead)
         instances.reserve(finalizedParticles.size());
         for (const auto& particle : finalizedParticles)
         {
@@ -218,14 +260,9 @@ void ParticleEmitter::FinalizeFrameData()
                 world = GetWorldMatrix(particle);
             else
                 world = MathHelper::CreateBillboardMatrix(
-                    particle.position,
-                    cameraPosition,
-                    cameraForward,
-                    cameraRight,
-                    cameraUp,
-                    vec3(particle.Size),
-                    particle.rotation
-                );
+                    particle.position, cameraPosition,
+                    cameraForward, cameraRight, cameraUp,
+                    vec3(particle.Size), particle.rotation);
 
             InstanceData data;
             data.ModelMatrix = world;
@@ -236,61 +273,9 @@ void ParticleEmitter::FinalizeFrameData()
     }
 }
 
-
-void ParticleEmitter::InitBilboardVaoIfNeeded()
-{
-    /*
-    if (bilboardVAO) return;
-
-    // Define billboard vertices (a quad centered at the origin with size 1x1 meter)
-// Using VertexData to leverage your declarations. Other fields are set to default.
-    std::vector<VertexData> vertices(4);
-
-    // Bottom-left
-    vertices[0].Position = glm::vec3(-0.5f, -0.5f, 0.0f);
-    vertices[0].TextureCoordinate = glm::vec2(0.0f, 1.0f);
-
-    // Bottom-right
-    vertices[1].Position = glm::vec3(0.5f, -0.5f, 0.0f);
-    vertices[1].TextureCoordinate = glm::vec2(1.0f, 1.0f);
-
-    // Top-right
-    vertices[2].Position = glm::vec3(0.5f, 0.5f, 0.0f);
-    vertices[2].TextureCoordinate = glm::vec2(1.0f, 0.0f);
-
-    // Top-left
-    vertices[3].Position = glm::vec3(-0.5f, 0.5f, 0.0f);
-    vertices[3].TextureCoordinate = glm::vec2(0.0f, 0.0f);
-
-    // Define indices for two triangles (quad)
-    std::vector<GLuint> indices = {
-        0, 1, 2,  // First triangle
-        2, 3, 0   // Second triangle
-    };
-
-    std::vector<InstanceData> instanceData{ }; //empty by default
-
-    // Create the vertex buffer for the billboard vertices
-    VertexBuffer* vb = new VertexBuffer(vertices, VertexData::Declaration(), GL_STATIC_DRAW);
-
-    // Create the index buffer for the quad
-    IndexBuffer* ib = new IndexBuffer(indices, GL_STATIC_DRAW);
-
-    // Create the instance buffer from the provided instance data
-    VertexBuffer* instanceBuffer = nullptr;
-    
-    instanceBuffer = new VertexBuffer(instanceData, InstanceData::Declaration(), GL_STATIC_DRAW);
-    
-
-    // Create the VAO using the vertex buffer, index buffer, and instance buffer (if any)
-    bilboardVAO = new VertexArrayObject(*vb, *ib, instanceBuffer);
-
-    VertexArrayObject::Unbind();
-    IndexBuffer::Unbind();
-    VertexBuffer::Unbind();
-    */
-}
-
+// ---------------------------------------------------------------------------
+// GetLightForParticle
+// ---------------------------------------------------------------------------
 vec3 ParticleEmitter::GetLightForParticle(const Particle& particle)
 {
     if (particle.UseWorldRotation == false)
@@ -303,27 +288,7 @@ vec3 ParticleEmitter::GetLightForParticle(const Particle& particle)
 
     auto light = Level::Current->BspData.GetLightvolColorPoint((particle.position + normal) * MAP_SCALE) * 4.0f;
 
-    float dirFactor = 1.0;// glm::clamp(dot(normal, light.direction), 0.0f, 1.0f);
+    float dirFactor = 1.0f;
 
     return light.ambientColor + light.directColor * dirFactor;
-}
-
-void ParticleEmitter::SetInstanceData(std::vector<InstanceData>& instanceData)
-{
-    /*
-    if (bilboardVAO == nullptr)
-    {
-        Logger::Log("null bilboard vao");
-        return;
-    }
-
-    if (bilboardVAO->instanceBuffer == nullptr)
-    {
-        Logger::Log("null bilboard vao instanceBuffer");
-        return;
-    }
-
-    bilboardVAO->instanceBuffer->UpdateData(instanceData);
-    */
-
 }
