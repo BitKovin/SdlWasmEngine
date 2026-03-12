@@ -15,7 +15,7 @@ public:
 
 		DepthPrePath = false;
 
-		PixelShader = "unlit_pixel";
+		PixelShader = "fs_unlit";
 
 		Transparent = true;
 

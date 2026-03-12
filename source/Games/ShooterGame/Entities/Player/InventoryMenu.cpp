@@ -16,7 +16,7 @@ void InventoryMenu::Finalize()
 
 	StaticMesh* background = new StaticMesh(this);
 	background->LoadFromFile("GameData/models/engine/invSphere.obj");
-	background->SetPixelShader("game/inventory_menu_sphere");
+	background->SetPixelShader("game/fs_inventory_menu_sphere");
 	background->IsViewmodel = true;
 	background->Position = Camera::position;
 	background->Transparent = true;

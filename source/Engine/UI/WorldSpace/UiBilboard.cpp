@@ -2,6 +2,9 @@
 
 #include "../UiRenderer.h"
 
+#include <BgfxStateManager.h>
+#include <Renderer/Abstractions/ViewIdManager.h>
+
 
 static std::map<hashed_string, std::vector<RenderTexture*>> bilboardRtCache;
 
@@ -10,107 +13,24 @@ UiBilboard::~UiBilboard()
 	if (renderTexture)
 	{
 		hashed_string hs = to_string(renderTexture->width()) + ";" + to_string(renderTexture->height());
-		bilboardRtCache[hs].push_back(renderTexture); // store it in the vector
+		bilboardRtCache[hs].push_back(renderTexture);
 		renderTexture = nullptr;
 	}
 }
 
 void UiBilboard::DrawForward(mat4x4 view, mat4x4 projection)
 {
+	if (renderTexture == nullptr) return;
 
-	/*ColorTextureId = renderTexture->id();
-	
+	// Point the mesh's colour slot at the UI render target so StaticMesh picks
+	// it up through the normal ColorTextureId path (same as any other override).
+	ColorTextureId = (int)renderTexture->textureHandle().idx;
 
-	if (model == nullptr) return;
-
-	if (Transparent == false)
-	{
-		if (DepthWrite)
-		{
-			glDepthMask(GL_TRUE);
-		}
-		else
-		{
-			glDepthMask(GL_FALSE);
-		}
-	}
-
-
-	if (TwoSided)
-	{
-		glDisable(GL_CULL_FACE);
-	}
-	else
-	{
-		glEnable(GL_CULL_FACE);
-	}
-
-
-	if (forward_shader_program == nullptr)
-		forward_shader_program = ShaderManager::GetShaderProgram("default_vertex", PixelShader);
-
-	forward_shader_program->UseProgram();
-
-
-	forward_shader_program->SetUniform("masked", Masked);
-
-	forward_shader_program->SetUniform("brightness", 1.0f * Brightness);
-
-	mat4x4 world = finalizedWorld;
-
-
-	forward_shader_program->SetUniform("view", view);
-	forward_shader_program->SetUniform("projection", projection);
-	forward_shader_program->SetUniform("viewmodelScaleFactor", ViewmodelScaleFactor);
-
-	forward_shader_program->SetUniform("world", world);
-
-	forward_shader_program->SetUniform("isViewmodel", IsViewmodel);
-
-	forward_shader_program->SetUniform("view", view);
-
-	forward_shader_program->SetUniform("customId", CustomId);
-
-
-
-
-	if (ColorTexture)
-	{
-		forward_shader_program->SetTexture("u_texture", ColorTexture);
-	}
-	else
-	{
-		forward_shader_program->SetTexture("u_texture", ColorTextureId);
-	}
-
-	if (EmissiveTexture)
-	{
-		forward_shader_program->SetTexture("u_textureEmissive", EmissiveTexture);
-	}
-	else
-	{
-		forward_shader_program->SetTexture("u_textureEmissive", EmissiveTextureId);
-	}
-
-
-	model->meshes[0].VAO->Bind();
-
-	glBlendFuncSeparate(GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-
-	glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(model->meshes[0].VAO->IndexCount), GL_UNSIGNED_INT, 0);
-
-	VertexArrayObject::Unbind();
-
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	glEnable(GL_CULL_FACE);
-
-	*/
+	StaticMesh::DrawForward(view, projection);
 }
 
 void UiBilboard::FinalizeFrameData()
 {
-
 	Rotation = Camera::rotation;
 
 	Canvas.size = vec2((float)ViewportSize.x, (float)ViewportSize.y);
@@ -131,27 +51,43 @@ void UiBilboard::Update()
 
 void UiBilboard::DrawUi()
 {
-	/*
 	EnsureRenderTarget();
 
 	UiRenderer::customViewport = true;
-
 	UiRenderer::customViewportSize = ViewportSize;
 
-	renderTexture->bindFramebuffer();
-	glViewport(0, 0, ViewportSize.x, ViewportSize.y);
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // alpha = 0
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glDisable(GL_DEPTH_TEST);
-	glBlendFuncSeparate(GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+	// --- bind the billboard's own render target ---
+	renderTexture->setAsRenderTarget();
+
+	bgfx::setViewRect(
+		ViewIdManager::GetCurrentId(),
+		0, 0,
+		(uint16_t)ViewportSize.x,
+		(uint16_t)ViewportSize.y
+	);
+
+	// Clear to transparent black, matching the main UI pass in EngineMain
+	bgfx::setViewClear(
+		ViewIdManager::GetCurrentId(),
+		BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH,
+		0x00000000,
+		1.0f, 0
+	);
+
+	auto savedState = BgfxStateManager::GetState();
+
+	BgfxStateManager::Reset();
+	BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Always);
+	// Premultiplied-alpha: replaces glBlendFuncSeparate(ONE, ONE_MINUS_SRC_ALPHA, ...)
+	BgfxStateManager::SetBlend(BgfxStateManager::Blend::Premultiplied);
 
 	Canvas.Draw();
 
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_DEPTH_TEST);
+	UiRenderer::EndFrame();
+
+	BgfxStateManager::SetState(savedState);
 
 	UiRenderer::customViewport = false;
-	*/
 }
 
 void UiBilboard::PreDraw()
@@ -159,9 +95,7 @@ void UiBilboard::PreDraw()
 	StaticMesh::PreDraw();
 
 	DrawUi();
-
 }
-
 
 void UiBilboard::EnsureRenderTarget()
 {
@@ -173,7 +107,7 @@ void UiBilboard::EnsureRenderTarget()
 	{
 		if (renderTexture)
 		{
-			// Push the old one back to cache before swapping
+			// Return the old one to cache before swapping
 			hashed_string oldHS = to_string(renderTexture->width()) + ";" + to_string(renderTexture->height());
 			bilboardRtCache[oldHS].push_back(renderTexture);
 		}
@@ -183,7 +117,7 @@ void UiBilboard::EnsureRenderTarget()
 		return;
 	}
 
-	// No cached one found: either create new or resize existing
+	// No cached RT found: create new or resize existing
 	if (renderTexture == nullptr)
 	{
 		renderTexture = new RenderTexture(
@@ -191,16 +125,19 @@ void UiBilboard::EnsureRenderTarget()
 			ViewportSize.y,
 			TextureFormat::RGBA8,
 			TextureType::Texture2D,
-			false, BGFX_SAMPLER_U_CLAMP
+			false,
+			BGFX_SAMPLER_U_CLAMP
 			| BGFX_SAMPLER_V_CLAMP
 			| BGFX_SAMPLER_MIN_POINT
 			| BGFX_SAMPLER_MAG_POINT
 		);
 
-		renderTexture->SetName("UiBilboard RT " + to_string(ViewportSize.x) + "x" + to_string(ViewportSize.y));
-
+		renderTexture->SetName(
+			"UiBilboard RT " + to_string(ViewportSize.x) + "x" + to_string(ViewportSize.y)
+		);
 	}
-	else if (renderTexture->width() != ViewportSize.x || renderTexture->height() != ViewportSize.y)
+	else if (renderTexture->width() != (uint32_t)ViewportSize.x ||
+		renderTexture->height() != (uint32_t)ViewportSize.y)
 	{
 		renderTexture->resize(ViewportSize.x, ViewportSize.y);
 	}

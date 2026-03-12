@@ -21,7 +21,7 @@ public:
 		Scalars["u_progress"] = debuff.GetProgress();
 		Scalars["u_timeRel"] = debuff.GetTimeRel();
 		color = glm::vec4(debuff.uiColor, 1.0f);
-		PixelShader = "game/debuff";
+		PixelShader = "game/fs_debuff";
 
 		if(debuff.uiShowStacks)
 		{
