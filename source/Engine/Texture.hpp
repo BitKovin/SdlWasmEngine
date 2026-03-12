@@ -42,19 +42,20 @@ public:
     }
 
     bool valid = false;
+    int  width = 0;
+    int  height = 0;
 
     bgfx::TextureHandle getHandle() const {
         return m_handle;
     }
 
     // Backward-compat: return numeric ID for ResourceStatistics etc.
-    uint16_t getID() const 
+    uint16_t getID() const
     {
-
-		if (bgfx::isValid(m_handle))
+        if (bgfx::isValid(m_handle))
             return m_handle.idx;
         else
-            return 0; // or some invalid ID value
+            return 0;
 
         return m_handle.idx;
     }
@@ -77,8 +78,6 @@ private:
     // -----------------------------------------------------------------------
 
     static uint64_t buildFlags() {
-        // BGFX_TEXTURE_NONE is 0 and has no effect — omitted.
-        // Anisotropic filtering for both min and mag.
         return BGFX_SAMPLER_MIN_ANISOTROPIC | BGFX_SAMPLER_MAG_ANISOTROPIC;
     }
 
@@ -107,35 +106,25 @@ private:
     // -----------------------------------------------------------------------
     // Core upload
     // -----------------------------------------------------------------------
-    void setupTexture(int width, int height,
+    void setupTexture(int w, int h,
         bgfx::TextureFormat::Enum format,
         const void* pixels,
         bool generateMipmaps)
     {
-        if (width <= 0 || height <= 0 || !pixels)
+        if (w <= 0 || h <= 0 || !pixels)
         {
             std::cerr << "setupTexture: invalid arguments ("
-                << width << "x" << height << ", pixels="
+                << w << "x" << h << ", pixels="
                 << (pixels ? "ok" : "null") << ")\n";
             return;
         }
 
-        const uint32_t dataSize = (uint32_t)(width * height * bytesPerPixel(format));
+        const uint32_t dataSize = (uint32_t)(w * h * bytesPerPixel(format));
         const bgfx::Memory* mem = bgfx::copy(pixels, dataSize);
 
-        // hasMips=false: we are only supplying the base mip level.
-        // Passing hasMips=true would tell bgfx that the memory buffer already
-        // contains a full pre-built mip chain — it does NOT auto-generate mips.
-        // Passing true with only base-level data causes bgfx to read past the
-        // end of the allocation, corrupting the uniform cache and crashing on
-        // the next bgfx::frame().
-        //
-        // To use mipmaps, pre-generate them with bimg::imageGenerateMips before
-        // calling this function, or load a pre-mipped DDS/KTX file via
-        // bgfx::makeRef + bgfx::createTexture.
         m_handle = bgfx::createTexture2D(
-            (uint16_t)width,
-            (uint16_t)height,
+            (uint16_t)w,
+            (uint16_t)h,
             false,  // hasMips — always false: we only provide the base level
             1,      // numLayers
             format,
@@ -144,15 +133,17 @@ private:
         );
 
         if (!bgfx::isValid(m_handle)) {
-            std::cerr << "bgfx::createTexture2D failed (" << width << "x" << height << ")\n";
+            std::cerr << "bgfx::createTexture2D failed (" << w << "x" << h << ")\n";
             return;
         }
 
-        // Approximate VRAM cost (base level only — no mip chain)
+        width = w;
+        height = h;
+
         const size_t textureSize = dataSize;
 
         std::string textureName = "Texture_"
-            + std::to_string(width) + "x" + std::to_string(height)
+            + std::to_string(w) + "x" + std::to_string(h)
             + formatSuffix(format);
 
         ResourceStatistics::Instance().registerResource(
@@ -189,27 +180,26 @@ private:
             return;
         }
 
-        int width, height, channels;
-        // Force RGBA8 — universally supported by bgfx across all backends
+        int w, h, channels;
         unsigned char* pixels = stbi_load_from_memory(
-            data, (int)size, &width, &height, &channels, 4);
+            data, (int)size, &w, &h, &channels, 4);
 
         if (!pixels) {
             std::cerr << "Texture: stbi_load_from_memory failed: " << stbi_failure_reason() << "\n";
             return;
         }
 
-        setupTexture(width, height, bgfx::TextureFormat::RGBA8, pixels, generateMipmaps);
+        setupTexture(w, h, bgfx::TextureFormat::RGBA8, pixels, generateMipmaps);
         stbi_image_free(pixels);
     }
 
-    void loadFromRawData(const unsigned char* data, int width, int height,
+    void loadFromRawData(const unsigned char* data, int w, int h,
         bgfx::TextureFormat::Enum format, bool generateMipmaps)
     {
         if (!data) {
             std::cerr << "Texture: loadFromRawData called with null data pointer\n";
             return;
         }
-        setupTexture(width, height, format, data, generateMipmaps);
+        setupTexture(w, h, format, data, generateMipmaps);
     }
 };

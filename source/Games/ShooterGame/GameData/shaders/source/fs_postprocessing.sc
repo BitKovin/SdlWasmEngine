@@ -3,14 +3,14 @@ $input v_texcoord0
 #include <bgfx_shader.sh>
 
 SAMPLER2D(screenTexture, 0);
-SAMPLER2D(noiseTexture,  1);
-SAMPLER2D(LutTexture,    2);
+SAMPLER2D(noiseTexture,  1);// @texture GameData/textures/noise/grainy5_256.png
+SAMPLER2D(LutTexture,    2);// @texture GameData/textures/pp/main.png
 
 uniform vec4 screenResolution;    // .xy
 // textureSize() is unavailable in bgfx's cross-platform dialect;
 // pass sizes from the application instead.
-uniform vec4 noiseTextureSize;    // .xy = width, height
-uniform vec4 lutTextureSize;      // .x  = height (N)  — width = N*N
+uniform vec4 noiseTexture_size;    // .xy = width, height
+uniform vec4 LutTexture_size;      // .x  = height (N)  — width = N*N
 
 #define FXAA_SPAN_MAX     4.0
 #define FXAA_REDUCE_MUL   (1.0 / 4.0)
@@ -130,7 +130,7 @@ float smoothNoise(vec2 uv)
 
 float getAspectRatio()
 {
-    return noiseTextureSize.x / noiseTextureSize.y;
+    return noiseTexture_size.x / noiseTexture_size.y;
 }
 
 vec3 smoothPosterize(vec3 color, float steps, float softness, vec2 uv)
@@ -149,14 +149,14 @@ vec3 smoothPosterize(vec3 color, float steps, float softness, vec2 uv)
 vec3 GetFromLUT(vec3 color)
 {
     color = clamp(color, 0.0, 1.0);
-
-    float N        = lutTextureSize.x;   // height of the LUT texture = slice size
+ 
+    float N        = LutTexture_size.y;   // height of the LUT texture = slice size N
     float maxColor = N - 1.0;
-
+ 
     float cell = floor(color.b * maxColor);
     float u    = (cell * N + color.r * maxColor + 0.5) / (N * N);
     float v    = (color.g * maxColor + 0.5) / N;
-
+ 
     return texture2DLod(LutTexture, vec2(u, v), 0.0).rgb;
 }
 
@@ -175,9 +175,9 @@ void main()
 
     vec3 color = applyFxaa(screenTexture, gl_FragCoord.xy, res).rgb;
 
-    //color = GetFromLUT(color);
+    color = GetFromLUT(color);
 
-    //color = smoothPosterize(color, 75.0, 0.35, v_texcoord0 * vec2(aspectRatio, 1.0));
+    color = smoothPosterize(color, 70.0, 0.35, v_texcoord0 * vec2(aspectRatio, 1.0));
 
     color += bayer_value / 256.0;
 

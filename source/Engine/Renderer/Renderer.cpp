@@ -151,6 +151,7 @@ void Renderer::RenderLevel(Level* level)
     fullscreenShader->SetTexture("screenTexture", resultTex);
     fullscreenShader->SetUniform("screenResolution", nativeRes);
 
+
     BgfxStateManager::Reset();
     BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Always);
     BgfxStateManager::Apply();

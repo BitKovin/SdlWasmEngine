@@ -57,10 +57,10 @@ std::string Shader::ResolveCompiledPath(const std::string& shaderName)
     return "GameData/shaders/compiled/" + GetPlatformRendererFolder() + shaderName + ".bin";
 }
 
-// Source .sh file: GameData/shaders/source/<n>.sh
+// Source .sc file: GameData/shaders/source/<n>.sc
 std::string Shader::ResolveSourcePath(const std::string& shaderName)
 {
-    return "GameData/shaders/source/" + shaderName + ".sh";
+    return "GameData/shaders/source/" + shaderName + ".sc";
 }
 
 // Load a compiled binary and create a bgfx ShaderHandle.
@@ -598,7 +598,7 @@ void Shader::SetTexture(const hashed_string& uname, Texture* texture)
     }
     else
     {
-		SetTexture(uname.str(), 0); // bind black texture for null/invalid Texture objects
+        SetTexture(uname.str(), 0); // bind black texture for null/invalid Texture objects
         return;
     }
 
@@ -731,23 +731,34 @@ void Shader::Submit(uint16_t viewId) const
 // @texture annotation parsing
 // ---------------------------------------------------------------------------
 
-// Parse a single source string for:
-//   uniform sampler2D  u_name; // @texture path/to/file.png
-//   uniform samplerCube u_env; // @texture path/to/cubemap
+// Parse a single source string for @texture annotations in both forms:
+//   uniform sampler2D  u_name;        // @texture path/to/file.png
+//   uniform samplerCube u_env;        // @texture path/to/cubemap
+//   SAMPLER2D(u_name, slot);          // @texture path/to/file.png
+//   SAMPLERCUBE(u_env, slot);         // @texture path/to/cubemap
 std::unordered_map<hashed_string, std::string>
 Shader::ParseTextureBindings(const std::string& sourceCode)
 {
     std::unordered_map<hashed_string, std::string> result;
 
-    std::regex re(R"(uniform\s+(?:sampler2D|samplerCube)\s+(\w+)\s*;.*@texture\s+([^\s]+))");
-    std::smatch match;
-    auto it = sourceCode.cbegin();
+    // Branch 1: uniform sampler2D/samplerCube u_name;  // @texture <path>
+    std::regex reUniform(R"(uniform\s+(?:sampler2D|samplerCube)\s+(\w+)\s*;[^\n]*@texture\s+([^\s]+))");
+    // Branch 2: SAMPLER2D(u_name, slot);               // @texture <path>
+    std::regex reMacro(R"(SAMPLER(?:2D|CUBE)\s*\(\s*(\w+)\s*,[^)]*\)\s*;[^\n]*@texture\s+([^\s]+))");
 
-    while (std::regex_search(it, sourceCode.cend(), match, re))
-    {
-        result[match[1].str()] = match[2].str();
-        it = match.suffix().first;
-    }
+    auto scan = [&](const std::regex& re)
+        {
+            std::smatch match;
+            auto it = sourceCode.cbegin();
+            while (std::regex_search(it, sourceCode.cend(), match, re))
+            {
+                result[match[1].str()] = match[2].str();
+                it = match.suffix().first;
+            }
+        };
+
+    scan(reUniform);
+    scan(reMacro);
 
     return result;
 }
@@ -774,12 +785,26 @@ Shader::ParseAllTextureBindings() const
 }
 
 // Apply all auto-bindings: resolve each path via AssetRegistry, call SetTexture.
-// SetTexture now writes into m_textureBuffer rather than calling bgfx directly.
+// For each binding, if a uniform named <samplerName>_size exists in the shader,
+// automatically set it to vec4(width, height, 0, 0) so shaders never need the
+// caller to manually push texture dimensions (e.g. noiseTexture_size, LutTexture_size).
 void Shader::ApplyTextureBindings()
 {
     for (const auto& [uniformName, path] : textureBindings)
     {
         Texture* tex = AssetRegistry::GetTextureFromFile(path);
         SetTexture(uniformName, tex);
+
+        // Auto-set <name>_size if the shader declared it and the texture is valid
+        const std::string sizeUniform = uniformName.str() + "_size";
+        if (tex && tex->valid && m_uniforms.count(sizeUniform))
+        {
+            const glm::vec4 size(
+                static_cast<float>(tex->width),
+                static_cast<float>(tex->height),
+                0.0f, 0.0f
+            );
+            SetUniform(sizeUniform, size);
+        }
     }
 }
