@@ -54,8 +54,8 @@ public:
         bool          sampleDepth = false,
         uint64_t      samplerFlags = BGFX_SAMPLER_U_CLAMP
         | BGFX_SAMPLER_V_CLAMP
-        | BGFX_SAMPLER_MIN_POINT
-        | BGFX_SAMPLER_MAG_POINT,
+        | BGFX_SAMPLER_MIN_ANISOTROPIC
+        | BGFX_SAMPLER_MIN_ANISOTROPIC,
         uint32_t      samples = 0);
 
     ~RenderTexture();
