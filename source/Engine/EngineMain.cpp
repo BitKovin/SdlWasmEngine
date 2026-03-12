@@ -16,6 +16,9 @@
 #include <UI/RmlUi/RmlUiContext.h>
 #include <LevelTraversalSystem.h>
 
+#include <BgfxStateManager.h>
+#include <Renderer/Abstractions/ViewIdManager.h>
+
 #include <Profiling/ResourceStatistics.hpp>
 
 EngineMain* EngineMain::MainInstance = nullptr;
@@ -652,10 +655,6 @@ void EngineMain::GameUpdate()
 
 void EngineMain::Render()
 {
-    const uint16_t UI_VIEW = 0;
-    const uint16_t WORLD_VIEW = 1;
-    const uint16_t COMPOSITE_VIEW = 2;
-
     ivec2 uiResolution = ivec2(
         UiManager::GetScaledUiHeight() * Camera::AspectRatio,
         UiManager::GetScaledUiHeight()
@@ -666,105 +665,76 @@ void EngineMain::Render()
        ============================================================ */
 
     if (UiRenderTexture == nullptr ||
-        UiRenderTexture->width() != uiResolution.x ||
-        UiRenderTexture->height() != uiResolution.y)
+        UiRenderTexture->width() != (uint32_t)uiResolution.x ||
+        UiRenderTexture->height() != (uint32_t)uiResolution.y)
     {
         delete UiRenderTexture;
+
+
 
         UiRenderTexture = new RenderTexture(
             uiResolution.x,
             uiResolution.y,
             TextureFormat::RGBA8
         );
-
         UiRenderTexture->SetName("UiRenderTexture");
+
     }
 
     /* ============================================================
        UI PASS → render to transparent RT
        ============================================================ */
 
-    bgfx::setViewFrameBuffer(UI_VIEW, UiRenderTexture->frameBufferHandle());
+    bgfx::ViewId uiView = UiRenderTexture->viewId();
 
-    bgfx::setViewRect(
-        UI_VIEW,
-        0,
-        0,
+
+    bgfx::setViewFrameBuffer(uiView, UiRenderTexture->frameBufferHandle());
+    bgfx::setViewRect(uiView, 0, 0,
         (uint16_t)uiResolution.x,
-        (uint16_t)uiResolution.y
-    );
-
-    bgfx::setViewClear(
-        UI_VIEW,
+        (uint16_t)uiResolution.y);
+    bgfx::setViewClear(uiView,
         BGFX_CLEAR_COLOR,
-        0x00000000, // transparent
-        1.0f,
-        0
-    );
+        0x00000000, // transparent black
+        1.0f, 0);
 
-    // UI renderer should submit draw calls with:
-    // BGFX_STATE_BLEND_ONE | BGFX_STATE_BLEND_INV_SRC_ALPHA
+    ViewIdManager::setCurrentViewId(uiView);
 
     Viewport.Draw();
     UiRenderer::EndFrame();
 
     /* ============================================================
-       WORLD PASS
+       WORLD PASS — RenderLevel manages its own view IDs internally
        ============================================================ */
-
-    bgfx::setViewFrameBuffer(WORLD_VIEW, BGFX_INVALID_HANDLE);
-
-    bgfx::setViewRect(
-        WORLD_VIEW,
-        0,
-        0,
-        (uint16_t)ScreenSize.x,
-        (uint16_t)ScreenSize.y
-    );
-
-    bgfx::setViewClear(
-        WORLD_VIEW,
-        BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH,
-        0x000000ff,
-        1.0f,
-        0
-    );
 
     MainRenderer->RenderLevel(Level::Current);
 
     /* ============================================================
-       COMPOSITE UI OVER SCENE
+       COMPOSITE UI OVER SCENE → swapchain (view 0)
        ============================================================ */
 
-    bgfx::setViewRect(
-        COMPOSITE_VIEW,
-        0,
-        0,
+    bgfx::setViewRect(0, 0, 0,
         (uint16_t)ScreenSize.x,
-        (uint16_t)ScreenSize.y
-    );
+        (uint16_t)ScreenSize.y);
+    bgfx::setViewFrameBuffer(0, BGFX_INVALID_HANDLE); // default backbuffer
 
-    auto fullscreenShader = ShaderManager::GetShaderProgram(
+    ViewIdManager::setCurrentViewId(0);
+
+    auto compositeShader = ShaderManager::GetShaderProgram(
         "vs_fullscreen",
         "fs_fxaa_simple"
     );
 
-    fullscreenShader->SetTexture("screenTexture", UiRenderTexture->textureHandle());
+    compositeShader->SetTexture("screenTexture", UiRenderTexture->textureHandle());
+    compositeShader->SetUniform("screenSize",
+        vec2((float)ScreenSize.x, (float)ScreenSize.y));
 
-    fullscreenShader->SetUniform(
-        "screenSize",
-        vec2((float)ScreenSize.x, (float)ScreenSize.y)
-    );
+    // Premultiplied-alpha blend: RGB = src*1 + dst*(1-srcA)
+    BgfxStateManager::Reset();
+    BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Always);
+    BgfxStateManager::SetBlend(BgfxStateManager::Blend::Premultiplied);
+    BgfxStateManager::Apply();
 
-    uint64_t state =
-        BGFX_STATE_WRITE_RGB |
-        BGFX_STATE_WRITE_A |
-        BGFX_STATE_BLEND_ONE |
-        BGFX_STATE_BLEND_INV_SRC_ALPHA;
-
-    bgfx::setState(state);
-
-    MainRenderer->RenderFullscreenQuad(fullscreenShader);
+    MainRenderer->RenderFullscreenQuad(compositeShader);
 
 
     RmlContext->Render();

@@ -9,6 +9,8 @@
 #include <mutex>
 #include "UiManager.h"
 
+#include <BgfxStateManager.h>
+
 #include <Renderer/Abstractions/ViewIdManager.h>
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -148,6 +150,12 @@ namespace UiRenderer {
 
     static void SubmitQuad(Shader* shader)
     {
+        
+        BgfxStateManager::Reset();
+        BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Always);
+        BgfxStateManager::SetBlend(BgfxStateManager::Blend::Alpha);
+        BgfxStateManager::Apply();
+
         bgfx::setVertexBuffer(0, s_quadVB);
         shader->Submit(ViewIdManager::getCurrentViewId());
     }

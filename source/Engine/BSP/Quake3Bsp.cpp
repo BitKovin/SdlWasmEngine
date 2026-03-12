@@ -20,6 +20,8 @@
 
 #include <Renderer/Abstractions/ViewIdManager.h>
 
+#include <BgfxStateManager.h>
+
 #include <ShaderManager.h>
 #include <Physics.h>
 
@@ -1158,6 +1160,8 @@ bool CQuake3BSP::RenderMergedFace(int mergedIndex, bool lightmap,
     bgfx::setVertexBuffer(0, mergedFace.vbo);
     bgfx::setIndexBuffer(mergedFace.ibo);
 
+    BgfxStateManager::Apply();
+
     shader->Submit(ViewIdManager::getCurrentViewId());
     return true;
 }
@@ -1643,6 +1647,8 @@ void BSPModelRef::DrawDepth(mat4x4 view, mat4x4 projection)
 
     bgfx::setVertexBuffer(0, vbo.vbo);
     bgfx::setIndexBuffer(vbo.ibo);
+
+    BgfxStateManager::Apply();
 
     shader->Submit(ViewIdManager::getCurrentViewId());
 }

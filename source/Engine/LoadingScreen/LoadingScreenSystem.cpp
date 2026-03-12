@@ -49,7 +49,6 @@ void LoadingScreenSystem::Draw()
         1.0f,
         0
     );
-    bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A);
 
     bgfx::touch(viewId); // ensure view clears even if nothing submitted
 

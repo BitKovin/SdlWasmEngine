@@ -46,7 +46,7 @@ public:
 
 private:
 
-    static inline std::atomic<uint16_t> s_nextViewId{ 1 }; // 0 reserved
+    static inline std::atomic<uint16_t> s_nextViewId{ 10 }; // 0-9 reserved
     static inline std::vector<uint16_t> s_freeViewIds;
     static inline std::mutex s_viewIdMutex;
 
