@@ -362,7 +362,7 @@
     <ClCompile Include="imgui\imgui_stdlib.cpp" />
     <ClCompile Include="imgui\imgui_tables.cpp" />
     <ClCompile Include="imgui\imgui_widgets.cpp" />
-    <ClCompile Include="includedLibraries\stb_image_implementation.cpp" />
+    <ClCompile Include="includedLibraries\stb_implementation.cpp" />
     <ClCompile Include="LevelTraversalSystem.cpp" />
     <ClCompile Include="LoadingScreen\LoadingScreenSystem.cpp" />
     <ClCompile Include="model_animator.cpp" />
@@ -515,6 +515,7 @@
     <ClInclude Include="imgui\vs_ocornut_imgui.bin.h" />
     <ClInclude Include="includedLibraries\stb_image.h" />
     <ClInclude Include="includedLibraries\stb_image_resize.h" />
+    <ClInclude Include="includedLibraries\stb_truetype.h" />
     <ClInclude Include="LevelTraversalSystem.h" />
     <ClInclude Include="LoadingScreen\LoadingScreenSystem.h" />
     <ClInclude Include="LoadingScreen\UiLoadingScreenBase.h" />

@@ -289,13 +289,14 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
             mesh->DrawForward(Camera::finalizedView, P);
         }
 
+
+        bgfx::setViewMode(vid, bgfx::ViewMode::Sequential);
+
         // Transparent: RGB+A write, no depth write, lequal test, alpha blend.
         BgfxStateManager::Reset();
         BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::LEqual);
         BgfxStateManager::SetBlend(BgfxStateManager::Blend::Alpha);
         BgfxStateManager::SetCull(BgfxStateManager::Cull::CW);
-
-        bgfx::setViewMode(vid, bgfx::ViewMode::Sequential);
 
         Level::Current->BspData.RenderTransparentFaces();
 

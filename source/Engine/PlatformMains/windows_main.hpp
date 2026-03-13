@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_ttf.h>
 #include "../imgui/imgui.h"
 #include "../imgui/imgui_impl_bgfx.h"
 #include "../imgui/imgui_impl_sdl2.h"

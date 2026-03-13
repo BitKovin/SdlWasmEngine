@@ -8,7 +8,6 @@ std::unordered_map<std::string, CubemapTexture*> AssetRegistry::textureCubeCache
 std::unordered_map<std::string, roj::SkinnedModel*> AssetRegistry::skinnedModelCache;
 std::unordered_map<std::string, roj::SkinnedModel*> AssetRegistry::skinnedModelAnimationCache;
 std::set<std::string> AssetRegistry::loadedAssetsDuringLoading;
-std::unordered_map<std::string, CachedFont> AssetRegistry::fontCache;
 
 void AssetRegistry::ClearMemory()
 {
@@ -223,46 +222,6 @@ Video* AssetRegistry::GetVideoFromFile(string filename)
 
 	return video;
 
-}
-
-TTF_Font* AssetRegistry::GetFontFromFile(const char* filename, int fontSize)
-{
-	std::string key = std::string(filename) + "_" + std::to_string(fontSize);
-
-	// Check cache first
-	auto it = fontCache.find(key);
-	if (it != fontCache.end()) {
-		return it->second.font;
-	}
-
-	// Load font data from file
-	std::vector<uint8_t> fontData = FileSystemEngine::ReadFileBinary(filename);
-	if (fontData.empty()) {
-		std::cerr << "Failed to read font file: " << filename << std::endl;
-		return nullptr;
-	}
-
-	// Create SDL_RWops from memory (mutable buffer)
-	SDL_RWops* rw = SDL_RWFromMem(fontData.data(), static_cast<int>(fontData.size()));
-	if (!rw) {
-		std::cerr << "SDL_RWFromMem Error: " << SDL_GetError() << std::endl;
-		return nullptr;
-	}
-
-	// Open font from memory
-	TTF_Font* font = TTF_OpenFontRW(rw, 1, fontSize); // SDL_ttf frees RWops automatically
-	if (!font) {
-		std::cerr << "TTF_OpenFontRW Error: " << TTF_GetError() << std::endl;
-		return nullptr;
-	}
-
-	// Cache font along with its data
-	CachedFont cached;
-	cached.font = font;
-	cached.data = std::move(fontData);
-	fontCache[key] = std::move(cached);
-
-	return font;
 }
 
 std::string AssetRegistry::ReadFileToString(string filename)
