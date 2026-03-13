@@ -3,17 +3,21 @@ $output v_color0, v_texcoord0
 
 #include <../bgfx_shader.sh>
 
+// Projection * CSS transform matrix. Updated once per SetTransform() call.
 uniform mat4 _transform;
+
+// Per-draw pixel translation from RenderGeometry()'s `translation` parameter.
+// Declared as vec4 because BGFX does not support vec2/vec3 uniforms.
+// Only .xy is used; .zw are padding.
+uniform vec4 _translate;
 
 void main()
 {
     v_texcoord0 = a_texcoord0;
     v_color0    = a_color0;
 
-    // FIX: _translate has been removed. Translation is now baked into
-    // _transform on the CPU side as (projection * css_transform * translate(offset)).
-    // The separate _translate vec4 uniform was silently ignored at runtime because
-    // Shader::SetUniform has no vec4 overload, leaving _translate = (0,0,0,0)
-    // and causing all geometry to render at document position (0,0) = top-left.
-    gl_Position = mul(_transform, vec4(a_position.xy, 0.0, 1.0));
+    // Mirror the GL3 vertex shader exactly:
+    //   vec2 translatedPos = inPosition + _translate;
+    //   gl_Position = _transform * vec4(translatedPos, 0.0, 1.0);
+    gl_Position = mul(_transform, vec4(a_position.xy + _translate.xy, 0.0, 1.0));
 }

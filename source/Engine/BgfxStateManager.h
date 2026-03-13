@@ -136,6 +136,7 @@ public:
     // -----------------------------------------------------------------------
     static void Apply()
     {
+        AddFlags(BGFX_STATE_MSAA);
         bgfx::setState(s_state);
     }
 

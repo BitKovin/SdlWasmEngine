@@ -25,7 +25,7 @@ public:
 
 	static void SetSurfaceShaderUniforms(Shader* shader, float brightnessScale = 1);
 
-	int MultiSampleCount = 0;
+	int MultiSampleCount = 8;
 
 	float ResolutionScale = 1.0f;
 

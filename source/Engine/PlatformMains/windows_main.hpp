@@ -123,6 +123,8 @@ void ShutdownDirectInput() {
     }
 }
 
+bool pendingResize = false;
+
 void desktop_render_loop() {
     SDL_Event event;
     int quit = 0;
@@ -147,12 +149,19 @@ void desktop_render_loop() {
                     event.window.event == SDL_WINDOWEVENT_RESIZED))
             {
                 SDL_GetWindowSize(window, &currentWidth, &currentHeight);
-                bgfx::reset(currentWidth, currentHeight, BGFX_RESET_NONE);
-                bgfx::setViewRect(0, 0, 0, currentWidth, currentHeight); // game view
-                bgfx::setViewRect(255, 0, 0, currentWidth, currentHeight); // ImGui overlay
+				pendingResize = true;
             }
 
             Input::ReceiveSdlEvent(event);
+        }
+
+        if (pendingResize)
+        {
+            bgfx::reset(currentWidth, currentHeight, BGFX_RESET_NONE);
+            bgfx::setViewRect(0, 0, 0, currentWidth, currentHeight); // game view
+            bgfx::setViewRect(255, 0, 0, currentWidth, currentHeight); // ImGui overlay
+			pendingResize = false;
+			EngineMain::MainInstance->UpdateScreenSize();
         }
 
         engine->MainLoop();
@@ -336,7 +345,7 @@ int main(int argc, char* args[])
 
     // ====================== BGFX INITIALIZATION (replaces all OpenGL) ======================
     bgfx::Init init;
-    init.type = bgfx::RendererType::OpenGL;   // auto-select best renderer (D3D11/Vulkan/etc.)
+    init.type = bgfx::RendererType::Direct3D11;   // auto-select best renderer (D3D11/Vulkan/etc.)
     init.debug = false;
 
     SDL_SysWMinfo wmInfo;

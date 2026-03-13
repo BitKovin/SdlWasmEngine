@@ -121,6 +121,7 @@ private:
     static bgfx::TextureFormat::Enum toBgfxFormat(TextureFormat fmt);
     static size_t                    bytesPerPixel(TextureFormat fmt);
     static uint64_t                  msaaFlag(uint32_t samples);
+    static bool                      isDepthFormat(TextureFormat fmt);
 
     // -----------------------------------------------------------------------
     // State

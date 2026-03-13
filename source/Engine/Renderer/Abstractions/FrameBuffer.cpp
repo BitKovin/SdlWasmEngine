@@ -106,7 +106,7 @@ void Framebuffer::attachColor(RenderTexture* texture, uint32_t attachmentIndex) 
         throw std::invalid_argument("Framebuffer::attachColor: texture is null");
 
     // Clear any pending cubemap-face state
-    m_cubemapFace   = -1;
+    m_cubemapFace = -1;
     m_cubemapSource = nullptr;
     m_cubemapIsDepth = false;
 
@@ -122,7 +122,7 @@ void Framebuffer::attachDepth(RenderTexture* texture) {
         throw std::invalid_argument("Framebuffer::attachDepth: texture is null");
 
     // Clear any pending cubemap-face state
-    m_cubemapFace   = -1;
+    m_cubemapFace = -1;
     m_cubemapSource = nullptr;
     m_cubemapIsDepth = false;
 
@@ -141,8 +141,8 @@ void Framebuffer::attachCubemapFace(RenderTexture* cubemap,
     if (face > 5)
         throw std::out_of_range("Framebuffer::attachCubemapFace: face index must be 0-5");
 
-    m_cubemapFace    = static_cast<int32_t>(face);
-    m_cubemapSource  = cubemap;
+    m_cubemapFace = static_cast<int32_t>(face);
+    m_cubemapSource = cubemap;
     m_cubemapIsDepth = isDepth;
 
     if (isDepth)
@@ -157,40 +157,50 @@ void Framebuffer::attachCubemapFace(RenderTexture* cubemap,
 }
 
 // -----------------------------------------------------------------------
-// Resolve MSAA → single-sample
+// resolve — copy auto-resolved color into the target FBO.
 //
-// FIX #3 (partial): Callers must NOT invoke resolve() for color attachments
-// before color has been written. The depth-only resolve after the pre-pass
-// is now done explicitly in RenderCameraForward rather than calling
-// resolve() on the full FBO.
-//
-// bgfx has no explicit "blit framebuffer" call; we delegate to
-// RenderTexture::copyFrom() which issues bgfx::blit on the destination
-// texture's view (so ordering relative to this framebuffer's view is
-// automatically correct as long as viewIds are sequenced properly).
+// bgfx::blit on OpenGL maps to glCopyImageSubData, which requires identical
+// sample counts and can NEVER copy MSAA → single-sample.  The only GL path
+// that resolves MSAA is glBlitFramebuffer, which bgfx invokes internally
+// at pass-end when a color attachment carries BGFX_RESOLVE_AUTO_GEN_MIPS
+// (set in rebuild()).  bgfx writes the resolved result into a companion
+// single-sample texture owned by the FrameBufferHandle.
+// bgfx::getTexture(m_frameBuffer, i) returns that companion — a real
+// single-sample handle distinct from m_colorAttachments[i]->textureHandle()
+// which is still the raw MSAA surface.  Blitting companion(1x)→target(1x)
+// is a same-sample copy and glCopyImageSubData accepts it.
 // -----------------------------------------------------------------------
 void Framebuffer::resolve(Framebuffer& target) {
-    // Resolve color attachments
     for (size_t i = 0; i < m_colorAttachments.size(); ++i) {
         if (!m_colorAttachments[i]) continue;
 
         RenderTexture* dst = target.colorAttachment(static_cast<uint32_t>(i));
-        dst->copyFrom(m_colorAttachments[i]);
+
+        // Companion single-sample texture produced by bgfx's internal
+        // glBlitFramebuffer resolve — NOT the raw MSAA texture handle.
+        bgfx::TextureHandle resolvedSrc =
+            bgfx::getTexture(m_frameBuffer, static_cast<uint8_t>(i));
+        if (!bgfx::isValid(resolvedSrc))
+            continue;
+
+        bgfx::ViewId blitView = ViewIdManager::GiveNextId();
+        bgfx::blit(blitView,
+            dst->textureHandle(), 0, 0, 0, 0,
+            resolvedSrc, 0, 0, 0, 0,
+            static_cast<uint16_t>(dst->width()),
+            static_cast<uint16_t>(dst->height()),
+            1);
     }
 
-    // Resolve depth (if both sides have one)
-    if (m_depthAttachment && target.m_depthAttachment)
-        target.m_depthAttachment->copyFrom(m_depthAttachment);
+    // Depth is BGFX_TEXTURE_RT_WRITE_ONLY — no resolve path in bgfx.
 }
 
 // -----------------------------------------------------------------------
-// resolveDepthOnly — resolve only the depth attachment.
-// Use this after a depth-pre-pass before color has been written to avoid
-// blitting uninitialized color data into the resolve target.
+// resolveDepthOnly — no-op.
+// MSAA depth is BGFX_TEXTURE_RT_WRITE_ONLY; bgfx has no resolve path for it.
 // -----------------------------------------------------------------------
-void Framebuffer::resolveDepthOnly(Framebuffer& target) {
-    if (m_depthAttachment && target.m_depthAttachment)
-        target.m_depthAttachment->copyFrom(m_depthAttachment);
+void Framebuffer::resolveDepthOnly(Framebuffer& /*target*/) {
+    // Intentional no-op.
 }
 
 // -----------------------------------------------------------------------

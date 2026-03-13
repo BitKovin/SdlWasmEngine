@@ -66,6 +66,19 @@ uint64_t RenderTexture::msaaFlag(uint32_t samples) {
     }
 }
 
+bool RenderTexture::isDepthFormat(TextureFormat fmt) {
+    switch (fmt) {
+    case TextureFormat::Depth16:
+    case TextureFormat::Depth24:
+    case TextureFormat::Depth32F:
+    case TextureFormat::Depth24Stencil8:
+    case TextureFormat::Depth32FStencil8:
+        return true;
+    default:
+        return false;
+    }
+}
+
 // -----------------------------------------------------------------------
 // Constructor / destructor
 // -----------------------------------------------------------------------
@@ -91,22 +104,44 @@ RenderTexture::~RenderTexture()
     destroyResources();
 }
 
-// -----------------------------------------------------------------------
-// createResources / destroyResources
-// -----------------------------------------------------------------------
 void RenderTexture::createResources() {
     bgfx::TextureFormat::Enum bgfxFmt = toBgfxFormat(m_format);
 
-    // Base RT flags + MSAA
-    uint64_t rtFlag = msaaFlag(m_samples);
+    const bool isMsaa = (m_samples > 1);
+    const bool isDepth = isDepthFormat(m_format);
 
-    // Depth-compare sampler
-    uint64_t samplerExtra = m_sampleDepth ? BGFX_SAMPLER_COMPARE_LEQUAL : 0;
-
-    // Blit destination flag — always set so copyFrom() works on any RT
-    uint64_t blitFlag = BGFX_TEXTURE_BLIT_DST;
-
-    uint64_t flags = rtFlag | blitFlag | m_samplerFlags | samplerExtra;
+    // -----------------------------------------------------------------------
+    // Texture flags — follow the pattern from the bgfx HDR example (09-hdr):
+    //
+    //   MSAA color   →  BGFX_TEXTURE_RT_MSAA_Xx | samplerFlags
+    //                   Resolvable: bgfx::blit MSAA color → single-sample target.
+    //                   Must NOT have BGFX_TEXTURE_BLIT_DST (it is a blit source).
+    //
+    //   MSAA depth   →  BGFX_TEXTURE_RT_WRITE_ONLY | BGFX_TEXTURE_RT_MSAA_Xx
+    //                   bgfx cannot resolve/blit MSAA depth; WRITE_ONLY tells
+    //                   the backend not to allocate a resolve surface.
+    //                   Adding any sampler or BLIT_DST flag triggers the assert:
+    //                   "depth MSAA texture cannot be resolved — must be
+    //                    WRITE_ONLY or MSAA_SAMPLE."
+    //
+    //   Single-sample → BGFX_TEXTURE_RT | BGFX_TEXTURE_BLIT_DST | samplerFlags
+    //                   Receives color resolves via bgfx::blit (copyFrom).
+    // -----------------------------------------------------------------------
+    uint64_t flags;
+    if (isMsaa && isDepth) {
+        // Write-only MSAA depth — no sampler flags, no BLIT_DST.
+        flags = BGFX_TEXTURE_RT_WRITE_ONLY | msaaFlag(m_samples);
+    }
+    else if (isMsaa) {
+        // Resolvable MSAA color — sampler flags allowed, no BLIT_DST.
+        uint64_t samplerExtra = m_sampleDepth ? BGFX_SAMPLER_COMPARE_LEQUAL : 0;
+        flags = msaaFlag(m_samples) | m_samplerFlags | samplerExtra;
+    }
+    else {
+        // Single-sample resolve target — blit destination + sampler.
+        uint64_t samplerExtra = m_sampleDepth ? BGFX_SAMPLER_COMPARE_LEQUAL : 0;
+        flags = BGFX_TEXTURE_RT | BGFX_TEXTURE_BLIT_DST | m_samplerFlags | samplerExtra;
+    }
 
     if (m_type == TextureType::Cubemap) {
         m_texture = bgfx::createTextureCube(
@@ -215,9 +250,13 @@ bool RenderTexture::resize(uint32_t width, uint32_t height) {
 }
 
 // -----------------------------------------------------------------------
-// Copy (blit)
-// bgfx::blit is recorded into a view and executes before that view's draws.
-// We use the destination RT's own view so ordering is guaranteed.
+// Copy (blit) — MSAA color resolve
+//
+// Claim a fresh view ID from ViewIdManager so the blit is sequenced
+// correctly between surrounding passes.  The destination texture must
+// have been created with BGFX_TEXTURE_BLIT_DST (single-sample targets).
+// MSAA depth textures are WRITE_ONLY and cannot be the source of a blit;
+// callers must never call copyFrom() on a depth texture.
 // -----------------------------------------------------------------------
 void RenderTexture::copyFrom(const RenderTexture* src) {
     if (!src)
@@ -231,12 +270,11 @@ void RenderTexture::copyFrom(const RenderTexture* src) {
             "RenderTexture::copyFrom: source/destination dimension or format mismatch");
     }
 
-    // Sample counts are intentionally allowed to differ —
-    // resolving MSAA → single-sample is the primary use-case here.
+    // Claim a dedicated view so bgfx places this blit between the passes
+    // that bracket it in the current frame's view sequence.
+    bgfx::ViewId blitView = ViewIdManager::GiveNextId();
 
-    // bgfx::blit(viewId, dst, dstMip, dstX, dstY, dstZ,
-    //            src, srcMip, srcX, srcY, srcZ, w, h, d)
-    bgfx::blit(m_viewId,
+    bgfx::blit(blitView,
         m_texture, 0, 0, 0, 0,
         src->m_texture, 0, 0, 0, 0,
         (uint16_t)m_width, (uint16_t)m_height, 1);

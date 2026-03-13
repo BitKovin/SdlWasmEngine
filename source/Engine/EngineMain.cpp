@@ -85,7 +85,6 @@ void EngineMain::UpdateScreenSize()
 void EngineMain::ToggleFullscreen()
 {
 
-    auto context = SDL_GL_GetCurrentContext();
 
     Uint32 FullscreenFlag = SDL_WINDOW_FULLSCREEN_DESKTOP;
     bool IsFullscreen = SDL_GetWindowFlags(Window) & FullscreenFlag;
@@ -95,11 +94,7 @@ void EngineMain::ToggleFullscreen()
     // Toggle fullscreen
     SDL_SetWindowFullscreen(Window, IsFullscreen ? 0 : FullscreenFlag);
 
-    // Rebind the context to the window
-    SDL_GL_MakeCurrent(Window, context);
 
-    // Ensure double-buffer swap is clean
-    SDL_GL_SwapWindow(Window);
 
     SDL_ShowCursor(SDL_ENABLE);
 
