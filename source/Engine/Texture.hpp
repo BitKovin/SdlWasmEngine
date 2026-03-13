@@ -138,7 +138,7 @@ private:
         // -----------------------------------------------------------------------
         const int pot_w = isPow2(w) ? w : nextPow2(w);
         const int pot_h = isPow2(h) ? h : nextPow2(h);
-        const bool needsUpscale = generateMipmaps && (pot_w != w || pot_h != h);
+        const bool needsUpscale = generateMipmaps && (pot_w != w || pot_h != h) && false;
 
         std::vector<uint8_t> pot_pixels;
         const uint8_t* basePixels = (const uint8_t*)pixels;
@@ -154,7 +154,7 @@ private:
                 bpp == 4 ? 3 : STBIR_ALPHA_CHANNEL_NONE,
                 bpp == 4 ? STBIR_FLAG_ALPHA_PREMULTIPLIED : 0,
                 STBIR_EDGE_CLAMP,
-                STBIR_FILTER_CATMULLROM,
+                STBIR_FILTER_DEFAULT,
                 STBIR_COLORSPACE_LINEAR,
                 nullptr);
             basePixels = pot_pixels.data();
@@ -195,24 +195,32 @@ private:
         // to the smallest levels, which is what caused the early blur.
         // -----------------------------------------------------------------------
         if (hasMips) {
-            int mipW = base_w, mipH = base_h;
+            // Start with a working copy of the base level (mip 0)
+            // One-time memcpy is negligible compared to the previous O(N·log N) cost
+            std::vector<uint8_t> workingMip(
+                basePixels,
+                basePixels + (size_t)base_w * base_h * bpp);
+
+            int currentW = base_w;
+            int currentH = base_h;
 
             for (uint8_t mip = 1; mip < numMips; ++mip) {
-                const int dstW = std::max(1, mipW / 2);
-                const int dstH = std::max(1, mipH / 2);
+                const int dstW = std::max(1, currentW / 2);
+                const int dstH = std::max(1, currentH / 2);
 
                 std::vector<uint8_t> mipPixels((size_t)dstW * dstH * bpp);
 
-                downsample(basePixels, base_w, base_h,
-                    mipPixels.data(), dstW, dstH,
-                    bpp);
+                downsample(workingMip.data(), currentW, currentH,
+                    mipPixels.data(), dstW, dstH, bpp);
 
                 bgfx::updateTexture2D(m_handle, 0, mip,
                     0, 0, (uint16_t)dstW, (uint16_t)dstH,
                     bgfx::copy(mipPixels.data(), (uint32_t)mipPixels.size()));
 
-                mipW = dstW;
-                mipH = dstH;
+                // Next iteration works from this level
+                workingMip = std::move(mipPixels);
+                currentW = dstW;
+                currentH = dstH;
             }
         }
 

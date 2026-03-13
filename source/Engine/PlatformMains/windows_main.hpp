@@ -339,12 +339,11 @@ int main(int argc, char* args[])
         return 1;
     }
 
-    TTF_Init();
     InitDirectInput(window);
 
     // ====================== BGFX INITIALIZATION (replaces all OpenGL) ======================
     bgfx::Init init;
-    init.type = bgfx::RendererType::Direct3D11;   // auto-select best renderer (D3D11/Vulkan/etc.)
+    init.type = bgfx::RendererType::OpenGL;   // auto-select best renderer (D3D11/Vulkan/etc.)
     init.debug = false;
 
     SDL_SysWMinfo wmInfo;

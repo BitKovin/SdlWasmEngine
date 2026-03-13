@@ -148,7 +148,6 @@ int main(int argc, char* args[])
         return 1;
     }
 
-    TTF_Init();
 
     // ------------------------------------------------------------
     // BGFX INIT (fixed for Emscripten)

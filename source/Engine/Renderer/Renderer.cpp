@@ -243,6 +243,7 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
         BgfxStateManager::SetWriteDepth(true);
         BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Always);
         BgfxStateManager::SetCull(BgfxStateManager::Cull::CW);
+        BgfxStateManager::SetMSAA(MultiSampleCount > 0);
 
         for (auto* mesh : VissibleRenderList)
         {
@@ -278,6 +279,7 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
         BgfxStateManager::Reset();
         BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::LEqual);
         BgfxStateManager::SetCull(BgfxStateManager::Cull::CW);
+        BgfxStateManager::SetMSAA(MultiSampleCount > 0);
 
         for (auto* mesh : VissibleRenderList)
         {
@@ -297,6 +299,7 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
         BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::LEqual);
         BgfxStateManager::SetBlend(BgfxStateManager::Blend::Alpha);
         BgfxStateManager::SetCull(BgfxStateManager::Cull::CW);
+        BgfxStateManager::SetMSAA(MultiSampleCount > 0);
 
         Level::Current->BspData.RenderTransparentFaces();
 
@@ -314,7 +317,7 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
 
     // Resolve color + depth → single-sample resolve FBO.
     forwardFBO->resolve(*forwardResolveFBO);
-
+    BgfxStateManager::SetMSAA(false);
     // ====================================================================
     // Pass C — Custom ID pass  (single-sample, no depth write)
     // ====================================================================

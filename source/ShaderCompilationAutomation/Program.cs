@@ -24,12 +24,42 @@ class ShaderCompiler
             return;
         }
 
-        // Path to varying.def.sc
+        // Path to default varying.def.sc (root of source)
         string varyingDefPath = Path.Combine(inputFolder, "varying.def.sc");
         if (!File.Exists(varyingDefPath))
         {
             Console.WriteLine("ERROR: varying.def.sc not found in source folder!");
             return;
+        }
+
+        // Local helper: find nearest varying.def.sc starting from shader dir and walking up to inputFolder.
+        string FindNearestVarying(string shaderDir)
+        {
+            if (string.IsNullOrEmpty(shaderDir))
+                return varyingDefPath;
+
+            string rootFull = Path.GetFullPath(inputFolder).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            string dir = Path.GetFullPath(shaderDir).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+            while (!string.IsNullOrEmpty(dir))
+            {
+                string candidate = Path.Combine(dir, "varying.def.sc");
+                if (File.Exists(candidate))
+                    return candidate;
+
+                // Stop if we've reached the source root
+                if (string.Equals(dir, rootFull, StringComparison.OrdinalIgnoreCase))
+                    break;
+
+                DirectoryInfo? parent = Directory.GetParent(dir);
+                if (parent == null)
+                    break;
+
+                dir = parent.FullName.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            }
+
+            // fallback to default root varying.def.sc
+            return varyingDefPath;
         }
 
         // Output base folder
@@ -51,24 +81,6 @@ class ShaderCompiler
             // -------------------
             ("linux/gl",    "linux", "gl",    "140",   "140"),
             ("linux/spirv", "linux", "spirv", "spirv", "spirv"),
-
-            // -------------------
-            // macOS
-            // -------------------
-            //("osx/gl",     "osx",   "gl",     "140",    "140"),
-            //("osx/metal",  "osx",   "metal",  "metal",  "metal"),
-
-            // -------------------
-            // Android
-            // -------------------
-            //("android/gles",   "android", "gles",   "300_es", "300_es"),
-            //("android/spirv",  "android", "spirv",  "spirv",  "spirv"),
-
-            // -------------------
-            // iOS
-            // -------------------
-            //("ios/gles",    "ios",   "gles",   "300_es", "300_es"),
-            //("ios/metal",   "ios",   "metal",  "metal",  "metal"),
 
             // -------------------
             // Web
@@ -136,9 +148,14 @@ class ShaderCompiler
                                 : "c";
 
                 string profile = (typeFlag == "v") ? target.vertexProfile : target.fragmentProfile;
+
+                // Find nearest varying.def.sc for this shader (search shader folder -> parent -> ... -> source root)
+                string shaderDir = Path.GetDirectoryName(shaderFile)!;
+                string varyingToUse = FindNearestVarying(shaderDir);
+
                 string argsStr = $"-f \"{shaderFile}\" -o \"{outFile}\" --type {typeFlag} " +
                                     $"--platform {target.platform} --profile {profile} " +
-                                    $"--varyingdef \"{varyingDefPath}\"";
+                                    $"--varyingdef \"{varyingToUse}\"";
 
                 var stdoutLines = new List<string>();
                 var stderrLines = new List<string>();
@@ -166,12 +183,12 @@ class ShaderCompiler
                 {
                     if (ok)
                     {
-                        Console.WriteLine($"[OK]     {target.folder} -> {Path.GetRelativePath(outputBase, outFile)}");
+                        Console.WriteLine($"[OK]     {target.folder} -> {Path.GetRelativePath(outputBase, outFile)} (varying: {Path.GetRelativePath(inputFolder, varyingToUse)})");
                         succeeded++;
                     }
                     else
                     {
-                        Console.WriteLine($"[FAILED] {target.folder} -> {shaderName}");
+                        Console.WriteLine($"[FAILED] {target.folder} -> {shaderName} (varying: {Path.GetRelativePath(inputFolder, varyingToUse)})");
                         foreach (var line in stdoutLines) Console.WriteLine($"         {line}");
                         foreach (var line in stderrLines) Console.WriteLine($"         {line}");
                         failed++;

@@ -90,7 +90,6 @@ int main(int argc, char* args[]) {
         return 1;
     }
 
-    TTF_Init();
 
     glContext = SDL_GL_CreateContext(window);
     if (!glContext) {
