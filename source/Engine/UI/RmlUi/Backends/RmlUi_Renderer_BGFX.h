@@ -241,6 +241,90 @@ private:
         RenderInterface_BGFX* ri_ = nullptr; // non-owning, for cleanup
     };
 
+    struct UniformCache
+    {
+        bool has_transform = false;
+        float transform[16] = {};
+
+        bool has_texParams = false;
+        float texParams[4] = {};
+
+        bool has_blurParams = false;
+        float blurParams[4] = {};
+
+        bool has_texelSize = false;
+        float texelSize[4] = {};
+
+        bool has_colorMatrix = false;
+        float colorMatrix[16] = {};
+
+        bool has_colorTranslate = false;
+        float colorTranslate[4] = {};
+
+        bool has_shadowExtra = false;
+        float shadowExtra[4] = {};
+
+        bool has_shadowColor = false;
+        float shadowColor[4] = {};
+
+        bool has_gradientParams = false;
+        float gradientParams[4] = {};
+
+        bool has_gradientP = false;
+        float gradientP[4] = {};
+
+        void Reset()
+        {
+            has_transform = false;
+            has_texParams = false;
+            has_blurParams = false;
+            has_texelSize = false;
+            has_colorMatrix = false;
+            has_colorTranslate = false;
+            has_shadowExtra = false;
+            has_shadowColor = false;
+            has_gradientParams = false;
+            has_gradientP = false;
+        }
+
+        void Submit(
+            bgfx::UniformHandle u_transform,
+            bgfx::UniformHandle u_texParams,
+            bgfx::UniformHandle u_blurParams,
+            bgfx::UniformHandle u_texelSize,
+            bgfx::UniformHandle u_colorMatrix,
+            bgfx::UniformHandle u_colorTranslate,
+            bgfx::UniformHandle u_shadowExtra,
+            bgfx::UniformHandle u_shadowColor,
+            bgfx::UniformHandle u_gradientParams,
+            bgfx::UniformHandle u_gradientP)
+        {
+            if (has_transform)
+                bgfx::setUniform(u_transform, transform);
+            if (has_texParams)
+                bgfx::setUniform(u_texParams, texParams);
+            if (has_blurParams)
+                bgfx::setUniform(u_blurParams, blurParams);
+            if (has_texelSize)
+                bgfx::setUniform(u_texelSize, texelSize);
+            if (has_colorMatrix)
+                bgfx::setUniform(u_colorMatrix, colorMatrix);
+            if (has_colorTranslate)
+                bgfx::setUniform(u_colorTranslate, colorTranslate);
+            if (has_shadowExtra)
+                bgfx::setUniform(u_shadowExtra, shadowExtra);
+            if (has_shadowColor)
+                bgfx::setUniform(u_shadowColor, shadowColor);
+            if (has_gradientParams)
+                bgfx::setUniform(u_gradientParams, gradientParams);
+            if (has_gradientP)
+                bgfx::setUniform(u_gradientP, gradientP);
+            Reset();
+        }
+    };
+
+    UniformCache m_uniformCache;
+
     RenderLayerStack m_layers;
 
     // ── Programs ────────────────────────────────────────────────────────────

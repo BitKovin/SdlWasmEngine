@@ -400,7 +400,7 @@ void RenderInterface_BGFX::SubmitGeometry(
         if (texture == 0)
             prog = RmlProgramId::Color;
         else if (texture == TexturePostprocess)
-            prog = m_activeProgram; // keep current
+            prog = m_activeProgram;
         else
             prog = RmlProgramId::Texture;
     }
@@ -410,7 +410,7 @@ void RenderInterface_BGFX::SubmitGeometry(
     Shader* shader = m_programs[static_cast<int>(prog)];
     if (!shader || !shader->IsValid()) return;
 
-    // Set transform uniform
+    // Cache transform uniform
     SetTransformUniform(translation);
 
     // Set texture
@@ -436,10 +436,8 @@ void RenderInterface_BGFX::SubmitGeometry(
     // Build render state
     uint64_t state = BuildBaseState();
 
-    // If we're doing color-only (no texture), still use standard blend
     if (prog == RmlProgramId::Color || texture == 0)
     {
-        // premultiplied alpha blend: src=ONE, dst=ONE_MINUS_SRC_ALPHA
         state |= BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_INV_SRC_ALPHA);
     }
     else
@@ -467,6 +465,10 @@ void RenderInterface_BGFX::SubmitGeometry(
         bgfx::setStencil(stencil);
     }
 
+    // Submit uniforms and draw
+    m_uniformCache.Submit(u_transform, u_texParams, u_blurParams, u_texelSize,
+        u_colorMatrix, u_colorTranslate, u_shadowExtra,
+        u_shadowColor, u_gradientParams, u_gradientP);
     bgfx::submit(m_currentView, shader->GetProgram(), m_drawOrder++);
 }
 
@@ -516,13 +518,11 @@ void RenderInterface_BGFX::SetTransform(const Rml::Matrix4f* transform)
 
 void RenderInterface_BGFX::SetTransformUniform(Rml::Vector2f translation)
 {
-    // Build MVP: projection * transform * translate
     Rml::Matrix4f translate_mat = Rml::Matrix4f::Translate(translation.x, translation.y, 0.f);
     Rml::Matrix4f mvp = m_projection * m_transform * translate_mat;
 
-    float mvp_f[16];
-    Matrix4ToFloat16(mvp, mvp_f);
-    bgfx::setUniform(u_transform, mvp_f);
+    Matrix4ToFloat16(mvp, m_uniformCache.transform);
+    m_uniformCache.has_transform = true;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -675,8 +675,6 @@ void RenderInterface_BGFX::RenderToClipMask(
     {
     case Rml::ClipMaskOperation::Set:
     {
-        // Clear stencil first, then write reference value.
-        // We increment the reference value each time Set is called.
         m_stencilRef = m_stencilValue++;
 
         stencil = 0
@@ -690,12 +688,6 @@ void RenderInterface_BGFX::RenderToClipMask(
     }
     case Rml::ClipMaskOperation::SetInverse:
     {
-        // Write to stencil where geometry IS NOT, so subsequent draws only
-        // pass where geometry was absent.
-        // First pass: clear stencil to ref everywhere (via fullscreen quad).
-        // Then write 0 where geometry is.
-
-        // We need two draws. First, fill entire stencil with ref via fullscreen quad.
         m_stencilRef = m_stencilValue++;
 
         // Fullscreen quad to fill stencil
@@ -705,14 +697,16 @@ void RenderInterface_BGFX::RenderToClipMask(
             {
                 const auto& fsGeo = fsIt->second;
 
-                // Set identity transform for fullscreen quad
                 float identity[16];
                 bx::mtxIdentity(identity);
-                bgfx::setUniform(u_transform, identity);
+
+                m_uniformCache.Reset();
+                std::memcpy(m_uniformCache.transform, identity, sizeof(identity));
+                m_uniformCache.has_transform = true;
 
                 bgfx::setVertexBuffer(0, fsGeo.vbh);
                 bgfx::setIndexBuffer(fsGeo.ibh);
-                bgfx::setState(BGFX_STATE_MSAA); // no color write
+                bgfx::setState(BGFX_STATE_MSAA);
 
                 uint32_t fillStencil = 0
                     | BGFX_STENCIL_TEST_ALWAYS
@@ -723,11 +717,13 @@ void RenderInterface_BGFX::RenderToClipMask(
                     | BGFX_STENCIL_OP_PASS_Z_REPLACE;
 
                 bgfx::setStencil(fillStencil);
+                m_uniformCache.Submit(u_transform, u_texParams, u_blurParams, u_texelSize,
+                    u_colorMatrix, u_colorTranslate, u_shadowExtra,
+                    u_shadowColor, u_gradientParams, u_gradientP);
                 bgfx::submit(m_currentView, creationShader->GetProgram(), m_drawOrder++);
             }
         }
 
-        // Now set up the actual geometry submission to write 0 where geometry is
         SetTransformUniform(translation);
         bgfx::setVertexBuffer(0, geo.vbh);
         bgfx::setIndexBuffer(geo.ibh);
@@ -744,36 +740,9 @@ void RenderInterface_BGFX::RenderToClipMask(
     }
     case Rml::ClipMaskOperation::Intersect:
     {
-        // Only write where stencil already equals ref (intersection).
-        // Increment ref; subsequent draws test against new value.
         uint8_t old_ref = m_stencilRef;
         m_stencilRef = m_stencilValue++;
 
-        stencil = 0
-            | BGFX_STENCIL_TEST_EQUAL
-            | BGFX_STENCIL_FUNC_REF(old_ref)
-            | BGFX_STENCIL_FUNC_RMASK(0xFF)
-            | BGFX_STENCIL_OP_FAIL_S_KEEP
-            | BGFX_STENCIL_OP_FAIL_Z_KEEP
-            | BGFX_STENCIL_OP_PASS_Z_REPLACE;
-
-        // We need to write the NEW ref on pass. bgfx stencil ref is both
-        // the comparison value and the replace value, so we need a trick:
-        // Compare against old_ref, but write m_stencilRef.
-        // Unfortunately bgfx doesn't separate these — the ref in BGFX_STENCIL_FUNC_REF
-        // is used for both comparison and REPLACE. So we use two passes:
-
-        // Pass 1: Decrement where not equal (no-op due to KEEP), or mark where equal
-        // Actually, let's use a simpler approach:
-        // We know old_ref < m_stencilRef (since we increment).
-        // On the geometry, where stencil == old_ref, write m_stencilRef.
-        // The comparison tests against old_ref but REPLACE writes the func_ref.
-
-        // In bgfx, BGFX_STENCIL_FUNC_REF is the reference value used for BOTH
-        // the comparison function AND the REPLACE operation.
-        // So we can't compare against old_ref and write new_ref in one pass.
-
-        // Workaround: use INCR instead of REPLACE when incrementing by 1.
         if (m_stencilRef == old_ref + 1)
         {
             stencil = 0
@@ -786,8 +755,6 @@ void RenderInterface_BGFX::RenderToClipMask(
         }
         else
         {
-            // Fallback: just use REPLACE with new ref, test LEQUAL against old.
-            // This is less precise but works for most cases.
             stencil = 0
                 | BGFX_STENCIL_TEST_LEQUAL
                 | BGFX_STENCIL_FUNC_REF(m_stencilRef)
@@ -811,6 +778,9 @@ void RenderInterface_BGFX::RenderToClipMask(
     }
 
     bgfx::setStencil(stencil);
+    m_uniformCache.Submit(u_transform, u_texParams, u_blurParams, u_texelSize,
+        u_colorMatrix, u_colorTranslate, u_shadowExtra,
+        u_shadowColor, u_gradientParams, u_gradientP);
     bgfx::submit(m_currentView, creationShader->GetProgram(), m_drawOrder++);
 }
 
@@ -838,11 +808,17 @@ void RenderInterface_BGFX::DrawFullscreenQuad(
     // Identity transform for NDC quad
     float identity[16];
     bx::mtxIdentity(identity);
-    bgfx::setUniform(u_transform, identity);
+
+    m_uniformCache.Reset();
+    std::memcpy(m_uniformCache.transform, identity, sizeof(identity));
+    m_uniformCache.has_transform = true;
 
     // UV params
-    float texParams[4] = { uv_offset.x, uv_offset.y, uv_scaling.x, uv_scaling.y };
-    bgfx::setUniform(u_texParams, texParams);
+    m_uniformCache.texParams[0] = uv_offset.x;
+    m_uniformCache.texParams[1] = uv_offset.y;
+    m_uniformCache.texParams[2] = uv_scaling.x;
+    m_uniformCache.texParams[3] = uv_scaling.y;
+    m_uniformCache.has_texParams = true;
 
     if (bgfx::isValid(texture))
         bgfx::setTexture(0, s_texture0, texture);
@@ -854,6 +830,10 @@ void RenderInterface_BGFX::DrawFullscreenQuad(
         | BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_INV_SRC_ALPHA);
     bgfx::setState(state);
 
+    // Submit uniforms and draw
+    m_uniformCache.Submit(u_transform, u_texParams, u_blurParams, u_texelSize,
+        u_colorMatrix, u_colorTranslate, u_shadowExtra,
+        u_shadowColor, u_gradientParams, u_gradientP);
     bgfx::submit(m_currentView, shader->GetProgram(), m_drawOrder++);
 }
 
@@ -922,11 +902,15 @@ void RenderInterface_BGFX::CompositeLayers(
         Shader* shader = m_programs[static_cast<int>(prog)];
         if (!shader) { m_currentView = savedView; return; }
 
-        bx::mtxIdentity(identity);
-        bgfx::setUniform(u_transform, identity);
+        m_uniformCache.Reset();
+        std::memcpy(m_uniformCache.transform, identity, sizeof(identity));
+        m_uniformCache.has_transform = true;
 
-        float texParams[4] = { 0.f, 0.f, 1.f, 1.f };
-        bgfx::setUniform(u_texParams, texParams);
+        m_uniformCache.texParams[0] = 0.f;
+        m_uniformCache.texParams[1] = 0.f;
+        m_uniformCache.texParams[2] = 1.f;
+        m_uniformCache.texParams[3] = 1.f;
+        m_uniformCache.has_texParams = true;
 
         bgfx::setTexture(0, s_texture0, source_texture);
         bgfx::setVertexBuffer(0, geo.vbh);
@@ -937,22 +921,22 @@ void RenderInterface_BGFX::CompositeLayers(
         switch (blend_mode)
         {
         case Rml::BlendMode::Blend:
-            // Standard premultiplied alpha compositing
             state |= BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_INV_SRC_ALPHA);
             break;
         case Rml::BlendMode::Replace:
-            // Direct copy, no blending
             break;
         }
 
         bgfx::setState(state);
+        m_uniformCache.Submit(u_transform, u_texParams, u_blurParams, u_texelSize,
+            u_colorMatrix, u_colorTranslate, u_shadowExtra,
+            u_shadowColor, u_gradientParams, u_gradientP);
         bgfx::submit(m_currentView, shader->GetProgram(), m_drawOrder++);
     }
 
     // Switch view to destination for continued rendering
     m_currentView = AllocateView();
     SetupView(m_currentView, dst_fb);
-    // Don't clear the destination since we just composited onto it
     bgfx::setViewClear(m_currentView, BGFX_CLEAR_NONE);
     bgfx::touch(m_currentView);
     m_drawOrder = 0;
@@ -978,7 +962,6 @@ void RenderInterface_BGFX::PopLayer()
 Rml::TextureHandle RenderInterface_BGFX::SaveLayerAsTexture()
 {
     const auto& srcLayer = m_layers.GetTopLayer();
-
     int x = 0, y = 0, w = srcLayer.width, h = srcLayer.height;
     if (m_scissorEnabled)
     {
@@ -987,14 +970,16 @@ Rml::TextureHandle RenderInterface_BGFX::SaveLayerAsTexture()
         w = m_scissorRegion.Width();
         h = m_scissorRegion.Height();
     }
-
     if (w <= 0 || h <= 0)
         return {};
 
-    // Create new framebuffer with point sampling to avoid filtering shifts.
     BgfxFramebuffer dstFb = CreateFramebuffer(w, h, false);
     if (!bgfx::isValid(dstFb.fb) || !bgfx::isValid(dstFb.color))
+    {
+        if (bgfx::isValid(dstFb.fb)) bgfx::destroy(dstFb.fb);
+        if (bgfx::isValid(dstFb.color)) bgfx::destroy(dstFb.color);
         return {};
+    }
 
     bgfx::ViewId renderView = AllocateView();
     bgfx::setViewName(renderView, "RmlUI_SaveLayer");
@@ -1002,7 +987,6 @@ Rml::TextureHandle RenderInterface_BGFX::SaveLayerAsTexture()
     bgfx::setViewRect(renderView, 0, 0, uint16_t(w), uint16_t(h));
     bgfx::setViewMode(renderView, bgfx::ViewMode::Sequential);
     bgfx::setViewClear(renderView, BGFX_CLEAR_COLOR, 0x00000000);
-
     float identity[16];
     bx::mtxIdentity(identity);
     bgfx::setViewTransform(renderView, identity, identity);
@@ -1026,13 +1010,22 @@ Rml::TextureHandle RenderInterface_BGFX::SaveLayerAsTexture()
     m_currentView = savedView;
     m_drawOrder = savedOrder;
 
+    // ────────────────────────────────────────────────────────────────
+    // Critical fix: destroy the framebuffer handle immediately,
+    // but keep the color texture alive (returned to RmlUi)
+    // ────────────────────────────────────────────────────────────────
+    if (bgfx::isValid(dstFb.fb))
+    {
+        bgfx::destroy(dstFb.fb);
+        dstFb.fb = BGFX_INVALID_HANDLE;
+    }
+
     return static_cast<Rml::TextureHandle>(dstFb.color.idx);
 }
 
 Rml::CompiledFilterHandle RenderInterface_BGFX::SaveLayerAsMaskImage()
 {
     const auto& srcLayer = m_layers.GetTopLayer();
-
     int x = 0, y = 0, w = srcLayer.width, h = srcLayer.height;
     if (m_scissorEnabled)
     {
@@ -1041,23 +1034,23 @@ Rml::CompiledFilterHandle RenderInterface_BGFX::SaveLayerAsMaskImage()
         w = m_scissorRegion.Width();
         h = m_scissorRegion.Height();
     }
-
     if (w <= 0 || h <= 0)
         return {};
 
-    // Create a new framebuffer exactly the size of the region.
     BgfxFramebuffer maskFb = CreateFramebuffer(w, h, false);
     if (!bgfx::isValid(maskFb.fb) || !bgfx::isValid(maskFb.color))
+    {
+        if (bgfx::isValid(maskFb.fb)) bgfx::destroy(maskFb.fb);
+        if (bgfx::isValid(maskFb.color)) bgfx::destroy(maskFb.color);
         return {};
+    }
 
-    // Set up a view to render into the mask framebuffer.
     bgfx::ViewId renderView = AllocateView();
     bgfx::setViewName(renderView, "RmlUI_SaveMask");
     bgfx::setViewFrameBuffer(renderView, maskFb.fb);
     bgfx::setViewRect(renderView, 0, 0, uint16_t(w), uint16_t(h));
     bgfx::setViewMode(renderView, bgfx::ViewMode::Sequential);
     bgfx::setViewClear(renderView, BGFX_CLEAR_COLOR, 0x00000000);
-
     float identity[16];
     bx::mtxIdentity(identity);
     bgfx::setViewTransform(renderView, identity, identity);
@@ -1081,10 +1074,19 @@ Rml::CompiledFilterHandle RenderInterface_BGFX::SaveLayerAsMaskImage()
     m_currentView = savedView;
     m_drawOrder = savedOrder;
 
-    // Create a filter holding this mask texture.
+    // ────────────────────────────────────────────────────────────────
+    // Critical fix: destroy the framebuffer handle immediately,
+    // but keep the color texture alive (stored in filter)
+    // ────────────────────────────────────────────────────────────────
+    if (bgfx::isValid(maskFb.fb))
+    {
+        bgfx::destroy(maskFb.fb);
+        maskFb.fb = BGFX_INVALID_HANDLE;
+    }
+
     CompiledFilter filter;
     filter.type = FilterType::MaskImage;
-    filter.mask_texture = maskFb.color; // store the texture handle
+    filter.mask_texture = maskFb.color;          // texture stays alive
 
     Rml::CompiledFilterHandle handle = m_nextFilterId++;
     m_filters[handle] = filter;
@@ -1255,6 +1257,7 @@ void RenderInterface_BGFX::RenderFilters(
             auto& pp2 = m_layers.GetPostprocessSecondary();
             Rml::Rectanglei rect = Rml::Rectanglei::FromSize(Rml::Vector2i(pp1.width, pp1.height));
             RenderBlur(filter.sigma, pp1, pp2, rect);
+
             break;
         }
         case FilterType::DropShadow:
@@ -1303,22 +1306,27 @@ void RenderInterface_BGFX::RenderFilters(
                     {
                         const auto& geo = fsIt->second;
 
-                        bgfx::setUniform(u_transform, identity);
-                        float texParams[4] = { 0.f, 0.f, 1.f, 1.f };
-                        bgfx::setUniform(u_texParams, texParams);
+                        m_uniformCache.Reset();
+                        std::memcpy(m_uniformCache.transform, identity, sizeof(identity));
+                        m_uniformCache.has_transform = true;
 
-                        float shadowExtra[4] = {
-                            filter.offset.x / pp1.width,
-                            filter.offset.y / pp1.height,
-                            0.f, 0.f
-                        };
-                        bgfx::setUniform(u_shadowExtra, shadowExtra);
+                        m_uniformCache.texParams[0] = 0.f;
+                        m_uniformCache.texParams[1] = 0.f;
+                        m_uniformCache.texParams[2] = 1.f;
+                        m_uniformCache.texParams[3] = 1.f;
+                        m_uniformCache.has_texParams = true;
 
-                        float shadowColor[4] = {
-                            filter.color.red, filter.color.green,
-                            filter.color.blue, filter.color.alpha
-                        };
-                        bgfx::setUniform(u_shadowColor, shadowColor);
+                        m_uniformCache.shadowExtra[0] = filter.offset.x / pp1.width;
+                        m_uniformCache.shadowExtra[1] = filter.offset.y / pp1.height;
+                        m_uniformCache.shadowExtra[2] = 0.f;
+                        m_uniformCache.shadowExtra[3] = 0.f;
+                        m_uniformCache.has_shadowExtra = true;
+
+                        m_uniformCache.shadowColor[0] = filter.color.red;
+                        m_uniformCache.shadowColor[1] = filter.color.green;
+                        m_uniformCache.shadowColor[2] = filter.color.blue;
+                        m_uniformCache.shadowColor[3] = filter.color.alpha;
+                        m_uniformCache.has_shadowColor = true;
 
                         bgfx::setTexture(0, s_texture0, pp3.color);
                         bgfx::setVertexBuffer(0, geo.vbh);
@@ -1326,7 +1334,14 @@ void RenderInterface_BGFX::RenderFilters(
 
                         uint64_t state = BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A;
                         bgfx::setState(state);
+
+                        auto savedView = m_currentView;
+                        m_currentView = dsView;
+                        m_uniformCache.Submit(u_transform, u_texParams, u_blurParams, u_texelSize,
+                            u_colorMatrix, u_colorTranslate, u_shadowExtra,
+                            u_shadowColor, u_gradientParams, u_gradientP);
                         bgfx::submit(dsView, dsShader->GetProgram(), 0);
+                        m_currentView = savedView;
                     }
                 }
             }
@@ -1384,12 +1399,21 @@ void RenderInterface_BGFX::RenderFilters(
                 {
                     const auto& geo = fsIt->second;
 
-                    bgfx::setUniform(u_transform, identity);
-                    float texParams[4] = { 0.f, 0.f, 1.f, 1.f };
-                    bgfx::setUniform(u_texParams, texParams);
+                    m_uniformCache.Reset();
+                    std::memcpy(m_uniformCache.transform, identity, sizeof(identity));
+                    m_uniformCache.has_transform = true;
 
-                    bgfx::setUniform(u_colorMatrix, filter.color_matrix);
-                    bgfx::setUniform(u_colorTranslate, filter.color_translate);
+                    m_uniformCache.texParams[0] = 0.f;
+                    m_uniformCache.texParams[1] = 0.f;
+                    m_uniformCache.texParams[2] = 1.f;
+                    m_uniformCache.texParams[3] = 1.f;
+                    m_uniformCache.has_texParams = true;
+
+                    std::memcpy(m_uniformCache.colorMatrix, filter.color_matrix, sizeof(filter.color_matrix));
+                    m_uniformCache.has_colorMatrix = true;
+
+                    std::memcpy(m_uniformCache.colorTranslate, filter.color_translate, sizeof(filter.color_translate));
+                    m_uniformCache.has_colorTranslate = true;
 
                     bgfx::setTexture(0, s_texture0, pp1.color);
                     bgfx::setVertexBuffer(0, geo.vbh);
@@ -1397,7 +1421,14 @@ void RenderInterface_BGFX::RenderFilters(
 
                     uint64_t state = BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A;
                     bgfx::setState(state);
+
+                    auto savedView = m_currentView;
+                    m_currentView = cmView;
+                    m_uniformCache.Submit(u_transform, u_texParams, u_blurParams, u_texelSize,
+                        u_colorMatrix, u_colorTranslate, u_shadowExtra,
+                        u_shadowColor, u_gradientParams, u_gradientP);
                     bgfx::submit(cmView, cmShader->GetProgram(), 0);
+                    m_currentView = savedView;
                 }
             }
 
@@ -1406,7 +1437,6 @@ void RenderInterface_BGFX::RenderFilters(
         }
         case FilterType::MaskImage:
         {
-            // Use blend-mask shader: output = src * mask.a
             auto& pp1 = m_layers.GetPostprocessPrimary();
             auto& pp2 = m_layers.GetPostprocessSecondary();
 
@@ -1428,9 +1458,15 @@ void RenderInterface_BGFX::RenderFilters(
                 {
                     const auto& geo = fsIt->second;
 
-                    bgfx::setUniform(u_transform, identity);
-                    float texParams[4] = { 0.f, 0.f, 1.f, 1.f };
-                    bgfx::setUniform(u_texParams, texParams);
+                    m_uniformCache.Reset();
+                    std::memcpy(m_uniformCache.transform, identity, sizeof(identity));
+                    m_uniformCache.has_transform = true;
+
+                    m_uniformCache.texParams[0] = 0.f;
+                    m_uniformCache.texParams[1] = 0.f;
+                    m_uniformCache.texParams[2] = 1.f;
+                    m_uniformCache.texParams[3] = 1.f;
+                    m_uniformCache.has_texParams = true;
 
                     bgfx::setTexture(0, s_texture0, pp1.color);
                     bgfx::setTexture(1, s_texture1, filter.mask_texture);
@@ -1440,7 +1476,14 @@ void RenderInterface_BGFX::RenderFilters(
 
                     uint64_t state = BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A;
                     bgfx::setState(state);
+
+                    auto savedView = m_currentView;
+                    m_currentView = maskView;
+                    m_uniformCache.Submit(u_transform, u_texParams, u_blurParams, u_texelSize,
+                        u_colorMatrix, u_colorTranslate, u_shadowExtra,
+                        u_shadowColor, u_gradientParams, u_gradientP);
                     bgfx::submit(maskView, bmShader->GetProgram(), 0);
+                    m_currentView = savedView;
                 }
             }
 
@@ -1459,9 +1502,15 @@ void RenderInterface_BGFX::RenderBlur(
     BgfxFramebuffer& temp,
     Rml::Rectanglei /*window_flipped*/)
 {
-    // Two-pass separable Gaussian blur, matching GL3.
-    // Pass 1: source_dest → temp (horizontal)
-    // Pass 2: temp → source_dest (vertical)
+
+    if (!bgfx::isValid(source_dest.fb) ||
+        !bgfx::isValid(source_dest.color) ||
+        !bgfx::isValid(temp.fb) ||
+        !bgfx::isValid(temp.color))
+    {
+        Rml::Log::Message(Rml::Log::LT_ERROR, "RenderBlur: one or more post-process framebuffers are invalid");
+        return;
+    }
 
     Shader* blurShader = m_programs[static_cast<int>(RmlProgramId::Blur)];
     if (!blurShader || !blurShader->IsValid()) return;
@@ -1491,22 +1540,28 @@ void RenderInterface_BGFX::RenderBlur(
         bgfx::setViewTransform(blurView, identity, identity);
         bgfx::touch(blurView);
 
-        bgfx::setUniform(u_transform, identity);
+        m_uniformCache.Reset();
 
-        float texParams[4] = { 0.f, 0.f, 1.f, 1.f };
-        bgfx::setUniform(u_texParams, texParams);
+        std::memcpy(m_uniformCache.transform, identity, sizeof(identity));
+        m_uniformCache.has_transform = true;
 
-        // blur direction: (1,0) horizontal, (0,1) vertical
-        float blurParams[4] = {
-            sigma,
-            (pass == 0) ? 1.f : 0.f,
-            (pass == 0) ? 0.f : 1.f,
-            0.f
-        };
-        bgfx::setUniform(u_blurParams, blurParams);
+        m_uniformCache.texParams[0] = 0.f;
+        m_uniformCache.texParams[1] = 0.f;
+        m_uniformCache.texParams[2] = 1.f;
+        m_uniformCache.texParams[3] = 1.f;
+        m_uniformCache.has_texParams = true;
 
-        float texelSize[4] = { texelW, texelH, 0.f, 0.f };
-        bgfx::setUniform(u_texelSize, texelSize);
+        m_uniformCache.blurParams[0] = sigma;
+        m_uniformCache.blurParams[1] = (pass == 0) ? 1.f : 0.f;
+        m_uniformCache.blurParams[2] = (pass == 0) ? 0.f : 1.f;
+        m_uniformCache.blurParams[3] = 0.f;
+        m_uniformCache.has_blurParams = true;
+
+        m_uniformCache.texelSize[0] = texelW;
+        m_uniformCache.texelSize[1] = texelH;
+        m_uniformCache.texelSize[2] = 0.f;
+        m_uniformCache.texelSize[3] = 0.f;
+        m_uniformCache.has_texelSize = true;
 
         bgfx::setTexture(0, s_texture0, src.color);
         bgfx::setVertexBuffer(0, geo.vbh);
@@ -1514,7 +1569,14 @@ void RenderInterface_BGFX::RenderBlur(
 
         uint64_t state = BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A;
         bgfx::setState(state);
+
+        auto savedView = m_currentView;
+        m_currentView = blurView;
+        m_uniformCache.Submit(u_transform, u_texParams, u_blurParams, u_texelSize,
+            u_colorMatrix, u_colorTranslate, u_shadowExtra,
+            u_shadowColor, u_gradientParams, u_gradientP);
         bgfx::submit(blurView, blurShader->GetProgram(), 0);
+        m_currentView = savedView;
     }
 }
 
@@ -1619,11 +1681,18 @@ void RenderInterface_BGFX::RenderShader(
         UseProgram(RmlProgramId::Gradient);
         SetTransformUniform(translation);
 
-        float gradParams[4] = { float(sd.gradient_function), 0.f, 0.f, 0.f };
-        bgfx::setUniform(u_gradientParams, gradParams);
+        // Cache gradient uniforms
+        m_uniformCache.gradientParams[0] = float(sd.gradient_function);
+        m_uniformCache.gradientParams[1] = 0.f;
+        m_uniformCache.gradientParams[2] = 0.f;
+        m_uniformCache.gradientParams[3] = 0.f;
+        m_uniformCache.has_gradientParams = true;
 
-        float gradP[4] = { sd.p.x, sd.p.y, sd.q.x, sd.q.y };
-        bgfx::setUniform(u_gradientP, gradP);
+        m_uniformCache.gradientP[0] = sd.p.x;
+        m_uniformCache.gradientP[1] = sd.p.y;
+        m_uniformCache.gradientP[2] = sd.q.x;
+        m_uniformCache.gradientP[3] = sd.q.y;
+        m_uniformCache.has_gradientP = true;
 
         if (bgfx::isValid(sd.stop_texture))
             bgfx::setTexture(0, s_texture0, sd.stop_texture);
@@ -1648,6 +1717,10 @@ void RenderInterface_BGFX::RenderShader(
         if (m_clipMaskEnabled)
             bgfx::setStencil(BuildStencilState());
 
+        // Submit uniforms and draw
+        m_uniformCache.Submit(u_transform, u_texParams, u_blurParams, u_texelSize,
+            u_colorMatrix, u_colorTranslate, u_shadowExtra,
+            u_shadowColor, u_gradientParams, u_gradientP);
         bgfx::submit(m_currentView, gradShader->GetProgram(), m_drawOrder++);
     }
 }
@@ -1730,12 +1803,19 @@ void RenderInterface_BGFX::RenderLayerStack::DestroyAll(RenderInterface_BGFX& ri
 void RenderInterface_BGFX::RenderLayerStack::BeginFrame(RenderInterface_BGFX& ri, int w, int h)
 {
     ri_ = &ri;
-
     if (w != width_ || h != height_)
     {
         DestroyAll(ri);
         width_ = w;
         height_ = h;
+    }
+
+    // === CRITICAL FIX: Pre-create ALL post-process buffers so vector never reallocates ===
+    // This prevents dangling references mid-frame (the real cause of "garbage data")
+    fb_postprocess_.reserve(8);                     // more than enough (we only ever use 4)
+    while (fb_postprocess_.size() < 4)
+    {
+        fb_postprocess_.emplace_back(ri.CreateFramebuffer(width_, height_, false));
     }
 
     layers_size_ = 0;
@@ -1804,8 +1884,13 @@ BgfxFramebuffer& RenderInterface_BGFX::RenderLayerStack::GetBlendMask()
 BgfxFramebuffer& RenderInterface_BGFX::RenderLayerStack::EnsurePostprocess(
     RenderInterface_BGFX& ri, int idx)
 {
-    while ((int)fb_postprocess_.size() <= idx)
-        fb_postprocess_.push_back(ri.CreateFramebuffer(width_, height_, false));
+    // No more push_back here — we already pre-allocated 4 slots in BeginFrame
+    if (idx >= (int)fb_postprocess_.size())
+    {
+        // Safety fallback (should never happen now)
+        while ((int)fb_postprocess_.size() <= idx)
+            fb_postprocess_.emplace_back(ri.CreateFramebuffer(width_, height_, false));
+    }
     return fb_postprocess_[idx];
 }
 
