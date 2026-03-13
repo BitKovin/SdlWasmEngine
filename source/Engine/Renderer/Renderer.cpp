@@ -272,7 +272,7 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
 
 
         // Clear color only — depth was already written by Pass A.
-        bgfx::setViewClear(vid, BGFX_CLEAR_COLOR, kClearBlack, 1.0f, 0);
+        //bgfx::setViewClear(vid, BGFX_CLEAR_COLOR, kClearBlack, 1.0f, 0);
 
         // Opaque: RGB+A write, no depth write, lequal test, back-face cull.
         BgfxStateManager::Reset();
