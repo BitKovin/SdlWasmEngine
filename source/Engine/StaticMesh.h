@@ -154,7 +154,7 @@ public:
 
 	float GetDistanceToCamera()
 	{
-		return distance(Camera::position, Position) * (IsViewmodel ? 0.1 : 1);
+		return distance(Camera::position, Position) * (IsViewmodel ? 0.01 : 1);
 	}
 
 	void FinalizeFrameData();

@@ -231,7 +231,7 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
             static_cast<uint16_t>(res.y));
 
         bgfx::ViewId vid = ViewIdManager::GetCurrentId();
-
+        bgfx::setViewMode(vid, bgfx::ViewMode::Default);
 
         // Clear depth only — no color attachment on this FBO.
         bgfx::setViewClear(vid, BGFX_CLEAR_DEPTH, kClearBlack, 1.0f, 0);
@@ -269,7 +269,7 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
             static_cast<uint16_t>(res.y));
 
         bgfx::ViewId vid = ViewIdManager::GetCurrentId();
-
+        bgfx::setViewMode(vid, bgfx::ViewMode::Default);
 
         // Clear color only — depth was already written by Pass A.
         //bgfx::setViewClear(vid, BGFX_CLEAR_COLOR, kClearBlack, 1.0f, 0);
@@ -281,6 +281,7 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
 
         for (auto* mesh : VissibleRenderList)
         {
+            
             if (mesh->Transparent) continue;
             const mat4& P = mesh->IsViewmodel
                 ? Camera::finalizedProjectionViewmodel
@@ -293,6 +294,8 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
         BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::LEqual);
         BgfxStateManager::SetBlend(BgfxStateManager::Blend::Alpha);
         BgfxStateManager::SetCull(BgfxStateManager::Cull::CW);
+
+        bgfx::setViewMode(vid, bgfx::ViewMode::Sequential);
 
         Level::Current->BspData.RenderTransparentFaces();
 

@@ -28,10 +28,10 @@ float CircularProgressRing(
     // Ring mask
     float ring = step(innerRadius, dist) * step(dist, outerRadius);
 
-    // Angle (start at top, clockwise).
-    // atan2 is used instead of GLSL two-arg atan() for bgfx cross-backend compat.
-    float angle = atan2(-p.x, p.y);
-    angle = (angle + 3.14159265) / (2.0 * 3.14159265);
+    // Angle (start at top, clockwise)
+    float angle = atan2(p.y, p.x);         // atan2 standard
+    angle = (0.25 - angle / (2.0 * 3.14159265)); // shift 0 = top
+    angle = fract(angle);                  // wrap 0..1
 
     // Progress mask
     float progressMask = step(angle, progress);
@@ -41,29 +41,24 @@ float CircularProgressRing(
 
 void main()
 {
+    // Slight UV offset can be negative; clamp instead of snapping to zero
     vec2 iconUV = mix(v_texcoord0, vec2(0.5, 0.5), -0.1);
     vec2 bgUV   = mix(v_texcoord0, vec2(0.5, 0.5), -0.1);
 
-    // Clamp out-of-range UVs to vec2(0) so the texture fetch returns transparent
-    if (any(lessThan(iconUV, vec2_splat(0.0))) || any(greaterThan(iconUV, vec2_splat(1.0))))
-        iconUV = vec2(0.0, 0.0);
+    iconUV = clamp(iconUV, 0.0, 1.0);
+    iconUV.y = 1.0 - iconUV.y;
+    bgUV   = clamp(bgUV,   0.0, 1.0);
+    bgUV.y = 1.0 - bgUV.y;
 
-    if (any(lessThan(bgUV, vec2_splat(0.0))) || any(greaterThan(bgUV, vec2_splat(1.0))))
-        bgUV = vec2(0.0, 0.0);
+    // Sample textures
+    vec4 texColor    = texture2D(u_Texture, iconUV);
+    vec4 circleColor = texture2D(circleTexture, bgUV) * u_Color;
 
-    vec4 texColor = vec4_splat(0.0);
-    if (iconUV.x != 0.0 || iconUV.y != 0.0)
-        texColor = texture2D(u_Texture, iconUV);
-
-    vec4 circleColor = vec4_splat(0.0);
-    if (bgUV.x != 0.0 || bgUV.y != 0.0)
-        circleColor = texture2D(circleTexture, bgUV) * u_Color;
-
-    float fillProgress = step(1.0 - u_progress.x, v_texcoord0.y);
-
-    // Vertical fill: dim when below progress threshold, full u_Color above
+    // Vertical fill: top-to-bottom
+    float fillProgress = step(v_texcoord0.y, u_progress.x); 
     circleColor *= mix(vec4(0.07, 0.07, 0.07, 0.55), u_Color, fillProgress);
 
+    // Base color blend (icon over circle)
     vec4 baseColor = mix(circleColor, texColor, texColor.a);
     baseColor.a = circleColor.a;
 
@@ -79,12 +74,12 @@ void main()
     );
 
     vec4 ringColor = vec4(0.949, 0.925, 0.922, ringAlpha);
+    vec4 outColor  = mix(baseColor, ringColor, ringColor.a);
 
-    vec4 outColor = mix(baseColor, ringColor, ringColor.a);
-
+    // Discard transparent pixels
     if (outColor.a < 0.001)
         discard;
 
-    // Premultiplied alpha output — matches the engine's Blend::Premultiplied state
+    // Premultiplied alpha output
     gl_FragColor = vec4(outColor.rgb * outColor.a, outColor.a);
 }
