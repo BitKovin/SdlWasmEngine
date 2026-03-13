@@ -514,6 +514,7 @@
     <ClInclude Include="imgui\imstb_truetype.h" />
     <ClInclude Include="imgui\vs_ocornut_imgui.bin.h" />
     <ClInclude Include="includedLibraries\stb_image.h" />
+    <ClInclude Include="includedLibraries\stb_image_resize.h" />
     <ClInclude Include="LevelTraversalSystem.h" />
     <ClInclude Include="LoadingScreen\LoadingScreenSystem.h" />
     <ClInclude Include="LoadingScreen\UiLoadingScreenBase.h" />

@@ -3,9 +3,12 @@
 #include <string>
 #include <iostream>
 #include <vector>
+#include <cmath>
+#include <algorithm>
 #include "FileSystem/FileSystem.h"
 
 #include <includedLibraries/stb_image.h>
+#include <includedLibraries/stb_image_resize.h>   // add this include
 #include <bgfx/bgfx.h>
 
 #include "malloc_override.h"
@@ -49,15 +52,12 @@ public:
         return m_handle;
     }
 
-    // Backward-compat: return numeric ID for ResourceStatistics etc.
     uint16_t getID() const
     {
         if (bgfx::isValid(m_handle))
             return m_handle.idx;
         else
             return 0;
-
-        return m_handle.idx;
     }
 
     bgfx::TextureHandle getTextureHandle() const {
@@ -119,17 +119,21 @@ private:
             return;
         }
 
-        const uint32_t dataSize = (uint32_t)(w * h * bytesPerPixel(format));
-        const bgfx::Memory* mem = bgfx::copy(pixels, dataSize);
+        // Calculate how many mip levels fit (down to 1x1).
+        const bool hasMips = generateMipmaps && (w > 1 || h > 1);
+        const uint8_t numMips = hasMips
+            ? (uint8_t)(1 + (int)std::floor(std::log2((double)std::max(w, h))))
+            : 1;
 
+        // Allocate the texture with mip storage but no initial data —
+        // we upload each level individually with updateTexture2D below.
         m_handle = bgfx::createTexture2D(
             (uint16_t)w,
             (uint16_t)h,
-            false,  // hasMips — always false: we only provide the base level
-            1,      // numLayers
+            hasMips,
+            1,         // numLayers
             format,
-            buildFlags(),
-            mem
+            buildFlags()
         );
 
         if (!bgfx::isValid(m_handle)) {
@@ -137,21 +141,58 @@ private:
             return;
         }
 
+        // Upload mip 0 — the original pixels.
+        {
+            const uint32_t sz = (uint32_t)(w * h * bytesPerPixel(format));
+            bgfx::updateTexture2D(m_handle, 0, 0,
+                0, 0, (uint16_t)w, (uint16_t)h,
+                bgfx::copy(pixels, sz));
+        }
+
+        // Generate and upload remaining mip levels via stbir_resize_uint8.
+        // Each level is downsampled from the previous one so quality degrades
+        // gracefully (progressive box filter) rather than resampling from
+        // the full-res image every time.
+        if (hasMips) {
+            const int bpp = (int)bytesPerPixel(format);
+
+            std::vector<uint8_t> prevPixels(
+                (const uint8_t*)pixels,
+                (const uint8_t*)pixels + w * h * bpp);
+
+            int mipW = w, mipH = h;
+
+            for (uint8_t mip = 1; mip < numMips; ++mip) {
+                const int dstW = std::max(1, mipW / 2);
+                const int dstH = std::max(1, mipH / 2);
+
+                std::vector<uint8_t> mipPixels((size_t)dstW * dstH * bpp);
+
+                stbir_resize_uint8(
+                    prevPixels.data(), mipW, mipH, 0,
+                    mipPixels.data(), dstW, dstH, 0,
+                    bpp);
+
+                bgfx::updateTexture2D(m_handle, 0, mip,
+                    0, 0, (uint16_t)dstW, (uint16_t)dstH,
+                    bgfx::copy(mipPixels.data(), (uint32_t)mipPixels.size()));
+
+                prevPixels = std::move(mipPixels);
+                mipW = dstW;
+                mipH = dstH;
+            }
+        }
+
         width = w;
         height = h;
 
-        const size_t textureSize = dataSize;
-
+        const size_t textureSize = (size_t)w * h * bytesPerPixel(format);
         std::string textureName = "Texture_"
             + std::to_string(w) + "x" + std::to_string(h)
             + formatSuffix(format);
 
         ResourceStatistics::Instance().registerResource(
-            ResourceType::Texture,
-            m_handle.idx,
-            textureSize,
-            textureName
-        );
+            ResourceType::Texture, m_handle.idx, textureSize, textureName);
 
         valid = true;
     }
