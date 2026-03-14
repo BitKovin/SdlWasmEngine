@@ -272,8 +272,6 @@ if (EMSCRIPTEN AND ENABLE_PTHREADS)
         "SHELL:-pthread"                      # pass -pthread to linker
         "SHELL:-s USE_PTHREADS=1"             # enable wasm threads in emscripten
         "SHELL:-s PTHREAD_POOL_SIZE=16"       # adjust pool size as needed
-
-        "SHELL:-sPTHREADS_DEBUG=1"       # adjust pool size as needed
         #"SHELL:-s PROXY_TO_PTHREAD=1"        # optional: proxy main to a worker
         "SHELL:-s TOTAL_MEMORY=999948288"   
     )
