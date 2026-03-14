@@ -40,6 +40,16 @@ EM_JS(int, canvas_get_height, (), {
 
 #endif // __EMSCRIPTEN__
 
+EngineMain::~EngineMain()
+{
+    FileSystemEngine::Shutdown();
+    Level::Current->CloseLevel();
+	UiRenderer::Shutdown();
+    ParticleEmitter::DestroyBillboardVao();
+    delete(RmlUiContext::Main);
+    RmlUiContext::Main = nullptr;
+}
+
 void EngineMain::UpdateScreenSize()
 {
 

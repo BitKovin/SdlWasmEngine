@@ -114,6 +114,23 @@ void ParticleEmitter::InitBilboardVaoIfNeeded()
     s_billboardIbh = bgfx::createIndexBuffer(bgfx::copy(indices, sizeof(indices)));
 }
 
+void ParticleEmitter::DestroyBillboardVao()
+{
+
+	if (bgfx::isValid(s_billboardVbh))
+    {
+        bgfx::destroy(s_billboardVbh);
+        s_billboardVbh = BGFX_INVALID_HANDLE;
+    }
+
+	if (bgfx::isValid(s_billboardIbh))
+    {
+        bgfx::destroy(s_billboardIbh);
+        s_billboardIbh = BGFX_INVALID_HANDLE;
+    }
+
+}
+
 // ---------------------------------------------------------------------------
 // DrawForward
 // ---------------------------------------------------------------------------

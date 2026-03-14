@@ -64,11 +64,7 @@ public:
 	{
 		Window = window;
 	}
-	~EngineMain()
-	{
-		FileSystemEngine::Shutdown();
-        Level::Current->CloseLevel();
-	}
+    ~EngineMain();
 
 
     std::map<std::string, std::vector<std::string>> Arguments;

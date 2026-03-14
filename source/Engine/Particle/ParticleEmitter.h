@@ -140,6 +140,7 @@ public:
 	bool DepthSorting = true;
 
 	static void InitBilboardVaoIfNeeded();
+	static void DestroyBillboardVao();
 
 	void PreloadAssets()
 	{

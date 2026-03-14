@@ -36,6 +36,9 @@ RmlUiContext::~RmlUiContext()
     // so we do NOT delete them here — Backend::Shutdown() handles cleanup.
     render_interface_ = nullptr;
     system_interface_ = nullptr;
+
+    Backend::Shutdown();
+
 }
 
 bool RmlUiContext::Initialize()
