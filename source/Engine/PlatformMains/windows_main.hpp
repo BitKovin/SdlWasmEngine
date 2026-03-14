@@ -388,7 +388,7 @@ int main(int argc, char* args[])
     ShutdownDirectInput();
 
     bgfx::frame();      // final present before shutdown
-    bgfx::shutdown();   // replaces SDL_GL_DeleteContext
+    //bgfx::shutdown();   // replaces SDL_GL_DeleteContext
 
     SDL_DestroyWindow(window);
     SDL_Quit();

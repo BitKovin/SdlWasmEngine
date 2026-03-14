@@ -186,7 +186,7 @@ private:
 
     void DrawFullscreenQuad(bgfx::TextureHandle texture, RmlProgramId program);
     void DrawFullscreenQuad(bgfx::TextureHandle texture, RmlProgramId program,
-                            Rml::Vector2f uv_offset, Rml::Vector2f uv_scaling);
+                            Rml::Vector2f uv_offset, Rml::Vector2f uv_scaling, bool flip_v);
 
     void BlitLayerToPostprocessPrimary(Rml::LayerHandle layer_handle);
     void RenderFilters(Rml::Span<const Rml::CompiledFilterHandle> filter_handles);
@@ -202,6 +202,8 @@ private:
     // ── Framebuffer helpers ─────────────────────────────────────────────────
     BgfxFramebuffer CreateFramebuffer(int w, int h, bool with_depth_stencil = true);
     void DestroyFramebuffer(BgfxFramebuffer& fb);
+
+    bool m_framebuffer_origin_bottom_left = true;
 
     // ── Layer stack ─────────────────────────────────────────────────────────
     class RenderLayerStack

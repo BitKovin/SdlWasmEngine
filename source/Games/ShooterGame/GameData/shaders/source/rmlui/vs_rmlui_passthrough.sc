@@ -20,5 +20,11 @@ void main()
 
     // Transform UV: output = offset + texcoord * scale
     v_texcoord0 = u_texParams.xy + a_texcoord0 * u_texParams.zw;
+
+    #if !BGFX_SHADER_LANGUAGE_GLSL
+    // For HLSL, Metal, Vulkan – flip V to match top‑left texture origin
+    v_texcoord0.y = 1.0 - v_texcoord0.y;
+    #endif
+    
     v_color0    = a_color0;
 }

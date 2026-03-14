@@ -104,6 +104,11 @@ RenderInterface_BGFX::RenderInterface_BGFX()
             {indices, 6}
         );
     }
+
+    bgfx::RendererType::Enum renderer = bgfx::getRendererType();
+    m_framebuffer_origin_bottom_left = (renderer == bgfx::RendererType::OpenGL ||
+        renderer == bgfx::RendererType::OpenGLES);
+
 }
 
 RenderInterface_BGFX::~RenderInterface_BGFX()
@@ -790,12 +795,13 @@ void RenderInterface_BGFX::RenderToClipMask(
 
 void RenderInterface_BGFX::DrawFullscreenQuad(bgfx::TextureHandle texture, RmlProgramId program)
 {
-    DrawFullscreenQuad(texture, program, {0.f, 0.f}, {1.f, 1.f});
+    DrawFullscreenQuad(texture, program, { 0.f, 0.f }, { 1.f, 1.f }, false);
 }
 
 void RenderInterface_BGFX::DrawFullscreenQuad(
     bgfx::TextureHandle texture, RmlProgramId program,
-    Rml::Vector2f uv_offset, Rml::Vector2f uv_scaling)
+    Rml::Vector2f uv_offset, Rml::Vector2f uv_scaling,
+    bool flip_v)
 {
     auto it = m_geometries.find(m_fullscreenQuad);
     if (it == m_geometries.end()) return;
@@ -805,7 +811,17 @@ void RenderInterface_BGFX::DrawFullscreenQuad(
     Shader* shader = m_programs[static_cast<int>(program)];
     if (!shader || !shader->IsValid()) return;
 
-    // Identity transform for NDC quad
+    // Apply flip if requested
+    Rml::Vector2f final_offset = uv_offset;
+    Rml::Vector2f final_scale = uv_scaling;
+    if (flip_v)
+    {
+        // new_v = 1 - (v * scale.y + offset.y)
+        // => scale'.y = -scale.y, offset'.y = 1 - offset.y
+        final_offset.y = 1.0f - (uv_offset.y + uv_scaling.y);
+        final_scale.y = -uv_scaling.y;
+    }
+
     float identity[16];
     bx::mtxIdentity(identity);
 
@@ -813,11 +829,10 @@ void RenderInterface_BGFX::DrawFullscreenQuad(
     std::memcpy(m_uniformCache.transform, identity, sizeof(identity));
     m_uniformCache.has_transform = true;
 
-    // UV params
-    m_uniformCache.texParams[0] = uv_offset.x;
-    m_uniformCache.texParams[1] = uv_offset.y;
-    m_uniformCache.texParams[2] = uv_scaling.x;
-    m_uniformCache.texParams[3] = uv_scaling.y;
+    m_uniformCache.texParams[0] = final_offset.x;
+    m_uniformCache.texParams[1] = final_offset.y;
+    m_uniformCache.texParams[2] = final_scale.x;
+    m_uniformCache.texParams[3] = final_scale.y;
     m_uniformCache.has_texParams = true;
 
     if (bgfx::isValid(texture))
@@ -830,7 +845,6 @@ void RenderInterface_BGFX::DrawFullscreenQuad(
         | BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_INV_SRC_ALPHA);
     bgfx::setState(state);
 
-    // Submit uniforms and draw
     m_uniformCache.Submit(u_transform, u_texParams, u_blurParams, u_texelSize,
         u_colorMatrix, u_colorTranslate, u_shadowExtra,
         u_shadowColor, u_gradientParams, u_gradientP);
@@ -962,6 +976,8 @@ void RenderInterface_BGFX::PopLayer()
 Rml::TextureHandle RenderInterface_BGFX::SaveLayerAsTexture()
 {
     const auto& srcLayer = m_layers.GetTopLayer();
+
+    // Get scissor region – if disabled, default to whole layer.
     int x = 0, y = 0, w = srcLayer.width, h = srcLayer.height;
     if (m_scissorEnabled)
     {
@@ -970,9 +986,11 @@ Rml::TextureHandle RenderInterface_BGFX::SaveLayerAsTexture()
         w = m_scissorRegion.Width();
         h = m_scissorRegion.Height();
     }
+
     if (w <= 0 || h <= 0)
         return {};
 
+    // Create a new framebuffer exactly the size of the scissor region.
     BgfxFramebuffer dstFb = CreateFramebuffer(w, h, false);
     if (!bgfx::isValid(dstFb.fb) || !bgfx::isValid(dstFb.color))
     {
@@ -981,38 +999,60 @@ Rml::TextureHandle RenderInterface_BGFX::SaveLayerAsTexture()
         return {};
     }
 
+    // Set up a view to render into the new framebuffer.
     bgfx::ViewId renderView = AllocateView();
     bgfx::setViewName(renderView, "RmlUI_SaveLayer");
     bgfx::setViewFrameBuffer(renderView, dstFb.fb);
     bgfx::setViewRect(renderView, 0, 0, uint16_t(w), uint16_t(h));
     bgfx::setViewMode(renderView, bgfx::ViewMode::Sequential);
     bgfx::setViewClear(renderView, BGFX_CLEAR_COLOR, 0x00000000);
+
     float identity[16];
     bx::mtxIdentity(identity);
     bgfx::setViewTransform(renderView, identity, identity);
     bgfx::touch(renderView);
 
+    // Save current state and switch to this view.
     auto savedView = m_currentView;
     auto savedOrder = m_drawOrder;
     m_currentView = renderView;
     m_drawOrder = 0;
 
-    // UV transform: source top → dest bottom, source bottom → dest top (vertical flip)
+    // ────────────────────────────────────────────────────────────────
+    // UV transformation for the scissor region.
+    // Uses m_framebuffer_origin_bottom_left to handle the two coordinate systems:
+    //   • OpenGL / OpenGLES (bottom-left origin) → negative v_scale (vertical flip)
+    //   • DX11 / Vulkan / Metal (top-left origin) → positive v_scale
+    // ────────────────────────────────────────────────────────────────
     float u_off = float(x) / float(srcLayer.width);
-    float v_off = float(srcLayer.height - y) / float(srcLayer.height); // source top
     float u_scale = float(w) / float(srcLayer.width);
-    float v_scale = -float(h) / float(srcLayer.height); // negative for flip
 
+    float v_off, v_scale;
+    if (m_framebuffer_origin_bottom_left)
+    {
+        // OpenGL / OpenGLES: source texture has bottom-left origin
+        v_off = float(srcLayer.height - y) / float(srcLayer.height); // source top edge
+        v_scale = -float(h) / float(srcLayer.height);                  // flip downward
+    }
+    else
+    {
+        // DX11 / Vulkan / Metal: source texture has top-left origin
+        v_off = 1.0f - float(y + h) / float(srcLayer.height);        // bottom edge of region
+        v_scale = float(h) / float(srcLayer.height);
+    }
+
+    // Draw a fullscreen quad with the source layer's texture, applying the UV transform.
     DrawFullscreenQuad(srcLayer.color, RmlProgramId::Passthrough,
         Rml::Vector2f(u_off, v_off),
-        Rml::Vector2f(u_scale, v_scale));
+        Rml::Vector2f(u_scale, v_scale), false);
 
+    // Restore previous view.
     m_currentView = savedView;
     m_drawOrder = savedOrder;
 
     // ────────────────────────────────────────────────────────────────
-    // Critical fix: destroy the framebuffer handle immediately,
-    // but keep the color texture alive (returned to RmlUi)
+    // Critical: destroy the framebuffer handle immediately (it is no longer needed),
+    // but keep the color texture alive – RmlUi now owns it via the returned handle.
     // ────────────────────────────────────────────────────────────────
     if (bgfx::isValid(dstFb.fb))
     {
@@ -1026,6 +1066,7 @@ Rml::TextureHandle RenderInterface_BGFX::SaveLayerAsTexture()
 Rml::CompiledFilterHandle RenderInterface_BGFX::SaveLayerAsMaskImage()
 {
     const auto& srcLayer = m_layers.GetTopLayer();
+
     int x = 0, y = 0, w = srcLayer.width, h = srcLayer.height;
     if (m_scissorEnabled)
     {
@@ -1034,6 +1075,7 @@ Rml::CompiledFilterHandle RenderInterface_BGFX::SaveLayerAsMaskImage()
         w = m_scissorRegion.Width();
         h = m_scissorRegion.Height();
     }
+
     if (w <= 0 || h <= 0)
         return {};
 
@@ -1051,6 +1093,7 @@ Rml::CompiledFilterHandle RenderInterface_BGFX::SaveLayerAsMaskImage()
     bgfx::setViewRect(renderView, 0, 0, uint16_t(w), uint16_t(h));
     bgfx::setViewMode(renderView, bgfx::ViewMode::Sequential);
     bgfx::setViewClear(renderView, BGFX_CLEAR_COLOR, 0x00000000);
+
     float identity[16];
     bx::mtxIdentity(identity);
     bgfx::setViewTransform(renderView, identity, identity);
@@ -1061,23 +1104,36 @@ Rml::CompiledFilterHandle RenderInterface_BGFX::SaveLayerAsMaskImage()
     m_currentView = renderView;
     m_drawOrder = 0;
 
-    // UV transform: flip vertically to match OpenGL's blit behaviour.
+    // ────────────────────────────────────────────────────────────────
+    // UV transformation matching SaveLayerAsTexture():
+    //   • OpenGL / OpenGLES (bottom-left origin) → negative v_scale (flip)
+    //   • DX11 / Vulkan / Metal (top-left origin) → positive v_scale
+    // ────────────────────────────────────────────────────────────────
     float u_off = float(x) / float(srcLayer.width);
-    float v_off = float(srcLayer.height - y) / float(srcLayer.height); // source top
     float u_scale = float(w) / float(srcLayer.width);
-    float v_scale = -float(h) / float(srcLayer.height); // negative for flip
+
+    float v_off, v_scale;
+    if (m_framebuffer_origin_bottom_left)
+    {
+        // OpenGL / OpenGLES: source texture has bottom-left origin
+        v_off = float(srcLayer.height - y) / float(srcLayer.height); // source top edge
+        v_scale = -float(h) / float(srcLayer.height);                  // flip downward
+    }
+    else
+    {
+        // DX11 / Vulkan / Metal: source texture has top-left origin
+        v_off = 1.0f - float(y + h) / float(srcLayer.height);        // bottom edge of region
+        v_scale = float(h) / float(srcLayer.height);
+    }
 
     DrawFullscreenQuad(srcLayer.color, RmlProgramId::Passthrough,
         Rml::Vector2f(u_off, v_off),
-        Rml::Vector2f(u_scale, v_scale));
+        Rml::Vector2f(u_scale, v_scale), false);
 
     m_currentView = savedView;
     m_drawOrder = savedOrder;
 
-    // ────────────────────────────────────────────────────────────────
-    // Critical fix: destroy the framebuffer handle immediately,
-    // but keep the color texture alive (stored in filter)
-    // ────────────────────────────────────────────────────────────────
+    // Critical: destroy framebuffer immediately, keep color texture alive
     if (bgfx::isValid(maskFb.fb))
     {
         bgfx::destroy(maskFb.fb);
@@ -1086,10 +1142,11 @@ Rml::CompiledFilterHandle RenderInterface_BGFX::SaveLayerAsMaskImage()
 
     CompiledFilter filter;
     filter.type = FilterType::MaskImage;
-    filter.mask_texture = maskFb.color;          // texture stays alive
+    filter.mask_texture = maskFb.color;  // texture handle stays valid
 
     Rml::CompiledFilterHandle handle = m_nextFilterId++;
     m_filters[handle] = filter;
+
     return handle;
 }
 
