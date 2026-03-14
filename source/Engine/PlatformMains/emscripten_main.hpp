@@ -232,7 +232,7 @@ int main(int argc, char* args[])
     delete engine;
 
     bgfx::frame();
-    bgfx::shutdown();
+    //bgfx::shutdown();
 
     SDL_DestroyWindow(window);
     SDL_Quit();
