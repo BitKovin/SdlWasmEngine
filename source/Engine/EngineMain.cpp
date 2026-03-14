@@ -178,6 +178,9 @@ void EngineMain::Init(std::vector<std::string> args)
 
     MainThreadPool->Start(ThreadPool::GetNumThreadsForThreadPool());
 
+	GameUpdateSingleThreadPool = new ThreadPool();
+	GameUpdateSingleThreadPool->Start(1);
+
     SoundManager::Initialize();
 
     Time::Init();
@@ -429,7 +432,9 @@ void EngineMain::MainLoop()
     
     if (asyncGameUpdate) 
     {
-        gameUpdateFuture = std::async(std::launch::async, &EngineMain::GameUpdate, this);
+        GameUpdateSingleThreadPool->QueueJob([this]() {
+            GameUpdate();
+			});
     }
     else 
     {
@@ -449,12 +454,7 @@ void EngineMain::MainLoop()
 
     if (asyncGameUpdate)
     {
-        if (gameUpdateFuture.valid()) {
-            // If it's not done yet, wait (or you could choose to skip/warn).
-            if (gameUpdateFuture.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
-                gameUpdateFuture.wait();
-            }
-        }
+        GameUpdateSingleThreadPool->WaitForFinish();
 
 		FinishFrame();
 

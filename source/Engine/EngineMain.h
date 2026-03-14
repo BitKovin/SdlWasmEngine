@@ -13,7 +13,6 @@
 
 #include "ThreadPool.h"
 
-#include <future>
 #include <thread>
 
 #include "ImGuiEngineImpl.h"
@@ -71,7 +70,8 @@ public:
 
     void UpdateScreenSize();
 
-    ThreadPool* MainThreadPool;
+    ThreadPool* MainThreadPool = nullptr;
+    ThreadPool* GameUpdateSingleThreadPool = nullptr;
 
     void ToggleFullscreen();
 
@@ -89,9 +89,6 @@ public:
 
     // Toggle asynchronous GameUpdate.
     bool asyncGameUpdate = true;
-
-    // Store the future of the async update.
-    std::future<void> gameUpdateFuture;
 
     // Main game loop.
     void MainLoop();
