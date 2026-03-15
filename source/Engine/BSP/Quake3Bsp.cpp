@@ -1643,11 +1643,26 @@ void BSPModelRef::FinalizeFrameData()
 
 void BSPModelRef::DrawForward(mat4x4 view, mat4x4 projection)
 {
+    
+    auto state = BgfxStateManager::GetState();
+
+    if (Transparent)
+    {
+        BgfxStateManager::SetWriteDepth(false);
+    }
+
     bsp->RenderBSP(Camera::finalizedPosition, model, finalWorldMatrix,
         useBspVisibility, Static);
 
     if (Transparent)
+    {
         bsp->RenderTransparentFaces();
+    }
+
+
+
+	BgfxStateManager::SetState(state);
+
 }
 
 void BSPModelRef::DrawDepth(mat4x4 view, mat4x4 projection)

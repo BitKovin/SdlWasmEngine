@@ -301,7 +301,11 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
         BgfxStateManager::SetCull(BgfxStateManager::Cull::CW);
         BgfxStateManager::SetMSAA(MultiSampleCount > 0);
 
+		BgfxStateManager::SetWriteDepth(false);
+
         Level::Current->BspData.RenderTransparentFaces();
+
+        BgfxStateManager::SetWriteDepth(true);
 
         for (auto* mesh : VissibleRenderList)
         {

@@ -98,6 +98,7 @@ void StaticMesh::DrawForward(mat4x4 view, mat4x4 projection)
 
 	forward_shader_program->UseProgram();
 
+	bool flipedNormals = finalizedScale.x * finalizedScale.y * finalizedScale.z < 0;
 
 	forward_shader_program->SetUniform("masked", Masked);
 
@@ -122,6 +123,7 @@ void StaticMesh::DrawForward(mat4x4 view, mat4x4 projection)
 	forward_shader_program->SetUniform("view", view);
 
 	forward_shader_program->SetUniform("customId", CustomId);
+	forward_shader_program->SetUniform("flipedNormals", flipedNormals);
 
 	ApplyAdditionalShaderParams(forward_shader_program);
 
@@ -215,6 +217,7 @@ void StaticMesh::DrawForward(mat4x4 view, mat4x4 projection)
 				forward_shader_program->SetTexture("u_textureEmissive", EmissiveTextureId);
 			}
 		}
+
 
 		bgfx::setVertexBuffer(0, mesh.vbh);
 		bgfx::setIndexBuffer(mesh.ibh);

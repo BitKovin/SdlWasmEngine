@@ -9,6 +9,8 @@ uniform vec4 cameraPosition;
 
 uniform vec4 masked;
 
+uniform vec4 flipedNormals;
+
 uniform vec4 light_color;
 uniform vec4 direct_light_color;
 uniform vec4 direct_light_dir;
@@ -100,7 +102,12 @@ void main()
         alpha = 1.0;
     }
 
-    vec3 lightColor = CalculateLight(v_normal, v_world.xyz)
+    vec3 normal = v_normal;
+
+    if (flipedNormals.x > 0.0)
+        normal = -normal;
+
+    vec3 lightColor = CalculateLight(normal, v_world.xyz)
                     + texture2D(u_textureEmissive, v_texcoord0).rgb;
     color *= lightColor;
 
