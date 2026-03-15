@@ -20,7 +20,6 @@ public:
 		for (IDrawMesh* mesh : Drawables)
 		{
 			mesh->Transparent = true;
-			mesh->
 		}
 	}
 

@@ -60,16 +60,41 @@ bool StaticMesh::IsCameraVisible()
 
 	if (Level::Current->BspData.m_numOfVerts)
 	{
-
 		int cameraC = Level::Current->BspData.FindClusterAtPosition(Camera::finalizedPosition);
 
+		auto bounds = GetBoundingBox();
 
-		int targetC = Level::Current->BspData.FindClusterAtPosition(Position + model->boundingSphere.offset / 2.0f);
+		vec3 min = bounds.Min;
+		vec3 max = bounds.Max;
 
-		if (Level::Current->BspData.IsClusterVisible(cameraC, targetC) == false)
+		vec3 points[8] =
 		{
-			return false;
+			{min.x, min.y, min.z},
+			{max.x, min.y, min.z},
+			{min.x, max.y, min.z},
+			{max.x, max.y, min.z},
+
+			{min.x, min.y, max.z},
+			{max.x, min.y, max.z},
+			{min.x, max.y, max.z},
+			{max.x, max.y, max.z}
+		};
+
+		bool visible = false;
+
+		for (int i = 0; i < 8; i++)
+		{
+			int targetC = Level::Current->BspData.FindClusterAtPosition(points[i]);
+
+			if (Level::Current->BspData.IsClusterVisible(cameraC, targetC))
+			{
+				visible = true;
+				break;
+			}
 		}
+
+		if (!visible)
+			return false;
 	}
 
 	return IsInFrustrum(Camera::frustum) && isVisible();
