@@ -345,6 +345,8 @@ int main(int argc, char* args[])
     bgfx::Init init;
     init.type = bgfx::RendererType::Direct3D11;   // auto-select best renderer (D3D11/Vulkan/etc.)
     init.debug = false;
+    init.profile = false;
+
 
     SDL_SysWMinfo wmInfo;
     SDL_VERSION(&wmInfo.version);
