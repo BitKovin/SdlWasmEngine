@@ -135,7 +135,7 @@ float getAspectRatio()
 
 vec3 smoothPosterize(vec3 color, float steps, float softness, vec2 uv)
 {
-    float n = (smoothNoise(uv * 2.3) - 0.5) / steps * 0.7;
+    float n = (smoothNoise(uv * 2.1) - 0.5) / steps * 0.7;
     color += n;
     color *= steps;
     vec3 floored = floor(color);

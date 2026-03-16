@@ -933,11 +933,11 @@ public:
 
 	static Body* CreateCharacterBody(Entity* owner, vec3 Position, float Radius, float Height, float Mass,
 		BodyType group = BodyType::CharacterCapsule,
-		BodyType mask = BodyType::GroupCollisionTest);
+		BodyType mask = BodyType::GroupCollisionTest | BodyType::WorldSkybox);
 
 	static Body* CreateCharacterCylinderBody(Entity* owner, vec3 Position, float Radius, float Height, float Mass,
 		BodyType group = BodyType::CharacterCapsule,
-		BodyType mask = BodyType::GroupCollisionTest);
+		BodyType mask = BodyType::GroupCollisionTest | BodyType::WorldSkybox);
 
 
 	struct HitResult

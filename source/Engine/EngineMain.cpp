@@ -70,7 +70,7 @@ void EngineMain::UpdateScreenSize()
         printf("failed to get screen resolution\n");
     }
 
-
+	printf("canvas size: %d x %d", ScreenSize.x, ScreenSize.y);
 
 #else
 
@@ -88,6 +88,9 @@ void EngineMain::UpdateScreenSize()
     {
         if(RmlContext)
 		    RmlContext->OnResize(ScreenSize.x, ScreenSize.y);
+
+		bgfx::reset(ScreenSize.x, ScreenSize.y, BGFX_RESET_NONE);
+
     }
 
 }

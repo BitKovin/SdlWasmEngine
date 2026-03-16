@@ -154,14 +154,6 @@ void desktop_render_loop() {
             Input::ReceiveSdlEvent(event);
         }
 
-        if (pendingResize)
-        {
-            bgfx::reset(currentWidth, currentHeight, BGFX_RESET_NONE);
-            bgfx::setViewRect(0, 0, 0, currentWidth, currentHeight); // game view
-            bgfx::setViewRect(255, 0, 0, currentWidth, currentHeight); // ImGui overlay
-			pendingResize = false;
-			EngineMain::MainInstance->UpdateScreenSize();
-        }
 
         engine->MainLoop();
 
