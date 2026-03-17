@@ -154,7 +154,7 @@ void Player::Start()
 
 	cameraRotation.y = Rotation.y;
 
-	Spawn("testGravityController");
+	//Spawn("testGravityController");
 
 	//Spawn("TestSpatialSoundPlayer")->Start();
 

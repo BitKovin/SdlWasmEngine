@@ -425,6 +425,7 @@
     <ClCompile Include="Renderer\Abstractions\RenderTexture.cpp" />
     <ClCompile Include="Renderer\Renderer.cpp" />
     <ClCompile Include="SaveSystem\GameSaveSystem.cpp" />
+    <ClCompile Include="SaveSystem\GameSettings.cpp" />
     <ClCompile Include="SaveSystem\LevelSaveSystem.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="ShaderManager.cpp" />
@@ -597,6 +598,7 @@
     <ClInclude Include="Renderer\Abstractions\RenderTexture.h" />
     <ClInclude Include="SaveSystem\EntitySaveData.h" />
     <ClInclude Include="SaveSystem\GameSaveSystem.h" />
+    <ClInclude Include="SaveSystem\GameSettings.h" />
     <ClInclude Include="SaveSystem\LevelSaveData.h" />
     <ClInclude Include="SaveSystem\LevelSaveSystem.h" />
     <ClInclude Include="Shader.hpp" />
@@ -627,6 +629,7 @@
     <ClInclude Include="UI\RmlUi\Backends\RmlUi_Renderer_BGFX.h" />
     <ClInclude Include="UI\RmlUi\RmlUiContext.h" />
     <ClInclude Include="UI\RmlUi\RmlUiEvents.h" />
+    <ClInclude Include="UI\RmlUi\UiModel.h" />
     <ClInclude Include="UI\UiButton.hpp" />
     <ClInclude Include="UI\UiCanvas.hpp" />
     <ClInclude Include="UI\UiContentBox.hpp" />

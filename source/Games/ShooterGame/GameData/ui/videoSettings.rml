@@ -1,0 +1,53 @@
+<rml>
+    <head>
+        <title>Video Settings</title>
+        <link type="text/css" href="style.rcss" />
+        <link type="text/css" href="base.rcss" />
+    </head>
+    <body data-model="videoSettings">
+        <h1>Video Settings</h1>
+
+        <!-- Resolution -->
+        <div class="focus_wrapper" style="display: flex; align-items: center; font-size: 3.5vh;">
+            <label for="resolution" style="width: 25vh; text-align: right; margin-right: 2vh; font-size: 4vh;">Resolution:</label>
+            <select id="resolution" data-value="selected_resolution"></select>
+            <div class="indicator"></div>
+        </div>
+
+        <!-- Window Mode -->
+        <div class="focus_wrapper" style="display: flex; align-items: center; font-size: 3.5vh;">
+            <label for="windowMode" style="width: 25vh; text-align: right; margin-right: 2vh; font-size: 4vh;">Window Mode:</label>
+            <select id="windowMode" data-value="window_mode" nav-up="auto" nav-down="#msaa">
+                <option value="fullscreen">Fullscreen</option>
+                <option value="borderless">Borderless</option>
+                <option value="windowed">Windowed</option>
+            </select>
+            <div class="indicator"></div>
+        </div>
+
+        <!-- MSAA -->
+        <div class="focus_wrapper" style="display: flex; align-items: center; font-size: 3.5vh;">
+            <label for="msaa" style="width: 25vh; text-align: right; margin-right: 2vh; font-size: 4vh;">MSAA:</label>
+            <select id="msaa" data-value="msaa" nav-up="#windowMode" nav-down="#fxaa">
+                <option value="0">Off</option>
+                <option value="2">2</option>
+                <option value="4">4</option>
+                <option value="8">8</option>
+            </select>
+            <div class="indicator"></div>
+        </div>
+
+        <!-- FXAA -->
+        <div class="focus_wrapper" style="display: flex; align-items: center; font-size: 3.5vh;">
+            <label for="fxaa" style="width: 25vh; text-align: right; margin-right: 2vh; font-size: 4vh;">FXAA Enabled</label>
+            <input type="checkbox" id="fxaa" data-checked="fxaa_enabled" nav-up="#msaa" nav-down="#backBtn" />
+            <div class="indicator"></div>
+        </div>
+
+        <!-- Back -->
+        <div class="focus_wrapper">
+            <button id="backBtn">Back</button>
+            <div class="indicator"></div>
+        </div>
+    </body>
+</rml>

@@ -68,7 +68,7 @@ private:
     SDL_Window*  window_ = nullptr;
     int          width_  = 0;
     int          height_ = 0;
-    bool         enable_debugger_ = false;
+    bool         enable_debugger_ = true;
 
     Rml::Context*           context_          = nullptr;
     RenderInterface_BGFX*   render_interface_  = nullptr;

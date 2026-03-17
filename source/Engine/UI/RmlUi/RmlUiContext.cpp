@@ -14,6 +14,8 @@
 #include "../../Input.h"
 #include "Backends/MyFileInterface.h"
 
+#include <unordered_set>
+
 RmlUiContext::RmlUiContext(SDL_Window* sdl_window, int initial_width, int initial_height, bool enable_debugger)
     : window_(sdl_window), width_(initial_width), height_(initial_height), enable_debugger_(enable_debugger)
 {
@@ -64,6 +66,8 @@ bool RmlUiContext::Initialize()
     {
         Rml::Debugger::Initialise(context_);
     }
+
+    Rml::Debugger::SetVisible(true);
 
     Rml::LoadFontFace("GameData/fonts/Kingthings_Calligraphica_2.ttf");
 
@@ -205,15 +209,53 @@ Rml::ElementDocument* RmlUiContext::LoadDocument(const std::string& filename)
         doc->AddEventListener("mouseover",
             new LambdaListener([](Rml::Element* e) {
                 if (!e) return;
+
+                /* ====================== INPUT TYPES SET (easy to extend) ====================== */
+                /* Only blur previous focus when hovering these "input" elements */
+                /* (select, button, real <input>, textarea, etc.) */
+                /* Hovering <option> inside a dropdown is deliberately ignored → no blur */
+                static const std::unordered_set<std::string> input_types = {
+                    "input",
+                    "select",
+                    "button",
+                    "textarea",
+                    
+                };
+
+                /* Early exit if this is NOT an input element (protects options, divs, labels, etc.) */
+                if (input_types.find(e->GetTagName()) == input_types.end()) {
+                    return;
+                }
+
+                auto focusedElement = e->GetOwnerDocument()->GetFocusLeafNode();
+
+                /* Check if the hovered element (or ANY of its parents/ancestors) IS the focused one */
+                /* This protects the entire select + selectbox + options tree without hardcoding tags */
+                if (focusedElement) {
+                    bool is_inside_focused_widget = false;
+                    for (Rml::Element* p = e; p != nullptr; p = p->GetParentNode()) {
+                        if (p == focusedElement) {
+                            is_inside_focused_widget = true;
+                            break;
+                        }
+                    }
+
+                    if (is_inside_focused_widget) {
+                        return;  // ←←← DO NOT remove focus when hovering inside the same widget (select dropdown, menus, etc.)
+                    }
+                }
+
+                /* ====================== ORIGINAL BLUR LOGIC (now only for real inputs) ====================== */
                 const Rml::Property* focus_prop = e->GetProperty("focus");
                 if (!focus_prop) return;
+
                 int focus_value = focus_prop->Get<int>();
                 if (focus_value != (int)Rml::Style::Focus::None)
                 {
                     auto focusedElement = e->GetOwnerDocument()->GetFocusLeafNode();
                     if (focusedElement) focusedElement->Blur();
                 }
-            })
+                })
         );
     }
     return doc;

@@ -368,5 +368,8 @@
     <ClInclude Include="Entities\Enemy\Enemies\NpcHumanBase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="UI\Pause\Settings\VideoSettings.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

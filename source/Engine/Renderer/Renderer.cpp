@@ -157,6 +157,7 @@ void Renderer::RenderLevel(Level* level)
     fullscreenShader->UseProgram();
     fullscreenShader->SetTexture("screenTexture", resultTex);
     fullscreenShader->SetUniform("screenResolution", nativeRes);
+    fullscreenShader->SetUniform("fxaaEnabled", FXAAEnabled);
 
 
     BgfxStateManager::Reset();

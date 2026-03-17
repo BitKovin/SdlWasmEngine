@@ -10,6 +10,8 @@
 #include <UI/RmlUi/RmlUiEvents.h>
 #include <EngineMain.h>
 
+#include <UI/Pause/Settings/VideoSettings.hpp>
+
 #include <PauseGameManager.hpp>
 
 #include <ItemsDataBase.h>
@@ -24,6 +26,7 @@ public:
 
 	Rml::ElementDocument* pauseMenuDoc = nullptr;
     Rml::ElementDocument* settingsMenuDoc = nullptr;
+    Rml::ElementDocument* videoSettingsMenuDoc = nullptr;
 
 
     void testHttp();
@@ -118,6 +121,8 @@ public:
 
     }
 
+	bool wasPaused = false;
+
     void UpdatePaused()
     {
 
@@ -127,7 +132,7 @@ public:
 
         if (PauseGameManager::GetGamePaused())
         {
-            if (!pauseMenuDoc->IsVisible())
+            if (wasPaused == false)
             {
 				RmlUiContext::Main->PushModal(pauseMenuDoc);
             }
@@ -139,7 +144,12 @@ public:
 				RmlUiContext::Main->RemoveFromModalFromStack(pauseMenuDoc);
             }
         }
+
+		wasPaused = PauseGameManager::GetGamePaused();
+
 	}
+
+	VideoSettingsModel videoSettingsModel;
 
     void ConstructPauseMenu()
     {
@@ -152,15 +162,60 @@ public:
             });
         RmlUiEvents::onClick(pauseMenuDoc, "optionsBtn", [&]()
             {
+				RmlUiContext::Main->PopModal();
 				RmlUiContext::Main->PushModal(settingsMenuDoc);
             });
 
 
 		settingsMenuDoc = RmlUiContext::Main->LoadDocument("GameData/ui/settings.rml");
-        RmlUiEvents::onClick(settingsMenuDoc, "backBtn", []()
+        RmlUiEvents::onClick(settingsMenuDoc, "backBtn", [&]()
+            {
+                
+                RmlUiContext::Main->PopModal();
+                RmlUiContext::Main->PushModal(pauseMenuDoc);
+            });
+
+        RmlUiEvents::onClick(settingsMenuDoc, "videoBtn", [&]()
+            {
+                
+				RmlUiContext::Main->PopModal();
+
+				VideoSettings::InitModelData(videoSettingsModel);
+                videoSettingsModel.DirtyAll();
+
+                Rml::Element* elem = videoSettingsMenuDoc->GetElementById("resolution");
+                if (!elem)
+                    return;
+
+                // Correct cast to ElementFormControlSelect
+                Rml::ElementFormControlSelect* select = dynamic_cast<Rml::ElementFormControlSelect*>(elem);
+                if (!select)
+                    return; // element is not a select, bail out
+
+                // Now you can use RemoveAll() and Add()
+                select->RemoveAll();
+                for (const auto& res : videoSettingsModel.resolutions)
+                {
+                    select->Add(res, res, res == videoSettingsModel.selected_resolution);
+                }
+                select->SetValue(videoSettingsModel.selected_resolution);
+
+                RmlUiContext::Main->PushModal(videoSettingsMenuDoc);
+            });
+
+
+        videoSettingsModel.Create(RmlUiContext::Main->GetContext(), "videoSettings");
+		VideoSettings::InitModelData(videoSettingsModel);
+        videoSettingsModel.DirtyAll();
+
+        videoSettingsMenuDoc = RmlUiContext::Main->LoadDocument("GameData/ui/videoSettings.rml");
+        RmlUiEvents::onClick(videoSettingsMenuDoc, "backBtn", [&]()
             {
                 RmlUiContext::Main->PopModal();
+				RmlUiContext::Main->PushModal(settingsMenuDoc);
             });
+        VideoSettings::BindVideoSettingsCallbacks(videoSettingsMenuDoc);
+
 
 	}
 

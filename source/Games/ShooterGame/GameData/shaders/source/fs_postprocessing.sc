@@ -12,7 +12,9 @@ uniform vec4 screenResolution;    // .xy
 uniform vec4 noiseTexture_size;    // .xy = width, height
 uniform vec4 LutTexture_size;      // .x  = height (N)  — width = N*N
 
-#define FXAA_SPAN_MAX     4.0
+uniform vec4 fxaaEnabled;
+
+#define FXAA_SPAN_MAX     8.0
 #define FXAA_REDUCE_MUL   (1.0 / 4.0)
 #ifndef FXAA_REDUCE_MIN
     #define FXAA_REDUCE_MIN   (1.0 / 128.0)
@@ -174,7 +176,15 @@ void main()
 
     vec2 res = screenResolution.xy;
 
-    vec3 color = applyFxaa(screenTexture, gl_FragCoord.xy, res).rgb;
+    vec3 color = vec3(0.0,0.0,0.0);
+
+    if(fxaaEnabled.x > 0.5)
+    {
+        color = applyFxaa(screenTexture, gl_FragCoord.xy, res).rgb;
+    }else
+    {
+        color = texture2D(screenTexture, v_texcoord0).rgb;
+    }
 
     color = GetFromLUT(color);
 

@@ -446,6 +446,7 @@
     <ClInclude Include="UI\LoadingScreen\UiDefaultLoadingScreen.h" />
     <ClInclude Include="UI\MobileControls\UiJoystick.h" />
     <ClInclude Include="UI\MobileControls\UiTouchMoveArea.h" />
+    <ClInclude Include="UI\Pause\Settings\VideoSettings.hpp" />
     <ClInclude Include="UI\Player\Crosshair.h" />
     <ClInclude Include="UI\Player\PlayerHud.hpp" />
     <ClInclude Include="UI\Player\ScreenMobileControls.h" />

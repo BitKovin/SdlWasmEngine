@@ -43,6 +43,7 @@ input, button, select {
     visibility: hidden;
     transform: translateY(-50%);
     border-radius: 1vh;
+    pointer-events: none;
 }
 
 /* show indicator on hover/focus */

@@ -27,6 +27,8 @@ public:
 
 	int MultiSampleCount = 8;
 
+	bool FXAAEnabled = true;
+
 	float ResolutionScale = 1.0f;
 
 	Shader* fullscreenShader = nullptr;
