@@ -4,12 +4,16 @@
 #include "../../Player/Player.hpp"
 #include <RandomHelper.h>
 
+#include <World/WorldOrientationManager.h>
+
 NpcHumanBase::NpcHumanBase()
 {
     mesh = new SkeletalMesh(this);
+    mesh->GravityAlignedRotation = true;
     Drawables.push_back(mesh);
 
     statusWidget = new UiBilboard(this);
+	statusWidget->GravityAlignedRotation = true;
     Drawables.push_back(statusWidget);
 
     auto debuffs = make_shared<UiNpcStatus>(this);
@@ -434,7 +438,7 @@ void NpcHumanBase::Deserialize(json& source)
 
 void NpcHumanBase::UpdateStatusWidgets()
 {
-    statusWidget->Position = Position + vec3(0, 1.0f, 0);
+    statusWidget->Position = mesh->Position + WorldOrientationManager::GetUpVector() * 2.0f;
 
     statusWidget->TwoSided = true;
     statusWidget->Update();

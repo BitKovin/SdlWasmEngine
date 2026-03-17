@@ -11,6 +11,8 @@
 #include <bgfx/bgfx.h>
 #include <BgfxStateManager.h>
 
+#include <World/WorldOrientationManager.h>
+
 // -----------------------------------------------------------------------
 // bgfx clear-color helper  (RGBA packed as uint32_t 0xRRGGBBAA)
 // -----------------------------------------------------------------------
@@ -379,6 +381,8 @@ void Renderer::SetSurfaceShaderUniforms(Shader* shader, float brightnessScale)
 
     shader->SetUniform("lightDirection", LightManager::LightDirection);
     shader->SetUniform("brightness", 1.0f * brightnessScale);
+
+	shader->SetUniform("worldOrientation", inverse(toMat4(WorldOrientationManager::GetWorldRotationQuat())));
 
     if (LightManager::DirectionalShadowsEnabled)
     {

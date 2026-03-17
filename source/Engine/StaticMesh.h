@@ -94,6 +94,8 @@ public:
 
 	bool DepthPrePath = true;
 
+	bool GravityAlignedRotation = false; //should engine automatically rotate model to align with gravity vector as part of model matrix?
+
 	float Brightness = 1.0f;
 
 	std::unordered_set<std::string> MeshHideList{};
@@ -113,14 +115,7 @@ public:
 
 	}
 
-	mat4 GetWorldMatrix()
-	{
-
-		mat4 posOffset = translate(positionOffset);
-		mat4 rotOffset = MathHelper::GetRotationMatrix(rotationOffset);
-
-		return translate(Position) * rotOffset * MathHelper::GetRotationMatrix(Rotation) * scale(Scale) * posOffset;
-	}
+	mat4 GetWorldMatrix();
 
 	virtual LightVolPointData GetLightVolData();
 

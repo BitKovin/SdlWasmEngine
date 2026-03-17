@@ -30,34 +30,37 @@ uniform mat4 PointLights[MAX_POINT_LIGHTS];
 
 vec3 CalculateSimplePointLight(int i, vec3 pixelPosition, vec3 normal)
 {
-    vec4 col0 = PointLights[i][0];
-    vec4 col1 = PointLights[i][1];
-    vec4 col2 = PointLights[i][2];
+    // === PORTABLE MATRIX ACCESS (bgfx built-in) ===
+    // mtxGetColumn works correctly on EVERY backend:
+    //   • OpenGL/GLSL  → column-major (exactly like your original [0]/[1]/[2])
+    //   • DirectX/HLSL, Metal, Vulkan/SPIR-V → row-major storage
+    // It automatically extracts the logical column no matter how the backend stores the matrix.
+    vec4 col0 = mtxGetColumn(PointLights[i], 0);
+    vec4 col1 = mtxGetColumn(PointLights[i], 1);
+    vec4 col2 = mtxGetColumn(PointLights[i], 2);
 
-    vec3  lightPos  = col0.xyz;
+    vec3 lightPos   = col0.xyz;
     float innerCone = col0.w;
-    vec3  lightCol  = col1.rgb;
+    vec3 lightCol   = col1.rgb;
     float radius    = col1.w;
-    vec3  lightFwd  = col2.xyz;
+    vec3 lightFwd   = col2.xyz;
     float outerCone = col2.w;
 
     if (radius <= 0.0) return vec3(0.0, 0.0, 0.0);
 
     normal = normalize(normal);
-
-    vec3  lightVector     = lightPos - pixelPosition;
+    vec3 lightVector = lightPos - pixelPosition;
     float distanceToLight = length(lightVector);
-
     if (distanceToLight > radius) return vec3(0.0, 0.0, 0.0);
 
-    vec3  lightDir  = lightVector / distanceToLight;
-    float lightDot  = dot(-lightDir, normalize(lightFwd));
+    vec3 lightDir = lightVector / distanceToLight;
+    float lightDot = dot(-lightDir, normalize(lightFwd));
     float dirFactor = smoothstep(outerCone, innerCone, lightDot);
+    if (dirFactor <= 0.001) return vec3(0.0, 0.0, 0.0);
 
-    if (dirFactor <= 0.001)           return vec3(0.0, 0.0, 0.0);
-    if (dot(normal, lightDir) < 0.0)  return vec3(0.0, 0.0, 0.0);
+    if (dot(normal, lightDir) < 0.0) return vec3(0.0, 0.0, 0.0);
 
-    float dist    = max((radius - distanceToLight) / radius, 0.0);
+    float dist = max((radius - distanceToLight) / radius, 0.0);
     float intense = dist * max(dot(normal, lightDir), 0.0);
 
     return lightCol * intense * dirFactor;

@@ -21,6 +21,8 @@
 
 #include <PauseGameManager.hpp>
 
+#include <World/WorldOrientationManager.h>
+
 REGISTER_ENTITY(Player, "player")
 
 Player* Player::Instance = nullptr;
@@ -152,6 +154,7 @@ void Player::Start()
 
 	cameraRotation.y = Rotation.y;
 
+	Spawn("testGravityController");
 
 	//Spawn("TestSpatialSoundPlayer")->Start();
 
@@ -1910,7 +1913,7 @@ void Player::UpdateBody()
 
 		float feetHeight = controller.GetSmoothPosition().y - controller.height / 2.0f;
 
-		Camera::position.y = feetHeight + controller.GetCameraHeight();
+		Camera::position = bodyMesh->Position + WorldOrientationManager::TransformDirectionToWorld(playerForward) * 0.3f + WorldOrientationManager::GetUpVector() * controller.height;
 
 		vec3 feetPos = controller.GetSmoothPosition();
 		feetPos.y = feetHeight;
@@ -2182,6 +2185,7 @@ void Player::LoadAssets()
 	bikeArmsMesh->PreloadAssets();
 
 	bodyMesh->LoadFromFile("GameData/models/player/body/player_body.glb");
+	bodyMesh->GravityAlignedRotation = true;
 	//bodyMesh->LoadFromFile("GameData/models/npc/guard.glb/");
 	bodyMesh->DepthPrePath = false;
 	bodyMesh->Masked = true;

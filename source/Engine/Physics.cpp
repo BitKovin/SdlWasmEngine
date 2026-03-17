@@ -204,6 +204,11 @@ void MyContactListener::OnContactRemoved(const JPH::SubShapeIDPair& inSubShapePa
 	// Leave empty; removals are handled in afterSimulation()
 }
 
+void Physics::SetGravity(vec3 gravity)
+{
+	physics_system->SetGravity(ToPhysics(gravity));
+}
+
 void Physics::DestroyBody(Body* body)
 {
 	if (body == nullptr)

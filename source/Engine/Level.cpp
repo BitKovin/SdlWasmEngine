@@ -26,6 +26,8 @@
 
 #include "SpatialSound/SpatialSoundManager.h"
 
+#include <World/WorldOrientationManager.h>
+
 Level* Level::Current = nullptr;
 
 string Level::pendingLoadLevelPath = "";
@@ -69,6 +71,8 @@ void Level::CloseLevel()
 		LevelTraversalSystem::Reset();
 	}
 
+	WorldOrientationManager::Reset();
+
 }
 
 inline bool endsWith(const std::string& str, const std::string& suffix) {
@@ -102,7 +106,7 @@ Level* Level::OpenLevel(string filePath)
 		delete(Current);
 	}
 
-	AssetRegistry::ClearMemory();
+	//AssetRegistry::ClearMemory();
 
 	if (isNewLevel)
 	{

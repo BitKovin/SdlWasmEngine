@@ -453,6 +453,7 @@
     <ClCompile Include="utils.cpp" />
     <ClCompile Include="Video\Video.cpp" />
     <ClCompile Include="Video\VideoInstance.cpp" />
+    <ClCompile Include="World\WorldOrientationManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AiPerception\AiPerceptionSystem.h" />
@@ -645,6 +646,7 @@
     <ClInclude Include="Video\pl_mpeg.h" />
     <ClInclude Include="Video\Video.h" />
     <ClInclude Include="Video\VideoInstance.h" />
+    <ClInclude Include="World\WorldOrientationManager.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

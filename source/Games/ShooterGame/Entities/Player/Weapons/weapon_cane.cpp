@@ -76,6 +76,9 @@ public:
 		viewmodel = new SkeletalMesh(owner);
 		arms = new SkeletalMesh(owner);
 
+		viewmodel->GravityAlignedRotation = true;
+		arms->GravityAlignedRotation = true;
+
 		viewmodel->LoadFromFile("GameData/models/player/weapons/cane/cane.glb");
 		//viewmodel->ColorTexture = AssetRegistry::GetTextureFromFile("GameData/textures/cat.png");
 		viewmodel->TexturesLocation = "GameData/models/player/weapons/cane/cane.glb/"; // to search in file:   

@@ -6,8 +6,13 @@ SAMPLERCUBE(s_bspTexture, 0);
 
 uniform vec4 cameraPosition;
 
+uniform mat4 worldOrientation;
+
 void main()
 {
-    vec3 dir = normalize(v_world.xyz - cameraPosition.xyz) * vec3(-1.0, 1.0, 1.0);
+    vec3 dir = normalize(v_world.xyz - cameraPosition.xyz);
+
+    dir = mul(worldOrientation, vec4(dir, 0.0)).xyz * vec3(-1.0, 1.0, 1.0);
+
     gl_FragColor = textureCube(s_bspTexture, dir);
 }

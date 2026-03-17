@@ -11,6 +11,24 @@
 #include <BgfxStateManager.h>
 #include <Renderer/Abstractions/ViewIdManager.h>
 
+#include <World/WorldOrientationManager.h>
+
+mat4 StaticMesh::GetWorldMatrix()
+{
+
+	mat4 posOffset = translate(positionOffset);
+	mat4 rotOffset = MathHelper::GetRotationMatrix(rotationOffset);
+
+	quat worldOrientation = glm::identity<quat>();
+
+	if(GravityAlignedRotation)
+	{
+		worldOrientation = WorldOrientationManager::GetWorldRotationQuat();
+	}
+
+	return translate(Position) * glm::toMat4(worldOrientation) * rotOffset * MathHelper::GetRotationMatrix(Rotation) * scale(Scale) * posOffset;
+}
+
 LightVolPointData StaticMesh::GetLightVolData()
 {
 

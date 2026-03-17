@@ -460,6 +460,7 @@ public:
 
 	}
 
+	static void SetGravity(vec3 gravity);
 
 	static Body* GetBodyFromId(BodyID id)
 	{

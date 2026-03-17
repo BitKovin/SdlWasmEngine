@@ -387,6 +387,7 @@
     <ClCompile Include="Entities\RelativeTeleporter.cpp" />
     <ClCompile Include="Entities\Enemy\Enemies\TestNpc.cpp" />
     <ClCompile Include="Entities\TestParticleSystem.cpp" />
+    <ClCompile Include="Entities\Test\TestGravityController.cpp" />
     <ClCompile Include="Entities\Test\TestSpatialSound.cpp" />
     <ClCompile Include="Entities\Triggers\TriggerTravel.cpp" />
     <ClCompile Include="GameStart.cpp" />

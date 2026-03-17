@@ -38,7 +38,7 @@ public:
         DrawTime = Delay(duration);
 
         
-        lineMesh.SetPixelShader("solidRed_pixel");
+        lineMesh.SetPixelShader("fs_solidRed");
 
         lineMesh.Position = mix(s, e, 0.5);
         lineMesh.Rotation = MathHelper::FindLookAtRotation(s, e);
