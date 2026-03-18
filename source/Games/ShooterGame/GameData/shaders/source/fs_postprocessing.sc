@@ -168,6 +168,13 @@ vec3 GetFromLUT(vec3 color)
 void main()
 {
 
+    vec2 coord = v_texcoord0;
+
+    #if BGFX_SHADER_LANGUAGE_GLSL
+    #else
+        coord.y = 1.0 - coord.y;
+    #endif
+
     int x = int(mod(gl_FragCoord.x, 4.0));
     int y = int(mod(gl_FragCoord.y, 4.0));
     float bayer_value = bayer4x4(y * 4 + x);
@@ -183,12 +190,12 @@ void main()
         color = applyFxaa(screenTexture, gl_FragCoord.xy, res).rgb;
     }else
     {
-        color = texture2D(screenTexture, v_texcoord0).rgb;
+        color = texture2D(screenTexture, coord).rgb;
     }
 
     color = GetFromLUT(color);
 
-    color = smoothPosterize(color, 70.0, 0.35, v_texcoord0 * vec2(aspectRatio, 1.0));
+    color = smoothPosterize(color, 70.0, 0.35, coord * vec2(aspectRatio, 1.0));
 
     color += bayer_value / 256.0;
 

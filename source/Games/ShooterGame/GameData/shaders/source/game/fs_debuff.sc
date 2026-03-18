@@ -41,21 +41,39 @@ float CircularProgressRing(
 
 void main()
 {
+
+    vec2 coord = v_texcoord0;
+
+    #if BGFX_SHADER_LANGUAGE_GLSL
+
+        coord.y = 1.0 - coord.y;
+    #else
+
+    #endif
+
     // Slight UV offset can be negative; clamp instead of snapping to zero
-    vec2 iconUV = mix(v_texcoord0, vec2(0.5, 0.5), -0.1);
-    vec2 bgUV   = mix(v_texcoord0, vec2(0.5, 0.5), -0.1);
+    vec2 iconUV = mix(coord, vec2(0.5, 0.5), -0.1);
+    vec2 bgUV   = mix(coord, vec2(0.5, 0.5), -0.1);
 
     iconUV = clamp(iconUV, 0.0, 1.0);
-    iconUV.y = 1.0 - iconUV.y;
     bgUV   = clamp(bgUV,   0.0, 1.0);
-    bgUV.y = 1.0 - bgUV.y;
+
+
+    #if BGFX_SHADER_LANGUAGE_GLSL
+
+    vec4 texColor    = texture2D(u_Texture, vec2(0.0, 1.0) - iconUV);
+    vec4 circleColor = texture2D(circleTexture, vec2(0.0, 1.0) - bgUV) * u_Color;
+
+    #else
+    vec4 texColor    = texture2D(u_Texture,vec2(0.0, 1.0) - iconUV);
+    vec4 circleColor = texture2D(circleTexture, vec2(0.0, 1.0) - bgUV) * u_Color;  
+    #endif
 
     // Sample textures
-    vec4 texColor    = texture2D(u_Texture, iconUV);
-    vec4 circleColor = texture2D(circleTexture, bgUV) * u_Color;
+
 
     // Vertical fill: top-to-bottom
-    float fillProgress = step(v_texcoord0.y, u_progress.x); 
+    float fillProgress = step(coord.y, u_progress.x); 
     circleColor *= mix(vec4(0.07, 0.07, 0.07, 0.55), u_Color, fillProgress);
 
     // Base color blend (icon over circle)
@@ -66,7 +84,7 @@ void main()
        Circular outline
        ============================== */
     float ringAlpha = CircularProgressRing(
-        v_texcoord0,
+        coord,
         vec2(0.5, 0.5),
         0.4,
         0.499,
