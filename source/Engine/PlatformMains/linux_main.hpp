@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_syswm.h>          // for native window handle
+#include <SDL2/SDL_syswm.h>
 #include "../imgui/imgui.h"
 #include "../imgui/imgui_impl_bgfx.h"
 #include "../imgui/imgui_impl_sdl2.h"
@@ -18,12 +18,6 @@ using namespace PlatformWindowData;
 
 EngineMain* engine = nullptr;
 
-// Function declarations
-void update_screen_size(int w, int h);
-void InitImGui();
-void desktop_render_loop();
-
-// Function implementations
 void update_screen_size(int w, int h) {
     SDL_SetWindowSize(window, w, h);
 }
@@ -60,7 +54,6 @@ void desktop_render_loop() {
 
             if (event.type == SDL_QUIT) quit = 1;
 
-            // BGFX resize handling
             if (event.type == SDL_WINDOWEVENT &&
                 (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED ||
                     event.window.event == SDL_WINDOWEVENT_RESIZED)) {
@@ -74,17 +67,16 @@ void desktop_render_loop() {
         }
 
         engine->MainLoop();
+        bgfx::frame();
     }
 }
 
-// Main function
 int main(int argc, char* args[]) {
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_JOYSTICK) < 0) {
         fprintf(stderr, "SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
         return 1;
     }
 
-    // No OpenGL attributes – we're using bgfx
     int flags = SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE;
     window = SDL_CreateWindow("Image", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
         800, 600, flags);
@@ -95,7 +87,7 @@ int main(int argc, char* args[]) {
 
     // ====================== BGFX INITIALIZATION ======================
     bgfx::Init init;
-    init.type = bgfx::RendererType::OpenGL;   // or Vulkan/Metal – auto can be used, but OpenGL is safe on Linux
+    init.type = bgfx::RendererType::OpenGL;   // or Vulkan/Metal; OpenGL is safe on Linux
     init.debug = false;
     init.profile = false;
 
@@ -106,17 +98,24 @@ int main(int argc, char* args[]) {
         return 1;
     }
 
-    // Set native window handle based on the SDL video subsystem
-    switch (wmInfo.subsystem) {
-    case SDL_SYSWM_X11:
+    // Set native window handle based on the available SDL video driver
+    bool handleSet = false;
+#if defined(SDL_VIDEO_DRIVER_X11)
+    if (wmInfo.subsystem == SDL_SYSWM_X11) {
         init.platformData.nwh = (void*)wmInfo.info.x11.window;
-        break;
-    case SDL_SYSWM_WAYLAND:
-        init.platformData.nwh = wmInfo.info.wl.surface;   // wl_surface*
-        init.platformData.ndt = wmInfo.info.wl.display;   // wl_display*
-        break;
-    default:
-        fprintf(stderr, "Unsupported SDL video subsystem\n");
+        init.platformData.ndt = wmInfo.info.x11.display;   // also needed on X11
+        handleSet = true;
+    }
+#endif
+#if defined(SDL_VIDEO_DRIVER_WAYLAND)
+    if (wmInfo.subsystem == SDL_SYSWM_WAYLAND) {
+        init.platformData.nwh = wmInfo.info.wl.surface;
+        init.platformData.ndt = wmInfo.info.wl.display;
+        handleSet = true;
+    }
+#endif
+    if (!handleSet) {
+        fprintf(stderr, "Unsupported or unrecognized SDL video subsystem\n");
         return 1;
     }
 
@@ -134,7 +133,6 @@ int main(int argc, char* args[]) {
     bgfx::setViewRect(0, 0, 0, 800, 600);
     bgfx::setViewRect(255, 0, 0, 800, 600);
 
-    // ImGui with bgfx backend
     InitImGui();
 
     SDL_SetHintWithPriority(SDL_HINT_MOUSE_RELATIVE_MODE_CENTER, "1", SDL_HINT_OVERRIDE);
@@ -152,8 +150,7 @@ int main(int argc, char* args[]) {
 
     delete engine;
 
-    // Cleanup bgfx
-    bgfx::frame();      // final present
+    bgfx::frame();
     bgfx::shutdown();
 
     SDL_DestroyWindow(window);
