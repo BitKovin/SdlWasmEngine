@@ -67,7 +67,6 @@ void desktop_render_loop() {
         }
 
         engine->MainLoop();
-        bgfx::frame();
     }
 }
 

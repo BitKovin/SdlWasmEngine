@@ -18,12 +18,12 @@ target_include_directories(fmod_core INTERFACE
 )
 elseif(WIN32)
 target_include_directories(fmod_core INTERFACE
-    ${CMAKE_CURRENT_LIST_DIR}/inc/desktop
+    ${CMAKE_CURRENT_LIST_DIR}/inc/windows
 )
 
 elseif(UNIX)
 target_include_directories(fmod_core INTERFACE
-    ${CMAKE_CURRENT_LIST_DIR}/inc/desktop
+    ${CMAKE_CURRENT_LIST_DIR}/inc/linux
 )
 endif()
 
