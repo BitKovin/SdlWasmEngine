@@ -44,30 +44,6 @@ elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
     set(LINUX TRUE)
     message(STATUS "Building for Linux")
 
-    
-    
-    add_library(mimalloc::mimalloc STATIC IMPORTED GLOBAL)
-    set_target_properties(mimalloc::mimalloc PROPERTIES
-        IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/Lib/Linux/libmimalloc.a"
-    )
-
-    # Find other Linux dependencies
-    find_package(GLEW       REQUIRED)
-    find_package(OpenGL     REQUIRED)
-    find_package(OpenAL     REQUIRED)
-    find_package(ZLIB       REQUIRED)
-
-    # Link OpenAL via imported target
-    target_link_libraries(engine PRIVATE OpenAL::OpenAL)
-
-    # Link the rest as before
-    target_link_libraries(engine PRIVATE
-        GLEW::GLEW
-        OpenGL::GL
-        ZLIB::ZLIB
-        mimalloc::mimalloc 
-    )
-
 endif()
 
 
@@ -283,7 +259,25 @@ else()
     )
 endif()
 
+if(LINUX)
+    add_library(mimalloc::mimalloc STATIC IMPORTED GLOBAL)
+    set_target_properties(mimalloc::mimalloc PROPERTIES
+        IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/Lib/Linux/libmimalloc.a"
+    )
 
+    # Find other Linux dependencies
+    find_package(OpenAL     REQUIRED)
+    find_package(ZLIB       REQUIRED)
+
+    # Link OpenAL via imported target
+    target_link_libraries(engine PRIVATE OpenAL::OpenAL)
+
+    # Link the rest as before
+    target_link_libraries(engine PRIVATE
+        ZLIB::ZLIB
+        mimalloc::mimalloc 
+    )
+endif()
 
 # Persist last selected game to build dir so it's easy to query later
 file(WRITE "${CMAKE_BINARY_DIR}/last_game.txt" "${GAME_NAME}\n")
