@@ -7,7 +7,7 @@ if(CMAKE_VERSION VERSION_LESS "2.8.3")
    message(FATAL_ERROR "CMake >= 2.8.3 required")
 endif()
 cmake_policy(PUSH)
-cmake_policy(VERSION 2.8.3...3.31)
+cmake_policy(VERSION 2.8.3...4.1)
 #----------------------------------------------------------------
 # Generated CMake target import file.
 #----------------------------------------------------------------
@@ -50,17 +50,17 @@ unset(_cmake_expected_targets)
 add_library(Jolt::Jolt STATIC IMPORTED)
 
 set_target_properties(Jolt::Jolt PROPERTIES
-  INTERFACE_COMPILE_DEFINITIONS "\$<\$<BOOL:>:_HAS_EXCEPTIONS=0>;\$<\$<CONFIG:Debug>:_DEBUG>;\$<\$<CONFIG:Release,Distribution,ReleaseASAN,ReleaseUBSAN,ReleaseTSAN,ReleaseCoverage>:NDEBUG>;\$<\$<CONFIG:ReleaseASAN,ReleaseTSAN>:JPH_DISABLE_TEMP_ALLOCATOR;JPH_DISABLE_CUSTOM_ALLOCATOR>;JPH_OBJECT_STREAM"
-  INTERFACE_COMPILE_OPTIONS "-msimd128;-msse4.2"
-  INTERFACE_INCLUDE_DIRECTORIES "F:/Git/SdlWasmEngine/sourceLibraries/JoltPhysics-5.3.0/Build/../"
-  INTERFACE_LINK_OPTIONS "-Wno-limited-postlink-optimizations"
+  INTERFACE_COMPILE_DEFINITIONS "\$<\$<BOOL:>:_HAS_EXCEPTIONS=0>;\$<\$<CONFIG:Debug>:_DEBUG>;\$<\$<CONFIG:Release,Distribution,ReleaseASAN,ReleaseUBSAN,ReleaseTSAN,ReleaseCoverage>:NDEBUG>;\$<\$<CONFIG:ReleaseASAN,ReleaseTSAN>:JPH_DISABLE_TEMP_ALLOCATOR;JPH_DISABLE_CUSTOM_ALLOCATOR>;JPH_OBJECT_STREAM;JPH_USE_AVX2;JPH_USE_AVX;JPH_USE_SSE4_1;JPH_USE_SSE4_2;JPH_USE_LZCNT;JPH_USE_TZCNT;JPH_USE_F16C;JPH_USE_FMADD"
+  INTERFACE_COMPILE_OPTIONS "-mavx2;-mbmi;-mpopcnt;-mlzcnt;-mf16c;-mlzcnt;-mbmi;-mf16c;-mfma;-mfpmath=sse;-pthread"
+  INTERFACE_INCLUDE_DIRECTORIES "/home/user/Documents/GitHub/REngine_2.0/sourceLibraries/JoltPhysics-5.3.0/Build/../"
+  INTERFACE_LINK_OPTIONS "-pthread"
 )
 
 # Import target "Jolt::Jolt" for configuration ""
 set_property(TARGET Jolt::Jolt APPEND PROPERTY IMPORTED_CONFIGURATIONS NOCONFIG)
 set_target_properties(Jolt::Jolt PROPERTIES
   IMPORTED_LINK_INTERFACE_LANGUAGES_NOCONFIG "CXX"
-  IMPORTED_LOCATION_NOCONFIG "F:/Git/SdlWasmEngine/Build/sourceLibraries/JoltPhysics-5.3.0/Build/libJolt.a"
+  IMPORTED_LOCATION_NOCONFIG "/home/user/Documents/GitHub/REngine_2.0/Build/sourceLibraries/JoltPhysics-5.3.0/Build/libJolt.a"
   )
 
 # This file does not depend on other imported targets which have
