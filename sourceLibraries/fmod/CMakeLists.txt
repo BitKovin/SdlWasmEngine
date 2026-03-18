@@ -72,6 +72,10 @@ elseif(UNIX)
     )
 endif()
 
+target_link_libraries(fmod_studio INTERFACE
+    fmod_core
+)
+
 # --------------------------------------------------
 # Convenience target (core + studio)
 # --------------------------------------------------
