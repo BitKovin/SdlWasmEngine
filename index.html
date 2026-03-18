@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Game Player</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+            background-color: #000;
+            font-family: 'Courier New', monospace;
+        }
+
+        .emscripten_border {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+        }
+
+        canvas.emscripten {
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            display: block;
+        }
+
+        #loading {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            z-index: 10;
+            text-align: right;
+            min-width: 300px;
+        }
+
+        #canvas:focus {
+            outline: none;
+            border: none;
+        }
+
+        #status {
+            color: #d4c8b8;
+            font-size: 24px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+            text-shadow: 0很0 5px rgba(0, 0, 0, 0.8);
+        }
+
+        #progress {
+            height: 15px;
+            width: 100%;
+            margin: 0;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            border: none;
+            background: #1a1515;
+        }
+
+            #progress::-webkit-progress-bar {
+                background: #1a1515;
+            }
+
+            #progress::-webkit-progress-value {
+                background: #8b4513;
+                transition: width 0.3s ease;
+            }
+
+            #progress::-moz-progress-bar {
+                background: #8b4513;
+            }
+
+        #emscripten_logo, #controls, #output {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading">
+        <div class="emscripten" id="status">Initializing</div>
+        <div class="emscripten">
+            <progress value="0" max="100" id="progress"></progress>
+        </div>
+    </div>
+
+    <div class="emscripten_border">
+        <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" tabindex="-1"></canvas>
+    </div>
+
+    <textarea id="output" rows="8"></textarea>
+
+    <!-- Existing script for Module setup -->
+    <script type="text/javascript">
+        var statusElement = document.getElementById("status");
+        var progressElement = document.getElementById("progress");
+        var canvasElement = document.getElementById("canvas");
+        var outputElement = document.getElementById("output");
+        var containerElement = document.querySelector('.emscripten_border');
+        if (outputElement) outputElement.value = "";
+
+        // Alert on WebGL context loss
+        canvasElement.addEventListener("webglcontextlost", (e) => {
+            alert("WebGL context lost. You will need to reload the page.");
+            e.preventDefault();
+        }, false);
+
+        var Module = {
+            print(...args) {
+                console.log(...args);
+                if (outputElement) {
+                    var text = args.join(" ");
+                    outputElement.value += text + "\n";
+                    outputElement.scrollTop = outputElement.scrollHeight;
+                }
+            },
+            canvas: canvasElement,
+            setStatus(text) {
+                if (!Module.setStatus.last) Module.setStatus.last = { time: Date.now(), text: "" };
+                if (text === Module.setStatus.last.text) return;
+
+                var m = text.match(/([^(]+)\((\d+(\.\d+)?)\/(\d+)\)/);
+                var now = Date.now();
+
+                if (m && now - Module.setStatus.last.time < 30) return;
+                Module.setStatus.last.time = now;
+                Module.setStatus.last.text = text;
+
+                if (m) {
+                    text = m[1];
+                    var current = parseInt(m[2]);
+                    var total = parseInt(m[4]);
+
+                    progressElement.value = current * 100;
+                    progressElement.max = total * 100;
+                    progressElement.style.display = "block";
+                } else {
+                    // Hide progress bar for non-downloading steps
+                    progressElement.style.display = "none";
+                }
+
+                statusElement.innerHTML = text.toUpperCase();
+            },
+            totalDependencies: 0,
+            monitorRunDependencies(left) {
+                this.totalDependencies = Math.max(this.totalDependencies, left);
+                Module.setStatus(
+                    left
+                        ? "Preparing... (" +
+                        (this.totalDependencies - left) +
+                        "/" +
+                        this.totalDependencies +
+                        ")"
+                        : "Initializing..."
+                );
+            },
+        };
+        Module.setStatus("Downloading...");
+
+        window.onerror = (event) => {
+            Module.setStatus("Exception thrown - see console");
+            Module.setStatus = (text) => {
+                if (text) console.error("[post-exception status] " + text);
+            };
+        };
+
+        // Enhanced resize handling
+        function resizeCanvas() {
+            const resScale = 1;
+            const dpr = window.devicePixelRatio || 1;
+            const containerWidth = containerElement.clientWidth * resScale;
+            const containerHeight = containerElement.clientHeight * resScale;
+
+            if (canvasElement.width !== containerWidth * dpr ||
+                canvasElement.height !== containerHeight * dpr) {
+
+                canvasElement.width = Math.floor(containerWidth * dpr);
+                canvasElement.height = Math.floor(containerHeight * dpr);
+
+                canvasElement.style.width = containerWidth + "px" / resScale;
+                canvasElement.style.height = containerHeight + "px" / resScale;
+
+                if (typeof Module.onCanvasResized === 'function') {
+                    Module.onCanvasResized(canvasElement.width, canvasElement.height);
+                }
+            }
+        }
+
+        // Setup resize observers
+        function setupResizeHandling() {
+            let resizeTimeout;
+            const resizeDebounceTime = 100;
+
+            function handleResize() {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(resizeCanvas, resizeDebounceTime);
+            }
+
+            if (typeof ResizeObserver === 'function') {
+                const resizeObserver = new ResizeObserver(handleResize);
+                resizeObserver.observe(containerElement);
+                resizeObserver.observe(document.documentElement);
+            } else {
+                window.addEventListener('resize', handleResize);
+            }
+
+            if (window.visualViewport) {
+                window.visualViewport.addEventListener('resize', handleResize);
+            }
+
+            window.addEventListener('orientationchange', handleResize);
+            setInterval(resizeCanvas, 1000);
+        }
+
+        // Initialize resizing
+        setupResizeHandling();
+        resizeCanvas();
+
+        // Hide loading indicators after module loads
+        Module.postRun = () => {
+            // Show 100% progress before hiding
+            progressElement.value = 100;
+            progressElement.max = 100;
+
+            setTimeout(() => {
+                document.getElementById("loading").style.display = "none";
+                resizeCanvas();
+            }, 500);
+        };
+    </script>
+
+
+
+    <!-- New script to force high-performance WebGL context -->
+    <script type="text/javascript">
+        (function () {
+            if (typeof HTMLCanvasElement !== "undefined") {
+                wrapGetContext(HTMLCanvasElement);
+            }
+            if (typeof OffscreenCanvas !== "undefined") {
+                wrapGetContext(OffscreenCanvas);
+            }
+
+            function wrapGetContext(ContextClass) {
+                const isWebGL = /webgl/i;
+
+                ContextClass.prototype.getContext = function (origFn) {
+                    return function (type, attributes) {
+                        if (isWebGL.test(type)) {
+                            attributes = Object.assign({}, attributes || {}, { powerPreference: "high-performance" });
+                        }
+                        return origFn.call(this, type, attributes);
+                    };
+                }(ContextClass.prototype.getContext);
+            }
+        })();
+    </script>
+
+    <!-- premultipliedAlpha false -->
+    <script type="text/javascript">
+        (function() {
+
+        if (typeof HTMLCanvasElement !== "undefined") {
+            wrapGetContext(HTMLCanvasElement);
+        }
+        if (typeof OffscreenCanvas !== "undefined") {
+            wrapGetContext(OffscreenCanvas);
+        }
+
+        function wrapGetContext(ContextClass) {
+            const isWebGL = /webgl/i;
+
+            ContextClass.prototype.getContext = function(origFn) {
+            return function(type, attributes) {
+                if (isWebGL.test(type)) {
+                attributes = Object.assign({}, attributes || {}, {premultipliedAlpha: false});
+                }
+                return origFn.call(this, type, attributes);
+            };
+            }(ContextClass.prototype.getContext);
+        }
+
+        }());
+    </script>
+
+    <!-- Emscripten-generated script -->
+    <script async type="text/javascript" src="main.js"></script>
+</body>
+</html>

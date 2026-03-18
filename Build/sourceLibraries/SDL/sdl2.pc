@@ -1,6 +1,6 @@
 # sdl pkg-config source file
 
-prefix=/usr/local
+prefix=F:/Tools/emsdk/upstream/emscripten/cache/sysroot
 exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
 includedir=${prefix}/include
@@ -10,5 +10,5 @@ Description: Simple DirectMedia Layer is a cross-platform multimedia library des
 Version: 2.32.10
 Requires.private: 
 Conflicts:
-Libs: -L${libdir}   -lSDL2    -pthread  -lm
-Cflags: -I${includedir} -I${includedir}/SDL2  -D_REENTRANT
+Libs: -L${libdir}   -lSDL2     -lm
+Cflags: -I${includedir} -I${includedir}/SDL2 
