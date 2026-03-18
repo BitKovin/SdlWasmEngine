@@ -105,8 +105,20 @@ int main(int argc, char* args[]) {
         fprintf(stderr, "SDL_GetWindowWMInfo failed: %s\n", SDL_GetError());
         return 1;
     }
-    // On Linux, the native window handle is an X11 Window (cast to void*)
-    init.platformData.nwh = (void*)wmInfo.info.x11.window;
+
+    // Set native window handle based on the SDL video subsystem
+    switch (wmInfo.subsystem) {
+    case SDL_SYSWM_X11:
+        init.platformData.nwh = (void*)wmInfo.info.x11.window;
+        break;
+    case SDL_SYSWM_WAYLAND:
+        init.platformData.nwh = wmInfo.info.wl.surface;   // wl_surface*
+        init.platformData.ndt = wmInfo.info.wl.display;   // wl_display*
+        break;
+    default:
+        fprintf(stderr, "Unsupported SDL video subsystem\n");
+        return 1;
+    }
 
     init.resolution.width = 800;
     init.resolution.height = 600;
