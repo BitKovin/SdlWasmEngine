@@ -675,33 +675,41 @@ void EngineMain::Render()
        CREATE / RESIZE UI RENDER TARGET
        ============================================================ */
 
-    if (UiRenderTexture == nullptr ||
-        UiRenderTexture->width() != (uint32_t)uiResolution.x ||
-        UiRenderTexture->height() != (uint32_t)uiResolution.y)
+    if (UiFrameBuffer == nullptr)
     {
-        delete UiRenderTexture;
-
-
-
+        UiFrameBuffer = new Framebuffer();
         UiRenderTexture = new RenderTexture(
             uiResolution.x,
             uiResolution.y,
-            TextureFormat::RGBA8
-        );
-        UiRenderTexture->SetName("UiRenderTexture");
+            TextureFormat::RGBA8);
+        UiRenderTextureStencil = new RenderTexture(uiResolution.x,
+            uiResolution.y, TextureFormat::Depth24Stencil8);
 
+        UiFrameBuffer->attachColor(UiRenderTexture);
+        UiFrameBuffer->attachDepth(UiRenderTextureStencil);
+    }
+
+    if (UiRenderTexture->width() != (uint32_t)uiResolution.x ||
+        UiRenderTexture->height() != (uint32_t)uiResolution.y)
+    {
+        UiRenderTexture->resize(uiResolution.x, uiResolution.y);
+        UiRenderTextureStencil->resize(uiResolution.x, uiResolution.y);
+
+        // Textures got new handles — rebuild the framebuffer against them
+        UiFrameBuffer->attachColor(UiRenderTexture);        // ← FIX 1
+        UiFrameBuffer->attachDepth(UiRenderTextureStencil);
     }
 
     /* ============================================================
        UI PASS → render to transparent RT
        ============================================================ */
 
-	UiRenderTexture->setAsRenderTarget();
-
+    UiFrameBuffer->bind();
+    bgfx::setViewMode(ViewIdManager::GetCurrentId(), bgfx::ViewMode::Sequential);
     bgfx::setViewClear(ViewIdManager::GetCurrentId(),
-        BGFX_CLEAR_COLOR,
+        BGFX_CLEAR_COLOR | BGFX_CLEAR_STENCIL,
         0x00000000, // transparent black
-        1.0f, 0);
+        1.0f, 0);   // stencil cleared to 0
 
 	BgfxStateManager::Reset();
     BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Always);
@@ -709,6 +717,10 @@ void EngineMain::Render()
 
     Viewport.Draw();
     UiRenderer::EndFrame();
+
+    UiFrameBuffer->unbind();
+
+    ViewIdManager::GetCurrentId();
 
     /* ============================================================
        WORLD PASS — RenderLevel manages its own view IDs internally

@@ -45,6 +45,11 @@ namespace UiRenderer {
     // Returns glm::vec2(0) if the font handle is invalid or text is empty.
     glm::vec2 MeasureText(const std::string& text, FontHandle font);
 
+    void PushMask(const glm::vec2& pos, const glm::vec2& size,
+        float rotation = 0.f, glm::vec2 pivot = glm::vec2(0.f));
+    void PopMask();
+    void ClearStencil();
+
     // Call at the end of each frame to upload any dirty atlas changes to the GPU.
     void EndFrame();
 

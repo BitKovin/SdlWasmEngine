@@ -69,11 +69,12 @@ void UiElement::FinalizeChildren()
 
     finalizedPosition = position;
     finalizedOffset = offset;
-    finalizedSize = size;
+    finalizedSize = GetSize();
 
     finalizedChildren = children;
     for (auto& child : finalizedChildren)
         child->FinalizeChildren();
+
 }
 
 std::shared_ptr<UiElement> UiElement::GetHitElementUnderPosition(vec2 hitPosition)

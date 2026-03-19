@@ -28,6 +28,8 @@ public:
 
 	void Update();
 
+	void Draw() override;
+
 private:
 
 };

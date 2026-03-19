@@ -166,6 +166,20 @@ void WeaponSlots::Update()
 
 }
 
+void WeaponSlots::Draw()
+{
+
+    glm::vec2 pos = position + offset;
+    glm::vec2 sz = finalizedSize;
+
+    //UiRenderer::PushMask(pos, sz);
+
+    UiHorizontalBox::Draw();//drawing children
+
+    //UiRenderer::PopMask();
+
+}
+
 UseIndicator::UseIndicator(Player* player)
 {
 

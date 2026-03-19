@@ -56,6 +56,8 @@ public:
     bool SimulatingPreciseGameTicks = false;
 
 	RenderTexture* UiRenderTexture = nullptr;
+    RenderTexture* UiRenderTextureStencil = nullptr;
+    Framebuffer* UiFrameBuffer = nullptr;
 
 	RmlUiContext* RmlContext = nullptr;
 

@@ -359,6 +359,7 @@ namespace UiRenderer {
         s_fontKeyCache.clear();
     }
 
+
     // ── LoadFont ──────────────────────────────────────────────────────────────────
 
     FontHandle LoadFont(const char* path, float pixelHeight)
@@ -442,6 +443,68 @@ namespace UiRenderer {
         return m;
     }
 
+
+    struct MaskEntry {
+        glm::vec2 pos, size;
+        float     rotation;
+        glm::vec2 pivot;
+    };
+
+    static std::vector<MaskEntry> s_maskStack;
+
+    // ── Internal: write a reference value into the stencil buffer for a rect ─────
+    // No colour or depth is written; always passes the depth test so the stencil
+    // op fires regardless of what the depth buffer contains.
+
+    static void DrawStencilRect_Internal(const glm::vec2& pos, const glm::vec2& size,
+        float rotation, glm::vec2 pivot, uint8_t ref)
+    {
+        s_flatColorShader->UseProgram();
+        SetShaderProjection(s_flatColorShader);
+
+        s_flatColorShader->SetUniform("u_Model", BuildQuadModel(pos, size, rotation, pivot));
+        s_flatColorShader->SetUniform("u_Color", glm::vec4(0.f));
+
+        // WRITE_RGB satisfies bgfx's requirement to process fragments so stencil
+        // ops fire. The blend equation src*0 + dst*1 = dst preserves the colour
+        // buffer entirely — neither PushMask nor PopMask taint rendered pixels.
+        bgfx::setState(
+            BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A |
+            BGFX_STATE_DEPTH_TEST_ALWAYS |
+            BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ZERO, BGFX_STATE_BLEND_ONE)
+        );
+
+        bgfx::setStencil(
+            BGFX_STENCIL_TEST_ALWAYS |
+            BGFX_STENCIL_FUNC_REF(ref) |
+            BGFX_STENCIL_FUNC_RMASK(0xFF) |
+            BGFX_STENCIL_OP_FAIL_S_REPLACE |
+            BGFX_STENCIL_OP_FAIL_Z_REPLACE |
+            BGFX_STENCIL_OP_PASS_Z_REPLACE
+        );
+
+        bgfx::setVertexBuffer(0, s_quadVB);
+        s_flatColorShader->Submit(ViewIdManager::GetCurrentId());
+    }
+
+    // ── Internal: apply the active stencil test before a normal draw call ─────────
+    // Called by SubmitQuad and DrawText's submit path.
+
+    static void ApplyStencilTest()
+    {
+        if (s_maskStack.empty()) return;
+
+        const uint8_t ref = static_cast<uint8_t>(s_maskStack.size());
+        bgfx::setStencil(
+            BGFX_STENCIL_TEST_EQUAL |  // only draw where stencil == ref
+            BGFX_STENCIL_FUNC_REF(ref) |
+            BGFX_STENCIL_FUNC_RMASK(0xFF) |
+            BGFX_STENCIL_OP_FAIL_S_KEEP |  // stencil fail → leave stencil alone
+            BGFX_STENCIL_OP_FAIL_Z_KEEP |
+            BGFX_STENCIL_OP_PASS_Z_KEEP          // pass         → leave stencil alone
+        );
+    }
+
     // ── Shared submit: bind the unit quad VB and dispatch ────────────────────────
 
     static void SubmitQuad(Shader* shader)
@@ -450,6 +513,8 @@ namespace UiRenderer {
         BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Always);
         BgfxStateManager::SetBlend(BgfxStateManager::Blend::Alpha);
         BgfxStateManager::Apply();
+
+        ApplyStencilTest();
 
         bgfx::setVertexBuffer(0, s_quadVB);
         shader->Submit(ViewIdManager::GetCurrentId());
@@ -694,6 +759,8 @@ namespace UiRenderer {
         BgfxStateManager::SetBlend(BgfxStateManager::Blend::Alpha);
         BgfxStateManager::Apply();
 
+        ApplyStencilTest();
+
         bgfx::setVertexBuffer(0, &tvb);
         sp->Submit(ViewIdManager::GetCurrentId());
     }
@@ -768,6 +835,52 @@ namespace UiRenderer {
         std::lock_guard<std::mutex> lock(s_fontMutex);
         for (auto& [id, atlas] : s_fontRegistry)
             atlas->FlushToGPU();
+    }
+
+    // ── PushMask ──────────────────────────────────────────────────────────────────
+// Draws `rect` into the stencil buffer at depth (stack size + 1).
+// All subsequent draw calls will be clipped to this region until PopMask().
+// Masks nest: each level intersects with all outer masks.
+
+    void PushMask(const glm::vec2& pos, const glm::vec2& size,
+        float rotation, glm::vec2 pivot)
+    {
+        const uint8_t newDepth = static_cast<uint8_t>(s_maskStack.size() + 1);
+        s_maskStack.push_back({ pos, size, rotation, pivot });
+        DrawStencilRect_Internal(pos, size, rotation, pivot, newDepth);
+    }
+
+    // ── PopMask ───────────────────────────────────────────────────────────────────
+    // Restores the stencil to the state before the matching PushMask by repainting
+    // the stored rect with the previous depth value.
+
+    void PopMask()
+    {
+        if (s_maskStack.empty()) return;
+
+        const MaskEntry& e = s_maskStack.back();
+        const uint8_t    prevDepth = static_cast<uint8_t>(s_maskStack.size() - 1);
+
+        DrawStencilRect_Internal(e.pos, e.size, e.rotation, e.pivot, prevDepth);
+        s_maskStack.pop_back();
+    }
+
+    // ── ClearStencil ──────────────────────────────────────────────────────────────
+    // Writes 0 across the entire viewport and empties the mask stack.
+    // Useful before rendering a completely new layer or after an emergency abort.
+
+    void ClearStencil()
+    {
+        s_maskStack.clear();
+
+        float screenH = static_cast<float>(UiManager::GetScaledUiHeight());
+        float screenW = screenH * Camera::AspectRatio;
+        if (customViewport) {
+            screenW = static_cast<float>(customViewportSize.x);
+            screenH = static_cast<float>(customViewportSize.y);
+        }
+
+        DrawStencilRect_Internal({ 0.f, 0.f }, { screenW, screenH }, 0.f, { 0.f, 0.f }, 0);
     }
 
 } // namespace UiRenderer
