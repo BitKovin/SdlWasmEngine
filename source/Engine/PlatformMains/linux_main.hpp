@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <SDL2/SDL.h>
+#define SDL_VIDEO_DRIVER_X11
+#define SDL_VIDEO_DRIVER_WAYLAND
 #include <SDL2/SDL_syswm.h>
 #include "../imgui/imgui.h"
 #include "../imgui/imgui_impl_bgfx.h"
@@ -86,7 +88,7 @@ int main(int argc, char* args[]) {
 
     // ====================== BGFX INITIALIZATION ======================
     bgfx::Init init;
-    init.type = bgfx::RendererType::OpenGL;   // or Vulkan/Metal; OpenGL is safe on Linux
+    init.type = bgfx::RendererType::Vulkan;   // or Vulkan/Metal; OpenGL is safe on Linux
     init.debug = false;
     init.profile = false;
 
@@ -113,6 +115,7 @@ int main(int argc, char* args[]) {
         handleSet = true;
     }
 #endif
+  printf("SDL subsystem: %d\n", wmInfo.subsystem);
     if (!handleSet) {
         fprintf(stderr, "Unsupported or unrecognized SDL video subsystem\n");
         return 1;
