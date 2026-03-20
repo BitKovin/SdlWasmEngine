@@ -1,6 +1,4 @@
 # Auto detect text files and perform LF normalization
 * text=auto
 
-# Include only source and tools directories
-source/** linguist-vendored=false
-tools/** linguist-vendored=false
+*.cob linguist-detectable=false
