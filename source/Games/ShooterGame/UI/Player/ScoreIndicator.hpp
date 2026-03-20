@@ -19,17 +19,18 @@ public:
 		progressBar->pivot = vec2(0.5f);
 		progressBar->origin = vec2(0.5f);
 		progressBar->rotation = -90;
-		progressBar->size = vec2(100);
+		progressBar->size = vec2(120);
 		text->pivot = vec2(0.5f);
 		text->origin = vec2(0.5f);
-		text->fontSize = 102;
+		text->fontSize = 112;
+		text->position = vec2(0, -10);
 
 		AddChild(progressBar);
 		AddChild(text);
 
-		pivot = vec2(0.5f);
+		pivot = vec2(0.5f,0);
 		origin = vec2(0.5f, 0.0f);
-		position = vec2(0, 50);
+		position = vec2(0, 20);
 
 	}
 

@@ -41,10 +41,10 @@ static constexpr int TIER_COUNT = static_cast<int>(ComboTier::COUNT);
 constexpr std::array<TierConfig, TIER_COUNT> TIER_CONFIGS = {{
                 //   name      multplier    points to progress    damage to fully regress tier
     /* None     */ { "x1",      1.0,          150.0,                      0.0 }, 
-    /* Bronze   */ { "x2",    2,          220.0,                    40.0 },
-    /* Silver   */ { "x4",    4,          300.0,                    35.0 },
-    /* Gold     */ { "x8",      8,          400.0,                    25.0 },
-    /* Platinum */ { "x16",  16,          400.0,                     15.0 },
+    /* Bronze   */ { "x2",    2,          250.0,                    40.0 },
+    /* Silver   */ { "x4",    4,          400.0,                    35.0 },
+    /* Gold     */ { "x8",      8,          600.0,                    25.0 },
+    /* Platinum */ { "x16",  16,          500.0,                     15.0 },
     //  /* Diamond  */ { "Diamond",   4.0,          100.0,                     15.0 }, 
 }};
 
