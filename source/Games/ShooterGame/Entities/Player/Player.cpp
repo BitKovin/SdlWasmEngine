@@ -21,6 +21,8 @@
 
 #include <PauseGameManager.hpp>
 
+#include <Systems/ScoreSystem/ScoreSystem.h>
+
 #include <World/WorldOrientationManager.h>
 
 REGISTER_ENTITY(Player, "player")
@@ -1953,6 +1955,9 @@ bool Player::InThirdPerson()
 void Player::OnDamage(float Damage, Entity* DamageCauser, Entity* Weapon)
 {
 	Entity::OnDamage(Damage, DamageCauser, Weapon);
+
+	ScoreSystem::Instance().takeDamage(Damage);
+
 }
 
 void Player::OnPointDamage(float Damage, vec3 Point, vec3 Direction, string bone, Entity* DamageCauser, Entity* Weapon)

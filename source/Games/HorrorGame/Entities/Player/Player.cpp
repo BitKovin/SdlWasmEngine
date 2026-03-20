@@ -4,6 +4,7 @@
 
 #include <EngineMain.h>
 
+
 REGISTER_ENTITY(Player, "info_player_start")
 
 Player* Player::Instance = nullptr;
@@ -873,6 +874,9 @@ void Player::Serialize(json& target)
 void Player::OnDamage(float Damage, Entity* DamageCauser, Entity* Weapon)
 {
     Entity::OnDamage(Damage, DamageCauser, Weapon);
+
+
+
 }
 
 void Player::OnPointDamage(float Damage, vec3 Point, vec3 Direction, string bone, Entity* DamageCauser, Entity* Weapon)

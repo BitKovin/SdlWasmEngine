@@ -21,9 +21,9 @@ enum class ComboTier : int {
     Silver   = 2,
     Gold     = 3,
     Platinum = 4,
-    Diamond  = 5,
+    //Diamond  = 5,
 
-    COUNT    = 6
+    COUNT
 };
 
 // ── Per-tier configuration ────────────────────
@@ -40,12 +40,12 @@ static constexpr int TIER_COUNT = static_cast<int>(ComboTier::COUNT);
 //   damageToDeplete = total damage that wipes the bar from 100% → 0%
 constexpr std::array<TierConfig, TIER_COUNT> TIER_CONFIGS = {{
                 //   name      multplier    points to progress    damage to fully regress tier
-    /* None     */ { "None",      1.0,          100.0,                      0.0 }, 
-    /* Bronze   */ { "Bronze",    1.2,          150.0,                    200.0 },
-    /* Silver   */ { "Silver",    1.5,          220.0,                    150.0 },
-    /* Gold     */ { "Gold",      2.0,          300.0,                    100.0 },
-    /* Platinum */ { "Platinum",  2.8,          400.0,                     75.0 },
-    /* Diamond  */ { "Diamond",   4.0,          400.0,                     50.0 }, 
+    /* None     */ { "x1",      1.0,          150.0,                      0.0 }, 
+    /* Bronze   */ { "x2",    2,          220.0,                    40.0 },
+    /* Silver   */ { "x4",    4,          300.0,                    35.0 },
+    /* Gold     */ { "x8",      8,          400.0,                    25.0 },
+    /* Platinum */ { "x16",  16,          400.0,                     15.0 },
+    //  /* Diamond  */ { "Diamond",   4.0,          100.0,                     15.0 }, 
 }};
 
 // ── ScoreSystem ───────────────────────────────
@@ -74,6 +74,8 @@ public:
 
     // Debug print
     void printStatus(std::ostream& os) const;
+
+    static ScoreSystem& Instance();
 
 private:
     double              totalScore_;

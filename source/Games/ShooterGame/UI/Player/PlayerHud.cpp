@@ -3,6 +3,8 @@
 
 #include "../../Entities/Player/Player.hpp"
 
+#include "ScoreIndicator.hpp"
+
 PlayerHud::PlayerHud()
 {
 }
@@ -50,15 +52,17 @@ void PlayerHud::Init(Player* playerRef)
 
     slots = make_shared<WeaponSlots>();
     slots->player = player;
-    slots->origin = vec2(0.5,0);
-    slots->pivot = vec2(0.5, 0);
-    slots->position = vec2(0,20);
+    slots->origin = vec2(1.0,0.5f);
+    slots->pivot = vec2(1.0, 0.5);
+    slots->position = vec2(-20,50);
     hudCanvas->AddChild(slots);
 
     useIndicator = make_shared<UseIndicator>(player);
     useIndicator->origin = vec2(0.5f);
 
     hudCanvas->AddChild(useIndicator);
+
+    hudCanvas->AddChild(std::make_shared<UiScoreIndicator>());
 
 }
 
@@ -162,7 +166,7 @@ void WeaponSlots::Update()
     oldSlot = player->currentSlot;
     oldSlots = player->weaponSlots;
 
-    UiHorizontalBox::Update();
+    UiVerticalBox::Update();
 
 }
 
@@ -174,7 +178,7 @@ void WeaponSlots::Draw()
 
     //UiRenderer::PushMask(pos, sz);
 
-    UiHorizontalBox::Draw();//drawing children
+    UiVerticalBox::Draw();//drawing children
 
     //UiRenderer::PopMask();
 

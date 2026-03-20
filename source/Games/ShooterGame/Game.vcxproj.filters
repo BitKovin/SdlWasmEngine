@@ -231,9 +231,6 @@
     <ClCompile Include="Entities\Test\TestGravityController.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\bogda_\Downloads\score_system.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Systems\ScoreSystem\ScoreSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -377,10 +374,10 @@
     <ClInclude Include="UI\Pause\Settings\VideoSettings.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="C:\Users\bogda_\Downloads\score_system.h">
+    <ClInclude Include="Systems\ScoreSystem\ScoreSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Systems\ScoreSystem\ScoreSystem.h">
+    <ClInclude Include="UI\Player\ScoreIndicator.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

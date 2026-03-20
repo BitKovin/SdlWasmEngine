@@ -67,7 +67,7 @@ bool RmlUiContext::Initialize()
         Rml::Debugger::Initialise(context_);
     }
 
-    Rml::Debugger::SetVisible(true);
+    //Rml::Debugger::SetVisible(true);
 
     Rml::LoadFontFace("GameData/fonts/Kingthings_Calligraphica_2.ttf");
 

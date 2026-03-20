@@ -34,12 +34,23 @@ double ScoreSystem::addScore(double baseScore) {
             earned        += remaining * cfg.scoreMultiplier;
             tierProgress_ += remaining / cfg.scoreToAdvance;
             remaining      = 0.0;
-        } else {
-            // Exactly fill this tier, promote, then continue with leftover
-            earned       += rawToFill * cfg.scoreMultiplier;
-            remaining    -= rawToFill;
-            tierProgress_ = 0.0;
-            promoteTier();
+        } else 
+        {
+
+            earned += rawToFill * cfg.scoreMultiplier;
+
+            if ((int)currentTier_ == (int)ComboTier::COUNT - 1)
+            {
+                tierProgress_ = 1.0f;
+                remaining = 0;
+            }
+            else
+            {          
+                // Exactly fill this tier, promote, then continue with leftover
+                remaining    -= rawToFill;
+                tierProgress_ = 0.0;
+                promoteTier();
+            }
         }
     }
 
@@ -97,6 +108,13 @@ void ScoreSystem::printStatus(std::ostream& os) const {
     os << "] " << std::right << std::setw(5) << std::fixed << std::setprecision(1)
        << tierProgress_ * 100.0 << "%  │\n";
     os << "└──────────────────────────────────┘\n";
+}
+
+ScoreSystem& ScoreSystem::Instance()
+{
+    static ScoreSystem sys;
+
+    return sys;
 }
 
 // ── Private ──────────────────────────────────

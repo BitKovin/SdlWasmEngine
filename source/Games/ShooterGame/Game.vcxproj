@@ -451,6 +451,7 @@
     <ClInclude Include="UI\Pause\Settings\VideoSettings.hpp" />
     <ClInclude Include="UI\Player\Crosshair.h" />
     <ClInclude Include="UI\Player\PlayerHud.hpp" />
+    <ClInclude Include="UI\Player\ScoreIndicator.hpp" />
     <ClInclude Include="UI\Player\ScreenMobileControls.h" />
   </ItemGroup>
   <ItemGroup>

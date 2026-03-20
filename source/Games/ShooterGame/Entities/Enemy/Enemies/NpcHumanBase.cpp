@@ -6,6 +6,8 @@
 
 #include <World/WorldOrientationManager.h>
 
+#include <Systems/ScoreSystem/ScoreSystem.h>
+
 NpcHumanBase::NpcHumanBase()
 {
     mesh = new SkeletalMesh(this);
@@ -295,6 +297,8 @@ void NpcHumanBase::Death()
 
     dead = true;
 
+    ScoreSystem::Instance().addScore(MaxHealth*0.5f);
+
     if (soundPlayer)
     {
         soundPlayer->DestroyWithDelay(3);
@@ -325,6 +329,8 @@ void NpcHumanBase::OnPointDamage(float Damage, vec3 Point, vec3 Direction, strin
 void NpcHumanBase::OnDamage(float Damage, Entity* DamageCauser, Entity* Weapon)
 {
     Damage = ModifyIncomingDamage(Damage);
+
+    ScoreSystem::Instance().addScore(std::min(Damage, Health));
 
     Health -= Damage;
 

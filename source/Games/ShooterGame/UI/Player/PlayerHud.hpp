@@ -8,7 +8,7 @@
 #include <UI/UiImage.hpp>
 #include "Crosshair.h"
 #include <UI/UiVideo.hpp>
-#include <UI/UiHorizontalBox.hpp>
+#include <UI/UiVerticalBox.hpp>
 #include <UI/UiProgressBar.hpp>
 #include <Entity.h>
 #include <Entities/Player/Weapons/WeaponBase.h>
@@ -17,7 +17,7 @@
 
 class Player;
 
-class WeaponSlots : public UiHorizontalBox
+class WeaponSlots : public UiVerticalBox
 {
 public:
 	
