@@ -17,7 +17,7 @@
 #include <ItemsDataBase.h>
 
 #include "Entities/Enemy/DebuffFactory.h"
-
+ 
 class GameStart : public Entity
 {
 public:
