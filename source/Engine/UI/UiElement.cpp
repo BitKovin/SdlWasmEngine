@@ -129,6 +129,15 @@ std::shared_ptr<UiElement> UiElement::GetHitElementUnderPosition(vec2 hitPositio
 
 }
 
+bool UiElement::IsVisible()
+{
+    if(!parent)
+        return visible;
+
+    return parent->IsVisible() && visible;
+
+}
+
 void UiElement::ResetTouchInputs()
 {
 

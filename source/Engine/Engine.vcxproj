@@ -635,6 +635,7 @@
     <ClInclude Include="UI\UiCustomShaderImage.hpp" />
     <ClInclude Include="UI\UiDropdown.hpp" />
     <ClInclude Include="UI\UiElement.h" />
+    <ClInclude Include="UI\UiFocusPointer.h" />
     <ClInclude Include="UI\UiHorizontalBox.hpp" />
     <ClInclude Include="UI\UiImage.hpp" />
     <ClInclude Include="UI\UiManager.h" />

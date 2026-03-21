@@ -4,6 +4,7 @@
 #include "UiButton.hpp"
 #include "UiImage.hpp"
 #include "UiVerticalBox.hpp"
+#include "UiNavigation.h"
 #include "../Input.h"
 
 #include <algorithm>
@@ -13,57 +14,62 @@
 // UiScrollRegion
 //
 // KEYBOARD / GAMEPAD NAVIGATION
-//   The region itself is a single nav node (HitCheck = true).
-//   On receiving focus it internally manages item selection:
-//     Up / Down   → move between items; consumed unless at the boundary,
-//                   in which case global nav continues
-//     Left/Right  → not consumed; global nav handles them
-//     ui_confirm  → fires the focused item's onClick
-//     ui_cancel   → calls onNavCancel if set
+//   The region itself is NOT the keyboard target — its children are.
+//   When the region receives focus (e.g. because nothing else is focused),
+//   it immediately delegates to its first child via UiNavigation::SetFocus.
 //
-//   Auto-scroll keeps the keyboard-selected item visible.
-//   onNavCancel — assign to handle cancel (e.g. UiDropdown closes itself).
+//   If placed inside a FocusTrap (e.g. UiDropdown's panel), child items
+//   with HitCheck=true are collected by UiNavigation and navigated
+//   spatially — no internal bookkeeping needed here.
+//
+//   Each frame Update() checks which child is currently focused and
+//   auto-scrolls to keep it visible.
+//
+//   onNavCancel — assign to handle ui_cancel at the trap level
+//                 (UiDropdown wires this to close the panel).
 // ---------------------------------------------------------------------------
 
 class UiScrollRegion : public UiElement
 {
 public:
     // ── Appearance ────────────────────────────────────────────────────────────
-    float ScrollBarWidth  = 14.f;
-    float MinThumbHeight  = 30.f;
-    float DragThreshold   = 8.f;
+    float ScrollBarWidth = 14.f;
+    float MinThumbHeight = 30.f;
+    float DragThreshold = 8.f;
 
-    vec4 TrackColor       = vec4(0.08f, 0.08f, 0.08f, 1.f);
-    vec4 ThumbColor       = vec4(0.40f, 0.40f, 0.40f, 1.f);
+    vec4 TrackColor = vec4(0.08f, 0.08f, 0.08f, 1.f);
+    vec4 ThumbColor = vec4(0.40f, 0.40f, 0.40f, 1.f);
     vec4 ThumbActiveColor = vec4(0.65f, 0.65f, 0.65f, 1.f);
 
     std::string ScrollBarImage = "GameData/textures/generic/white.png";
 
     float ContentDistance = 0.f;
 
-    // Assign to handle ui_cancel while this region is focused.
+    // Called when ui_cancel fires while this region's FocusTrap is active.
     std::function<void()> onNavCancel = nullptr;
 
     // ── Construction ──────────────────────────────────────────────────────────
     UiScrollRegion()
     {
+        // HitCheck=true so the region receives wheel/hover events when no
+        // child intercepts the cursor (e.g. scrollbar area, empty space).
         HitCheck = true;
 
         m_content = std::make_shared<UiVerticalBox>();
         m_content->origin = vec2(0.f);
-        m_content->pivot  = vec2(0.f);
+        m_content->pivot = vec2(0.f);
         UiElement::AddChild(m_content);
 
         m_track = std::make_shared<UiImage>();
         m_track->origin = vec2(0.f);
-        m_track->pivot  = vec2(0.f);
+        m_track->pivot = vec2(0.f);
         UiElement::AddChild(m_track);
 
         m_thumb = std::make_shared<UiButton>();
         m_thumb->HitCheck = true;
+        m_thumb->origin = vec2(0.f);
+        m_thumb->pivot = vec2(0.f);
         m_thumb->DisableFocus = true;
-        m_thumb->origin   = vec2(0.f);
-        m_thumb->pivot    = vec2(0.f);
         UiElement::AddChild(m_thumb);
     }
 
@@ -79,70 +85,26 @@ public:
     void ClearChildren() override
     {
         m_content->UiElement::ClearChildren();
-        m_navIndex = -1;
     }
 
     // ── Accessors ─────────────────────────────────────────────────────────────
-    float GetScrollOffset() const  { return m_scrollOffset; }
+    float GetScrollOffset() const { return m_scrollOffset; }
     void  SetScrollOffset(float v) { m_scrollOffset = v; }
     float GetContentHeight() const { return m_contentHeight; }
 
-    // Exposed so UiDropdown can iterate items for width sync.
     std::shared_ptr<UiVerticalBox> m_content;
 
-    // ── Keyboard nav callbacks ────────────────────────────────────────────────
+    // ── Nav callbacks ─────────────────────────────────────────────────────────
 
+    // When this region itself gains focus, immediately delegate to first child.
     void OnFocused() override
     {
-        if (m_navIndex < 0 && !m_content->children.empty())
-            m_navIndex = 0;
-        UpdateNavHighlight();
+        if (!m_content->children.empty())
+            UiNavigation::SetFocus(m_content->children.front().get());
     }
 
-    void OnUnfocused() override
-    {
-        ClearAllHighlights();
-    }
-
-    // Up/Down navigate items; Left/Right pass through to global nav.
-    bool OnNav(UiNavDir dir) override
-    {
-        if (m_content->children.empty()) return false;
-
-        const int count = static_cast<int>(m_content->children.size());
-
-        if (dir == UiNavDir::Up)
-        {
-            if (m_navIndex > 0)
-            {
-                m_navIndex--;
-                UpdateNavHighlight();
-                ScrollToNavItem();
-                return true; // consumed
-            }
-            return false; // at top — let global nav exit upward
-        }
-
-        if (dir == UiNavDir::Down)
-        {
-            if (m_navIndex < count - 1)
-            {
-                m_navIndex++;
-                UpdateNavHighlight();
-                ScrollToNavItem();
-                return true; // consumed
-            }
-            return false; // at bottom — let global nav exit downward
-        }
-
-        return false; // Left/Right not consumed here
-    }
-
-    void OnNavConfirm() override
-    {
-        FireNavItem();
-    }
-
+    // Cancel is handled at the trap level by UiNavigation, which calls
+    // OnNavCancel on the trap element. Wire onNavCancel from outside.
     void OnNavCancel() override
     {
         if (onNavCancel) onNavCancel();
@@ -151,19 +113,18 @@ public:
     // ── Update ────────────────────────────────────────────────────────────────
     void Update() override
     {
-        const float viewH     = size.y;
-        const float contentW  = size.x - ScrollBarWidth;
-        const float contentH  = m_contentHeight;
+        const float viewH = size.y;
+        const float contentW = size.x - ScrollBarWidth;
+        const float contentH = m_contentHeight;
         const float maxScroll = std::max(0.f, contentH - viewH);
-        const bool  needsBar  = contentH > viewH + 0.5f;
+        const bool  needsBar = contentH > viewH + 0.5f;
 
-        const float thumbH     = needsBar
+        const float thumbH = needsBar
             ? std::max(MinThumbHeight, (viewH / contentH) * viewH)
             : viewH;
         const float trackRange = viewH - thumbH;
 
         // ── 1. Mouse wheel ─────────────────────────────────────────────────────
-        // TouchEvents non-empty ↔ cursor is over this element (HitCheck=true).
         if (TouchEvents.size() > 0)
             m_scrollOffset -= Input::MouseScrollDelta * 20.f;
 
@@ -171,31 +132,34 @@ public:
         if (needsBar) UpdateThumbDrag(maxScroll, trackRange);
         else          m_thumbDrag = {};
 
-        // ── 3. Content gesture + mouse hover ──────────────────────────────────
+        // ── 3. Content drag (region-level, for when items don't steal touch) ───
         UpdateContentGesture(contentW);
+
+        // ── 4. Auto-scroll to the currently focused child ──────────────────────
+        ScrollToFocusedItem();
 
         // ── Clamp ──────────────────────────────────────────────────────────────
         m_scrollOffset = std::clamp(m_scrollOffset, 0.f, maxScroll);
 
         // ── Layout ─────────────────────────────────────────────────────────────
         m_content->ContentDistance = ContentDistance;
-        m_content->size     = vec2(contentW, std::max(viewH, contentH));
+        m_content->size = vec2(contentW, std::max(viewH, contentH));
         m_content->position = vec2(0.f, -m_scrollOffset);
 
-        m_track->visible   = needsBar;
-        m_thumb->visible   = needsBar;
+        m_track->visible = needsBar;
+        m_thumb->visible = needsBar;
 
         m_track->ImagePath = ScrollBarImage;
-        m_track->color     = TrackColor;
-        m_track->size      = vec2(ScrollBarWidth, viewH);
-        m_track->position  = vec2(contentW, 0.f);
+        m_track->color = TrackColor;
+        m_track->size = vec2(ScrollBarWidth, viewH);
+        m_track->position = vec2(contentW, 0.f);
 
         const float thumbY = (maxScroll > 0.f) ? (m_scrollOffset / maxScroll) * trackRange : 0.f;
         m_thumb->ImagePath = ScrollBarImage;
-        m_thumb->Color     = m_thumbDrag.active ? ThumbActiveColor : ThumbColor;
-        m_thumb->HoverColor= ThumbActiveColor;
-        m_thumb->size      = vec2(ScrollBarWidth, thumbH);
-        m_thumb->position  = vec2(contentW, thumbY);
+        m_thumb->Color = m_thumbDrag.active ? ThumbActiveColor : ThumbColor;
+        m_thumb->HoverColor = ThumbActiveColor;
+        m_thumb->size = vec2(ScrollBarWidth, thumbH);
+        m_thumb->position = vec2(contentW, thumbY);
 
         UiElement::Update();
 
@@ -205,7 +169,7 @@ public:
     // ── Draw ──────────────────────────────────────────────────────────────────
     void Draw() override
     {
-        const vec2  pos      = finalizedPosition + finalizedOffset;
+        const vec2  pos = finalizedPosition + finalizedOffset;
         const float contentW = finalizedSize.x - ScrollBarWidth;
 
         if (finalizedChildren.size() > 0 && finalizedChildren[0]->visible)
@@ -227,25 +191,22 @@ private:
     std::shared_ptr<UiImage>  m_track;
     std::shared_ptr<UiButton> m_thumb;
 
-    float m_scrollOffset  = 0.f;
+    float m_scrollOffset = 0.f;
     float m_contentHeight = 0.f;
-
-    // Keyboard-selected item index (-1 = none).
-    int m_navIndex = -1;
 
     struct ThumbDrag
     {
-        bool  active        = false;
-        float startY        = 0.f;
+        bool  active = false;
+        float startY = 0.f;
         float scrollAtStart = 0.f;
     } m_thumbDrag;
 
     struct ContentGesture
     {
-        bool  active        = false;
-        bool  dragging      = false;
-        float maxMovement   = 0.f;
-        vec2  startPos      = {};
+        bool  active = false;
+        bool  dragging = false;
+        float maxMovement = 0.f;
+        vec2  startPos = {};
         float scrollAtStart = 0.f;
     } m_gesture;
 
@@ -277,13 +238,10 @@ private:
         }
     }
 
-    // ── Content gesture + mouse hover ─────────────────────────────────────────
+    // ── Content gesture ───────────────────────────────────────────────────────
+    // Only fires if the scroll region itself owns the touch (no child stole it).
     void UpdateContentGesture(float contentW)
     {
-        // Clear mouse hover every frame; re-set below. Keyboard nav highlight
-        // (m_navIndex) is managed separately and NOT cleared here.
-        ClearMouseHover();
-
         const TouchEvent* touch = nullptr;
         for (const auto& t : TouchEvents)
         {
@@ -292,117 +250,50 @@ private:
             break;
         }
 
-        if (!touch)
-        {
-            m_gesture = {};
-            return;
-        }
+        if (!touch) { m_gesture = {}; return; }
 
         if (touch->pressed)
         {
-            m_gesture.active        = true;
-            m_gesture.dragging      = false;
-            m_gesture.maxMovement   = 0.f;
-            m_gesture.startPos      = touch->position;
-            m_gesture.scrollAtStart = m_scrollOffset;
+            m_gesture = { true, false, 0.f, touch->position, m_scrollOffset };
         }
         else if (touch->released)
         {
-            if (m_gesture.active && !m_gesture.dragging)
-            {
-                // Tap: fire the item under the release position.
-                if (auto item = FindItemAt(touch->position))
-                    if (auto btn = std::dynamic_pointer_cast<UiButton>(item))
-                        if (btn->onClick) btn->onClick();
-            }
             m_gesture = {};
-            return; // no hover on release frame
         }
         else if (m_gesture.active)
         {
             const float moved = glm::distance(touch->position, m_gesture.startPos);
             m_gesture.maxMovement = std::max(m_gesture.maxMovement, moved);
-
-            if (m_gesture.maxMovement > DragThreshold)
-                m_gesture.dragging = true;
-
+            if (m_gesture.maxMovement > DragThreshold) m_gesture.dragging = true;
             if (m_gesture.dragging)
-            {
-                m_scrollOffset = m_gesture.scrollAtStart
-                               + (m_gesture.startPos.y - touch->position.y);
-                return; // no hover while dragging
-            }
-        }
-
-        // Hover: highlight item under cursor when not dragging.
-        if (auto item = FindItemAt(touch->position))
-            if (auto btn = std::dynamic_pointer_cast<UiButton>(item))
-                btn->IsHovered = true;
-    }
-
-    // ── Keyboard nav helpers ──────────────────────────────────────────────────
-
-    void UpdateNavHighlight()
-    {
-        for (int i = 0; i < static_cast<int>(m_content->children.size()); ++i)
-            if (auto btn = std::dynamic_pointer_cast<UiButton>(m_content->children[i]))
-                btn->IsHovered = (i == m_navIndex);
-    }
-
-    void ClearAllHighlights()
-    {
-        for (auto& child : m_content->children)
-            if (auto btn = std::dynamic_pointer_cast<UiButton>(child))
-                btn->IsHovered = false;
-        m_navIndex = -1;
-    }
-
-    // Clear mouse hover without touching the keyboard-nav-selected item.
-    void ClearMouseHover()
-    {
-        for (int i = 0; i < static_cast<int>(m_content->children.size()); ++i)
-        {
-            if (i == m_navIndex) continue;
-            if (auto btn = std::dynamic_pointer_cast<UiButton>(m_content->children[i]))
-                btn->IsHovered = false;
+                m_scrollOffset = m_gesture.scrollAtStart + (m_gesture.startPos.y - touch->position.y);
         }
     }
 
-    void FireNavItem()
+    // ── Auto-scroll to focused item ───────────────────────────────────────────
+    void ScrollToFocusedItem()
     {
-        if (m_navIndex < 0 || m_navIndex >= static_cast<int>(m_content->children.size())) return;
-        if (auto btn = std::dynamic_pointer_cast<UiButton>(m_content->children[m_navIndex]))
-            if (btn->onClick) btn->onClick();
-    }
+        UiElement* focused = UiNavigation::Focused;
+        if (!focused) return;
 
-    // Scroll so the keyboard-selected item is fully in view.
-    void ScrollToNavItem()
-    {
-        if (m_navIndex < 0 || m_navIndex >= static_cast<int>(m_content->children.size())) return;
-
-        // Build item position from sizes — doesn't rely on stale topLeft values.
+        // Find which of our content children is focused (or contains focus).
         float itemTop = 0.f;
-        for (int i = 0; i < m_navIndex; ++i)
-            itemTop += m_content->children[i]->GetSize().y + ContentDistance;
-        const float itemBot = itemTop + m_content->children[m_navIndex]->GetSize().y;
-
-        if (itemTop < m_scrollOffset)
-            m_scrollOffset = itemTop;
-        else if (itemBot > m_scrollOffset + size.y)
-            m_scrollOffset = itemBot - size.y;
-    }
-
-    // ── Helpers ───────────────────────────────────────────────────────────────
-
-    std::shared_ptr<UiElement> FindItemAt(vec2 pos) const
-    {
         for (const auto& child : m_content->children)
         {
-            if (pos.x >= child->topLeft.x  && pos.x <= child->bottomRight.x &&
-                pos.y >= child->topLeft.y  && pos.y <= child->bottomRight.y)
-                return child;
+            const float itemH = child->GetSize().y;
+            const float itemBot = itemTop + itemH;
+
+            if (child.get() == focused)
+            {
+                if (itemTop < m_scrollOffset)
+                    m_scrollOffset = itemTop;
+                else if (itemBot > m_scrollOffset + size.y)
+                    m_scrollOffset = itemBot - size.y;
+                return;
+            }
+
+            itemTop = itemBot + ContentDistance;
         }
-        return nullptr;
     }
 
     void MeasureContentHeight()

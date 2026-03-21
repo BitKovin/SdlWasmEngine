@@ -126,6 +126,8 @@ public:
 
     virtual std::shared_ptr<UiElement> GetHitElementUnderPosition(vec2 position);
 
+    bool IsVisible();
+
     virtual void ResetTouchInputs();
     virtual void TouchInputPostProcessing();
     

@@ -7,45 +7,51 @@
 #include "UiNavigation.h"
 
 // ---------------------------------------------------------------------------
-// UiDropdown — keyboard nav integration
+// UiDropdown
 //
-//   Header focused  + ui_confirm  → opens panel, focuses panel
-//   Panel focused   + ui_up/down  → navigates items (UiScrollRegion::OnNav)
-//   Panel focused   + ui_cancel   → closes panel, returns focus to header
-//   Item clicked (mouse or kb)    → closes panel, returns focus to header
+//  Header: UiButton  (HitCheck=true, focusable)
+//            ├─ UiText  m_headerLabel   — current selection, left-aligned
+//            └─ UiText  m_headerArrow   — ▼/▲, right-aligned
 //
-//   While open: panel has FocusTrap = true so navigation cannot escape.
+//  Panel:  UiScrollRegion  (FocusTrap=true while open, useLateDraw=true)
+//            └─ UiButton × N  (HitCheck=true — real nav targets)
+//                └─ UiText    — item label
+//
+// Because items have HitCheck=true and the panel is a FocusTrap, UiNavigation
+// collects them directly and moves focus between them spatially with Up/Down.
+// UiScrollRegion::OnFocused delegates to the first item immediately.
+// UiScrollRegion::Update auto-scrolls to whichever item is focused.
 // ---------------------------------------------------------------------------
 
 class UiDropdown : public UiElement
 {
 public:
     // ── Appearance ─────────────────────────────────────────────────────────────
-    std::string BackgroundImage  = "GameData/textures/generic/white.png";
+    std::string BackgroundImage = "GameData/textures/generic/white.png";
 
-    vec4 HeaderColor      = vec4(0.20f, 0.20f, 0.20f, 1.f);
+    vec4 HeaderColor = vec4(0.20f, 0.20f, 0.20f, 1.f);
     vec4 HeaderHoverColor = vec4(0.30f, 0.30f, 0.30f, 1.f);
-    vec4 ItemColor        = vec4(0.15f, 0.15f, 0.15f, 1.f);
-    vec4 ItemHoverColor   = vec4(0.28f, 0.28f, 0.28f, 1.f);
-    vec4 TextColor        = vec4(1.f);
-    vec4 ArrowColor       = vec4(1.f);
+    vec4 ItemColor = vec4(0.15f, 0.15f, 0.15f, 1.f);
+    vec4 ItemHoverColor = vec4(0.28f, 0.28f, 0.28f, 1.f);
+    vec4 TextColor = vec4(1.f);
+    vec4 ArrowColor = vec4(1.f);
     vec4 ScrollTrackColor = vec4(0.10f, 0.10f, 0.10f, 1.f);
     vec4 ScrollThumbColor = vec4(0.38f, 0.38f, 0.38f, 1.f);
     vec4 ScrollThumbHover = vec4(0.60f, 0.60f, 0.60f, 1.f);
 
-    float FontSize       = 32.f;
-    float ArrowFontSize  = 28.f;
-    float ItemHeight     = 48.f;
+    float FontSize = 32.f;
+    float ArrowFontSize = 28.f;
+    float ItemHeight = 48.f;
     float ScrollBarWidth = 14.f;
-    float Padding        = 8.f;
-    float LabelSpacing   = 4.f;
-    float ArrowSpacing   = 4.f;
+    float Padding = 8.f;
+    float LabelSpacing = 4.f;
+    float ArrowSpacing = 4.f;
 
     int MaxVisibleItems = 5;
 
     std::string Placeholder = "Select...";
-    std::string ArrowDown   = "v";
-    std::string ArrowUp     = "^";
+    std::string ArrowDown = "v";
+    std::string ArrowUp = "^";
 
     // ── State ──────────────────────────────────────────────────────────────────
     int SelectedIndex = -1;
@@ -58,29 +64,32 @@ public:
         HitCheck = false;
 
         m_header = std::make_shared<UiButton>();
-        m_header->origin  = vec2(0.f);
-        m_header->pivot   = vec2(0.f);
+        m_header->origin = vec2(0.f);
+        m_header->pivot = vec2(0.f);
         m_header->onClick = [this]() { SetOpen(!m_isOpen); };
+
+        // Confirm key on focused header → open the panel
+        m_header->onNavConfirm = [this]() { SetOpen(true); };
 
         m_headerLabel = std::make_shared<UiText>();
         m_headerLabel->origin = vec2(0.f);
-        m_headerLabel->pivot  = vec2(0.f, 0.5f);
+        m_headerLabel->pivot = vec2(0.f, 0.5f);
         m_header->AddChild(m_headerLabel);
 
         m_headerArrow = std::make_shared<UiText>();
         m_headerArrow->origin = vec2(0.f);
-        m_headerArrow->pivot  = vec2(1.f, 0.5f);
+        m_headerArrow->pivot = vec2(1.f, 0.5f);
         m_header->AddChild(m_headerArrow);
 
         UiElement::AddChild(m_header);
 
         m_panel = std::make_shared<UiScrollRegion>();
-        m_panel->origin      = vec2(0.f);
-        m_panel->pivot       = vec2(0.f);
-        m_panel->visible     = false;
+        m_panel->origin = vec2(0.f);
+        m_panel->pivot = vec2(0.f);
+        m_panel->visible = false;
         m_panel->useLateDraw = true;
 
-        // Cancel while panel is focused → close and return focus to header.
+        // ui_cancel while panel trap is active → close and return focus to header
         m_panel->onNavCancel = [this]() { SetOpen(false); };
 
         UiElement::AddChild(m_panel);
@@ -105,41 +114,40 @@ public:
 
     void SetSelectedIndex(int index) { SelectedIndex = index; }
 
-    // Only header height contributes to layout; panel overlays below.
     glm::vec2 GetSize() override { return size; }
 
     // ── Update ─────────────────────────────────────────────────────────────────
     void Update() override
     {
-        const vec2  headerSize  = size;
-        const int   numOptions  = static_cast<int>(m_options.size());
+        const vec2  headerSize = size;
+        const int   numOptions = static_cast<int>(m_options.size());
         const int   visibleRows = std::min(numOptions, MaxVisibleItems);
         const float textCentreY = headerSize.y * 0.5f;
 
-        m_header->size       = headerSize;
-        m_header->ImagePath  = BackgroundImage;
-        m_header->Color      = m_isOpen ? HeaderHoverColor : HeaderColor;
+        m_header->size = headerSize;
+        m_header->ImagePath = BackgroundImage;
+        m_header->Color = m_isOpen ? HeaderHoverColor : HeaderColor;
         m_header->HoverColor = HeaderHoverColor;
 
-        m_headerLabel->text      = CurrentLabel();
-        m_headerLabel->fontSize  = FontSize;
+        m_headerLabel->text = CurrentLabel();
+        m_headerLabel->fontSize = FontSize;
         m_headerLabel->textColor = TextColor;
-        m_headerLabel->position  = vec2(Padding + LabelSpacing, textCentreY);
+        m_headerLabel->position = vec2(Padding + LabelSpacing, textCentreY);
 
-        m_headerArrow->text      = m_isOpen ? ArrowUp : ArrowDown;
-        m_headerArrow->fontSize  = ArrowFontSize;
+        m_headerArrow->text = m_isOpen ? ArrowUp : ArrowDown;
+        m_headerArrow->fontSize = ArrowFontSize;
         m_headerArrow->textColor = ArrowColor;
-        m_headerArrow->position  = vec2(headerSize.x - Padding - ArrowSpacing, textCentreY);
+        m_headerArrow->position = vec2(headerSize.x - Padding - ArrowSpacing, textCentreY);
 
-        m_panel->visible          = m_isOpen;
-        m_panel->FocusTrap        = m_isOpen;
-        m_panel->position         = vec2(0.f, headerSize.y);
-        m_panel->size             = ComputePanelSize(visibleRows, headerSize.x);
-        m_panel->ScrollBarWidth   = ScrollBarWidth;
-        m_panel->TrackColor       = ScrollTrackColor;
-        m_panel->ThumbColor       = ScrollThumbColor;
+        m_panel->visible = m_isOpen;
+        m_panel->FocusTrap = m_isOpen;
+        m_panel->position = vec2(0.f, headerSize.y);
+        m_panel->size = ComputePanelSize(visibleRows, headerSize.x);
+        m_panel->ScrollBarWidth = ScrollBarWidth;
+        m_panel->TrackColor = ScrollTrackColor;
+        m_panel->ThumbColor = ScrollThumbColor;
         m_panel->ThumbActiveColor = ScrollThumbHover;
-        m_panel->ScrollBarImage   = BackgroundImage;
+        m_panel->ScrollBarImage = BackgroundImage;
 
         for (auto& child : m_panel->m_content->children)
             child->size.x = headerSize.x;
@@ -149,7 +157,7 @@ public:
 
     void FinalizeChildren() override
     {
-        m_panel->visible   = m_isOpen;
+        m_panel->visible = m_isOpen;
         m_panel->FocusTrap = m_isOpen;
         UiElement::FinalizeChildren();
     }
@@ -177,12 +185,14 @@ private:
 
     void SetOpen(bool open)
     {
-        m_isOpen           = open;
-        m_panel->visible   = open;
+        m_isOpen = open;
+        m_panel->visible = open;
         m_panel->FocusTrap = open;
 
         if (open)
         {
+            // Focus the panel — it will immediately delegate to its first item
+            // via UiScrollRegion::OnFocused.
             UiNavigation::SetFocus(m_panel.get());
         }
         else
@@ -199,32 +209,34 @@ private:
         for (int i = 0; i < static_cast<int>(m_options.size()); ++i)
         {
             auto itemBtn = std::make_shared<UiButton>();
-            itemBtn->HitCheck   = false;
-            itemBtn->size       = vec2(size.x, ItemHeight);
-            itemBtn->origin     = vec2(0.f);
-            itemBtn->pivot      = vec2(0.f);
-            itemBtn->Color      = ItemColor;
+            // HitCheck=true: items are real nav targets collected by UiNavigation.
+            // They also receive their own touch events and fire onClick on release.
+            itemBtn->HitCheck = true;
+            itemBtn->size = vec2(size.x, ItemHeight);
+            itemBtn->origin = vec2(0.f);
+            itemBtn->pivot = vec2(0.f);
+            itemBtn->Color = ItemColor;
             itemBtn->HoverColor = ItemHoverColor;
-            itemBtn->ImagePath  = BackgroundImage;
+            itemBtn->ImagePath = BackgroundImage;
 
             auto itemLabel = std::make_shared<UiText>();
-            itemLabel->origin    = vec2(0.f);
-            itemLabel->pivot     = vec2(0.f, 0.5f);
-            itemLabel->position  = vec2(Padding + LabelSpacing, ItemHeight * 0.5f);
-            itemLabel->text      = m_options[i];
-            itemLabel->fontSize  = FontSize;
+            itemLabel->origin = vec2(0.f);
+            itemLabel->pivot = vec2(0.f, 0.5f);
+            itemLabel->position = vec2(Padding + LabelSpacing, ItemHeight * 0.5f);
+            itemLabel->text = m_options[i];
+            itemLabel->fontSize = FontSize;
             itemLabel->textColor = TextColor;
 
             itemBtn->AddChild(itemLabel);
 
             const int capturedIndex = i;
             itemBtn->onClick = [this, capturedIndex]()
-            {
-                SelectedIndex = capturedIndex;
-                SetOpen(false);
-                if (onSelectionChanged)
-                    onSelectionChanged(capturedIndex, m_options[capturedIndex]);
-            };
+                {
+                    SelectedIndex = capturedIndex;
+                    SetOpen(false);
+                    if (onSelectionChanged)
+                        onSelectionChanged(capturedIndex, m_options[capturedIndex]);
+                };
 
             m_panel->AddChild(itemBtn);
         }

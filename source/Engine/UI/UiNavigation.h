@@ -12,36 +12,21 @@
 // SETUP
 //   Call UiNavigation::Update(root) once per frame AFTER the UI tree Update()
 //   so topLeft/bottomRight are valid for spatial resolution.
-//   Set initial focus with UiNavigation::SetFocus(element).
 //
 // INPUT ACTIONS
 //   ui_up  ui_down  ui_left  ui_right  ui_confirm  ui_cancel
 //
+// HOVER → FOCUS
+//   Any focusable element (HitCheck=true, visible=true, !DisableFocus) that
+//   has active TouchEvents (cursor over it) immediately becomes focused.
+//   This keeps mouse hover and keyboard focus on the same element.
+//
 // FOCUS TRAP
-//   Set FocusTrap = true on a UiElement to isolate its subtree.
-//   UiNavigation does a top-down search and uses the LAST visible FocusTrap
-//   found — matching draw order so the topmost menu always has priority.
-//
-//     Root
-//       Gameplay            (no trap)
-//       PauseMenu           (FocusTrap)   ← found first
-//       SettingsMenu        (FocusTrap)   ← found last → ACTIVE TRAP ✓
-//
-//   Auto-navigation is confined entirely within the active trap's subtree.
-//   Manual overrides (NavUp / NavDown / NavLeft / NavRight on UiElement)
-//   always bypass trap boundaries — use them for deliberate exits.
+//   The last visible FocusTrap in a top-down tree search has priority,
+//   matching draw order so the topmost menu always wins.
 //
 // INTERACTABILITY
-//   Only elements with HitCheck = true and visible = true are candidates.
-//   This reuses the existing touch-routing interactability flag.
-//
-// ELEMENT CALLBACKS (virtual on UiElement, override as needed)
-//   OnFocused()          element gained keyboard focus
-//   OnUnfocused()        element lost keyboard focus
-//   OnNavConfirm()       ui_confirm pressed while focused
-//   OnNavCancel()        ui_cancel pressed while focused
-//   OnNav(UiNavDir dir)  called before spatial resolution; return true to
-//                        consume the input (see UiScrollRegion)
+//   HitCheck = true, visible = true, DisableFocus = false.
 // ---------------------------------------------------------------------------
 
 class UiNavigation
@@ -72,7 +57,6 @@ public:
 
     static void ClearFocus() { SetFocus(nullptr); }
 
-    // Focus the first interactable element inside the active trap (or globally).
     static void FocusFirst(UiElement* root)
     {
         s_root = root;
@@ -87,11 +71,16 @@ public:
     {
         s_root = root;
 
-        // Drop focus if the focused element is no longer interactable.
-        if (Focused && (!Focused->visible || !Focused->HitCheck || Focused->DisableFocus))
+        // Drop focus if the element is no longer interactable.
+        if (Focused && (!Focused->IsVisible() || !Focused->HitCheck || Focused->DisableFocus))
             SetFocus(nullptr);
 
-        // No focus at all — find the first candidate automatically.
+        // Hover → focus: if any focusable element has the cursor over it,
+        // focus it immediately. This is checked before keyboard input so
+        // confirm/cancel always act on the element the cursor is over.
+        UpdateHoverFocus();
+
+        // Auto-focus: if still nothing focused, pick the first candidate.
         if (!Focused)
             FocusFirst(root);
 
@@ -100,23 +89,38 @@ public:
         if (Input::GetAction("ui_left")->Pressed())  Navigate(UiNavDir::Left);
         if (Input::GetAction("ui_right")->Pressed()) Navigate(UiNavDir::Right);
 
-        if (Input::GetAction("ui_confirm")->Pressed() && Focused) Focused->OnNavConfirm();
-        if (Input::GetAction("ui_cancel")->Pressed() && Focused) 
+        if (Input::GetAction("ui_confirm")->Pressed() && Focused)
+            Focused->OnNavConfirm();
+
+        if (Input::GetAction("ui_cancel")->Pressed())
         {
-
-            auto trap = GetActiveTrap(root);
-
+            UiElement* trap = GetActiveTrap(root);
             if (trap)
                 trap->OnNavCancel();
-
-            /*if(Focused)
-                Focused->OnNavCancel()*/
-
         }
     }
 
 private:
     static inline UiElement* s_root = nullptr;
+
+    // ── Hover → focus ─────────────────────────────────────────────────────────
+    // Walk all focusable candidates and set focus to the first one that has
+    // active touch events (cursor is over it). Only considers elements within
+    // the active trap scope, same as keyboard nav.
+    static void UpdateHoverFocus()
+    {
+        std::vector<UiElement*> candidates;
+        Collect(candidates);
+
+        for (UiElement* el : candidates)
+        {
+            if (!el->TouchEvents.empty())
+            {
+                SetFocus(el);
+                return;
+            }
+        }
+    }
 
     // ── Navigation ────────────────────────────────────────────────────────────
 
@@ -124,10 +128,10 @@ private:
     {
         if (!Focused) return;
 
-        // 1. Give the focused element first refusal (e.g. scroll region items).
+        // 1. Give the focused element first refusal.
         if (Focused->OnNav(dir)) return;
 
-        // 2. Manual override on the focused element — bypasses FocusTrap.
+        // 2. Manual override — bypasses FocusTrap.
         if (UiElement* manual = GetManualOverride(Focused, dir))
         {
             SetFocus(manual);
@@ -141,7 +145,6 @@ private:
 
     // ── Candidate collection ──────────────────────────────────────────────────
 
-    // Fill `out` with all interactable candidates respecting the active trap.
     static void Collect(std::vector<UiElement*>& out)
     {
         if (!s_root) return;
@@ -150,28 +153,26 @@ private:
         else      CollectGlobal(s_root, out);
     }
 
-    // Collect globally, skipping ALL FocusTrap subtrees entirely.
     static void CollectGlobal(UiElement* node, std::vector<UiElement*>& out)
     {
         for (auto& child : node->children)
         {
-            if (!child->visible) continue;
-            if (child->DisableFocus) continue;
-            if (child->FocusTrap) continue; // sealed — skip whole subtree
-            if (child->HitCheck) out.push_back(child.get());
+            if (!child->IsVisible())      continue;
+            if (child->DisableFocus)  continue;
+            if (child->FocusTrap)     continue;
+            if (child->HitCheck)      out.push_back(child.get());
             CollectGlobal(child.get(), out);
         }
     }
 
-    // Collect within a trap, stopping at nested traps (they are their own scope).
     static void CollectInTrap(UiElement* trap, std::vector<UiElement*>& out)
     {
         for (auto& child : trap->children)
         {
-            if (!child->visible) continue;
-            if (child->DisableFocus) continue;
-            if (child->HitCheck) out.push_back(child.get());
-            if (!child->FocusTrap) CollectInTrap(child.get(), out);
+            if (!child->IsVisible())      continue;
+            if (child->DisableFocus)  continue;
+            if (child->HitCheck)      out.push_back(child.get());
+            if (!child->FocusTrap)    CollectInTrap(child.get(), out);
         }
     }
 
@@ -203,15 +204,14 @@ private:
 
             switch (dir)
             {
-                case UiNavDir::Up:    valid = dy < 0.f; primary = -dy; secondary = std::abs(dx); break;
-                case UiNavDir::Down:  valid = dy > 0.f; primary = dy; secondary = std::abs(dx); break;
-                case UiNavDir::Left:  valid = dx < 0.f; primary = -dx; secondary = std::abs(dy); break;
-                case UiNavDir::Right: valid = dx > 0.f; primary = dx; secondary = std::abs(dy); break;
+            case UiNavDir::Up:    valid = dy < 0.f; primary = -dy; secondary = std::abs(dx); break;
+            case UiNavDir::Down:  valid = dy > 0.f; primary = dy; secondary = std::abs(dx); break;
+            case UiNavDir::Left:  valid = dx < 0.f; primary = -dx; secondary = std::abs(dy); break;
+            case UiNavDir::Right: valid = dx > 0.f; primary = dx; secondary = std::abs(dy); break;
             }
 
             if (!valid) continue;
 
-            // Prefer elements directly ahead; penalise lateral offset.
             const float score = primary + secondary * 2.f;
             if (score < bestScore) { bestScore = score; best = c; }
         }
@@ -221,7 +221,6 @@ private:
 
     // ── Active trap ───────────────────────────────────────────────────────────
 
-    // Top-down DFS — the LAST visible FocusTrap found has priority (= draw order).
     static UiElement* GetActiveTrap(UiElement* root)
     {
         UiElement* last = nullptr;

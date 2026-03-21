@@ -20,6 +20,7 @@
 #include <Renderer/Abstractions/ViewIdManager.h>
 
 #include <UI/UiNavigation.h>
+#include <UI/UiFocusPointer.h>
 
 #include <Profiling/ResourceStatistics.hpp>
 
@@ -376,6 +377,14 @@ void EngineMain::MainLoop()
 
     bool loadedlevel = Level::LoadPendingLevel();
 
+    if (loadedlevel)
+    {
+        auto pointer = std::make_shared<UiFocusPointer>();
+        pointer->ImagePath = "GameData/cat.png";
+        pointer->PointerSize = vec2(24.f, 24.f);
+        pointer->PointerOffset = 10.f;
+        Viewport.AddChild(pointer);
+    }
 
     Viewport.ResetTouchInputs();
 
@@ -427,6 +436,7 @@ void EngineMain::MainLoop()
     LevelTraversalSystem::TimeSkip = 0;
 
     Input::Update();
+
 
     Viewport.Update();
 
