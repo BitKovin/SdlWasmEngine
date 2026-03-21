@@ -29,6 +29,10 @@ namespace Origins {
     }
 }
 
+// Direction enum used by the nav system. Defined here so UiElement can
+// declare OnNav without a circular include with UiNavigation.h.
+enum class UiNavDir { Up, Down, Left, Right };
+
 class UiElement : public std::enable_shared_from_this<UiElement>
 {
 public:
@@ -38,6 +42,8 @@ public:
     static inline std::vector<std::shared_ptr<UiElement>> pendingLateDrawElements;
 
     bool HitCheck = false;
+
+    bool DisableFocus = false;
 
     bool useLateDraw = false;
 
@@ -70,9 +76,42 @@ public:
     std::vector<std::shared_ptr<UiElement>> children;
     std::vector<std::shared_ptr<UiElement>> finalizedChildren;
 
+    // ── Keyboard / gamepad navigation ──────────────────────────────────────────
+
+    // When true this subtree is isolated: auto-navigation cannot enter or leave
+    // it. The last visible FocusTrap found in a top-down tree search has
+    // priority, matching draw order (i.e. the topmost rendered menu wins).
+    bool FocusTrap = false;
+
+    // Manual directional overrides. When set, UiNavigation moves focus directly
+    // to the target regardless of spatial layout and FocusTrap boundaries.
+    std::weak_ptr<UiElement> NavUp, NavDown, NavLeft, NavRight;
+
+    // Set by UiNavigation. Read this for focus visuals only — not for logic.
+    bool IsFocused = false;
+
+    // ── Nav callbacks (override in subclasses as needed) ──────────────────────
+
+    // Called when this element gains / loses keyboard focus.
+    virtual void OnFocused()   {}
+    virtual void OnUnfocused() {}
+
+    // Called when ui_confirm fires while this element is focused.
+    virtual void OnNavConfirm() {}
+
+    // Called when ui_cancel fires while this element is focused.
+    virtual void OnNavCancel() {}
+
+    // Called by UiNavigation before spatial resolution.
+    // Return true to consume the direction input (stops global navigation).
+    // Use this to handle navigation internally (e.g. UiScrollRegion items).
+    virtual bool OnNav(UiNavDir dir) { return false; }
+
+    // ── Existing interface (unchanged) ────────────────────────────────────────
+
     UiElement() = default;
 
-    virtual ~UiElement() = default;
+    virtual ~UiElement();
 
     virtual void AddChild(std::shared_ptr<UiElement> child);
     virtual void RemoveChild(std::shared_ptr<UiElement> child);

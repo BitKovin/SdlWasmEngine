@@ -15,15 +15,18 @@ private:
 public:
     std::string ImagePath = "GameData/texture/ui/white.png";
 
-    vec4 Color = vec4(.15f, 0.15f, 0.15f, 1);
+    vec4 Color      = vec4(.15f, 0.15f, 0.15f, 1);
 
-    // Visual-only hover tint. Shown while this element has active touch events
-    // (pressed or held) or while IsHovered is set externally.
-    // Has no effect on interaction logic.
+    // Shown while cursor is over this element (touch events present) or while
+    // IsHovered is forced externally. Visual only — no interaction logic.
     vec4 HoverColor = vec4(.2f, 0.2f, 0.2f, 1);
 
-    // Driven externally by a parent that intercepts touches (e.g. UiScrollRegion)
-    // so children with HitCheck=false still get hover feedback. Visual only.
+    // Shown while this element has keyboard/gamepad focus.
+    // Lower priority than hover so press feedback always wins.
+    vec4 FocusColor = vec4(0.25f, 0.25f, 0.45f, 1);
+
+    // Set by a parent (e.g. UiScrollRegion) to show hover on elements
+    // with HitCheck = false that never receive touch events themselves.
     bool IsHovered = false;
 
     std::function<void()> onClick = nullptr;
@@ -51,6 +54,11 @@ public:
         }
     }
 
+    // Keyboard/gamepad confirm → same as a click.
+    void OnNavConfirm() override
+    {
+        if (onClick) onClick();
+    }
 
     void Draw() override
     {
@@ -70,8 +78,13 @@ public:
 
         vec2 pos = finalizedPosition + finalizedOffset;
 
-        const bool hovered = IsHovered || !TouchEvents.empty();
-        const vec4 tint    = hovered ? HoverColor : Color;
+        vec4 tint;
+        if (!TouchEvents.empty() || IsHovered)
+            tint = HoverColor;
+        else if (IsFocused)
+            tint = FocusColor;
+        else
+            tint = Color;
 
         if (PixelShader.empty())
             UiRenderer::DrawTexturedRect(pos, finalizedSize, rotation, pivot, tex->getHandle(), tint * GetFinalColor());

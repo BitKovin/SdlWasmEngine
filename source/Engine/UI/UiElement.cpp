@@ -5,8 +5,18 @@
 #include "../Input.h"
 #include "UiRenderer.h" // Assume you have a DrawRect or DrawTexturedRect method
 
+#include "UiNavigation.h"
+
 bool UiElement::drawAllBorders = false;
 UiElement* UiElement::Viewport = nullptr;
+
+UiElement::~UiElement()
+{
+    if (UiNavigation::Focused == this)
+    {
+        UiNavigation::ClearFocus();
+    }
+}
 
 void UiElement::AddChild(std::shared_ptr<UiElement> child) {
     child->parent = this;

@@ -4,26 +4,17 @@
 #include "UiButton.hpp"
 #include "UiText.hpp"
 #include "UiScrollRegion.hpp"
+#include "UiNavigation.h"
 
 // ---------------------------------------------------------------------------
-// UiDropdown
+// UiDropdown — keyboard nav integration
 //
-//  Header: UiButton
-//            ├─ UiText  (m_headerLabel)  — current selection, left-aligned
-//            └─ UiText  (m_headerArrow)  — "▼"/"▲", right-aligned, separate
+//   Header focused  + ui_confirm  → opens panel, focuses panel
+//   Panel focused   + ui_up/down  → navigates items (UiScrollRegion::OnNav)
+//   Panel focused   + ui_cancel   → closes panel, returns focus to header
+//   Item clicked (mouse or kb)    → closes panel, returns focus to header
 //
-//  Panel:  UiScrollRegion  (hidden until opened)
-//            └─ [UiButton + UiText] × N  — one row per option
-//
-//  Padding
-//  ───────
-//  `Padding` insets all content from the element edges. Useful when the
-//  background texture has a border that must not be overlapped by text.
-//  It applies to:
-//    - Header: label pushed right by Padding, arrow pulled left by Padding,
-//              label/arrow Y centred within the padded height
-//    - Items:  label pushed right by Padding, height padded top+bottom
-//              (ItemHeight is the total row height including padding)
+//   While open: panel has FocusTrap = true so navigation cannot escape.
 // ---------------------------------------------------------------------------
 
 class UiDropdown : public UiElement
@@ -46,19 +37,15 @@ public:
     float ArrowFontSize  = 28.f;
     float ItemHeight     = 48.f;
     float ScrollBarWidth = 14.f;
-
-    // Insets all text content from element edges. Respect textured borders here.
-    float Padding = 8.f;
-
-    // Additional spacing between label and the left/right edge, on top of Padding.
-    float LabelSpacing = 4.f;
-    float ArrowSpacing = 4.f;
+    float Padding        = 8.f;
+    float LabelSpacing   = 4.f;
+    float ArrowSpacing   = 4.f;
 
     int MaxVisibleItems = 5;
 
-    std::string Placeholder = "Select…";
-    std::string ArrowDown   = "d";
-    std::string ArrowUp     = "u";
+    std::string Placeholder = "Select...";
+    std::string ArrowDown   = "v";
+    std::string ArrowUp     = "^";
 
     // ── State ──────────────────────────────────────────────────────────────────
     int SelectedIndex = -1;
@@ -75,13 +62,11 @@ public:
         m_header->pivot   = vec2(0.f);
         m_header->onClick = [this]() { SetOpen(!m_isOpen); };
 
-        // Label — left-aligned, pivot.y=0.5 centres vertically
         m_headerLabel = std::make_shared<UiText>();
         m_headerLabel->origin = vec2(0.f);
         m_headerLabel->pivot  = vec2(0.f, 0.5f);
         m_header->AddChild(m_headerLabel);
 
-        // Arrow — separate element, right-aligned via pivot.x=1
         m_headerArrow = std::make_shared<UiText>();
         m_headerArrow->origin = vec2(0.f);
         m_headerArrow->pivot  = vec2(1.f, 0.5f);
@@ -90,10 +75,13 @@ public:
         UiElement::AddChild(m_header);
 
         m_panel = std::make_shared<UiScrollRegion>();
-        m_panel->origin  = vec2(0.f);
-        m_panel->pivot   = vec2(0.f);
-        m_panel->visible = false;
+        m_panel->origin      = vec2(0.f);
+        m_panel->pivot       = vec2(0.f);
+        m_panel->visible     = false;
         m_panel->useLateDraw = true;
+
+        // Cancel while panel is focused → close and return focus to header.
+        m_panel->onNavCancel = [this]() { SetOpen(false); };
 
         UiElement::AddChild(m_panel);
     }
@@ -117,7 +105,7 @@ public:
 
     void SetSelectedIndex(int index) { SelectedIndex = index; }
 
-    // Only header height contributes to layout; panel overlays content below.
+    // Only header height contributes to layout; panel overlays below.
     glm::vec2 GetSize() override { return size; }
 
     // ── Update ─────────────────────────────────────────────────────────────────
@@ -126,30 +114,25 @@ public:
         const vec2  headerSize  = size;
         const int   numOptions  = static_cast<int>(m_options.size());
         const int   visibleRows = std::min(numOptions, MaxVisibleItems);
-
-        // Padded vertical centre for header text
         const float textCentreY = headerSize.y * 0.5f;
 
-        // ── Header ─────────────────────────────────────────────────────────────
         m_header->size       = headerSize;
         m_header->ImagePath  = BackgroundImage;
         m_header->Color      = m_isOpen ? HeaderHoverColor : HeaderColor;
         m_header->HoverColor = HeaderHoverColor;
 
-        // Label: left edge inset by Padding + LabelSpacing
         m_headerLabel->text      = CurrentLabel();
         m_headerLabel->fontSize  = FontSize;
         m_headerLabel->textColor = TextColor;
         m_headerLabel->position  = vec2(Padding + LabelSpacing, textCentreY);
 
-        // Arrow: right edge pulled in by Padding + ArrowSpacing; pivot.x=1 aligns it
         m_headerArrow->text      = m_isOpen ? ArrowUp : ArrowDown;
         m_headerArrow->fontSize  = ArrowFontSize;
         m_headerArrow->textColor = ArrowColor;
         m_headerArrow->position  = vec2(headerSize.x - Padding - ArrowSpacing, textCentreY);
 
-        // ── Panel ─────────────────────────────────────────────────────────────
         m_panel->visible          = m_isOpen;
+        m_panel->FocusTrap        = m_isOpen;
         m_panel->position         = vec2(0.f, headerSize.y);
         m_panel->size             = ComputePanelSize(visibleRows, headerSize.x);
         m_panel->ScrollBarWidth   = ScrollBarWidth;
@@ -158,7 +141,6 @@ public:
         m_panel->ThumbActiveColor = ScrollThumbHover;
         m_panel->ScrollBarImage   = BackgroundImage;
 
-        // Keep item widths in sync if size.x changed after RebuildPanel().
         for (auto& child : m_panel->m_content->children)
             child->size.x = headerSize.x;
 
@@ -167,7 +149,8 @@ public:
 
     void FinalizeChildren() override
     {
-        m_panel->visible = m_isOpen;
+        m_panel->visible   = m_isOpen;
+        m_panel->FocusTrap = m_isOpen;
         UiElement::FinalizeChildren();
     }
 
@@ -187,7 +170,6 @@ private:
         return Placeholder;
     }
 
-    // Panel height = N visible rows. ItemHeight is the full row height.
     vec2 ComputePanelSize(int rows, float width) const
     {
         return vec2(width, static_cast<float>(rows) * ItemHeight);
@@ -195,9 +177,19 @@ private:
 
     void SetOpen(bool open)
     {
-        m_isOpen         = open;
-        m_panel->visible = open;
-        if (!open) m_panel->SetScrollOffset(0.f);
+        m_isOpen           = open;
+        m_panel->visible   = open;
+        m_panel->FocusTrap = open;
+
+        if (open)
+        {
+            UiNavigation::SetFocus(m_panel.get());
+        }
+        else
+        {
+            m_panel->SetScrollOffset(0.f);
+            UiNavigation::SetFocus(m_header.get());
+        }
     }
 
     void RebuildPanel()
@@ -207,7 +199,7 @@ private:
         for (int i = 0; i < static_cast<int>(m_options.size()); ++i)
         {
             auto itemBtn = std::make_shared<UiButton>();
-            itemBtn->HitCheck   = false; // UiScrollRegion owns all content touches
+            itemBtn->HitCheck   = false;
             itemBtn->size       = vec2(size.x, ItemHeight);
             itemBtn->origin     = vec2(0.f);
             itemBtn->pivot      = vec2(0.f);
@@ -218,8 +210,6 @@ private:
             auto itemLabel = std::make_shared<UiText>();
             itemLabel->origin    = vec2(0.f);
             itemLabel->pivot     = vec2(0.f, 0.5f);
-            // Label X respects Padding + LabelSpacing, same as header label.
-            // Label Y centred within the full item height.
             itemLabel->position  = vec2(Padding + LabelSpacing, ItemHeight * 0.5f);
             itemLabel->text      = m_options[i];
             itemLabel->fontSize  = FontSize;

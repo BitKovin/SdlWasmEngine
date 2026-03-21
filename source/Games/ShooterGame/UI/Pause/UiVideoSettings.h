@@ -21,6 +21,8 @@ public:
 	UiVideoSettings(std::shared_ptr<UiElement> parentMenu_)
 	{
 
+		FocusTrap = true;
+
 		this->parentMenu = parentMenu_;
 
 		background = make_shared<UiImage>();
@@ -68,6 +70,10 @@ public:
 
 	}
 
+	void OnNavCancel() override
+	{
+		backButton->onClick();
+	}
 
 	void FinalizeChildren() override
 	{

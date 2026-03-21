@@ -12,29 +12,17 @@
 // ---------------------------------------------------------------------------
 // UiScrollRegion
 //
-// A clipping + scrolling container. Children may overflow vertically and
-// are scrolled via:
+// KEYBOARD / GAMEPAD NAVIGATION
+//   The region itself is a single nav node (HitCheck = true).
+//   On receiving focus it internally manages item selection:
+//     Up / Down   → move between items; consumed unless at the boundary,
+//                   in which case global nav continues
+//     Left/Right  → not consumed; global nav handles them
+//     ui_confirm  → fires the focused item's onClick
+//     ui_cancel   → calls onNavCancel if set
 //
-//   1. Mouse wheel   — ui_scroll_up / ui_scroll_down, only when
-//                      TouchEvents is non-empty (cursor is over this element)
-//   2. Scrollbar thumb drag
-//   3. Content-area touch/mouse with tap-vs-drag disambiguation
-//
-// TOUCH EVENT STATES
-//   touch.pressed  == true                    BEGIN  (first frame of contact)
-//   touch.pressed  == false, .released==false HELD   (subsequent frames)
-//   touch.released == true                    END    (finger/button lifted)
-//
-// TAP DISPATCH
-//   Fired on END, only if movement never exceeded DragThreshold.
-//   Item under the END position is looked up by bounding box and its
-//   onClick is called directly.
-//
-// HOVER
-//   Any non-drag touch event (including pure mouse-over if the engine
-//   delivers position-only events) is used to highlight the item under
-//   the cursor. IsHovered is cleared on every frame before being set,
-//   so stale highlights never persist.
+//   Auto-scroll keeps the keyboard-selected item visible.
+//   onNavCancel — assign to handle cancel (e.g. UiDropdown closes itself).
 // ---------------------------------------------------------------------------
 
 class UiScrollRegion : public UiElement
@@ -43,7 +31,6 @@ public:
     // ── Appearance ────────────────────────────────────────────────────────────
     float ScrollBarWidth  = 14.f;
     float MinThumbHeight  = 30.f;
-    float ScrollSpeed     = 60.f;
     float DragThreshold   = 8.f;
 
     vec4 TrackColor       = vec4(0.08f, 0.08f, 0.08f, 1.f);
@@ -53,6 +40,9 @@ public:
     std::string ScrollBarImage = "GameData/textures/generic/white.png";
 
     float ContentDistance = 0.f;
+
+    // Assign to handle ui_cancel while this region is focused.
+    std::function<void()> onNavCancel = nullptr;
 
     // ── Construction ──────────────────────────────────────────────────────────
     UiScrollRegion()
@@ -71,6 +61,7 @@ public:
 
         m_thumb = std::make_shared<UiButton>();
         m_thumb->HitCheck = true;
+        m_thumb->DisableFocus = true;
         m_thumb->origin   = vec2(0.f);
         m_thumb->pivot    = vec2(0.f);
         UiElement::AddChild(m_thumb);
@@ -88,6 +79,7 @@ public:
     void ClearChildren() override
     {
         m_content->UiElement::ClearChildren();
+        m_navIndex = -1;
     }
 
     // ── Accessors ─────────────────────────────────────────────────────────────
@@ -97,6 +89,64 @@ public:
 
     // Exposed so UiDropdown can iterate items for width sync.
     std::shared_ptr<UiVerticalBox> m_content;
+
+    // ── Keyboard nav callbacks ────────────────────────────────────────────────
+
+    void OnFocused() override
+    {
+        if (m_navIndex < 0 && !m_content->children.empty())
+            m_navIndex = 0;
+        UpdateNavHighlight();
+    }
+
+    void OnUnfocused() override
+    {
+        ClearAllHighlights();
+    }
+
+    // Up/Down navigate items; Left/Right pass through to global nav.
+    bool OnNav(UiNavDir dir) override
+    {
+        if (m_content->children.empty()) return false;
+
+        const int count = static_cast<int>(m_content->children.size());
+
+        if (dir == UiNavDir::Up)
+        {
+            if (m_navIndex > 0)
+            {
+                m_navIndex--;
+                UpdateNavHighlight();
+                ScrollToNavItem();
+                return true; // consumed
+            }
+            return false; // at top — let global nav exit upward
+        }
+
+        if (dir == UiNavDir::Down)
+        {
+            if (m_navIndex < count - 1)
+            {
+                m_navIndex++;
+                UpdateNavHighlight();
+                ScrollToNavItem();
+                return true; // consumed
+            }
+            return false; // at bottom — let global nav exit downward
+        }
+
+        return false; // Left/Right not consumed here
+    }
+
+    void OnNavConfirm() override
+    {
+        FireNavItem();
+    }
+
+    void OnNavCancel() override
+    {
+        if (onNavCancel) onNavCancel();
+    }
 
     // ── Update ────────────────────────────────────────────────────────────────
     void Update() override
@@ -112,30 +162,22 @@ public:
             : viewH;
         const float trackRange = viewH - thumbH;
 
-        // ── 1. Mouse wheel ────────────────────────────────────────────────────
-        // TouchEvents is non-empty exactly when the cursor is over this element
-        // (HitCheck = true). Using this instead of a manual bounds check.
-        const bool mouseInBounds = TouchEvents.size() > 0;
-        if (mouseInBounds)
-        {
+        // ── 1. Mouse wheel ─────────────────────────────────────────────────────
+        // TouchEvents non-empty ↔ cursor is over this element (HitCheck=true).
+        if (TouchEvents.size() > 0)
+            m_scrollOffset -= Input::MouseScrollDelta * 20.f;
 
-            m_scrollOffset -= Input::MouseScrollDelta * 20;
+        // ── 2. Thumb drag ──────────────────────────────────────────────────────
+        if (needsBar) UpdateThumbDrag(maxScroll, trackRange);
+        else          m_thumbDrag = {};
 
-        }
-
-        // ── 2. Scrollbar thumb drag ───────────────────────────────────────────
-        if (needsBar)
-            UpdateThumbDrag(maxScroll, trackRange);
-        else
-            m_thumbDrag = {};
-
-        // ── 3. Content gesture + hover ────────────────────────────────────────
+        // ── 3. Content gesture + mouse hover ──────────────────────────────────
         UpdateContentGesture(contentW);
 
-        // ── Clamp ─────────────────────────────────────────────────────────────
+        // ── Clamp ──────────────────────────────────────────────────────────────
         m_scrollOffset = std::clamp(m_scrollOffset, 0.f, maxScroll);
 
-        // ── Layout ────────────────────────────────────────────────────────────
+        // ── Layout ─────────────────────────────────────────────────────────────
         m_content->ContentDistance = ContentDistance;
         m_content->size     = vec2(contentW, std::max(viewH, contentH));
         m_content->position = vec2(0.f, -m_scrollOffset);
@@ -188,6 +230,9 @@ private:
     float m_scrollOffset  = 0.f;
     float m_contentHeight = 0.f;
 
+    // Keyboard-selected item index (-1 = none).
+    int m_navIndex = -1;
+
     struct ThumbDrag
     {
         bool  active        = false;
@@ -227,19 +272,18 @@ private:
         }
         else if (m_thumbDrag.active && trackRange > 0.f)
         {
-            // HELD
             float delta = ((touch.position.y - m_thumbDrag.startY) / trackRange) * maxScroll;
             m_scrollOffset = m_thumbDrag.scrollAtStart + delta;
         }
     }
 
-    // ── Content gesture + hover ───────────────────────────────────────────────
+    // ── Content gesture + mouse hover ─────────────────────────────────────────
     void UpdateContentGesture(float contentW)
     {
-        // Clear all item hover states every frame before potentially re-setting.
-        SetAllItemsHover(false);
+        // Clear mouse hover every frame; re-set below. Keyboard nav highlight
+        // (m_navIndex) is managed separately and NOT cleared here.
+        ClearMouseHover();
 
-        // Find first content-area touch (exclude scrollbar strip).
         const TouchEvent* touch = nullptr;
         for (const auto& t : TouchEvents)
         {
@@ -256,7 +300,6 @@ private:
 
         if (touch->pressed)
         {
-            // BEGIN
             m_gesture.active        = true;
             m_gesture.dragging      = false;
             m_gesture.maxMovement   = 0.f;
@@ -265,9 +308,9 @@ private:
         }
         else if (touch->released)
         {
-            // END — fire tap if the gesture never became a drag
             if (m_gesture.active && !m_gesture.dragging)
             {
+                // Tap: fire the item under the release position.
                 if (auto item = FindItemAt(touch->position))
                     if (auto btn = std::dynamic_pointer_cast<UiButton>(item))
                         if (btn->onClick) btn->onClick();
@@ -277,7 +320,6 @@ private:
         }
         else if (m_gesture.active)
         {
-            // HELD
             const float moved = glm::distance(touch->position, m_gesture.startPos);
             m_gesture.maxMovement = std::max(m_gesture.maxMovement, moved);
 
@@ -292,14 +334,66 @@ private:
             }
         }
 
-        // Hover: cursor is over the content area and we are not dragging.
-        // Highlight whichever item is under the current touch position.
+        // Hover: highlight item under cursor when not dragging.
         if (auto item = FindItemAt(touch->position))
             if (auto btn = std::dynamic_pointer_cast<UiButton>(item))
                 btn->IsHovered = true;
     }
 
+    // ── Keyboard nav helpers ──────────────────────────────────────────────────
+
+    void UpdateNavHighlight()
+    {
+        for (int i = 0; i < static_cast<int>(m_content->children.size()); ++i)
+            if (auto btn = std::dynamic_pointer_cast<UiButton>(m_content->children[i]))
+                btn->IsHovered = (i == m_navIndex);
+    }
+
+    void ClearAllHighlights()
+    {
+        for (auto& child : m_content->children)
+            if (auto btn = std::dynamic_pointer_cast<UiButton>(child))
+                btn->IsHovered = false;
+        m_navIndex = -1;
+    }
+
+    // Clear mouse hover without touching the keyboard-nav-selected item.
+    void ClearMouseHover()
+    {
+        for (int i = 0; i < static_cast<int>(m_content->children.size()); ++i)
+        {
+            if (i == m_navIndex) continue;
+            if (auto btn = std::dynamic_pointer_cast<UiButton>(m_content->children[i]))
+                btn->IsHovered = false;
+        }
+    }
+
+    void FireNavItem()
+    {
+        if (m_navIndex < 0 || m_navIndex >= static_cast<int>(m_content->children.size())) return;
+        if (auto btn = std::dynamic_pointer_cast<UiButton>(m_content->children[m_navIndex]))
+            if (btn->onClick) btn->onClick();
+    }
+
+    // Scroll so the keyboard-selected item is fully in view.
+    void ScrollToNavItem()
+    {
+        if (m_navIndex < 0 || m_navIndex >= static_cast<int>(m_content->children.size())) return;
+
+        // Build item position from sizes — doesn't rely on stale topLeft values.
+        float itemTop = 0.f;
+        for (int i = 0; i < m_navIndex; ++i)
+            itemTop += m_content->children[i]->GetSize().y + ContentDistance;
+        const float itemBot = itemTop + m_content->children[m_navIndex]->GetSize().y;
+
+        if (itemTop < m_scrollOffset)
+            m_scrollOffset = itemTop;
+        else if (itemBot > m_scrollOffset + size.y)
+            m_scrollOffset = itemBot - size.y;
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
+
     std::shared_ptr<UiElement> FindItemAt(vec2 pos) const
     {
         for (const auto& child : m_content->children)
@@ -309,13 +403,6 @@ private:
                 return child;
         }
         return nullptr;
-    }
-
-    void SetAllItemsHover(bool state)
-    {
-        for (const auto& child : m_content->children)
-            if (auto btn = std::dynamic_pointer_cast<UiButton>(child))
-                btn->IsHovered = state;
     }
 
     void MeasureContentHeight()

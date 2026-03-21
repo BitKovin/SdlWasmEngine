@@ -15,6 +15,9 @@ class UiPauseMenu : public UiCanvas
 public:
 	UiPauseMenu()
 	{
+
+		FocusTrap = true;
+
 		background = make_shared<UiImage>();
 		background->color = vec4(0.5f, 0.0f, 0.0f, 0.5f);
 		AddChild(background);
@@ -35,12 +38,13 @@ public:
 		optionsBox->AddChild(settingsButton);
 		optionsBox->AddChild(menuButton);
 
+
 		AddChild(optionsBox);
 
 		resumeButton->onClick = [&]() 
 			{
 				PauseGameManager::SetGamePaused(false);
-
+				Input::GetAction("pause")->CleanPressed();
 			};
 
 		settingsButton->onClick = [&]()
@@ -48,11 +52,14 @@ public:
 				
 				EngineMain::MainInstance->Viewport.AddChild(std::make_shared<UiSettingsMenu>(shared_from_this()));
 				visible = false;
-
 			};
 
 	}
 	
+	void OnNavCancel() override
+	{
+		resumeButton->onClick();
+	}
 
 	void FinalizeChildren() override
 	{

@@ -220,6 +220,8 @@ public:
     void SimulateHolding();
     void SimulateRelease();
 
+    void CleanPressed();
+
     // Returns true on the frame the action was pressed.
     bool Pressed() const;
     // Returns true on the frame the action was released.

@@ -19,6 +19,8 @@
 #include <BgfxStateManager.h>
 #include <Renderer/Abstractions/ViewIdManager.h>
 
+#include <UI/UiNavigation.h>
+
 #include <Profiling/ResourceStatistics.hpp>
 
 EngineMain* EngineMain::MainInstance = nullptr;
@@ -427,6 +429,9 @@ void EngineMain::MainLoop()
     Input::Update();
 
     Viewport.Update();
+
+    UiNavigation::Update(&Viewport);
+
     Viewport.UpdateChildrenOffsetRecursive();
     Viewport.FinalizeChildren();
 

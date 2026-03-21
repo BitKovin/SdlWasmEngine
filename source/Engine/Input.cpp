@@ -519,6 +519,11 @@ void InputAction::SimulateRelease()
     pressed = false;
 }
 
+void InputAction::CleanPressed()
+{
+    pressed = false;
+}
+
 bool InputAction::Pressed() const {
     return pressed;
 }
