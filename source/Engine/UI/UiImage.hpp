@@ -16,7 +16,7 @@ private:
 
 public:
 
-	string ImagePath = "GameData/cat.png";
+	string ImagePath = "GameData/textures/ui/white.png";
 
 	UiImage()
 	{ 

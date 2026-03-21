@@ -82,6 +82,13 @@ void UiBilboard::DrawUi()
 	BgfxStateManager::SetBlend(BgfxStateManager::Blend::Premultiplied);
 
 	Canvas.Draw();
+	UiElement::DrawingLate = true;
+	for (auto elem : UiElement::pendingLateDrawElements)
+	{
+		elem->Draw();
+	}
+	UiElement::DrawingLate = false;
+	UiElement::pendingLateDrawElements.clear();
 
 	UiRenderer::EndFrame();
 

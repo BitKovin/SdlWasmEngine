@@ -34,7 +34,12 @@ class UiElement : public std::enable_shared_from_this<UiElement>
 public:
     static UiElement* Viewport;
 
+    static inline bool DrawingLate = false;
+    static inline std::vector<std::shared_ptr<UiElement>> pendingLateDrawElements;
+
     bool HitCheck = false;
+
+    bool useLateDraw = false;
 
     glm::vec4 color = vec4(1);
 	bool inheritParentColor = true;
@@ -91,6 +96,8 @@ public:
     virtual glm::vec2 GetSize();
 
     virtual void Draw();
+
+    bool HasLateDrawInTree();
 
     static glm::vec2 WorldToScreenSpace(const glm::vec3& pos);
     static glm::vec2 WorldToScreenSpace(const glm::vec3& pos, bool& inScreen);

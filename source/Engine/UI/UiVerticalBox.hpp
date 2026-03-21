@@ -9,8 +9,9 @@ public:
 	
 	float ContentDistance = 5;
 
-    void Update()
+    void UpdateChildrenOffsets() override
     {
+
         float yOffset = 0.0f;
 
         for (auto& elem : children)
@@ -19,7 +20,8 @@ public:
             yOffset += elem->GetSize().y + ContentDistance;
         }
 
-        UiElement::Update();
+        UiContentBox::UpdateChildrenOffsets();
+
     }
 
 private:

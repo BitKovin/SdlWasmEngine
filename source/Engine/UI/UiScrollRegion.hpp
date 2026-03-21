@@ -119,7 +119,7 @@ public:
         if (mouseInBounds)
         {
 
-            m_scrollOffset -= Input::MouseScrollDelta * 10;
+            m_scrollOffset -= Input::MouseScrollDelta * 20;
 
         }
 

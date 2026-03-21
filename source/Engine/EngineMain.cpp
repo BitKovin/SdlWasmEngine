@@ -716,6 +716,16 @@ void EngineMain::Render()
 
 
     Viewport.Draw();
+    UiElement::DrawingLate = true;
+
+    for (auto elem : UiElement::pendingLateDrawElements)
+    {
+        elem->Draw();
+    }
+
+    UiElement::DrawingLate = false;
+    UiElement::pendingLateDrawElements.clear();
+
     UiRenderer::EndFrame();
 
     UiFrameBuffer->unbind();

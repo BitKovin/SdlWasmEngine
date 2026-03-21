@@ -234,6 +234,9 @@
     <ClCompile Include="Systems\ScoreSystem\ScoreSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="UI\Pause\UiVideoSettings.h">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Entities\Player\Player.hpp">
@@ -371,13 +374,19 @@
     <ClInclude Include="Entities\Enemy\Enemies\NpcHumanBase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="UI\Pause\Settings\VideoSettings.hpp">
+    <ClInclude Include="UI\Pause\Settings\VideoSettings.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Systems\ScoreSystem\ScoreSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="UI\Player\ScoreIndicator.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\Pause\UiPauseMenu.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\Pause\UiSettingsMenu.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

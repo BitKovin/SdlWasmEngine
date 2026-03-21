@@ -11,6 +11,7 @@ UiElement* UiElement::Viewport = nullptr;
 void UiElement::AddChild(std::shared_ptr<UiElement> child) {
     child->parent = this;
     children.push_back(child);
+    UpdateChildrenOffsetRecursive();
 }
 
 void UiElement::RemoveChild(std::shared_ptr<UiElement> child) {
@@ -97,13 +98,20 @@ std::shared_ptr<UiElement> UiElement::GetHitElementUnderPosition(vec2 hitPositio
 	for (auto& child : children)
 	{
 
+        if (child->visible == false) continue;
+
 		auto childHit = child->GetHitElementUnderPosition(hitPosition);
 
 		if (childHit != nullptr)
 		{
+
+            if (hit)
+            {
+                if (hit->useLateDraw && childHit->useLateDraw == false) continue;
+            }
+
 			hit = childHit;
 		}
-
 
 	}
 
@@ -188,13 +196,40 @@ glm::vec2 UiElement::GetSize() {
 void UiElement::Draw() {
     for (auto& child : finalizedChildren)
         if (child->visible)
-            child->Draw();
+        {
+            if (DrawingLate)
+            {
+                child->Draw();
+            }
+            else
+            {
+
+                if (child->useLateDraw)
+                {
+                    pendingLateDrawElements.push_back(child);
+                    continue;
+                }
+
+                child->Draw();
+            }
+        }
+            
 
     if (drawBorder || drawAllBorders) {
         glm::vec2 pos = position + offset;
         glm::vec2 sz = GetSize();
         UiRenderer::DrawBorderRect(pos, sz, glm::vec4(1.0f, 0.0f, 0.0f, 0.3f)); // Red with alpha
     }
+}
+
+//if it has late draw parent or is late draw by itself
+bool UiElement::HasLateDrawInTree()
+{
+
+    if (parent == nullptr) return useLateDraw;
+
+    return useLateDraw || parent->HasLateDrawInTree();
+
 }
 
 glm::vec2 UiElement::WorldToScreenSpace(const glm::vec3& pos) {

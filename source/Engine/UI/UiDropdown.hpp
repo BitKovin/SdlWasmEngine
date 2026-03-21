@@ -93,6 +93,7 @@ public:
         m_panel->origin  = vec2(0.f);
         m_panel->pivot   = vec2(0.f);
         m_panel->visible = false;
+        m_panel->useLateDraw = true;
 
         UiElement::AddChild(m_panel);
     }

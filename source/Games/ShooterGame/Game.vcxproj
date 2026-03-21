@@ -253,6 +253,7 @@
       <AdditionalOptions>/arch:SSE2 /Zc:__cplusplus /Zc:preprocessor %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard_C>stdclatest</LanguageStandard_C>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <ShowIncludes>false</ShowIncludes>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -280,6 +281,7 @@
       <AdditionalOptions>/arch:SSE2 /Zc:__cplusplus /Zc:preprocessor %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard_C>stdclatest</LanguageStandard_C>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <ShowIncludes>false</ShowIncludes>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -310,6 +312,7 @@
       <AdditionalOptions>/arch:SSE2 /Zc:__cplusplus /Zc:preprocessor %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard_C>stdclatest</LanguageStandard_C>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <ShowIncludes>false</ShowIncludes>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -338,6 +341,7 @@
       <AdditionalOptions>/arch:SSE2 /Zc:__cplusplus /Zc:preprocessor %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard_C>stdclatest</LanguageStandard_C>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <ShowIncludes>false</ShowIncludes>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -425,6 +429,7 @@
     <ClCompile Include="UI\LoadingScreen\UiDefaultLoadingScreen.cpp" />
     <ClCompile Include="UI\MobileControls\UiJoystick.cpp" />
     <ClCompile Include="UI\MobileControls\UiTouchMoveArea.cpp" />
+    <ClCompile Include="UI\Pause\UiVideoSettings.h" />
     <ClCompile Include="UI\Player\Crosshair.cpp" />
     <ClCompile Include="UI\Player\PlayerHud.cpp" />
   </ItemGroup>
@@ -472,7 +477,9 @@
     <ClInclude Include="UI\LoadingScreen\UiDefaultLoadingScreen.h" />
     <ClInclude Include="UI\MobileControls\UiJoystick.h" />
     <ClInclude Include="UI\MobileControls\UiTouchMoveArea.h" />
-    <ClInclude Include="UI\Pause\Settings\VideoSettings.hpp" />
+    <ClInclude Include="UI\Pause\Settings\VideoSettings.h" />
+    <ClInclude Include="UI\Pause\UiPauseMenu.h" />
+    <ClInclude Include="UI\Pause\UiSettingsMenu.h" />
     <ClInclude Include="UI\Player\Crosshair.h" />
     <ClInclude Include="UI\Player\PlayerHud.hpp" />
     <ClInclude Include="UI\Player\ScoreIndicator.hpp" />

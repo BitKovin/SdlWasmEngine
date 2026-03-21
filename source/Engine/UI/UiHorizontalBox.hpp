@@ -9,18 +9,20 @@ public:
 	
 	float ContentDistance = 5;
 
-    void Update()
-    {
-        float xOffset = 0.0f;
+	void UpdateChildrenOffsets() override
+	{
 
-        for (auto elem : children)
-        {
-            elem->position = vec2(xOffset, 0.0f);
-            xOffset += elem->GetSize().x + ContentDistance;
-        }
+		float xOffset = 0.0f;
 
-        UiElement::Update();
-    }
+		for (auto elem : children)
+		{
+			elem->position = vec2(xOffset, 0.0f);
+			xOffset += elem->GetSize().x + ContentDistance;
+		}
+
+		UiContentBox::UpdateChildrenOffsets();
+
+	}
 
 
 private:

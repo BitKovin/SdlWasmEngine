@@ -3,7 +3,6 @@
 #include <UI/RmlUi/UiModel.h>
 
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_syswm.h>
 
 #include <UI/RmlUi/RmlUiEvents.h>
 
@@ -41,7 +40,7 @@ namespace VideoSettings
         return std::to_string(w) + "x" + std::to_string(h);
     }
 
-    void InitModelData(VideoSettingsModel& model)
+    inline void InitModelData(VideoSettingsModel& model)
     {
 
 		auto window = EngineMain::MainInstance->Window;
@@ -106,7 +105,7 @@ namespace VideoSettings
 
     }
 
-    void BindVideoSettingsCallbacks(Rml::ElementDocument* doc)
+    inline void BindVideoSettingsCallbacks(Rml::ElementDocument* doc)
     {
 
         using namespace RmlUiEvents;

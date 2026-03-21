@@ -10,11 +10,13 @@
 #include <UI/RmlUi/RmlUiEvents.h>
 #include <EngineMain.h>
 
-#include <UI/Pause/Settings/VideoSettings.hpp>
+#include <UI/Pause/Settings/VideoSettings.h>
 
 #include <PauseGameManager.hpp>
 
 #include <ItemsDataBase.h>
+
+#include <UI/Pause/UiPauseMenu.h>
 
 #include "Entities/Enemy/DebuffFactory.h"
  
@@ -123,6 +125,8 @@ public:
 
 	bool wasPaused = false;
 
+    std::shared_ptr<UiPauseMenu> pauseMenu;
+
     void UpdatePaused()
     {
 
@@ -134,14 +138,23 @@ public:
         {
             if (wasPaused == false)
             {
-				RmlUiContext::Main->PushModal(pauseMenuDoc);
+
+                pauseMenu = std::make_shared<UiPauseMenu>();
+
+                EngineMain::MainInstance->Viewport.AddChild(pauseMenu);
+
+				//RmlUiContext::Main->PushModal(pauseMenuDoc);
             }
         }
         else
         {
-            if (pauseMenuDoc != nullptr && pauseMenuDoc->IsVisible())
+            if (pauseMenu != nullptr)
             {
-				RmlUiContext::Main->RemoveFromModalFromStack(pauseMenuDoc);
+
+                pauseMenu->RemoveFromParent();
+                pauseMenu = nullptr;
+
+				//RmlUiContext::Main->RemoveFromModalFromStack(pauseMenuDoc);
             }
         }
 
@@ -310,7 +323,6 @@ GameStart::GameStart()
     Input::AddAction("ui_left")->AddKeyboardKey(SDL_KeyCode::SDLK_LEFT)->AddButton(GamepadButton::DPadLeft);
 	Input::AddAction("ui_right")->AddKeyboardKey(SDL_KeyCode::SDLK_RIGHT)->AddButton(GamepadButton::DPadRight);
 
-    Input::AddAction("ui_scroll_up")->AddKeyboardKey(SDL_KeyCode::SDLK_RIGHT)->AddButton(GamepadButton::DPadRight);
 
     Input::AddAction("dbg_simulate")->AddKeyboardKey(SDL_KeyCode::SDLK_j);
 

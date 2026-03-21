@@ -10,18 +10,17 @@
 class UiButton : public UiElement
 {
 private:
-    bool pendingClick = false;
     Texture* tex = nullptr;
 
 public:
-    std::string ImagePath = "GameData/cat.png";
+    std::string ImagePath = "GameData/texture/ui/white.png";
 
-    vec4 Color = vec4(1.f);
+    vec4 Color = vec4(.15f, 0.15f, 0.15f, 1);
 
     // Visual-only hover tint. Shown while this element has active touch events
     // (pressed or held) or while IsHovered is set externally.
     // Has no effect on interaction logic.
-    vec4 HoverColor = vec4(0.75f, 0.75f, 0.75f, 1.f);
+    vec4 HoverColor = vec4(.2f, 0.2f, 0.2f, 1);
 
     // Driven externally by a parent that intercepts touches (e.g. UiScrollRegion)
     // so children with HitCheck=false still get hover feedback. Visual only.
@@ -45,18 +44,13 @@ public:
         {
             if (touch.id < 10 && OnlyTouch) continue;
 
-            if (touch.pressed)
+            if (touch.released)
             {
                 if (onClick) onClick();
             }
         }
     }
 
-    bool HasPendingClick()
-    {
-        if (pendingClick) { pendingClick = false; return true; }
-        return false;
-    }
 
     void Draw() override
     {

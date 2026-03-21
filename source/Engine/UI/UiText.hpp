@@ -44,7 +44,6 @@ public:
 
         // Compute scale factor based on desired font size.
         glm::vec2 scale(fontSize / StaticFontSize);
-
         // Draw the text.
         UiRenderer::DrawText(text, font, pos, rotation, pivot, textColor * GetFinalColor(), scale);
 
