@@ -38,9 +38,18 @@ public:
 
 		VideoSettings::InitModelData(model);
 
+		if (std::find(model.resolutions.begin(), model.resolutions.end(), model.selected_resolution) == model.resolutions.end())
+		{
+			model.resolutions.push_back(model.selected_resolution);
+		}
+
+		int selectedIndex = std::distance(model.resolutions.begin(), std::find(model.resolutions.begin(), model.resolutions.end(), model.selected_resolution));
+
 		resolutions = std::make_shared<UiDropdown>();
 		resolutions->SetOptions(model.resolutions);
+		resolutions->SetSelectedIndex(selectedIndex);
 		resolutions->size = vec2(400,70);
+		resolutions->onSelectionChanged = UiVideoSettings::UpdateResolution;
 		resolutionsHolder = GetSettingRow("resolution", resolutions);
 
 
@@ -114,6 +123,40 @@ private:
 		btn->AddChild(txt);
 
 		return btn;
+	}
+
+	static inline void UpdateResolution(int index, const std::string& value)
+	{
+
+		// Parse resolution string, expected format: "WIDTHxHEIGHT" (e.g., "1920x1080")
+		size_t xPos = value.find('x');
+		if (xPos == std::string::npos) return;
+
+		int width = std::stoi(value.substr(0, xPos));
+		int height = std::stoi(value.substr(xPos + 1));
+
+		// Assuming gWindow is your SDL_Window* accessible globally
+		SDL_Window* gWindow = EngineMain::MainInstance->Window;
+
+		// For fullscreen modes, we need to change the display mode
+		Uint32 flags = SDL_GetWindowFlags(gWindow);
+		if (flags & SDL_WINDOW_FULLSCREEN) {
+			// In fullscreen, we must change the display mode
+			SDL_DisplayMode mode;
+			mode.format = SDL_PIXELFORMAT_UNKNOWN; // let SDL choose
+			mode.w = width;
+			mode.h = height;
+			mode.refresh_rate = 0; // use current refresh rate
+			mode.driverdata = nullptr;
+
+			SDL_SetWindowDisplayMode(gWindow, &mode);
+			// Toggle fullscreen off and on to apply? Usually SetDisplayMode works immediately
+			// But we can also just set the mode and it should apply
+		}
+		else {
+			// Windowed mode: just set the size
+			SDL_SetWindowSize(gWindow, width, height);
+		}
 	}
 
 };

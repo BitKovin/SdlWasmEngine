@@ -107,7 +107,7 @@ std::shared_ptr<UiElement> UiElement::GetHitElementUnderPosition(vec2 hitPositio
 
             if (hit)
             {
-                if (hit->useLateDraw && childHit->useLateDraw == false) continue;
+                if (hit->HasLateDrawInTree() && childHit->HasLateDrawInTree() == false) continue;
             }
 
 			hit = childHit;

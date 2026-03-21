@@ -78,7 +78,7 @@ namespace VideoSettings
                 int aw, ah, bw, bh;
                 sscanf(a.c_str(), "%dx%d", &aw, &ah);
                 sscanf(b.c_str(), "%dx%d", &bw, &bh);
-                return (aw * ah) < (bw * bh);
+                return (aw * ah) > (bw * bh);
             });
 
         // --- Current resolution ---
