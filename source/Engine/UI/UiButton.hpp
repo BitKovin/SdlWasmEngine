@@ -1,9 +1,7 @@
 #pragma once
 
 #include "UiElement.h"
-
 #include "UiRenderer.h"
-
 #include "../Texture.hpp"
 #include "../AssetRegistry.h"
 #include "../EngineMain.h"
@@ -11,108 +9,81 @@
 
 class UiButton : public UiElement
 {
-
 private:
-
-	bool pendingClick = false;
-
-	Texture* tex = nullptr;
+    bool pendingClick = false;
+    Texture* tex = nullptr;
 
 public:
+    std::string ImagePath = "GameData/cat.png";
 
-	string ImagePath = "GameData/cat.png";
+    vec4 Color = vec4(1.f);
 
-	vec4 Color = vec4(1);
+    // Visual-only hover tint. Shown while this element has active touch events
+    // (pressed or held) or while IsHovered is set externally.
+    // Has no effect on interaction logic.
+    vec4 HoverColor = vec4(0.75f, 0.75f, 0.75f, 1.f);
 
-	std::function<void()> onClick = nullptr;
+    // Driven externally by a parent that intercepts touches (e.g. UiScrollRegion)
+    // so children with HitCheck=false still get hover feedback. Visual only.
+    bool IsHovered = false;
 
-	bool OnlyTouch = false;
-	bool OnlyNotPaused = false;
+    std::function<void()> onClick = nullptr;
 
-	UiButton()
-	{ 
-		HitCheck = true;
-	}
-	~UiButton()
-	{
+    bool OnlyTouch     = false;
+    bool OnlyNotPaused = false;
 
-	}
+    UiButton() { HitCheck = true; }
+    ~UiButton() {}
 
-	void Update()
-	{
+    void Update() override
+    {
+        UiElement::Update();
 
-		UiElement::Update();
+        if (EngineMain::MainInstance->Paused && OnlyNotPaused) return;
 
-		if (EngineMain::MainInstance->Paused && OnlyNotPaused) return;
+        for (const auto& touch : TouchEvents)
+        {
+            if (touch.id < 10 && OnlyTouch) continue;
 
-		for (const auto& touch : TouchEvents)
-		{
+            if (touch.pressed)
+            {
+                if (onClick) onClick();
+            }
+        }
+    }
 
-			if (touch.id < 10 && OnlyTouch) return;
+    bool HasPendingClick()
+    {
+        if (pendingClick) { pendingClick = false; return true; }
+        return false;
+    }
 
-			if (touch.pressed)
-			{
-				if (onClick)
-				{
-					onClick();
-				}
-			}
-		}
+    void Draw() override
+    {
+        if (Level::ChangingLevel)
+        {
+            tex = AssetRegistry::GetTextureFromFile(ImagePath);
+        }
+        else
+        {
+            if (tex == nullptr)
+            {
+                tex = AssetRegistry::GetTextureFromFile(ImagePath);
+                if (!tex->valid)
+                    tex = AssetRegistry::GetTextureFromFile("GameData/textures/generic/white.png");
+            }
+        }
 
-		/*
-		if (hovering) {
-			if (Input::GetAction("click")->Pressed())
-			{
-				if (onClick)
-				{
-					(*onClick)();
-				}
-			}
-		}
-		*/
-	}
+        vec2 pos = finalizedPosition + finalizedOffset;
 
-	bool HasPendingClick()
-	{
-		if (pendingClick)
-		{
-			pendingClick = false;
-			return true;
-		}
+        const bool hovered = IsHovered || !TouchEvents.empty();
+        const vec4 tint    = hovered ? HoverColor : Color;
 
-		return false;
-	}
+        if (PixelShader.empty())
+            UiRenderer::DrawTexturedRect(pos, finalizedSize, rotation, pivot, tex->getHandle(), tint * GetFinalColor());
+        else
+            UiRenderer::DrawTexturedRectShader(pos, finalizedSize, rotation, pivot, tex->getHandle(), tint * GetFinalColor(), PixelShader);
 
-	void Draw()
-	{
-
-
-		if (Level::ChangingLevel)
-		{
-			tex = AssetRegistry::GetTextureFromFile(ImagePath);
-		}
-		else
-		{
-			if (tex == nullptr)
-			{
-				tex = AssetRegistry::GetTextureFromFile(ImagePath);
-				if (tex->valid == false)
-					tex = AssetRegistry::GetTextureFromFile("GameData/textures/generic/white.png");
-			}
-		}
-
-		vec2 pos = finalizedPosition + finalizedOffset;
-
-		if (PixelShader.empty())
-		{
-			UiRenderer::DrawTexturedRect(pos, finalizedSize, rotation, pivot, tex->getHandle(), GetFinalColor());
-		}
-		else
-		{
-			UiRenderer::DrawTexturedRectShader(pos, finalizedSize, rotation, pivot, tex->getHandle(), GetFinalColor(), PixelShader);
-		}
-
-		UiElement::Draw();
-	}
-
+        UiElement::Draw();
+    }
 };

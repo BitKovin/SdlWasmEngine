@@ -633,11 +633,13 @@
     <ClInclude Include="UI\UiCanvas.hpp" />
     <ClInclude Include="UI\UiContentBox.hpp" />
     <ClInclude Include="UI\UiCustomShaderImage.hpp" />
+    <ClInclude Include="UI\UiDropdown.hpp" />
     <ClInclude Include="UI\UiElement.h" />
     <ClInclude Include="UI\UiHorizontalBox.hpp" />
     <ClInclude Include="UI\UiImage.hpp" />
     <ClInclude Include="UI\UiManager.h" />
     <ClInclude Include="UI\UiRenderer.h" />
+    <ClInclude Include="UI\UiScrollRegion.hpp" />
     <ClInclude Include="UI\UiText.hpp" />
     <ClInclude Include="UI\UiVerticalBox.hpp" />
     <ClInclude Include="UI\UiViewport.hpp" />

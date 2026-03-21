@@ -5,6 +5,8 @@
 
 #include "ScoreIndicator.hpp"
 
+#include <UI/UiDropdown.hpp>
+
 PlayerHud::PlayerHud()
 {
 }
@@ -63,6 +65,14 @@ void PlayerHud::Init(Player* playerRef)
     hudCanvas->AddChild(useIndicator);
 
     hudCanvas->AddChild(std::make_shared<UiScoreIndicator>());
+
+    auto testDropdown = make_shared<UiDropdown>();
+
+    testDropdown->size = vec2(300,50);
+    testDropdown->SetOptions({"option1","option2", "option3", "option4", "option5", "option6", "option7", "option8", "option9", "option10" });
+
+    hudCanvas->AddChild(testDropdown);
+    testDropdown->position = vec2(200,200);
 
 }
 

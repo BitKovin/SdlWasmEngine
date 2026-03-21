@@ -202,6 +202,8 @@ void Input::StartEventsFrame()
 
     IsScrenTouched = false;
 
+    MouseScrollDelta = 0;
+
     for (auto& action : TouchActions)
     {
 
@@ -286,6 +288,11 @@ void Input::ReceiveSdlEvent(SDL_Event event)
         touchAction.position = vec2(event.tfinger.x, event.tfinger.y) * UiScreenSize;
         touchAction.delta = vec2(event.tfinger.dx, event.tfinger.dy) * UiScreenSize;
 
+    }
+    else if (event.type == SDL_MOUSEWHEEL) 
+    {
+
+        MouseScrollDelta += event.wheel.preciseY;
     }
 }
 

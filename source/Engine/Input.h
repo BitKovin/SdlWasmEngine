@@ -114,6 +114,8 @@ public:
     static std::vector<glm::vec2> MouseDeltas;
     static int MaxDeltas;
 
+    static inline float MouseScrollDelta = 0;
+
     // Input actions mapped by a string name
     static std::unordered_map<std::string, InputAction*> actions;
 
