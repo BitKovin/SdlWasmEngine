@@ -69,7 +69,6 @@ public:
         m_thumb->HitCheck = true;
         m_thumb->origin = vec2(0.f);
         m_thumb->pivot = vec2(0.f);
-        m_thumb->DisableFocus = true;
         UiElement::AddChild(m_thumb);
     }
 
@@ -113,6 +112,11 @@ public:
     // ── Update ────────────────────────────────────────────────────────────────
     void Update() override
     {
+        // Measure before layout — GetSize() needs no positional data so it's
+        // always current-frame accurate. This eliminates the 1-frame delay
+        // that occurs when measuring from bottomRight after UiElement::Update().
+        MeasureContentHeight();
+
         const float viewH = size.y;
         const float contentW = size.x - ScrollBarWidth;
         const float contentH = m_contentHeight;
@@ -162,8 +166,6 @@ public:
         m_thumb->position = vec2(contentW, thumbY);
 
         UiElement::Update();
-
-        MeasureContentHeight();
     }
 
     // ── Draw ──────────────────────────────────────────────────────────────────
@@ -300,10 +302,11 @@ private:
     {
         if (m_content->children.empty()) { m_contentHeight = 0.f; return; }
 
-        float maxBottom = -FLT_MAX;
+        float h = 0.f;
         for (const auto& child : m_content->children)
-            maxBottom = std::max(maxBottom, child->bottomRight.y);
+            h += child->GetSize().y + ContentDistance;
 
-        m_contentHeight = maxBottom - m_content->topLeft.y;
+        // Remove the trailing gap added after the last item.
+        m_contentHeight = h - ContentDistance;
     }
 };

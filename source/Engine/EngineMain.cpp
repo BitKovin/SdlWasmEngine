@@ -437,10 +437,11 @@ void EngineMain::MainLoop()
 
     Input::Update();
 
+    UiNavigation::Update(&Viewport);
 
     Viewport.Update();
 
-    UiNavigation::Update(&Viewport);
+    UiNavigation::LateUpdate();
 
     Viewport.UpdateChildrenOffsetRecursive();
     Viewport.FinalizeChildren();

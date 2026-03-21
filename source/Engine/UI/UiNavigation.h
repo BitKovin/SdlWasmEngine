@@ -100,6 +100,12 @@ public:
         }
     }
 
+    static void LateUpdate()
+    {
+        if (Focused && (!Focused->IsVisible() || !Focused->HitCheck || Focused->DisableFocus))
+            SetFocus(nullptr);
+    }
+
 private:
     static inline UiElement* s_root = nullptr;
 

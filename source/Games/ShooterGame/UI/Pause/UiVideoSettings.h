@@ -52,10 +52,26 @@ public:
 		resolutions->SetSelectedIndex(selectedIndex);
 		resolutions->size = vec2(400,70);
 		resolutions->onSelectionChanged = UiVideoSettings::UpdateResolution;
-		resolutionsHolder = GetSettingRow("resolution", resolutions);
+		resolutionsHolder = GetSettingRow("Resolution", resolutions);
+
+		windowMode = std::make_shared<UiDropdown>();
+		windowMode->SetOptions({"windowed","fullscreen", "borderless"});
+
+		int windowOption = 0;
+		Uint32 flags = SDL_GetWindowFlags(EngineMain::MainInstance->Window);
+		if (flags & SDL_WINDOW_FULLSCREEN_DESKTOP)
+			windowOption = 2;
+		else if (flags & SDL_WINDOW_FULLSCREEN)
+			windowOption = 1;
+
+		windowMode->SetSelectedIndex(windowOption);
+		windowMode->size = vec2(400, 70);
+		windowMode->onSelectionChanged = UiVideoSettings::UpdateWindowMode;
+		windowModeHolder = GetSettingRow("Window Mode", windowMode);
 
 
 		optionsBox->AddChild(resolutionsHolder);
+		optionsBox->AddChild(windowModeHolder);
 		optionsBox->AddChild(backButton);
 
 		AddChild(optionsBox);
@@ -89,6 +105,12 @@ private:
 
 	std::shared_ptr<UiDropdown> resolutions;
 	std::shared_ptr<UiHorizontalBox> resolutionsHolder;
+
+	std::shared_ptr<UiDropdown> windowMode;
+	std::shared_ptr<UiHorizontalBox> windowModeHolder;
+
+	std::shared_ptr<UiDropdown> aaMode;
+	std::shared_ptr<UiHorizontalBox> aaModeHolder;
 
 	std::shared_ptr<UiButton> backButton;
 
@@ -163,6 +185,25 @@ private:
 			// Windowed mode: just set the size
 			SDL_SetWindowSize(gWindow, width, height);
 		}
+	}
+
+	static inline void UpdateWindowMode(int index, const std::string& value)
+	{
+
+		if (index == 0)
+		{
+			SDL_SetWindowFullscreen(EngineMain::MainInstance->Window, 0);
+		}
+		else if(index == 2)
+		{
+			SDL_SetWindowFullscreen(EngineMain::MainInstance->Window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+		}
+		else
+		{
+			SDL_SetWindowFullscreen(EngineMain::MainInstance->Window, SDL_WINDOW_FULLSCREEN);
+		}
+
+
 	}
 
 };

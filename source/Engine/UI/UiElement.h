@@ -145,10 +145,12 @@ public:
 
 	void RemoveFromParent();
 
-protected:
-
     vec2 finalizedPosition = vec2(0);
     vec2 finalizedOffset = vec2(0);
     vec2 finalizedSize = vec2(0);
+
+protected:
+
+
 
 };

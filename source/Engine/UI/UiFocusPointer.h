@@ -59,6 +59,9 @@ public:
 
         visible = Input::LockCursor == false;
 
+        if (visible == false)
+            UiNavigation::ClearFocus();
+
         // Focused element's screen-space bounds were written by the tree's
         // own Update() which runs before this element (we're a sibling/child
         // of the viewport, updated after the main tree completes).
@@ -80,6 +83,14 @@ public:
         m_image->position = vec2(0.f);
 
         UiElement::Update();
+    }
+
+    void FinalizeChildren() override
+    {
+
+        Update();
+
+        UiElement::FinalizeChildren();
     }
 
 private:
