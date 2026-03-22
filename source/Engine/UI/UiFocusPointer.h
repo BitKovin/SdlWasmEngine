@@ -5,24 +5,23 @@
 #include "UiNavigation.h"
 
 // ---------------------------------------------------------------------------
-// UiFocusPointer
+// UiFocusPointer — purely visual indicator that tracks UiNavigation::Focused.
 //
-// A purely visual indicator that tracks UiNavigation::Focused.
-// Place it anywhere in the UI tree (typically as a direct child of the
-// viewport so its position is in screen space).
+// Positioning is fully transform-aware:
 //
-// Each frame it reads the focused element's screen-space topLeft/bottomRight,
-// then positions itself to the left of that element, vertically centred.
+//   1. The attachment point is the mid-point of the focused element's right
+//      edge in local space — (sz.x, sz.y * 0.5) — transformed through
+//      worldMatrix into screen space.
 //
-//   [pointer image]   [focused element                    ]
-//         <-- PointerOffset -->
+//   2. The offset direction is the element's own world-space X axis
+//      (worldMatrix column 0, normalized), so the pointer always moves
+//      away from the right edge regardless of rotation.
 //
-// Properties:
-//   ImagePath     — texture for the pointer image
-//   PointerSize   — size of the pointer image
-//   PointerOffset — gap between the right edge of the pointer and the
-//                   left edge of the focused element
-//   Color         — tint applied to the image
+//   3. The pointer's own rotation is set to match the focused element so
+//      it visually aligns with the edge rather than staying upright.
+//
+//   This means the pointer behaves correctly for any combination of
+//   translation, rotation, and parent rotations.
 // ---------------------------------------------------------------------------
 
 class UiFocusPointer : public UiElement
@@ -35,9 +34,7 @@ public:
 
     UiFocusPointer()
     {
-        // Not interactable — purely visual.
         HitCheck = false;
-        // Draw on top of everything else.
         useLateDraw = true;
 
         m_image = std::make_shared<UiImage>();
@@ -57,39 +54,59 @@ public:
             return;
         }
 
-        visible = Input::LockCursor == false;
+        visible = !Input::LockCursor;
 
-        if (visible == false)
+        if (!visible)
+        {
             UiNavigation::ClearFocus();
+            UiElement::Update();
+            return;
+        }
 
-        // Focused element's screen-space bounds were written by the tree's
-        // own Update() which runs before this element (we're a sibling/child
-        // of the viewport, updated after the main tree completes).
-        const vec2  drawTopLeft = focused->position + focused->offset;
-        const vec2  drawSize = focused->size;
-        const float drawCentreY = drawTopLeft.y + drawSize.y * 0.5f;
-        const float focusedRightX = drawTopLeft.x + drawSize.x;
+        const glm::mat3& m = focused->worldMatrix;
+        const vec2        sz = focused->GetSize();
 
-        // Position: right of focused element, vertically centred.
+        // ── 1. Attachment point ───────────────────────────────────────────────
+        // Mid-point of the focused element's right edge in its local space,
+        // transformed to screen space through the full world matrix.
+        const vec2 attachPoint = UiElement::TransformPoint(m, vec2(sz.x, sz.y * 0.5f));
+
+        // ── 2. World-space right direction ────────────────────────────────────
+        // Column 0 of the mat3 is the world-space X axis of the element.
+        // Normalize so any scale in the matrix doesn't affect the offset length.
+        const vec2  xAxis = vec2(m[0][0], m[0][1]);
+        const float axisLen = glm::length(xAxis);
+        const vec2  rightDir = (axisLen > 1e-6f) ? xAxis / axisLen : vec2(1.f, 0.f);
+
+        // The perpendicular (element's Y axis, pointing down in local space)
+        // is used to shift the pointer's top-left so the image centres
+        // vertically on the attachment point.
+        const vec2 downDir = vec2(-rightDir.y, rightDir.x);
+
+        // ── 3. Place and orient this element ──────────────────────────────────
         size = PointerSize;
-        position = vec2(
-            focusedRightX + PointerOffset,
-            drawCentreY - PointerSize.y * 0.5f + 0
-        );
+        // Start at the attachment point, step right by the gap, then step
+        // back half a pointer height along the perpendicular so the pointer
+        // image is vertically centred on the edge mid-point.
+        position = attachPoint
+            + rightDir * PointerOffset
+            - downDir * (PointerSize.y * 0.5f);
+
+        // Rotate the pointer to match the focused element's world orientation.
+        rotation = glm::degrees(std::atan2(rightDir.y, rightDir.x));
 
         m_image->ImagePath = ImagePath;
         m_image->color = Color;
         m_image->size = PointerSize;
         m_image->position = vec2(0.f);
+        m_image->rotation = 0.f;
 
         UiElement::Update();
     }
 
     void FinalizeChildren() override
     {
-
         Update();
-
         UiElement::FinalizeChildren();
     }
 

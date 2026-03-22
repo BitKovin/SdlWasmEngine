@@ -11,22 +11,21 @@
 //
 // SETUP
 //   Call UiNavigation::Update(root) once per frame AFTER the UI tree Update()
-//   so topLeft/bottomRight are valid for spatial resolution.
+//   so worldMatrix / topLeft / bottomRight are valid.
 //
 // INPUT ACTIONS
 //   ui_up  ui_down  ui_left  ui_right  ui_confirm  ui_cancel
 //
 // HOVER → FOCUS
 //   Any focusable element (HitCheck=true, visible=true, !DisableFocus) that
-//   has active TouchEvents (cursor over it) immediately becomes focused.
-//   This keeps mouse hover and keyboard focus on the same element.
+//   has active TouchEvents immediately becomes focused.
 //
 // FOCUS TRAP
-//   The last visible FocusTrap in a top-down tree search has priority,
-//   matching draw order so the topmost menu always wins.
+//   The last visible FocusTrap in a top-down tree search has priority.
 //
-// INTERACTABILITY
-//   HitCheck = true, visible = true, DisableFocus = false.
+// SPATIAL NAVIGATION
+//   Neighbour candidates are scored by their world-space centres, computed via
+//   element.worldMatrix so the layout correctly handles rotated subtrees.
 // ---------------------------------------------------------------------------
 
 class UiNavigation
@@ -35,7 +34,6 @@ public:
     static inline UiElement* Focused = nullptr;
 
     // ── Focus control ─────────────────────────────────────────────────────────
-
     static void SetFocus(UiElement* element)
     {
         if (Focused == element) return;
@@ -66,21 +64,15 @@ public:
     }
 
     // ── Per-frame update ──────────────────────────────────────────────────────
-
     static void Update(UiElement* root)
     {
         s_root = root;
 
-        // Drop focus if the element is no longer interactable.
         if (Focused && (!Focused->IsVisible() || !Focused->HitCheck || Focused->DisableFocus))
             SetFocus(nullptr);
 
-        // Hover → focus: if any focusable element has the cursor over it,
-        // focus it immediately. This is checked before keyboard input so
-        // confirm/cancel always act on the element the cursor is over.
         UpdateHoverFocus();
 
-        // Auto-focus: if still nothing focused, pick the first candidate.
         if (!Focused)
             FocusFirst(root);
 
@@ -95,8 +87,7 @@ public:
         if (Input::GetAction("ui_cancel")->Pressed())
         {
             UiElement* trap = GetActiveTrap(root);
-            if (trap)
-                trap->OnNavCancel();
+            if (trap) trap->OnNavCancel();
         }
     }
 
@@ -110,9 +101,6 @@ private:
     static inline UiElement* s_root = nullptr;
 
     // ── Hover → focus ─────────────────────────────────────────────────────────
-    // Walk all focusable candidates and set focus to the first one that has
-    // active touch events (cursor is over it). Only considers elements within
-    // the active trap scope, same as keyboard nav.
     static void UpdateHoverFocus()
     {
         std::vector<UiElement*> candidates;
@@ -129,28 +117,23 @@ private:
     }
 
     // ── Navigation ────────────────────────────────────────────────────────────
-
     static void Navigate(UiNavDir dir)
     {
         if (!Focused) return;
 
-        // 1. Give the focused element first refusal.
         if (Focused->OnNav(dir)) return;
 
-        // 2. Manual override — bypasses FocusTrap.
         if (UiElement* manual = GetManualOverride(Focused, dir))
         {
             SetFocus(manual);
             return;
         }
 
-        // 3. Spatial auto-resolution within the active trap (or globally).
         UiElement* neighbour = FindNeighbour(Focused, dir);
         if (neighbour) SetFocus(neighbour);
     }
 
     // ── Candidate collection ──────────────────────────────────────────────────
-
     static void Collect(std::vector<UiElement*>& out)
     {
         if (!s_root) return;
@@ -163,7 +146,7 @@ private:
     {
         for (auto& child : node->children)
         {
-            if (!child->IsVisible())      continue;
+            if (!child->IsVisible())  continue;
             if (child->DisableFocus)  continue;
             if (child->FocusTrap)     continue;
             if (child->HitCheck)      out.push_back(child.get());
@@ -175,7 +158,7 @@ private:
     {
         for (auto& child : trap->children)
         {
-            if (!child->IsVisible())      continue;
+            if (!child->IsVisible())  continue;
             if (child->DisableFocus)  continue;
             if (child->HitCheck)      out.push_back(child.get());
             if (!child->FocusTrap)    CollectInTrap(child.get(), out);
@@ -183,7 +166,6 @@ private:
     }
 
     // ── Spatial neighbour ─────────────────────────────────────────────────────
-
     static UiElement* FindNeighbour(UiElement* from, UiNavDir dir)
     {
         std::vector<UiElement*> candidates;
@@ -195,7 +177,7 @@ private:
         if (candidates.empty()) return nullptr;
 
         const vec2 fc = Center(from);
-        UiElement* best = nullptr;
+        UiElement* best      = nullptr;
         float      bestScore = FLT_MAX;
 
         for (UiElement* c : candidates)
@@ -204,16 +186,16 @@ private:
             const float dx = cc.x - fc.x;
             const float dy = cc.y - fc.y;
 
-            bool  valid = false;
-            float primary = 0.f;
+            bool  valid     = false;
+            float primary   = 0.f;
             float secondary = 0.f;
 
             switch (dir)
             {
             case UiNavDir::Up:    valid = dy < 0.f; primary = -dy; secondary = std::abs(dx); break;
-            case UiNavDir::Down:  valid = dy > 0.f; primary = dy; secondary = std::abs(dx); break;
+            case UiNavDir::Down:  valid = dy > 0.f; primary =  dy; secondary = std::abs(dx); break;
             case UiNavDir::Left:  valid = dx < 0.f; primary = -dx; secondary = std::abs(dy); break;
-            case UiNavDir::Right: valid = dx > 0.f; primary = dx; secondary = std::abs(dy); break;
+            case UiNavDir::Right: valid = dx > 0.f; primary =  dx; secondary = std::abs(dy); break;
             }
 
             if (!valid) continue;
@@ -226,7 +208,6 @@ private:
     }
 
     // ── Active trap ───────────────────────────────────────────────────────────
-
     static UiElement* GetActiveTrap(UiElement* root)
     {
         UiElement* last = nullptr;
@@ -245,7 +226,6 @@ private:
     }
 
     // ── Utilities ─────────────────────────────────────────────────────────────
-
     static UiElement* GetManualOverride(UiElement* el, UiNavDir dir)
     {
         std::weak_ptr<UiElement>* field = nullptr;
@@ -261,8 +241,10 @@ private:
         return (locked && locked->visible && locked->HitCheck) ? locked.get() : nullptr;
     }
 
+    // Returns the world-space centre of an element using its worldMatrix.
+    // This is accurate even when the element (or any of its ancestors) is rotated.
     static vec2 Center(UiElement* el)
     {
-        return (el->topLeft + el->bottomRight) * 0.5f;
+        return UiElement::TransformPoint(el->worldMatrix, el->GetSize() * 0.5f);
     }
 };

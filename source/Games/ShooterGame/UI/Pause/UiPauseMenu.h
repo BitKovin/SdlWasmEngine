@@ -38,6 +38,7 @@ public:
 		optionsBox->AddChild(settingsButton);
 		optionsBox->AddChild(menuButton);
 
+		optionsBox->rotation = 30;
 
 		AddChild(optionsBox);
 

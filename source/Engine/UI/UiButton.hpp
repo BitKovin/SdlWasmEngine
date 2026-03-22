@@ -15,21 +15,17 @@ private:
 public:
     std::string ImagePath = "GameData/texture/ui/white.png";
 
-    vec4 Color = vec4(.15f, 0.15f, 0.15f, 1);
-    vec4 HoverColor = vec4(.2f, 0.2f, 0.2f, 1);
+    vec4 Color      = vec4(.15f, 0.15f, 0.15f, 1);
+    vec4 HoverColor = vec4(.2f,  0.2f,  0.2f,  1);
 
     // Set externally to force hover visual (e.g. by a scroll region parent).
     bool IsHovered = false;
 
-    std::function<void()> onClick = nullptr;
+    std::function<void()> onClick      = nullptr;
+    std::function<void()> onNavConfirm = nullptr;  // override for confirm (see UiDropdown)
 
-    // Optional keyboard confirm override. If null, defaults to onClick.
-    // Assign when confirm should differ from click (e.g. UiDropdown header
-    // opens the panel on confirm rather than toggling it).
-    std::function<void()> onNavConfirm = nullptr;
-
-    bool OnlyTouch = false;
-    bool OnlyNotPaused = false;
+    bool OnlyTouch       = false;
+    bool OnlyNotPaused   = false;
 
     UiButton() { HitCheck = true; }
     ~UiButton() {}
@@ -43,11 +39,8 @@ public:
         for (const auto& touch : TouchEvents)
         {
             if (touch.id < 10 && OnlyTouch) continue;
-
             if (touch.released)
-            {
                 if (onClick) onClick();
-            }
         }
     }
 
@@ -73,15 +66,13 @@ public:
             }
         }
 
-        vec2 pos = finalizedPosition + finalizedOffset;
-
         const bool hovered = IsHovered || !TouchEvents.empty() || IsFocused;
-        const vec4 tint = hovered ? HoverColor : Color;
+        const vec4 tint    = hovered ? HoverColor : Color;
 
         if (PixelShader.empty())
-            UiRenderer::DrawTexturedRect(pos, finalizedSize, rotation, pivot, tex->getHandle(), tint * GetFinalColor());
+            UiRenderer::DrawTexturedRect(finalizedMatrix, finalizedSize, tex->getHandle(), tint * GetFinalColor());
         else
-            UiRenderer::DrawTexturedRectShader(pos, finalizedSize, rotation, pivot, tex->getHandle(), tint * GetFinalColor(), PixelShader);
+            UiRenderer::DrawTexturedRectShader(finalizedMatrix, finalizedSize, tex->getHandle(), tint * GetFinalColor(), PixelShader);
 
         UiElement::Draw();
     }
