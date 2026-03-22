@@ -111,18 +111,27 @@ struct FontAtlas {
         scale = stbtt_ScaleForPixelHeight(&fontInfo, height);
         stbtt_GetFontVMetrics(&fontInfo, &ascent, &descent, &lineGap);
 
-        // Initialise the CPU bitmap to fully transparent black
-        pixels.assign(static_cast<size_t>(ATLAS_W) * ATLAS_H * 4, 0u);
+        // White-transparent background: alpha=0 pixels are invisible but their
+        // RGB participates in bilinear filtering. Black here causes dark fringe
+        // artifacts where the sampler interpolates toward the empty background.
+        const size_t atlasPixels = static_cast<size_t>(ATLAS_W) * ATLAS_H;
+        pixels.resize(atlasPixels * 4);
+        for (size_t i = 0; i < atlasPixels; ++i)
+        {
+            pixels[i * 4 + 0] = 255u;
+            pixels[i * 4 + 1] = 255u;
+            pixels[i * 4 + 2] = 255u;
+            pixels[i * 4 + 3] = 0u;
+        }
 
-        // Create the GPU texture (data will be uploaded on first FlushToGPU)
+        // No mipmaps. bgfx default sampler = bilinear filtering + clamp.
         texture = bgfx::createTexture2D(
             static_cast<uint16_t>(ATLAS_W),
             static_cast<uint16_t>(ATLAS_H),
             false, 1,
             bgfx::TextureFormat::RGBA8,
-            // Linear filtering is the bgfx default (0); only _POINT variants exist as flags.
             BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP,
-            nullptr); // data supplied later via updateTexture2D
+            nullptr);
 
         textureDirty = false;
         return true;
@@ -224,21 +233,16 @@ struct FontAtlas {
         return true;
     }
 
-    // ── FlushToGPU ────────────────────────────────────────────────────────────
-    // Uploads the CPU atlas to the GPU texture. Called once per EndFrame if dirty.
-
     void FlushToGPU()
     {
         if (!textureDirty || !bgfx::isValid(texture))
             return;
 
         const uint32_t byteCount = static_cast<uint32_t>(ATLAS_W) * ATLAS_H * 4;
-        const bgfx::Memory* mem = bgfx::copy(pixels.data(), byteCount);
-        bgfx::updateTexture2D(texture, 0, 0,
-            0, 0,
+        bgfx::updateTexture2D(texture, 0, 0, 0, 0,
             static_cast<uint16_t>(ATLAS_W),
             static_cast<uint16_t>(ATLAS_H),
-            mem);
+            bgfx::copy(pixels.data(), byteCount));
         textureDirty = false;
     }
 
@@ -428,9 +432,6 @@ namespace UiRenderer {
         shader->SetUniform("u_Projection", uiProjection);
     }
 
-    // ── Shared model-matrix builders ──────────────────────────────────────────────
-
-    // Legacy path: build a mat4 from pos / size / rotation / pivot.
     static glm::mat4 BuildQuadModel(const glm::vec2& pos, const glm::vec2& size,
         float rotation, glm::vec2 pivot)
     {
@@ -444,50 +445,18 @@ namespace UiRenderer {
         return m;
     }
 
-    // Matrix path: convert a UiElement worldMatrix (mat3, local→screen) + size
-    // into the mat4 model that the vertex shader expects.
-    //
-    // The unit quad VB is in [0,1]², so we scale by `size` first, then lift
-    // the 2-D mat3 into a 4×4 mat4 (Z column/row = identity).
-    //
-    // GLM mat3/mat4 are column-major: m[col][row].
-    //   mat3 layout used by UiElement:
-    //     col 0 = x-axis  [cos, sin, 0]
-    //     col 1 = y-axis  [-sin, cos, 0]
-    //     col 2 = translation [tx, ty, 1]
-    static glm::mat4 BuildQuadModelFromMat3(const glm::mat3& transform,
-        const glm::vec2& size)
+    // GLM is column-major: m[col][row].
+    static glm::mat4 BuildQuadModelFromMat3(const glm::mat3& t, const glm::vec2& size)
     {
         glm::mat4 m(1.f);
-        // x-axis
-        m[0][0] = transform[0][0];
-        m[0][1] = transform[0][1];
-        // y-axis
-        m[1][0] = transform[1][0];
-        m[1][1] = transform[1][1];
-        // translation (mat3 col 2 → mat4 col 3)
-        m[3][0] = transform[2][0];
-        m[3][1] = transform[2][1];
-
-        // Pre-multiply by scale so [0,1]² → [0,size]
-        m = m * glm::scale(glm::mat4(1.f), glm::vec3(size, 1.f));
-        return m;
+        m[0][0] = t[0][0]; m[0][1] = t[0][1];
+        m[1][0] = t[1][0]; m[1][1] = t[1][1];
+        m[3][0] = t[2][0]; m[3][1] = t[2][1];
+        return m * glm::scale(glm::mat4(1.f), glm::vec3(size, 1.f));
     }
 
-
-    // ── Mask stack ────────────────────────────────────────────────────────────────
-    // Each entry stores the pre-built mat4 so both legacy and matrix paths share
-    // a single DrawStencilRect_Internal overload.
-
-    struct MaskEntry {
-        glm::mat4 model;  // ready-to-use model matrix for re-drawing on PopMask
-    };
-
+    struct MaskEntry { glm::mat4 model; };
     static std::vector<MaskEntry> s_maskStack;
-
-    // ── Internal: write a reference value into the stencil buffer for a rect ─────
-    // No colour or depth is written; always passes the depth test so the stencil
-    // op fires regardless of what the depth buffer contains.
 
     static void DrawStencilRect_Internal(const glm::mat4& model, uint8_t ref)
     {
@@ -874,8 +843,6 @@ namespace UiRenderer {
 // All subsequent draw calls will be clipped to this region until PopMask().
 // Masks nest: each level intersects with all outer masks.
 
-    // ── PushMask (legacy: pos + rotation + pivot) ─────────────────────────────────
-
     void PushMask(const glm::vec2& pos, const glm::vec2& size,
         float rotation, glm::vec2 pivot)
     {
@@ -885,8 +852,6 @@ namespace UiRenderer {
         DrawStencilRect_Internal(model, newDepth);
     }
 
-    // ── PushMask (matrix: worldMatrix + size) ─────────────────────────────────────
-
     void PushMask(const glm::mat3& transform, const glm::vec2& size)
     {
         const uint8_t   newDepth = static_cast<uint8_t>(s_maskStack.size() + 1);
@@ -895,69 +860,50 @@ namespace UiRenderer {
         DrawStencilRect_Internal(model, newDepth);
     }
 
-    // ── PopMask ───────────────────────────────────────────────────────────────────
-
     void PopMask()
     {
         if (s_maskStack.empty()) return;
-
         const MaskEntry& e = s_maskStack.back();
         const uint8_t    prevDepth = static_cast<uint8_t>(s_maskStack.size() - 1);
-
         DrawStencilRect_Internal(e.model, prevDepth);
         s_maskStack.pop_back();
     }
 
-    // ── ClearStencil ──────────────────────────────────────────────────────────────
-
     void ClearStencil()
     {
         s_maskStack.clear();
-
         float screenH = static_cast<float>(UiManager::GetScaledUiHeight());
         float screenW = screenH * Camera::AspectRatio;
         if (customViewport) {
             screenW = static_cast<float>(customViewportSize.x);
             screenH = static_cast<float>(customViewportSize.y);
         }
-
         DrawStencilRect_Internal(
             BuildQuadModel({ 0.f, 0.f }, { screenW, screenH }, 0.f, { 0.f, 0.f }), 0);
     }
 
-    // =========================================================================
-    // Matrix-based draw overloads
-    // =========================================================================
-    //
-    // Each overload converts the mat3 worldMatrix + size into a mat4 model via
-    // BuildQuadModelFromMat3, then delegates to the same shader / submit path
-    // as the legacy overloads.  No shader changes required.
+    // ── Matrix-based draw overloads ───────────────────────────────────────────
 
     void DrawTexturedRect(const glm::mat3& transform, const glm::vec2& size,
         bgfx::TextureHandle texture, const glm::vec4& color)
     {
         s_texturedShader->UseProgram();
         SetShaderProjection(s_texturedShader);
-
         s_texturedShader->SetUniform("u_Model", BuildQuadModelFromMat3(transform, size));
         s_texturedShader->SetUniform("u_Color", color);
         s_texturedShader->SetTexture("u_Texture", texture);
-
         SubmitQuad(s_texturedShader);
     }
 
     void DrawTexturedRectShader(const glm::mat3& transform, const glm::vec2& size,
-        bgfx::TextureHandle texture, const glm::vec4& color,
-        const string& shader)
+        bgfx::TextureHandle texture, const glm::vec4& color, const string& shader)
     {
         auto* sp = ShaderManager::GetShaderProgram("ui", shader);
         sp->UseProgram();
         SetShaderProjection(sp);
-
         sp->SetUniform("u_Model", BuildQuadModelFromMat3(transform, size));
         sp->SetUniform("u_Color", color);
         sp->SetTexture("u_Texture", texture);
-
         SubmitQuad(sp);
     }
 
@@ -970,14 +916,11 @@ namespace UiRenderer {
         auto* sp = ShaderManager::GetShaderProgram("vs_ui", shader);
         sp->UseProgram();
         SetShaderProjection(sp);
-
         sp->SetUniform("u_Model", BuildQuadModelFromMat3(transform, size));
         sp->SetUniform("u_Color", color);
-
         for (auto& [name, tex] : textures) sp->SetTexture(name, tex);
         for (auto& [name, scalar] : scalars)  sp->SetUniform(name, scalar);
         for (auto& [name, v4] : vec4s)    sp->SetUniform(name, v4);
-
         SubmitQuad(sp);
     }
 
@@ -986,25 +929,13 @@ namespace UiRenderer {
     {
         s_flatColorShader->UseProgram();
         SetShaderProjection(s_flatColorShader);
-
         s_flatColorShader->SetUniform("u_Model", BuildQuadModelFromMat3(transform, size));
         s_flatColorShader->SetUniform("u_Color", color);
-
         bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_PT_LINESTRIP | BGFX_STATE_BLEND_ALPHA);
-
         bgfx::setVertexBuffer(0, s_quadVB);
         s_flatColorShader->Submit(ViewIdManager::GetCurrentId());
     }
 
-    // DrawText (matrix overload)
-    //
-    // The glyph quads are built in normalized [0,1]² space (same as the legacy
-    // path) and then placed by BuildQuadModelFromMat3, which scales by the
-    // text-block pixel dimensions (scale * textW/H) encoded in the mat3.
-    //
-    // NOTE: the mat3 passed here should already encode the text element's
-    // full world transform (position + all ancestor rotations).  `scale` is
-    // the atlas-pixel → screen-pixel multiplier (fontSize / StaticFontSize).
     void DrawText(std::string text, FontHandle fontHandle,
         const glm::mat3& transform,
         const glm::vec4& color, const glm::vec2& scale,
@@ -1020,7 +951,7 @@ namespace UiRenderer {
             atlas = it->second;
         }
 
-        // ── Pass 1: ensure all glyphs ────────────────────────────────────────
+        // Pass 1: ensure all glyphs
         {
             const char* p = text.c_str();
             while (*p) {
@@ -1029,10 +960,9 @@ namespace UiRenderer {
             }
         }
 
-        // ── Pass 2: measure ───────────────────────────────────────────────────
+        // Pass 2: measure
         const float lineH = atlas->LineHeight();
         const float baseline = atlas->BaselineOff();
-
         float maxLineW = 0.f, lineW = 0.f;
         int   numLines = 1, numGlyphs = 0;
         {
@@ -1050,27 +980,24 @@ namespace UiRenderer {
                 const GlyphInfo& g = it->second;
                 if (prevCp != 0)
                     lineW += stbtt_GetCodepointKernAdvance(&atlas->fontInfo, prevCp, cp) * atlas->scale;
-                lineW += g.advanceX;
-                prevCp = cp;
+                lineW += g.advanceX; prevCp = cp;
                 if (!g.invisible) ++numGlyphs;
             }
             if (lineW > maxLineW) maxLineW = lineW;
         }
-
         if (maxLineW <= 0.f || numGlyphs == 0) return;
 
         const float textW = maxLineW;
         const float textH = static_cast<float>(numLines) * lineH;
 
-        // ── Pass 3: build TransientVertexBuffer ───────────────────────────────
+        // Pass 3: build TVB
         const uint32_t vertexCount = static_cast<uint32_t>(numGlyphs * 6);
         if (bgfx::getAvailTransientVertexBuffer(vertexCount, s_quadLayout) < vertexCount) {
-            std::cerr << "[UiRenderer] DrawText(mat3): not enough transient VB space\n";
-            return;
+            std::cerr << "[UiRenderer] DrawText(mat3): not enough transient VB\n";
+                return;
         }
         bgfx::TransientVertexBuffer tvb;
         bgfx::allocTransientVertexBuffer(&tvb, vertexCount, s_quadLayout);
-
         auto* v = reinterpret_cast<QuadVertex*>(tvb.data);
 
         float penX = 0.f, penY = 0.f;
@@ -1100,34 +1027,27 @@ namespace UiRenderer {
                 v[5] = { nx + nrw, ny,       g.u1, g.v0 };
                 v += 6;
             }
-            penX += g.advanceX;
-            prevCp = cp;
+            penX += g.advanceX; prevCp = cp;
         }
 
-        // ── Pass 4: submit ────────────────────────────────────────────────────
-        // The text block occupies [0, scale*textW] × [0, scale*textH] in screen
-        // space.  We encode that size into the model so the normalised glyph quads
-        // land at the correct pixel dimensions.
+        // Pass 4: submit — set state directly, never via BgfxStateManager
         const glm::vec2 drawSize(scale.x * textW, scale.y * textH);
-        const glm::mat4 model = BuildQuadModelFromMat3(transform, drawSize);
-
         Shader* sp = shader.empty()
             ? s_texturedShader
             : ShaderManager::GetShaderProgram("ui", shader);
-
         sp->UseProgram();
         SetShaderProjection(sp);
-        sp->SetUniform("u_Model", model);
+        sp->SetUniform("u_Model", BuildQuadModelFromMat3(transform, drawSize));
         sp->SetUniform("u_Color", color);
         sp->SetTexture("u_Texture", atlas->texture);
 
-        BgfxStateManager::Reset();
-        BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Always);
-        BgfxStateManager::SetBlend(BgfxStateManager::Blend::Alpha);
-        BgfxStateManager::Apply();
-
+        bgfx::setState(
+            BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A |
+            BGFX_STATE_DEPTH_TEST_ALWAYS |
+            BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA,
+                BGFX_STATE_BLEND_INV_SRC_ALPHA)
+        );
         ApplyStencilTest();
-
         bgfx::setVertexBuffer(0, &tvb);
         sp->Submit(ViewIdManager::GetCurrentId());
     }
