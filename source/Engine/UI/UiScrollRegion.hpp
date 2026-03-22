@@ -54,10 +54,13 @@ public:
         m_thumb->origin   = vec2(0.f);
         m_thumb->pivot    = vec2(0.f);
         UiElement::AddChild(m_thumb);
+
+        FocusPointerSide = UiNavDir::Left;
+
     }
 
     // ── Child redirection ─────────────────────────────────────────────────────
-    void AddChild(std::shared_ptr<UiElement> child) override   { m_content->UiElement::AddChild(child); }
+    void AddChild(std::shared_ptr<UiElement> child) override { m_content->UiElement::AddChild(child); child->FocusPointerSide = FocusPointerSide; }
     void RemoveChild(std::shared_ptr<UiElement> child) override { m_content->UiElement::RemoveChild(child); }
     void ClearChildren() override                               { m_content->UiElement::ClearChildren(); }
 

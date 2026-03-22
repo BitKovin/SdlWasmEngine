@@ -5,23 +5,27 @@
 #include "UiNavigation.h"
 
 // ---------------------------------------------------------------------------
-// UiFocusPointer — purely visual indicator that tracks UiNavigation::Focused.
+// UiFocusPointer
 //
-// Positioning is fully transform-aware:
+// Key design decisions:
 //
-//   1. The attachment point is the mid-point of the focused element's right
-//      edge in local space — (sz.x, sz.y * 0.5) — transformed through
-//      worldMatrix into screen space.
+//   FocusPointer element:  rotation = 0 always.  Setting rotation here
+//     corrupts child offset calculations because localTL is computed in
+//     the rotated parent's local space.
 //
-//   2. The offset direction is the element's own world-space X axis
-//      (worldMatrix column 0, normalized), so the pointer always moves
-//      away from the right edge regardless of rotation.
+//   m_image pivot = (0.5, 0.5) always (center).  Using an off-center pivot
+//     for rotation causes the image to orbit around that point when rotated,
+//     which flips it to the wrong side of the attachment point.
+//     Positioning is handled exclusively through m_image->position.
 //
-//   3. The pointer's own rotation is set to match the focused element so
-//      it visually aligns with the edge rather than staying upright.
+//   m_image->position = offsetDir * PointerOffset in FocusPointer local
+//     space.  Because FocusPointer has rotation=0, its local space is
+//     screen-aligned, so offsetDir (which is in screen space) can be used
+//     directly.
 //
-//   This means the pointer behaves correctly for any combination of
-//   translation, rotation, and parent rotations.
+//   imageAngle = atan2(...) + 180°.  The +180° is required because atan2
+//     gives the angle of the axis vector, but the pointer image asset faces
+//     in the opposite convention.
 // ---------------------------------------------------------------------------
 
 class UiFocusPointer : public UiElement
@@ -30,7 +34,7 @@ public:
     std::string ImagePath = "GameData/textures/ui/white.png";
     vec2        PointerSize = vec2(20.f, 20.f);
     float       PointerOffset = 8.f;
-    vec4        Color = vec4(1.f);
+    vec4        Color = vec4(1.f, 1.f, 1.f, 1.f);
 
     UiFocusPointer()
     {
@@ -38,8 +42,8 @@ public:
         useLateDraw = true;
 
         m_image = std::make_shared<UiImage>();
-        m_image->origin = vec2(0.f);
-        m_image->pivot = vec2(0.f);
+        m_image->origin = vec2(0.f, 0.f);
+        m_image->pivot = vec2(0.5f, 0.5f);   // center pivot — never changes
         UiElement::AddChild(m_image);
     }
 
@@ -66,40 +70,71 @@ public:
         const glm::mat3& m = focused->worldMatrix;
         const vec2        sz = focused->GetSize();
 
-        // ── 1. Attachment point ───────────────────────────────────────────────
-        // Mid-point of the focused element's right edge in its local space,
-        // transformed to screen space through the full world matrix.
-        const vec2 attachPoint = UiElement::TransformPoint(m, vec2(sz.x, sz.y * 0.5f));
-
-        // ── 2. World-space right direction ────────────────────────────────────
-        // Column 0 of the mat3 is the world-space X axis of the element.
-        // Normalize so any scale in the matrix doesn't affect the offset length.
+        // World-space axes of the focused element (normalized).
         const vec2  xAxis = vec2(m[0][0], m[0][1]);
-        const float axisLen = glm::length(xAxis);
-        const vec2  rightDir = (axisLen > 1e-6f) ? xAxis / axisLen : vec2(1.f, 0.f);
+        const float xLen = glm::length(xAxis);
+        const vec2  rightDir = (xLen > 1e-6f) ? xAxis / xLen : vec2(1.f, 0.f);
+        // 90° CW from rightDir = element's local down axis in screen space
+        const vec2  downDir = vec2(-rightDir.y, rightDir.x);
 
-        // The perpendicular (element's Y axis, pointing down in local space)
-        // is used to shift the pointer's top-left so the image centres
-        // vertically on the attachment point.
-        const vec2 downDir = vec2(-rightDir.y, rightDir.x);
+        vec2  localAttach = vec2(0.f, 0.f);
+        vec2  offsetDir = vec2(0.f, 0.f);
+        float imageAngle = 0.f;
 
-        // ── 3. Place and orient this element ──────────────────────────────────
+        switch (focused->FocusPointerSide)
+        {
+        default:
+        case UiNavDir::Right:
+            localAttach = vec2(sz.x, sz.y * 0.5f);
+            offsetDir = rightDir;
+            imageAngle = glm::degrees(std::atan2(rightDir.y, rightDir.x)) + 180.f;
+            break;
+
+        case UiNavDir::Left:
+            localAttach = vec2(0.f, sz.y * 0.5f);
+            offsetDir = -rightDir;
+            imageAngle = glm::degrees(std::atan2(-rightDir.y, -rightDir.x)) + 180.f;
+            break;
+
+        case UiNavDir::Up:
+            localAttach = vec2(sz.x * 0.5f, 0.f);
+            offsetDir = -downDir;
+            imageAngle = glm::degrees(std::atan2(-downDir.y, -downDir.x)) + 180.f;
+            break;
+
+        case UiNavDir::Down:
+            localAttach = vec2(sz.x * 0.5f, sz.y);
+            offsetDir = downDir;
+            imageAngle = glm::degrees(std::atan2(downDir.y, downDir.x)) + 180.f;
+            break;
+        }
+
+        imageAngle = MathHelper::NormalizeAngle(imageAngle);
+
+        if (imageAngle > 90)
+        {
+            imageAngle -= 180;
+        }
+        else if (imageAngle < -90)
+        {
+            imageAngle += 180;
+        }
+
+        // FocusPointer sits exactly at the attachment point with no rotation.
+        // The image is pushed away via its own position in local space.
+        // Because FocusPointer.rotation = 0, local space == screen-aligned
+        // space, so offsetDir (screen-space) is valid here directly.
+        const vec2 attachPoint = UiElement::TransformPoint(m, localAttach);
+
         size = PointerSize;
-        // Start at the attachment point, step right by the gap, then step
-        // back half a pointer height along the perpendicular so the pointer
-        // image is vertically centred on the edge mid-point.
-        position = attachPoint
-            + rightDir * PointerOffset
-            - downDir * (PointerSize.y * 0.5f);
-
-        // Rotate the pointer to match the focused element's world orientation.
-        rotation = glm::degrees(std::atan2(rightDir.y, rightDir.x));
+        position = attachPoint;
+        rotation = 0.f;
 
         m_image->ImagePath = ImagePath;
         m_image->color = Color;
         m_image->size = PointerSize;
-        m_image->position = vec2(0.f);
-        m_image->rotation = 0.f;
+        m_image->position = offsetDir * PointerOffset + m_image->size*0.5f * offsetDir;  // gap from attachment
+        m_image->rotation = imageAngle;
 
         UiElement::Update();
     }

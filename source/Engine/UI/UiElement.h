@@ -84,6 +84,8 @@ public:
 
     bool IsFocused = false;
 
+    UiNavDir FocusPointerSide = UiNavDir::Right;
+
     // ── Nav callbacks ─────────────────────────────────────────────────────────
     virtual void OnFocused()   {}
     virtual void OnUnfocused() {}
