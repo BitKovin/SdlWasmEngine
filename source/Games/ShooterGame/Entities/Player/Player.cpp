@@ -1916,7 +1916,7 @@ void Player::UpdateBody()
 	{
 		//Camera::position = MathHelper::DecomposeMatrix(bodyMesh->GetBoneMatrixWorld("head")).Position + playerForward * 0.3f;
 
-		Camera::position = bodyMesh->Position + WorldOrientationManager::TransformDirectionToWorld(playerForward) * 0.3f + WorldOrientationManager::GetUpVector() * controller.height;
+		Camera::position = bodyMesh->Position + WorldOrientationManager::TransformDirectionToWorld(playerForward) * 0.3f + WorldOrientationManager::GetUpVector() * controller.GetCameraHeight();
 
 		float feetHeight = controller.GetSmoothPosition().y - controller.height / 2.0f;
 

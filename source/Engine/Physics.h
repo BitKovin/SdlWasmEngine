@@ -127,12 +127,12 @@ struct BodyData
 		
 	}
 
-	BodyType group;
-	BodyType mask;
+	BodyType group = BodyType::None;
+	BodyType mask = BodyType::None;
 
 	bool dynamicCollisionGroupOrMask = false;
 
-	Entity* OwnerEntity;
+	Entity* OwnerEntity = nullptr;
 
 	string hitboxName = "";
 

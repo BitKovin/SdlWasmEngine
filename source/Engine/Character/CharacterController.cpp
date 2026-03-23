@@ -273,7 +273,7 @@ vec3 CharacterController::GetPosition()
 {
 	if (body)
 	{
-		return FromPhysics(body->GetPosition()) - vec3(0, stepHeight*0.5f, 0);
+		return FromPhysics(body->GetPosition()) - vec3(0, stepHeight * 0.5f, 0);
 	}
 
 	return vec3();
@@ -289,7 +289,7 @@ void CharacterController::SetPosition(vec3 position)
 {
 	if (body)
 	{
-		Physics::SetBodyPosition(body, position + vec3(0, stepHeight*0.5f, 0));
+		Physics::SetBodyPosition(body, position + vec3(0, stepHeight * 0.5f, 0));
 	}
 }
 
@@ -350,29 +350,38 @@ void CharacterController::Crouch()
 	if (isCrouched) return;
 
 	vec3 oldVel = GetVelocity();
+
 	vec3 currentBodyPos = FromPhysics(body->GetPosition());
 	float oldHeight = height;
 	float newHeight = crouchHeight;
-	float delta = oldHeight - newHeight; // positive
+	float delta = oldHeight - newHeight;
 	vec3 deltaPos(0.0f);
+
 
 	if (onGround)
 	{
-		// Feet stay planted, head lowers — smooth the descent
 		deltaPos.y = -delta / 2.0f;
-		heightSmoothOffset += delta; // hold camera high, let it decay down
 	}
 	else
 	{
-		// In air: raise feet, camera stays fixed in world space
-		deltaPos.y = delta / 2.0f;
-		currentCameraHeight = cameraHeightCrouching; // snap — no smooth needed, head didn't move
+		float oldCam = cameraHeightStanding;
+		float newCam = cameraHeightCrouching;
+
+		deltaPos.y =
+			(newHeight - oldHeight) * 0.5f +
+			(oldCam - newCam);
+
+		currentCameraHeight = cameraHeightCrouching;
+
 	}
+
 
 	vec3 newBodyPos = currentBodyPos + deltaPos;
 
 	Destroy();
+
 	stepHeight = 0.25f;
+
 	body = Physics::CreateCharacterCylinderBody(owner, newBodyPos, radius, newHeight - stepHeight, 30);
 	body->GetMotionProperties()->SetLinearDamping(0);
 	Physics::GetBodyData(body)->dynamicCollisionGroupOrMask = true;
@@ -380,38 +389,48 @@ void CharacterController::Crouch()
 
 	height = newHeight;
 	isCrouched = true;
+
+
+
 	SetVelocity(oldVel);
 }
 
 void CharacterController::UnCrouch()
 {
 	if (!isCrouched) return;
+
 	if (!CanStandUp()) return;
 
 	vec3 oldVel = GetVelocity();
+
 	vec3 currentBodyPos = FromPhysics(body->GetPosition());
 	float oldHeight = height;
 	float newHeight = standingHeight;
-	float delta = newHeight - oldHeight; // positive
+	float delta = newHeight - oldHeight;
 	vec3 deltaPos(0.0f);
 
 	if (onGround)
 	{
-		// Feet stay planted, head rises — smooth the ascent
 		deltaPos.y = delta / 2.0f;
-		heightSmoothOffset -= delta; // hold camera low, let it decay up
 	}
 	else
 	{
-		// In air: lower feet, camera stays fixed in world space
-		deltaPos.y = -delta / 2.0f;
-		currentCameraHeight = cameraHeightStanding; // snap — head didn't move
+		float oldCam = cameraHeightCrouching;
+		float newCam = cameraHeightStanding;
+
+		deltaPos.y =
+			(newHeight - oldHeight) * 0.5f +
+			(oldCam - newCam);
+		currentCameraHeight = cameraHeightStanding;
 	}
+
 
 	vec3 newBodyPos = currentBodyPos + deltaPos;
 
 	Destroy();
+
 	stepHeight = 0.4f;
+
 	body = Physics::CreateCharacterCylinderBody(owner, newBodyPos, radius, newHeight - stepHeight, 30);
 	body->GetMotionProperties()->SetLinearDamping(0);
 	Physics::GetBodyData(body)->dynamicCollisionGroupOrMask = true;
@@ -419,6 +438,7 @@ void CharacterController::UnCrouch()
 
 	height = newHeight;
 	isCrouched = false;
+
 	SetVelocity(oldVel);
 }
 
@@ -444,7 +464,7 @@ bool CharacterController::CanStandUp()
 	vec3 newBodyPos = currentBodyPos + deltaPos;
 	float newPhysHalf = (newHeight - stepHeight * 2.0f) / 2.0f;
 	vec3 bottom = newBodyPos;
-	bottom -= vec3(0, 0.15f, 0); 
+	bottom -= vec3(0, 0.15f, 0);
 	vec3 top = newBodyPos + vec3(0.0f, newPhysHalf, 0.0f);
 
 	Physics::HitResult result = Physics::CylinderTrace(bottom, top, radius - 0.05f, 0.05f, BodyType::GroupCollisionTest, { body });
@@ -515,7 +535,7 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 			if (outCanStand)
 				standingOnBody = hitBody;
 
-			return; 
+			return;
 		}
 
 		// Sloped or missed — fall through to reduced NPC sample loop below

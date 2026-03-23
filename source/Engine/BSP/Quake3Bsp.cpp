@@ -694,7 +694,7 @@ bool CQuake3BSP::CheckLightProbeAcess(const glm::vec3& position, const glm::vec3
     if (FindClusterAtPosition(volPosition) < 0) return false;
 
     float maxDimension = std::max(std::max(lightVolGridSize.x, lightVolGridSize.x), lightVolGridSize.z);
-    return Physics::SphereTrace(position, volPosition, maxDimension / MAP_SCALE * 0.3f,
+    return Physics::LineTrace(position, volPosition,
         BodyType::WorldOpaque).hasHit == false;
 }
 
@@ -778,6 +778,16 @@ LightVolPointData CQuake3BSP::GetLightvolColorPoint(const glm::vec3& position, b
         valid101 = CheckLightProbeAcess(position / MAP_SCALE, getGridEnginePos(nx1, ny0, nz1) / MAP_SCALE);
         valid011 = CheckLightProbeAcess(position / MAP_SCALE, getGridEnginePos(nx0, ny1, nz1) / MAP_SCALE);
         valid111 = CheckLightProbeAcess(position / MAP_SCALE, getGridEnginePos(nx1, ny1, nz1) / MAP_SCALE);
+
+        if (valid000 || valid010 || valid100 || valid110 || valid001 || valid101 || valid011 || valid111)
+        {
+
+        }
+        else
+        {
+            return GetLightvolColorPoint(position, false);
+        }
+
     }
 
     struct LightData { glm::vec3 amb, dir_color, dir_vec; };
