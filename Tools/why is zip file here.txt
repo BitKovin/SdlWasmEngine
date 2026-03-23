@@ -1,0 +1,1 @@
+For some reason cloning repo caused net radiant custom to stop reading .obj models. Copying backup solved the issue. Maybe gitignore breaks something inside of built program without causing a crash????

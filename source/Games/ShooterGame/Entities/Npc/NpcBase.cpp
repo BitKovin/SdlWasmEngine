@@ -417,7 +417,7 @@ void NpcBase::AsyncUpdate()
 	if (controller)
 	{
 		controller->Update(Time::DeltaTimeF);
-		Position = controller->GetPosition();
+		Position = controller->GetSmoothPosition();
 	}
 
 

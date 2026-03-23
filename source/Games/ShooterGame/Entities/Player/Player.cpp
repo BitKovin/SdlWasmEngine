@@ -1545,6 +1545,9 @@ void Player::Update()
 	{
 		UpdateBikeMovement(input);
 	}
+
+	Position = controller.GetSmoothPosition();
+
 	bikeArmsMesh->Rotation = bikeMesh->Rotation;
 	bikeArmsMesh->Position = bikeMesh->Position;
 	bikeArmsMesh->PasteAnimationPose(bikeMesh->GetAnimationPose());
@@ -1903,7 +1906,7 @@ void Player::UpdateBody()
 	//poseT["thigh_r"] = translate(Camera::position + Camera::Forward()) * scale(vec3(0.01f));
 	//bodyMesh->ApplyWorldSpaceBoneTransforms(poseT);
 
-	Camera::ApplyCameraShake(Time::DeltaTimeF);
+
 
 	if (InThirdPerson())
 	{
@@ -1911,11 +1914,11 @@ void Player::UpdateBody()
 	}
 	else
 	{
-		Camera::position = MathHelper::DecomposeMatrix(bodyMesh->GetBoneMatrixWorld("head")).Position + playerForward * 0.3f;
-
-		float feetHeight = controller.GetSmoothPosition().y - controller.height / 2.0f;
+		//Camera::position = MathHelper::DecomposeMatrix(bodyMesh->GetBoneMatrixWorld("head")).Position + playerForward * 0.3f;
 
 		Camera::position = bodyMesh->Position + WorldOrientationManager::TransformDirectionToWorld(playerForward) * 0.3f + WorldOrientationManager::GetUpVector() * controller.height;
+
+		float feetHeight = controller.GetSmoothPosition().y - controller.height / 2.0f;
 
 		vec3 feetPos = controller.GetSmoothPosition();
 		feetPos.y = feetHeight;
@@ -1930,7 +1933,7 @@ void Player::UpdateBody()
 
 	}
 
-
+	Camera::ApplyCameraShake(Time::DeltaTimeF);
 
 	observationTarget->position = Position + vec3(0, 0.65f, 0);
 
