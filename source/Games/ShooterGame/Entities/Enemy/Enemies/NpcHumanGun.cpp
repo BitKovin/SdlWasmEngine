@@ -9,7 +9,7 @@ REGISTER_ENTITY(NpcHumanGun, "npc_human_gun")
 NpcHumanGun::NpcHumanGun()
 {
     ClassName = "npc_human_gun";
-    maxSpeed = 5.3f;
+    maxSpeed = 2.5f;
     mesh->Scale = vec3(1.15f);
 }
 
@@ -36,6 +36,7 @@ void NpcHumanGun::Attack()
     if (AttackDirectionCheck(bonePos, predictedTargetPosition, targetRef) == false)
     {
         inAttackDelay.AddDelay(0.5f);
+        return;
     }
 
     const float bulletSpeed = 50;
@@ -74,6 +75,7 @@ void NpcHumanGun::Attack()
     PlaySoundEffect("event:/NPC/Enemy1/Enemy1AttackStart");
 
     inAttackDelay.AddDelay(ModifyAnimationSpeed(0.5f));
+    afterAttackDelay.AddDelay(4);
     mesh->PlayAnimation("fire");
     mesh->PullRootMotion();
 }
@@ -178,14 +180,14 @@ void NpcHumanGun::AsyncUpdate()
 
     bool hasLineOfSight = LineOfSightCheck(target);
 
-    float attackDistance = 16;
+    float attackDistance = 34;
 
     if (distance2(target->Position, Position) > attackDistance * attackDistance)
     {
         hasLineOfSight = false;
     }
 
-    if (hasLineOfSight)
+    if (hasLineOfSight || afterAttackDelay.Wait())
     {
         if (stopMovingDelay.Wait() == false)
         {
@@ -251,7 +253,7 @@ void NpcHumanGun::AsyncUpdate()
 
     speed = glm::clamp(speed, 0.0f, ModifyMovementSpeed(maxSpeed));
 
-    if ((hasLineOfSight || inAttackDelay.Wait()) && stopMovingDelay.Wait() == false)
+    if ((hasLineOfSight || afterAttackDelay.Wait()) && stopMovingDelay.Wait() == false)
     {
         speed = 0;
     }

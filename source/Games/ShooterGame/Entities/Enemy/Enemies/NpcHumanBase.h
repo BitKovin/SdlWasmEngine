@@ -46,6 +46,7 @@ protected:
     AnimationState animationStateSaveData;
 
     Delay inAttackDelay;
+    Delay afterAttackDelay;
 
     bool stuned = false;
 
