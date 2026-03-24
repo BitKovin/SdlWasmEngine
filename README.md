@@ -9,7 +9,7 @@ Core improvements of this version:
 3. Behavior Tree editor
 4. Emscripten compilation support with experimental multi-threading
 5. Improved animation blending and playback
-6. Native OpenGL ES 3.0 and OpenGL 4+ renderer (to support both desktop and browser with possibility of mobile using Angle)
+6. BGFX renderer with support of all backends.
 7. Mobile control
 
 This repository also contains modified versions of used libraries and tools.
