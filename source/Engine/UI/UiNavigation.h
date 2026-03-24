@@ -17,8 +17,9 @@
 //   ui_up  ui_down  ui_left  ui_right  ui_confirm  ui_cancel
 //
 // HOVER → FOCUS
-//   Any focusable element (HitCheck=true, visible=true, !DisableFocus) that
-//   has active TouchEvents immediately becomes focused.
+//   Any focusable element (HitCheck=true, visible=true) that has active
+//   TouchEvents immediately becomes focused. DisableFocus is ignored here —
+//   it only restricts keyboard/gamepad navigation.
 //
 // FOCUS TRAP
 //   The last visible FocusTrap in a top-down tree search has priority.
@@ -101,10 +102,12 @@ private:
     static inline UiElement* s_root = nullptr;
 
     // ── Hover → focus ─────────────────────────────────────────────────────────
+    // DisableFocus is intentionally ignored — it only gates navigation controls,
+    // not pointer-driven focus transfer.
     static void UpdateHoverFocus()
     {
         std::vector<UiElement*> candidates;
-        Collect(candidates);
+        CollectHover(candidates);
 
         for (UiElement* el : candidates)
         {
@@ -133,7 +136,7 @@ private:
         if (neighbour) SetFocus(neighbour);
     }
 
-    // ── Candidate collection ──────────────────────────────────────────────────
+    // ── Navigation candidate collection (respects DisableFocus) ──────────────
     static void Collect(std::vector<UiElement*>& out)
     {
         if (!s_root) return;
@@ -165,6 +168,36 @@ private:
         }
     }
 
+    // ── Hover candidate collection (ignores DisableFocus) ────────────────────
+    static void CollectHover(std::vector<UiElement*>& out)
+    {
+        if (!s_root) return;
+        UiElement* trap = GetActiveTrap(s_root);
+        if (trap) CollectHoverInTrap(trap, out);
+        else      CollectHoverGlobal(s_root, out);
+    }
+
+    static void CollectHoverGlobal(UiElement* node, std::vector<UiElement*>& out)
+    {
+        for (auto& child : node->children)
+        {
+            if (!child->IsVisible()) continue;
+            if (child->FocusTrap)    continue;
+            if (child->HitCheck)     out.push_back(child.get());
+            CollectHoverGlobal(child.get(), out);
+        }
+    }
+
+    static void CollectHoverInTrap(UiElement* trap, std::vector<UiElement*>& out)
+    {
+        for (auto& child : trap->children)
+        {
+            if (!child->IsVisible()) continue;
+            if (child->HitCheck)     out.push_back(child.get());
+            if (!child->FocusTrap)   CollectHoverInTrap(child.get(), out);
+        }
+    }
+
     // ── Spatial neighbour ─────────────────────────────────────────────────────
     static UiElement* FindNeighbour(UiElement* from, UiNavDir dir)
     {
@@ -177,7 +210,7 @@ private:
         if (candidates.empty()) return nullptr;
 
         const vec2 fc = Center(from);
-        UiElement* best      = nullptr;
+        UiElement* best = nullptr;
         float      bestScore = FLT_MAX;
 
         for (UiElement* c : candidates)
@@ -186,16 +219,16 @@ private:
             const float dx = cc.x - fc.x;
             const float dy = cc.y - fc.y;
 
-            bool  valid     = false;
-            float primary   = 0.f;
+            bool  valid = false;
+            float primary = 0.f;
             float secondary = 0.f;
 
             switch (dir)
             {
             case UiNavDir::Up:    valid = dy < 0.f; primary = -dy; secondary = std::abs(dx); break;
-            case UiNavDir::Down:  valid = dy > 0.f; primary =  dy; secondary = std::abs(dx); break;
+            case UiNavDir::Down:  valid = dy > 0.f; primary = dy; secondary = std::abs(dx); break;
             case UiNavDir::Left:  valid = dx < 0.f; primary = -dx; secondary = std::abs(dy); break;
-            case UiNavDir::Right: valid = dx > 0.f; primary =  dx; secondary = std::abs(dy); break;
+            case UiNavDir::Right: valid = dx > 0.f; primary = dx; secondary = std::abs(dy); break;
             }
 
             if (!valid) continue;

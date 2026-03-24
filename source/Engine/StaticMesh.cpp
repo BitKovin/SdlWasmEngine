@@ -64,7 +64,7 @@ bool StaticMesh::IsInFrustrum(Frustum frustrum)
 BoundingBox StaticMesh::GetBoundingBox()
 {
 
-	return model->boundingBox.Transform(finalizedWorld);
+	return model->boundingBox.Transform(GetWorldMatrix());
 
 }
 
@@ -84,6 +84,7 @@ bool StaticMesh::IsCameraVisible()
 
 		vec3 min = bounds.Min;
 		vec3 max = bounds.Max;
+
 
 		vec3 points[8] =
 		{
