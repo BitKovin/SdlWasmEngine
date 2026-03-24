@@ -91,6 +91,13 @@ void WeaponFirearm::LoadAssets()
 	viewmodelLeft->Visible = false;
 	armsLeft->Visible = false;
 	akimboPrev = false;
+
+	viewmodel->GravityAlignedRotation = true;
+	arms->GravityAlignedRotation = true;
+	viewmodelLeft->GravityAlignedRotation = true;
+	armsLeft->GravityAlignedRotation = true;
+	thirdPersonModel->GravityAlignedRotation = true;
+
 }
 
 void WeaponFirearm::SetAkimbo(bool enabled)
@@ -231,7 +238,7 @@ void WeaponFirearm::PerformAttack()
 	// muzzle selection
 	mat4 boneMat = (akimbo && fireLeft ? viewmodelLeft : viewmodel)->GetBoneMatrixWorld(params.boneMuzzle);
 	vec3 startLoc = MathHelper::DecomposeMatrix(boneMat).Position;
-	startLoc = mix(startLoc, Camera::position, params.muzzleMix) - Camera::Forward() * params.muzzleForwardOffset;
+	startLoc = mix(startLoc, Camera::position, params.muzzleMix) - MathHelper::GetForwardVector(Camera::finalizedRotation) * params.muzzleForwardOffset;
 
 	WeaponFireFlash::CreateAt(startLoc);
 
@@ -265,7 +272,7 @@ void WeaponFirearm::FireSingleBullet(const vec3& startLoc, const vec4& gridOffse
 
 	vec3 offset;
 	if (params.spreadType == "grid")
-		offset = MathHelper::GetRotationMatrix(Rotation) * gridOffset;
+		offset = MathHelper::GetRotationMatrix(Camera::finalizedRotation) * gridOffset;
 	else
 		offset = RandomHelper::RandomPosition(1) * Spread;
 
@@ -273,9 +280,9 @@ void WeaponFirearm::FireSingleBullet(const vec3& startLoc, const vec4& gridOffse
 	bool firstperson = owner != nullptr && owner->InThirdPerson() == false;
 
 	if (firstperson)
-		endLoc = Position + MathHelper::GetForwardVector(Rotation) * params.range + offset;
+		endLoc = Position + MathHelper::GetForwardVector(Camera::finalizedRotation) * params.range + offset;
 	else {
-		endLoc = Camera::position + MathHelper::GetForwardVector(Rotation) * (params.range + 3);
+		endLoc = Camera::position + MathHelper::GetForwardVector(Camera::finalizedRotation) * (params.range + 3);
 		auto hit = Physics::LineTrace(Camera::finalizedPosition, endLoc, BodyType::GroupHitTest, {}, { owner });
 		if (hit.hasHit) endLoc = hit.shapePosition;
 		endLoc += offset * hit.fraction;

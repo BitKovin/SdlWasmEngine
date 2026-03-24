@@ -4,486 +4,206 @@
 #include <vector>
 #include <unordered_map>
 #include <algorithm>
-#include "Logger.hpp"
-#include "gl.h"
-#include "glm.h"
-#include "utility/hashed_string.hpp"
 
+#include <bgfx/bgfx.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
+#include "utility/hashed_string.hpp"
 #include "Texture.hpp"
+#include "Logger.hpp"
 #include "FileSystem/FileSystem.h"
 #include "malloc_override.h"
-#include "Helpers/StringHelper.h"
-using namespace std;
 
-enum ShaderType
+// ---------------------------------------------------------------------------
+// UniformMeta — per-uniform bookkeeping
+// ---------------------------------------------------------------------------
+struct UniformMeta
 {
-    VertexShader,
-    PixelShader
+    enum class Kind { Vec4, Mat3, Mat4, Sampler };
+
+    Kind              kind = Kind::Vec4;
+    bgfx::UniformHandle handle = BGFX_INVALID_HANDLE;
+    uint8_t           samplerSlot = 0;
+    uint16_t          num = 1;   // array element count
 };
 
-// Forward declare so Shader can reference ShaderProgram and vice-versa
-class ShaderProgram;
-
-// Struct for storing OpenGL attribute information.
-struct GLAttribute
+// ---------------------------------------------------------------------------
+// UniformEntry — buffered uniform value (packed float data, bgfx-ready layout)
+// ---------------------------------------------------------------------------
+struct UniformEntry
 {
-    std::string name;  // Attribute name.
-    GLenum type = -1;       // Data type (e.g., GL_FLOAT, GL_INT).
-    GLint size = -1;        // Size (number of components, or array size).
-    GLint location = -1;    // Location within the shader program.
+    std::vector<float> data; // packed floats in bgfx-ready layout
+    uint16_t           num = 1; // array element count passed to bgfx::setUniform
 };
+
+// ---------------------------------------------------------------------------
+// TextureEntry — buffered texture binding
+// ---------------------------------------------------------------------------
+struct TextureEntry
+{
+    uint8_t             slot = 0;
+    bgfx::UniformHandle samplerHandle = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle texture = BGFX_INVALID_HANDLE;
+};
+
 
 class Shader
 {
 public:
-    Shader() {}
+    std::string name;
+    bool        AllowMissingUniforms = true;
 
-    GLuint shaderPointer = 0;
-    std::string shaderCode = "";
-    std::string filePath = "";
-    ShaderType shaderType = ShaderType::PixelShader;
-
-    // List of programs that currently have this shader attached (registered via ShaderProgram::AttachShader).
-    std::vector<ShaderProgram*> attachedPrograms;
-
-    // Creates a Shader object from source code.
-    static Shader* FromCode(const char* code, ShaderType shaderType, bool autoCompile = true)
-    {
-        Shader* output = new Shader();
-        GLuint glShaderType = (shaderType == VertexShader) ? GL_VERTEX_SHADER : GL_FRAGMENT_SHADER;
-
-        output->shaderCode = code;
-        const char* cCode = code;
-
-        output->shaderPointer = glCreateShader(glShaderType);
-
-        output->shaderType = shaderType;
-
-        glShaderSource(output->shaderPointer, 1, &cCode, NULL);
-
-        if (autoCompile)
-            output->CompileShader();
-
-        return output;
-    }
-
-    static Shader* FromFile(const char* filePath, ShaderType shaderType, bool autoCompile = true)
-    {
-
-        std::string pathStd = std::string(filePath);
-
-		Logger::Log("Loading shader from file: " + pathStd);
-
-        auto optimizedDir = pathStd;// StringHelper::Replace(pathStd, "GameData/shaders/", "GameData/shaders/.optimized/");
-
-		Logger::Log("Loading optimized shader from file: " + std::string(optimizedDir));
-
-        Shader* output = FromCode(FileSystemEngine::ReadFile(optimizedDir).c_str(), shaderType, autoCompile);
-        output->filePath = filePath;
-
-        return output;
-    }
-
-    // Compiles the shader and logs compile errors if any.
-    void CompileShader()
-    {
-        glCompileShader(shaderPointer);
-
-        GLint success = 0;
-        glGetShaderiv(shaderPointer, GL_COMPILE_STATUS, &success);
-        if (success == GL_FALSE)
-        {
-            GLint logLength = 0;
-            glGetShaderiv(shaderPointer, GL_INFO_LOG_LENGTH, &logLength);
-            std::string infoLog(logLength, ' ');
-            glGetShaderInfoLog(shaderPointer, logLength, &logLength, &infoLog[0]);
-            Logger::Log(filePath);
-            Logger::Log("Shader compilation failed:\n" + infoLog);
-            Logger::Log(shaderCode);
-        }
-    }
-
-    // Register/unregister programs that use this shader
-    void RegisterProgram(ShaderProgram* prog)
-    {
-        if (std::find(attachedPrograms.begin(), attachedPrograms.end(), prog) == attachedPrograms.end())
-            attachedPrograms.push_back(prog);
-    }
-
-    void UnregisterProgram(ShaderProgram* prog)
-    {
-        auto it = std::find(attachedPrograms.begin(), attachedPrograms.end(), prog);
-        if (it != attachedPrograms.end())
-            attachedPrograms.erase(it);
-    }
-
-    // Hot reloads shader source (from file if filePath is set, otherwise uses stored shaderCode).
-    // Returns true if reload succeeded and programs were relinked, false if compilation or linking failed
-    // (in case of failure the old shader stays attached).
-    bool Reload();
-};
-
-class ShaderProgram
-{
-
-private:
-    std::unordered_map<hashed_string, GLuint> m_textureUnits;
-    GLuint m_currentUnit = 0;
-    GLuint m_maxTextureUnits = 16; // Will be initialized from GL
-
-
-
-public:
-    GLuint program;
-    std::vector<GLAttribute> attributes;  // Stores shader attributes.
-    std::unordered_map<hashed_string, GLint> uniformLocations; // Cache for uniform locations.
-
+    // uniform name -> asset path, populated from @texture annotations in .sh sources
     std::unordered_map<hashed_string, std::string> textureBindings;
 
-    // Keep track of Shader* that are attached to this program (so we can unregister on destruction).
-    std::vector<Shader*> attachedShaders;
+    // -----------------------------------------------------------------------
+    // Factory
+    // -----------------------------------------------------------------------
 
-    string name;
+    // Create from compiled binary base-names (no extension, no platform path).
+    // e.g. Shader::FromFiles("vs_mesh", "fs_mesh")
+    // Compiled binaries are resolved from: GameData/shaders/compiled/<platform>/<renderer>/
+    // Source files are resolved from:      GameData/shaders/source/
+    static Shader* FromFiles(const char* vsName, const char* fsName);
 
-    bool AllowMissingUniforms = true; // keep your original semantics (you had 'true' earlier)
+    ~Shader();
 
-    ShaderProgram() {
-        glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, (GLint*)&m_maxTextureUnits);
-        program = glCreateProgram();
-    }
+    // -----------------------------------------------------------------------
+    // Uniform setters — scalar / vector / matrix
+    // -----------------------------------------------------------------------
+    // Values are buffered and applied just before bgfx::submit() in Submit().
+    // bgfx maps everything float to Vec4 or Mat3/Mat4.
+    // Smaller types (float, vec2, vec3, mat2) are padded to fit.
 
-    ~ShaderProgram()
-    {
-        // unregister this program from attached shaders
-        for (auto* s : attachedShaders)
-        {
-            if (s) s->UnregisterProgram(this);
-        }
+    void SetUniform(const std::string& uname, int   value);
+    void SetUniform(const std::string& uname, bool  value);
+    void SetUniform(const std::string& uname, float value);
 
-        if (program != 0)
-            glDeleteProgram(program);
-    }
+    void SetUniform(const std::string& uname, const glm::vec2& value);
+    void SetUniform(const std::string& uname, const glm::vec3& value);
+    void SetUniform(const std::string& uname, const glm::vec4& value);
 
-    // Attaches a compiled shader to the program.
-    ShaderProgram* AttachShader(Shader* shader)
-    {
-        if (!shader) return this;
+    // mat2 is packed into a single Vec4 (4 floats)
+    void SetUniform(const std::string& uname, const glm::mat2& value);
+    // mat3 uses bgfx Mat3 uniform type (3 Vec4 rows)
+    void SetUniform(const std::string& uname, const glm::mat3& value);
+    // mat4 uses bgfx Mat4 uniform type
+    void SetUniform(const std::string& uname, const glm::mat4& value);
 
-        glAttachShader(program, shader->shaderPointer);
+    // -----------------------------------------------------------------------
+    // Uniform setters — arrays
+    // -----------------------------------------------------------------------
+    // Each float/vec2/vec3 element is padded into a Vec4 slot.
+    // mat4 arrays map directly to Mat4 arrays.
 
-        // remember locally
-        if (std::find(attachedShaders.begin(), attachedShaders.end(), shader) == attachedShaders.end())
-            attachedShaders.push_back(shader);
+    void SetUniform(const std::string& uname, const std::vector<float>& values);
+    void SetUniform(const std::string& uname, const std::vector<glm::vec2>& values);
+    void SetUniform(const std::string& uname, const std::vector<glm::vec3>& values);
+    void SetUniform(const std::string& uname, const std::vector<glm::vec4>& values);
+    void SetUniform(const std::string& uname, const std::vector<glm::mat2>& values);
+    void SetUniform(const std::string& uname, const std::vector<glm::mat3>& values);
+    void SetUniform(const std::string& uname, const std::vector<glm::mat4>& values);
 
-        // register this program with the shader so Shader::Reload can find all programs using it
-        shader->RegisterProgram(this);
+    // -----------------------------------------------------------------------
+    // Texture setters
+    // -----------------------------------------------------------------------
+    void SetTexture(const std::string& uname, bgfx::TextureHandle texture);
+    void SetTexture(const std::string& uname, int texture);
+    void SetTexture(const hashed_string& uname, Texture* texture);
+    void SetCubemapTexture(const std::string& uname, bgfx::TextureHandle texture);
 
-        return this;
-    }
+    // -----------------------------------------------------------------------
+    // Draw
+    // -----------------------------------------------------------------------
 
-    // Links the program.
-    ShaderProgram* LinkProgram()
-    {
-        glLinkProgram(program);
-
-        GLint success;
-        glGetProgramiv(program, GL_LINK_STATUS, &success);
-        if (success == GL_FALSE)
-        {
-            GLint logLength = 0;
-            glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logLength);
-            std::string infoLog(logLength, ' ');
-            glGetProgramInfoLog(program, logLength, &logLength, &infoLog[0]);
-            Logger::Log("Shader program linking failed:\n" + infoLog);
-        }
-
-        FillAttributes();
-        CacheUniformLocations();
-
-        textureBindings = ParseAllTextureBindings();
-
-        return this;
-    }
-
-    // Activates the program.
+    // Resolve @texture bindings, apply them, and prepare for submission.
+    // Call this once per draw call before Submit().
     void UseProgram();
 
-    // Fills the attributes vector by querying the linked program.
-    void FillAttributes()
-    {
-        attributes.clear();
-        GLint attributeCount = 0;
-        glGetProgramiv(program, GL_ACTIVE_ATTRIBUTES, &attributeCount);
+    // Flush all buffered uniforms and textures to bgfx, then submit the draw
+    // call to the given view. SetUniform / SetTexture values are re-applied
+    // every Submit() so they persist across frames without re-setting.
+    void Submit(uint16_t viewId) const;
 
-        char name[256];
-        for (int i = 0; i < attributeCount; i++)
-        {
-            GLsizei length = 0;
-            GLint size = 0;
-            GLenum type = 0;
-            glGetActiveAttrib(program, i, sizeof(name), &length, &size, &type, name);
-            GLint location = glGetAttribLocation(program, name);
+    // -----------------------------------------------------------------------
+    // Hot reload
+    // -----------------------------------------------------------------------
 
-            GLAttribute atribute;
+    // Destroys and recreates the program from disk.
+    // All previously set uniforms remain valid because handles are
+    // re-created with the same names during reflection.
+    // The uniform/texture buffers are preserved across reload so callers
+    // do not need to re-set values.
+    bool Reload();
 
-            atribute.name = name;
-            atribute.type = type;
-            atribute.size = size;
-            atribute.location = location;
+    // -----------------------------------------------------------------------
+    // Accessors
+    // -----------------------------------------------------------------------
+    bgfx::ProgramHandle GetProgram() const { return m_program; }
+    bool IsValid()                   const { return bgfx::isValid(m_program); }
 
-            attributes.push_back(atribute);
-        }
-    }
+    // -----------------------------------------------------------------------
+    // Texture-binding helpers (used by UseProgram / Reload)
+    // -----------------------------------------------------------------------
+    static std::unordered_map<hashed_string, std::string>
+        ParseTextureBindings(const std::string& sourceCode);
 
-    // Caches uniform locations to avoid redundant glGetUniformLocation calls.
-    void CacheUniformLocations()
-    {
-        uniformLocations.clear();
-        GLint uniformCount = 0;
-        glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &uniformCount);
-
-        char name[256];
-        for (int i = 0; i < uniformCount; i++)
-        {
-            GLsizei length = 0;
-            GLint size = 0;
-            GLenum type = 0;
-            glGetActiveUniform(program, i, sizeof(name), &length, &size, &type, name);
-            GLint location = glGetUniformLocation(program, name);
-            uniformLocations[name] = location;
-        }
-    }
-
-    // Retrieves a cached uniform location.
-    GLint GetUniformLocation(const hashed_string& name)
-    {
-        auto it = uniformLocations.find(name);
-        if (it != uniformLocations.end())
-            return it->second;
-
-        GLint location = glGetUniformLocation(program, name.c_str());
-
-        uniformLocations[name] = location;
-
-        if (location >= 0)
-            return location;
-
-
-
-        if (AllowMissingUniforms == false)
-            Logger::Log("Warning: Uniform \"" + name.str() + "\" not found in program " + std::to_string(program) + ".");
-
-        return -1;
-    }
-
-    void SetTexture(const std::string& name, GLuint texture) {
-        GLint location = GetUniformLocation(name);
-        if (location == -1) return;
-
-        // Find or assign texture unit
-        auto it = m_textureUnits.find(name);
-        if (it == m_textureUnits.end()) {
-            if (m_currentUnit >= m_maxTextureUnits) {
-                Logger::Log("Texture unit overflow! Maximum: " +
-                    std::to_string(m_maxTextureUnits));
-                return;
-            }
-            m_textureUnits[name] = m_currentUnit++;
-        }
-
-        GLuint unit = m_textureUnits[name];
-
-        // Bind texture and update uniform
-        glActiveTexture(GL_TEXTURE0 + unit);
-        glBindTexture(GL_TEXTURE_2D, texture);
-        glUniform1i(location, unit);
-    }
-
-    void SetCubemapTexture(const std::string& name, GLuint texture) {
-        GLint location = GetUniformLocation(name);
-        if (location == -1) return;
-
-        // Find or assign texture unit
-        auto it = m_textureUnits.find(name);
-        if (it == m_textureUnits.end()) {
-            if (m_currentUnit >= m_maxTextureUnits) {
-                Logger::Log("Texture unit overflow! Maximum: " +
-                    std::to_string(m_maxTextureUnits));
-                return;
-            }
-            m_textureUnits[name] = m_currentUnit++;
-        }
-
-        GLuint unit = m_textureUnits[name];
-
-        // Bind cubemap texture and update uniform
-        glActiveTexture(GL_TEXTURE0 + unit);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, texture);
-        glUniform1i(location, unit);
-    }
-
-    void SetTexture(const hashed_string& name, Texture* texture) {
-        GLint location = GetUniformLocation(name);
-        if (location == -1) return;
-
-        // Find or assign texture unit
-        auto it = m_textureUnits.find(name);
-        if (it == m_textureUnits.end()) {
-            if (m_currentUnit >= m_maxTextureUnits) {
-                Logger::Log("Texture unit overflow! Maximum: " +
-                    std::to_string(m_maxTextureUnits));
-                return;
-            }
-            m_textureUnits[name] = m_currentUnit++;
-        }
-
-        GLuint unit = m_textureUnits[name];
-
-        // Bind texture and update uniform
-        glActiveTexture(GL_TEXTURE0 + unit);
-        glBindTexture(GL_TEXTURE_2D, texture == nullptr? 0 : texture->getID());
-        glUniform1i(location, unit);
-    }
-
-
-    // === Uniform setting functions with cached locations ===
-    
-    // Set uniform integer
-    void SetUniform(const std::string& name, int value)
-    {
-        GLint location = GetUniformLocation(name);
-        if (location != -1) 
-            Logger::Log("Using int uniform. They are not allowed during transition process");
-		SetUniform(name, static_cast<float>(value));
-    }
-
-    void SetUniform(const std::string& name, bool value)
-    {
-		SetUniform(name, value ? 1.0f : 0.0f);
-    }
-
-    // Set uniform float
-    void SetUniform(const std::string& name, float value)
-    {
-        GLint location = GetUniformLocation(name);
-        if (location != -1) glUniform1f(location, value);
-    }
-
-    // Set uniform vec2
-    void SetUniform(const std::string& name, const glm::vec2& value)
-    {
-        GLint location = GetUniformLocation(name);
-        if (location != -1) glUniform2f(location, value.x, value.y);
-    }
-
-    // Set uniform vec3
-    void SetUniform(const std::string& name, const glm::vec3& value)
-    {
-        GLint location = GetUniformLocation(name);
-        if (location != -1) glUniform3f(location, value.x, value.y, value.z);
-    }
-
-    // Set uniform vec4
-    void SetUniform(const std::string& name, const glm::vec4& value)
-    {
-        GLint location = GetUniformLocation(name);
-        if (location != -1) glUniform4f(location, value.x, value.y, value.z, value.w);
-    }
-
-    // Set uniform mat2
-    void SetUniform(const std::string& name, const glm::mat2& value)
-    {
-        GLint location = GetUniformLocation(name);
-        if (location != -1) glUniformMatrix2fv(location, 1, GL_FALSE, glm::value_ptr(value));
-    }
-
-    // Set uniform mat3
-    void SetUniform(const std::string& name, const glm::mat3& value)
-    {
-        GLint location = GetUniformLocation(name);
-        if (location != -1) glUniformMatrix3fv(location, 1, GL_FALSE, glm::value_ptr(value));
-    }
-
-    // Set uniform mat4
-    void SetUniform(const std::string& name, const glm::mat4& value)
-    {
-        GLint location = GetUniformLocation(name);
-        if (location != -1) glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(value));
-    }
-
-    // Set uniform array of floats
-    void SetUniform(const std::string& name, const std::vector<float>& values)
-    {
-        GLint location = GetUniformLocation(name);
-        if (location != -1)
-            glUniform1fv(location, static_cast<GLsizei>(values.size()), values.data());
-    }
-
-    // Set uniform array of vec2
-    void SetUniform(const std::string& name, const std::vector<glm::vec2>& values)
-    {
-        GLint location = GetUniformLocation(name);
-        if (location != -1)
-            glUniform2fv(location, static_cast<GLsizei>(values.size()), glm::value_ptr(values[0]));
-    }
-
-    // Set uniform array of vec3
-    void SetUniform(const std::string& name, const std::vector<glm::vec3>& values)
-    {
-        GLint location = GetUniformLocation(name);
-        if (location != -1)
-            glUniform3fv(location, static_cast<GLsizei>(values.size()), glm::value_ptr(values[0]));
-    }
-
-    // Set uniform array of vec4
-    void SetUniform(const std::string& name, const std::vector<glm::vec4>& values)
-    {
-        GLint location = GetUniformLocation(name);
-        if (location != -1)
-            glUniform4fv(location, static_cast<GLsizei>(values.size()), glm::value_ptr(values[0]));
-    }
-
-    // Set uniform array of mat2
-    void SetUniform(const std::string& name, const std::vector<glm::mat2>& values)
-    {
-        GLint location = GetUniformLocation(name);
-        if (location != -1)
-            glUniformMatrix2fv(location,
-                static_cast<GLsizei>(values.size()),
-                GL_FALSE,
-                glm::value_ptr(values[0]));
-    }
-
-    // Set uniform array of mat3
-    void SetUniform(const std::string& name, const std::vector<glm::mat3>& values)
-    {
-        GLint location = GetUniformLocation(name);
-        if (location != -1)
-            glUniformMatrix3fv(location,
-                static_cast<GLsizei>(values.size()),
-                GL_FALSE,
-                glm::value_ptr(values[0]));
-    }
-
-    // Set uniform array of mat4 
-    void SetUniform(const std::string& name, const std::vector<glm::mat4>& values)
-    {
-        GLint location = GetUniformLocation(name);
-        if (location != -1)
-            glUniformMatrix4fv(location,
-                static_cast<GLsizei>(values.size()),
-                GL_FALSE,
-                glm::value_ptr(values[0]));
-    }
-
-    
-
-    static std::unordered_map<hashed_string, std::string> ParseTextureBindings(const std::string& shaderCode);
-
-    std::unordered_map<hashed_string, std::string> ParseAllTextureBindings() const;
-
-    void ParseShaders();
+    std::unordered_map<hashed_string, std::string>
+        ParseAllTextureBindings() const;
 
     void ApplyTextureBindings();
 
+private:
+    Shader() = default;
+
+    // -----------------------------------------------------------------------
+    // Internal state
+    // -----------------------------------------------------------------------
+    bgfx::ProgramHandle m_program = BGFX_INVALID_HANDLE;
+
+    // name -> uniform metadata (handle, kind, sampler slot, array count)
+    std::unordered_map<std::string, UniformMeta> m_uniforms;
+
+    // stored for Reload()
+    std::string m_vsName;
+    std::string m_fsName;
+
+    // stored for ParseAllTextureBindings()
+    std::string m_vsSourcePath;
+    std::string m_fsSourcePath;
+
+    // -----------------------------------------------------------------------
+    // Deferred uniform / texture buffers
+    // Marked mutable so Submit() const can flush them.
+    // Buffers persist across frames — last-written value is re-applied every
+    // Submit() call, matching bgfx's per-draw-call state model.
+    // -----------------------------------------------------------------------
+    mutable std::unordered_map<std::string, UniformEntry> m_uniformBuffer;
+    mutable std::unordered_map<std::string, TextureEntry> m_textureBuffer;
+
+    // Apply all buffered uniforms and textures to bgfx state.
+    // Called internally by Submit() before bgfx::submit().
+    void FlushBuffers() const;
+
+    // -----------------------------------------------------------------------
+    // Shared texture fallbacks (all Shader instances)
+    // -----------------------------------------------------------------------
+    static bgfx::TextureHandle s_missingTexture; // magenta — set but invalid
+    static bgfx::TextureHandle s_blackTexture;   // black   — sampler with no binding
+    static void                EnsureMissingTexture();
+
+    // -----------------------------------------------------------------------
+    // Private helpers
+    // -----------------------------------------------------------------------
+    static bool        IsBgfxBuiltin(const std::string& uname);
+    static std::string ResolveCompiledPath(const std::string& shaderName);
+    static std::string ResolveSourcePath(const std::string& shaderName);
+    static bgfx::ShaderHandle LoadShaderBinary(const std::string& shaderName);
+
+    // Reflect uniforms from both shader stages, populate m_uniforms.
+    void ReflectUniforms(bgfx::ShaderHandle vsh, bgfx::ShaderHandle fsh);
+
+    // Lookup helper — returns nullptr and optionally logs if not found.
+    const UniformMeta* FindUniform(const std::string& uname) const;
 };

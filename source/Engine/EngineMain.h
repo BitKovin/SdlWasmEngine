@@ -13,7 +13,6 @@
 
 #include "ThreadPool.h"
 
-#include <future>
 #include <thread>
 
 #include "ImGuiEngineImpl.h"
@@ -57,6 +56,8 @@ public:
     bool SimulatingPreciseGameTicks = false;
 
 	RenderTexture* UiRenderTexture = nullptr;
+    RenderTexture* UiRenderTextureStencil = nullptr;
+    Framebuffer* UiFrameBuffer = nullptr;
 
 	RmlUiContext* RmlContext = nullptr;
 
@@ -64,18 +65,15 @@ public:
 	{
 		Window = window;
 	}
-	~EngineMain()
-	{
-		FileSystemEngine::Shutdown();
-        Level::Current->CloseLevel();
-	}
+    ~EngineMain();
 
 
     std::map<std::string, std::vector<std::string>> Arguments;
 
     void UpdateScreenSize();
 
-    ThreadPool* MainThreadPool;
+    ThreadPool* MainThreadPool = nullptr;
+    ThreadPool* GameUpdateSingleThreadPool = nullptr;
 
     void ToggleFullscreen();
 
@@ -93,9 +91,6 @@ public:
 
     // Toggle asynchronous GameUpdate.
     bool asyncGameUpdate = true;
-
-    // Store the future of the async update.
-    std::future<void> gameUpdateFuture;
 
     // Main game loop.
     void MainLoop();

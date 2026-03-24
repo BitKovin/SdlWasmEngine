@@ -28,7 +28,9 @@ public:
                 bottomRight.y = elem->bottomRight.y;
         }
 
-        return bottomRight - topLeft;
+        size = bottomRight - topLeft;
+
+        return size;
     }
 
 

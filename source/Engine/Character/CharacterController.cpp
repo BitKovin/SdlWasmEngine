@@ -273,7 +273,7 @@ vec3 CharacterController::GetPosition()
 {
 	if (body)
 	{
-		return FromPhysics(body->GetPosition()) - vec3(0, stepHeight*0.5f, 0);
+		return FromPhysics(body->GetPosition()) - vec3(0, stepHeight * 0.5f, 0);
 	}
 
 	return vec3();
@@ -289,7 +289,7 @@ void CharacterController::SetPosition(vec3 position)
 {
 	if (body)
 	{
-		Physics::SetBodyPosition(body, position + vec3(0, stepHeight*0.5f, 0));
+		Physics::SetBodyPosition(body, position + vec3(0, stepHeight * 0.5f, 0));
 	}
 }
 
@@ -464,7 +464,7 @@ bool CharacterController::CanStandUp()
 	vec3 newBodyPos = currentBodyPos + deltaPos;
 	float newPhysHalf = (newHeight - stepHeight * 2.0f) / 2.0f;
 	vec3 bottom = newBodyPos;
-	bottom -= vec3(0, 0.15f, 0); 
+	bottom -= vec3(0, 0.15f, 0);
 	vec3 top = newBodyPos + vec3(0.0f, newPhysHalf, 0.0f);
 
 	Physics::HitResult result = Physics::CylinderTrace(bottom, top, radius - 0.05f, 0.05f, BodyType::GroupCollisionTest, { body });
@@ -535,7 +535,7 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 			if (outCanStand)
 				standingOnBody = hitBody;
 
-			return; 
+			return;
 		}
 
 		// Sloped or missed — fall through to reduced NPC sample loop below

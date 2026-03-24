@@ -1,5 +1,7 @@
 #include <Particle/GlobalParticleSystem.hpp>
 
+#include <World/WorldOrientationManager.h>
+
 static vec3 bloodColor = vec3(0.5,0,0);
 
 class BloodDecal : public ParticleEmitter
@@ -97,9 +99,9 @@ public:
 
     Particle UpdateParticle(Particle particle, float deltaTime) override
     {
-        particle.velocity -= glm::vec3(0, 6.0f, 0) * (deltaTime / 2.0f);
+        particle.velocity -= WorldOrientationManager::GetUpVector()* 6.0f * (deltaTime / 2.0f);
         particle = ParticleEmitter::UpdateParticle(particle, deltaTime);
-        particle.velocity -= glm::vec3(0, 6.0f, 0) * (deltaTime / 2.0f);
+        particle.velocity -= WorldOrientationManager::GetUpVector() * 6.0f * (deltaTime / 2.0f);
         particle.Transparency = std::max(particle.Transparency - (deltaTime / 1.5f), 0.0f);
         return particle;
     }
@@ -156,7 +158,7 @@ public:
             
         }
 
-        particle.velocity -= glm::vec3(0, 10.0f, 0) * (deltaTime / 2.0f);
+        particle.velocity -= WorldOrientationManager::GetUpVector() * 10.0f * (deltaTime / 2.0f);
         particle = ParticleEmitter::UpdateParticle(particle, deltaTime);
 
 
@@ -201,7 +203,7 @@ public:
 
 		}
 
-        particle.velocity -= glm::vec3(0, 10.0f, 0) * (deltaTime / 2.0f);
+        particle.velocity -= WorldOrientationManager::GetUpVector() * 10.0f * (deltaTime / 2.0f);
         particle.Transparency = std::max(particle.Transparency - (deltaTime / 3.0f), 0.0f);
         return particle;
     }

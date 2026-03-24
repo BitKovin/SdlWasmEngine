@@ -5,6 +5,8 @@
 #include "MathHelper.hpp"
 #include <SDL2/SDL_video.h>
 
+#include <World/WorldOrientationManager.h>
+
 
     float Camera::AspectRatio = 1.7777f;
     vec3 Camera::position = vec3(0.0f);
@@ -71,9 +73,13 @@
         return translate(position) * MathHelper::GetRotationMatrix(rotation);
     }
 
-    void Camera::Update(float deltaTime) {
+    void Camera::Update(float deltaTime) 
+    {
         finalizedPosition = position;
         finalizedRotation = rotation;
+
+		finalizedRotation = MathHelper::ToYawPitchRoll(WorldOrientationManager::GetWorldRotationQuat() * MathHelper::GetRotationQuaternion(finalizedRotation));
+
         world = translate(mat4(1.0f), vec3(0.0f));
         if (MathHelper::GetUpVector(rotation).y > 0.0f) {
             lastWorkingRotation = rotation;

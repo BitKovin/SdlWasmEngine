@@ -2,29 +2,24 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_ttf.h>
+#define SDL_VIDEO_DRIVER_X11
+#define SDL_VIDEO_DRIVER_WAYLAND
+#include <SDL2/SDL_syswm.h>
 #include "../imgui/imgui.h"
-#include "../imgui/imgui_impl_opengl3.h"
+#include "../imgui/imgui_impl_bgfx.h"
 #include "../imgui/imgui_impl_sdl2.h"
-#include "../gl.h"
+#include <bgfx/bgfx.h>
+#include <bgfx/platform.h>
 #include <deque>
 #include <algorithm>
 #include <array>
 
 #include "../EngineMain.h"
-
 #include "PlatformWindowData.h"
 using namespace PlatformWindowData;
 
 EngineMain* engine = nullptr;
 
-// Function declarations
-void update_screen_size(int w, int h);
-void InitImGui();
-void desktop_render_loop();
-
-
-// Function implementations
 void update_screen_size(int w, int h) {
     SDL_SetWindowSize(window, w, h);
 }
@@ -36,88 +31,118 @@ void InitImGui() {
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
     ImGui::StyleColorsDark();
-    ImGui_ImplSDL2_InitForOpenGL(window, glContext);
-    ImGui_ImplOpenGL3_Init();
-}
 
+    // bgfx + SDL2 backend (nullptr context because we no longer use OpenGL)
+    ImGui_ImplSDL2_InitForOpenGL(window, nullptr);
+    ImGui_Implbgfx_Init(255);   // 255 = standard ImGui view ID (drawn on top)
+}
 
 void desktop_render_loop() {
     SDL_Event event;
     int quit = 0;
-
-    
+    int currentWidth = 800, currentHeight = 600;
 
     while (!quit) {
         Input::PendingMouseDelta = vec2(0);
         Input::StartEventsFrame();
-        while (SDL_PollEvent(&event)) 
-        {
+
+        while (SDL_PollEvent(&event)) {
             if (EngineMain::MainInstance->DebugUiEnabled)
                 ImGui_ImplSDL2_ProcessEvent(&event);
 
-            if (event.type == SDL_MOUSEMOTION)
-            {
+            if (event.type == SDL_MOUSEMOTION) {
                 Input::PendingMouseDelta += vec2(event.motion.xrel, event.motion.yrel);
             }
 
             if (event.type == SDL_QUIT) quit = 1;
 
-            Input::ReceiveSdlEvent(event);
+            if (event.type == SDL_WINDOWEVENT &&
+                (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED ||
+                    event.window.event == SDL_WINDOWEVENT_RESIZED)) {
+                SDL_GetWindowSize(window, &currentWidth, &currentHeight);
+                bgfx::reset(currentWidth, currentHeight, BGFX_RESET_NONE);
+                bgfx::setViewRect(0, 0, 0, currentWidth, currentHeight);
+                bgfx::setViewRect(255, 0, 0, currentWidth, currentHeight);
+            }
 
+            Input::ReceiveSdlEvent(event);
         }
+
         engine->MainLoop();
     }
 }
 
-// Main function
 int main(int argc, char* args[]) {
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_JOYSTICK) < 0) {
         fprintf(stderr, "SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
         return 1;
     }
 
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
-    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, GL_TRUE);
-    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 2);
-
-    int flags = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE;
-    window = SDL_CreateWindow("Image", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600, flags);
+    int flags = SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE;
+    window = SDL_CreateWindow("Image", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+        800, 600, flags);
     if (!window) {
         fprintf(stderr, "Window could not be created! SDL_Error: %s\n", SDL_GetError());
         return 1;
     }
 
-    TTF_Init();
+    // ====================== BGFX INITIALIZATION ======================
+    bgfx::Init init;
+    init.type = bgfx::RendererType::Vulkan;   // or Vulkan/Metal; OpenGL is safe on Linux
+    init.debug = false;
+    init.profile = false;
 
-    glContext = SDL_GL_CreateContext(window);
-    if (!glContext) {
-        fprintf(stderr, "OpenGL context could not be created! SDL_Error: %s\n", SDL_GetError());
+    SDL_SysWMinfo wmInfo;
+    SDL_VERSION(&wmInfo.version);
+    if (!SDL_GetWindowWMInfo(window, &wmInfo)) {
+        fprintf(stderr, "SDL_GetWindowWMInfo failed: %s\n", SDL_GetError());
         return 1;
     }
 
-    GLenum glewError = glewInit();
-    if (glewError != GLEW_OK) {
-        fprintf(stderr, "Failed to initialize GLEW: %s\n", glewGetErrorString(glewError));
+    // Set native window handle based on the available SDL video driver
+    bool handleSet = false;
+#if defined(SDL_VIDEO_DRIVER_X11)
+    if (wmInfo.subsystem == SDL_SYSWM_X11) {
+        init.platformData.nwh = (void*)wmInfo.info.x11.window;
+        init.platformData.ndt = wmInfo.info.x11.display;   // also needed on X11
+        handleSet = true;
+    }
+#endif
+#if defined(SDL_VIDEO_DRIVER_WAYLAND)
+    if (wmInfo.subsystem == SDL_SYSWM_WAYLAND) {
+        init.platformData.nwh = wmInfo.info.wl.surface;
+        init.platformData.ndt = wmInfo.info.wl.display;
+        handleSet = true;
+    }
+#endif
+  printf("SDL subsystem: %d\n", wmInfo.subsystem);
+    if (!handleSet) {
+        fprintf(stderr, "Unsupported or unrecognized SDL video subsystem\n");
         return 1;
     }
+
+    init.resolution.width = 800;
+    init.resolution.height = 600;
+    init.resolution.reset = BGFX_RESET_NONE;   // no vsync
+
+    if (!bgfx::init(init)) {
+        fprintf(stderr, "bgfx::init failed!\n");
+        return 1;
+    }
+
+    // Default clear + views
+    bgfx::setViewClear(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x000000ff, 1.0f, 0);
+    bgfx::setViewRect(0, 0, 0, 800, 600);
+    bgfx::setViewRect(255, 0, 0, 800, 600);
 
     InitImGui();
+
     SDL_SetHintWithPriority(SDL_HINT_MOUSE_RELATIVE_MODE_CENTER, "1", SDL_HINT_OVERRIDE);
     SDL_SetRelativeMouseMode(SDL_TRUE);
 
-    printf("GL Version={%s}\n", glGetString(GL_VERSION));
-    printf("GLSL Version={%s}\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
-
-
+    printf("bgfx initialized successfully.\n");
 
     Input::AddAction("fullscreen")->AddKeyboardKey(SDL_GetScancodeFromKey(SDLK_F11));
-
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    SDL_GL_SetSwapInterval(0);
 
     engine = new EngineMain(window);
     EngineMain::MainInstance = engine;
@@ -125,9 +150,11 @@ int main(int argc, char* args[]) {
 
     desktop_render_loop();
 
-	delete engine;
+    delete engine;
 
-    SDL_GL_DeleteContext(glContext);
+    bgfx::frame();
+    bgfx::shutdown();
+
     SDL_DestroyWindow(window);
     SDL_Quit();
     return 0;

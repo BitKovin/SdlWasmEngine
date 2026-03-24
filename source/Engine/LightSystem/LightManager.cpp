@@ -134,7 +134,7 @@ void LightManager::UpdateLightSource(PointLightInfo light)
 
 }
 
-void LightManager::ApplyPointLightToShader(ShaderProgram* shader, vec3 boundsMin, vec3 boundsMax)
+void LightManager::ApplyPointLightToShader(Shader* shader, vec3 boundsMin, vec3 boundsMax)
 {
     if (!shader) return;
 
@@ -205,7 +205,7 @@ void LightManager::ApplyPointLightToShader(ShaderProgram* shader, vec3 boundsMin
         ++added;
     }
 
-    shader->SetUniform("PointLightsNumber", added);
+    shader->SetUniform("PointLightsNumber", vec4(added));
     shader->SetUniform("PointLights", pointLights);
 }
 

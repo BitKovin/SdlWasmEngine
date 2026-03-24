@@ -1,11 +1,11 @@
 <rml>
     <head>
-        <title>Pause Menu</title>
+        <title>Settings</title>
         <link type="text/css" href="style.rcss" />
         <link type="text/css" href="base.rcss" />
     </head>
 
-    <body data-title="Pause Menu">
+    <body data-title="Settings">
         <h1>Options</h1>
 
         <div class="focus_wrapper">

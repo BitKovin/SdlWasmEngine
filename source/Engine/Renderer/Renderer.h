@@ -21,28 +21,30 @@ public:
 
 	void RenderDirectionalLightShadows(vector<IDrawMesh*>& ShadowRenderList, Framebuffer& fbo, int numCascades);
 
-	void RenderFullscreenQuad();
+	void RenderFullscreenQuad(Shader* shader);
 
-	static void SetSurfaceShaderUniforms(ShaderProgram* shader, float brightnessScale = 1);
+	static void SetSurfaceShaderUniforms(Shader* shader, float brightnessScale = 1);
 
-	int MultiSampleCount = 1;
+	int MultiSampleCount = 8;
+
+	bool FXAAEnabled = true;
 
 	float ResolutionScale = 1.0f;
 
-	ShaderProgram* fullscreenShader = nullptr;
+	Shader* fullscreenShader = nullptr;
 
 private:
 
 	inline ivec2 GetScreenResolution() const;
 	inline ivec2 GetNativeScreenResolution() const;
 
-	void InitFullscreenVAO();
+	void InitFullscreenBuffers();
 
 	void InitFrameBuffers();
 	void InitResolveFrameBuffers();
 
-	unsigned int quadVAO;
-	unsigned int quadVBO;
+	bgfx::VertexLayout m_fullscreenLayout;
+	bgfx::VertexBufferHandle m_fullscreenVB;
 
 	RenderTexture* colorBuffer = nullptr;
 	RenderTexture* depthBuffer = nullptr;
@@ -66,7 +68,7 @@ private:
 	Framebuffer* DetailDirectionalShadowMapFBO = nullptr;
 
 
-	ShaderProgram* blurShader = nullptr;
-	ShaderProgram* blurApplyShader = nullptr;
+	Shader* blurShader = nullptr;
+	Shader* blurApplyShader = nullptr;
 
 };

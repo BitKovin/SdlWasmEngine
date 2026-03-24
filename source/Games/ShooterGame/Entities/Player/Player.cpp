@@ -21,6 +21,10 @@
 
 #include <PauseGameManager.hpp>
 
+#include <Systems/ScoreSystem/ScoreSystem.h>
+
+#include <World/WorldOrientationManager.h>
+
 REGISTER_ENTITY(Player, "player")
 
 Player* Player::Instance = nullptr;
@@ -152,6 +156,7 @@ void Player::Start()
 
 	cameraRotation.y = Rotation.y;
 
+	//Spawn("testGravityController");
 
 	//Spawn("TestSpatialSoundPlayer")->Start();
 
@@ -1540,6 +1545,9 @@ void Player::Update()
 	{
 		UpdateBikeMovement(input);
 	}
+
+	Position = controller.GetSmoothPosition();
+
 	bikeArmsMesh->Rotation = bikeMesh->Rotation;
 	bikeArmsMesh->Position = bikeMesh->Position;
 	bikeArmsMesh->PasteAnimationPose(bikeMesh->GetAnimationPose());
@@ -1898,7 +1906,7 @@ void Player::UpdateBody()
 	//poseT["thigh_r"] = translate(Camera::position + Camera::Forward()) * scale(vec3(0.01f));
 	//bodyMesh->ApplyWorldSpaceBoneTransforms(poseT);
 
-	Camera::ApplyCameraShake(Time::DeltaTimeF);
+
 
 	if (InThirdPerson())
 	{
@@ -1906,11 +1914,11 @@ void Player::UpdateBody()
 	}
 	else
 	{
-		Camera::position = MathHelper::DecomposeMatrix(bodyMesh->GetBoneMatrixWorld("head")).Position + playerForward * 0.3f;
+		//Camera::position = MathHelper::DecomposeMatrix(bodyMesh->GetBoneMatrixWorld("head")).Position + playerForward * 0.3f;
+
+		Camera::position = bodyMesh->Position + WorldOrientationManager::TransformDirectionToWorld(playerForward) * 0.3f + WorldOrientationManager::GetUpVector() * controller.GetCameraHeight();
 
 		float feetHeight = controller.GetSmoothPosition().y - controller.height / 2.0f;
-
-		Camera::position.y = feetHeight + controller.GetCameraHeight();
 
 		vec3 feetPos = controller.GetSmoothPosition();
 		feetPos.y = feetHeight;
@@ -1925,7 +1933,7 @@ void Player::UpdateBody()
 
 	}
 
-
+	Camera::ApplyCameraShake(Time::DeltaTimeF);
 
 	observationTarget->position = Position + vec3(0, 0.65f, 0);
 
@@ -1950,6 +1958,9 @@ bool Player::InThirdPerson()
 void Player::OnDamage(float Damage, Entity* DamageCauser, Entity* Weapon)
 {
 	Entity::OnDamage(Damage, DamageCauser, Weapon);
+
+	ScoreSystem::Instance().takeDamage(Damage);
+
 }
 
 void Player::OnPointDamage(float Damage, vec3 Point, vec3 Direction, string bone, Entity* DamageCauser, Entity* Weapon)
@@ -2182,6 +2193,7 @@ void Player::LoadAssets()
 	bikeArmsMesh->PreloadAssets();
 
 	bodyMesh->LoadFromFile("GameData/models/player/body/player_body.glb");
+	bodyMesh->GravityAlignedRotation = true;
 	//bodyMesh->LoadFromFile("GameData/models/npc/guard.glb/");
 	bodyMesh->DepthPrePath = false;
 	bodyMesh->Masked = true;

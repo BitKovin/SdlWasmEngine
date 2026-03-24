@@ -1,373 +1,410 @@
-﻿#include "Renderer.h"
+// Renderer.cpp — bgfx port
+#include "Renderer.h"
 
 #include "../EngineMain.h"
-
 #include "../LightSystem/LightManager.h"
 #include "../DebugDraw.hpp"
-
 #include "../FogManager.h"
 
+#include "Abstractions/ViewIdManager.h"
+
+#include <bgfx/bgfx.h>
+#include <BgfxStateManager.h>
+
+#include <World/WorldOrientationManager.h>
+
+// -----------------------------------------------------------------------
+// bgfx clear-color helper  (RGBA packed as uint32_t 0xRRGGBBAA)
+// -----------------------------------------------------------------------
+static constexpr uint32_t kClearBlack = 0x000000ff;
+static constexpr uint32_t kClearAlpha1 = 0x000000ff;
+
+// -----------------------------------------------------------------------
+// Constructor / destructor
+// -----------------------------------------------------------------------
 Renderer::Renderer()
 {
-	ivec2 screenResolution = GetScreenResolution();
+    ivec2 screenResolution = GetScreenResolution();
 
     InitFrameBuffers();
     InitResolveFrameBuffers();
 
-	fullscreenShader = ShaderManager::GetShaderProgram("fullscreen_vertex","postprocessing");
-    blurShader = ShaderManager::GetShaderProgram("fullscreen_vertex", "motionBlur");
-    blurApplyShader = ShaderManager::GetShaderProgram("fullscreen_vertex", "motionBlur_apply");
+    fullscreenShader = ShaderManager::GetShaderProgram("vs_fullscreen", "fs_postprocessing");
+    blurShader = ShaderManager::GetShaderProgram("vs_fullscreen", "fs_motionBlur");
+    blurApplyShader = ShaderManager::GetShaderProgram("vs_fullscreen", "fs_motionBlur_apply");
 
-    BlurResultBuffer = new RenderTexture(screenResolution.x, screenResolution.y, TextureFormat::RGBA16F);
-	BlurResultBuffer->SetName("BlurResultBuffer");
-    BlurAccumulatedBuffer = new RenderTexture(screenResolution.x, screenResolution.y, TextureFormat::RGBA16F);
-	BlurAccumulatedBuffer->SetName("BlurAccumulatedBuffer");
+    BlurResultBuffer = new RenderTexture(screenResolution.x, screenResolution.y,
+        TextureFormat::RGBA16F);
+    BlurResultBuffer->SetName("BlurResultBuffer");
+
+    BlurAccumulatedBuffer = new RenderTexture(screenResolution.x, screenResolution.y,
+        TextureFormat::RGBA16F);
+    BlurAccumulatedBuffer->SetName("BlurAccumulatedBuffer");
 
     if (LightManager::DirectionalShadowsEnabled)
     {
-        DirectionalShadowMap = new RenderTexture(LightManager::ShadowMapResolution, LightManager::ShadowMapResolution, TextureFormat::Depth32F, TextureType::Texture2D);
-		DirectionalShadowMap->SetName("DirectionalShadowMap");
+        DirectionalShadowMap = new RenderTexture(
+            LightManager::ShadowMapResolution, LightManager::ShadowMapResolution,
+            TextureFormat::Depth32F, TextureType::Texture2D);
+        DirectionalShadowMap->SetName("DirectionalShadowMap");
         DirectionalShadowMapFBO = new Framebuffer();
         DirectionalShadowMapFBO->attachDepth(DirectionalShadowMap);
 
-        DetailDirectionalShadowMap = new RenderTexture(LightManager::ShadowMapResolution, LightManager::ShadowMapResolution, TextureFormat::Depth32F, TextureType::Texture2D);
-		DetailDirectionalShadowMap->SetName("DetailDirectionalShadowMap");
+        DetailDirectionalShadowMap = new RenderTexture(
+            LightManager::ShadowMapResolution, LightManager::ShadowMapResolution,
+            TextureFormat::Depth32F, TextureType::Texture2D);
+        DetailDirectionalShadowMap->SetName("DetailDirectionalShadowMap");
         DetailDirectionalShadowMapFBO = new Framebuffer();
         DetailDirectionalShadowMapFBO->attachDepth(DetailDirectionalShadowMap);
     }
 
-
-	InitFullscreenVAO();
-
+    InitFullscreenBuffers();
 }
 
 Renderer::~Renderer()
 {
-	delete(colorBuffer);
-	delete(depthBuffer);
+    delete colorBuffer;
+    delete depthBuffer;
 
-	glDeleteVertexArrays(1, &quadVAO);
-	glDeleteBuffers(1, &quadVBO);
+    if (bgfx::isValid(m_fullscreenVB))
+        bgfx::destroy(m_fullscreenVB);
 }
 
+// -----------------------------------------------------------------------
+// RenderLevel
+// -----------------------------------------------------------------------
 void Renderer::RenderLevel(Level* level)
 {
     if (LightManager::DirectionalShadowsEnabled)
     {
         RenderDirectionalLightShadows(level->ShadowRenderList, *DirectionalShadowMapFBO, 4);
-        RenderDirectionalLightShadows(level->DetailShadowRenderList, *DirectionalShadowMapFBO, 3);
+        RenderDirectionalLightShadows(level->DetailShadowRenderList, *DetailDirectionalShadowMapFBO, 3);
     }
 
     for (auto drawable : level->VissibleRenderList)
-    {
-		drawable->PreDraw();
-    }
+        drawable->PreDraw();
 
-	RenderCameraForward(level->VissibleRenderList);
+    RenderCameraForward(level->VissibleRenderList);
 
     ivec2 screenResolution = GetScreenResolution();
-    glViewport(0, 0, screenResolution.x, screenResolution.y);
-
     BlurAccumulatedBuffer->resize(screenResolution.x, screenResolution.y);
     BlurResultBuffer->resize(screenResolution.x, screenResolution.y);
 
-    const bool bulurEnabled = false;
+    const bool blurEnabled = false;
 
-    if (bulurEnabled)
+    if (blurEnabled)
     {
-        BlurResultBuffer->bindFramebuffer();
+        // ---- Motion blur accumulate pass ----
+        BlurResultBuffer->setAsRenderTarget();
 
-        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-        glDepthMask(GL_FALSE);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        glDisable(GL_BLEND);
+        bgfx::setViewClear(ViewIdManager::GetCurrentId(),
+            BGFX_CLEAR_COLOR, kClearBlack, 1.0f, 0);
 
         blurShader->UseProgram();
-        blurShader->SetTexture("uAccumulated", BlurAccumulatedBuffer->id());
-        blurShader->SetTexture("uCustomIdTex", customIdResolveBuffer->id());
-        blurShader->SetUniform("uDeltaTime", EngineMain::MainInstance->Paused ? 0.0f : Time::DeltaTimeFNoTimeScale);
+        blurShader->SetTexture("uAccumulated", BlurAccumulatedBuffer->textureHandle());
+        blurShader->SetTexture("uCustomIdTex", customIdResolveBuffer->textureHandle());
+        blurShader->SetUniform("uDeltaTime", EngineMain::MainInstance->Paused
+            ? 0.0f
+            : Time::DeltaTimeFNoTimeScale);
         blurShader->SetUniform("GameTime", (float)Time::GameTime);
         blurShader->SetUniform("uPersistence", 0.20f);
         blurShader->SetUniform("uMotionScale", 3.0f);
-        blurShader->SetTexture("screenTexture", colorResolveBuffer->id());
-        RenderFullscreenQuad();
-        glEnable(GL_BLEND);
+        blurShader->SetTexture("screenTexture", colorResolveBuffer->textureHandle());
+
+        BgfxStateManager::Reset();
+        BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Always);
+        BgfxStateManager::Apply();
+        RenderFullscreenQuad(blurShader);
 
         BlurAccumulatedBuffer->copyFrom(BlurResultBuffer);
 
-        BlurResultBuffer->bindFramebuffer();
+        // ---- Motion blur apply pass ----
+        BlurResultBuffer->setAsRenderTarget();
         blurApplyShader->UseProgram();
-        blurApplyShader->SetTexture("screenTexture", colorResolveBuffer->id());
-        blurApplyShader->SetTexture("blurTexture", BlurAccumulatedBuffer->id());
-        RenderFullscreenQuad();
-        Framebuffer::unbind();
+        blurApplyShader->SetTexture("screenTexture", colorResolveBuffer->textureHandle());
+        blurApplyShader->SetTexture("blurTexture", BlurAccumulatedBuffer->textureHandle());
+
+        BgfxStateManager::Reset();
+        BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Always);
+        BgfxStateManager::Apply();
+        RenderFullscreenQuad(blurApplyShader);
     }
 
-    int resultTexId = bulurEnabled ? BlurResultBuffer->id() : colorResolveBuffer->id();
+    // ---- Final blit to backbuffer ----
+    // FIX: Use m_finalBlitViewId (a high view ID, allocated after all FBO views)
+    // so bgfx executes this AFTER the scene FBO passes, not before them.
+    // View 0 executes first in bgfx's default order, so we must NOT use view 0
+    // for a pass that depends on FBO results.
+    bgfx::TextureHandle resultTex = blurEnabled
+        ? BlurResultBuffer->textureHandle()
+        : colorResolveBuffer->textureHandle();
 
-    ivec2 nativeScreenResolution = GetNativeScreenResolution();
-    glViewport(0, 0, nativeScreenResolution.x, nativeScreenResolution.y);
+#if __EMSCRIPTEN__
+	resultTex = colorBuffer->textureHandle();
+#endif // __EMSCRIPTEN__
 
-	//rendering to screen
+
+    ivec2 nativeRes = GetNativeScreenResolution();
+
+    ViewIdManager::GiveNextId();
+
+    bgfx::setViewRect(ViewIdManager::GetCurrentId(), 0, 0,
+        static_cast<uint16_t>(nativeRes.x),
+        static_cast<uint16_t>(nativeRes.y));
+    bgfx::setViewFrameBuffer(ViewIdManager::GetCurrentId(), BGFX_INVALID_HANDLE);
+
+
     fullscreenShader->UseProgram();
-    fullscreenShader->SetTexture("screenTexture", resultTexId);
-    fullscreenShader->SetUniform("screenResolution", nativeScreenResolution);
-	RenderFullscreenQuad();
+    fullscreenShader->SetTexture("screenTexture", resultTex);
+    fullscreenShader->SetUniform("screenResolution", nativeRes);
+    fullscreenShader->SetUniform("fxaaEnabled", FXAAEnabled);
 
+
+    BgfxStateManager::Reset();
+    BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Always);
+    BgfxStateManager::Apply();
+    RenderFullscreenQuad(fullscreenShader);
 }
 
+// -----------------------------------------------------------------------
+// RenderCameraForward
+// -----------------------------------------------------------------------
 void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
 {
-    
-
     ivec2 res = GetScreenResolution();
 
-    #ifndef GL_ES_PROFILE
+    // ---- MSAA bookkeeping ----
+#if defined(BGFX_PLATFORM_EMSCRIPTEN)
+    MultiSampleCount = 0;
+#endif
 
     if (MultiSampleCount)
     {
-        glEnable(GL_MULTISAMPLE);
-    }
-    else
-    {
-        glDisable(GL_MULTISAMPLE);
-    }
-
-    #else
-
-    MultiSampleCount = 0;
-
-    #endif // !GL_ES_PROFILE
-
-#ifndef GL_ES_PROFILE
-
-    if (MultiSampleCount) 
-    {
-
         if (colorBuffer->type() == TextureType::Texture2D)
-        {
             InitFrameBuffers();
-        }
 
         colorBuffer->setSamples(MultiSampleCount);
         depthBuffer->setSamples(MultiSampleCount);
     }
     else
     {
-
         if (colorBuffer->type() == TextureType::Texture2DMultisample)
-        {
             InitFrameBuffers();
-        }
 
-        colorBuffer->setSamples(1);
-        depthBuffer->setSamples(1);
+        colorBuffer->setSamples(0);
+        depthBuffer->setSamples(0);
     }
 
-#endif
-
-    // resize all our buffers
-    colorBuffer->resize(res.x, res.y);
-    depthBuffer->resize(res.x, res.y);
-
-    colorResolveBuffer->resize(res.x, res.y);
-    customIdResolveBuffer->resize(res.x, res.y);
-    depthResolveBuffer->resize(res.x, res.y);
-
-
-
-    // 1) bind the one multisample FBO with both attachments
-    forwardFBO->bind();
-
-    glViewport(0, 0, res.x, res.y);
-
-    glEnable(GL_POLYGON_OFFSET_FILL);
-    glPolygonOffset(3.0f, 3.0f); // slopeScale, units
-
-    //
-    // A) Depth‑only pass
-    //
-    // disable color writes, enable depth writes, clear depth
-    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-    glDepthMask(GL_TRUE);
-    glClear(GL_DEPTH_BUFFER_BIT);
-    glDepthFunc(GL_LESS);
-    glEnable(GL_CULL_FACE);
-
-
-    for (auto* mesh : VissibleRenderList) 
+    // ---- Resize all buffers ----
+    // If any texture is resized its handle changes, so we must rebuild the
+    // FBOs that reference it immediately after resizing.
+    bool resized = false;
+    resized |= colorBuffer->resize(res.x, res.y);
+    resized |= depthBuffer->resize(res.x, res.y);
+    if (resized)
     {
-        if (mesh->Transparent)
+        // Texture handles changed — rebuild both FBOs that reference them.
+        //forwardDepthFBO->attachDepth(depthBuffer);
+        forwardFBO->attachColor(colorBuffer, 0u);
+        forwardFBO->attachDepth(depthBuffer);
+    }
+
+    bool resolveResized = false;
+    resolveResized |= colorResolveBuffer->resize(res.x, res.y);
+    resolveResized |= customIdResolveBuffer->resize(res.x, res.y);
+    resolveResized |= depthResolveBuffer->resize(res.x, res.y);
+    if (resolveResized)
+    {
+        forwardResolveFBO->attachColor(colorResolveBuffer, 0u);
+        forwardResolveFBO->attachDepth(depthResolveBuffer);
+        customIdFBO->attachColor(customIdResolveBuffer, 0u);
+    }
+
+    // ====================================================================
+    // Pass A — Depth pre-pass
+    // Uses forwardDepthFBO — its own dedicated view ID, separate from
+    // forwardFBO. This is critical: if both passes share a view, the second
+    // setViewClear call overwrites the first (depth clear is lost) and bgfx
+    // may reorder draws within the view, breaking the pre-pass.
+    // ====================================================================
+    {
+
+        forwardFBO->bind(0, 0,
+            static_cast<uint16_t>(res.x),
+            static_cast<uint16_t>(res.y));
+
+        bgfx::ViewId vid = ViewIdManager::GetCurrentId();
+        bgfx::setViewMode(vid, bgfx::ViewMode::Default);
+
+        // Clear depth only — no color attachment on this FBO.
+        bgfx::setViewClear(vid, BGFX_CLEAR_DEPTH, kClearBlack, 1.0f, 0);
+
+        // Depth write only, less-than test, back-face cull.
+        BgfxStateManager::Reset();
+        BgfxStateManager::SetWriteRGB(false);
+        BgfxStateManager::SetWriteAlpha(false);
+        BgfxStateManager::SetWriteDepth(true);
+        BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Always);
+        BgfxStateManager::SetCull(BgfxStateManager::Cull::CW);
+        BgfxStateManager::SetMSAA(MultiSampleCount > 0);
+
+        for (auto* mesh : VissibleRenderList)
         {
-            //continue;
+            const mat4& P = mesh->IsViewmodel
+                ? Camera::finalizedProjectionViewmodel
+                : Camera::finalizedProjection;
+            mesh->DrawDepth(Camera::finalizedView, P);
         }
-        const mat4& P = mesh->IsViewmodel
-            ? Camera::finalizedProjectionViewmodel
-            : Camera::finalizedProjection;
-        mesh->DrawDepth(Camera::finalizedView, P);
-
-    }
-    glUseProgram(0);
-
-    forwardFBO->unbind();
-    glDisable(GL_POLYGON_OFFSET_FILL);
-
-    forwardFBO->resolve(*forwardResolveFBO,
-        GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT,
-        GL_LINEAR);
-
-    forwardFBO->bind();
-
-    //
-    // B) Opaque + transparent color passes
-    //
-    // re‑enable color writes, disable depth writes, clear color    
-    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-    glDepthMask(GL_FALSE);
-    //glClear(GL_COLOR_BUFFER_BIT);
-
-    // draw opaque where depth ==
-    glDepthFunc(GL_LEQUAL);
-    for (auto* mesh : VissibleRenderList) {
-        if (mesh->Transparent) continue;
-        const mat4& P = mesh->IsViewmodel
-            ? Camera::finalizedProjectionViewmodel
-            : Camera::finalizedProjection;
-        mesh->DrawForward(Camera::finalizedView, P);
     }
 
+    // Resolve depth pre-pass → single-sample. Safe here because we haven't
+    // written any color yet and forwardDepthFBO has no color attachment.
+    forwardFBO->resolveDepthOnly(*forwardResolveFBO);
 
-    // draw transparent with normal depth test
-    glDepthFunc(GL_LEQUAL);
-
-    Level::Current->BspData.RenderTransparentFaces();
-
-    for (auto* mesh : VissibleRenderList) {
-        if (!mesh->Transparent) continue;
-        const mat4& P = mesh->IsViewmodel
-            ? Camera::finalizedProjectionViewmodel
-            : Camera::finalizedProjection;
-        mesh->DrawForward(Camera::finalizedView, P);
-    }
-
-    DebugDraw::Draw();
-    glUseProgram(0);
-
-    //this part makes it work correctly if premultiplied alpha is enabled by webgl. can be disabled by injecting js code in shell, but better to keep just in case
-    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_TRUE);
-    glClearColor(0, 0, 0, 1);    // only alpha channel to 1
-    glClear(GL_COLOR_BUFFER_BIT);
-    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-
-    forwardFBO->unbind();
-
-    // 2) resolve to single‐sample FBO
-    forwardFBO->resolve(*forwardResolveFBO,
-        GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT,  
-        GL_NEAREST);
-
-    customIdFBO->bind();
-
-    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-    glDepthMask(GL_FALSE);
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    for (auto* mesh : VissibleRenderList)
+    // ====================================================================
+    // Pass B — Opaque + transparent color pass
+    // Uses forwardFBO — a different view ID from Pass A. This guarantees
+    // the GPU executes Pass A fully before Pass B begins.
+    // ====================================================================
     {
 
-        const mat4& P = mesh->IsViewmodel
-            ? Camera::finalizedProjectionViewmodel
-            : Camera::finalizedProjection;
-        mesh->DrawCustomId(Camera::finalizedView, P);
+        forwardFBO->bind(0, 0,
+            static_cast<uint16_t>(res.x),
+            static_cast<uint16_t>(res.y));
 
+        bgfx::ViewId vid = ViewIdManager::GetCurrentId();
+        bgfx::setViewMode(vid, bgfx::ViewMode::Default);
+
+        // Clear color only — depth was already written by Pass A.
+        //bgfx::setViewClear(vid, BGFX_CLEAR_COLOR, kClearBlack, 1.0f, 0);
+
+        // Opaque: RGB+A write, no depth write, lequal test, back-face cull.
+        BgfxStateManager::Reset();
+        BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::LEqual);
+        BgfxStateManager::SetCull(BgfxStateManager::Cull::CW);
+        BgfxStateManager::SetMSAA(MultiSampleCount > 0);
+
+        for (auto* mesh : VissibleRenderList)
+        {
+            
+            if (mesh->Transparent) continue;
+            const mat4& P = mesh->IsViewmodel
+                ? Camera::finalizedProjectionViewmodel
+                : Camera::finalizedProjection;
+            mesh->DrawForward(Camera::finalizedView, P);
+        }
+
+
+        bgfx::setViewMode(vid, bgfx::ViewMode::Sequential);
+
+        // Transparent: RGB+A write, no depth write, lequal test, alpha blend.
+        BgfxStateManager::Reset();
+        BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::LEqual);
+        BgfxStateManager::SetBlend(BgfxStateManager::Blend::Alpha);
+        BgfxStateManager::SetCull(BgfxStateManager::Cull::CW);
+        BgfxStateManager::SetMSAA(MultiSampleCount > 0);
+
+		BgfxStateManager::SetWriteDepth(false);
+
+        Level::Current->BspData.RenderTransparentFaces();
+
+        BgfxStateManager::SetWriteDepth(true);
+
+        for (auto* mesh : VissibleRenderList)
+        {
+            if (!mesh->Transparent) continue;
+            const mat4& P = mesh->IsViewmodel
+                ? Camera::finalizedProjectionViewmodel
+                : Camera::finalizedProjection;
+            mesh->DrawForward(Camera::finalizedView, P);
+        }
+
+        DebugDraw::Draw();
     }
 
-    customIdFBO->unbind();
+    // Resolve color + depth → single-sample resolve FBO.
+    forwardFBO->resolve(*forwardResolveFBO);
+    BgfxStateManager::SetMSAA(false);
+    // ====================================================================
+    // Pass C — Custom ID pass  (single-sample, no depth write)
+    // ====================================================================
+    {
 
-#ifndef GL_ES_PROFILE
-    glDisable(GL_MULTISAMPLE);   
-#endif
+        customIdFBO->bind(0, 0,
+            static_cast<uint16_t>(res.x),
+            static_cast<uint16_t>(res.y));
+
+        bgfx::ViewId vid = ViewIdManager::GetCurrentId();
+
+
+        bgfx::setViewClear(vid, BGFX_CLEAR_COLOR, kClearBlack, 1.0f, 0);
+
+        // No depth test — write color IDs only.
+        BgfxStateManager::Reset();
+        BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Always);
+
+        for (auto* mesh : VissibleRenderList)
+        {
+            const mat4& P = mesh->IsViewmodel
+                ? Camera::finalizedProjectionViewmodel
+                : Camera::finalizedProjection;
+            mesh->DrawCustomId(Camera::finalizedView, P);
+        }
+    }
+}
+
+// -----------------------------------------------------------------------
+// RenderDirectionalLightShadows
+// -----------------------------------------------------------------------
+void Renderer::RenderDirectionalLightShadows(vector<IDrawMesh*>& ShadowRenderList,
+    Framebuffer& fbo,
+    int                 /*numCascades*/)
+{
 
 }
 
-void Renderer::RenderDirectionalLightShadows(vector<IDrawMesh*>& ShadowRenderList, Framebuffer& fbo, int numCascades)
+// -----------------------------------------------------------------------
+// RenderFullscreenQuad
+// State must be set by the caller via BgfxStateManager before calling this.
+// -----------------------------------------------------------------------
+void Renderer::RenderFullscreenQuad(Shader* shader)
 {
-    glUseProgram(0);
-    fbo.bind();
-
-    int halfRes = LightManager::ShadowMapResolution / 2;
-
-    
-
-    glEnable(GL_DEPTH_TEST);
-    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-    glDepthMask(GL_TRUE);
-    glClear(GL_DEPTH_BUFFER_BIT);
-    glDepthFunc(GL_LESS);
-    glEnable(GL_CULL_FACE);
-
-
-    glViewport(0, 0, halfRes, halfRes);
-    for (auto* mesh : ShadowRenderList) {
-        mesh->DrawShadow(LightManager::lightView1, LightManager::lightProjection1);
-    }
-
-    glViewport(halfRes, 0, halfRes, halfRes);
-    for (auto* mesh : ShadowRenderList) {
-        mesh->DrawShadow(LightManager::lightView2, LightManager::lightProjection2);
-    }
-
-    glViewport(0, halfRes, halfRes, halfRes);
-    for (auto* mesh : ShadowRenderList) {
-        mesh->DrawShadow(LightManager::lightView3, LightManager::lightProjection3);
-    }
-
-    glViewport(halfRes, halfRes, halfRes, halfRes);
-    for (auto* mesh : ShadowRenderList) {
-        mesh->DrawShadow(LightManager::lightView4, LightManager::lightProjection4);
-    }
-    glUseProgram(0);
+    bgfx::setVertexBuffer(0, m_fullscreenVB);
+	shader->Submit(ViewIdManager::GetCurrentId());
 }
 
-void Renderer::RenderFullscreenQuad()
+// -----------------------------------------------------------------------
+// SetSurfaceShaderUniforms
+// -----------------------------------------------------------------------
+void Renderer::SetSurfaceShaderUniforms(Shader* shader, float brightnessScale)
 {
-
-    glDisable(GL_DITHER);
-	glDisable(GL_DEPTH_TEST);
-
-	// Draw quad
-	glBindVertexArray(quadVAO);
-	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-	glBindVertexArray(0);
-
-
-	glEnable(GL_DEPTH_TEST);
-
-
-}
-
-void Renderer::SetSurfaceShaderUniforms(ShaderProgram* shader, float brightnessScale)
-{
-    if (shader == nullptr) return;
+    if (!shader) return;
 
     shader->SetUniform("lightDirection", LightManager::LightDirection);
-
     shader->SetUniform("brightness", 1.0f * brightnessScale);
 
+	shader->SetUniform("worldOrientation", inverse(toMat4(WorldOrientationManager::GetWorldRotationQuat())));
 
     if (LightManager::DirectionalShadowsEnabled)
     {
-        shader->SetUniform("lightMatrix1", LightManager::lightProjection1 * LightManager::lightView1);
-        shader->SetUniform("lightMatrix2", LightManager::lightProjection2 * LightManager::lightView2);
-        shader->SetUniform("lightMatrix3", LightManager::lightProjection3 * LightManager::lightView3);
-        shader->SetUniform("lightMatrix4", LightManager::lightProjection4 * LightManager::lightView4);
+        shader->SetUniform("lightMatrix1",
+            LightManager::lightProjection1 * LightManager::lightView1);
+        shader->SetUniform("lightMatrix2",
+            LightManager::lightProjection2 * LightManager::lightView2);
+        shader->SetUniform("lightMatrix3",
+            LightManager::lightProjection3 * LightManager::lightView3);
+        shader->SetUniform("lightMatrix4",
+            LightManager::lightProjection4 * LightManager::lightView4);
 
+        shader->SetTexture("shadowMap",
+            EngineMain::MainInstance->MainRenderer->DirectionalShadowMap->textureHandle());
+        shader->SetTexture("shadowMapDetail",
+            EngineMain::MainInstance->MainRenderer->DetailDirectionalShadowMap->textureHandle());
+        shader->SetTexture("shadowMapRaw",
+            EngineMain::MainInstance->MainRenderer->DirectionalShadowMap->textureHandle());
+        shader->SetTexture("shadowMapDetailRaw",
+            EngineMain::MainInstance->MainRenderer->DetailDirectionalShadowMap->textureHandle());
 
-        shader->SetTexture("shadowMap", EngineMain::MainInstance->MainRenderer->DirectionalShadowMap->id());
-        shader->SetTexture("shadowMapDetail", EngineMain::MainInstance->MainRenderer->DetailDirectionalShadowMap->id());
-        shader->SetTexture("shadowMapRaw", EngineMain::MainInstance->MainRenderer->DirectionalShadowMap->id());
-        shader->SetTexture("shadowMapDetailRaw", EngineMain::MainInstance->MainRenderer->DetailDirectionalShadowMap->id());
         shader->SetUniform("shadowDistance1", LightManager::LightDistance1);
         shader->SetUniform("shadowDistance2", LightManager::LightDistance2);
         shader->SetUniform("shadowDistance3", LightManager::LightDistance3);
@@ -378,132 +415,151 @@ void Renderer::SetSurfaceShaderUniforms(ShaderProgram* shader, float brightnessS
         shader->SetUniform("shadowRadius3", LightManager::LightRadius3);
         shader->SetUniform("shadowRadius4", LightManager::LightRadius4);
     }
-    else
-    {
-        //shader->SetTexture("shadowMap", nullptr);
-       // shader->SetTexture("shadowMapDetail", nullptr);
-        //shader->SetTexture("shadowMapRaw", nullptr);
-        //shader->SetTexture("shadowMapDetailRaw", nullptr);
-    }
 
-    shader->SetTexture("depthTexture", EngineMain::MainInstance->MainRenderer->depthResolveBuffer->id());
+    shader->SetTexture("depthTexture",
+        EngineMain::MainInstance->MainRenderer->depthResolveBuffer->textureHandle());
 
     shader->SetUniform("fog_start", FogManager::StartDistance);
     shader->SetUniform("fog_end", FogManager::EndDistance);
     shader->SetUniform("fog_opacity", FogManager::Opacity);
     shader->SetUniform("fog_color", FogManager::Color);
 
-
     shader->SetUniform("cameraPosition", Camera::finalizedPosition);
     shader->SetUniform("shadowMapSize", LightManager::ShadowMapResolution);
-
     shader->SetUniform("shaddowOffsetScale", LightManager::ShaddowOffsetScale);
-
 }
 
+// -----------------------------------------------------------------------
+// Resolution helpers
+// -----------------------------------------------------------------------
 inline ivec2 Renderer::GetScreenResolution() const
 {
-	return ivec2(EngineMain::MainInstance->ScreenSize.x * ResolutionScale, EngineMain::MainInstance->ScreenSize.y * ResolutionScale);
+    return ivec2(EngineMain::MainInstance->ScreenSize.x * ResolutionScale,
+        EngineMain::MainInstance->ScreenSize.y * ResolutionScale);
 }
 
 inline ivec2 Renderer::GetNativeScreenResolution() const
 {
-    return ivec2(EngineMain::MainInstance->ScreenSize.x, EngineMain::MainInstance->ScreenSize.y);
+    return ivec2(EngineMain::MainInstance->ScreenSize.x,
+        EngineMain::MainInstance->ScreenSize.y);
 }
 
-void Renderer::InitFullscreenVAO()
+// -----------------------------------------------------------------------
+// InitFullscreenBuffers
+// -----------------------------------------------------------------------
+void Renderer::InitFullscreenBuffers()
 {
-	float quadVertices[] = {
-		// positions   // texCoords
-		-1.0f,  1.0f,  0.0f, 1.0f,
-		-1.0f, -1.0f,  0.0f, 0.0f,
-		 1.0f,  1.0f,  1.0f, 1.0f,
-		 1.0f, -1.0f,  1.0f, 0.0f,
-	};
+    m_fullscreenLayout.begin()
+        .add(bgfx::Attrib::Position, 2, bgfx::AttribType::Float)
+        .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
+        .end();
 
-	glGenVertexArrays(1, &quadVAO);
-	glGenBuffers(1, &quadVBO);
-	glBindVertexArray(quadVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
-	glBindVertexArray(0);
+    // Single oversized triangle covering the entire NDC clip space.
+    // bgfx default state is TRIANGLE_LIST, so the old 4-vertex strip
+    // only drew one triangle (verts 0-1-2; vert 3 was ignored).
+    // A 3-vertex oversized triangle needs no BGFX_STATE_PT_TRISTRIP,
+    // no index buffer, and has no diagonal seam.
+    //
+    //   (-1, 3)
+    //     |\
+    //     |  \         clips to the [-1,+1] viewport on the GPU
+    //     |    \
+    //  (-1,-1)---(3,-1)
+    //
+    struct FullscreenVertex { float x, y, u, v; };
+    static const FullscreenVertex kVerts[3] = {
+        { -1.0f,  3.0f,   0.0f,  2.0f },   // top-left  (oversized)
+        { -1.0f, -1.0f,   0.0f,  0.0f },   // bottom-left
+        {  3.0f, -1.0f,   2.0f,  0.0f },   // bottom-right (oversized)
+    };
+
+    m_fullscreenVB = bgfx::createVertexBuffer(
+        bgfx::makeRef(kVerts, sizeof(kVerts)),
+        m_fullscreenLayout
+    );
 }
 
+// -----------------------------------------------------------------------
+// InitFrameBuffers
+// -----------------------------------------------------------------------
 void Renderer::InitFrameBuffers()
 {
-
-    TextureFormat colorTextureFormat = TextureFormat::RGBA16F;
-
     ivec2 screenResolution = GetScreenResolution();
+    TextureFormat colorFmt = TextureFormat::RGBA16F;
 
-    if (colorBuffer != nullptr)
-    {
-        delete(colorBuffer);
-    }
+    delete colorBuffer;      colorBuffer = nullptr;
+    delete depthBuffer;      depthBuffer = nullptr;
+    delete forwardFBO;       forwardFBO = nullptr;
 
-    if (depthBuffer != nullptr)
-    {
-        delete(depthBuffer);
-    }
+    TextureType texType = (MultiSampleCount > 0)
+        ? TextureType::Texture2DMultisample
+        : TextureType::Texture2D;
 
-    if (forwardFBO != nullptr)
-    {
-        delete(forwardFBO);
-    }
+    constexpr uint64_t kSamplerFlags =
+        BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP
+        | BGFX_SAMPLER_MIN_ANISOTROPIC | BGFX_SAMPLER_MAG_ANISOTROPIC;
 
-    TextureType textureType = (MultiSampleCount > 0) ? TextureType::Texture2DMultisample : TextureType::Texture2D;
+    colorBuffer = new RenderTexture(
+        screenResolution.x, screenResolution.y,
+        colorFmt, texType,
+        /*sampleDepth=*/false,
+        kSamplerFlags,
+        MultiSampleCount > 0 ? MultiSampleCount : 0);
+    colorBuffer->SetName("MainColorBuffer");
 
-    colorBuffer = new RenderTexture(screenResolution.x, screenResolution.y, colorTextureFormat, textureType, false, GL_LINEAR, GL_LINEAR,
-        GL_CLAMP_TO_EDGE, 1);
-	colorBuffer->SetName("MainColorBuffer");
+    depthBuffer = new RenderTexture(
+        screenResolution.x, screenResolution.y,
+        TextureFormat::Depth24, texType,
+        /*sampleDepth=*/false,
+        kSamplerFlags,
+        MultiSampleCount > 0 ? MultiSampleCount : 0);
+    depthBuffer->SetName("MainDepthBuffer");
 
+    // FIX: Depth pre-pass gets its own FBO with its own view ID.
+    // This is a depth-only FBO — no color attachment.
+    // bgfx will execute this view before forwardFBO's view because its
+    // ID is allocated first (lower number).
 
-    depthBuffer = new RenderTexture(screenResolution.x, screenResolution.y, TextureFormat::Depth24, textureType, false, GL_LINEAR, GL_LINEAR,
-        GL_CLAMP_TO_EDGE, 1);
-	depthBuffer->SetName("MainDepthBuffer");
-
+    // Color pass FBO — color + the same depth buffer written by the pre-pass.
     forwardFBO = new Framebuffer();
-    forwardFBO->attachDepth(depthBuffer);
     forwardFBO->attachColor(colorBuffer, 0u);
-
-    // resize all our buffers
-    colorBuffer->resize(screenResolution.x, screenResolution.y);
-    depthBuffer->resize(screenResolution.x, screenResolution.y);
-    colorBuffer->setSamples(MultiSampleCount);
-    depthBuffer->setSamples(MultiSampleCount);
-
+    forwardFBO->attachDepth(depthBuffer);
 }
 
+// -----------------------------------------------------------------------
+// InitResolveFrameBuffers
+// -----------------------------------------------------------------------
 void Renderer::InitResolveFrameBuffers()
 {
-
     ivec2 screenResolution = GetScreenResolution();
-    TextureFormat colorTextureFormat = TextureFormat::RGBA16F;
+    TextureFormat colorFmt = TextureFormat::RGBA16F;
 
-    //colorTextureFormat = TextureFormat::RGB8;
+    constexpr uint64_t kSamplerFlags =
+        BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP
+        | BGFX_SAMPLER_MIN_ANISOTROPIC | BGFX_SAMPLER_MAG_ANISOTROPIC;
 
-    colorResolveBuffer = new RenderTexture(screenResolution.x, screenResolution.y, colorTextureFormat, TextureType::Texture2D);
-	colorResolveBuffer->SetName("ColorResolveBuffer");
-    customIdResolveBuffer = new RenderTexture(screenResolution.x, screenResolution.y, TextureFormat::RGB8, TextureType::Texture2D);
-	customIdResolveBuffer->SetName("CustomIdResolveBuffer");
-    depthResolveBuffer = new RenderTexture(screenResolution.x, screenResolution.y, TextureFormat::Depth24, TextureType::Texture2D);
-	depthResolveBuffer->SetName("DepthResolveBuffer");
+    colorResolveBuffer = new RenderTexture(
+        screenResolution.x, screenResolution.y,
+        colorFmt, TextureType::Texture2D,
+        false, kSamplerFlags);
+    colorResolveBuffer->SetName("ColorResolveBuffer");
+
+    customIdResolveBuffer = new RenderTexture(
+        screenResolution.x, screenResolution.y,
+        TextureFormat::RGBA8, TextureType::Texture2D,
+        false, kSamplerFlags);
+    customIdResolveBuffer->SetName("CustomIdResolveBuffer");
+
+    depthResolveBuffer = new RenderTexture(
+        screenResolution.x, screenResolution.y,
+        TextureFormat::Depth24, TextureType::Texture2D,
+        false, kSamplerFlags);
+    depthResolveBuffer->SetName("DepthResolveBuffer");
 
     forwardResolveFBO = new Framebuffer();
-
+    forwardResolveFBO->attachColor(colorResolveBuffer, 0u);
     forwardResolveFBO->attachDepth(depthResolveBuffer);
-    forwardResolveFBO->attachColor(colorResolveBuffer,0u);
-
-    colorResolveBuffer->resize(screenResolution.x, screenResolution.y);
-    customIdResolveBuffer->resize(screenResolution.x, screenResolution.y);
-    depthResolveBuffer->resize(screenResolution.x, screenResolution.y);
 
     customIdFBO = new Framebuffer();
-    customIdFBO->attachDepth(depthResolveBuffer);
-    customIdFBO->attachColor(customIdResolveBuffer);
-
+    customIdFBO->attachColor(customIdResolveBuffer, 0u);
 }

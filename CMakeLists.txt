@@ -37,15 +37,30 @@ if (CMAKE_SYSTEM_NAME MATCHES "Emscripten")
     set(EMSCRIPTEN TRUE)
     message(STATUS "Building for Emscripten")
     include_directories(SYSTEM ${EMSCRIPTEN_SYSROOT}/include)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse -msse2 -msimd128 -msse4.2")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse -msse2 -msimd128")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse -msse2 -msimd128 -msse4.2")
 
 elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
     set(LINUX TRUE)
     message(STATUS "Building for Linux")
 
-    
-    
+endif()
+
+
+# ——————————————————————————————————————————————————————————————————————
+# Engine library
+# ——————————————————————————————————————————————————————————
+file(GLOB_RECURSE ENGINE_SOURCES "${CMAKE_SOURCE_DIR}/source/Engine/*.cpp")
+
+add_library(engine STATIC ${ENGINE_SOURCES})
+
+# Engine must see itself as a root include folder
+target_include_directories(engine
+    PUBLIC
+        "${CMAKE_SOURCE_DIR}/source/Engine"   # <Renderer/...>
+        "${CMAKE_SOURCE_DIR}/libraries"       # third-party headers
+)
+if(LINUX)
     add_library(mimalloc::mimalloc STATIC IMPORTED GLOBAL)
     set_target_properties(mimalloc::mimalloc PROPERTIES
         IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/Lib/Linux/libmimalloc.a"
@@ -67,25 +82,7 @@ elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
         ZLIB::ZLIB
         mimalloc::mimalloc 
     )
-
 endif()
-
-
-# ——————————————————————————————————————————————————————————————————————
-# Engine library
-# ——————————————————————————————————————————————————————————
-file(GLOB_RECURSE ENGINE_SOURCES "${CMAKE_SOURCE_DIR}/source/Engine/*.cpp")
-
-add_library(engine STATIC ${ENGINE_SOURCES})
-
-# Engine must see itself as a root include folder
-target_include_directories(engine
-    PUBLIC
-        "${CMAKE_SOURCE_DIR}/source/Engine"   # <Renderer/...>
-        "${CMAKE_SOURCE_DIR}/libraries"       # third-party headers
-)
-
-
 
 set(LIB_DIR "${CMAKE_SOURCE_DIR}/sourceLibraries")
 
@@ -147,13 +144,21 @@ target_link_libraries(engine PUBLIC fmod)
 
 
 # Jolt shipping configuration
-set(ENABLE_ASSERTS              OFF CACHE BOOL "Enable asserts"                    FORCE)
-set(ENABLE_ALL_WARNINGS         OFF CACHE BOOL "Enable all warnings"               FORCE)
-set(INTERPROCEDURAL_OPTIMIZATION ON  CACHE BOOL "Enable link-time optimization"    FORCE)
 
-# Disable debug features not needed in shipping
+# Jolt shipping configuration
+set(ENABLE_ASSERTS              OFF CACHE BOOL "" FORCE)
+set(ENABLE_ALL_WARNINGS         OFF CACHE BOOL "" FORCE)
+set(INTERPROCEDURAL_OPTIMIZATION ON  CACHE BOOL "" FORCE)
+
+# Disable debug features...
 set(DEBUG_RENDERER_IN_DEBUG_AND_RELEASE OFF CACHE BOOL "" FORCE)
 set(PROFILER_IN_DEBUG_AND_RELEASE       OFF CACHE BOOL "" FORCE)
+
+
+if(EMSCRIPTEN)
+    set(USE_WASM_SIMD ON CACHE BOOL "Enable SIMD on Emscripten WASM build" FORCE)
+endif()
+
 add_subdirectory(${LIB_DIR}/JoltPhysics-5.3.0/Build/)
 target_link_libraries(engine PUBLIC Jolt::Jolt)
 
@@ -163,6 +168,8 @@ set(ASSIMP_BUILD_ASSIMP_TOOLS OFF CACHE BOOL "" FORCE)
 set(ASSIMP_BUILD_SAMPLES OFF CACHE BOOL "" FORCE)
 set(ASSIMP_NO_EXPORT ON CACHE BOOL "" FORCE)
 set(ASSIMP_BUILD_DLL_EXPORT OFF)
+set(ASSIMP_INSTALL OFF)
+
 
 set(ASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT OFF CACHE BOOL "" FORCE)
 set(ASSIMP_BUILD_OBJ_IMPORTER ON CACHE BOOL "" FORCE)   # .obj
@@ -173,6 +180,36 @@ set(ASSIMP_BUILD_ZLIB OFF CACHE BOOL "" FORCE)
 add_subdirectory(${LIB_DIR}/assimp)
 target_link_libraries(engine PUBLIC assimp)
 
+
+# BGFX
+
+set(BGFX_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+
+if(WIN32)
+    set(BGFX_BUILD_TOOLS    ON CACHE BOOL "" FORCE)
+else()
+    set(BGFX_BUILD_TOOLS    OFF CACHE BOOL "" FORCE)
+endif()
+
+if(EMSCRIPTEN)
+    set(BGFX_CONFIG_MULTITHREADED OFF CACHE BOOL "" FORCE)
+    set(BX_CONFIG_SUPPORTS_THREADING OFF CACHE BOOL "" FORCE)
+    set(BGFX_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
+endif()
+
+set(BGFX_INSTALL        OFF CACHE BOOL "" FORCE)
+
+add_subdirectory(${LIB_DIR}/bgfx/bgfx.cmake)
+target_link_libraries(engine PUBLIC bgfx)
+target_link_libraries(engine PUBLIC bx)
+if(EMSCRIPTEN)
+    if(TARGET bimg_encode)
+        # Undefine the macros only for this target so it skips the broken #include <x86intrin.h>
+        # Jolt and everything else still get the full SSE4.2 intrinsics.
+        target_compile_options(bimg_encode PRIVATE -U__SSE4_1__ -U__SSE4_2__)
+        message(STATUS "bimg_encode: disabled SSE4.1/4.2 intrinsics to avoid x86intrin.h errors on Emscripten")
+    endif()
+endif()
 
 # ——————————————————————————————————————————————————————————
 # Resolve GAME_DIR, create source/game folder if missing, save selection
@@ -203,6 +240,8 @@ set(WASM_COMMON_LINK_OPTIONS
     "SHELL:-s USE_WEBGL2=1"
     "SHELL:-s MIN_WEBGL_VERSION=2"
     "SHELL:-s MAX_WEBGL_VERSION=2"
+
+
     #"SHELL:-s GL_PREINITIALIZED_CONTEXT=1"
     "SHELL:-s STACK_SIZE=500000"
     #"SHELL:-fsanitize=address,undefined"

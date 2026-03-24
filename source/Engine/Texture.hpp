@@ -1,17 +1,18 @@
 #pragma once
 
-#include <SDL2/SDL.h>
-#include "gl.h"
 #include <string>
 #include <iostream>
 #include <vector>
+#include <cmath>
+#include <algorithm>
 #include "FileSystem/FileSystem.h"
 
 #include <includedLibraries/stb_image.h>
+#include <includedLibraries/stb_image_resize.h>   // add this include
+#include <bgfx/bgfx.h>
 
 #include "malloc_override.h"
 #include "Logger.hpp"
-
 #include <Profiling/ResourceStatistics.hpp>
 
 class Texture {
@@ -20,214 +21,260 @@ public:
         loadFromFile(filename, generateMipmaps);
     }
 
-    Texture() 
-    {
-        
-    }
+    Texture() {}
 
-    // Load from compressed data (PNG/JPEG in memory)
     Texture(const unsigned char* data, size_t size, bool generateMipmaps = true) {
         loadFromMemoryCompressed(data, size, generateMipmaps);
     }
 
-    // Load from raw pixel data (RGBA or BGRA32)
-    Texture(const unsigned char* data, int width, int height, GLenum format = GL_RGBA, bool generateMipmaps = true) {
+    Texture(const unsigned char* data, int width, int height,
+        bgfx::TextureFormat::Enum format = bgfx::TextureFormat::RGBA8,
+        bool generateMipmaps = true) {
         loadFromRawData(data, width, height, format, generateMipmaps);
     }
 
-    ~Texture() 
-    {
-
-		ResourceStatistics::Instance().unregisterResource(ResourceType::Texture, textureID);
-
-        if (textureID != 0)
-            glDeleteTextures(1, &textureID);
+    ~Texture() {
+        ResourceStatistics::Instance().unregisterResource(ResourceType::Texture, m_handle.idx);
+        if (bgfx::isValid(m_handle))
+            bgfx::destroy(m_handle);
     }
 
-    void bind() const {
-        glBindTexture(GL_TEXTURE_2D, textureID);
+    void bind(uint8_t stage, bgfx::UniformHandle sampler) const {
+        bgfx::setTexture(stage, sampler, m_handle);
     }
 
     bool valid = false;
+    int  width = 0;
+    int  height = 0;
 
-    GLuint getID() const {
-        return textureID;
+    bgfx::TextureHandle getHandle()        const { return m_handle; }
+    bgfx::TextureHandle getTextureHandle() const { return m_handle; }
+
+    uint16_t getID() const {
+        return bgfx::isValid(m_handle) ? m_handle.idx : 0;
     }
 
     void setName(const std::string& name) {
-        ResourceStatistics::Instance().setResourceName(ResourceType::Texture, textureID, name);
+        ResourceStatistics::Instance().setResourceName(ResourceType::Texture, m_handle.idx, name);
+        if (bgfx::isValid(m_handle))
+            bgfx::setName(m_handle, name.c_str(), (int32_t)name.size());
     }
 
 private:
-    GLuint textureID = 0;
+    bgfx::TextureHandle m_handle = BGFX_INVALID_HANDLE;
 
-    static inline bool isPowerOfTwo(int v) { return v > 0 && ((v & (v - 1)) == 0); }
+    // -----------------------------------------------------------------------
+    // Helpers
+    // -----------------------------------------------------------------------
+    static uint64_t buildFlags() {
+        return BGFX_SAMPLER_MIN_ANISOTROPIC | BGFX_SAMPLER_MAG_ANISOTROPIC;
+    }
 
-    void setupTexture(int width, int height, GLenum format, const void* pixels, bool generateMipmaps) {
-        if (width <= 0 || height <= 0) return;
-        if (!pixels) return;
+    static size_t bytesPerPixel(bgfx::TextureFormat::Enum fmt) {
+        switch (fmt) {
+        case bgfx::TextureFormat::R8:    return 1;
+        case bgfx::TextureFormat::RG8:   return 2;
+        case bgfx::TextureFormat::RGB8:  return 3;
+        case bgfx::TextureFormat::RGBA8: return 4;
+        case bgfx::TextureFormat::BGRA8: return 4;
+        default:                         return 4;
+        }
+    }
 
-        glGenTextures(1, &textureID);
-        glBindTexture(GL_TEXTURE_2D, textureID);
+    static std::string formatSuffix(bgfx::TextureFormat::Enum fmt) {
+        switch (fmt) {
+        case bgfx::TextureFormat::R8:    return "_R";
+        case bgfx::TextureFormat::RG8:   return "_RG";
+        case bgfx::TextureFormat::RGB8:  return "_RGB";
+        case bgfx::TextureFormat::RGBA8: return "_RGBA";
+        case bgfx::TextureFormat::BGRA8: return "_BGRA";
+        default:                         return "_Unknown";
+        }
+    }
 
-        // Ensure proper alignment for 3-byte RGB rows
-        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    static int  nextPow2(int x) { int p = 1; while (p < x) p <<= 1; return p; }
+    static bool isPow2(int x) { return x > 0 && (x & (x - 1)) == 0; }
 
-        // On WebGL / GLES the base internalFormat must equal the format (GL_RGB/GL_RGBA).
-        // Use 'format' as the internalFormat to be safe on ANGLE/WebGL and desktop.
-        GLenum internalFormat = format;
+    // Downsample src → dst using Catmull-Rom.
+    // Always samples from the full POT base (src), never from a previous mip,
+    // so filter error does not compound across levels.
+    static void downsample(
+        const uint8_t* src, int srcW, int srcH,
+        uint8_t* dst, int dstW, int dstH,
+        int bpp)
+    {
+        stbir_resize_uint8_generic(
+            src, srcW, srcH, 0,
+            dst, dstW, dstH, 0,
+            bpp,
+            bpp == 4 ? 3 : STBIR_ALPHA_CHANNEL_NONE,  // alpha channel index
+            bpp == 4 ? STBIR_FLAG_ALPHA_PREMULTIPLIED : 0,
+            STBIR_EDGE_CLAMP,
+            STBIR_FILTER_CATMULLROM,   // sharp, no box-blur compounding
+            STBIR_COLORSPACE_LINEAR,
+            nullptr);
+    }
 
-        // If the uploaded pixel format is BGR/BGRA, convert to RGB/RGBA because WebGL typically doesn't accept BGR.
-        const unsigned char* uploadPixels = reinterpret_cast<const unsigned char*>(pixels);
-        std::vector<unsigned char> converted; // will hold converted data if needed
-
-        // Calculate bytes per pixel based on format
-        size_t bytesPerPixel = 4; // default RGBA
-        switch (format) {
-        case GL_RGB:
-            bytesPerPixel = 3;
-            break;
-        case GL_RGBA:
-            bytesPerPixel = 4;
-            break;
-        case GL_RED:
-        case GL_ALPHA:
-        case GL_LUMINANCE:
-            bytesPerPixel = 1;
-            break;
-        case GL_LUMINANCE_ALPHA:
-            bytesPerPixel = 2;
-            break;
-        case GL_RG:
-            bytesPerPixel = 2;
-            break;
-        default:
-            bytesPerPixel = 4; // fallback
-            break;
+    // -----------------------------------------------------------------------
+    // Core upload
+    // -----------------------------------------------------------------------
+    void setupTexture(int w, int h,
+        bgfx::TextureFormat::Enum format,
+        const void* pixels,
+        bool generateMipmaps)
+    {
+        if (w <= 0 || h <= 0 || !pixels) {
+            std::cerr << "setupTexture: invalid arguments ("
+                << w << "x" << h << ", pixels="
+                << (pixels ? "ok" : "null") << ")\n";
+            return;
         }
 
-        // NPOT handling: WebGL1 forbids mipmaps + repeat for NPOT textures.
-        bool npot = false;// !isPowerOfTwo(width) || !isPowerOfTwo(height);
-        bool useMips = generateMipmaps && !npot;
+        const int bpp = (int)bytesPerPixel(format);
 
-        // Upload
-        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, GL_UNSIGNED_BYTE, uploadPixels);
+        // -----------------------------------------------------------------------
+        // Step 1 — upscale to POT if needed.
+        // Mip chains require POT dimensions so each half-step lands on an integer.
+        // -----------------------------------------------------------------------
+        const int pot_w = isPow2(w) ? w : nextPow2(w);
+        const int pot_h = isPow2(h) ? h : nextPow2(h);
+        const bool needsUpscale = generateMipmaps && (pot_w != w || pot_h != h) && false;
 
-        // Debug GL error right after upload (useful to catch ANGLE errors)
-        GLenum err = glGetError();
-        if (err != GL_NO_ERROR) {
-            std::cerr << "glTexImage2D failed with GL error: 0x" << std::hex << err << std::dec << std::endl;
-            // still continue to set parameters (but texture may be invalid)
+        std::vector<uint8_t> pot_pixels;
+        const uint8_t* basePixels = (const uint8_t*)pixels;
+        int base_w = w, base_h = h;
+
+        if (needsUpscale) {
+            pot_pixels.resize((size_t)pot_w * pot_h * bpp);
+            // Upscale with Catmull-Rom to preserve sharpness at the base level.
+            stbir_resize_uint8_generic(
+                (const uint8_t*)pixels, w, h, 0,
+                pot_pixels.data(), pot_w, pot_h, 0,
+                bpp,
+                bpp == 4 ? 3 : STBIR_ALPHA_CHANNEL_NONE,
+                bpp == 4 ? STBIR_FLAG_ALPHA_PREMULTIPLIED : 0,
+                STBIR_EDGE_CLAMP,
+                STBIR_FILTER_DEFAULT,
+                STBIR_COLORSPACE_LINEAR,
+                nullptr);
+            basePixels = pot_pixels.data();
+            base_w = pot_w;
+            base_h = pot_h;
         }
 
-        if (useMips) {
-            glGenerateMipmap(GL_TEXTURE_2D);
+        // -----------------------------------------------------------------------
+        // Step 2 — allocate texture with full mip chain.
+        // -----------------------------------------------------------------------
+        const bool hasMips = generateMipmaps && (base_w > 1 || base_h > 1);
+        const uint8_t numMips = hasMips
+            ? (uint8_t)(1 + (int)std::floor(std::log2((double)std::max(base_w, base_h))))
+            : 1;
+
+        m_handle = bgfx::createTexture2D(
+            (uint16_t)base_w, (uint16_t)base_h,
+            hasMips, 1, format, buildFlags());
+
+        if (!bgfx::isValid(m_handle)) {
+            std::cerr << "bgfx::createTexture2D failed (" << base_w << "x" << base_h << ")\n";
+            return;
         }
 
-        // Set sensible parameters based on NPOT/mips
-        if (npot) {
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, useMips ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
-        }
-        else {
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, useMips ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST);
-        }
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        // -----------------------------------------------------------------------
+        // Step 3 — upload mip 0.
+        // -----------------------------------------------------------------------
+        bgfx::updateTexture2D(m_handle, 0, 0,
+            0, 0, (uint16_t)base_w, (uint16_t)base_h,
+            bgfx::copy(basePixels, (uint32_t)(base_w * base_h * bpp)));
 
-        GLfloat maxAniso = 0.0f;
-        glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAniso);
-        if (maxAniso > 0.0f) {
-            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAniso);
+        // -----------------------------------------------------------------------
+        // Step 4 — generate every mip by downsampling from the POT base.
+        //
+        // Sampling each level directly from base (not from the previous mip)
+        // means the Catmull-Rom filter runs once per level against clean data.
+        // Progressive sampling (prev→next) would apply the filter log2(N) times
+        // to the smallest levels, which is what caused the early blur.
+        // -----------------------------------------------------------------------
+        if (hasMips) {
+            // Start with a working copy of the base level (mip 0)
+            // One-time memcpy is negligible compared to the previous O(N·log N) cost
+            std::vector<uint8_t> workingMip(
+                basePixels,
+                basePixels + (size_t)base_w * base_h * bpp);
+
+            int currentW = base_w;
+            int currentH = base_h;
+
+            for (uint8_t mip = 1; mip < numMips; ++mip) {
+                const int dstW = std::max(1, currentW / 2);
+                const int dstH = std::max(1, currentH / 2);
+
+                std::vector<uint8_t> mipPixels((size_t)dstW * dstH * bpp);
+
+                downsample(workingMip.data(), currentW, currentH,
+                    mipPixels.data(), dstW, dstH, bpp);
+
+                bgfx::updateTexture2D(m_handle, 0, mip,
+                    0, 0, (uint16_t)dstW, (uint16_t)dstH,
+                    bgfx::copy(mipPixels.data(), (uint32_t)mipPixels.size()));
+
+                // Next iteration works from this level
+                workingMip = std::move(mipPixels);
+                currentW = dstW;
+                currentH = dstH;
+            }
         }
 
-        // Calculate accurate texture size
-        size_t textureSize = width * height * bytesPerPixel;
-
-        // Account for mipmaps (adds approximately 1/3 more memory)
-        if (useMips) {
-            textureSize += textureSize / 3;
-        }
-
-        // Create descriptive name
-        std::string textureName = "Texture_" + std::to_string(width) + "x" + std::to_string(height);
-        switch (format) {
-        case GL_RGB:
-            textureName += "_RGB";
-            break;
-        case GL_RGBA:
-            textureName += "_RGBA";
-            break;
-        case GL_RED:
-            textureName += "_R";
-            break;
-        case GL_LUMINANCE:
-            textureName += "_L";
-            break;
-        case GL_LUMINANCE_ALPHA:
-            textureName += "_LA";
-            break;
-        case GL_RG:
-            textureName += "_RG";
-            break;
-        }
-        if (useMips) {
-            textureName += "_Mips";
-        }
+        // Report original dimensions to callers.
+        width = w;
+        height = h;
 
         ResourceStatistics::Instance().registerResource(
-            ResourceType::Texture,
-            textureID,
-            textureSize,
-            textureName
-        );
+            ResourceType::Texture, m_handle.idx,
+            (size_t)w * h * bpp,
+            "Texture_" + std::to_string(w) + "x" + std::to_string(h) + formatSuffix(format));
 
         valid = true;
     }
 
-
-
-    void loadFromFile(const std::string& filename, bool generateMipmaps)
-    {
-        // 1. Read data from FileSystemEngine
+    // -----------------------------------------------------------------------
+    // Load paths
+    // -----------------------------------------------------------------------
+    void loadFromFile(const std::string& filename, bool generateMipmaps) {
         std::vector<uint8_t> fileData = FileSystemEngine::ReadFileBinary(filename);
         if (fileData.empty()) {
-            std::cerr << "File empty or not found: " << filename << std::endl;
+            std::cerr << "Texture: file empty or not found: " << filename << "\n";
             return;
         }
-
-		loadFromMemoryCompressed(fileData.data(), fileData.size(), generateMipmaps);
-
-		ResourceStatistics::Instance().setResourceName(ResourceType::Texture, textureID, filename);
+        loadFromMemoryCompressed(fileData.data(), fileData.size(), generateMipmaps);
+        if (bgfx::isValid(m_handle)) {
+            bgfx::setName(m_handle, filename.c_str(), (int32_t)filename.size());
+            ResourceStatistics::Instance().setResourceName(
+                ResourceType::Texture, m_handle.idx, filename);
+        }
     }
 
     void loadFromMemoryCompressed(const unsigned char* data, size_t size, bool generateMipmaps) {
-        int width, height, channels;
-        // force 4 channels (RGBA)
-        unsigned char* pixels = stbi_load_from_memory(data, static_cast<int>(size), &width, &height, &channels, 4);
-        if (!pixels) {
-            std::cerr << "Failed to load image from memory: " << stbi_failure_reason() << std::endl;
+        if (!data || size == 0) {
+            std::cerr << "Texture: null or empty compressed data\n";
             return;
         }
-        // Upload texture
-        setupTexture(width, height, GL_RGBA, pixels, generateMipmaps);
-
-        // Free the loaded image
+        int w, h, channels;
+        unsigned char* pixels = stbi_load_from_memory(data, (int)size, &w, &h, &channels, 4);
+        if (!pixels) {
+            std::cerr << "Texture: stbi_load_from_memory failed: " << stbi_failure_reason() << "\n";
+            return;
+        }
+        setupTexture(w, h, bgfx::TextureFormat::RGBA8, pixels, generateMipmaps);
         stbi_image_free(pixels);
     }
 
-    void loadFromRawData(const unsigned char* data, int width, int height, GLenum format, bool generateMipmaps) {
-        // quick sanity check for commonly expected RGB buffer size
+    void loadFromRawData(const unsigned char* data, int w, int h,
+        bgfx::TextureFormat::Enum format, bool generateMipmaps)
+    {
         if (!data) {
-            std::cerr << "loadFromRawData: null data pointer\n";
+            std::cerr << "Texture: loadFromRawData called with null data pointer\n";
             return;
         }
-        if (format == GL_RGB) {
-            // If you expect RGB, verify size externally (frame vector length etc.)
-            // (Cannot check here without knowing buffer size.)
-        }
-        setupTexture(width, height, format, data, generateMipmaps);
+        setupTexture(w, h, format, data, generateMipmaps);
     }
 };

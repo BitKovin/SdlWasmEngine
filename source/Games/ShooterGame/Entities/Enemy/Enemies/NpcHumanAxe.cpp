@@ -152,7 +152,7 @@ void NpcHumanAxe::AsyncUpdate()
     if (dead || stuned || stunnedRagdoll || returningFromRagdoll) return;
 
     UpdateAttackDamage();
-
+    if (dead)return;
 
     Entity* target = Player::Instance;
 

@@ -434,3 +434,6 @@ source/Intermediage/
 Build/sourceLibraries/assimp/lib/libassimp.a
 Build/sourceLibraries/assimp/lib/libassimp.a
 /Build/sourceLibraries/assimp/lib
+source/Distribution/Engine.lib
+Build/ShooterGame/linux/lib/libengine.a
+BuildLinux/librmlui.a

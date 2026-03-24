@@ -43,7 +43,7 @@ namespace roj
 	Mesh ModelLoader<Mesh>::processMesh(aiMesh* mesh, const aiScene* scene)
 	{
 		std::vector<MeshTexture> textures = getMeshTextures(scene->mMaterials[mesh->mMaterialIndex], scene);
-		std::vector<VertexData>  vertices = getMeshVertices(mesh);
+		std::vector<VertexData> vertices = getMeshVertices(mesh);
 		std::vector<uint32_t> indices;
 		for (uint32_t i = 0; i < mesh->mNumFaces; i++)
 		{
@@ -53,7 +53,19 @@ namespace roj
 
 		Mesh m;
 
-		m.vertexBuffer = new VertexBuffer(vertices, VertexData::Declaration());
+		m.layout = VertexData::Declaration();
+
+		m.vertices = vertices;
+		m.indices = indices;
+
+		const bgfx::Memory* vbMem = bgfx::makeRef(m.vertices.data(), sizeof(VertexData) * m.vertices.size());
+		m.vbh = bgfx::createVertexBuffer(vbMem, m.layout);
+
+		const bgfx::Memory* ibMem = bgfx::makeRef(m.indices.data(), sizeof(uint32_t) * m.indices.size());
+		m.ibh = bgfx::createIndexBuffer(ibMem, BGFX_BUFFER_INDEX32);
+
+		m.numIndices = static_cast<uint32_t>(indices.size());
+		m.textures = textures;
 
 		return m;
 	}
@@ -87,10 +99,7 @@ namespace roj
 		}
 
 		processNode(scene->mRootNode, scene);
-		for (Mesh& mesh : m_model)
-		{
-			mesh.VAO = new VertexArrayObject(*mesh.vertexBuffer, *mesh.indexBuffer);
-		}
+
 		return true;
 	}
 

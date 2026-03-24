@@ -114,6 +114,8 @@ public:
     static std::vector<glm::vec2> MouseDeltas;
     static int MaxDeltas;
 
+    static inline float MouseScrollDelta = 0;
+
     // Input actions mapped by a string name
     static std::unordered_map<std::string, InputAction*> actions;
 
@@ -217,6 +219,8 @@ public:
     void SimulatePressed();
     void SimulateHolding();
     void SimulateRelease();
+
+    void CleanPressed();
 
     // Returns true on the frame the action was pressed.
     bool Pressed() const;

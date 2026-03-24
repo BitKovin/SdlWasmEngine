@@ -16,6 +16,12 @@
 #include <UI/RmlUi/RmlUiContext.h>
 #include <LevelTraversalSystem.h>
 
+#include <BgfxStateManager.h>
+#include <Renderer/Abstractions/ViewIdManager.h>
+
+#include <UI/UiNavigation.h>
+#include <UI/UiFocusPointer.h>
+
 #include <Profiling/ResourceStatistics.hpp>
 
 EngineMain* EngineMain::MainInstance = nullptr;
@@ -37,6 +43,16 @@ EM_JS(int, canvas_get_height, (), {
 
 #endif // __EMSCRIPTEN__
 
+EngineMain::~EngineMain()
+{
+    FileSystemEngine::Shutdown();
+    Level::Current->CloseLevel();
+	UiRenderer::Shutdown();
+    ParticleEmitter::DestroyBillboardVao();
+    delete(RmlUiContext::Main);
+    RmlUiContext::Main = nullptr;
+}
+
 void EngineMain::UpdateScreenSize()
 {
 
@@ -57,7 +73,7 @@ void EngineMain::UpdateScreenSize()
         printf("failed to get screen resolution\n");
     }
 
-
+	printf("canvas size: %d x %d", ScreenSize.x, ScreenSize.y);
 
 #else
 
@@ -75,6 +91,9 @@ void EngineMain::UpdateScreenSize()
     {
         if(RmlContext)
 		    RmlContext->OnResize(ScreenSize.x, ScreenSize.y);
+
+		bgfx::reset(ScreenSize.x, ScreenSize.y, BGFX_RESET_NONE);
+
     }
 
 }
@@ -82,23 +101,16 @@ void EngineMain::UpdateScreenSize()
 void EngineMain::ToggleFullscreen()
 {
 
-    auto context = SDL_GL_GetCurrentContext();
 
     Uint32 FullscreenFlag = SDL_WINDOW_FULLSCREEN_DESKTOP;
     bool IsFullscreen = SDL_GetWindowFlags(Window) & FullscreenFlag;
 
-    // Ensure pending GL commands are done
-    glFinish();
 
 
     // Toggle fullscreen
     SDL_SetWindowFullscreen(Window, IsFullscreen ? 0 : FullscreenFlag);
 
-    // Rebind the context to the window
-    SDL_GL_MakeCurrent(Window, context);
 
-    // Ensure double-buffer swap is clean
-    SDL_GL_SwapWindow(Window);
 
     SDL_ShowCursor(SDL_ENABLE);
 
@@ -147,11 +159,6 @@ void EngineMain::InitInputs()
 
     Input::AddAction("click")->LMB = true;
 
-    int maxUniforms;
-
-    glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &maxUniforms);
-
-    printf("max uniforms: %i \n", maxUniforms);
 
 }
 
@@ -176,6 +183,9 @@ void EngineMain::Init(std::vector<std::string> args)
     MainThreadPool = new ThreadPool();
 
     MainThreadPool->Start(ThreadPool::GetNumThreadsForThreadPool());
+
+	GameUpdateSingleThreadPool = new ThreadPool();
+	GameUpdateSingleThreadPool->Start(1);
 
     SoundManager::Initialize();
 
@@ -203,9 +213,14 @@ void EngineMain::Init(std::vector<std::string> args)
 
     Level::Current = new Level();
 
+    bgfx::touch(0);
+	bgfx::frame();
+
+
     ImStartFrame();
 	RenderImGui();
-
+    bgfx::touch(0);
+    bgfx::frame();
 }
 
 #include <map>
@@ -362,6 +377,14 @@ void EngineMain::MainLoop()
 
     bool loadedlevel = Level::LoadPendingLevel();
 
+    if (loadedlevel)
+    {
+        auto pointer = std::make_shared<UiFocusPointer>();
+        pointer->ImagePath = "GameData/cat.png";
+        pointer->PointerSize = vec2(24.f, 24.f);
+        pointer->PointerOffset = 10.f;
+        Viewport.AddChild(pointer);
+    }
 
     Viewport.ResetTouchInputs();
 
@@ -414,7 +437,12 @@ void EngineMain::MainLoop()
 
     Input::Update();
 
+    UiNavigation::Update(&Viewport);
+
     Viewport.Update();
+
+    UiNavigation::LateUpdate();
+
     Viewport.UpdateChildrenOffsetRecursive();
     Viewport.FinalizeChildren();
 
@@ -423,7 +451,9 @@ void EngineMain::MainLoop()
     
     if (asyncGameUpdate) 
     {
-        gameUpdateFuture = std::async(std::launch::async, &EngineMain::GameUpdate, this);
+        GameUpdateSingleThreadPool->QueueJob([this]() {
+            GameUpdate();
+			});
     }
     else 
     {
@@ -443,12 +473,7 @@ void EngineMain::MainLoop()
 
     if (asyncGameUpdate)
     {
-        if (gameUpdateFuture.valid()) {
-            // If it's not done yet, wait (or you could choose to skip/warn).
-            if (gameUpdateFuture.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
-                gameUpdateFuture.wait();
-            }
-        }
+        GameUpdateSingleThreadPool->WaitForFinish();
 
 		FinishFrame();
 
@@ -655,101 +680,106 @@ void EngineMain::GameUpdate()
 void EngineMain::Render()
 {
 
+	ViewIdManager::Reset();
 
-    glEnable(GL_DEPTH_TEST);
+    ivec2 uiResolution = ivec2(
+        UiManager::GetScaledUiHeight() * Camera::AspectRatio,
+        UiManager::GetScaledUiHeight()
+    );
 
-    ivec2 uiResolution = ivec2(UiManager::GetScaledUiHeight() * Camera::AspectRatio , UiManager::GetScaledUiHeight());
+    /* ============================================================
+       CREATE / RESIZE UI RENDER TARGET
+       ============================================================ */
 
-
-    // Resize UI render target if needed
-    if (UiRenderTexture == nullptr ||
-        UiRenderTexture->width() != uiResolution.x ||
-        UiRenderTexture->height() != uiResolution.y)
+    if (UiFrameBuffer == nullptr)
     {
-        delete UiRenderTexture;
+        UiFrameBuffer = new Framebuffer();
         UiRenderTexture = new RenderTexture(
             uiResolution.x,
             uiResolution.y,
-            TextureFormat::RGBA8
-        );
+            TextureFormat::RGBA8);
+        UiRenderTextureStencil = new RenderTexture(uiResolution.x,
+            uiResolution.y, TextureFormat::Depth24Stencil8);
 
-        UiRenderTexture->SetName("UiRenderTexture");
+        UiFrameBuffer->attachColor(UiRenderTexture);
+        UiFrameBuffer->attachDepth(UiRenderTextureStencil);
+    }
+
+    if (UiRenderTexture->width() != (uint32_t)uiResolution.x ||
+        UiRenderTexture->height() != (uint32_t)uiResolution.y)
+    {
+        UiRenderTexture->resize(uiResolution.x, uiResolution.y);
+        UiRenderTextureStencil->resize(uiResolution.x, uiResolution.y);
+
+        // Textures got new handles — rebuild the framebuffer against them
+        UiFrameBuffer->attachColor(UiRenderTexture);        // ← FIX 1
+        UiFrameBuffer->attachDepth(UiRenderTextureStencil);
     }
 
     /* ============================================================
-       UI PASS → render into transparent RT (PREMULTIPLIED ALPHA)
+       UI PASS → render to transparent RT
        ============================================================ */
 
-    UiRenderTexture->bindFramebuffer();
-    glViewport(0, 0, uiResolution.x, uiResolution.y);
+    UiFrameBuffer->bind();
+    bgfx::setViewMode(ViewIdManager::GetCurrentId(), bgfx::ViewMode::Sequential);
+    bgfx::setViewClear(ViewIdManager::GetCurrentId(),
+        BGFX_CLEAR_COLOR | BGFX_CLEAR_STENCIL,
+        0x00000000, // transparent black
+        1.0f, 0);   // stencil cleared to 0
 
-    glClearColor(0.f, 0.f, 0.f, 0.f);
-    glClear(GL_COLOR_BUFFER_BIT);
+	BgfxStateManager::Reset();
+    BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Always);
 
-    glDisable(GL_DEPTH_TEST);
-    glEnable(GL_BLEND);
-
-    // Premultiplied alpha blending
-    glBlendFuncSeparate(
-        GL_ONE, GL_ONE_MINUS_SRC_ALPHA,
-        GL_ONE, GL_ONE_MINUS_SRC_ALPHA
-    );
 
     Viewport.Draw();
+    UiElement::DrawingLate = true;
+
+    for (auto elem : UiElement::pendingLateDrawElements)
+    {
+        elem->Draw();
+    }
+
+    UiElement::DrawingLate = false;
+    UiElement::pendingLateDrawElements.clear();
+
     UiRenderer::EndFrame();
 
-    /* ============================================================
-       RESTORE BLEND STATE BEFORE WORLD RENDER
-       ============================================================ */
+    UiFrameBuffer->unbind();
 
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_BLEND);
-    glEnable(GL_DEPTH_TEST);
+    ViewIdManager::GetCurrentId();
 
     /* ============================================================
-       WORLD PASS
+       WORLD PASS — RenderLevel manages its own view IDs internally
        ============================================================ */
 
     MainRenderer->RenderLevel(Level::Current);
 
     /* ============================================================
-       COMPOSITE UI OVER SCENE (PREMULTIPLIED)
+       COMPOSITE UI OVER SCENE → swapchain (view 0)
        ============================================================ */
 
-    glDisable(GL_DEPTH_TEST);
-    glEnable(GL_BLEND);
+    bgfx::setViewRect(ViewIdManager::GetCurrentId(), 0, 0,
+        (uint16_t)ScreenSize.x,
+        (uint16_t)ScreenSize.y);
+    bgfx::setViewFrameBuffer(ViewIdManager::GetCurrentId(), BGFX_INVALID_HANDLE); // default backbuffer
 
-    // Premultiplied alpha for fullscreen composite
-    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
-    glViewport(0, 0, ScreenSize.x, ScreenSize.y);
-
-    auto fullscreenShader = ShaderManager::GetShaderProgram(
-        "fullscreen_vertex",
-        "fxaa_simple"
+    auto compositeShader = ShaderManager::GetShaderProgram(
+        "vs_fullscreen",
+        "fs_fxaa_simple"
     );
 
-    fullscreenShader->UseProgram();
-    fullscreenShader->SetTexture(
-        "screenTexture",
-        UiRenderTexture->id()
-    );
-    fullscreenShader->SetUniform(
-        "screenSize",
-        vec2((float)ScreenSize.x, (float)ScreenSize.y)
-    );
+    compositeShader->SetTexture("screenTexture", UiRenderTexture->textureHandle());
+    compositeShader->SetUniform("screenSize",
+        vec2((float)ScreenSize.x, (float)ScreenSize.y));
 
-    MainRenderer->RenderFullscreenQuad();
+    // Premultiplied-alpha blend: RGB = src*1 + dst*(1-srcA)
+    BgfxStateManager::Reset();
+    BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Always);
+    BgfxStateManager::SetBlend(BgfxStateManager::Blend::Premultiplied);
+    BgfxStateManager::Apply();
 
-    /* ============================================================
-       FINAL STATE RESTORE (IMPORTANT)
-       ============================================================ */
-
-       // Restore default alpha blending for rest of frame / next frame
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glDisable(GL_BLEND);
-    glEnable(GL_DEPTH_TEST);
-
+    MainRenderer->RenderFullscreenQuad(compositeShader);
 
     RmlContext->Render();
 
@@ -817,8 +847,6 @@ void EngineMain::ForceUpdateScreenSize()
 void EngineMain::FinishRender()
 {
 
-    SDL_GL_SwapWindow(Window);
-    glFinish();
-    glFlush();
+	bgfx::frame();
 
 }

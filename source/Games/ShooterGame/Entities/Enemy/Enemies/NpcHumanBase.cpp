@@ -4,12 +4,18 @@
 #include "../../Player/Player.hpp"
 #include <RandomHelper.h>
 
+#include <World/WorldOrientationManager.h>
+
+#include <Systems/ScoreSystem/ScoreSystem.h>
+
 NpcHumanBase::NpcHumanBase()
 {
     mesh = new SkeletalMesh(this);
+    mesh->GravityAlignedRotation = true;
     Drawables.push_back(mesh);
 
     statusWidget = new UiBilboard(this);
+	statusWidget->GravityAlignedRotation = true;
     Drawables.push_back(statusWidget);
 
     auto debuffs = make_shared<UiNpcStatus>(this);
@@ -291,6 +297,8 @@ void NpcHumanBase::Death()
 
     dead = true;
 
+    ScoreSystem::Instance().addScore(MaxHealth*0.5f);
+
     if (soundPlayer)
     {
         soundPlayer->DestroyWithDelay(3);
@@ -321,6 +329,8 @@ void NpcHumanBase::OnPointDamage(float Damage, vec3 Point, vec3 Direction, strin
 void NpcHumanBase::OnDamage(float Damage, Entity* DamageCauser, Entity* Weapon)
 {
     Damage = ModifyIncomingDamage(Damage);
+
+    ScoreSystem::Instance().addScore(std::min(Damage, Health));
 
     Health -= Damage;
 
@@ -434,7 +444,7 @@ void NpcHumanBase::Deserialize(json& source)
 
 void NpcHumanBase::UpdateStatusWidgets()
 {
-    statusWidget->Position = Position + vec3(0, 1.0f, 0);
+    statusWidget->Position = mesh->Position + WorldOrientationManager::GetUpVector() * 2.0f;
 
     statusWidget->TwoSided = true;
     statusWidget->Update();

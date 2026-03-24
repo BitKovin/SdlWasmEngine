@@ -76,16 +76,20 @@ void ThreadPool::Worker() {
                 return;
             }
 
-            // Increase wait time based on idle count to reduce spurious wakeups
-            if (idle_count < 10) {
-                cv_job_.wait(lk);
-            }
-            else if (idle_count < 50) {
-                cv_job_.wait_for(lk, 1ms);
-            }
-            else {
-                cv_job_.wait_for(lk, 10ms);
-            }
+            if (DisableWaitCooldown == false)
+            {
+				// Increase wait time based on idle count to reduce spurious wakeups
+				if (idle_count < 10) {
+					cv_job_.wait(lk);
+				}
+				else if (idle_count < 50) {
+					cv_job_.wait_for(lk, 1ms);
+				}
+				else {
+					cv_job_.wait_for(lk, 2ms);
+				}
+
+			}
             idle_count++;
         }
 

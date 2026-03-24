@@ -29,14 +29,14 @@ private:
 
 protected:
 
-	virtual void ApplyAdditionalShaderParams(ShaderProgram* shader_program)
+	virtual void ApplyAdditionalShaderParams(Shader* shader_program)
 	{
 
 	}
 
-	string PixelShader = "default_pixel";
+	string PixelShader = "fs_default";
 
-	ShaderProgram* forward_shader_program = nullptr;
+	Shader* forward_shader_program = nullptr;
 
 	int numInstances = -1;
 
@@ -94,6 +94,8 @@ public:
 
 	bool DepthPrePath = true;
 
+	bool GravityAlignedRotation = false; //should engine automatically rotate model to align with gravity vector as part of model matrix?
+
 	float Brightness = 1.0f;
 
 	std::unordered_set<std::string> MeshHideList{};
@@ -113,14 +115,7 @@ public:
 
 	}
 
-	mat4 GetWorldMatrix()
-	{
-
-		mat4 posOffset = translate(positionOffset);
-		mat4 rotOffset = MathHelper::GetRotationMatrix(rotationOffset);
-
-		return translate(Position) * rotOffset * MathHelper::GetRotationMatrix(Rotation) * scale(Scale) * posOffset;
-	}
+	mat4 GetWorldMatrix();
 
 	virtual LightVolPointData GetLightVolData();
 
@@ -138,9 +133,9 @@ public:
 
 			MeshUtils::PositionVerticesIndices meshData;
 
-			meshData.indices = mesh.vertexIndices;
+			meshData.indices = mesh.indices;
 
-			for (auto& vertex : mesh.vertexLocations)
+			for (auto& vertex : mesh.vertices)
 			{
 				meshData.vertices.push_back(world * vertex.Position);
 			}
@@ -154,7 +149,7 @@ public:
 
 	float GetDistanceToCamera()
 	{
-		return distance(Camera::position, Position) * (IsViewmodel ? 0.1 : 1);
+		return distance(Camera::position, Position) * (IsViewmodel ? 0.01 : 1);
 	}
 
 	void FinalizeFrameData();

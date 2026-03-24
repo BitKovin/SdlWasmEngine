@@ -25,26 +25,60 @@ namespace roj
 // SkinnedMesh (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 
-struct SkinnedMesh
-{
-    VertexBuffer*      vertices  = nullptr;
-    IndexBuffer*       indices   = nullptr;
-    VertexArrayObject* VAO       = nullptr;
+    struct SkinnedMesh
+    {
 
-    std::vector<MeshTexture>  textures;
-    std::vector<VertexData>   vertexLocations;
-    std::vector<uint32_t>     vertexIndices;
+        bgfx::VertexBufferHandle vbh = BGFX_INVALID_HANDLE;
+        bgfx::IndexBufferHandle  ibh = BGFX_INVALID_HANDLE;
 
-    std::string materialName;
-    std::string name;
+        bgfx::VertexLayout layout;
 
-    Texture* cachedBaseColor     = nullptr;
-    Texture* cachedEmissiveColor = nullptr;
-    bool     transparentTexture  = false;
+        std::vector<MeshTexture> textures;
 
-    void ProcessDefaultTextures();
-    void DestroyBuffers();
-};
+        std::vector<VertexData> vertices;
+        std::vector<uint32_t> indices;
+
+        string materialName;
+        string name;
+
+        Texture* cachedBaseColor = nullptr;
+        Texture* cachedEmissiveColor = nullptr;
+
+        bool transparentTexture = false;
+
+        void ProcessDefaultTextures();
+
+        void DestroyBuffers()
+        {
+            // Destroy GPU buffers if valid
+            if (bgfx::isValid(vbh))
+            {
+                bgfx::destroy(vbh);
+                vbh = BGFX_INVALID_HANDLE;
+            }
+
+            if (bgfx::isValid(ibh))
+            {
+                bgfx::destroy(ibh);
+                ibh = BGFX_INVALID_HANDLE;
+            }
+
+            // Clear CPU-side vectors
+            vertices.clear();
+            vertices.shrink_to_fit();
+            indices.clear();
+            indices.shrink_to_fit();
+            textures.clear();
+            textures.shrink_to_fit();
+
+            // Material and name cleanup
+            materialName.clear();
+            materialName.shrink_to_fit();
+            name.clear();
+            name.shrink_to_fit();
+        }
+
+    };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Legacy structures — kept for SkeletalMesh.cpp compatibility only.

@@ -1,5 +1,4 @@
 #pragma once
-#include <SDL2/SDL_ttf.h>
 #include <set>
 #include "malloc_override.h"
 
@@ -12,10 +11,6 @@
 #include "Video/Video.h"
 #include <vector>
 
-struct CachedFont {
-    TTF_Font* font = nullptr;
-    std::vector<uint8_t> data; // keeps font memory alive
-};
 
 class AssetRegistry
 {
@@ -32,7 +27,6 @@ private:
 
     static inline bool loadingLevel = false;
 
-    static std::unordered_map<std::string, CachedFont> fontCache;
 
 
 
@@ -42,7 +36,6 @@ public:
     static void ClearUnusedMemory();
     static bool IsAssetUsed(std::string filename);
 
-    static Shader* GetShaderByName(const std::string& name, ShaderType shaderType);
 
     static void ReloadShaders();
 
@@ -54,7 +47,6 @@ public:
 
     static Video* GetVideoFromFile(string filename);
 
-    static TTF_Font* GetFontFromFile(const char* filename, int fontSize);
 
     static std::string ReadFileToString(string filename);
 

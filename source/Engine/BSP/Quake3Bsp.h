@@ -151,9 +151,24 @@ struct tBSPVisData {
 };
 
 struct FaceBuffers {
-    std::unique_ptr<VertexArrayObject> VAO;
-    std::unique_ptr<VertexBuffer> VBO;
-    std::unique_ptr<IndexBuffer> EBO;
+    bgfx::VertexBufferHandle VBO = BGFX_INVALID_HANDLE;
+    bgfx::IndexBufferHandle  EBO = BGFX_INVALID_HANDLE;
+    uint32_t                 IndexCount = 0;
+
+    ~FaceBuffers()
+    {
+        if (bgfx::isValid(VBO)) { bgfx::destroy(VBO); VBO = BGFX_INVALID_HANDLE; }
+        if (bgfx::isValid(EBO)) { bgfx::destroy(EBO); EBO = BGFX_INVALID_HANDLE; }
+    }
+    // Non-copyable, movable
+    FaceBuffers() = default;
+    FaceBuffers(const FaceBuffers&) = delete;
+    FaceBuffers& operator=(const FaceBuffers&) = delete;
+    FaceBuffers(FaceBuffers&& o) noexcept : VBO(o.VBO), EBO(o.EBO), IndexCount(o.IndexCount)
+    {
+        o.VBO = BGFX_INVALID_HANDLE;
+        o.EBO = BGFX_INVALID_HANDLE;
+    }
 };
 
 struct FaceBuffArray {
@@ -163,7 +178,7 @@ struct FaceBuffArray {
 struct RenderBuffers
 {
     std::map<int, std::vector<VertexData>> v_faceVBOs; // Changed to VertexData
-    std::map<int, std::vector<GLuint>> v_faceIDXs;
+    std::map<int, std::vector<uint32_t>> v_faceIDXs;
     std::map<int, std::string>          texvec;
     std::vector<tBSPLightmap>           G_lightMaps;
 };
@@ -300,16 +315,16 @@ struct FaceRenderData
 
 struct OpaqueModelVBO
 {
-    VertexBuffer* vbo = nullptr;
-    IndexBuffer* ibo = nullptr;
-    VertexArrayObject* vao = nullptr;
+    bgfx::VertexBufferHandle vbo = BGFX_INVALID_HANDLE;
+    bgfx::IndexBufferHandle  ibo = BGFX_INVALID_HANDLE;
+    uint32_t                 IndexCount = 0;
 };
 
 struct MergedModelFacesData
 {
-    VertexBuffer* vbo = nullptr;
-    IndexBuffer* ibo = nullptr;
-    VertexArrayObject* vao = nullptr;
+    bgfx::VertexBufferHandle vbo = BGFX_INVALID_HANDLE;
+    bgfx::IndexBufferHandle  ibo = BGFX_INVALID_HANDLE;
+    uint32_t                 IndexCount = 0;
 
     uint32 referenceFace = 0; // stores face data that will be referenced (e.g. for texturing)
     uint32 uId = 0; // unique id to avoid drawing same faces multiple times

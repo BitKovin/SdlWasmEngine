@@ -3,7 +3,9 @@
 #include "../EngineMain.h"
 #include "../AssetRegistry.h"
 
+#include <BgfxStateManager.h>
 
+#include <Renderer/Abstractions/ViewIdManager.h>
 
 void LoadingScreenSystem::Init()
 {
@@ -30,27 +32,42 @@ void LoadingScreenSystem::Update(float newProgress)
 
 void LoadingScreenSystem::Draw()
 {
+    if (uiCanvas == nullptr)
+        return;
 
-	if (uiCanvas == nullptr) return;
+	BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Always);
 
+    uiCanvas->LoadingProgress = Progress;
 
-	Framebuffer::unbind();
+    const uint16_t viewId = ViewIdManager::GetCurrentId(); // loading screen view
 
-	uiCanvas->LoadingProgress = Progress;
+    const uint16_t width = EngineMain::MainInstance->ScreenSize.x;
+    const uint16_t height = EngineMain::MainInstance->ScreenSize.y;
 
-	glViewport(0, 0, EngineMain::MainInstance->ScreenSize.x, EngineMain::MainInstance->ScreenSize.y);
+    // Configure view
+    bgfx::setViewRect(viewId, 0, 0, width, height);
+    bgfx::setViewClear(
+        viewId,
+        BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH,
+        0x000000ff, // black
+        1.0f,
+        0
+    );
 
-	glClearColor(0, 0, 0, 1);
-	glDisable(GL_DEPTH_TEST);
+    bgfx::touch(viewId); // ensure view clears even if nothing submitted
 
-	viewport.Update();
-	viewport.FinalizeChildren();
-	viewport.Draw();
+    // Update and draw UI
+    viewport.Update();
+    viewport.FinalizeChildren();
+    viewport.Draw(); // must submit bgfx draw calls internally
 
-	glFinish();
-	glFlush();
-	SDL_PollEvent(nullptr);
-	SDL_GL_SwapWindow(EngineMain::MainInstance->Window);
+    // Process events (still needed for SDL)
+    SDL_PollEvent(nullptr);
+
+    // Present frame
+    bgfx::frame();
+
+    ViewIdManager::Reset();
 
 }
 

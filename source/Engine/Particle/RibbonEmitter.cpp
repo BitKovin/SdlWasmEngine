@@ -1,178 +1,170 @@
-﻿#include "RibbonEmitter.h"
+#include "RibbonEmitter.h"
 #include "../MathHelper.hpp"
-
 #include "../Renderer/Renderer.h"
+#include "../ShaderManager.h"
 
+#include <BgfxStateManager.h>
+#include <Renderer/Abstractions/ViewIdManager.h>
+
+// ---------------------------------------------------------------------------
+// Constructor / Destructor
+// ---------------------------------------------------------------------------
 RibbonEmitter::RibbonEmitter()
-    : decl(VertexData::Declaration())
 {
     DepthSorting = false;
 }
 
 RibbonEmitter::~RibbonEmitter()
 {
-    delete vao;
-    delete vb;
-    delete ib;
 }
 
-void RibbonEmitter::RenderRibbon(const std::vector<Particle>& inParticles)
+// ---------------------------------------------------------------------------
+// GenerateIndices
+// ---------------------------------------------------------------------------
+void RibbonEmitter::GenerateIndices(std::vector<uint32_t>& dst, int n)
+{
+    dst.resize((n - 1) * 6);
+    for (int i = 0; i < n - 1; ++i)
+    {
+        int      b  = i * 6;
+        uint32_t v0 = i * 2;
+        uint32_t v1 = i * 2 + 1;
+        uint32_t v2 = i * 2 + 2;
+        uint32_t v3 = i * 2 + 3;
+
+        dst[b + 0] = v0; dst[b + 1] = v2; dst[b + 2] = v1;
+        dst[b + 3] = v1; dst[b + 4] = v2; dst[b + 5] = v3;
+    }
+}
+
+// ---------------------------------------------------------------------------
+// RenderRibbon
+// ---------------------------------------------------------------------------
+bool RibbonEmitter::RenderRibbon(const std::vector<Particle>& inParticles)
 {
     primitiveCount = 0;
 
-    if (inParticles.size() < 1 || destroyed)
-        return;
+    if (inParticles.size() < 2 || destroyed)
+        return false;
 
-    VertexArrayObject::Unbind();
-
-    // Initialize with empty buffers since data is dynamic
-    std::vector<VertexData> emptyVerts;
-    std::vector<GLuint> emptyIdxs;
-
-    if (vb == nullptr)
-    {
-        // Create VBO with GL_STREAM_DRAW for dynamic updates
-        vb = new VertexBuffer(emptyVerts, VertexData::Declaration(), GL_STREAM_DRAW);
-    }
-    if (ib == nullptr)
-    {
-        // Create IBO with GL_STREAM_DRAW for dynamic updates
-        ib = new IndexBuffer(emptyIdxs, GL_STREAM_DRAW);
-    }
-
-    if (vao == nullptr)
-    {
-        // Create VAO to manage VBO and IBO state
-        vao = new VertexArrayObject(*vb, *ib);
-    }
-
-
-
-    // 1. Copy and possibly append particles
     std::vector<Particle> particles = inParticles;
-    if (true) {
-        Particle np = GetNewParticle();
-        np.position = Position + MathHelper::GetForwardVector(particles.back().globalRotation) * 0.001f;
-        particles.push_back(np);
+    if (SimpleRibbon)
+        particles = { inParticles.front(), inParticles.back() };
 
-    }
+    const int      n        = static_cast<int>(particles.size());
+    const uint32_t vCount   = static_cast<uint32_t>(n * 2);
+    const uint32_t idxCount = static_cast<uint32_t>((n - 1) * 6);
 
-    if (SimpleRibbon) 
-    {
-        std::vector<Particle> cParticles = particles;
-        particles.clear();
-        particles.push_back(cParticles[0]);
-        particles.push_back(cParticles[cParticles.size() - 1]);
-    }
-    int n = static_cast<int>(particles.size());
-    int vCount = n * 2;          // Two vertices per particle (ribbon width)
-    int idxCount = (n - 1) * 6;  // Six indices per segment (two triangles)
+    const bgfx::VertexLayout layout = VertexData::Declaration();
 
-    // 2. Resize and fill CPU-side arrays
+    if (bgfx::getAvailTransientVertexBuffer(vCount,   layout) < vCount)   return false;
+    if (bgfx::getAvailTransientIndexBuffer (idxCount, true)   < idxCount) return false;
+
     verts.resize(vCount);
-    idxs.resize(idxCount);
     GenerateIndices(idxs, n);
 
-    glm::vec3 camPos = Camera::position;
-    for (int i = 0; i < n; ++i) {
-        const Particle& p = particles[i];
-        glm::vec3 P = p.position;
+    const vec3 camPos = Camera::finalizedPosition;
 
-        // Calculate direction and perpendicular vector for ribbon orientation
-        glm::vec3 dir = (i < n - 1)
+    for (int i = 0; i < n; ++i)
+    {
+        const Particle& p = particles[i];
+        const vec3      P = p.position;
+
+        vec3 dir = (i < n - 1)
             ? glm::normalize(P - particles[i + 1].position)
             : glm::normalize(particles[i - 1].position - P);
-        glm::vec3 camFwd = glm::normalize(P - camPos);
-        glm::vec3 perp = glm::normalize(glm::cross(dir, camFwd));
 
-        float half = p.Size * 0.5f;
-        int b = i * 2;
+        vec3 camFwd = glm::normalize(P - camPos);
+        vec3 perp   = glm::normalize(glm::cross(dir, camFwd));
 
-        vec3 light = GetLightForParticle(p);
+        const float half  = p.Size * 0.5f;
+        const int   b     = i * 2;
+        const float u     = static_cast<float>(i) / static_cast<float>(n - 1);
+        const vec3  light = GetLightForParticle(p);
+        const vec4  color = p.Color * vec4(light, 1.0f) * vec4(1.0f, 1.0f, 1.0f, p.Transparency);
+        const vec3  nrm   = vec3(0.0f, 1.0f, 0.0f);
 
-        // Vertex on one side of the ribbon
-        verts[b + 0].Position = P + perp * half;
-		verts[b + 0].TextureCoordinate = glm::vec2(static_cast<float>(i) / (n - 1), 0.0f);
+        verts[b + 0].Position           = P + perp * half;
+        verts[b + 0].Normal             = nrm;
+        verts[b + 0].TextureCoordinate  = vec2(u, 0.0f);
+        verts[b + 0].Color              = color;
+        verts[b + 0].SmoothNormal       = nrm;
 
-		verts[b + 0].Color = p.Color * vec4(1, 1, 1, p.Transparency) * vec4(light,1.0);
-
-        // Vertex on the other side
-        verts[b + 1].Position = P - perp * half;
-        verts[b + 1].TextureCoordinate = glm::vec2(static_cast<float>(i) / (n - 1), 1.0f) ;
-        verts[b + 1].Color = p.Color * vec4(1, 1, 1, p.Transparency) * vec4(light, 1.0);
+        verts[b + 1].Position           = P - perp * half;
+        verts[b + 1].Normal             = nrm;
+        verts[b + 1].TextureCoordinate  = vec2(u, 1.0f);
+        verts[b + 1].Color              = color;
+        verts[b + 1].SmoothNormal       = nrm;
     }
 
-    primitiveCount = idxCount / 3;
+    primitiveCount = static_cast<int>(idxCount) / 3;
 
-    // 3. Update VBO and IBO with new data
-    vb->UpdateData(verts);  // Assuming VertexBuffer has an UpdateData method
-    ib->UpdateData(idxs);   // Assuming IndexBuffer has an UpdateData method (see note below)
+    bgfx::TransientVertexBuffer tvb;
+    bgfx::TransientIndexBuffer  tib;
 
-    // 4. Render using VAO
-    vao->Bind();
-    glDrawElements(GL_TRIANGLES, idxs.size(), GL_UNSIGNED_INT, 0);
-    vao->Unbind();
-    vb->Unbind();
-    ib->Unbind();
-    VertexArrayObject::Unbind();
+    bgfx::allocTransientVertexBuffer(&tvb, vCount,   layout);
+    bgfx::allocTransientIndexBuffer (&tib, idxCount, true);
+
+    memcpy(tvb.data, verts.data(), vCount   * sizeof(VertexData));
+    memcpy(tib.data, idxs.data(),  idxCount * sizeof(uint32_t));
+
+    bgfx::setVertexBuffer(0, &tvb);
+    bgfx::setIndexBuffer(&tib);
+
+    return true;
 }
 
+// ---------------------------------------------------------------------------
+// FinalizeFrameData
+// ---------------------------------------------------------------------------
 void RibbonEmitter::FinalizeFrameData()
 {
     std::lock_guard<std::recursive_mutex> lock(particlesMutex);
     finalizedParticles = Particles;
 }
 
+// ---------------------------------------------------------------------------
+// DrawForward
+// ---------------------------------------------------------------------------
 void RibbonEmitter::DrawForward(mat4x4 view, mat4x4 projection)
 {
+    if (finalizedParticles.size() < 2) return;
+
     if (savedTextureName != texture)
     {
-        savedTexture = AssetRegistry::GetTextureFromFile(texture);
+        savedTexture     = AssetRegistry::GetTextureFromFile(texture);
         savedTextureName = texture;
     }
 
-    glDepthMask(GL_FALSE);
+    auto startState = BgfxStateManager::GetState();
 
-    glDisable(GL_CULL_FACE);
+    BgfxStateManager::SetWriteDepth(false);
+    BgfxStateManager::SetCull(BgfxStateManager::Cull::None);
 
-    ShaderProgram* forward_shader_program = nullptr;
+    Shader* shader = ShaderManager::GetShaderProgram("vs_default", PixelShader);
+    if (shader == nullptr) return;
 
-    if (forward_shader_program == nullptr)
-        forward_shader_program = ShaderManager::GetShaderProgram("default_vertex", PixelShader);
+    shader->UseProgram();
 
-    forward_shader_program->UseProgram();
+    shader->SetUniform("view",        view);
+    shader->SetUniform("projection",  projection);
+    shader->SetUniform("world",       glm::identity<mat4>());
+    shader->SetUniform("isViewmodel", false);
+    shader->SetUniform("is_particle", true);
+    shader->SetUniform("is_decal",    false);
 
-    forward_shader_program->SetUniform("view", view);
-    forward_shader_program->SetUniform("projection", projection);
+    Renderer::SetSurfaceShaderUniforms(shader);
 
-    forward_shader_program->SetUniform("is_particle", true);
-    forward_shader_program->SetUniform("is_decal", false);
-    forward_shader_program->SetUniform("world", glm::identity<mat4>());
-    forward_shader_program->SetUniform("isViewmodel", false);
+    shader->SetTexture("u_texture", savedTexture);
 
-    Renderer::SetSurfaceShaderUniforms(forward_shader_program);
-
-    forward_shader_program->SetTexture("u_texture", savedTexture);
-
-    RenderRibbon(finalizedParticles);
-
-    forward_shader_program->SetUniform("is_particle", false);
-    forward_shader_program->SetUniform("is_decal", false);
-
-    glDepthMask(GL_TRUE);
-    glEnable(GL_CULL_FACE);
-}
-
-
-void RibbonEmitter::GenerateIndices(std::vector<GLuint>& dst, int n) {
-    for (int i = 1; i < n; ++i) {
-        int io = (i - 1) * 6;
-        int vo = i * 2;
-        dst[io + 0] = GLuint(vo);
-        dst[io + 1] = GLuint(vo - 1);
-        dst[io + 2] = GLuint(vo - 2);
-        dst[io + 3] = GLuint(vo);
-        dst[io + 4] = GLuint(vo + 1);
-        dst[io + 5] = GLuint(vo - 1);
+    if (!RenderRibbon(finalizedParticles))
+    {
+        BgfxStateManager::SetState(startState);
+        return;
     }
+
+    BgfxStateManager::Apply();
+    shader->Submit(ViewIdManager::GetCurrentId());
+
+    BgfxStateManager::SetState(startState);
 }

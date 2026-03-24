@@ -72,6 +72,8 @@ public:
     // Number of tasks currently executing (informational)
     std::atomic<int> performingJobs{ 0 };
 
+	bool DisableWaitCooldown = false; // If true, Worker will not sleep to reduce CPU usage. Use with caution.
+
 private:
     void Worker();
 

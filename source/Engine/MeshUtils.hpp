@@ -9,6 +9,8 @@
 #include <numeric>
 #include <functional>
 
+#include <algorithm>
+
 #include "VertexData.h"
 
 using namespace std;
@@ -102,7 +104,7 @@ public:
         // Spatial sort by X
         vector<size_t> sorted(mesh.vertices.size());
         iota(sorted.begin(), sorted.end(), 0);
-        sort(sorted.begin(), sorted.end(), [&](size_t a, size_t b) {
+        std::sort(sorted.begin(), sorted.end(), [&](size_t a, size_t b) {
             return mesh.vertices[a].x < mesh.vertices[b].x;
             });
 

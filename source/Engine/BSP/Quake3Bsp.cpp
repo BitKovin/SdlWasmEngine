@@ -18,6 +18,11 @@
 #include <FileSystem/FileSystem.h>
 #include <LightSystem/LightManager.h>
 
+#include <Renderer/Abstractions/ViewIdManager.h>
+
+#include <BgfxStateManager.h>
+
+#include <ShaderManager.h>
 #include <Physics.h>
 
 #ifndef _MSC_VER
@@ -45,16 +50,14 @@ CQuake3BSP::~CQuake3BSP()
 
     for (auto& modelVBO : opaqueVBOs)
     {
-        delete modelVBO.vao;
-        delete modelVBO.ibo;
-        delete modelVBO.vbo;
+        if (bgfx::isValid(modelVBO.vbo)) bgfx::destroy(modelVBO.vbo);
+        if (bgfx::isValid(modelVBO.ibo)) bgfx::destroy(modelVBO.ibo);
     }
 
     for (auto& mergedModel : mergedFacesData)
     {
-        delete mergedModel.vao;
-        delete mergedModel.ibo;
-        delete mergedModel.vbo;
+        if (bgfx::isValid(mergedModel.vbo)) bgfx::destroy(mergedModel.vbo);
+        if (bgfx::isValid(mergedModel.ibo)) bgfx::destroy(mergedModel.ibo);
     }
 
     delete[] m_pVerts;
@@ -408,21 +411,21 @@ void CQuake3BSP::CreateIndices(int index)
 
 void CQuake3BSP::CreateRenderBuffers(int index)
 {
-    auto& vertices = Rbuffers.v_faceVBOs[index];
-    auto& indices = Rbuffers.v_faceIDXs[index];
+    const auto& vertices = Rbuffers.v_faceVBOs[index];
+    const auto& indices  = Rbuffers.v_faceIDXs[index];
 
-    FB_array.FB_Idx[index].VBO = std::make_unique<VertexBuffer>(
-        vertices, VertexData::Declaration());
-    FB_array.FB_Idx[index].EBO = std::make_unique<IndexBuffer>(indices);
+    auto& fb = FB_array.FB_Idx[index];
 
-    ResourceStatistics::Instance().setResourceName(
-        ResourceType::VertexBuffer, FB_array.FB_Idx[index].VBO->m_id, "bsp raw buffer");
-    ResourceStatistics::Instance().setResourceName(
-        ResourceType::IndexBuffer, FB_array.FB_Idx[index].EBO->m_id, "bsp raw buffer");
+    // ── Vertex buffer ────────────────────────────────────────────────────────
+    const bgfx::Memory* vMem = bgfx::copy(
+        vertices.data(), static_cast<uint32_t>(vertices.size() * sizeof(VertexData)));
+    fb.VBO = bgfx::createVertexBuffer(vMem, VertexData::Declaration());
 
-    FB_array.FB_Idx[index].VAO = std::make_unique<VertexArrayObject>(
-        *FB_array.FB_Idx[index].VBO,
-        *FB_array.FB_Idx[index].EBO);
+    // ── Index buffer (uint32) ────────────────────────────────────────────────
+    const bgfx::Memory* iMem = bgfx::copy(
+        indices.data(), static_cast<uint32_t>(indices.size() * sizeof(uint32_t)));
+    fb.EBO = bgfx::createIndexBuffer(iMem, BGFX_BUFFER_INDEX32);
+    fb.IndexCount = static_cast<uint32_t>(indices.size());
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -440,7 +443,7 @@ void CQuake3BSP::GenerateLightmap()
             v,v,v,v,  v,v,v,v
         };
         // Texture(data, width, height, format, generateMipmaps)
-        m_missingLightmap = std::make_shared<Texture>(pixels, 2, 2, GL_RGBA, false);
+        m_missingLightmap = std::make_shared<Texture>(pixels, 2, 2, bgfx::TextureFormat::RGBA8, false);
 		m_missingLightmap->setName("Missing Lightmap");
     }
 
@@ -450,7 +453,7 @@ void CQuake3BSP::GenerateLightmap()
             255,255,255,255,  255,255,255,255,
             255,255,255,255,  255,255,255,255
         };
-        m_whiteLightmap = std::make_shared<Texture>(pixels, 2, 2, GL_RGBA, false);
+        m_whiteLightmap = std::make_shared<Texture>(pixels, 2, 2, bgfx::TextureFormat::RGBA8, false);
 		m_whiteLightmap->setName("White Lightmap");
     }
 
@@ -465,7 +468,7 @@ void CQuake3BSP::GenerateLightmap()
             reinterpret_cast<const uint8_t*>(Rbuffers.G_lightMaps[i].imageBits);
 
         // generateMipmaps = true to match original glGenerateMipmap call
-        auto tex = std::make_shared<Texture>(pixels, 128, 128, GL_RGB, true);
+        auto tex = std::make_shared<Texture>(pixels, 128, 128, bgfx::TextureFormat::RGB8, true);
 		tex->setName("BSP Lightmap " + std::to_string(i));
         m_lightmapTextures.push_back(std::move(tex));
     }
@@ -552,10 +555,21 @@ void CQuake3BSP::PreloadFace(int index)
     else if (!isCube)
     {
         string lightMapPath = GetLightMapFilePathFromId(pFace->lightmapID, filePath);
-        auto   lmTex = AssetRegistry::GetTextureFromFile(lightMapPath);
-        lightmapId = (lmTex && lmTex->getID() != 0)
-            ? (int)lmTex->getID()
-            : GetLightmapNativeId(-1); // missing fallback
+
+        if (lightMapPath.empty())
+        {
+            // No lightmap file found for this face; use missing-lightmap fallback.
+			lightmapId = GetLightmapNativeId(-1);
+        }
+        else
+        {
+            auto   lmTex = AssetRegistry::GetTextureFromFile(lightMapPath);
+            lightmapId = (lmTex && lmTex->getID() != 0)
+                ? (int)lmTex->getID()
+                : GetLightmapNativeId(-1); // missing fallback
+        }
+
+
     }
 
     CachedFaceTextureData data;
@@ -621,16 +635,22 @@ void CQuake3BSP::BuildMergedModels()
         auto mergedMesh = MeshUtils::MergeMeshes(facesMeshes);
 
         MergedModelFacesData data;
-        data.ibo = new IndexBuffer(mergedMesh.indices);
-        data.vbo = new VertexBuffer(mergedMesh.vertices, VertexData::Declaration());
-        data.vao = new VertexArrayObject(*data.vbo, *data.ibo);
+
+        {
+            const bgfx::Memory* vMem = bgfx::copy(
+                mergedMesh.vertices.data(),
+                static_cast<uint32_t>(mergedMesh.vertices.size() * sizeof(VertexData)));
+            data.vbo = bgfx::createVertexBuffer(vMem, VertexData::Declaration());
+
+            const bgfx::Memory* iMem = bgfx::copy(
+                mergedMesh.indices.data(),
+                static_cast<uint32_t>(mergedMesh.indices.size() * sizeof(uint32_t)));
+            data.ibo = bgfx::createIndexBuffer(iMem, BGFX_BUFFER_INDEX32);
+            data.IndexCount = static_cast<uint32_t>(mergedMesh.indices.size());
+        }
+
         data.referenceFace = keyPair.second[0];
         data.uId = (uint32)mergedFacesData.size();
-
-        ResourceStatistics::Instance().setResourceName(
-            ResourceType::VertexBuffer, data.vbo->m_id, "bsp merged");
-        ResourceStatistics::Instance().setResourceName(
-            ResourceType::IndexBuffer, data.ibo->m_id, "bsp merged");
 
         data.bounds = BoundingBox::FromVertices(mergedMesh.vertices)
             .Transform(glm::scale(vec3(1.0f / MAP_SCALE)));
@@ -674,7 +694,7 @@ bool CQuake3BSP::CheckLightProbeAcess(const glm::vec3& position, const glm::vec3
     if (FindClusterAtPosition(volPosition) < 0) return false;
 
     float maxDimension = std::max(std::max(lightVolGridSize.x, lightVolGridSize.x), lightVolGridSize.z);
-    return Physics::SphereTrace(position, volPosition, maxDimension / MAP_SCALE * 0.3f,
+    return Physics::LineTrace(position, volPosition,
         BodyType::WorldOpaque).hasHit == false;
 }
 
@@ -758,6 +778,16 @@ LightVolPointData CQuake3BSP::GetLightvolColorPoint(const glm::vec3& position, b
         valid101 = CheckLightProbeAcess(position / MAP_SCALE, getGridEnginePos(nx1, ny0, nz1) / MAP_SCALE);
         valid011 = CheckLightProbeAcess(position / MAP_SCALE, getGridEnginePos(nx0, ny1, nz1) / MAP_SCALE);
         valid111 = CheckLightProbeAcess(position / MAP_SCALE, getGridEnginePos(nx1, ny1, nz1) / MAP_SCALE);
+
+        if (valid000 || valid010 || valid100 || valid110 || valid001 || valid101 || valid011 || valid111)
+        {
+
+        }
+        else
+        {
+            return GetLightvolColorPoint(position, false);
+        }
+
     }
 
     struct LightData { glm::vec3 amb, dir_color, dir_vec; };
@@ -952,7 +982,8 @@ void CQuake3BSP::RenderBSP(const glm::vec3& cameraPos, tBSPModel& model,
 
     LightVolPointData lightData = { vec3(0), vec3(1), vec3(0) };
 
-    glDepthMask(GL_TRUE);
+    // bgfx: depth writes are controlled per-draw via BGFX_STATE_WRITE_Z in the shader submit call.
+    // Opaque pass uses depth write (set in RenderMergedFace / RenderSingleFace state flags).
 
     if (!lightmap)
     {
@@ -1024,7 +1055,8 @@ void CQuake3BSP::RenderBSP(const glm::vec3& cameraPos, tBSPModel& model,
 
 void CQuake3BSP::RenderTransparentFaces()
 {
-    glDepthMask(GL_FALSE);
+    // bgfx: transparent faces disable depth writes – pass BGFX_STATE_WRITE_Z=0 in submit flags.
+    // The state is applied inside RenderMergedFace when called from this path.
 
     for (auto& face : facesToDrawTransparent)
         RenderMergedFace(face.faceIndex, face.useLightmap, face.lightPointData, face.modelMatrix);
@@ -1054,7 +1086,8 @@ bool CQuake3BSP::RenderSingleFace(int index, bool lightmap,
         return false;
 
     auto& buffers = FB_array.FB_Idx[index];
-    buffers.VAO->Bind();
+    if (!bgfx::isValid(buffers.VBO) || !bgfx::isValid(buffers.EBO))
+        return false;
 
     const CachedFaceTextureData& data = cachedFaces[index];
 
@@ -1063,7 +1096,7 @@ bool CQuake3BSP::RenderSingleFace(int index, bool lightmap,
 
     if (faceTexture == 0) return false;
 
-    ShaderProgram* shader = ShaderManager::GetShaderProgram(
+    Shader* shader = ShaderManager::GetShaderProgram(
         "bsp", data.isCube ? "bsp_cube" : "bsp");
     shader->UseProgram();
 
@@ -1071,21 +1104,25 @@ bool CQuake3BSP::RenderSingleFace(int index, bool lightmap,
     shader->SetUniform("direct_light_color", lightData.directColor);
     shader->SetUniform("direct_light_dir", lightData.direction);
 
-    if (data.isCube)
-        shader->SetCubemapTexture("s_bspTexture", faceTexture);
-    else
-        shader->SetTexture("s_bspTexture", faceTexture);
+    bgfx::TextureHandle albedoHandle = { static_cast<uint16_t>(faceTexture) };
+    bgfx::TextureHandle lmHandle     = { static_cast<uint16_t>(lmId) };
 
-    shader->SetTexture("s_bspLightmap", lmId);
+    if (data.isCube)
+        shader->SetCubemapTexture("s_bspTexture", albedoHandle);
+    else
+        shader->SetTexture("s_bspTexture", albedoHandle);
+
+    shader->SetTexture("s_bspLightmap", lmHandle);
     shader->SetUniform("view", Camera::finalizedView);
     shader->SetUniform("projection", Camera::finalizedProjection);
     shader->SetUniform("model", model);
 
     EngineMain::MainInstance->MainRenderer->SetSurfaceShaderUniforms(shader);
 
-    glDrawElements(GL_TRIANGLES, data.numOfIndices, GL_UNSIGNED_INT, 0);
+    bgfx::setVertexBuffer(0, buffers.VBO);
+    bgfx::setIndexBuffer(buffers.EBO);
 
-    VertexArrayObject::Unbind();
+    shader->Submit(ViewIdManager::GetCurrentId());
     return true;
 }
 
@@ -1102,7 +1139,8 @@ bool CQuake3BSP::RenderMergedFace(int mergedIndex, bool lightmap,
     if (!Camera::frustum.IsBoxVisible(bounds.Min, bounds.Max))
         return false;
 
-    mergedFace.vao->Bind();
+    if (!bgfx::isValid(mergedFace.vbo) || !bgfx::isValid(mergedFace.ibo))
+        return false;
 
     const CachedFaceTextureData& data = cachedFaces[mergedFace.referenceFace];
 
@@ -1113,8 +1151,8 @@ bool CQuake3BSP::RenderMergedFace(int mergedIndex, bool lightmap,
 
     if (faceTexture == 0) return false;
 
-    ShaderProgram* shader = ShaderManager::GetShaderProgram(
-        "bsp", data.isCube ? "bsp_cube" : "bsp");
+    Shader* shader = ShaderManager::GetShaderProgram(
+        "vs_bsp", data.isCube ? "fs_bsp_cube" : "fs_bsp");
     shader->UseProgram();
 
     shader->SetUniform("useVertexLight",
@@ -1124,12 +1162,15 @@ bool CQuake3BSP::RenderMergedFace(int mergedIndex, bool lightmap,
     shader->SetUniform("direct_light_color", lightData.directColor);
     shader->SetUniform("direct_light_dir", lightData.direction);
 
-    if (data.isCube)
-        shader->SetCubemapTexture("s_bspTexture", faceTexture);
-    else
-        shader->SetTexture("s_bspTexture", faceTexture);
+    bgfx::TextureHandle albedoHandle = { static_cast<uint16_t>(faceTexture) };
+    bgfx::TextureHandle lmHandle     = { static_cast<uint16_t>(lmId) };
 
-    shader->SetTexture("s_bspLightmap", lmId);
+    if (data.isCube)
+        shader->SetCubemapTexture("s_bspTexture", albedoHandle);
+    else
+        shader->SetTexture("s_bspTexture", albedoHandle);
+
+    shader->SetTexture("s_bspLightmap", lmHandle);
     shader->SetUniform("view", Camera::finalizedView);
     shader->SetUniform("projection", Camera::finalizedProjection);
     shader->SetUniform("model", model);
@@ -1137,9 +1178,12 @@ bool CQuake3BSP::RenderMergedFace(int mergedIndex, bool lightmap,
     EngineMain::MainInstance->MainRenderer->SetSurfaceShaderUniforms(shader);
     LightManager::ApplyPointLightToShader(shader, bounds.Min, bounds.Max);
 
-    glDrawElements(GL_TRIANGLES, mergedFace.vao->IndexCount, GL_UNSIGNED_INT, 0);
+    bgfx::setVertexBuffer(0, mergedFace.vbo);
+    bgfx::setIndexBuffer(mergedFace.ibo);
 
-    VertexArrayObject::Unbind();
+    BgfxStateManager::Apply();
+
+    shader->Submit(ViewIdManager::GetCurrentId());
     return true;
 }
 
@@ -1179,14 +1223,20 @@ void CQuake3BSP::BuildStaticOpaqueObstacles()
         auto indices = ref.GetIndices(false, true);
 
         OpaqueModelVBO modelVBO;
-        modelVBO.vbo = new VertexBuffer(vertices, VertexData::Declaration());
-        modelVBO.ibo = new IndexBuffer(indices);
-        modelVBO.vao = new VertexArrayObject(*modelVBO.vbo, *modelVBO.ibo);
 
-        ResourceStatistics::Instance().setResourceName(
-            ResourceType::VertexBuffer, modelVBO.vbo->m_id, "bsp staticOpaque");
-        ResourceStatistics::Instance().setResourceName(
-            ResourceType::IndexBuffer, modelVBO.ibo->m_id, "bsp staticOpaque");
+		if (vertices.size() > 0 && indices.size() > 0)
+        {
+            const bgfx::Memory* vMem = bgfx::copy(
+                vertices.data(),
+                static_cast<uint32_t>(vertices.size() * sizeof(VertexData)));
+            modelVBO.vbo = bgfx::createVertexBuffer(vMem, VertexData::Declaration());
+
+            const bgfx::Memory* iMem = bgfx::copy(
+                indices.data(),
+                static_cast<uint32_t>(indices.size() * sizeof(uint32_t)));
+            modelVBO.ibo = bgfx::createIndexBuffer(iMem, BGFX_BUFFER_INDEX32);
+            modelVBO.IndexCount = static_cast<uint32_t>(indices.size());
+        }
 
         opaqueVBOs[i] = modelVBO;
     }
@@ -1218,6 +1268,10 @@ std::string CQuake3BSP::GetLightMapFilePathFromId(int id, const std::string& fil
         digits[i] = char('0' + (tmp % 10));
         tmp /= 10;
     }
+
+    if(digits[3] == '-')
+		return ""; // invalid ID
+
     result.append(digits, 4);
     result += ".tga";
     return result;
@@ -1599,27 +1653,46 @@ void BSPModelRef::FinalizeFrameData()
 
 void BSPModelRef::DrawForward(mat4x4 view, mat4x4 projection)
 {
+    
+    auto state = BgfxStateManager::GetState();
+
+    if (Transparent)
+    {
+        BgfxStateManager::SetWriteDepth(false);
+    }
+
     bsp->RenderBSP(Camera::finalizedPosition, model, finalWorldMatrix,
         useBspVisibility, Static);
 
     if (Transparent)
+    {
         bsp->RenderTransparentFaces();
+    }
+
+
+
+	BgfxStateManager::SetState(state);
+
 }
 
 void BSPModelRef::DrawDepth(mat4x4 view, mat4x4 projection)
 {
     const auto& vbo = bsp->opaqueVBOs[id];
-    if (!vbo.vao) return;
+	if (vbo.IndexCount == 0)
+        return;
 
-    vbo.vao->Bind();
+    if (!bgfx::isValid(vbo.vbo) || !bgfx::isValid(vbo.ibo)) return;
 
-    ShaderProgram* shader = ShaderManager::GetShaderProgram("bsp", "empty_pixel");
+    Shader* shader = ShaderManager::GetShaderProgram("vs_bsp", "fs_empty");
     shader->UseProgram();
     shader->SetUniform("view", view);
     shader->SetUniform("projection", projection);
     shader->SetUniform("model", finalWorldMatrix);
 
-    glDrawElements(GL_TRIANGLES, vbo.vao->IndexCount, GL_UNSIGNED_INT, 0);
+    bgfx::setVertexBuffer(0, vbo.vbo);
+    bgfx::setIndexBuffer(vbo.ibo);
 
-    VertexArrayObject::Unbind();
+    BgfxStateManager::Apply();
+
+    shader->Submit(ViewIdManager::GetCurrentId());
 }

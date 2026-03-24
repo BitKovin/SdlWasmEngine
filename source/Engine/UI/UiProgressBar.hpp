@@ -8,7 +8,7 @@ public:
 
 	UiProgressBar()
 	{
-		PixelShader = "ui/progressBar";
+		PixelShader = "ui/fs_progressBar";
 	}
 
 	std::string BackgroundImage = "GameData/cat.png";
@@ -28,9 +28,9 @@ public:
 	{
 
 		vec4Final["bgColor"] = BackgroundColor;
-		texturesFinal["bgTexture"] = AssetRegistry::GetTextureFromFile(BackgroundImage)->getID();
+		texturesFinal["bgTexture"] = AssetRegistry::GetTextureFromFile(BackgroundImage)->getHandle();
 		vec4Final["u_Color"] = color;
-		texturesFinal["u_Texture"] = AssetRegistry::GetTextureFromFile(ProgressImage)->getID();
+		texturesFinal["u_Texture"] = AssetRegistry::GetTextureFromFile(ProgressImage)->getHandle();
 		scalarsFinal["progress"] = progressFinal;
 
 		UiCustomShaderImage::Draw();

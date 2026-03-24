@@ -204,6 +204,11 @@ void MyContactListener::OnContactRemoved(const JPH::SubShapeIDPair& inSubShapePa
 	// Leave empty; removals are handled in afterSimulation()
 }
 
+void Physics::SetGravity(vec3 gravity)
+{
+	physics_system->SetGravity(ToPhysics(gravity));
+}
+
 void Physics::DestroyBody(Body* body)
 {
 	if (body == nullptr)
@@ -216,7 +221,6 @@ void Physics::DestroyBody(Body* body)
 
 	// Retrieve and delete collision properties if present.
 	auto* props = reinterpret_cast<BodyData*>(body->GetUserData());
-	body->SetUserData(0);
 
 	if (props)
 	{
@@ -880,8 +884,17 @@ Physics::HitResult Physics::LineTrace(const vec3 start, const vec3 end, const Bo
 
 			auto* props = reinterpret_cast<BodyData*>(body->GetUserData());
 
-			hit.entity = props->OwnerEntity;
-			hit.hitboxName = props->hitboxName;
+			if (props == nullptr)
+			{
+				hasHit = false;
+			}
+			else
+			{
+				hit.entity = props->OwnerEntity;
+				hit.hitboxName = props->hitboxName;
+			}
+
+
 		}
 	}
 
@@ -993,12 +1006,21 @@ Physics::HitResult Physics::SphereTrace(const vec3 start, const vec3 end, float 
 
 			auto* props = reinterpret_cast<BodyData*>(body->GetUserData());
 
-			hit.entity = props->OwnerEntity;
+			if (props == nullptr)
+			{
+				hit.hasHit = false;
+				hit.entity = nullptr;
+			}
+			else
+			{
+				hit.entity = props->OwnerEntity;
 
-			// Record the hit body.
-			hit.hitbody = body;
-			hit.hasHit = true;
-			hit.hitboxName = props->hitboxName;
+				// Record the hit body.
+				hit.hitbody = body;
+				hit.hasHit = true;
+				hit.hitboxName = props->hitboxName;
+			}
+
 		}
 	}
 
@@ -1108,12 +1130,20 @@ Physics::HitResult Physics::SphereTraceForEntity(vector<Entity*> entityties, con
 
 			auto* props = reinterpret_cast<BodyData*>(body->GetUserData());
 
-			hit.entity = props->OwnerEntity;
+			if (props == nullptr)
+			{
 
-			// Record the hit body.
-			hit.hitbody = body;
-			hit.hasHit = true;
-			hit.hitboxName = props->hitboxName;
+			}
+			else
+			{
+				hit.entity = props->OwnerEntity;
+
+				// Record the hit body.
+				hit.hitbody = body;
+				hit.hasHit = true;
+				hit.hitboxName = props->hitboxName;
+			}
+
 		}
 	}
 
@@ -1203,10 +1233,21 @@ Physics::HitResult Physics::CylinderTrace(const vec3 start, const vec3 end, floa
 			hit.position = FromPhysics(collector.GetHit().mContactPointOn2);
 
 			auto* props = reinterpret_cast<BodyData*>(body->GetUserData());
-			hit.entity = props->OwnerEntity;
-			hit.hitbody = body;
-			hit.hasHit = true;
-			hit.hitboxName = props->hitboxName;
+
+			if (props == nullptr)
+			{
+				hit.hasHit = false;
+				hit.entity = nullptr;
+			}
+			else
+			{
+				hit.entity = props->OwnerEntity;
+				hit.hitbody = body;
+				hit.hasHit = true;
+				hit.hitboxName = props->hitboxName;
+			}
+
+
 		}
 	}
 	// physicsMainLock.unlock(); // Uncomment if thread safety required
@@ -1276,10 +1317,21 @@ Physics::HitResult Physics::ShapeTrace(const Shape* shape, vec3 start, vec3 end,
 			hit.position = FromPhysics(collector.GetHit().mContactPointOn2);
 
 			auto* props = reinterpret_cast<BodyData*>(body->GetUserData());
-			hit.entity = props->OwnerEntity;
-			hit.hitbody = body;
-			hit.hasHit = hit.entity != nullptr && !hit.entity->Destroyed;
-			hit.hitboxName = props->hitboxName;
+
+			if (props == nullptr)
+			{
+				hit.hasHit = false;
+				hit.entity = nullptr;
+			}
+			else
+			{
+				hit.entity = props->OwnerEntity;
+				hit.hitbody = body;
+				hit.hasHit = hit.entity != nullptr && !hit.entity->Destroyed;
+				hit.hitboxName = props->hitboxName;
+			}
+
+
 		}
 	}
 

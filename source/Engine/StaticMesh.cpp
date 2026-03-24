@@ -8,6 +8,27 @@
 
 #include "LightSystem/LightManager.h"
 
+#include <BgfxStateManager.h>
+#include <Renderer/Abstractions/ViewIdManager.h>
+
+#include <World/WorldOrientationManager.h>
+
+mat4 StaticMesh::GetWorldMatrix()
+{
+
+	mat4 posOffset = translate(positionOffset);
+	mat4 rotOffset = MathHelper::GetRotationMatrix(rotationOffset);
+
+	quat worldOrientation = glm::identity<quat>();
+
+	if(GravityAlignedRotation)
+	{
+		worldOrientation = WorldOrientationManager::GetWorldRotationQuat();
+	}
+
+	return translate(Position) * glm::toMat4(worldOrientation) * rotOffset * MathHelper::GetRotationMatrix(Rotation) * scale(Scale) * posOffset;
+}
+
 LightVolPointData StaticMesh::GetLightVolData()
 {
 
@@ -57,16 +78,41 @@ bool StaticMesh::IsCameraVisible()
 
 	if (Level::Current->BspData.m_numOfVerts)
 	{
-
 		int cameraC = Level::Current->BspData.FindClusterAtPosition(Camera::finalizedPosition);
 
+		auto bounds = GetBoundingBox();
 
-		int targetC = Level::Current->BspData.FindClusterAtPosition(Position + model->boundingSphere.offset / 2.0f);
+		vec3 min = bounds.Min;
+		vec3 max = bounds.Max;
 
-		if (Level::Current->BspData.IsClusterVisible(cameraC, targetC) == false)
+		vec3 points[8] =
 		{
-			return false;
+			{min.x, min.y, min.z},
+			{max.x, min.y, min.z},
+			{min.x, max.y, min.z},
+			{max.x, max.y, min.z},
+
+			{min.x, min.y, max.z},
+			{max.x, min.y, max.z},
+			{min.x, max.y, max.z},
+			{max.x, max.y, max.z}
+		};
+
+		bool visible = false;
+
+		for (int i = 0; i < 8; i++)
+		{
+			int targetC = Level::Current->BspData.FindClusterAtPosition(points[i]);
+
+			if (Level::Current->BspData.IsClusterVisible(cameraC, targetC))
+			{
+				visible = true;
+				break;
+			}
 		}
+
+		if (!visible)
+			return false;
 	}
 
 	return IsInFrustrum(Camera::frustum) && isVisible();
@@ -74,37 +120,28 @@ bool StaticMesh::IsCameraVisible()
 
 void StaticMesh::DrawForward(mat4x4 view, mat4x4 projection)
 {
-
+	
 	if (model == nullptr) return;
+
+	auto startState = BgfxStateManager::GetState();
 
 	if (Transparent == false)
 	{
-		if (DepthWrite)
-		{
-			glDepthMask(GL_TRUE);
-		}
-		else
-		{
-			glDepthMask(GL_FALSE);
-		}
+
+		BgfxStateManager::SetWriteDepth(DepthWrite);
+
 	}
 
 
-	if (TwoSided)
-	{
-		glDisable(GL_CULL_FACE);
-	}
-	else
-	{
-		glEnable(GL_CULL_FACE);
-	}
+	BgfxStateManager::SetCull(TwoSided ? BgfxStateManager::Cull::None : BgfxStateManager::Cull::CW);
 
 
 	if (forward_shader_program == nullptr)
-		forward_shader_program = ShaderManager::GetShaderProgram("default_vertex", PixelShader);
+		forward_shader_program = ShaderManager::GetShaderProgram("vs_default", PixelShader);
 
 	forward_shader_program->UseProgram();
 
+	bool flipedNormals = finalizedScale.x * finalizedScale.y * finalizedScale.z < 0;
 
 	forward_shader_program->SetUniform("masked", Masked);
 
@@ -129,6 +166,7 @@ void StaticMesh::DrawForward(mat4x4 view, mat4x4 projection)
 	forward_shader_program->SetUniform("view", view);
 
 	forward_shader_program->SetUniform("customId", CustomId);
+	forward_shader_program->SetUniform("flipedNormals", flipedNormals);
 
 	ApplyAdditionalShaderParams(forward_shader_program);
 
@@ -191,14 +229,9 @@ void StaticMesh::DrawForward(mat4x4 view, mat4x4 projection)
 
 			if (Transparent)
 			{
-				if (mesh.transparentTexture)
-				{
-					glDepthMask(GL_FALSE);
-				}
-				else
-				{
-					glDepthMask(GL_TRUE);
-				}
+
+				BgfxStateManager::SetWriteDepth(mesh.transparentTexture == false);
+
 			}
 
 
@@ -217,6 +250,7 @@ void StaticMesh::DrawForward(mat4x4 view, mat4x4 projection)
 				forward_shader_program->SetTexture("u_texture", ColorTextureId);
 			}
 
+			forward_shader_program->SetTexture("u_textureEmissive", 0);
 			if (EmissiveTexture)
 			{
 				forward_shader_program->SetTexture("u_textureEmissive", EmissiveTexture);
@@ -227,115 +261,87 @@ void StaticMesh::DrawForward(mat4x4 view, mat4x4 projection)
 			}
 		}
 
-		mesh.VAO->Bind();
 
-		if (mesh.VAO->IsInstanced())
-		{
-			glDrawElementsInstanced(GL_TRIANGLES, static_cast<unsigned int>(mesh.VAO->IndexCount), GL_UNSIGNED_INT, 0, mesh.VAO->GetInstanceCount());
-		}
-		else if (numInstances < 0)
-		{
-			glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(mesh.VAO->IndexCount), GL_UNSIGNED_INT, 0);
-		}
+		bgfx::setVertexBuffer(0, mesh.vbh);
+		bgfx::setIndexBuffer(mesh.ibh);
 
-		VertexArrayObject::Unbind();
+		BgfxStateManager::Apply();
+
+		forward_shader_program->Submit(ViewIdManager::GetCurrentId());
 
 	}
 
-	glEnable(GL_CULL_FACE);
-
+	BgfxStateManager::SetState(startState);
+	
 }
 
 void StaticMesh::DrawDepth(mat4x4 view, mat4x4 projection)
 {
-
 	if (model == nullptr) return;
-
 	if (DepthPrePath == false) return;
 
-	if (TwoSided)
-	{
-		glDisable(GL_CULL_FACE);
-	}
-	else
-	{
-		glEnable(GL_CULL_FACE);
-	}
+	auto startState = BgfxStateManager::GetState();
 
-	bool mask = Transparent || Masked;
+	BgfxStateManager::SetCull(TwoSided ? BgfxStateManager::Cull::None : BgfxStateManager::Cull::CW);
 
-	ShaderProgram* shader_program = ShaderManager::GetShaderProgram("default_vertex", mask ? "mask_pixel" : "empty_pixel");
+	const bool mask = Transparent || Masked;
 
-	shader_program->UseProgram();
+	Shader* shader = ShaderManager::GetShaderProgram("vs_default", mask ? "fs_mask" : "fs_empty");
+
+	shader->UseProgram();
 
 	mat4x4 world = finalizedWorld;
 
-	shader_program->SetUniform("view", view);
-	shader_program->SetUniform("projection", projection);
-	shader_program->SetUniform("viewmodelScaleFactor", ViewmodelScaleFactor);
+	shader->SetUniform("view", view);
+	shader->SetUniform("projection", projection);
+	shader->SetUniform("viewmodelScaleFactor", ViewmodelScaleFactor);
+	shader->SetUniform("world", world);
+	shader->SetUniform("isViewmodel", IsViewmodel);
 
-	shader_program->SetUniform("world", world);
-
-	shader_program->SetUniform("isViewmodel", IsViewmodel);
-
-	ApplyAdditionalShaderParams(shader_program);
-
+	ApplyAdditionalShaderParams(shader);
 
 	for (roj::SkinnedMesh& mesh : model->meshes)
 	{
-
 		if (finalMeshHideList.contains(mesh.name)) continue;
 
 		if (mask)
 		{
-
-			if (ColorTexture == nullptr)
+			if (ColorTexture == nullptr && ColorTextureId == 0)
 			{
-
-				string baseTextureName;
-
-				for (auto texture : mesh.textures)
-				{
-					if (texture.type == aiTextureType_BASE_COLOR)
-					{
-						baseTextureName = texture.src;
-						break;
-					}
-				}
-
-
-
 				if (mesh.cachedBaseColor == nullptr)
 				{
-					const string textureRoot = TexturesLocation;
-
-					mesh.cachedBaseColor = AssetRegistry::GetTextureFromFile(textureRoot + baseTextureName);
+					string baseTextureName;
+					for (auto& texture : mesh.textures)
+					{
+						if (texture.type == aiTextureType_BASE_COLOR)
+						{
+							baseTextureName = texture.src;
+							break;
+						}
+					}
+					mesh.cachedBaseColor = AssetRegistry::GetTextureFromFile(TexturesLocation + baseTextureName);
 				}
 
-				Texture* texture = mesh.cachedBaseColor;
-
-				shader_program->SetTexture("u_texture", texture);
+				shader->SetTexture("u_texture", mesh.cachedBaseColor);
 			}
 			else
 			{
-				shader_program->SetTexture("u_texture", ColorTexture);
+				if (ColorTexture)
+					shader->SetTexture("u_texture", ColorTexture);
+				else
+					shader->SetTexture("u_texture", ColorTextureId);
 			}
 		}
 
-		mesh.VAO->Bind();
+		bgfx::setVertexBuffer(0, mesh.vbh);
+		bgfx::setIndexBuffer(mesh.ibh);
 
-		if (mesh.VAO->IsInstanced())
-		{
-			glDrawElementsInstanced(GL_TRIANGLES, static_cast<unsigned int>(mesh.VAO->IndexCount), GL_UNSIGNED_INT, 0, mesh.VAO->GetInstanceCount());
-		}
-		else if (numInstances < 0)
-		{
-			glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(mesh.VAO->IndexCount), GL_UNSIGNED_INT, 0);
-		}
+		BgfxStateManager::Apply();
 
-		VertexArrayObject::Unbind();
-
+		shader->Submit(ViewIdManager::GetCurrentId());
 	}
+
+	BgfxStateManager::SetState(startState);
 }
 
 void StaticMesh::DrawCustomId(mat4x4 view, mat4x4 projection)
@@ -343,157 +349,136 @@ void StaticMesh::DrawCustomId(mat4x4 view, mat4x4 projection)
 	if (model == nullptr) return;
 	if (CustomId == 0) return;
 
-	bool mask = Transparent;
+	auto startState = BgfxStateManager::GetState();
 
-	ShaderProgram* shader_program = ShaderManager::GetShaderProgram("default_vertex", "customId");
+	BgfxStateManager::SetCull(TwoSided ? BgfxStateManager::Cull::None : BgfxStateManager::Cull::CW);
 
-	shader_program->UseProgram();
+	const bool mask = Transparent;
+
+	Shader* shader = ShaderManager::GetShaderProgram("vs_default", "fs_customId");
+
+	shader->UseProgram();
 
 	mat4x4 world = finalizedWorld;
 
-	shader_program->SetUniform("view", view);
-	shader_program->SetUniform("projection", projection);
-	shader_program->SetUniform("viewmodelScaleFactor", ViewmodelScaleFactor);
+	shader->SetUniform("view", view);
+	shader->SetUniform("projection", projection);
+	shader->SetUniform("viewmodelScaleFactor", ViewmodelScaleFactor);
+	shader->SetUniform("world", world);
+	shader->SetUniform("customId", CustomId);
+	shader->SetUniform("isViewmodel", IsViewmodel);
 
-	shader_program->SetUniform("world", world);
-
-	shader_program->SetUniform("customId", CustomId);
-
-	shader_program->SetUniform("isViewmodel", IsViewmodel);
-
-	ApplyAdditionalShaderParams(shader_program);
-
+	ApplyAdditionalShaderParams(shader);
 
 	for (roj::SkinnedMesh& mesh : model->meshes)
 	{
-
 		if (finalMeshHideList.contains(mesh.name)) continue;
 
 		if (mask)
 		{
-			if (ColorTexture == nullptr)
+			if (ColorTexture == nullptr && ColorTextureId == 0)
 			{
-
-				string baseTextureName;
-
-				for (auto texture : mesh.textures)
-				{
-					if (texture.type == aiTextureType_BASE_COLOR)
-					{
-						baseTextureName = texture.src;
-						break;
-					}
-				}
-
-
-
 				if (mesh.cachedBaseColor == nullptr)
 				{
-					const string textureRoot = TexturesLocation;
-
-					mesh.cachedBaseColor = AssetRegistry::GetTextureFromFile(textureRoot + baseTextureName);
+					string baseTextureName;
+					for (auto& texture : mesh.textures)
+					{
+						if (texture.type == aiTextureType_BASE_COLOR)
+						{
+							baseTextureName = texture.src;
+							break;
+						}
+					}
+					mesh.cachedBaseColor = AssetRegistry::GetTextureFromFile(TexturesLocation + baseTextureName);
 				}
 
-				Texture* texture = mesh.cachedBaseColor;
-
-				shader_program->SetTexture("u_texture", texture);
+				shader->SetTexture("u_texture", mesh.cachedBaseColor);
 			}
 			else
 			{
-				shader_program->SetTexture("u_texture", ColorTexture);
+				if (ColorTexture)
+					shader->SetTexture("u_texture", ColorTexture);
+				else
+					shader->SetTexture("u_texture", ColorTextureId);
 			}
 		}
-		mesh.VAO->Bind();
 
-		if (mesh.VAO->IsInstanced())
-		{
-			glDrawElementsInstanced(GL_TRIANGLES, static_cast<unsigned int>(mesh.VAO->IndexCount), GL_UNSIGNED_INT, 0, mesh.VAO->GetInstanceCount());
-		}
-		else if (numInstances < 0)
-		{
-			glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(mesh.VAO->IndexCount), GL_UNSIGNED_INT, 0);
-		}
+		bgfx::setVertexBuffer(0, mesh.vbh);
+		bgfx::setIndexBuffer(mesh.ibh);
 
-		VertexArrayObject::Unbind();
+		BgfxStateManager::Apply();
 
+		shader->Submit(ViewIdManager::GetCurrentId());
 	}
+
+	BgfxStateManager::SetState(startState);
 }
 
 void StaticMesh::DrawShadow(mat4x4 view, mat4x4 projection)
 {
 	if (model == nullptr) return;
-	bool mask = Transparent;
 
-	ShaderProgram* shader_program = ShaderManager::GetShaderProgram("default_vertex", mask ? "mask_pixel" : "empty_pixel");
+	auto startState = BgfxStateManager::GetState();
 
-	shader_program->UseProgram();
+	BgfxStateManager::SetCull(TwoSided ? BgfxStateManager::Cull::None : BgfxStateManager::Cull::CW);
+
+	const bool mask = Transparent;
+
+	Shader* shader = ShaderManager::GetShaderProgram("vs_default", mask ? "fs_mask" : "fs_empty");
+
+	shader->UseProgram();
 
 	mat4x4 world = finalizedWorld;
 
-	shader_program->SetUniform("view", view);
-	shader_program->SetUniform("projection", projection);
+	shader->SetUniform("view", view);
+	shader->SetUniform("projection", projection);
+	shader->SetUniform("world", world);
+	shader->SetUniform("isViewmodel", false);
 
-	shader_program->SetUniform("world", world);
-
-	shader_program->SetUniform("isViewmodel", false);
-
-	ApplyAdditionalShaderParams(shader_program);
-
+	ApplyAdditionalShaderParams(shader);
 
 	for (roj::SkinnedMesh& mesh : model->meshes)
 	{
-
 		if (finalMeshHideList.contains(mesh.name)) continue;
 
 		if (mask)
 		{
-
-			if (ColorTexture == nullptr)
+			if (ColorTexture == nullptr && ColorTextureId == 0)
 			{
-
-				string baseTextureName;
-
-				for (auto texture : mesh.textures)
-				{
-					if (texture.type == aiTextureType_BASE_COLOR)
-					{
-						baseTextureName = texture.src;
-						break;
-					}
-				}
-
-
-
 				if (mesh.cachedBaseColor == nullptr)
 				{
-					const string& textureRoot = TexturesLocation;
-
-					mesh.cachedBaseColor = AssetRegistry::GetTextureFromFile(textureRoot + baseTextureName);
+					string baseTextureName;
+					for (auto& texture : mesh.textures)
+					{
+						if (texture.type == aiTextureType_BASE_COLOR)
+						{
+							baseTextureName = texture.src;
+							break;
+						}
+					}
+					mesh.cachedBaseColor = AssetRegistry::GetTextureFromFile(TexturesLocation + baseTextureName);
 				}
 
-				Texture* texture = mesh.cachedBaseColor;
-
-				shader_program->SetTexture("u_texture", texture);
+				shader->SetTexture("u_texture", mesh.cachedBaseColor);
 			}
 			else
 			{
-				shader_program->SetTexture("u_texture", ColorTexture);
+				if (ColorTexture)
+					shader->SetTexture("u_texture", ColorTexture);
+				else
+					shader->SetTexture("u_texture", ColorTextureId);
 			}
 		}
-		mesh.VAO->Bind();
 
-		if (mesh.VAO->IsInstanced())
-		{
-			glDrawElementsInstanced(GL_TRIANGLES, static_cast<unsigned int>(mesh.VAO->IndexCount), GL_UNSIGNED_INT, 0, mesh.VAO->GetInstanceCount());
-		}
-		else if (numInstances < 0)
-		{
-			glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(mesh.VAO->IndexCount), GL_UNSIGNED_INT, 0);
-		}
+		bgfx::setVertexBuffer(0, mesh.vbh);
+		bgfx::setIndexBuffer(mesh.ibh);
 
-		VertexArrayObject::Unbind();
+		BgfxStateManager::Apply();
 
+		shader->Submit(ViewIdManager::GetCurrentId());
 	}
+
+	BgfxStateManager::SetState(startState);
 }
 
 void StaticMesh::PreloadAssets()

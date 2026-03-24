@@ -10,12 +10,16 @@
 #include <UI/RmlUi/RmlUiEvents.h>
 #include <EngineMain.h>
 
+#include <UI/Pause/Settings/VideoSettings.h>
+
 #include <PauseGameManager.hpp>
 
 #include <ItemsDataBase.h>
 
-#include "Entities/Enemy/DebuffFactory.h"
+#include <UI/Pause/UiPauseMenu.h>
 
+#include "Entities/Enemy/DebuffFactory.h"
+ 
 class GameStart : public Entity
 {
 public:
@@ -24,6 +28,7 @@ public:
 
 	Rml::ElementDocument* pauseMenuDoc = nullptr;
     Rml::ElementDocument* settingsMenuDoc = nullptr;
+    Rml::ElementDocument* videoSettingsMenuDoc = nullptr;
 
 
     void testHttp();
@@ -47,6 +52,7 @@ public:
             Level::LoadLevelFromFile("GameData/maps/test.bsp");
         }
 		
+        AssetRegistry::GetSkinnedModelFromFile("GameData/models/arms.glb");
 
         for (size_t i = 0; i < 000; i++)
         {
@@ -117,6 +123,10 @@ public:
 
     }
 
+	bool wasPaused = false;
+
+    std::shared_ptr<UiPauseMenu> pauseMenu;
+
     void UpdatePaused()
     {
 
@@ -126,19 +136,33 @@ public:
 
         if (PauseGameManager::GetGamePaused())
         {
-            if (!pauseMenuDoc->IsVisible())
+            if (wasPaused == false)
             {
-				RmlUiContext::Main->PushModal(pauseMenuDoc);
+
+                pauseMenu = std::make_shared<UiPauseMenu>();
+
+                EngineMain::MainInstance->Viewport.AddChild(pauseMenu);
+
+				//RmlUiContext::Main->PushModal(pauseMenuDoc);
             }
         }
         else
         {
-            if (pauseMenuDoc != nullptr && pauseMenuDoc->IsVisible())
+            if (pauseMenu != nullptr)
             {
-				RmlUiContext::Main->RemoveFromModalFromStack(pauseMenuDoc);
+
+                pauseMenu->RemoveFromParent();
+                pauseMenu = nullptr;
+
+				//RmlUiContext::Main->RemoveFromModalFromStack(pauseMenuDoc);
             }
         }
+
+		wasPaused = PauseGameManager::GetGamePaused();
+
 	}
+
+	VideoSettingsModel videoSettingsModel;
 
     void ConstructPauseMenu()
     {
@@ -151,15 +175,60 @@ public:
             });
         RmlUiEvents::onClick(pauseMenuDoc, "optionsBtn", [&]()
             {
+				RmlUiContext::Main->PopModal();
 				RmlUiContext::Main->PushModal(settingsMenuDoc);
             });
 
 
 		settingsMenuDoc = RmlUiContext::Main->LoadDocument("GameData/ui/settings.rml");
-        RmlUiEvents::onClick(settingsMenuDoc, "backBtn", []()
+        RmlUiEvents::onClick(settingsMenuDoc, "backBtn", [&]()
+            {
+                
+                RmlUiContext::Main->PopModal();
+                RmlUiContext::Main->PushModal(pauseMenuDoc);
+            });
+
+        RmlUiEvents::onClick(settingsMenuDoc, "videoBtn", [&]()
+            {
+                
+				RmlUiContext::Main->PopModal();
+
+				VideoSettings::InitModelData(videoSettingsModel);
+                videoSettingsModel.DirtyAll();
+
+                Rml::Element* elem = videoSettingsMenuDoc->GetElementById("resolution");
+                if (!elem)
+                    return;
+
+                // Correct cast to ElementFormControlSelect
+                Rml::ElementFormControlSelect* select = dynamic_cast<Rml::ElementFormControlSelect*>(elem);
+                if (!select)
+                    return; // element is not a select, bail out
+
+                // Now you can use RemoveAll() and Add()
+                select->RemoveAll();
+                for (const auto& res : videoSettingsModel.resolutions)
+                {
+                    select->Add(res, res, res == videoSettingsModel.selected_resolution);
+                }
+                select->SetValue(videoSettingsModel.selected_resolution);
+
+                RmlUiContext::Main->PushModal(videoSettingsMenuDoc);
+            });
+
+
+        videoSettingsModel.Create(RmlUiContext::Main->GetContext(), "videoSettings");
+		VideoSettings::InitModelData(videoSettingsModel);
+        videoSettingsModel.DirtyAll();
+
+        videoSettingsMenuDoc = RmlUiContext::Main->LoadDocument("GameData/ui/videoSettings.rml");
+        RmlUiEvents::onClick(videoSettingsMenuDoc, "backBtn", [&]()
             {
                 RmlUiContext::Main->PopModal();
+				RmlUiContext::Main->PushModal(settingsMenuDoc);
             });
+        VideoSettings::BindVideoSettingsCallbacks(videoSettingsMenuDoc);
+
 
 	}
 
@@ -253,6 +322,7 @@ GameStart::GameStart()
 	Input::AddAction("ui_up")->AddKeyboardKey(SDL_KeyCode::SDLK_UP)->AddButton(GamepadButton::DPadUp);
     Input::AddAction("ui_left")->AddKeyboardKey(SDL_KeyCode::SDLK_LEFT)->AddButton(GamepadButton::DPadLeft);
 	Input::AddAction("ui_right")->AddKeyboardKey(SDL_KeyCode::SDLK_RIGHT)->AddButton(GamepadButton::DPadRight);
+
 
     Input::AddAction("dbg_simulate")->AddKeyboardKey(SDL_KeyCode::SDLK_j);
 
