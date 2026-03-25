@@ -40,6 +40,7 @@
     <ProjectGuid>{8A221747-7EFF-4885-9B18-0261C4DBFCBB}</ProjectGuid>
     <RootNamespace>Game</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>SkeletalEditor</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -143,34 +144,36 @@
     <LibraryPath>F:\Git\SdlWasmEngine\Lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(SolutionDir)../libraries/;$(SolutionDir)Engine/;$(SolutionDir)../emscriptenLibraries/;$(SolutionDir)../librariesMSVC/;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)../libraries/;$(SolutionDir)../emscriptenLibraries/;$(ProjectDir);$(SolutionDir)../librariesMSVC/;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)../Lib/;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
-    <IntDir>..\Intermediage\$(ShortProjectName)\$(Configuration)\</IntDir>
+    <IntDir>..\..\Intermediage\$(ShortProjectName)\$(Configuration)\</IntDir>
     <AllProjectIncludesArePublic>true</AllProjectIncludesArePublic>
+    <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(SolutionDir)../libraries/;$(SolutionDir)Engine/;$(SolutionDir)../emscriptenLibraries/;$(SolutionDir)../librariesMSVC/;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)../libraries/;$(SolutionDir)../emscriptenLibraries/;$(ProjectDir);$(SolutionDir)../librariesMSVC/;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)../Lib/;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
-    <IntDir>..\Intermediage\$(ShortProjectName)\$(Configuration)\</IntDir>
+    <IntDir>..\..\Intermediage\$(ShortProjectName)\$(Configuration)\</IntDir>
     <AllProjectIncludesArePublic>true</AllProjectIncludesArePublic>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Distribution|x64'">
-    <IncludePath>$(SolutionDir)../libraries/;$(SolutionDir)Engine/;$(SolutionDir)../emscriptenLibraries/;$(SolutionDir)../librariesMSVC/;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)../libraries/;$(SolutionDir)../emscriptenLibraries/;$(ProjectDir);$(SolutionDir)../librariesMSVC/;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)../Lib/;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
-    <IntDir>..\Intermediage\$(ShortProjectName)\$(Configuration)\</IntDir>
+    <IntDir>..\..\Intermediage\$(ShortProjectName)\$(Configuration)\</IntDir>
     <AllProjectIncludesArePublic>true</AllProjectIncludesArePublic>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='emscripten|x64'">
-    <IncludePath>$(SolutionDir)../libraries/;$(SolutionDir)Engine/;$(SolutionDir)../emscriptenLibraries/;$(SolutionDir)../librariesMSVC/;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)../libraries/;$(SolutionDir)../emscriptenLibraries/;$(ProjectDir);$(SolutionDir)../librariesMSVC/;$(IncludePath)</IncludePath>
     <LibraryPath>F:\Git\SdlWasmEngine\Lib;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
-    <IntDir>..\Intermediage\$(ShortProjectName)\$(Configuration)\</IntDir>
+    <IntDir>..\..\Intermediage\$(ShortProjectName)\$(Configuration)\</IntDir>
     <AllProjectIncludesArePublic>true</AllProjectIncludesArePublic>
+    <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -243,16 +246,26 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>DESKTOP;WINDOWS;%(PreprocessorDefinitions);WIN32;_WINDOWS;_HAS_EXCEPTIONS=0;NDEBUG;JPH_OBJECT_STREAM;JPH_USE_AVX2;JPH_USE_AVX;JPH_USE_SSE4_1;JPH_USE_SSE4_2;JPH_USE_LZCNT;JPH_USE_TZCNT;JPH_USE_F16C;JPH_USE_FMADD</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DESKTOP;WINDOWS;%(PreprocessorDefinitions);WIN32;_WINDOWS;_HAS_EXCEPTIONS=0;NDEBUG;JPH_OBJECT_STREAM;JPH_USE_AVX2;JPH_USE_AVX;JPH_USE_SSE4_1;JPH_USE_SSE4_2;JPH_USE_LZCNT;JPH_USE_TZCNT;JPH_USE_F16C;JPH_USE_FMADD;BX_CONFIG_DEBUG=1</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <AdditionalOptions>/arch:SSE2 /Zc:__cplusplus /Zc:preprocessor %(AdditionalOptions)</AdditionalOptions>
+      <LanguageStandard_C>stdclatest</LanguageStandard_C>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <ShowIncludes>false</ShowIncludes>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_image.lib;SDL2_ttf.lib;OpenAL32.lib;glew32.lib;glew32s.lib;opengl32.lib;assimp-vc143-mt.lib;Jolt.lib;fmod_vc.lib;fmodstudio_vc.lib;mimalloc.lib;rmlui.lib;rmlui_debugger.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>mimalloc.lib;SDL2.lib;SDL2main.lib;bx.lib;bimg.lib;SDL2_ttf.lib;OpenAL32.lib;glew32.lib;glew32s.lib;opengl32.lib;assimp-vc143-mt.lib;Jolt.lib;fmod_vc.lib;fmodstudio_vc.lib;rmlui.lib;rmlui_debugger.lib;bgfx_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /y /d /e "$(SolutionDir)binariesToInclude\*.*" "$(TargetDir)"</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>copy binaries to exe location</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -265,16 +278,25 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <WholeProgramOptimization>false</WholeProgramOptimization>
+      <AdditionalOptions>/arch:SSE2 /Zc:__cplusplus /Zc:preprocessor %(AdditionalOptions)</AdditionalOptions>
+      <LanguageStandard_C>stdclatest</LanguageStandard_C>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <ShowIncludes>false</ShowIncludes>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
-      <EnableCOMDATFolding>false</EnableCOMDATFolding>
-      <OptimizeReferences>false</OptimizeReferences>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_image.lib;SDL2_ttf.lib;OpenAL32.lib;glew32.lib;glew32s.lib;opengl32.lib;assimp-vc143-mt.lib;Jolt.lib;fmod_vc.lib;fmodstudio_vc.lib;mimalloc.lib;rmlui.lib;rmlui_debugger.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>mimalloc.lib;SDL2.lib;SDL2main.lib;bx.lib;bimg.lib;SDL2_ttf.lib;OpenAL32.lib;glew32.lib;glew32s.lib;opengl32.lib;assimp-vc143-mt.lib;Jolt.lib;fmod_vc.lib;fmodstudio_vc.lib;rmlui.lib;rmlui_debugger.lib;bgfx_r.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
-      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /y /d /e "$(SolutionDir)binariesToInclude\*.*" "$(TargetDir)"</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>copy binaries to exe location</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Distribution|x64'">
     <ClCompile>
@@ -287,16 +309,25 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <WholeProgramOptimization>false</WholeProgramOptimization>
+      <AdditionalOptions>/arch:SSE2 /Zc:__cplusplus /Zc:preprocessor %(AdditionalOptions)</AdditionalOptions>
+      <LanguageStandard_C>stdclatest</LanguageStandard_C>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <ShowIncludes>false</ShowIncludes>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
-      <EnableCOMDATFolding>false</EnableCOMDATFolding>
-      <OptimizeReferences>false</OptimizeReferences>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_image.lib;SDL2_ttf.lib;OpenAL32.lib;glew32.lib;glew32s.lib;opengl32.lib;assimp-vc143-mt.lib;Jolt.lib;fmod_vc.lib;fmodstudio_vc.lib;mimalloc.lib;rmlui.lib;rmlui_debugger.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>mimalloc.lib;SDL2.lib;SDL2main.lib;bx.lib;bimg.lib;SDL2_ttf.lib;OpenAL32.lib;glew32.lib;glew32s.lib;opengl32.lib;assimp-vc143-mt.lib;Jolt.lib;fmod_vc.lib;fmodstudio_vc.lib;rmlui.lib;rmlui_debugger.lib;bgfx_r.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
-      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /y /d /e "$(SolutionDir)binariesToInclude\*.*" "$(TargetDir)"</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>copy binaries to exe location</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='emscripten|x64'">
     <ClCompile>
@@ -307,14 +338,24 @@
       <PreprocessorDefinitions>__EMSCRIPTEN__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalOptions>/arch:SSE2 /Zc:__cplusplus /Zc:preprocessor %(AdditionalOptions)</AdditionalOptions>
+      <LanguageStandard_C>stdclatest</LanguageStandard_C>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <ShowIncludes>false</ShowIncludes>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_image.lib;SDL2_ttf.lib;OpenAL32.lib;glew32.lib;glew32s.lib;opengl32.lib;assimp-vc143-mt.lib;Jolt.lib;fmod_vc.lib;fmodstudio_vc.lib;mimalloc.lib;rmlui.lib;rmlui_debugger.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>mimalloc.lib;SDL2.lib;SDL2main.lib;bgfx.lib;bx.lib;bimg.lib;SDL2_image.lib;SDL2_ttf.lib;OpenAL32.lib;glew32.lib;glew32s.lib;opengl32.lib;assimp-vc143-mt.lib;Jolt.lib;fmod_vc.lib;fmodstudio_vc.lib;rmlui.lib;rmlui_debugger.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /y /d /e "$(SolutionDir)binariesToInclude\*.*" "$(TargetDir)"</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>copy binaries to exe location</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Entities\FreeCamera.cpp" />
@@ -322,6 +363,9 @@
     <ClCompile Include="GameStart.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\Engine\Engine.vcxproj">
+      <Project>{d353d7f2-b610-486e-b37f-eac38f0a6e35}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\Engine\Engine.vcxproj">
       <Project>{d353d7f2-b610-486e-b37f-eac38f0a6e35}</Project>
     </ProjectReference>

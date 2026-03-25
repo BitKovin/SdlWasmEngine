@@ -9,6 +9,4 @@ void TransformPoint::FromData(EntityData data)
 
 	Rotation = EntityData::ConvertRotation(angles, true);
 
-	DebugDraw::Line(Position, Position + MathHelper::GetForwardVector(Rotation), 50,0.1f);
-
 }

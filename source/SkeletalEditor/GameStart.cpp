@@ -24,6 +24,8 @@ public:
 		Spawn("freecamera");
 		Spawn("skeletal_editor");
 
+		EngineMain::MainInstance->DebugUiEnabled = true;
+
 		//EngineMain::MainInstance->asyncGameUpdate = false;
 
 	}
