@@ -23,7 +23,9 @@
 #include <SoundSystem/FmodEventInstance.h>
 #include <Navigation/Navigation.hpp>
 #include "NpcHelper.h"
-#include <Animation.h> // Assuming header for Animation
+#include <Animation.h>
+
+#include <AiPerception/Observer.h>
 
 class NpcHumanBase : public Entity, public IEnemy
 {
@@ -35,7 +37,7 @@ protected:
 
     SoundPlayer* soundPlayer = nullptr;
 
-    float maxSpeed = 5.5f; // Average between gun and axe
+    float maxSpeed = 5.5f;
     float speed = 4;
 
     bool dead = false;
@@ -65,7 +67,13 @@ protected:
     vec3 ragdollPelvisWorldPos = vec3();
     float pelvisBlendTimer = 0.0f;
 
+    std::shared_ptr<Observer> observer;
+
+    Entity* target = nullptr;
+
     void UpdateFleeTarget();
+
+    void UpdatePerception();
 
     void SetupSoundPlayer(SoundPlayer* soundPlayer);
 
@@ -98,6 +106,12 @@ protected:
     void UpdateDebugUI();
 
     void LoadAssets();
+
+    void FromData(EntityData data);
+
+    void SetTarget(Entity* newTarget);
+
+    void OnAction(std::string action);
 
 public:
     NpcHumanBase();

@@ -300,7 +300,10 @@ void WeaponFirearm::NotifyNpcs() {
 	auto observers = AiPerceptionSystem::GetObserversInRadius(Position, params.npcNotifyRadius);
 	for (auto observer : observers) {
 		auto ownerNpc = dynamic_cast<NpcBase*>(Level::Current->FindEntityWithId(observer->owner));
-		ownerNpc->TryStartInvestigation(InvestigationReason::WeaponFire, Position, Player::Instance->Id);
+		if (ownerNpc)
+		{
+			ownerNpc->TryStartInvestigation(InvestigationReason::WeaponFire, Position, Player::Instance->Id);
+		}
 	}
 }
 

@@ -189,6 +189,15 @@ std::string EntityData::GetPropertyString(const std::string& propName, const std
     return defaultValue;
 }
 
+bool EntityData::HasPropery(const std::string& propName)
+{
+    auto it = Properties.find(propName);
+    if (it != Properties.end()) {
+        return true;
+    }
+    return false;
+}
+
 /**
  * Converts an imported rotation vector to a usable format.
  * Adjusts based on whether it's for a model or not.
@@ -199,7 +208,10 @@ glm::vec3 EntityData::ConvertRotation(glm::vec3 importRot, bool notForModel)
     if (!notForModel) {
         importRot.y += 180.0f; // Add 180 degrees to yaw
     }
-
+    else
+    {
+        importRot.y -= 90; // Add 180 degrees to yaw
+    }
 
     importRot = glm::radians(importRot);
 
@@ -217,9 +229,7 @@ glm::vec3 EntityData::ConvertRotation(glm::vec3 importRot, bool notForModel)
     glm::vec3 rotation = MathHelper::DecomposeMatrix(rotM).Rotation; // Returns radians, XYZ order (pitch, yaw, roll)
 
     // Step 5: Adjust yaw for non-models
-    if (notForModel) {
-        rotation.y += 90.0f; // Add 90 degrees to yaw
-    }
+
 
     // Step 6: Convert back to degrees and return
     return rotation;

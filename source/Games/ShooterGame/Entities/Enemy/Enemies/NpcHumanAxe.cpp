@@ -1,6 +1,5 @@
 // NpcHumanAxe.cpp
 #include "NpcHumanAxe.h"
-#include "../../Player/Player.hpp"
 
 REGISTER_ENTITY(NpcHumanAxe, "npc_human_axe")
 
@@ -11,7 +10,6 @@ NpcHumanAxe::NpcHumanAxe()
 
     Health = 110;
     MaxHealth = 110;
-
 }
 
 void NpcHumanAxe::ProcessAnimationEvent(AnimationEvent& event)
@@ -75,7 +73,6 @@ void NpcHumanAxe::UpdateAttackDamage()
     {
         if (hit.entity->HasTag("player"))
         {
-
             if (NpcHelper::CheckParry(MathHelper::GetForwardVector(mesh->Rotation), hit.entity))
             {
                 OnPointDamage(20, hit.shapePosition, MathHelper::FastNormalize(Position - hit.shapePosition), "", this, this);
@@ -89,7 +86,6 @@ void NpcHumanAxe::UpdateAttackDamage()
                 hit.entity->OnPointDamage(15, hit.shapePosition, MathHelper::FastNormalize(hit.shapePosition - Position), "", this, this);
                 attackingDamage = false;
             }
-
         }
     }
 }
@@ -104,6 +100,8 @@ void NpcHumanAxe::AsyncUpdate()
 
         return;
     }
+
+    UpdatePerception();
 
     UpdateStatusWidgets();
 
@@ -156,15 +154,26 @@ void NpcHumanAxe::AsyncUpdate()
     if (dead || stuned || stunnedRagdoll || returningFromRagdoll) return;
 
     UpdateAttackDamage();
-    if (dead)return;
+    if (dead) return;
 
-    Entity* target = Player::Instance;
+    // No target: idle in place
+    if (target == nullptr)
+    {
+        if (mesh->GetAnimationName() != "idle")
+            mesh->PlayAnimation("idle", true, 0.5f);
+
+        vec3 vel = FromPhysics(LeadBody->GetLinearVelocity());
+        Physics::SetLinearVelocity(LeadBody, vec3(0, vel.y, 0));
+        return;
+    }
+    else if(mesh->GetAnimationName() == "idle")
+    {      
+        mesh->PlayAnimation("run", true, 0.5f);
+    }
 
     if (attacking)
     {
-
         speed = 2;
-
         return;
     }
 
@@ -173,25 +182,19 @@ void NpcHumanAxe::AsyncUpdate()
     if (distance(target->Position, Position) < 1.5f
         && dot(MathHelper::GetForwardVector(mesh->Rotation), lookAtDir) > 0.93)
     {
-
         Attack();
     }
 
-    if (target)
+    if (fleeing)
     {
-        if (fleeing)
-        {
-            UpdateFleeTarget();
-        }
-        else
-        {
-
-            pathFollow.UpdateStartAndTarget(Position, target->Position);
-            pathFollow.TryPerform();
-
-        }
-
+        UpdateFleeTarget();
     }
+    else
+    {
+        pathFollow.UpdateStartAndTarget(Position, target->Position);
+        pathFollow.TryPerform();
+    }
+
     if (pathFollow.FoundTarget)
     {
         desiredDirection = normalize(MathHelper::XZ(pathFollow.CalculatedTargetLocation - Position));
@@ -205,27 +208,19 @@ void NpcHumanAxe::AsyncUpdate()
 
     movingDirection = MathHelper::FastNormalize(movingDirection);
 
-    // Get the current horizontal velocity (preserving the vertical component from physics)
     vec3 currentVelocity = FromPhysics(LeadBody->GetLinearVelocity());
     vec3 currentHorizontalVel(currentVelocity.x, 0.0f, currentVelocity.z);
 
-    // Determine the desired horizontal velocity (5.0f is the intended speed)
     vec3 desiredHorizontalVel = movingDirection * speed;
 
-    // Calculate the change in velocity you need to achieve over the current frame
-    // Using Time::DeltaTime (dt) to convert velocity difference to the required acceleration
     float dt = Time::DeltaTime;
     vec3 neededAcceleration = (desiredHorizontalVel - currentHorizontalVel) / dt;
 
-    // Retrieve the body mass to calculate the needed force (F = m * a)
     float mass = 40;
     vec3 forceToApply = neededAcceleration * mass;
 
-    // Only apply horizontal forces to avoid interfering with the vertical (gravity, jump, etc.)
     vec3 horizontalForce(forceToApply.x, 0.0f, forceToApply.z);
 
-
-    // Apply the calculated force to the body
     LeadBody->AddForce(ToPhysics(horizontalForce));
 
     Physics::Activate(LeadBody);
@@ -251,7 +246,6 @@ void NpcHumanAxe::Deserialize(json& source)
 
 void NpcHumanAxe::LoadAssets()
 {
-
     NpcHumanBase::LoadAssets();
 
     SoundManager::LoadBankFromPath("GameData/sounds/banks/Desktop/SFX.bank");

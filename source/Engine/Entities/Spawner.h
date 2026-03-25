@@ -10,6 +10,7 @@ public:
 	string onDespawnedAction = "despawned";
 	string actionTarget = "";
 
+	bool autoTriggerOnPlayer = false;
 
 	Spawner()
 	{
@@ -20,7 +21,6 @@ public:
 	{
 		Entity::FromData(data);
 
-		Rotation.y = data.GetPropertyFloat("angle") + 90;
 		spawnClassName = data.GetPropertyString("className", spawnClassName);
 		onSpawnedAction = data.GetPropertyString("onSpawned", onSpawnedAction);
 		onDespawnedAction = data.GetPropertyString("onDespawned", onDespawnedAction);
@@ -42,9 +42,13 @@ public:
 		}
 		entity->Position = Position;
 		entity->Rotation = Rotation;
+		entity->OwnerId = Id;
 		entity->Start();
 
-		entity->OwnerId = Id;
+		if (autoTriggerOnPlayer)
+		{
+			entity->OnAction("triggerOnPlayer");
+		}
 		
 		Logger::Log("calling action");
 

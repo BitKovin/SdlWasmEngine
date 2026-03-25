@@ -1,12 +1,13 @@
-// NpcHumanBase.cpp
-
 #include "NpcHumanBase.h"
-#include "../../Player/Player.hpp"
 #include <RandomHelper.h>
 
 #include <World/WorldOrientationManager.h>
 
 #include <Systems/ScoreSystem/ScoreSystem.h>
+
+#include <Entities/Player/Player.hpp>
+
+#include <AiPerception/AiPerceptionSystem.h>
 
 NpcHumanBase::NpcHumanBase()
 {
@@ -46,10 +47,10 @@ NpcHumanBase::~NpcHumanBase()
 
 void NpcHumanBase::UpdateFleeTarget()
 {
+    if (target == nullptr) return;
+
     if (fleeSearchDelay.Wait() == false)
     {
-        Entity* target = Player::Instance;
-
         auto path = NavigationSystem::FindFleePath(Position, target->Position);
 
         if (path.empty() == false)
@@ -60,6 +61,32 @@ void NpcHumanBase::UpdateFleeTarget()
 
         fleeSearchDelay.AddDelay(0.2f);
     }
+}
+
+void NpcHumanBase::UpdatePerception()
+{
+
+    if (observer == nullptr) return;
+
+    observer->forward = MathHelper::GetForwardVector(mesh->Rotation);
+    observer->position = Position + vec3(0,0.7f,0);
+
+    for (auto& t : observer->visibleTargets)
+    {
+        if (t->HasTag("player"))
+        {
+
+            if (target)
+            {
+                if (t->ownerId == target->Id) continue;
+            }
+
+
+            SetTarget(Level::Current->FindEntityWithId(t->ownerId));
+
+        }
+    }
+
 }
 
 void NpcHumanBase::SetupSoundPlayer(SoundPlayer* soundPlayer)
@@ -96,7 +123,10 @@ void NpcHumanBase::Start()
 
     SetupSoundPlayer(soundPlayer);
 
-    
+    DebugDraw::Line(Position, Position + MathHelper::GetForwardVector(mesh->Rotation), 10, 0.1f);
+
+    observer = AiPerceptionSystem::CreateObserver(Position, MathHelper::GetForwardVector(mesh->Rotation), 150);
+
 }
 
 void NpcHumanBase::Stun()
@@ -120,12 +150,10 @@ void NpcHumanBase::StartStunnedRagdoll()
     }
 
     stunnedRagdollDelay.AddDelay(2);
-    // needHelpStunned = true; // If applicable, but omitted as not in human context
 }
 
 void NpcHumanBase::UpdateStunnedReturn()
 {
-
     if (stunnedRagdoll == false) return;
 
     Body* pelvisBody = mesh->FindHitboxByName("pelvis");
@@ -158,15 +186,11 @@ void NpcHumanBase::StartReturnFromRagdoll()
 {
     if (mesh->InRagdoll == false) return;
 
-
-
     mesh->UpdateHitboxes();
 
     vec3 pelvisPos = MathHelper::DecomposeMatrix(mesh->GetBoneMatrixWorld("pelvis")).Position;
     vec3 pelvisRot = MathHelper::DecomposeMatrix(mesh->GetBoneMatrixWorld("pelvis")).Rotation;
     vec3 spinePos = MathHelper::DecomposeMatrix(mesh->GetBoneMatrixWorld("spine_03")).Position;
-
-
 
     ragdollPose = mesh->GetAnimationPose();
 
@@ -190,8 +214,6 @@ void NpcHumanBase::StartReturnFromRagdoll()
         mesh->Rotation = vec3(0, MathHelper::FindLookAtRotation(spinePos, pelvisPos).y, 0);
     }
 
-
-
     movingDirection = MathHelper::GetForwardVector(mesh->Rotation);
 
     auto pelvisTransform = MathHelper::DecomposeMatrix(ragdollPose.boneTransforms["pelvis"]);
@@ -213,16 +235,13 @@ void NpcHumanBase::StartReturnFromRagdoll()
     desiredDirection = movingDirection;
 
     mesh->StopAnimation();
-
 }
 
 void NpcHumanBase::UpdateReturnFromRagdoll()
 {
-
-
     if (stunnedRagdollDelay.Wait()) return;
 
-    if (returningFromRagdoll == false)return;
+    if (returningFromRagdoll == false) return;
 
     vec3 vel = FromPhysics(LeadBody->GetLinearVelocity());
     Physics::SetLinearVelocity(LeadBody, vec3(0, vel.y, 0));
@@ -253,13 +272,10 @@ void NpcHumanBase::UpdateReturnFromRagdoll()
         pelvisBlendTimer += Time::DeltaTimeF;
         float t = saturate(pelvisBlendTimer / 0.5f);
 
-        // Where the animation wants the pelvis right now
         vec3 animPelvisWorldPos = MathHelper::DecomposeMatrix(mesh->GetBoneMatrixWorld("pelvis")).Position;
 
-        // Lerp from the saved ragdoll position toward the animation's position
         vec3 targetPelvisWorldPos = mix(ragdollPelvisWorldPos, animPelvisWorldPos, t);
 
-        // Shift the entire mesh so the pelvis lands where we want it
         mesh->Position += targetPelvisWorldPos - animPelvisWorldPos;
     }
 
@@ -269,12 +285,11 @@ void NpcHumanBase::UpdateReturnFromRagdoll()
         {
             returningFromRagdoll = false;
             stunnedRagdoll = false;
-            mesh->PlayAnimation("run", true, 0.5f); // Return to run like stun_end
+            mesh->PlayAnimation("run", true, 0.5f);
             speed = maxSpeed;
         }
         return;
     }
-
 }
 
 void NpcHumanBase::Death()
@@ -297,7 +312,7 @@ void NpcHumanBase::Death()
 
     dead = true;
 
-    ScoreSystem::Instance().addScore(MaxHealth*0.5f);
+    ScoreSystem::Instance().addScore(MaxHealth * 0.5f);
 
     if (soundPlayer)
     {
@@ -388,6 +403,11 @@ void NpcHumanBase::Serialize(json& target)
 
     SERIALIZE_FIELD(target, ragdollPelvisWorldPos);
     SERIALIZE_FIELD(target, pelvisBlendTimer);
+
+    std::string targetId = "";
+    if (this->target)
+        targetId = this->target->Id;
+    SERIALIZE_FIELD(target, targetId);
 }
 
 void NpcHumanBase::Deserialize(json& source)
@@ -440,6 +460,10 @@ void NpcHumanBase::Deserialize(json& source)
     DESERIALIZE_FIELD(source, ragdollPelvisWorldPos);
     DESERIALIZE_FIELD(source, pelvisBlendTimer);
 
+    std::string targetId = "";
+    DESERIALIZE_FIELD(source, targetId);
+
+    this->target = Level::Current->FindEntityWithId(targetId);
 }
 
 void NpcHumanBase::UpdateStatusWidgets()
@@ -475,4 +499,24 @@ void NpcHumanBase::Destroy()
     Entity::Destroy();
 
     mesh->ClearHitboxes();
+}
+
+void NpcHumanBase::FromData(EntityData data)
+{
+    Entity::FromData(data);
+}
+
+void NpcHumanBase::SetTarget(Entity* newTarget)
+{
+    target = newTarget;
+}
+
+void NpcHumanBase::OnAction(std::string action)
+{
+
+    if (action == "triggerOnPlayer")
+    {
+        SetTarget(Player::Instance);
+    }
+
 }

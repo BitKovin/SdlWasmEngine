@@ -38,6 +38,8 @@ public:
 
     void AddDebuff(const std::shared_ptr<Debuff>& debuff);
 
+    void SetTarget(class Entity* newTarget){}
+
     nlohmann::json SerializeDebuffs() const
     {
         nlohmann::json j = nlohmann::json::array();

@@ -91,16 +91,7 @@ public:
 		SpawnTime = Time::GameTime;
 	}
 
-	virtual void FromData(EntityData data)
-	{
-
-		Name = data.GetPropertyString("targetname");
-
-		Position = data.GetPropertyVectorPosition("origin");
-
-		Unique = data.GetPropertyBool("unique", Unique);
-
-	}
+	virtual void FromData(EntityData data);
 
 	virtual void Finalize()
 	{

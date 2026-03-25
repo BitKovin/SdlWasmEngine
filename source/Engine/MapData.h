@@ -29,6 +29,8 @@ public:
     bool GetPropertyBool(const std::string& propName, bool defaultValue = false);
     std::string GetPropertyString(const std::string& propName, const std::string& defaultValue = "");
 
+    bool HasPropery(const std::string& propName);
+
     // ConvertRotation adjusts an imported rotation vector.
     static glm::vec3 ConvertRotation(glm::vec3 importRot, bool notForModel = false);
 };

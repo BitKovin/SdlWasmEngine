@@ -1,6 +1,30 @@
 #include "Entity.h"
 #include "LevelObjectFactory.h"
 
+void Entity::FromData(EntityData data)
+{
+
+	Name = data.GetPropertyString("targetname");
+
+	Position = data.GetPropertyVectorPosition("origin");
+
+	Unique = data.GetPropertyBool("unique", Unique);
+
+	if (data.HasPropery("angles"))
+	{
+		vec3 angles = data.GetPropertyVectorRotation("angles");
+
+		Rotation = EntityData::ConvertRotation(angles, true);
+	}
+	else if (data.HasPropery("angle"))
+	{
+		Rotation.y = data.GetPropertyFloat("angle") + 90;
+	}
+
+
+
+}
+
 Entity* Entity::Spawn(std::string technicalName)
 {
 	auto entity = LevelObjectFactory::instance().create(technicalName);

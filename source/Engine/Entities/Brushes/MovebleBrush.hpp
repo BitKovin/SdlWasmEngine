@@ -73,8 +73,10 @@ public:
 
 		if (offsetPoint == nullptr) return;
 
+		vec3 referenceRotation = EntityData::ConvertRotation(vec3(0, 0, 0), true);
+
 		offsetPosition = offsetPoint->Position;
-		offsetRotation = offsetPoint->Rotation;
+		offsetRotation = MathHelper::NormalizeAngles(offsetPoint->Rotation) - MathHelper::NormalizeAngles(referenceRotation);
 
 		for (auto model : Drawables)
 		{

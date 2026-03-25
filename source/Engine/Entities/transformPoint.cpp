@@ -7,5 +7,8 @@ void TransformPoint::FromData(EntityData data)
 
 	vec3 angles = data.GetPropertyVectorRotation("angles");
 
-	Rotation = EntityData::ConvertRotation(angles, false);
+	Rotation = EntityData::ConvertRotation(angles, true);
+
+	DebugDraw::Line(Position, Position + MathHelper::GetForwardVector(Rotation), 50,0.1f);
+
 }

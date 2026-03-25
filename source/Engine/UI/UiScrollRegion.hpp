@@ -99,10 +99,7 @@ public:
         const float trackRange = viewH - thumbH;
 
         // ── Mouse wheel ───────────────────────────────────────────────────────
-        // UiScrollRegion has HitCheck=true so this element receives a touch
-        // event whenever the pointer is over it.
-        if (!TouchEvents.empty())
-            m_scrollOffset -= Input::MouseScrollDelta * 20.f;
+        m_scrollOffset -= Input::MouseScrollDelta * 20.f;
 
         // ── Thumb drag ────────────────────────────────────────────────────────
         if (needsBar) UpdateThumbDrag(maxScroll, trackRange);

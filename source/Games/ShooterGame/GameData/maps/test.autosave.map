@@ -1372,6 +1372,15 @@
 }
 // brush 151
 {
+( -352 528 342 ) ( -352 560 0 ) ( -352 560 342 ) FPSTextures/Wall_23 0 16 0 1 1 0 0 0
+( 544 544 342 ) ( -352 544 0 ) ( -352 544 342 ) FPSTextures/Wall_23 0 16 0 1 1 0 0 0
+( 544 560 0 ) ( -352 528 0 ) ( 544 528 0 ) FPSTextures/Wall_23 0 16 0 1 1 0 0 0
+( 544 552 342 ) ( -352 552 0 ) ( 544 552 0 ) FPSTextures/Wall_23 0 16 0 1 1 0 0 0
+( 544 560 342 ) ( 544 528 0 ) ( 544 528 342 ) FPSTextures/Wall_23 0 16 0 1 1 0 0 0
+( 132 556 16 ) ( 172 548 16 ) ( 132 548 16 ) FPSTextures/Wall_23 0 16 0 1 1 0 0 0
+}
+// brush 152
+{
 ( 544 544 342 ) ( -352 544 0 ) ( -352 544 342 ) FPSTextures_HD/wall_wood_wallpaper 0 32 0 0.5 0.5 0 0 0
 ( 544 552 342 ) ( -352 552 0 ) ( 544 552 0 ) FPSTextures_HD/wall_wood_wallpaper 0 32 0 0.5 0.5 0 0 0
 ( 528 560 342 ) ( 528 528 0 ) ( 528 528 342 ) FPSTextures_HD/wall_wood_wallpaper 0 32 0 0.5 0.5 0 0 0
@@ -1379,7 +1388,7 @@
 ( 132 548 16 ) ( 172 548 16 ) ( 132 556 16 ) FPSTextures_HD/wall_wood_wallpaper 0 32 0 0.5 0.5 0 0 0
 ( 174 548 24 ) ( 174 556 16 ) ( 174 556 24 ) FPSTextures_HD/wall_wood_wallpaper 0 32 0 0.5 0.5 0 0 0
 }
-// brush 152
+// brush 153
 {
 ( -336 528 342 ) ( -336 560 0 ) ( -336 560 342 ) FPSTextures_HD/wall_wood_wallpaper 0 32 0 0.5 0.5 0 0 0
 ( 544 544 342 ) ( -352 544 0 ) ( -352 544 342 ) FPSTextures_HD/wall_wood_wallpaper 0 32 0 0.5 0.5 0 0 0
@@ -1388,7 +1397,7 @@
 ( 132 548 16 ) ( 172 548 16 ) ( 132 556 16 ) FPSTextures_HD/wall_wood_wallpaper 0 32 0 0.5 0.5 0 0 0
 ( 130 548 24 ) ( 130 556 16 ) ( 130 548 16 ) FPSTextures_HD/wall_wood_wallpaper 0 32 0 0.5 0.5 0 0 0
 }
-// brush 153
+// brush 154
 {
 ( -80 560 160 ) ( -80 448 160 ) ( -320 560 160 ) FPSTextures/Flat111 0 0 0 1 1 0 0 0
 ( -80 560 160 ) ( -320 560 160 ) ( -80 560 144 ) FPSTextures/Flat111 0 0 0 1 1 0 0 0
@@ -2089,6 +2098,6 @@
 // entity 77
 {
 "classname" "env_door"
-"origin" "151.84 549.189 16"
+"origin" "151.84 550.189 16"
 "angle" "180"
 }

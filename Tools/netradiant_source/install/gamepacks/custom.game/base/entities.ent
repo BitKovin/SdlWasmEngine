@@ -29,7 +29,7 @@ This is not an entity as such. It is strictly an editor utility to group world b
 To make a func_group into a terrain entity, refer to the Terrain Construction documentation.
 </group>
 
-<point name="env_door" color="0.6 0.4 0.4" box="-12 -12 0 12 12 32">
+    <point name="env_door" color="0.6 0.4 0.4" box="-12 -12 0 12 12 32">
         <angle key="angle" name="Yaw Angle" value="0"/>
         <string key="targetname" name="Name" value=""/>
         <model key="model" name="Model Path" value="models/tools/door.obj"></model>
@@ -124,6 +124,7 @@ To make a func_group into a terrain entity, refer to the Terrain Construction do
 
     <point name="spawner" color="1 0.2 0.8" box="-16 -16 -32 16 16 16">
         <string key="className" name="Class Name" value="npc_base"></string>
+        <boolean key="autoTrigger" name="Auto Trigger" value="npc_base"></boolean>
         <string key="targetname" name="Name"></string>
         <target key="target" name="Target"></target>
         <angles key="angles" name="Rotation" value="0 0 0"></angles>

@@ -9,7 +9,7 @@ REGISTER_ENTITY(NpcHumanGun, "npc_human_gun")
 NpcHumanGun::NpcHumanGun()
 {
     ClassName = "npc_human_gun";
-    maxSpeed = 2.5f;
+    maxSpeed = 3.5f;
     mesh->Scale = vec3(1.15f);
 }
 
@@ -27,13 +27,13 @@ void NpcHumanGun::Attack()
     if (cantAttackDelay.Wait()) return;
     if (inAttackDelay.Wait()) return;
 
+    if (target == nullptr) return;
+
     vec3 bonePos = mesh->GetBoneMatrixWorld("weapon_muzzle")[3];
 
-    Entity* targetRef = Player::Instance;
+    vec3 predictedTargetPosition = target->Position;
 
-    vec3 predictedTargetPosition = targetRef->Position;
-
-    if (AttackDirectionCheck(bonePos, predictedTargetPosition, targetRef) == false)
+    if (AttackDirectionCheck(bonePos, predictedTargetPosition, target) == false)
     {
         inAttackDelay.AddDelay(0.5f);
         return;
@@ -41,24 +41,21 @@ void NpcHumanGun::Attack()
 
     const float bulletSpeed = 50;
 
-    if (targetRef)
-    {
-        Player* playerRef = dynamic_cast<Player*>(targetRef);
+    Player* playerRef = dynamic_cast<Player*>(target);
 
-        if (playerRef)
+    if (playerRef)
+    {
+        predictedTargetPosition += playerRef->controller.GetVelocity() * distance(Position, target->Position) / bulletSpeed;
+    }
+    else
+    {
+        if (target->LeadBody)
         {
-            predictedTargetPosition += playerRef->controller.GetVelocity() * distance(Position, targetRef->Position) / bulletSpeed;
-        }
-        else
-        {
-            if (targetRef->LeadBody)
-            {
-                predictedTargetPosition += FromPhysics(targetRef->LeadBody->GetLinearVelocity()) * distance(Position, targetRef->Position) / bulletSpeed;
-            }
+            predictedTargetPosition += FromPhysics(target->LeadBody->GetLinearVelocity()) * distance(Position, target->Position) / bulletSpeed;
         }
     }
 
-    predictedTargetPosition += RandomHelper::RandomPosition(distance(targetRef->Position, Position) / 20.0f) * (accuracyModifier + 1.0f);
+    predictedTargetPosition += RandomHelper::RandomPosition(distance(target->Position, Position) / 20.0f) * (accuracyModifier + 1.0f);
 
     vec3 bulletRotation = MathHelper::FindLookAtRotation(bonePos, predictedTargetPosition);
 
@@ -75,7 +72,7 @@ void NpcHumanGun::Attack()
     PlaySoundEffect("event:/NPC/Enemy1/Enemy1AttackStart");
 
     inAttackDelay.AddDelay(ModifyAnimationSpeed(0.5f));
-    afterAttackDelay.AddDelay(4);
+    afterAttackDelay.AddDelay(3);
     mesh->PlayAnimation("fire");
     mesh->PullRootMotion();
 }
@@ -98,7 +95,6 @@ bool NpcHumanGun::AttackDirectionCheck(vec3 start, vec3 target, Entity* targetEn
     return hit.hasHit == false;
 }
 
-
 void NpcHumanGun::AsyncUpdate()
 {
     if (dead)
@@ -109,6 +105,7 @@ void NpcHumanGun::AsyncUpdate()
 
         return;
     }
+    UpdatePerception();
 
     accuracyModifier -= Time::DeltaTimeF / 3.0f;
     accuracyModifier = glm::clamp(accuracyModifier, 0.0f, 5.0f);
@@ -152,7 +149,6 @@ void NpcHumanGun::AsyncUpdate()
         movingDirection = MathHelper::GetForwardVector(mesh->Rotation);
     }
 
-
     UpdateStunnedReturn();
     UpdateReturnFromRagdoll();
 
@@ -164,6 +160,18 @@ void NpcHumanGun::AsyncUpdate()
 
     if (dead || stuned || stunnedRagdoll || returningFromRagdoll) return;
 
+    // No target: idle in place
+    if (target == nullptr)
+    {
+        if (mesh->GetAnimationName() != "aim")
+            mesh->PlayAnimation("aim", true, 0.5f);
+
+        afterAttackDelay.AddDelay(2);
+
+        vec3 vel = FromPhysics(LeadBody->GetLinearVelocity());
+        Physics::SetLinearVelocity(LeadBody, vec3(0, vel.y, 0));
+        return;
+    }
 
     auto animName = mesh->GetAnimationName();
 
@@ -171,8 +179,6 @@ void NpcHumanGun::AsyncUpdate()
     {
         cantAttackDelay.AddDelay(0.7f);
     }
-
-    Entity* target = Player::Instance;
 
     desiredTargetLocation = target->Position;
 
@@ -191,11 +197,9 @@ void NpcHumanGun::AsyncUpdate()
     {
         if (stopMovingDelay.Wait() == false)
         {
-
             if (animName == "run")
             {
                 mesh->PlayAnimation("aim", true, 0.3f);
-
             }
             else
             {
@@ -214,7 +218,6 @@ void NpcHumanGun::AsyncUpdate()
     }
     else
     {
-
         if (animName != "run" && stuned == false)
         {
             mesh->PlayAnimation("run", true, 0.6f);
@@ -223,31 +226,23 @@ void NpcHumanGun::AsyncUpdate()
         cantAttackDelay.AddDelay(0.5f);
 
         stopMovingDelay.AddDelay(RandomHelper::RandomFloat() * -0.5f + 0.5f);
-
     }
 
-
-
-    if (target)
+    if (fleeing)
     {
-        if (fleeing)
-        {
-            UpdateFleeTarget();
-        }
-        else
-        {
-            pathFollow.WaitToFinish();
-            pathFollow.UpdateStartAndTarget(Position, desiredTargetLocation);
-            pathFollow.TryPerform();
-
-        }
-
+        UpdateFleeTarget();
     }
+    else
+    {
+        pathFollow.WaitToFinish();
+        pathFollow.UpdateStartAndTarget(Position, desiredTargetLocation);
+        pathFollow.TryPerform();
+    }
+
     if (pathFollow.FoundTarget && animName == "run")
     {
         desiredDirection = normalize(MathHelper::XZ(pathFollow.CalculatedTargetLocation - Position));
     }
-
 
     speed += Time::DeltaTimeF * 6.5;
 
@@ -262,27 +257,19 @@ void NpcHumanGun::AsyncUpdate()
 
     movingDirection = MathHelper::FastNormalize(movingDirection);
 
-    // Get the current horizontal velocity (preserving the vertical component from physics)
     vec3 currentVelocity = FromPhysics(LeadBody->GetLinearVelocity());
     vec3 currentHorizontalVel(currentVelocity.x, 0.0f, currentVelocity.z);
 
-    // Determine the desired horizontal velocity (5.0f is the intended speed)
     vec3 desiredHorizontalVel = movingDirection * speed;
 
-    // Calculate the change in velocity you need to achieve over the current frame
-    // Using Time::DeltaTime (dt) to convert velocity difference to the required acceleration
     float dt = Time::DeltaTime;
     vec3 neededAcceleration = (desiredHorizontalVel - currentHorizontalVel) / dt;
 
-    // Retrieve the body mass to calculate the needed force (F = m * a)
     float mass = 40;
     vec3 forceToApply = neededAcceleration * mass;
 
-    // Only apply horizontal forces to avoid interfering with the vertical (gravity, jump, etc.)
     vec3 horizontalForce(forceToApply.x, 0.0f, forceToApply.z);
 
-
-    // Apply the calculated force to the body
     LeadBody->AddForce(ToPhysics(horizontalForce));
 
     Physics::Activate(LeadBody);
