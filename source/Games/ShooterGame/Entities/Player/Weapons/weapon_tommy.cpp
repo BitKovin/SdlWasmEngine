@@ -20,7 +20,6 @@ public:
         params.range = 80.0f;
         params.fireAnimation = "fire";
         params.fireAnimInterpInTime = 0.08f;
-        params.notifyNpcs = false;
         params.activateViolenceCrime = false;
         params.hasRecoilModelOffset = false;
         params.hasRandomRecoilStrength = true;

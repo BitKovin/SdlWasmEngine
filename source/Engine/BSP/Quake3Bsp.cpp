@@ -450,11 +450,11 @@ void CQuake3BSP::GenerateLightmap()
     // ── White lightmap (full-bright 2×2 RGBA) ────────────────────────────────
     {
         uint8_t pixels[16] = {
-            255,255,255,255,  255,255,255,255,
-            255,255,255,255,  255,255,255,255
+            0,0,0,0,  0,0,0,0,
+            0,0,0,0,  0,0,0,0
         };
         m_whiteLightmap = std::make_shared<Texture>(pixels, 2, 2, bgfx::TextureFormat::RGBA8, false);
-		m_whiteLightmap->setName("White Lightmap");
+		m_whiteLightmap->setName("Black Lightmap");
     }
 
     // ── Per-BSP-lightmap textures (128×128 RGB) ───────────────────────────────
@@ -980,7 +980,7 @@ void CQuake3BSP::RenderBSP(const glm::vec3& cameraPos, tBSPModel& model,
     int cameraCluster = FindClusterAtPosition(cameraPos);
     int drawnFaces = 0;
 
-    LightVolPointData lightData = { vec3(0), vec3(1), vec3(0) };
+    LightVolPointData lightData = { vec3(0), vec3(0), vec3(0) };
 
     // bgfx: depth writes are controlled per-draw via BGFX_STATE_WRITE_Z in the shader submit call.
     // Opaque pass uses depth write (set in RenderMergedFace / RenderSingleFace state flags).
@@ -990,6 +990,7 @@ void CQuake3BSP::RenderBSP(const glm::vec3& cameraPos, tBSPModel& model,
         vec3 min = vec3(model.mins[0], model.mins[1], model.mins[2]);
         vec3 max = vec3(model.maxs[0], model.maxs[1], model.maxs[2]);
         lightData = GetLightvolColorPoint((min + max) / 2.0f);
+        lightData *= 2.5;// 2.5f;
     }
 
     std::vector<bool> renderedFaces(m_numOfFaces);

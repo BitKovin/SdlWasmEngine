@@ -153,7 +153,7 @@ private:
 	vec3 weaponRunRotation = vec3(-8.9f, 30.0f, -9.21f);
 	vec3 runRotatePoint = vec3(-0.1f,-0.290f,0.45f);
 
-	float WalkSpeed = 6.0f;
+	float WalkSpeed = 6.5f;
 	float CrouchSpeed = 2.5f;
 	float RunSpeed = 7.5f;
 

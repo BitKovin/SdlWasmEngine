@@ -296,7 +296,11 @@ void WeaponFirearm::FireSingleBullet(const vec3& startLoc, const vec4& gridOffse
 	bullet->Damage = params.bulletDamage;
 }
 
-void WeaponFirearm::NotifyNpcs() {
+void WeaponFirearm::NotifyNpcs() 
+{
+
+	AiPerceptionSystem::EmitSoundAt(Position, params.npcNotifyRadius, (int)InvestigationReason::WeaponFire, Player::Instance->Id);
+
 	auto observers = AiPerceptionSystem::GetObserversInRadius(Position, params.npcNotifyRadius);
 	for (auto observer : observers) {
 		auto ownerNpc = dynamic_cast<NpcBase*>(Level::Current->FindEntityWithId(observer->owner));

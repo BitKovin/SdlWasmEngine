@@ -9,7 +9,7 @@ REGISTER_ENTITY(NpcHumanGun, "npc_human_gun")
 NpcHumanGun::NpcHumanGun()
 {
     ClassName = "npc_human_gun";
-    maxSpeed = 3.5f;
+    maxSpeed = 4.2f;
     mesh->Scale = vec3(1.15f);
 }
 
@@ -191,6 +191,11 @@ void NpcHumanGun::AsyncUpdate()
     if (distance2(target->Position, Position) > attackDistance * attackDistance)
     {
         hasLineOfSight = false;
+    }
+
+    if (hasLineOfSight)
+    {
+        afterAttackDelay.AddDelay(3);
     }
 
     if (hasLineOfSight || afterAttackDelay.Wait())

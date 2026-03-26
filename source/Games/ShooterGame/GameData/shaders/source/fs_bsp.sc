@@ -81,13 +81,13 @@ void main()
     vertexLightFactor *= 1.5;
 
     vec3 o_lightmap = texture2D(s_bspLightmap, v_texcoord1).rgb
-                      * light_color.rgb
                       * vertexLightFactor;
 
     vec3  normal  = normalize(v_normal);
-    float dirDot  = clamp(dot(normal, normalize(direct_light_dir.xyz)) * 0.7 + 0.3, 0.0, 1.0);
+    float dirDot  = clamp(dot(normal, normalize(direct_light_dir.xyz)) * 1.0 + 0.0, 0.0, 1.0);
     float vlScale = (useVertexLight.x > 0.0) ? vertexLightComp : 1.0;
-    o_lightmap   += dirDot * direct_light_color.rgb * 2.0 * vlScale;
+
+    o_lightmap += mix(light_color.rgb, direct_light_color.rgb, dirDot);
 
     int numLights = min(MAX_POINT_LIGHTS, int(PointLightsNumber.x));
     for (int i = 0; i < numLights; i++)

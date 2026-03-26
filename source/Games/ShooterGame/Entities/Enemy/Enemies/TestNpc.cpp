@@ -101,7 +101,7 @@ void TestNpc::Attack()
 
 	PlaySoundEffect("event:/NPC/Dog/DogAttackStart");
 
-	inAttackDelay.AddDelay(2.5f);
+	inAttackDelay.AddDelay(4.5f);
 	mesh->PlayAnimation("attack");
 	mesh->PullRootMotion();
 	attacking = true;
@@ -296,7 +296,7 @@ void TestNpc::AsyncUpdate()
 	vec3 lookAtDir = MathHelper::FastNormalize(target->Position - Position);
 
 	if (distance(target->Position, Position) < 5 
-		&& dot(MathHelper::GetForwardVector(mesh->Rotation), lookAtDir) > 0.9)
+		&& dot(MathHelper::GetForwardVector(mesh->Rotation), lookAtDir) > 0.975)
 	{
 		
 		Attack();

@@ -87,6 +87,19 @@ void NpcHumanBase::UpdatePerception()
         }
     }
 
+    for (auto& s : observer->heardSounds)
+    {
+        auto causer = Level::Current->FindEntityWithId(s.causerId);
+
+        if (causer == nullptr) continue;
+
+        if (causer->HasTag("player"))
+        {
+            SetTarget(causer);
+        }
+
+    }
+
 }
 
 void NpcHumanBase::SetupSoundPlayer(SoundPlayer* soundPlayer)
@@ -122,8 +135,6 @@ void NpcHumanBase::Start()
     soundPlayer = SoundPlayer::Create();
 
     SetupSoundPlayer(soundPlayer);
-
-    DebugDraw::Line(Position, Position + MathHelper::GetForwardVector(mesh->Rotation), 10, 0.1f);
 
     observer = AiPerceptionSystem::CreateObserver(Position, MathHelper::GetForwardVector(mesh->Rotation), 150);
 

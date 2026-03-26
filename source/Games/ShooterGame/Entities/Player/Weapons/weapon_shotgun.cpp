@@ -7,7 +7,7 @@ public:
         params.texturesLocation = "GameData/models/player/weapons/shotgun/shotgun.glb/";
         params.fireSoundEvent = "GameData/sounds/weapons/shotgun/shotgun_fire2.wav";
         params.useOneshotSound = false;
-        params.baseSpread = 2.2f;
+        params.baseSpread = 2.2f * 0.7f;
         params.hasActiveSpread = false;
         params.attackDelayTime = 1.0f; // Note: Added in PerformAttack, but set here
         params.switchDelayTime = 0.35f;
@@ -18,7 +18,7 @@ public:
         params.range = 70.0f;
         params.fireAnimation = "attack";
         params.fireAnimInterpInTime = 0.15f; // No speed specified, assume default
-        params.notifyNpcs = false;
+        params.notifyNpcs = true;
         params.activateViolenceCrime = false;
         params.hasRecoilModelOffset = false;
         params.hasRandomRecoilStrength = false;
@@ -33,9 +33,9 @@ public:
             CameraShake::ShakeType::SingleWave// shakeType
         );
         params.spreadType = "grid";
-        params.gridSpreadSize = 4.0f;
-        params.gridStep = 2.0f;
-        params.gridMaxLength = 4.7f;
+        params.gridSpreadSize = 4.0f * 0.7f;
+        params.gridStep = 2.0f * 0.7f;
+        params.gridMaxLength = 4.7f * 0.7f;
 
         params.debuffOnHit = "PoiseBreakDebuff";
 		params.debuffStacksOnHit = 100 / 21.0f;

@@ -6,7 +6,7 @@ REGISTER_ENTITY(NpcHumanAxe, "npc_human_axe")
 NpcHumanAxe::NpcHumanAxe()
 {
     ClassName = "npc_human_axe";
-    maxSpeed = 4.5f;
+    maxSpeed = 6.0f;
 
     Health = 110;
     MaxHealth = 110;

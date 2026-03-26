@@ -166,10 +166,10 @@ bool EntityData::GetPropertyBool(const std::string& propName, bool defaultValue)
     std::replace(boolStr.begin(), boolStr.end(), '1', 't');
     std::transform(boolStr.begin(), boolStr.end(), boolStr.begin(), ::tolower);
 
-    if (boolStr == "true") {
+    if (boolStr == "true" || (boolStr == "1")) {
         return true;
     }
-    else if (boolStr == "false") {
+    else if (boolStr == "false" || (boolStr == "0")) {
         return false;
     }
     else {

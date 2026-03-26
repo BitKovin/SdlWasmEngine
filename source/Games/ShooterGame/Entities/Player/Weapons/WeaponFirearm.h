@@ -38,7 +38,7 @@ struct FirearmParams {
 	float muzzleForwardOffset = 0.1f;
 	float fireAnimInterpInTime = 0.08f;
 	bool hasActiveSpread = true;
-	bool notifyNpcs = false;
+	bool notifyNpcs = true;
 	float npcNotifyRadius = 20.0f;
 	bool activateViolenceCrime = false;
 	float violenceCrimeDelay = 0.3f;

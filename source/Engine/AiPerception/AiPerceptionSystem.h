@@ -20,6 +20,8 @@ public:
 
     static void Update(); // Main update loop — updates visibility for all observers
 
+    static void EmitSoundAt(const glm::vec3& position, float radius, int severity, std::string causerId);
+
     static const std::vector<std::shared_ptr<Observer>>& GetObservers() { return observers; }
     static const std::vector<std::shared_ptr<ObservationTarget>>& GetTargets() { return targets; }
 

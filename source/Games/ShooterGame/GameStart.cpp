@@ -49,7 +49,7 @@ public:
         }
         else
         {
-            Level::LoadLevelFromFile("GameData/maps/test.bsp");
+            Level::LoadLevelFromFile("GameData/maps/lvl1_proto.bsp");
         }
 		
         AssetRegistry::GetSkinnedModelFromFile("GameData/models/arms.glb");

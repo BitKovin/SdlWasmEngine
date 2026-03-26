@@ -225,7 +225,7 @@ struct LightVolPointData {
         return {
             v.directColor * s,
             v.ambientColor * s,
-            v.direction * s
+            v.direction
         };
     }
     friend LightVolPointData operator*(float s, const LightVolPointData& v) {
@@ -237,7 +237,7 @@ struct LightVolPointData {
         return {
             v.directColor / s,
             v.ambientColor / s,
-            v.direction / s
+            v.direction
         };
     }
 

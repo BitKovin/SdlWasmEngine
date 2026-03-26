@@ -47,19 +47,39 @@ void AiPerceptionSystem::RemoveAll()
 
 void AiPerceptionSystem::Update()
 {
-
     const int frameDistrib = 4;
 
     for (auto& observer : observers)
     {
+        // Promote sounds emitted last frame into heardSounds so AI can read them this frame,
+        // then clear the staging buffer ready for new EmitSoundAt() calls.
+        observer->heardSounds = std::move(observer->pendingSounds);
+        observer->pendingSounds.clear();
 
         if (observer->id % frameDistrib == EngineMain::MainInstance->frame % frameDistrib)
         {
             observer->UpdateVisibility(targets);
         }
-
     }
+}
 
+void AiPerceptionSystem::EmitSoundAt(const glm::vec3& position, float radius, int severity, std::string causerId)
+{
+    if (observers.empty() || radius <= 0.0f)
+        return;
+
+    const float radiusSq = radius * radius;
+
+    for (auto& observer : observers)
+    {
+        const glm::vec3 delta = observer->position - position;
+        const float distSq = glm::dot(delta, delta);
+
+        if (distSq <= radiusSq)
+        {
+            observer->pendingSounds.push_back({ position, radius, severity, causerId });
+        }
+    }
 }
 
 std::vector<std::shared_ptr<Observer>> AiPerceptionSystem::GetObserversInRadius(const glm::vec3& position, float radius)
