@@ -91,6 +91,8 @@ void CharacterController::Update(float deltaTime)
 	vec3 notWalkableNormal = vec3();
 	UpdateGroundCheck(standsOnGround, verticalPosition, onGround, notWalkableNormal);
 
+	currentGroundNormal = notWalkableNormal;
+
 	if (onGround == false)
 	{
 		standingOnBody = nullptr;

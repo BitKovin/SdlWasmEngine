@@ -154,7 +154,7 @@ private:
 	vec3 runRotatePoint = vec3(-0.1f,-0.290f,0.45f);
 
 	float WalkSpeed = 6.5f;
-	float CrouchSpeed = 2.5f;
+	float CrouchSpeed = 4.0f;
 	float RunSpeed = 7.5f;
 
 	glm::vec3 Friction(glm::vec3 vel, float factor = 60.0f) {
@@ -212,6 +212,9 @@ private:
 
 	void Jump()
 	{
+
+		controller.UnCrouch();
+
 		vec3 velocity = controller.GetVelocity();
 		velocity.y = 8.0;
 		controller.SetVelocity(velocity);
@@ -251,6 +254,51 @@ private:
 	float interactionProgress = 0;
 
 	friend class UseIndicator;
+
+	// State
+	bool  isSliding = false;
+	vec3  slideDir = vec3(0);       // normalized horizontal slide direction
+	Delay slideBoostCooldown;          // 2-second cooldown between slide boosts
+
+	bool  wasOnGround = false;
+	float airVerticalVelocity = 0.0f;   // vy captured while airborne, consumed on landing
+
+	// Tuning constants
+	static constexpr float SlideInitialBoost = 1.5f;  // speed impulse added when slide starts (m/s)
+	static constexpr float SlideFriction = 12.0f;  // flat-ground deceleration (m/s²)
+	static constexpr float SlopeGravityScale = 1.5f;  // multiplier on slope-projected gravity
+	static constexpr float SlideSteerStrength = 0.4f;  // how quickly WASD can redirect the slide
+	static constexpr float SlideBoostCooldownTime = 2.0f;  // seconds between boosts
+
+	// Input dot-product threshold for auto-slide: player must be steering
+	// within ~45° of downhill (dot > 0.7).
+	static constexpr float SlideInputAlignment = 0.7f;
+
+	// If player presses this hard against slide direction, slide is cancelled.
+	static constexpr float SlideCancelAlignment = -0.6f;
+
+	// Min net slope accel (m/s²) before auto-slide triggers while crouched + holding downhill.
+	// Prevents triggering on barely perceptible slopes.
+	static constexpr float SlopeTriggerThreshold = 1.5f;
+
+	// Fraction of vertical fall speed redirected to horizontal on slope landing.
+	static constexpr float LandingTransferScale = 0.5f;
+
+	// ── Methods ───────────────────────────────────────────────────────────────
+	// Computes slope downhill direction (XZ) and net acceleration (slope force - friction).
+	// Positive netAccel means the slope beats friction and will accelerate a slide.
+	void GetSlopeInfo(const vec3& groundNormal,
+		vec3& outDownhillDir,
+		float& outNetAccel) const;
+
+	void StartSlide(const vec3& currentVelocity);
+	void StopSlide();
+
+	bool ShouldAutoSlide(const vec3& downhillDir, float netSlopeAccel, const vec3& wishDir) const;
+
+	// Per-frame slide physics.  downhillDir / netSlopeAccel come from GetSlopeInfo
+	// so we don't recompute the same thing twice per frame.
+	void UpdateSlide(vec2 input, const vec3& downhillDir, float netSlopeAccel);
 
 public:
 

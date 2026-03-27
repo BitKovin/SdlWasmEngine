@@ -164,48 +164,129 @@ void Player::Start()
 
 void Player::UpdateWalkMovement(vec2 input)
 {
-
+	// ── Direction vectors ─────────────────────────────────────────────────
 	vec3 right = MathHelper::GetRightVector(Camera::rotation);
-
 	vec3 forward = MathHelper::GetForwardVector(vec3(0, Camera::rotation.y, 0));
+	if (freeFly) forward = Camera::Forward();
 
-	if (freeFly)
-		forward = Camera::Forward();
-
-	vec3 movement = input.x * right + input.y * forward;
-
-	//if (stepDelay.Wait())
-		//movement = stepForceWalkDirection;
-
-
-
+	// wishDir: where the player *wants* to go (XZ, not normalized if no input)
+	vec3 wishDir3 = MathHelper::XZ(input.x * right + input.y * forward);
+	vec3 movement = input.x * right + input.y * forward; // full vec for legacy funcs
 
 	velocity = controller.GetVelocity();
+	bool onGround = OnGround();
 
+	if (onGround)
+		bobProgress += glm::length(MathHelper::XZ(velocity)) * Time::DeltaTime;
 
-	if (OnGround())
+	// ── Slope info ────────────────────────────────────────────────────────
+	// Computed once per frame and shared by all checks below.
+	const vec3& groundNormal = controller.currentGroundNormal;
+	vec3  downhillDir;
+	float netSlopeAccel;
+	GetSlopeInfo(groundNormal, downhillDir, netSlopeAccel);
+
+	// ── Track vertical velocity while airborne ────────────────────────────
+	if (!onGround)
+		airVerticalVelocity = velocity.y;
+
+	// ─────────────────────────────────────────────────────────────────────
+	// LANDING EVENT  (fires once on the frame ground contact begins)
+	// ─────────────────────────────────────────────────────────────────────
+	bool justLanded = onGround && !wasOnGround;
+	if (justLanded)
 	{
+		float fallSpeed = -airVerticalVelocity; // positive = was falling
+		float slopeSlant = glm::length(vec2(groundNormal.x, groundNormal.z));
 
-		bobProgress += length(MathHelper::XZ(velocity)) * Time::DeltaTime;
+		// Redirect part of the fall speed into horizontal momentum along the
+		// downhill direction.  On flat ground slopeSlant ≈ 0 → no transfer.
+		// Only fires when actually falling (not from a tiny hop).
+		if (fallSpeed > 1.0f && slopeSlant > 0.01f)
+		{
+			float transferred = fallSpeed * slopeSlant * LandingTransferScale;
+			vec3  horVel = MathHelper::XZ(velocity) + downhillDir * transferred;
+			velocity.x = horVel.x;
+			velocity.z = horVel.z;
+			controller.SetVelocity(vec3(horVel.x, controller.GetVelocity().y, horVel.z));
+			velocity = controller.GetVelocity(); // re-sync for checks below
+		}
 
-		/*
-		TryStep(movement * 0.8f);
-
-		TryStep(MathHelper::RotateVector(movement * 0.8f, vec3(0, 1, 0), 5));
-		TryStep(MathHelper::RotateVector(movement * 0.8f, vec3(0, 1, 0), -5));
-
-		TryStep(MathHelper::RotateVector(movement * 0.8f, vec3(0, 1, 0), 10));
-		TryStep(MathHelper::RotateVector(movement * 0.8f, vec3(0, 1, 0), -10));
-
-		TryStep(MathHelper::RotateVector(movement * 0.8f, vec3(0, 1, 0), 20));
-		TryStep(MathHelper::RotateVector(movement * 0.8f, vec3(0, 1, 0), -20));
-
-		TryStep(MathHelper::RotateVector(movement * 0.8f, vec3(0, 1, 0), 35));
-		TryStep(MathHelper::RotateVector(movement * 0.8f, vec3(0, 1, 0), -35));
-		*/
+		// Auto-start slide if crouched and fast enough.
+		// Covers: crouched in air → flat landing, and slope landing boost.
+		// ShouldAutoSlide is not called here — on landing we always slide if
+		// crouched and speed is sufficient regardless of slope angle.
+		if (controller.isCrouched && !isSliding)
+		{
+			float horSpeed = glm::length(MathHelper::XZ(velocity));
+			if (horSpeed > CrouchSpeed)
+				StartSlide(velocity);
+		}
 	}
 
-	if (OnGround())
+	// ─────────────────────────────────────────────────────────────────────
+	// CANCEL SLIDE IF AIRBORNE
+	// ─────────────────────────────────────────────────────────────────────
+	if (isSliding && !onGround)
+		StopSlide();
+
+	// ─────────────────────────────────────────────────────────────────────
+	// CROUCH TOGGLE  (explicit player input)
+	// ─────────────────────────────────────────────────────────────────────
+	if (Input::GetAction("crouch")->Pressed())
+	{
+		if (controller.isCrouched)
+		{
+			StopSlide();
+			controller.UnCrouch();
+		}
+		else
+		{
+			float horSpeed = glm::length(MathHelper::XZ(velocity));
+			if (onGround && horSpeed > CrouchSpeed)
+				StartSlide(velocity);
+			else
+				controller.Crouch();
+			// If pressed in air: capsule shrinks now, StartSlide fires on landing.
+		}
+	}
+
+	// ─────────────────────────────────────────────────────────────────────
+	// AUTO-SLIDE FROM SLOPE  (crouched, not yet sliding)
+	// ─────────────────────────────────────────────────────────────────────
+	// ShouldAutoSlide checks:
+	//   • netSlopeAccel > SlopeTriggerThreshold
+	//   • current velocity is not going uphill
+	//   • input is within 45° of downhill (or no input → slope pulls freely)
+	if (!isSliding && onGround && controller.isCrouched)
+	{
+		if (ShouldAutoSlide(downhillDir, netSlopeAccel, wishDir3))
+			StartSlide(velocity);
+	}
+
+	// ─────────────────────────────────────────────────────────────────────
+	// MOVEMENT
+	// ─────────────────────────────────────────────────────────────────────
+	if (isSliding && onGround)
+	{
+		UpdateSlide(input, downhillDir, netSlopeAccel);
+
+		// Slide ran out of speed (StopSlide called inside UpdateSlide).
+		// Restart only if the slope is still winning AND we are actually
+		// moving in the downhill direction — prevents re-triggering when
+		// the player just slowed to a halt while pushing uphill.
+		if (!isSliding && controller.isCrouched)
+		{
+			vec3  horVel = MathHelper::XZ(velocity);
+			float movingDown = (glm::length(horVel) > 0.1f)
+				? glm::dot(glm::normalize(horVel), downhillDir)
+				: 0.0f;
+
+			if (netSlopeAccel > 0.0f && movingDown > 0.3f)
+				StartSlide(velocity);
+		}
+	}
+	else if (onGround)
 	{
 		velocity = UpdateGroundVelocity(movement, velocity);
 	}
@@ -214,7 +295,6 @@ void Player::UpdateWalkMovement(vec2 input)
 		velocity = UpdateAirVelocity(movement, velocity);
 	}
 
-
 	velocity.y = controller.GetVelocity().y;
 
 	if (freeFly)
@@ -222,52 +302,180 @@ void Player::UpdateWalkMovement(vec2 input)
 
 	controller.SetVelocity(velocity);
 
-	if (Input::GetAction("crouch")->Pressed())
-	{
-		if (controller.isCrouched)
-		{
-			controller.UnCrouch();
-		}
-		else
-		{
-			controller.Crouch();
-		}
-
-	}
-
-
-
+	// ─────────────────────────────────────────────────────────────────────
+	// JUMP
+	// ─────────────────────────────────────────────────────────────────────
 	if (Input::GetAction("jump")->PressedBuffered())
 	{
-
-		if (dashProgress.Wait() && HasStamina() && OnGround()) // dash jump
+		if (dashProgress.Wait() && HasStamina() && onGround)
 		{
 			wasDashing = false;
 			dashProgress.AddDelay(-1);
 			ConsumeStamina();
+			StopSlide();
 			controller.SetVelocity(dashVector);
+			Jump();
+		}
+		else if (onGround)
+		{
+			StopSlide(); // preserve xz momentum, only y changes
 			Jump();
 		}
 		else
 		{
-			if (OnGround())
-			{
-				Jump();
-			}
-			else
-			{
-				TryWallJump();
-
-				velocity = controller.GetVelocity();
-
-				dashVector = normalize(dashVector) * 20.0f;
-
-				controller.SetVelocity(velocity);
-
-			}
+			TryWallJump();
+			velocity = controller.GetVelocity();
+			dashVector = glm::normalize(dashVector) * 20.0f;
+			controller.SetVelocity(velocity);
 		}
-
 	}
+
+	// ─────────────────────────────────────────────────────────────────────
+	wasOnGround = onGround;
+}
+
+void Player::GetSlopeInfo(const vec3& groundNormal,
+	vec3& outDownhillDir,
+	float& outNetAccel) const
+{
+	vec3  g = vec3(0.0f, -controller.gravity, 0.0f);
+	vec3  slopeForce = g - glm::dot(g, groundNormal) * groundNormal;
+	vec3  slopeXZ = MathHelper::XZ(slopeForce);
+	float slopeAccel = glm::length(slopeXZ) * SlopeGravityScale;
+
+	outDownhillDir = slopeAccel > 0.01f ? glm::normalize(slopeXZ) : vec3(0.0f);
+	outNetAccel = slopeAccel - SlideFriction;
+}
+
+// Called once when the player initiates a slide.
+// Applies the initial speed boost and starts the crouch.
+void Player::StartSlide(const vec3& currentVelocity)
+{
+	isSliding = true;
+
+	vec3  horVel = MathHelper::XZ(currentVelocity);
+	float speed = glm::length(horVel);
+
+	slideDir = (speed > 0.1f)
+		? glm::normalize(horVel)
+		: glm::normalize(MathHelper::XZ(MathHelper::GetForwardVector(vec3(0, cameraRotation.y, 0))));
+
+	if (!slideBoostCooldown.Wait())
+	{
+		vec3 boostedVel = slideDir * (speed + SlideInitialBoost);
+		boostedVel.y = currentVelocity.y;
+		controller.SetVelocity(boostedVel);
+		slideBoostCooldown.AddDelay(SlideBoostCooldownTime);
+	}
+
+	controller.Crouch();
+}
+
+// Called when the slide should end for any reason.
+// Does NOT modify velocity — momentum carries over naturally.
+void Player::StopSlide()
+{
+	isSliding = false;
+}
+
+bool Player::ShouldAutoSlide(const vec3& downhillDir, float netSlopeAccel,
+	const vec3& wishDir) const
+{
+	if (netSlopeAccel < SlopeTriggerThreshold) return false;
+	if (glm::length(downhillDir) < 0.01f)     return false;
+
+	// Check 2: current velocity must not be going significantly uphill.
+	vec3  horVel = MathHelper::XZ(velocity);
+	float velLen = glm::length(horVel);
+	if (velLen > 0.2f)
+	{
+		float velDownhill = glm::dot(glm::normalize(horVel), downhillDir);
+		if (velDownhill < -0.3f)  // moving more than ~17° into the uphill side
+			return false;
+	}
+
+	// Check 3: input alignment.  Skip if no input (let slope pull freely).
+	float wishLen = glm::length(wishDir);
+	if (wishLen > 0.1f)
+	{
+		float inputDownhill = glm::dot(glm::normalize(wishDir), downhillDir);
+		if (inputDownhill < SlideInputAlignment)  // tighter than 45° cone
+			return false;
+	}
+
+	return true;
+}
+
+// Stages:
+//   1. Apply slope-projected gravity (acceleration on downhill, drag on uphill).
+//   2. Apply friction (higher multiplier when going uphill).
+//   3. Gently steer velocity toward WASD input without adding speed.
+//   4. End slide when speed drops below CrouchSpeed.
+// ---------------------------------------------------------------------------
+void Player::UpdateSlide(vec2 input, const vec3& downhillDir, float netSlopeAccel)
+{
+	vec3  horVel = MathHelper::XZ(velocity);
+	float speed = glm::length(horVel);
+
+	if (speed > 0.1f)
+		slideDir = glm::normalize(horVel);
+
+	vec3 right = MathHelper::GetRightVector(Camera::rotation);
+	vec3 fwd = MathHelper::GetForwardVector(vec3(0, cameraRotation.y, 0));
+	vec3 wishXZ = MathHelper::XZ(input.x * right + input.y * fwd);
+
+	if (dot(wishXZ, normalize(downhillDir)) > -0.0 || length(input) < 0.5)
+	{
+		// ── 1. Slope gravity ──────────────────────────────────────────────────
+		float rawSlopeAccel = netSlopeAccel + SlideFriction;
+		if (glm::length(downhillDir) > 0.01f)
+			horVel += downhillDir * (rawSlopeAccel * SlopeGravityScale * Time::DeltaTimeF);
+	}
+
+	// ── 2. Friction ───────────────────────────────────────────────────────
+	// Heading uphill → more friction so the player actually slows down.
+	float frictionMul = 1.0f;
+	if (glm::length(downhillDir) > 0.01f && speed > 0.01f)
+	{
+		float uphillDot = glm::dot(slideDir, -downhillDir); // +1 = pure uphill
+		frictionMul += glm::max(0.0f, uphillDot) * 2.0f;
+	}
+
+	float newSpeed = glm::max(0.0f, glm::length(horVel) - SlideFriction * frictionMul * Time::DeltaTimeF);
+	horVel = (glm::length(horVel) > 0.01f) ? glm::normalize(horVel) * newSpeed : vec3(0.0f);
+
+	// ── 3. Steering ───────────────────────────────────────────────────────
+	if (newSpeed > 0.1f)
+	{
+
+		if (glm::length(wishXZ) > 0.01f)
+		{
+			vec3 wishDir = glm::normalize(wishXZ);
+
+			// ── 4. Cancel if player pushes significantly against the slide ──
+			// "Significantly" means the input opposes the current slide dir
+			// strongly enough — the player wants to stop sliding and walk.
+			if (glm::dot(wishDir, slideDir) < SlideCancelAlignment)
+			{
+				StopSlide();
+				velocity.x = horVel.x;
+				velocity.z = horVel.z;
+				return;
+			}
+
+			vec3 steered = glm::normalize(
+				glm::mix(glm::normalize(horVel), wishDir, SlideSteerStrength * Time::DeltaTimeF)
+			);
+			horVel = steered * newSpeed;
+		}
+	}
+
+	velocity.x = horVel.x;
+	velocity.z = horVel.z;
+
+	// ── 5. End by speed ───────────────────────────────────────────────────
+	if (newSpeed < CrouchSpeed)
+		StopSlide();
 }
 
 void Player::UpdateBikeMovement(vec2 input)

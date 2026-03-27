@@ -43,6 +43,8 @@ public:
 	float height = 1.8;
 	float radius = 0.4;
 
+	vec3 currentGroundNormal = vec3(0.0f,1.0f,0.0f);
+
 	float groundMaxAngle = 40;
 
 	float stepSmoothingSpeed = 15.0f;
