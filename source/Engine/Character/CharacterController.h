@@ -38,7 +38,7 @@ public:
 
 	float gravity = 25;
 
-	float stepHeight = 0.35;
+	float stepHeight = 0.4;
 
 	float height = 1.8;
 	float radius = 0.4;

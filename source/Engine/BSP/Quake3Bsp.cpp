@@ -1682,6 +1682,8 @@ void BSPModelRef::DrawDepth(mat4x4 view, mat4x4 projection)
 	if (vbo.IndexCount == 0)
         return;
 
+    if (Transparent) return;
+
     if (!bgfx::isValid(vbo.vbo) || !bgfx::isValid(vbo.ibo)) return;
 
     Shader* shader = ShaderManager::GetShaderProgram("vs_bsp", "fs_empty");
