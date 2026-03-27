@@ -143,11 +143,11 @@ Level* Level::OpenLevel(string filePath)
 		LoadingScreenSystem::Update(0.1f);
 
 		Current->BspData.BuildVBO();
-
 		Current->BspData.GenerateTexture();
-
 		Current->BspData.GenerateLightmap();
 
+		std::string portalFile = FileSystemEngine::ReadFile(StringHelper::Replace(filePath, ".bsp", ".prt"));
+		if(portalFile.empty() == false) Current->BspData.LoadPortalsFromPRT(portalFile);
 
 		LoadingScreenSystem::Update(0.15f);
 

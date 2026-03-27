@@ -1898,13 +1898,13 @@ default
 303 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_props/crate-door-brn
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 304 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_props/crate-door-brn
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
 305 // ESurfaceType::Meta V: 4 I: 6 planar
@@ -2006,19 +2006,19 @@ default
 321 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_props/crate-side-brn
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
 
 322 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_props/crate-side-brn
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 323 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_props/crate-side-brn
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 324 // ESurfaceType::Meta V: 4 I: 6 planar
@@ -2048,19 +2048,19 @@ default
 328 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_props/crate-side-brn
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 329 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_props/crate-side-brn
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 330 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_props/crate-side-brn
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
 
 331 // ESurfaceType::Meta V: 4 I: 6 planar

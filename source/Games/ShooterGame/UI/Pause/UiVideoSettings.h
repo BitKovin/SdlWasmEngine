@@ -59,10 +59,10 @@ public:
 
 		int windowOption = 0;
 		Uint32 flags = SDL_GetWindowFlags(EngineMain::MainInstance->Window);
-		if (flags & SDL_WINDOW_FULLSCREEN_DESKTOP)
-			windowOption = 2;
+		if ((flags & SDL_WINDOW_FULLSCREEN_DESKTOP) == SDL_WINDOW_FULLSCREEN_DESKTOP)
+			windowOption = 2; // borderless — requires ALL its bits to match
 		else if (flags & SDL_WINDOW_FULLSCREEN)
-			windowOption = 1;
+			windowOption = 1; // true exclusive fullscreen
 
 		windowMode->SetSelectedIndex(windowOption);
 		windowMode->size = vec2(400, 70);

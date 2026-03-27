@@ -3412,7 +3412,7 @@
 "targetname" "b1_of1_book_hid"
 "rotationPointName" "b1_o1_sd_1_tp"
 "time" "4"
-"useLightmap" "true"
+"useLightmap" "false"
 // brush 0
 {
 ( -1166 -5320 176 ) ( -1390 -5320 16 ) ( -1390 -5320 176 ) FPSTextures/Wall_23 46 12.6699981689 -0 1 1.2000000477 0 0 0

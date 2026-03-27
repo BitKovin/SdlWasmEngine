@@ -10,7 +10,7 @@
 <command>[q3map2] -meta -noob &quot;[MapFile]&quot;</command>
 </build>
 <build name="Single: vis">
-<command>[q3map2] -vis -saveprt &quot;[MapFile]&quot;</command>
+<command>[q3map2] -vis -saveprt -saveprt &quot;[MapFile]&quot;</command>
 </build>
 <build name="Single: light">
 <command>[q3map2] -light -fast &quot;[MapFile]&quot;</command>
@@ -18,26 +18,26 @@
 <separator/>
 <build name="[test] quick and very crude">
 <command>[q3map2] -meta -samplesize 64 &quot;[MapFile]&quot;</command>
-<command>[q3map2] -vis -fast -saveprt &quot;[MapFile]&quot;</command>
+<command>[q3map2] -vis -saveprt -fast -saveprt &quot;[MapFile]&quot;</command>
 <command>[q3map2] -light -fast -nogrid &quot;[MapFile]&quot;</command>
 <command>[bspzip] &quot;[BspFile]&quot;</command>
 </build>
 <build name="[test] quick and very crude +noOb">
 <command>[q3map2] -meta -noob -samplesize 64 &quot;[MapFile]&quot;</command>
-<command>[q3map2] -vis -fast -saveprt &quot;[MapFile]&quot;</command>
+<command>[q3map2] -vis -saveprt -fast -saveprt &quot;[MapFile]&quot;</command>
 <command>[q3map2] -light -fast -nogrid &quot;[MapFile]&quot;</command>
 <command>[bspzip] &quot;[BspFile]&quot;</command>
 </build>
 <separator/>
 <build name="(Final)">
 <command>[q3map2] -meta &quot;[MapFile]&quot;</command>
-<command>[q3map2] -vis &quot;[MapFile]&quot;</command>
+<command>[q3map2] -vis -saveprt &quot;[MapFile]&quot;</command>
 <command>[q3map2] -light -fast  -patchshadows -samples 2 -filter -bounce 2 -shade -bouncegrid -gamma 2 -compensate 2 -threads 24 -dirty -lightmapsize 256 &quot;[MapFile]&quot;</command>
 <command>[bspzip] &quot;[BspFile]&quot;</command>
 </build>
 <build name="(Final) Best">
 <command>[q3map2] -meta &quot;[MapFile]&quot;</command>
-<command>[q3map2] -vis &quot;[MapFile]&quot;</command>
+<command>[q3map2] -vis -saveprt &quot;[MapFile]&quot;</command>
 <command>[q3map2] -light -patchshadows -samples 4 -super 2 -shade -samplesize 1 -bouncegrid -filter -filterwindow 2 -dirty -bounce 5 -gamma 2 -compensate 2 -threads 24 -lightmapsize 2048 &quot;[MapFile]&quot;</command>
 <command>[bspzip] &quot;[BspFile]&quot;</command>
 </build>
@@ -51,7 +51,7 @@
 <command>[q3map2] -convert -format obj -shadersasbitmap &quot;[BspFile]&quot;</command>
 </build>
 <separator/>
-<build name="make .pk3">
+<build name="make .zip">
 <command>[bspzip] &quot;[BspFile]&quot;</command>
 </build>
 <build name="make .aas">

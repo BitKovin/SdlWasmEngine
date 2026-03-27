@@ -335,6 +335,55 @@ struct MergedModelFacesData
 class BSPModelRef;
 
 // ─────────────────────────────────────────────────────────────────────────────
+// BSPPortal
+// A convex polygon reconstructed from a BSP splitting plane.
+// It records which BSP child (node or leaf) lies on each side so you can
+// traverse the connectivity graph without re-walking the tree.
+// ─────────────────────────────────────────────────────────────────────────────
+struct BSPPortal
+{
+    int                    planeIndex;
+    std::vector<glm::vec3> vertices;
+    int                    frontChild;   // raw BSP child encoding (keep for reference)
+    int                    backChild;
+    int                    frontLeafIndex = -1;  // ← resolved actual leaf
+    int                    backLeafIndex = -1;  // ← resolved actual leaf
+    glm::vec3              center;
+    BoundingBox            bounds;
+
+    // Updated accessors — now use resolved indices directly
+    bool IsLeafPortal()  const { return frontLeafIndex >= 0 && backLeafIndex >= 0; }
+    int  FrontLeaf()     const { return frontLeafIndex; }
+    int  BackLeaf()      const { return backLeafIndex; }
+    int  OtherLeaf(int knownLeaf) const
+    {
+        if (frontLeafIndex == knownLeaf) return backLeafIndex;
+        if (backLeafIndex == knownLeaf) return frontLeafIndex;
+        return -1;
+    }
+    int FrontCluster(const std::vector<tBSPLeaf>& leafs) const
+    {
+        return (frontLeafIndex >= 0 && frontLeafIndex < (int)leafs.size())
+            ? leafs[frontLeafIndex].cluster : -1;
+    }
+    int BackCluster(const std::vector<tBSPLeaf>& leafs) const
+    {
+        return (backLeafIndex >= 0 && backLeafIndex < (int)leafs.size())
+            ? leafs[backLeafIndex].cluster : -1;
+    }
+
+    float Area() const
+    {
+        if (vertices.size() < 3) return 0.f;
+        float area = 0.f;
+        const glm::vec3& o = vertices[0];
+        for (size_t i = 1; i + 1 < vertices.size(); ++i)
+            area += glm::length(glm::cross(vertices[i] - o, vertices[i + 1] - o));
+        return area * 0.5f;
+    }
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // CQuake3BSP
 // ─────────────────────────────────────────────────────────────────────────────
 class CQuake3BSP : public IDrawMesh
@@ -438,6 +487,11 @@ public:
     glm::vec3 originalMins;
     glm::vec3 originalMaxs;
 
+    std::vector<BSPPortal> portals;
+    int                                m_numClusters = 0;
+    std::vector<std::vector<int>>      m_clusterToPortals;   // cluster → list of portal indices
+    std::vector<std::vector<int>>      m_portalAdjacency;    // portal → list of directly reachable portals (same cluster)
+
     std::vector<VertexData>   GetFaceVertices(int faceId);
     std::vector<uint32_t>     GetFaceIndices(int faceId);
 
@@ -482,6 +536,16 @@ public:
 
     // Returns the native ID of the white (no-lightmap) fallback texture.
     int GetWhiteLightmapNativeId() const;
+
+    /// Parses a .prt file passed as a raw string and fills CQuake3BSP::portals.
+    ///
+    /// @param content  Full text content of the .prt file (any line ending).
+    void LoadPortalsFromPRT(const std::string& content);
+
+    void BuildClusterToPortalsMap();
+
+    std::vector<vec3> FindPath(vec3 start, vec3 target, int smoothSubdiv = 0, float smoothAlpha = 0.0f);
+
 };
 
 

@@ -1197,6 +1197,12 @@ void Player::UpdateDebugUI()
 
 	draw->AddText(NULL, 24.0f, ImVec2(10, 10), IM_COL32(255, 255, 255, 255), fps.c_str());
 
+	for (size_t i = 0; i < 10; i++)
+	{
+		Level::Current->BspData.FindPath(testStart, Position);
+	}
+
+
 	if (EngineMain::MainInstance->Paused == false) return;
 
 	ImGui::Begin("navigation");
@@ -1218,7 +1224,13 @@ void Player::UpdateDebugUI()
 	if (ImGui::Button("calculate path to player"))
 	{
 
+		auto path = Level::Current->BspData.FindPath(testStart, Position);
+
+		DebugDraw::Path(path, 10);
+
 	}
+
+
 
 	ImGui::End();
 
@@ -1808,6 +1820,13 @@ void Player::AsyncUpdate()
 	bodyAnimator.Update();
 
 	UpdateCurrentRestrictedArea();
+
+	auto& portals = Level::Current->BspData.portals;
+
+	for (auto& portal : portals)
+	{
+		//DebugDraw::Path(portal.vertices, 0.01f, 0.1f);
+	}
 
 }
 

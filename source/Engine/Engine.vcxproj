@@ -340,6 +340,7 @@
     <ClCompile Include="BehaviourTree\NodeFactory.cpp" />
     <ClCompile Include="BehaviourTree\TaskNodes.cpp" />
     <ClCompile Include="BehaviourTree\TreeNode.cpp" />
+    <ClCompile Include="BSP\Quake3BSP_Portals.cpp" />
     <ClCompile Include="Compression\zip\zip.cpp" />
     <ClCompile Include="Console\Console.cpp" />
     <ClCompile Include="Console\ConsoleDefaultCommands.cpp" />
