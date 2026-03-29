@@ -273,10 +273,12 @@ void RenderTexture::copyFrom(const RenderTexture* src) {
             "RenderTexture::copyFrom: source/destination dimension or format mismatch");
     }
 
-    if (bgfx::getCaps()->supported & BGFX_CAPS_TEXTURE_BLIT && false)
+    if (bgfx::getCaps()->supported & BGFX_CAPS_TEXTURE_BLIT && false) //causes problems on d3d
     {
         // Fast path — native blit (desktop GL / Vulkan / Metal / D3D).
         bgfx::ViewId blitView = ViewIdManager::GiveNextId();
+
+
         bgfx::blit(blitView,
             m_texture, 0, 0, 0, 0,
             src->m_texture, 0, 0, 0, 0,
