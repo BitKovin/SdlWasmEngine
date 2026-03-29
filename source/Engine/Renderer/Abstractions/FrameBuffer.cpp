@@ -5,6 +5,9 @@
 #include <stdexcept>
 #include <algorithm>
 
+#include <EngineMain.h>
+#include <BgfxStateManager.h>
+
 // -----------------------------------------------------------------------
 // Constructor / destructor
 // -----------------------------------------------------------------------
@@ -170,37 +173,49 @@ void Framebuffer::attachCubemapFace(RenderTexture* cubemap,
 // which is still the raw MSAA surface.  Blitting companion(1x)→target(1x)
 // is a same-sample copy and glCopyImageSubData accepts it.
 // -----------------------------------------------------------------------
-void Framebuffer::resolve(Framebuffer& target) {
+void Framebuffer::resolve(Framebuffer& target) 
+{
     for (size_t i = 0; i < m_colorAttachments.size(); ++i) {
         if (!m_colorAttachments[i]) continue;
 
-        RenderTexture* dst = target.colorAttachment(static_cast<uint32_t>(i));
+        if (bgfx::getCaps()->supported & BGFX_CAPS_TEXTURE_BLIT)
+        {
+            RenderTexture* dst = target.colorAttachment(static_cast<uint32_t>(i));
 
-        // Companion single-sample texture produced by bgfx's internal
-        // glBlitFramebuffer resolve — NOT the raw MSAA texture handle.
-        bgfx::TextureHandle resolvedSrc =
-            bgfx::getTexture(m_frameBuffer, static_cast<uint8_t>(i));
-        if (!bgfx::isValid(resolvedSrc))
-            continue;
+            // Companion single-sample texture produced by bgfx's internal
+            // glBlitFramebuffer resolve — NOT the raw MSAA texture handle.
+            bgfx::TextureHandle resolvedSrc =
+                bgfx::getTexture(m_frameBuffer, static_cast<uint8_t>(i));
+            if (!bgfx::isValid(resolvedSrc))
+                continue;
 
-        bgfx::ViewId blitView = ViewIdManager::GiveNextId();
-        bgfx::blit(blitView,
-            dst->textureHandle(), 0, 0, 0, 0,
-            resolvedSrc, 0, 0, 0, 0,
-            static_cast<uint16_t>(dst->width()),
-            static_cast<uint16_t>(dst->height()),
-            1);
+            bgfx::ViewId blitView = ViewIdManager::GiveNextId();
+            bgfx::blit(blitView,
+                dst->textureHandle(), 0, 0, 0, 0,
+                resolvedSrc, 0, 0, 0, 0,
+                static_cast<uint16_t>(dst->width()),
+                static_cast<uint16_t>(dst->height()),
+                1);
+        }
+        else //doesn't support msaa anyway
+        {
+            RenderTexture* dst = target.colorAttachment(static_cast<uint32_t>(i));
+
+            // Companion single-sample texture produced by bgfx's internal
+            // glBlitFramebuffer resolve — NOT the raw MSAA texture handle.
+            bgfx::TextureHandle resolvedSrc =
+                bgfx::getTexture(m_frameBuffer, static_cast<uint8_t>(i));
+            if (!bgfx::isValid(resolvedSrc))
+                continue;
+
+            dst->copyFrom(colorAttachment(i));
+        }
+
+
     }
 
-    // Depth is BGFX_TEXTURE_RT_WRITE_ONLY — no resolve path in bgfx.
-}
+    resolveDepthOnly(target);
 
-// -----------------------------------------------------------------------
-// resolveDepthOnly — no-op.
-// MSAA depth is BGFX_TEXTURE_RT_WRITE_ONLY; bgfx has no resolve path for it.
-// -----------------------------------------------------------------------
-void Framebuffer::resolveDepthOnly(Framebuffer& /*target*/) {
-    // Intentional no-op.
 }
 
 // -----------------------------------------------------------------------
@@ -231,6 +246,106 @@ void Framebuffer::bind(uint16_t x, uint16_t y,
         }
     }
     bgfx::setViewRect(m_viewId, x, y, rw, rh);
+}
+
+void Framebuffer::bindDepthOnly(uint16_t x, uint16_t y, uint16_t w, uint16_t h)
+{
+    if (!bgfx::isValid(m_frameBuffer))
+        return;
+
+    m_viewId = ViewIdManager::GiveNextId();
+    bgfx::setViewFrameBuffer(m_viewId, m_frameBuffer);
+
+    uint16_t rw = w, rh = h;
+    if (rw == 0 || rh == 0) {
+        if (m_depthAttachment) {
+            rw = static_cast<uint16_t>(m_depthAttachment->width());
+            rh = static_cast<uint16_t>(m_depthAttachment->height());
+        }
+    }
+    bgfx::setViewRect(m_viewId, x, y, rw, rh);
+    // No clear — we're writing depth data, not starting a new frame
+}
+
+void Framebuffer::resolveDepthOnly(Framebuffer& target)
+{
+
+    if (!m_depthAttachment) return;
+    RenderTexture* dst = target.depthAttachment();
+    if (!dst) return;
+
+    const bool isMsaa = m_depthAttachment->samples() > 1;
+
+    if (isMsaa)
+    {
+        if (bgfx::getCaps()->supported & BGFX_CAPS_TEXTURE_BLIT)
+        {
+            // GL/Vulkan — bgfx auto-resolves MSAA depth into a companion
+            // single-sample texture at pass-end (requires no WRITE_ONLY flag).
+            uint8_t depthSlot = static_cast<uint8_t>(m_colorAttachments.size());
+            bgfx::TextureHandle companion = bgfx::getTexture(m_frameBuffer, depthSlot);
+
+            if (bgfx::isValid(companion))
+            {
+                // GL/Vulkan: blit the resolved companion into the target.
+                bgfx::ViewId blitView = ViewIdManager::GiveNextId();
+                bgfx::blit(blitView,
+                    dst->textureHandle(), 0, 0, 0, 0,
+                    companion, 0, 0, 0, 0,
+                    static_cast<uint16_t>(dst->width()),
+                    static_cast<uint16_t>(dst->height()),
+                    1);
+                return;
+            }
+        }
+
+        // D3D11/D3D12 (or any backend where companion is unavailable):
+        // ResolveSubresource doesn't support depth formats, so resolve
+        // manually by sampling each MSAA sample and taking the minimum.
+        Renderer* r = EngineMain::MainInstance->MainRenderer;
+        target.bindDepthOnly();
+        r->depthMsaaResolveShader->UseProgram();
+        r->depthMsaaResolveShader->SetTexture("depthMsaa", m_depthAttachment->textureHandle());
+        r->depthMsaaResolveShader->SetUniform("uResolution",
+            vec2((float)m_depthAttachment->width(), (float)m_depthAttachment->height()));
+        r->depthMsaaResolveShader->SetUniform("uSampleCount",
+            (float)m_depthAttachment->samples());
+        BgfxStateManager::Reset();
+        BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Always);
+        BgfxStateManager::SetWriteDepth(true);
+        BgfxStateManager::SetWriteRGB(false);
+        BgfxStateManager::SetWriteAlpha(false);
+        BgfxStateManager::Apply();
+        r->RenderFullscreenQuad(r->depthMsaaResolveShader);
+    }
+    else
+    {
+        // Single-sample path — blit if available, shader copy otherwise (WebGL).
+        if (bgfx::getCaps()->supported & BGFX_CAPS_TEXTURE_BLIT)
+        {
+            bgfx::ViewId blitView = ViewIdManager::GiveNextId();
+            bgfx::blit(blitView,
+                dst->textureHandle(), 0, 0, 0, 0,
+                m_depthAttachment->textureHandle(), 0, 0, 0, 0,
+                static_cast<uint16_t>(dst->width()),
+                static_cast<uint16_t>(dst->height()),
+                1);
+        }
+        else
+        {
+            Renderer* r = EngineMain::MainInstance->MainRenderer;
+            target.bindDepthOnly();
+            r->depthCopyShader->UseProgram();
+            r->depthCopyShader->SetTexture("depthTexture", m_depthAttachment->textureHandle());
+            BgfxStateManager::Reset();
+            BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Always);
+            BgfxStateManager::SetWriteDepth(true);
+            BgfxStateManager::SetWriteRGB(false);
+            BgfxStateManager::SetWriteAlpha(false);
+            BgfxStateManager::Apply();
+            r->RenderFullscreenQuad(r->depthCopyShader);
+        }
+    }
 }
 
 // -----------------------------------------------------------------------

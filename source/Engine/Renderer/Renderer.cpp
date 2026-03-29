@@ -33,6 +33,10 @@ Renderer::Renderer()
     blurShader = ShaderManager::GetShaderProgram("vs_fullscreen", "fs_motionBlur");
     blurApplyShader = ShaderManager::GetShaderProgram("vs_fullscreen", "fs_motionBlur_apply");
 
+    copyShader = ShaderManager::GetShaderProgram("vs_fullscreen", "fs_copy");
+    depthCopyShader = ShaderManager::GetShaderProgram("vs_fullscreen", "fs_copy_depth");
+    depthMsaaResolveShader = ShaderManager::GetShaderProgram("vs_fullscreen", "fs_resolve_depth_msaa");
+
     BlurResultBuffer = new RenderTexture(screenResolution.x, screenResolution.y,
         TextureFormat::RGBA16F);
     BlurResultBuffer->SetName("BlurResultBuffer");
@@ -90,7 +94,15 @@ void Renderer::RenderLevel(Level* level)
     BlurAccumulatedBuffer->resize(screenResolution.x, screenResolution.y);
     BlurResultBuffer->resize(screenResolution.x, screenResolution.y);
 
-    const bool blurEnabled = false;
+    auto colorTex = colorResolveBuffer->textureHandle();
+
+#if __EMSCRIPTEN__
+    colorTex = colorBuffer->textureHandle();
+#endif // __EMSCRIPTEN__
+
+    //colorTex = customIdResolveBuffer->textureHandle();
+
+    const bool blurEnabled = true;
 
     if (blurEnabled)
     {
@@ -109,7 +121,7 @@ void Renderer::RenderLevel(Level* level)
         blurShader->SetUniform("GameTime", (float)Time::GameTime);
         blurShader->SetUniform("uPersistence", 0.20f);
         blurShader->SetUniform("uMotionScale", 3.0f);
-        blurShader->SetTexture("screenTexture", colorResolveBuffer->textureHandle());
+        blurShader->SetTexture("screenTexture", colorTex);
 
         BgfxStateManager::Reset();
         BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Always);
@@ -121,7 +133,7 @@ void Renderer::RenderLevel(Level* level)
         // ---- Motion blur apply pass ----
         BlurResultBuffer->setAsRenderTarget();
         blurApplyShader->UseProgram();
-        blurApplyShader->SetTexture("screenTexture", colorResolveBuffer->textureHandle());
+        blurApplyShader->SetTexture("screenTexture", colorTex);
         blurApplyShader->SetTexture("blurTexture", BlurAccumulatedBuffer->textureHandle());
 
         BgfxStateManager::Reset();
@@ -137,16 +149,13 @@ void Renderer::RenderLevel(Level* level)
     // for a pass that depends on FBO results.
     bgfx::TextureHandle resultTex = blurEnabled
         ? BlurResultBuffer->textureHandle()
-        : colorResolveBuffer->textureHandle();
-
-#if __EMSCRIPTEN__
-	resultTex = colorBuffer->textureHandle();
-#endif // __EMSCRIPTEN__
+        : colorTex;
 
 
     ivec2 nativeRes = GetNativeScreenResolution();
 
     ViewIdManager::GiveNextId();
+    
 
     bgfx::setViewRect(ViewIdManager::GetCurrentId(), 0, 0,
         static_cast<uint16_t>(nativeRes.x),
@@ -335,13 +344,19 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
             static_cast<uint16_t>(res.y));
 
         bgfx::ViewId vid = ViewIdManager::GetCurrentId();
-
+        bgfx::setViewMode(vid, bgfx::ViewMode::Sequential);
 
         bgfx::setViewClear(vid, BGFX_CLEAR_COLOR, kClearBlack, 1.0f, 0);
+
+        bgfx::touch(ViewIdManager::GetCurrentId());
 
         // No depth test — write color IDs only.
         BgfxStateManager::Reset();
         BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Always);
+        BgfxStateManager::SetBlend(BgfxStateManager::Blend::Alpha);
+        BgfxStateManager::SetCull(BgfxStateManager::Cull::CW);
+
+        BgfxStateManager::SetWriteDepth(false);
 
         for (auto* mesh : VissibleRenderList)
         {
@@ -562,4 +577,6 @@ void Renderer::InitResolveFrameBuffers()
 
     customIdFBO = new Framebuffer();
     customIdFBO->attachColor(customIdResolveBuffer, 0u);
+    customIdFBO->attachDepth(depthResolveBuffer);
+    bgfx::setName(customIdFBO->frameBufferHandle(), std::string("custom id").c_str());
 }

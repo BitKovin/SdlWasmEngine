@@ -445,6 +445,7 @@ void TestNpc::LoadAssets()
 	mesh->PlayAnimation("run",true);
 	mesh->SetLooped(true);
 	mesh->ColorTexture = AssetRegistry::GetTextureFromFile("GameData/cat.png");
+	mesh->CustomId = 1;
 
 }
 

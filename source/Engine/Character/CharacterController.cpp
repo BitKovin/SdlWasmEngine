@@ -544,14 +544,15 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 	}
 
 	// -------------------------------------------------------
-	// Full / reduced sample loop (existing logic)
+	// Full / reduced sample loop
+	// Walkable and non-walkable hits are accumulated separately.
+	// Non-walkable hits (steep surfaces) still detect that ground
+	// exists (hitsGround) but do NOT poison avgNormal or height.
+	// If no walkable hits were found at all, we fall back to the
+	// full set so behaviour on fully-steep ground is unchanged.
 	// -------------------------------------------------------
 	int numOfIterations = 16;
 	float startRadius = 0.1f;
-	float accumulatedHeight = 0;
-	int numOfHits = 0;
-	int nNotWalk = 0;
-
 	float rayRadius = 0.1f;
 
 	if (ThreadPool::Supported() == false)
@@ -567,58 +568,100 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 		rayRadius = 0;
 	}
 
+	// --- walkable bucket ---
+	vec3  walkNormalSum = vec3(0);
+	float walkHeightSum = 0;
+	int   walkHits = 0;
+	int   walkNormalCount = 0;
+
+	// --- non-walkable bucket (steep / bad surfaces) ---
+	vec3  steepNormalSum = vec3(0);
+	float steepHeightSum = 0;
+	int   steepHits = 0;
+	int   steepNormalCount = 0;
+
+	const float heightComp = GetPosition().y - height / 2.0f - 0.001f;
+
+	// Helper: route one CheckGroundAt result into the right bucket.
+	// Weight is 1 for ring samples, 3 for the weighted center cast.
+	auto AccumulateHit = [&](bool hit, float weight, const Body* hb)
+		{
+			if (!hit) return;
+
+			bool walkable = outCanStand; // set by the last CheckGroundAt call
+
+			if (outheight > heightComp)
+				hitsGround = true;
+
+			if (walkable)
+			{
+				walkNormalSum += outNormal;
+				walkHeightSum += outheight * weight;
+				walkHits += static_cast<int>(weight);
+				walkNormalCount += 1;
+				canStand = true;
+				if (hb) standingOnBody = hb;
+			}
+			else
+			{
+				steepNormalSum += outNormal;
+				steepHeightSum += outheight * weight;
+				steepHits += static_cast<int>(weight);
+				steepNormalCount += 1;
+			}
+		};
+
+	// Ring samples
 	for (float r = startRadius; r <= 1; r += 0.3f)
 	{
 		for (int i = 0; i < numOfIterations; i++)
 		{
 			float angle = (2.0f * M_PI / numOfIterations) * i;
-			vec3 offset = vec3(cos(angle), 0.0f, sin(angle)) * (radius * r - 0.11f);
+			vec3  offset = vec3(cos(angle), 0.0f, sin(angle)) * (radius * r - 0.11f);
 
+			bool hit = CheckGroundAt(
+				FromPhysics(body->GetPosition()) + offset - heightOffset,
+				rayRadius, outheight, outCanStand, outNormal, &hitBody);
 
-
-			if (CheckGroundAt(FromPhysics(body->GetPosition()) + offset - heightOffset,
-				rayRadius, outheight, outCanStand, outNormal, &hitBody))
-			{
-				if (outCanStand) canStand = true;
-				avgNormal += outNormal;
-				nNotWalk++;
-
-				float heightComp = GetPosition().y - height / 2.0f - 0.001f;
-				if (outheight > heightComp) hitsGround = true;
-
-				accumulatedHeight += outheight;
-				numOfHits++;
-			}
+			AccumulateHit(hit, 1.0f, hitBody);
 		}
 	}
 
-	if (CheckGroundAt(FromPhysics(body->GetPosition()) - heightOffset,
-		radius - 0.01f, outheight, outCanStand, outNormal, &hitBody))
+	// Weighted center cast (weight 3 — same as before)
 	{
-		if (hitBody && Physics::GetBodyData(hitBody)->group == BodyType::CharacterCapsule)
+		bool hit = CheckGroundAt(
+			FromPhysics(body->GetPosition()) - heightOffset,
+			radius - 0.01f, outheight, outCanStand, outNormal, &hitBody);
+
+		if (hit && hitBody && Physics::GetBodyData(hitBody)->group == BodyType::CharacterCapsule)
 			Physics::AddImpulse(body, vec3(0, 1.1f, 0));
 
-		if (outCanStand)
-		{
-			canStand = true;
-			standingOnBody = hitBody;
-		}
-
-		avgNormal += outNormal;
-		nNotWalk++;
-
-		float heightComp = GetPosition().y - height / 2.0f - 0.001f;
-		if (outheight > heightComp) hitsGround = true;
-
-		accumulatedHeight += outheight * 3;
-		numOfHits += 3;
+		AccumulateHit(hit, 3.0f, hitBody);
 	}
 
-	if (nNotWalk) avgNormal /= nNotWalk;
+	// -------------------------------------------------------
+	// Resolve: prefer walkable bucket; fall back to full set
+	// only when there are zero walkable hits (pure steep ground).
+	// -------------------------------------------------------
+	if (walkHits > 0)
+	{
+		// Normal surface or mixed (player partially on steep edge):
+		// use only walkable samples so steep patches don't tilt the
+		// normal and cause the bogus downhill acceleration / slow-down.
+		avgNormal = walkNormalSum / static_cast<float>(walkNormalCount);
+		calculatedGroundHeight = walkHeightSum / static_cast<float>(walkHits);
+	}
+	else if (steepHits > 0)
+	{
+		// Entirely on steep ground — keep old behaviour so gravity /
+		// slope-slide still work correctly.
+		avgNormal = steepNormalSum / static_cast<float>(steepNormalCount);
+		calculatedGroundHeight = steepHeightSum / static_cast<float>(steepHits);
+	}
 
-	hitsGround = hitsGround && (numOfHits > 0);
+	const int totalHits = walkHits + steepHits;
+	hitsGround = hitsGround && (totalHits > 0);
 	canStand = hitsGround && (GroundAngleDeg(avgNormal) <= groundMaxAngle) && canStand;
-	calculatedGroundHeight = (numOfHits > 0) ? accumulatedHeight / numOfHits : 0;
 }
 
 bool CharacterController::CheckGroundAt(vec3 location, float checkRadius, float& outheight, bool& canStand, vec3& normal, const Body** hitBody)

@@ -375,34 +375,33 @@ void StaticMesh::DrawCustomId(mat4x4 view, mat4x4 projection)
 	{
 		if (finalMeshHideList.contains(mesh.name)) continue;
 
-		if (mask)
-		{
-			if (ColorTexture == nullptr && ColorTextureId == 0)
-			{
-				if (mesh.cachedBaseColor == nullptr)
-				{
-					string baseTextureName;
-					for (auto& texture : mesh.textures)
-					{
-						if (texture.type == aiTextureType_BASE_COLOR)
-						{
-							baseTextureName = texture.src;
-							break;
-						}
-					}
-					mesh.cachedBaseColor = AssetRegistry::GetTextureFromFile(TexturesLocation + baseTextureName);
-				}
 
-				shader->SetTexture("u_texture", mesh.cachedBaseColor);
-			}
-			else
+		if (ColorTexture == nullptr && ColorTextureId == 0)
+		{
+			if (mesh.cachedBaseColor == nullptr)
 			{
-				if (ColorTexture)
-					shader->SetTexture("u_texture", ColorTexture);
-				else
-					shader->SetTexture("u_texture", ColorTextureId);
+				string baseTextureName;
+				for (auto& texture : mesh.textures)
+				{
+					if (texture.type == aiTextureType_BASE_COLOR)
+					{
+						baseTextureName = texture.src;
+						break;
+					}
+				}
+				mesh.cachedBaseColor = AssetRegistry::GetTextureFromFile(TexturesLocation + baseTextureName);
 			}
+
+			shader->SetTexture("u_texture", mesh.cachedBaseColor);
 		}
+		else
+		{
+			if (ColorTexture)
+				shader->SetTexture("u_texture", ColorTexture);
+			else
+				shader->SetTexture("u_texture", ColorTextureId);
+		}
+
 
 		bgfx::setVertexBuffer(0, mesh.vbh);
 		bgfx::setIndexBuffer(mesh.ibh);

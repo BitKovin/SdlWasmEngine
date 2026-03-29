@@ -75,6 +75,8 @@ public:
     // No-op in bgfx (views are statically assigned); provided for API parity.
     static void unbind() {}
 
+    void bindDepthOnly(uint16_t x = 0, uint16_t y = 0, uint16_t w = 0, uint16_t h = 0);
+
     // -----------------------------------------------------------------------
     // Accessors
     // -----------------------------------------------------------------------

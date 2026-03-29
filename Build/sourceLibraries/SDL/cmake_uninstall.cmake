@@ -1,13 +1,13 @@
-if (NOT EXISTS "/home/user/Documents/GitHub/REngine_2.0/Build/install_manifest.txt")
-    message(FATAL_ERROR "Cannot find install manifest: \"/home/user/Documents/GitHub/REngine_2.0/Build/install_manifest.txt\"")
-endif(NOT EXISTS "/home/user/Documents/GitHub/REngine_2.0/Build/install_manifest.txt")
+if (NOT EXISTS "F:/Git/SdlWasmEngine/Build/install_manifest.txt")
+    message(FATAL_ERROR "Cannot find install manifest: \"F:/Git/SdlWasmEngine/Build/install_manifest.txt\"")
+endif(NOT EXISTS "F:/Git/SdlWasmEngine/Build/install_manifest.txt")
 
-file(READ "/home/user/Documents/GitHub/REngine_2.0/Build/install_manifest.txt" files)
+file(READ "F:/Git/SdlWasmEngine/Build/install_manifest.txt" files)
 string(REGEX REPLACE "\n" ";" files "${files}")
 foreach (file ${files})
     message(STATUS "Uninstalling \"$ENV{DESTDIR}${file}\"")
     execute_process(
-        COMMAND /snap/cmake/1525/bin/cmake -E remove "$ENV{DESTDIR}${file}"
+        COMMAND C:/Program Files/CMake/bin/cmake.exe -E remove "$ENV{DESTDIR}${file}"
         OUTPUT_VARIABLE rm_out
         RESULT_VARIABLE rm_retval
     )

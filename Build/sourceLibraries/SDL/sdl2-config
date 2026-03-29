@@ -46,14 +46,14 @@ while test $# -gt 0; do
       echo 2.32.10
       ;;
     --cflags)
-      echo -I${prefix}/include/SDL2  -D_REENTRANT
+      echo -I${prefix}/include/SDL2 
       ;;
 #    --libs)
 #      echo -L${exec_prefix}/lib   -lSDL2 
 #      ;;
 #    --static-libs)
     --libs|--static-libs)
-      sdl_static_libs=$(echo " -lSDL2   -pthread  -lm" | sed -E "s#-lSDL2[ $]#$libdir/libSDL2.a #g")
+      sdl_static_libs=$(echo " -lSDL2    -lm" | sed -E "s#-lSDL2[ $]#$libdir/libSDL2.a #g")
       echo -L${exec_prefix}/lib $sdl_static_libs
       ;;
     *)

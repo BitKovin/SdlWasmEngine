@@ -23,17 +23,25 @@ int decodeId24(vec3 color)
     int r = int(color.r * 255.0 + 0.5);
     int g = int(color.g * 255.0 + 0.5);
     int b = int(color.b * 255.0 + 0.5);
-    return (r << 16) | (g << 8) | b;
+    return r * 65536 + g * 256 + b;  // no <<, no |
 }
 
 void main()
 {
-    gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
-    return;
+ 
+    vec2 screenCoords = v_texcoord0;
 
-    int customId = decodeId24(texture2D(uCustomIdTex, v_texcoord0).rgb);
+    #if BGFX_SHADER_LANGUAGE_GLSL
+    
+    #else
 
-    vec4 history = texture2D(uAccumulated, v_texcoord0);
+    screenCoords.y = 1.0 - screenCoords.y;
+
+    #endif
+
+    int customId = decodeId24(texture2D(uCustomIdTex, screenCoords).rgb);
+
+    vec4 history = texture2D(uAccumulated, screenCoords);
 
     const float STATIC_JITTER              = 0.0025;
     const float LEGACY_BASE_PER_FRAME      = 0.0025;
@@ -41,11 +49,11 @@ void main()
 
     float dt = min(uDeltaTime.x, 0.1);
 
-    vec2  staticOffset = (hash2(v_texcoord0) - 0.5) * STATIC_JITTER;
+    vec2  staticOffset = (hash2(screenCoords) - 0.5) * STATIC_JITTER;
 
     float t       = GameTime.x * 0.8;
-    float spatial = sin(v_texcoord0.x * 6.2831853 * 2.0) * 0.25
-                  + cos(v_texcoord0.y * 6.2831853 * 1.5) * 0.25;
+    float spatial = sin(screenCoords.x * 6.2831853 * 2.0) * 0.25
+                  + cos(screenCoords.y * 6.2831853 * 1.5) * 0.25;
     float angle = t + spatial;
     vec2  dir   = normalize(vec2(cos(angle), sin(angle)));
 
@@ -56,15 +64,15 @@ void main()
     vec2 motionOffset = dir * motionMagnitude;
     vec2 totalOffset  = staticOffset + motionOffset;
 
-    vec4 c_center  = texture2D(screenTexture, v_texcoord0);
-    vec4 c_p       = texture2D(screenTexture, clamp(v_texcoord0 + totalOffset, 0.0, 1.0));
-    vec4 c_m       = texture2D(screenTexture, clamp(v_texcoord0 - totalOffset, 0.0, 1.0));
+    vec4 c_center  = texture2D(screenTexture, screenCoords);
+    vec4 c_p       = texture2D(screenTexture, clamp(screenCoords + totalOffset, 0.0, 1.0));
+    vec4 c_m       = texture2D(screenTexture, clamp(screenCoords - totalOffset, 0.0, 1.0));
     vec4 currentBlur = (c_center * 0.5) + (c_p + c_m) * 0.25;
 
     if (customId != 1)
         currentBlur.a = 0.0;
 
-    vec4 historyOffset  = texture2D(uAccumulated, clamp(v_texcoord0 - motionOffset * 0.6, 0.0, 1.0));
+    vec4 historyOffset  = texture2D(uAccumulated, clamp(screenCoords - motionOffset * 0.6, 0.0, 1.0));
     vec4 historyCombined = mix(history, historyOffset, 0.5);
 
     float w;

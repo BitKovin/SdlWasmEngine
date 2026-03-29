@@ -7,8 +7,11 @@
 
 #include <string>
 
+#include <EngineMain.h>
 
 #include "ViewIdManager.h"
+
+#include <BgfxStateManager.h>
 
 // -----------------------------------------------------------------------
 // Format mapping
@@ -270,14 +273,33 @@ void RenderTexture::copyFrom(const RenderTexture* src) {
             "RenderTexture::copyFrom: source/destination dimension or format mismatch");
     }
 
-    // Claim a dedicated view so bgfx places this blit between the passes
-    // that bracket it in the current frame's view sequence.
-    bgfx::ViewId blitView = ViewIdManager::GiveNextId();
+    if (bgfx::getCaps()->supported & BGFX_CAPS_TEXTURE_BLIT && false)
+    {
+        // Fast path — native blit (desktop GL / Vulkan / Metal / D3D).
+        bgfx::ViewId blitView = ViewIdManager::GiveNextId();
+        bgfx::blit(blitView,
+            m_texture, 0, 0, 0, 0,
+            src->m_texture, 0, 0, 0, 0,
+            (uint16_t)m_width, (uint16_t)m_height, 1);
+    }
+    else
+    {
+        // Slow path — shader copy (WebGL / any backend without blit support).
+        // Render src into this texture via the renderer's fullscreen quad.
+        Renderer* r = EngineMain::MainInstance->MainRenderer;
 
-    bgfx::blit(blitView,
-        m_texture, 0, 0, 0, 0,
-        src->m_texture, 0, 0, 0, 0,
-        (uint16_t)m_width, (uint16_t)m_height, 1);
+        setAsRenderTarget();
+        bgfx::setViewClear(ViewIdManager::GetCurrentId(),
+            BGFX_CLEAR_COLOR, 0x000000ff, 1.0f, 0);
+
+        r->copyShader->UseProgram();
+        r->copyShader->SetTexture("screenTexture", src->textureHandle());
+
+        BgfxStateManager::Reset();
+        BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Always);
+        BgfxStateManager::Apply();
+        r->RenderFullscreenQuad(r->copyShader);
+    }
 }
 
 // -----------------------------------------------------------------------

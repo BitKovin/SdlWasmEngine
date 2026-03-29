@@ -33,6 +33,10 @@ public:
 
 	Shader* fullscreenShader = nullptr;
 
+	Shader* copyShader = nullptr;
+	Shader* depthCopyShader = nullptr;
+	Shader* depthMsaaResolveShader = nullptr;
+
 private:
 
 	inline ivec2 GetScreenResolution() const;
