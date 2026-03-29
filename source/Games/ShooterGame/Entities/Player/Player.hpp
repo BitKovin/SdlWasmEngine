@@ -148,7 +148,28 @@ private:
 	std::string lastInventoryUUID = "";      // Previously equipped inventory item UUID (for quick switch)
 	bool pendingInventorySwitch = false;
 
-
+	Delay mantleDelay;
+	vec3 mantleStartPosition;
+	vec3 mantleTargetPosition;
+	// Whether the mantle animation is currently running.
+	// When true, UpdateWalkMovement returns immediately after calling UpdateMantle().
+	bool  isMantling = false;
+	// 0 → 1 over MantleDuration seconds, drives the two-phase easing curve.
+	float mantleProgress = 0.0f;
+	// Capsule-center the player is teleported to at mantle start
+	// (flush against the wall face, camera at ledge height = hanging pose).
+	vec3  mantleSnapPosition = vec3(0);
+	// Ledge height range relative to the player's current feet position.
+	static constexpr float MantleMinLedgeHeight = 0.3f;   // units above feet
+	static constexpr float MantleMaxLedgeHeight = 2.5f;   // units above feet
+	// How far in front of the player to search for a wall face.
+	static constexpr float MantleForwardReach = 1.0f;
+	// Minimum free vertical space above the ledge surface for the player to stand.
+	static constexpr float MantleStandClearance = 0.15f;
+	// Total seconds for the full pull-up + vault-over animation.
+	static constexpr float MantleDuration = 0.750f;
+	// Seconds before another TryMantle() call is allowed.
+	static constexpr float MantleCooldown = 0.35f;
 
 	vec3 weaponRunRotation = vec3(-8.9f, 30.0f, -9.21f);
 	vec3 runRotatePoint = vec3(-0.1f,-0.290f,0.45f);
@@ -207,6 +228,11 @@ private:
 
 		return vel + accelspeed * wishdir;
 	}
+
+	void TryMantle();
+	void StartMantle();
+	void FinishMantle(bool isNaturalFinish = true);
+	void UpdateMantle();
 
 	void TryWallJump();
 

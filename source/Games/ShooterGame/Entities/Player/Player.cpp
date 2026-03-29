@@ -164,6 +164,13 @@ void Player::Start()
 
 void Player::UpdateWalkMovement(vec2 input)
 {
+
+	if (isMantling)
+	{
+		UpdateMantle();
+		return;
+	}
+
 	// ── Direction vectors ─────────────────────────────────────────────────
 	vec3 right = MathHelper::GetRightVector(Camera::rotation);
 	vec3 forward = MathHelper::GetForwardVector(vec3(0, Camera::rotation.y, 0));
@@ -175,6 +182,12 @@ void Player::UpdateWalkMovement(vec2 input)
 
 	velocity = controller.GetVelocity();
 	bool onGround = OnGround();
+
+	// ── Auto-detect mantleable ledge ─────────────────────────────────────────
+	// Runs every frame while airborne.  The -6 m/s threshold matches Guard 3
+	// inside TryMantle and prevents wasted traces during a hard fall.
+	if (!onGround && velocity.y > -30.0f && (Input::GetAction("jump")->Holding() || input.y > 0.5f))
+		TryMantle();
 
 	if (onGround)
 		bobProgress += glm::length(MathHelper::XZ(velocity)) * Time::DeltaTime;
@@ -323,10 +336,14 @@ void Player::UpdateWalkMovement(vec2 input)
 		}
 		else
 		{
-			TryWallJump();
-			velocity = controller.GetVelocity();
-			dashVector = glm::normalize(dashVector) * 20.0f;
-			controller.SetVelocity(velocity);
+			TryMantle();
+			if (!isMantling)
+			{
+				TryWallJump();
+				velocity = controller.GetVelocity();
+				dashVector = glm::normalize(dashVector) * 20.0f;
+				controller.SetVelocity(velocity);
+			}
 		}
 	}
 
@@ -387,6 +404,9 @@ bool Player::ShouldAutoSlide(const vec3& downhillDir, float netSlopeAccel,
 	// Check 2: current velocity must not be going significantly uphill.
 	vec3  horVel = MathHelper::XZ(velocity);
 	float velLen = glm::length(horVel);
+
+	if (velLen < 1.0f) return false;
+
 	if (velLen > 0.2f)
 	{
 		float velDownhill = glm::dot(glm::normalize(horVel), downhillDir);
@@ -423,6 +443,8 @@ void Player::UpdateSlide(vec2 input, const vec3& downhillDir, float netSlopeAcce
 	vec3 right = MathHelper::GetRightVector(Camera::rotation);
 	vec3 fwd = MathHelper::GetForwardVector(vec3(0, cameraRotation.y, 0));
 	vec3 wishXZ = MathHelper::XZ(input.x * right + input.y * fwd);
+
+	float rawSlopeAccel = 0;
 
 	if (dot(wishXZ, normalize(downhillDir)) > -0.0 || length(input) < 0.5)
 	{
@@ -474,7 +496,7 @@ void Player::UpdateSlide(vec2 input, const vec3& downhillDir, float netSlopeAcce
 	velocity.z = horVel.z;
 
 	// ── 5. End by speed ───────────────────────────────────────────────────
-	if (newSpeed < CrouchSpeed)
+	if (newSpeed < CrouchSpeed && rawSlopeAccel == 0)
 		StopSlide();
 }
 
@@ -1854,7 +1876,7 @@ void Player::Update()
 	}
 
 	// Weapon switching logic based on current mode
-	if (weaponSystemMode == WeaponSystemMode::Slots)
+	if (weaponSystemMode == WeaponSystemMode::Slots && isMantling == false)
 	{
 		// Original slot-based weapon switching with lazy loading
 		if (currentWeapon != nullptr)
@@ -1882,7 +1904,7 @@ void Player::Update()
 
 	// Offhand weapon management (Slots mode only)
 	// In Inventory mode, offhand is managed through OffhandWeapon or DualWeapon items
-	if (weaponSystemMode == WeaponSystemMode::Slots)
+	if (weaponSystemMode == WeaponSystemMode::Slots && isMantling == false)
 	{
 		if (disableOffhandWeapon)
 		{
@@ -2273,6 +2295,14 @@ void Player::Serialize(json& target)
 	SERIALIZE_FIELD(target, currentMainWeaponUUID);
 	SERIALIZE_FIELD(target, currentOffhandWeaponUUID);
 
+
+	SERIALIZE_FIELD(target, isSliding);
+	SERIALIZE_FIELD(target, mantleDelay);
+	SERIALIZE_FIELD(target, mantleStartPosition);
+	SERIALIZE_FIELD(target, mantleTargetPosition);
+	SERIALIZE_FIELD(target, isMantling);
+	SERIALIZE_FIELD(target, mantleProgress);
+	SERIALIZE_FIELD(target, mantleSnapPosition);
 }
 
 void Player::Deserialize(json& source)
@@ -2302,6 +2332,14 @@ void Player::Deserialize(json& source)
 	DESERIALIZE_FIELD(source, inventory);
 	DESERIALIZE_FIELD(source, currentInventoryUUID);
 	DESERIALIZE_FIELD(source, lastInventoryUUID);
+
+	DESERIALIZE_FIELD(source, isSliding);
+	DESERIALIZE_FIELD(source, mantleDelay);
+	DESERIALIZE_FIELD(source, mantleStartPosition);
+	DESERIALIZE_FIELD(source, mantleTargetPosition);
+	DESERIALIZE_FIELD(source, isMantling);
+	DESERIALIZE_FIELD(source, mantleProgress);
+	DESERIALIZE_FIELD(source, mantleSnapPosition);
 
 	// Restore weapon based on mode
 	if (weaponSystemMode == WeaponSystemMode::Slots)

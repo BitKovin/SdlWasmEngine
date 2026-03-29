@@ -989,8 +989,8 @@ public:
 	static HitResult SphereTrace(const vec3 start, const vec3 end, float radius, const BodyType mask = BodyType::GroupHitTest, const vector<Body*> ignoreList = {}, const vector<Entity*> entityIgnoreList = {});
 	static HitResult SphereTraceForEntity(vector<Entity*> entityties, const vec3 start, const vec3 end, float radius, const BodyType mask = BodyType::GroupHitTest, const vector<Body*> ignoreList = {});
 
-	static HitResult CylinderTrace(const vec3 start, const vec3 end, float radius, float halfHeight, const BodyType mask = BodyType::GroupHitTest, const vector<Body*> ignoreList = {});
-	static HitResult ShapeTrace(const Shape* shape,vec3 start, vec3 end, vec3 scale, const BodyType mask = BodyType::GroupHitTest, const vector<Body*> ignoreList = {});
+	static HitResult CylinderTrace(const vec3 start, const vec3 end, float radius, float halfHeight, const BodyType mask = BodyType::GroupHitTest, const vector<Body*> ignoreList = {}, const vector<Entity*> entityIgnoreList = {});
+	static HitResult ShapeTrace(const Shape* shape,vec3 start, vec3 end, vec3 scale, const BodyType mask = BodyType::GroupHitTest, const vector<Body*> ignoreList = {}, const vector<Entity*> entityIgnoreList = {});
 
 };
 

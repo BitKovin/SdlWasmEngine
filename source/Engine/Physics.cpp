@@ -1160,7 +1160,7 @@ Physics::HitResult Physics::SphereTraceForEntity(vector<Entity*> entityties, con
 	return hit;
 }
 
-Physics::HitResult Physics::CylinderTrace(const vec3 start, const vec3 end, float radius, float halfHeight, const BodyType mask, const vector<Body*> ignoreList)
+Physics::HitResult Physics::CylinderTrace(const vec3 start, const vec3 end, float radius, float halfHeight, const BodyType mask, const vector<Body*> ignoreList, const vector<Entity*> entityIgnoreList)
 {
 	HitResult hit;
 	// Initialize default values
@@ -1205,6 +1205,7 @@ Physics::HitResult Physics::CylinderTrace(const vec3 start, const vec3 end, floa
 	TraceBodyFilter filter;
 	filter.mask = mask;
 	filter.ignoreList = ignoreList;
+	filter.entityIgnoreList = entityIgnoreList;
 
 	// Perform shape cast
 	// physicsMainLock.lock(); // Uncomment if thread safety required
@@ -1262,7 +1263,7 @@ Physics::HitResult Physics::CylinderTrace(const vec3 start, const vec3 end, floa
 	return hit;
 }
 
-Physics::HitResult Physics::ShapeTrace(const Shape* shape, vec3 start, vec3 end, vec3 scale, const BodyType mask, const vector<Body*> ignoreList)
+Physics::HitResult Physics::ShapeTrace(const Shape* shape, vec3 start, vec3 end, vec3 scale, const BodyType mask, const vector<Body*> ignoreList, const vector<Entity*> entityIgnoreList)
 {
 	HitResult hit;
 	hit.fraction = 1.0f;
@@ -1293,6 +1294,7 @@ Physics::HitResult Physics::ShapeTrace(const Shape* shape, vec3 start, vec3 end,
 	TraceBodyFilter filter;
 	filter.mask = mask;
 	filter.ignoreList = ignoreList;
+	filter.entityIgnoreList = entityIgnoreList;
 
 	ClosestHitShapeCastCollector collector;
 	physics_system->GetNarrowPhaseQuery().CastShape(shape_cast, JPH::ShapeCastSettings(), JPH::Vec3::sZero(), collector, {}, {}, filter);

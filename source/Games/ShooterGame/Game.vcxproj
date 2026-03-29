@@ -395,6 +395,7 @@
     <ClCompile Include="Entities\Enemy\Enemies\NpcHumanAxe.cpp" />
     <ClCompile Include="Entities\Player\InventoryMenu.cpp" />
     <ClCompile Include="Entities\Player\Player.cpp" />
+    <ClCompile Include="Entities\Player\Player_Mantle.cpp" />
     <ClCompile Include="Entities\Player\player_start.cpp" />
     <ClCompile Include="Entities\Player\RestrictedArea.cpp" />
     <ClCompile Include="Entities\Player\Weapons\Animators\Animator_Akimbo.cpp" />
