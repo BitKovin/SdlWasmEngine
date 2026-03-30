@@ -89,8 +89,8 @@ private:
 
 	vec3 velocity = vec3(0);
 
-	bool canRun = false;
-	bool canDash = true;
+	bool canRun = true;
+	bool canDash = false;
 
 	vec3 oldPos = vec3();
 
@@ -174,9 +174,9 @@ private:
 	vec3 weaponRunRotation = vec3(-8.9f, 30.0f, -9.21f);
 	vec3 runRotatePoint = vec3(-0.1f,-0.290f,0.45f);
 
-	float WalkSpeed = 6.5f;
-	float CrouchSpeed = 4.0f;
-	float RunSpeed = 7.5f;
+	float WalkSpeed = 4.5f;
+	float CrouchSpeed = 2.5f;
+	float RunSpeed = 8.5f;
 
 	glm::vec3 Friction(glm::vec3 vel, float factor = 60.0f) {
 		vel = MathHelper::XZ(vel);
@@ -291,7 +291,7 @@ private:
 
 	// Tuning constants
 	static constexpr float SlideInitialBoost = 1.5f;  // speed impulse added when slide starts (m/s)
-	static constexpr float SlideFriction = 12.0f;  // flat-ground deceleration (m/s²)
+	static constexpr float SlideFriction = 4.0f;  // flat-ground deceleration (m/s²)
 	static constexpr float SlopeGravityScale = 1.5f;  // multiplier on slope-projected gravity
 	static constexpr float SlideSteerStrength = 0.4f;  // how quickly WASD can redirect the slide
 	static constexpr float SlideBoostCooldownTime = 2.0f;  // seconds between boosts

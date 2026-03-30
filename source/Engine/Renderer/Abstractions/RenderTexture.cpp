@@ -141,9 +141,18 @@ void RenderTexture::createResources() {
         flags = msaaFlag(m_samples) | m_samplerFlags | samplerExtra;
     }
     else {
-        // Single-sample resolve target — blit destination + sampler.
-        uint64_t samplerExtra = m_sampleDepth ? BGFX_SAMPLER_COMPARE_LEQUAL : 0;
-        flags = BGFX_TEXTURE_RT | BGFX_TEXTURE_BLIT_DST | m_samplerFlags | samplerExtra;
+        if (isDepth) {
+            // Depth — samplable RT, no BLIT_DST, no compare sampler
+            flags = BGFX_TEXTURE_RT | m_samplerFlags;
+            // Only add compare if caller explicitly needs shadow sampling,
+            // and only if they're NOT reading raw depth values
+            // uint64_t samplerExtra = m_sampleDepth ? BGFX_SAMPLER_COMPARE_LEQUAL : 0;
+        }
+        else {
+            // Color resolve target
+            uint64_t samplerExtra = m_sampleDepth ? BGFX_SAMPLER_COMPARE_LEQUAL : 0;
+            flags = BGFX_TEXTURE_RT | BGFX_TEXTURE_BLIT_DST | m_samplerFlags | samplerExtra;
+        }
     }
 
     if (m_type == TextureType::Cubemap) {
@@ -273,7 +282,7 @@ void RenderTexture::copyFrom(const RenderTexture* src) {
             "RenderTexture::copyFrom: source/destination dimension or format mismatch");
     }
 
-    if (bgfx::getCaps()->supported & BGFX_CAPS_TEXTURE_BLIT && false) //causes problems on d3d
+    if (bgfx::getCaps()->supported & BGFX_CAPS_TEXTURE_BLIT && false) //causes problems on d3d. I'll just use alternative aproach
     {
         // Fast path — native blit (desktop GL / Vulkan / Metal / D3D).
         bgfx::ViewId blitView = ViewIdManager::GiveNextId();

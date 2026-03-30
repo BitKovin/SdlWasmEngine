@@ -1641,7 +1641,7 @@ void Player::Update()
 
 	float lightLevel = LightVisibility::Compute(lightData);
 
-	//printf("light level: %f \n", lightLevel);
+	printf("light level: %f \n", lightLevel);
 
 	//Logger::Log("Voxel world memory: " + std::to_string(memMB) + " MB");
 
@@ -1762,7 +1762,7 @@ void Player::Update()
 
 	RunProgress = std::clamp(RunProgress, 0.0f, 1.0f);
 
-	maxSpeed = std::lerp(controller.isCrouched ? CrouchSpeed : WalkSpeed, RunSpeed, RunProgress);
+	maxSpeed = controller.isCrouched ? CrouchSpeed : std::lerp(WalkSpeed, RunSpeed, RunProgress);
 
 	if (on_bike == false)
 	{

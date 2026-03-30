@@ -111,9 +111,9 @@ void Shader::ReflectUniforms(bgfx::ShaderHandle vsh, bgfx::ShaderHandle fsh)
 {
     m_uniforms.clear();
 
-    uint8_t samplerSlot = 0;
+    // 🔥 NEW: get real sampler slots from shader source
+    auto samplerSlots = ParseAllSamplerSlots();
 
-    // Reflect both stages; merge results (fragment shader owns samplers).
     bgfx::ShaderHandle stages[2] = { vsh, fsh };
 
     for (bgfx::ShaderHandle stage : stages)
@@ -133,36 +133,66 @@ void Shader::ReflectUniforms(bgfx::ShaderHandle vsh, bgfx::ShaderHandle fsh)
 
             const std::string uname(info.name);
 
-            if (IsBgfxBuiltin(uname))         continue;
-            if (m_uniforms.count(uname))       continue; // already reflected
+            if (IsBgfxBuiltin(uname))   continue;
+            if (m_uniforms.count(uname)) continue;
 
             UniformMeta u;
-            // Re-create the uniform so bgfx knows the correct array size (num)
             u.handle = bgfx::createUniform(info.name, info.type, info.num);
             u.num = info.num;
 
             switch (info.type)
             {
             case bgfx::UniformType::Sampler:
+            {
                 u.kind = UniformMeta::Kind::Sampler;
-                u.samplerSlot = samplerSlot++;
+
+                auto itSlot = samplerSlots.find(uname);
+                if (itSlot != samplerSlots.end())
+                {
+                    u.samplerSlot = itSlot->second;
+                }
+                else
+                {
+                    Logger::Log("Shader warning: sampler \"" + uname +
+                        "\" has no explicit slot. Defaulting to 0.");
+                    u.samplerSlot = 0;
+                }
+
+                // Optional safety check
+                if (u.samplerSlot > 15)
+                {
+                    Logger::Log("Shader error: sampler \"" + uname +
+                        "\" uses invalid slot > 15");
+                }
+
                 break;
+            }
+
             case bgfx::UniformType::Vec4:
                 u.kind = UniformMeta::Kind::Vec4;
                 break;
+
             case bgfx::UniformType::Mat3:
                 u.kind = UniformMeta::Kind::Mat3;
                 break;
+
             case bgfx::UniformType::Mat4:
                 u.kind = UniformMeta::Kind::Mat4;
                 break;
+
             default:
-                // Unknown type — destroy handle and skip
                 bgfx::destroy(u.handle);
                 continue;
             }
 
             m_uniforms.emplace(uname, u);
+
+            // Debug (optional, very useful)
+            if (u.kind == UniformMeta::Kind::Sampler)
+            {
+                Logger::Log("Sampler: " + uname +
+                    " → slot " + std::to_string(u.samplerSlot));
+            }
         }
     }
 }
@@ -773,6 +803,53 @@ Shader::ParseTextureBindings(const std::string& sourceCode)
 
     scan(reUniform);
     scan(reMacro);
+
+    return result;
+}
+
+std::unordered_map<std::string, uint8_t>
+Shader::ParseSamplerSlots(const std::string& source)
+{
+    std::unordered_map<std::string, uint8_t> result;
+
+    // Matches: SAMPLER2D(name, slot) or SAMPLERCUBE(name, slot)
+    std::regex re(R"(SAMPLER(?:2D|CUBE)\s*\(\s*(\w+)\s*,\s*(\d+)\s*\))");
+
+    std::smatch match;
+    auto it = source.cbegin();
+
+    while (std::regex_search(it, source.cend(), match, re))
+    {
+        const std::string name = match[1].str();
+        const uint8_t slot = static_cast<uint8_t>(std::stoi(match[2].str()));
+
+        result[name] = slot;
+
+        it = match.suffix().first;
+    }
+
+    return result;
+}
+
+std::unordered_map<std::string, uint8_t>
+Shader::ParseAllSamplerSlots() 
+{
+    std::unordered_map<std::string, uint8_t> result;
+
+    for (const std::string& path : { m_vsSourcePath, m_fsSourcePath })
+    {
+        if (path.empty()) continue;
+
+        const std::string source = FileSystemEngine::ReadFile(path);
+        if (source.empty()) continue;
+
+        auto parsed = ParseSamplerSlots(source);
+
+        for (auto& [k, v] : parsed)
+        {
+            result[k] = v; // Fragment shader overrides vertex if duplicate
+        }
+    }
 
     return result;
 }

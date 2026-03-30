@@ -186,7 +186,7 @@ CubemapTexture* AssetRegistry::GetTextureCubeFromFile(string filename)
 		return it->second; 
 	}
 
-	textureCubeCache[key] = new CubemapTexture(filename, true);
+	textureCubeCache[key] = new CubemapTexture(filename, false);
 
 	return textureCubeCache[key];
 }

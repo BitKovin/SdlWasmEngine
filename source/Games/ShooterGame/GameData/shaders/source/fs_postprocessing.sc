@@ -3,8 +3,9 @@ $input v_texcoord0
 #include <bgfx_shader.sh>
 
 SAMPLER2D(screenTexture, 0);
-SAMPLER2D(noiseTexture,  1);// @texture GameData/textures/noise/grainy5_256.png
-SAMPLER2D(LutTexture,    2);// @texture GameData/textures/pp/main.png
+SAMPLER2D(depthTexture, 1);
+SAMPLER2D(noiseTexture,  2);// @texture GameData/textures/noise/grainy5_256.png
+SAMPLER2D(LutTexture,    3);// @texture GameData/textures/pp/main.png
 
 uniform vec4 screenResolution;    // .xy
 // textureSize() is unavailable in bgfx's cross-platform dialect;
@@ -151,15 +152,25 @@ vec3 smoothPosterize(vec3 color, float steps, float softness, vec2 uv)
 vec3 GetFromLUT(vec3 color)
 {
     color = clamp(color, 0.0, 1.0);
- 
-    float N        = LutTexture_size.y;   // height of the LUT texture = slice size N
+
+    float N        = LutTexture_size.y;   // height of the LUT = slice size N
     float maxColor = N - 1.0;
- 
-    float cell = floor(color.b * maxColor);
-    float u    = (cell * N + color.r * maxColor + 0.5) / (N * N);
-    float v    = (color.g * maxColor + 0.5) / N;
- 
-    return texture2DLod(LutTexture, vec2(u, v), 0.0).rgb;
+
+    // Blue slice index + fractional part for linear interpolation in blue
+    float b    = color.b * maxColor;
+    float cell = floor(b);
+    float frac = b - cell;
+
+    // Sample two adjacent blue slices
+    // +0.5 is REQUIRED so hardware bilinear hits the exact LUT grid points
+    float u0 = (cell * N + color.r * maxColor + 0.5) / (N * N);
+    float u1 = ((cell + 1.0) * N + color.r * maxColor + 0.5) / (N * N);
+    float v  = (color.g * maxColor + 0.5) / N;
+
+    vec3 slice0 = texture2DLod(LutTexture, vec2(u0, v), 0.0).rgb;
+    vec3 slice1 = texture2DLod(LutTexture, vec2(u1, v), 0.0).rgb;
+
+    return mix(slice0, slice1, frac);
 }
 
 // ---------------------------------------------------------------------------
@@ -185,6 +196,7 @@ void main()
 
     vec3 color = vec3(0.0,0.0,0.0);
 
+
     if(fxaaEnabled.x > 0.5)
     {
         color = applyFxaa(screenTexture, gl_FragCoord.xy, res).rgb;
@@ -192,10 +204,14 @@ void main()
     {
         color = texture2D(screenTexture, coord).rgb;
     }
+    float depthValue = texture2D(depthTexture, coord).r;
 
     color = GetFromLUT(color);
 
-    color = smoothPosterize(color, 70.0, 0.35, coord * vec2(aspectRatio, 1.0));
+    if(depthValue<0.999)
+    {
+        color = smoothPosterize(color, 60.0, 0.35, coord * vec2(aspectRatio, 1.0));
+    }
 
     color += bayer_value / 256.0;
 

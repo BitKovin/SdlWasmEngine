@@ -73,7 +73,6 @@ void EngineMain::UpdateScreenSize()
         printf("failed to get screen resolution\n");
     }
 
-	printf("canvas size: %d x %d", ScreenSize.x, ScreenSize.y);
 
 #else
 

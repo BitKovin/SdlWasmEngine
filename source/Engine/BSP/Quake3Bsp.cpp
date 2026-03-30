@@ -1132,6 +1132,9 @@ bool CQuake3BSP::RenderSingleFace(int index, bool lightmap,
 bool CQuake3BSP::RenderMergedFace(int mergedIndex, bool lightmap,
     LightVolPointData lightData, mat4 model)
 {
+
+    auto startState = BgfxStateManager::GetState();
+
     const auto& mergedFace = mergedFacesData[mergedIndex];
 
     auto bounds = mergedFace.bounds;
@@ -1185,6 +1188,9 @@ bool CQuake3BSP::RenderMergedFace(int mergedIndex, bool lightmap,
     BgfxStateManager::Apply();
 
     shader->Submit(ViewIdManager::GetCurrentId());
+
+    BgfxStateManager::SetState(startState);
+
     return true;
 }
 
@@ -1220,8 +1226,8 @@ void CQuake3BSP::BuildStaticOpaqueObstacles()
     {
         BSPModelRef ref(this, i, models[i]);
 
-        auto vertices = ref.GetVertices(false, true);
-        auto indices = ref.GetIndices(false, true);
+        auto vertices = ref.GetVertices(true, true);
+        auto indices = ref.GetIndices(true, true);
 
         OpaqueModelVBO modelVBO;
 

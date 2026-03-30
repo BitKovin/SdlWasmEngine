@@ -149,6 +149,10 @@ public:
     static std::unordered_map<hashed_string, std::string>
         ParseTextureBindings(const std::string& sourceCode);
 
+    std::unordered_map<std::string, uint8_t> ParseSamplerSlots(const std::string& source);
+
+    std::unordered_map<std::string, uint8_t> ParseAllSamplerSlots() ;
+
     std::unordered_map<hashed_string, std::string>
         ParseAllTextureBindings() const;
 

@@ -164,7 +164,8 @@ void Renderer::RenderLevel(Level* level)
 
 
     fullscreenShader->UseProgram();
-    fullscreenShader->SetTexture("screenTexture", resultTex);
+    fullscreenShader->SetTexture("screenTexture", colorTex);
+    fullscreenShader->SetTexture("depthTexture", depthResolveBuffer->textureHandle());
     fullscreenShader->SetUniform("screenResolution", nativeRes);
     fullscreenShader->SetUniform("fxaaEnabled", FXAAEnabled);
 
@@ -229,6 +230,37 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
         customIdFBO->attachColor(customIdResolveBuffer, 0u);
     }
 
+    //too tired of trying to resolve depth. I'll just render it twice. Not a big deal
+    {
+
+        forwardResolveFBO->bind(0, 0,
+            static_cast<uint16_t>(res.x),
+            static_cast<uint16_t>(res.y));
+
+        bgfx::ViewId vid = ViewIdManager::GetCurrentId();
+        bgfx::setViewMode(vid, bgfx::ViewMode::Default);
+
+        // Clear depth only — no color attachment on this FBO.
+        bgfx::setViewClear(vid, BGFX_CLEAR_DEPTH, kClearBlack, 1.0f, 0);
+
+        // Depth write only, less-than test, back-face cull.
+        BgfxStateManager::Reset();
+        BgfxStateManager::SetWriteRGB(false);
+        BgfxStateManager::SetWriteAlpha(false);
+        BgfxStateManager::SetWriteDepth(true);
+        BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::LEqual);
+        BgfxStateManager::SetCull(BgfxStateManager::Cull::CW);
+        BgfxStateManager::SetMSAA(false);
+
+        for (auto* mesh : VissibleRenderList)
+        {
+            const mat4& P = mesh->IsViewmodel
+                ? Camera::finalizedProjectionViewmodel
+                : Camera::finalizedProjection;
+            mesh->DrawDepth(Camera::finalizedView, P);
+        }
+    }
+
     // ====================================================================
     // Pass A — Depth pre-pass
     // Uses forwardDepthFBO — its own dedicated view ID, separate from
@@ -253,7 +285,7 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
         BgfxStateManager::SetWriteRGB(false);
         BgfxStateManager::SetWriteAlpha(false);
         BgfxStateManager::SetWriteDepth(true);
-        BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Always);
+        BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::LEqual);
         BgfxStateManager::SetCull(BgfxStateManager::Cull::CW);
         BgfxStateManager::SetMSAA(MultiSampleCount > 0);
 
@@ -514,6 +546,10 @@ void Renderer::InitFrameBuffers()
         BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP
         | BGFX_SAMPLER_MIN_ANISOTROPIC | BGFX_SAMPLER_MAG_ANISOTROPIC;
 
+    constexpr uint64_t kDepthSamplerFlags =
+        BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP
+        | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT;  // NO anisotropic
+
     colorBuffer = new RenderTexture(
         screenResolution.x, screenResolution.y,
         colorFmt, texType,
@@ -526,7 +562,7 @@ void Renderer::InitFrameBuffers()
         screenResolution.x, screenResolution.y,
         TextureFormat::Depth24, texType,
         /*sampleDepth=*/false,
-        kSamplerFlags,
+        kDepthSamplerFlags,
         MultiSampleCount > 0 ? MultiSampleCount : 0);
     depthBuffer->SetName("MainDepthBuffer");
 
@@ -553,6 +589,10 @@ void Renderer::InitResolveFrameBuffers()
         BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP
         | BGFX_SAMPLER_MIN_ANISOTROPIC | BGFX_SAMPLER_MAG_ANISOTROPIC;
 
+    constexpr uint64_t kDepthSamplerFlags =
+        BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP
+        | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT;  // NO anisotropic
+
     colorResolveBuffer = new RenderTexture(
         screenResolution.x, screenResolution.y,
         colorFmt, TextureType::Texture2D,
@@ -562,13 +602,13 @@ void Renderer::InitResolveFrameBuffers()
     customIdResolveBuffer = new RenderTexture(
         screenResolution.x, screenResolution.y,
         TextureFormat::RGBA8, TextureType::Texture2D,
-        false, kSamplerFlags);
+        false, kDepthSamplerFlags);
     customIdResolveBuffer->SetName("CustomIdResolveBuffer");
 
     depthResolveBuffer = new RenderTexture(
         screenResolution.x, screenResolution.y,
         TextureFormat::Depth24, TextureType::Texture2D,
-        false, kSamplerFlags);
+        false, kDepthSamplerFlags);
     depthResolveBuffer->SetName("DepthResolveBuffer");
 
     forwardResolveFBO = new Framebuffer();

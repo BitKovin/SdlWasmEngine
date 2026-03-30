@@ -27,7 +27,7 @@ public:
 
 	int MultiSampleCount = 8;
 
-	bool FXAAEnabled = true;
+	bool FXAAEnabled = false;
 
 	float ResolutionScale = 1.0f;
 

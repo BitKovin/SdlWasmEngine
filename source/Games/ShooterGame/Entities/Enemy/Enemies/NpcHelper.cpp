@@ -19,6 +19,12 @@ bool NpcHelper::CheckParry(vec3 npcForward, Entity* entity)
 			parrying = true;
 	}
 
+	if (player->currentWeapon)
+	{
+		if (player->currentWeapon->Parrying)
+			parrying = true;
+	}
+
 	if (parrying == false)
 		return false;
 

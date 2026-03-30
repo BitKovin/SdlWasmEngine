@@ -181,7 +181,21 @@ Level* Level::OpenLevel(string filePath)
 	Current->RemovePendingEntities();
 	Current->MemoryCleanPendingEntities();
 
-	Current->LoadAssets();
+	LoadingScreenSystem::Update(0.6f);
+
+	Current->AddPendingLevelObjects();
+
+	float assetPreloadProgress = 0;
+
+	for (auto obj : Current->LevelObjects)
+	{
+
+		assetPreloadProgress += 1.0 / Current->LevelObjects.size();
+
+		LoadingScreenSystem::Update(0.6 + assetPreloadProgress * 0.3);
+
+		obj->LoadAssetsIfNeeded();
+	}
 
 	for (LevelObject* obj : Current->LevelObjects)
 	{
@@ -200,7 +214,7 @@ Level* Level::OpenLevel(string filePath)
 	Current->RemovePendingEntities();
 	Current->MemoryCleanPendingEntities();
 
-	LoadingScreenSystem::Update(0.6f);
+	LoadingScreenSystem::Update(0.9f);
 
 	if (isNewLevel) 
 	{

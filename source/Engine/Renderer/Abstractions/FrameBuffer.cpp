@@ -269,7 +269,7 @@ void Framebuffer::bindDepthOnly(uint16_t x, uint16_t y, uint16_t w, uint16_t h)
 
 void Framebuffer::resolveDepthOnly(Framebuffer& target)
 {
-
+    return;
     if (!m_depthAttachment) return;
     RenderTexture* dst = target.depthAttachment();
     if (!dst) return;
@@ -278,7 +278,7 @@ void Framebuffer::resolveDepthOnly(Framebuffer& target)
 
     if (isMsaa)
     {
-        if (bgfx::getCaps()->supported & BGFX_CAPS_TEXTURE_BLIT)
+        if (bgfx::getCaps()->supported & BGFX_CAPS_TEXTURE_BLIT && false)
         {
             // GL/Vulkan — bgfx auto-resolves MSAA depth into a companion
             // single-sample texture at pass-end (requires no WRITE_ONLY flag).
@@ -304,6 +304,7 @@ void Framebuffer::resolveDepthOnly(Framebuffer& target)
         // manually by sampling each MSAA sample and taking the minimum.
         Renderer* r = EngineMain::MainInstance->MainRenderer;
         target.bindDepthOnly();
+        bgfx::setViewName(ViewIdManager::GetCurrentId(), std::string("depth resolve view").c_str());
         r->depthMsaaResolveShader->UseProgram();
         r->depthMsaaResolveShader->SetTexture("depthMsaa", m_depthAttachment->textureHandle());
         r->depthMsaaResolveShader->SetUniform("uResolution",
