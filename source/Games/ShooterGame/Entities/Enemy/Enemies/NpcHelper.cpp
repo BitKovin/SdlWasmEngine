@@ -38,7 +38,11 @@ bool NpcHelper::CheckParry(vec3 npcForward, Entity* entity)
 
 	if (res)
 	{
-		player->currentOffhandWeapon->OnParried();
+		if(player->currentOffhandWeapon)
+			player->currentOffhandWeapon->OnParried();
+
+		if (player->currentWeapon)
+			player->currentWeapon->OnParried();
 	}
 
 	return res;

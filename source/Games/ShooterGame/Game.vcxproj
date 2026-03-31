@@ -75,6 +75,7 @@
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
+    <EnableASAN>false</EnableASAN>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -411,6 +412,7 @@
     <ClCompile Include="Entities\Player\Weapons\weapon_pistol.cpp" />
     <ClCompile Include="Entities\Player\Weapons\weapon_shotgun.cpp" />
     <ClCompile Include="Entities\Player\Weapons\weapon_sniper.cpp" />
+    <ClCompile Include="Entities\Player\Weapons\weapon_sword.cpp" />
     <ClCompile Include="Entities\Player\Weapons\weapon_swords.cpp" />
     <ClCompile Include="Entities\Player\Weapons\weapon_tommy.cpp" />
     <ClCompile Include="Entities\RelativeTeleporter.cpp" />
@@ -471,6 +473,7 @@
     <ClInclude Include="Helpers\LightVisibilityHelper.h" />
     <ClInclude Include="InteractionSystem\IInteractive.h" />
     <ClInclude Include="ItemsDataBase.h" />
+    <ClInclude Include="ParticleSystems\particle_system_meleeTrail.hpp" />
     <ClInclude Include="PauseGameManager.hpp" />
     <ClInclude Include="Systems\ScoreSystem\ScoreSystem.h" />
     <ClInclude Include="UI\Enemy\UiNpcDebuffs.h" />

@@ -74,6 +74,7 @@
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
+    <EnableASAN>false</EnableASAN>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
@@ -418,6 +419,7 @@
     <ClCompile Include="Particle\GlobalParticleSystem.cpp" />
     <ClCompile Include="Particle\ParticleEmitter.cpp" />
     <ClCompile Include="Particle\RibbonEmitter.cpp" />
+    <ClCompile Include="Particle\TrailEmitter.cpp" />
     <ClCompile Include="Physics.cpp" />
     <ClCompile Include="Physics.h" />
     <ClCompile Include="RandomHelper.cpp" />
@@ -584,6 +586,7 @@
     <ClInclude Include="Particle\ParticleEmitter.h" />
     <ClInclude Include="Particle\ParticleSystem.hpp" />
     <ClInclude Include="Particle\RibbonEmitter.h" />
+    <ClInclude Include="Particle\TrailEmitter.h" />
     <ClInclude Include="PhysicsConverter.h" />
     <ClInclude Include="PhysicsHelper.h" />
     <ClInclude Include="PlatformMains\emscripten_main.hpp" />

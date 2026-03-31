@@ -13,6 +13,8 @@ public:
 
 	Delay StopDelay = Delay(1000000000);
 
+	mat4 RelativeTransform = glm::identity<mat4>();
+
 	~ParticleSystem()
 	{
 
@@ -22,8 +24,6 @@ public:
 	{
 		for (auto emitter : emitters)
 		{
-
-
 			emitter->Position = Position;
 			emitter->Rotation = Rotation;
 
@@ -57,6 +57,7 @@ public:
 			emitter->Position = Position;
 			emitter->Rotation = Rotation;
 			emitter->Scale = Scale;
+			emitter->RelativeTransform = RelativeTransform;
 			emitter->Update(Time::DeltaTimeF);
 		}
 
@@ -71,10 +72,17 @@ public:
 			if (emitter->destroyed == false) return;
 		}
 
-		Destroy();
+		//Destroy();
 
 		UpdateDestroyDelay();
 
+	}
+
+
+	void SetTrailTransform(const vec3& start, const vec3 end)
+	{
+		Rotation = MathHelper::FindLookAtRotation(start, end);
+		Position = (start + end) * 0.5f;
 	}
 
 	static void PreloadSystemAssets(string name)

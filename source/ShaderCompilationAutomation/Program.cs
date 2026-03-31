@@ -2,160 +2,150 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 class ShaderCompiler
 {
     static void Main(string[] args)
     {
-        // Path to shaderc.exe (assumed in the same folder as this program)
         string shadercPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "shaderc.exe");
-        if (!File.Exists(shadercPath))
-        {
-            Console.WriteLine("ERROR: shaderc.exe not found!");
-            return;
-        }
+        if (!File.Exists(shadercPath)) { Console.WriteLine("ERROR: shaderc.exe not found!"); return; }
 
-        // Input folder containing .sc files
         string inputFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "source");
-        if (!Directory.Exists(inputFolder))
-        {
-            Console.WriteLine("ERROR: source folder not found!");
-            return;
-        }
+        if (!Directory.Exists(inputFolder)) { Console.WriteLine("ERROR: source folder not found!"); return; }
 
-        // Path to default varying.def.sc (root of source)
         string varyingDefPath = Path.Combine(inputFolder, "varying.def.sc");
-        if (!File.Exists(varyingDefPath))
-        {
-            Console.WriteLine("ERROR: varying.def.sc not found in source folder!");
-            return;
-        }
+        if (!File.Exists(varyingDefPath)) { Console.WriteLine("ERROR: varying.def.sc not found in source folder!"); return; }
 
-        // Local helper: find nearest varying.def.sc starting from shader dir and walking up to inputFolder.
         string FindNearestVarying(string shaderDir)
         {
-            if (string.IsNullOrEmpty(shaderDir))
-                return varyingDefPath;
-
+            if (string.IsNullOrEmpty(shaderDir)) return varyingDefPath;
             string rootFull = Path.GetFullPath(inputFolder).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
             string dir = Path.GetFullPath(shaderDir).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-
             while (!string.IsNullOrEmpty(dir))
             {
                 string candidate = Path.Combine(dir, "varying.def.sc");
-                if (File.Exists(candidate))
-                    return candidate;
-
-                // Stop if we've reached the source root
-                if (string.Equals(dir, rootFull, StringComparison.OrdinalIgnoreCase))
-                    break;
-
+                if (File.Exists(candidate)) return candidate;
+                if (string.Equals(dir, rootFull, StringComparison.OrdinalIgnoreCase)) break;
                 DirectoryInfo? parent = Directory.GetParent(dir);
-                if (parent == null)
-                    break;
-
+                if (parent == null) break;
                 dir = parent.FullName.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
             }
-
-            // fallback to default root varying.def.sc
             return varyingDefPath;
         }
 
-        // Output base folder
         string outputBase = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "compiled");
 
-        // Platforms/backends
-        var targets = new (string folder, string platform, string type, string vertexProfile, string fragmentProfile)[]
+        // -----------------------------------------------------------------------
+        // Shader types that produce DIFFERENT binaries per platform.
+        // Everything else is compiled once for the first target in its group
+        // and the resulting .bin is copied to all other matching platform folders.
+        // -----------------------------------------------------------------------
+        var platformSpecificTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
-            // -------------------
-            // Windows
-            // -------------------
-            ("windows/dx11",  "windows", "dx11",  "s_5_0",   "s_5_0"),
-            ("windows/dx12",  "windows", "dx12",  "s_5_0",   "s_5_0"),
-            ("windows/gl",    "windows", "gl",    "140",     "140"),
-            ("windows/spirv", "windows", "spirv", "spirv",   "spirv"),
-
-            // -------------------
-            // Linux
-            // -------------------
-            ("linux/gl",    "linux", "gl",    "140",   "140"),
-            ("linux/spirv", "linux", "spirv", "spirv", "spirv"),
-
-            // -------------------
-            // Web
-            // -------------------
-            ("web/gles",  "html5", "glsl",  "300_es", "300_es"),
-            ("web/spirv", "html5", "spirv", "spirv",  "spirv"),
+            // nothing here currently — all types produce platform-independent output
         };
 
-        // Find all .sc files recursively, excluding varying.def.sc
+        var targets = new (string folder, string platform, string type, string vertexProfile, string fragmentProfile)[]
+        {
+            // Windows — dx12 shares the dx11 binary
+            ("windows/dx11",  "windows", "dx11",  "s_5_0",  "s_5_0"),
+            ("windows/dx12",  "windows", "dx11",  "s_5_0",  "s_5_0"),  // ← same type key as above
+            ("windows/gl",    "windows", "gl",    "140",    "140"),
+            ("windows/spirv", "windows", "spirv", "spirv",  "spirv"),
+            // Linux
+            ("linux/gl",      "linux",   "gl",    "140",    "140"),
+            ("linux/spirv",   "linux",   "spirv", "spirv",  "spirv"),
+            // Web
+            ("web/gles",      "html5",   "glsl",  "300_es", "300_es"),
+            ("web/spirv",     "html5",   "spirv", "spirv",  "spirv"),
+        };
+
+        // Group targets whose (type + profiles) produce identical output.
+        // Platform-independent types share a single compile job; others get one job each.
+        var targetGroups = targets
+            .GroupBy(t => (t.type, t.vertexProfile, t.fragmentProfile))
+            .ToList();
+
         string[] shaderFiles = Directory.GetFiles(inputFolder, "*.sc", SearchOption.AllDirectories);
 
-        // Build the full list of compile jobs
-        var jobs = new List<(string shaderFile, string shaderName, string relativeDir, (string folder, string platform, string type, string vertexProfile, string fragmentProfile) target)>();
+        // Separate compile jobs from copy jobs up front
+        var compileJobs = new List<(
+            string shaderFile,
+            string shaderName,
+            string relativeDir,
+            (string folder, string platform, string type, string vertexProfile, string fragmentProfile) target)>();
+
+        var copyJobs = new List<(
+            string shaderFile,
+            string shaderName,
+            string relativeDir,
+            (string folder, string platform, string type, string vertexProfile, string fragmentProfile) sourceTarget,
+            (string folder, string platform, string type, string vertexProfile, string fragmentProfile) destTarget)>();
 
         foreach (var shaderFile in shaderFiles)
         {
             string shaderName = Path.GetFileName(shaderFile);
+            if (shaderName.Equals("varying.def.sc", StringComparison.OrdinalIgnoreCase)) continue;
 
-            // Skip varying definition file
-            if (shaderName.Equals("varying.def.sc", StringComparison.OrdinalIgnoreCase))
-                continue;
-
-            // Determine shader type by prefix
-            string typeFlag;
-            if (shaderName.StartsWith("vs_")) typeFlag = "v";
-            else if (shaderName.StartsWith("fs_")) typeFlag = "f";
-            else if (shaderName.StartsWith("cs_")) typeFlag = "c";
-            else
+            if (!shaderName.StartsWith("vs_") && !shaderName.StartsWith("fs_") && !shaderName.StartsWith("cs_"))
             {
                 Console.WriteLine($"WARNING: Cannot determine shader type for {shaderName}, skipping.");
                 continue;
             }
 
-            // Preserve subfolder structure in output by computing relative path from inputFolder
             string relativeDir = Path.GetRelativePath(inputFolder, Path.GetDirectoryName(shaderFile)!);
 
-            foreach (var target in targets)
-                jobs.Add((shaderFile, shaderName, relativeDir, target));
+            foreach (var group in targetGroups)
+            {
+                var groupTargets = group.ToList();
+                bool isPlatformSpecific = platformSpecificTypes.Contains(group.Key.type);
+
+                if (isPlatformSpecific)
+                {
+                    // Each platform target gets its own compile job
+                    foreach (var t in groupTargets)
+                        compileJobs.Add((shaderFile, shaderName, relativeDir, t));
+                }
+                else
+                {
+                    // Compile once against the first target, copy the result to the rest
+                    var primary = groupTargets[0];
+                    compileJobs.Add((shaderFile, shaderName, relativeDir, primary));
+                    foreach (var other in groupTargets.Skip(1))
+                        copyJobs.Add((shaderFile, shaderName, relativeDir, primary, other));
+                }
+            }
         }
 
-        Console.WriteLine($"Compiling {shaderFiles.Length} shader(s) across {targets.Length} target(s) = {jobs.Count} total jobs...\n");
+        Console.WriteLine($"Found {shaderFiles.Length} shader file(s).");
+        Console.WriteLine($"Compile jobs : {compileJobs.Count}");
+        Console.WriteLine($"Copy jobs    : {copyJobs.Count}\n");
 
-        // Track results thread-safely
-        int succeeded = 0;
-        int failed = 0;
+        int succeeded = 0, failed = 0, copied = 0, copySkipped = 0;
         object consoleLock = new object();
 
-        // Run all jobs in parallel (capped at logical CPU count)
+        // ── Phase 1: compile ────────────────────────────────────────────────────
         Parallel.ForEach(
-            jobs,
+            compileJobs,
             new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount },
             job =>
             {
                 var (shaderFile, shaderName, relativeDir, target) = job;
 
-                // Mirror subfolder structure: compiled/<target.folder>/<relativeDir>/
                 string subPath = relativeDir == "." ? target.folder : Path.Combine(target.folder, relativeDir);
                 string outDir = Path.Combine(outputBase, subPath);
                 Directory.CreateDirectory(outDir);
 
                 string outFile = Path.Combine(outDir, Path.GetFileNameWithoutExtension(shaderFile) + ".bin");
-
-                string typeFlag = shaderName.StartsWith("vs_") ? "v"
-                                : shaderName.StartsWith("fs_") ? "f"
-                                : "c";
-
+                string typeFlag = shaderName.StartsWith("vs_") ? "v" : shaderName.StartsWith("fs_") ? "f" : "c";
                 string profile = (typeFlag == "v") ? target.vertexProfile : target.fragmentProfile;
-
-                // Find nearest varying.def.sc for this shader (search shader folder -> parent -> ... -> source root)
-                string shaderDir = Path.GetDirectoryName(shaderFile)!;
-                string varyingToUse = FindNearestVarying(shaderDir);
+                string varyingToUse = FindNearestVarying(Path.GetDirectoryName(shaderFile)!);
 
                 string argsStr = $"-f \"{shaderFile}\" -o \"{outFile}\" --type {typeFlag} " +
-                                    $"--platform {target.platform} --profile {profile} " +
-                                    $"--varyingdef \"{varyingToUse}\"";
+                                 $"--platform {target.platform} --profile {profile} " +
+                                 $"--varyingdef \"{varyingToUse}\"";
 
                 var stdoutLines = new List<string>();
                 var stderrLines = new List<string>();
@@ -178,25 +168,57 @@ class ShaderCompiler
 
                 bool ok = proc.ExitCode == 0;
 
-                // Print output atomically so lines from parallel jobs don't interleave
                 lock (consoleLock)
                 {
                     if (ok)
                     {
-                        Console.WriteLine($"[OK]     {target.folder} -> {Path.GetRelativePath(outputBase, outFile)} (varying: {Path.GetRelativePath(inputFolder, varyingToUse)})");
+                        Console.WriteLine($"[COMPILED] {target.folder} -> {Path.GetRelativePath(outputBase, outFile)} (varying: {Path.GetRelativePath(inputFolder, varyingToUse)})");
                         succeeded++;
                     }
                     else
                     {
-                        Console.WriteLine($"[FAILED] {target.folder} -> {shaderName} (varying: {Path.GetRelativePath(inputFolder, varyingToUse)})");
-                        foreach (var line in stdoutLines) Console.WriteLine($"         {line}");
-                        foreach (var line in stderrLines) Console.WriteLine($"         {line}");
+                        Console.WriteLine($"[FAILED]   {target.folder} -> {shaderName} (varying: {Path.GetRelativePath(inputFolder, varyingToUse)})");
+                        foreach (var line in stdoutLines) Console.WriteLine($"           {line}");
+                        foreach (var line in stderrLines) Console.WriteLine($"           {line}");
                         failed++;
                     }
                 }
             });
 
-        Console.WriteLine($"\nShader compilation done!  {succeeded} succeeded, {failed} failed.");
+        // ── Phase 2: copy ───────────────────────────────────────────────────────
+        Parallel.ForEach(
+            copyJobs,
+            new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount },
+            job =>
+            {
+                var (shaderFile, shaderName, relativeDir, sourceTarget, destTarget) = job;
+
+                string srcSubPath = relativeDir == "." ? sourceTarget.folder : Path.Combine(sourceTarget.folder, relativeDir);
+                string srcFile = Path.Combine(outputBase, srcSubPath, Path.GetFileNameWithoutExtension(shaderFile) + ".bin");
+
+                string dstSubPath = relativeDir == "." ? destTarget.folder : Path.Combine(destTarget.folder, relativeDir);
+                string dstDir = Path.Combine(outputBase, dstSubPath);
+                string dstFile = Path.Combine(dstDir, Path.GetFileNameWithoutExtension(shaderFile) + ".bin");
+
+                lock (consoleLock)
+                {
+                    if (File.Exists(srcFile))
+                    {
+                        Directory.CreateDirectory(dstDir);
+                        File.Copy(srcFile, dstFile, overwrite: true);
+                        Console.WriteLine($"[COPIED]   {sourceTarget.folder} -> {destTarget.folder}/{Path.GetFileName(dstFile)}");
+                        copied++;
+                    }
+                    else
+                    {
+                        // Source failed to compile — nothing to copy
+                        Console.WriteLine($"[SKIPPED]  {destTarget.folder} -> {shaderName} (source compile failed)");
+                        copySkipped++;
+                    }
+                }
+            });
+
+        Console.WriteLine($"\nShader compilation done!  {succeeded} compiled, {copied} copied, {failed} failed, {copySkipped} copies skipped.");
         Console.ReadLine();
     }
 }

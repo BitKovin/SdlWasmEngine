@@ -58,6 +58,8 @@ public:
 		Transparent = true;
 	}
 
+	mat4 RelativeTransform = glm::identity<mat4>();
+
 	void Start()
 	{
 		std::lock_guard<std::recursive_mutex> lock(particlesMutex);
@@ -119,10 +121,10 @@ public:
 	std::vector<Particle> Particles;
 	std::recursive_mutex particlesMutex;
 
-	int currentId;
-	float elapsedTime;
-	bool Emitting;
-	bool destroyed;
+	int currentId = -1;
+	float elapsedTime = 0;
+	bool Emitting = true;
+	bool destroyed = false;
 
 	int InitialSpawnCount;
 	float Duration;
@@ -131,7 +133,7 @@ public:
 	glm::vec3 Rotation = vec3(0);
 	glm::vec3 Scale = vec3(1);
 
-	bool isDecal;
+	bool isDecal = false;
 
 	string texture = "";
 

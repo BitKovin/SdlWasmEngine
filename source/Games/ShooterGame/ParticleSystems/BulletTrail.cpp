@@ -1,11 +1,11 @@
 #include <Particle/ParticleSystem.hpp>
 #include <Particle/RibbonEmitter.h>
 
-class TrailEmitter : public RibbonEmitter
+class BulletTrailEmitter : public RibbonEmitter
 {
 public:
 
-	TrailEmitter() : RibbonEmitter()
+	BulletTrailEmitter() : RibbonEmitter()
 	{
 		texture = "GameData/textures/particles/trail.png";
 		SpawnRate = 100;
@@ -43,7 +43,7 @@ class BulletTrail : public ParticleSystem
 public:
 	BulletTrail()
 	{
-		emitters.push_back(new TrailEmitter());
+		emitters.push_back(new BulletTrailEmitter());
 	}
 
 

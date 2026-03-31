@@ -64,6 +64,7 @@ void Player::Start()
 	hitbox->SetMotionType(JPH::EMotionType::Kinematic);
 	Physics::ExcludedDrawBodies.insert(hitbox);
 
+	PreloadEntityType("weapon_sword");
 	PreloadEntityType("weapon_pistol");
 	PreloadEntityType("weapon_shotgun");
 	PreloadEntityType("weapon_tommy");
@@ -144,14 +145,14 @@ void Player::Start()
 	else
 	{
 		// Slots mode - use original system
-		AddWeaponByName("weapon_pistol");
+		AddWeaponByName("weapon_sword");
 		AddWeaponByName("weapon_shotgun");
 		AddWeaponByName("weapon_mpsd");
 		AddWeaponByName("weapon_sniper");
 
 		// Offhand weapons for slots mode
 		offhandWeapons.push_back("weapon_cane");
-		desiredOffhandWeapon = 2;
+		desiredOffhandWeapon = 0;
 	}
 
 	cameraRotation.y = Rotation.y;
@@ -1377,23 +1378,27 @@ void Player::UpdateWeapon()
 
 		}
 
-		disableOffhandWeapon = firearm->akimbo 
+		disableOffhandWeapon = firearm->akimbo
 			|| (currentWeapon && currentWeapon->SupportsOffhandWeapon == false);
+	}
 
-		vec3 relativeWeaponPos = vec3();
+	vec3 relativeWeaponPos = vec3();
 
-		vec3 currentWeaponRunRotation = lerp(vec3(), weaponRunRotation, RunProgress);
+	vec3 currentWeaponRunRotation = lerp(vec3(), weaponRunRotation, RunProgress);
 
-		vec3 rotatedWeaponPos = MathHelper::RotateAroundPoint(relativeWeaponPos, runRotatePoint, currentWeaponRunRotation);
+	vec3 rotatedWeaponPos = MathHelper::RotateAroundPoint(relativeWeaponPos, runRotatePoint, currentWeaponRunRotation);
 
-		glm::quat qCurrent = MathHelper::GetRotationQuaternion(lerp(cameraRotation, Camera::rotation, 0.75f));
-		glm::quat qAdd = MathHelper::GetRotationQuaternion(currentWeaponRunRotation);
+	glm::quat qCurrent = MathHelper::GetRotationQuaternion(lerp(cameraRotation, Camera::rotation, 0.75f));
+	glm::quat qAdd = MathHelper::GetRotationQuaternion(currentWeaponRunRotation);
 
-		glm::quat qResult = qCurrent * qAdd;
+	glm::quat qResult = qCurrent * qAdd;
 
-		rotatedWeaponPos -= mix(vec3(), vec3(-0.05f, 0.02, 0.05), RunProgress);
+	rotatedWeaponPos -= mix(vec3(), vec3(-0.05f, 0.02, 0.05), RunProgress);
 
-		vec3 scaledBob = bob * mix(vec3(1), vec3(2.5, 2.2f, 2.2f), RunProgress);
+	vec3 scaledBob = bob * mix(vec3(1), vec3(2.5, 2.2f, 2.2f), RunProgress);
+
+	if (currentWeapon)
+	{
 
 		currentWeapon->HideWeapon = (currentOffhandWeapon != nullptr) ? 1.0f : bike_progress;
 		currentWeapon->Position = MathHelper::TransformVector(rotatedWeaponPos, Camera::GetMatrix()) + MathHelper::TransformVector(scaledBob, Camera::GetRotationMatrix()) * currentWeapon->bobScale;
@@ -1403,8 +1408,8 @@ void Player::UpdateWeapon()
 		{
 			observationTarget->tags.insert("illegal_weapon");
 		}
-
 	}
+
 
 	if (currentOffhandWeapon != nullptr)
 	{
