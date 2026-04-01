@@ -51,7 +51,7 @@ public:
 
 	bool onGround = false;
 
-	float cameraHeightStanding = 1.7f;
+	float cameraHeightStanding = 1.6f;
 	float cameraHeightCrouching = 0.8f;
 	float crouchHeight = 0.80f;
 

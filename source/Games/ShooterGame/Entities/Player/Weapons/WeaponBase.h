@@ -48,6 +48,7 @@ public:
 	bool ForceFirstPerson = false;
 
 	bool Parrying = false;
+	bool Blocking = false;
 
 	bool SupportsOffhandWeapon = true;
 

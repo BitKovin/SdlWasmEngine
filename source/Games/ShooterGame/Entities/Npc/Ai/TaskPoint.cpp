@@ -55,7 +55,7 @@ void TaskPoint::NpcUpdate(NpcBase* npc)
 void TaskPoint::NpcInterrupted(NpcBase* npc)
 {
     //Logger::Log("npc interrupted task");
-    npc->animator.StopTaskAnimation();
+    npc->animator->StopTaskAnimation();
     
     TaskState& s = npc->GetTaskStateRef();
     s.HasToLockPosition = false;
@@ -97,12 +97,12 @@ void TaskPoint::MoveNpcTo(NpcBase* npc, vec3 target, float radius)
 
 void TaskPoint::PlayTaskAnimation(NpcBase* npc, std::string anim, bool loop)
 {
-    npc->animator.PlayTaskAnimation(anim, loop);
+    npc->animator->PlayTaskAnimation(anim, loop);
 }
 
 void TaskPoint::StopTaskAnimation(NpcBase* npc)
 {
-    npc->animator.StopTaskAnimation();
+    npc->animator->StopTaskAnimation();
 }
 
 void TaskPoint::NpcTryInterrupt(NpcBase* npc)

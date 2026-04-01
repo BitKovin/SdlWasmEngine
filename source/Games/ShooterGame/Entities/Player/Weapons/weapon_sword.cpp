@@ -41,6 +41,8 @@ public:
 	SoundPlayer* fireSoundPlayer2 = nullptr;
 	SoundPlayer* hitSoundPlayer = nullptr;
 
+	Delay blockStartDelay;
+
 	weapon_sword()
 	{
 		LateUpdateWhenPaused = true;
@@ -96,8 +98,8 @@ public:
 	void StartNewTrail()
 	{
 		trail = new particle_system_meleeTrail();
-		vec3 trailStart = viewmodel->GetBoneMatrix("trail_start")[3];
-		vec3 trailEnd = viewmodel->GetBoneMatrix("trail_end")[3];
+		vec3 trailStart = viewmodel->GetBoneMatrixWorld("trail_start")[3];
+		vec3 trailEnd = viewmodel->GetBoneMatrixWorld("trail_end")[3];
 
 		trail->SetTrailTransform(trailStart, trailEnd);
 		trail->Start();
@@ -121,11 +123,11 @@ public:
 		if (trail == nullptr) return;
 
 		// Anchor the trail to camera space so it follows the viewmodel correctly
-		trail->RelativeTransform = Camera::GetMatrix();
+		//trail->RelativeTransform = Camera::GetMatrix();
 
 		// Feed the two blade endpoints from the animated skeleton
-		vec3 trailStart = viewmodel->GetBoneMatrix("trail_start")[3];
-		vec3 trailEnd = viewmodel->GetBoneMatrix("trail_end")[3];
+		vec3 trailStart = viewmodel->GetBoneMatrixWorld("trail_start")[3];
+		vec3 trailEnd = viewmodel->GetBoneMatrixWorld("trail_end")[3];
 
 		trail->SetTrailTransform(trailStart, trailEnd);
 	}
@@ -241,13 +243,18 @@ public:
 
 	void StartBlock()
 	{
+
+		if (attackDelay.Wait()) return;
+
 		isBlocking = true;
 		pendingAttack = false;  // cancel any in-flight swing
 
 		viewmodel->PlayAnimation("block_start", false, 0.1f);
 
+		blockStartDelay.AddDelay(0.2f);
+
 		if(parrySpamWindow.Wait() == false)
-			parryWindow.AddDelay(0.4);
+			parryWindow.AddDelay(0.5);
 
 	}
 
@@ -259,6 +266,8 @@ public:
 		isBlocking = false;
 
 		viewmodel->PlayAnimation("block_end", false, 0.1f);
+
+		attackDelay.AddDelay(0.3f);
 	}
 
 	// Called by the engine when an enemy attack lands during a parry window
@@ -282,10 +291,10 @@ public:
 			StartAttack();
 
 		// Block: hold to block, release to lower guard
-		if (Input::GetAction("attack2")->Pressed() && !isBlocking)
+		if (Input::GetAction("block")->Holding() && !isBlocking)
 			StartBlock();
-
-		if (Input::GetAction("attack2")->Released() && isBlocking)
+			
+		if (Input::GetAction("block")->Holding() == false && isBlocking)
 			EndBlock();
 
 		// Resolve hit each frame while inside the valid window:
@@ -295,13 +304,23 @@ public:
 			PerformAttack();
 
 		Parrying = parryWindow.Wait();
-
+		Blocking = (isBlocking && blockStartDelay.Wait() == false) || parrySpamWindow.Wait();
 	}
 
 	void AsyncUpdate() override
 	{
 		viewmodel->Update();
-		arms->PasteAnimationPose(viewmodel->GetAnimationPose());
+
+		float hide = 1;
+
+		auto pose = viewmodel->GetAnimationPose();
+		auto leftHandPose = pose.GetBoneTransform("clavicle_l");
+		leftHandPose.Rotation += vec3(120, 0, 0) * hide;
+
+		leftHandPose.Scale *= mix(vec3(1.0f), vec3(0.0f), hide);
+
+		pose.SetBoneTransformEuler("clavicle_l", leftHandPose);
+		arms->PasteAnimationPose(pose);
 	}
 
 	void LateUpdate() override

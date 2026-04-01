@@ -17,9 +17,9 @@ public:
     {
         texture             = "GameData/textures/particles/trail.png";
         InitialSpawnCount   = 2;
-        SpawnRate           = 60;
+        SpawnRate           = 70;
         Emitting            = true;
-        IsViewmodel           = true;
+        IsViewmodel           = false;
     }
 
 

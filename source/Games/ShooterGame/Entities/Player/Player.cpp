@@ -152,7 +152,7 @@ void Player::Start()
 
 		// Offhand weapons for slots mode
 		offhandWeapons.push_back("weapon_cane");
-		desiredOffhandWeapon = 0;
+		desiredOffhandWeapon = 1;
 	}
 
 	cameraRotation.y = Rotation.y;
@@ -1646,7 +1646,7 @@ void Player::Update()
 
 	float lightLevel = LightVisibility::Compute(lightData);
 
-	printf("light level: %f \n", lightLevel);
+	//printf("light level: %f \n", lightLevel);
 
 	//Logger::Log("Voxel world memory: " + std::to_string(memMB) + " MB");
 

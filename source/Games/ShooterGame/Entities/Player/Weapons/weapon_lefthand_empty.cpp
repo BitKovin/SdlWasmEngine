@@ -39,7 +39,7 @@ public:
 
 		viewmodel->LoadFromFile("GameData/models/player/weapons/leftHand/empty.glb");
  
-		viewmodel->PlayAnimation("rest", true);
+		viewmodel->PlayAnimation("draw", false,0);
 		viewmodel->PreloadAssets();
 		viewmodel->Visible = false;
 
@@ -61,6 +61,11 @@ public:
 	{
 		viewmodel->Update();
 
+		if (viewmodel->IsAnimationPlaying() == false)
+		{
+			viewmodel->PlayAnimation("rest", true, 0.2f);
+		}
+
 		auto pose = viewmodel->GetAnimationPose();
 
 		arms->PasteAnimationPose(pose);
@@ -78,8 +83,9 @@ public:
 		{
 
 			WeaponFirearm* firearm = dynamic_cast<WeaponFirearm*>(Player::Instance->currentWeapon);
-
-			arms->Visible = firearm->akimbo == false;
+			
+			if(firearm)
+				arms->Visible = firearm->akimbo == false;
 		}
 
 		viewmodel->Position = Position + (mat3)Camera::GetRotationMatrix() * weaponOffset;

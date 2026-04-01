@@ -59,7 +59,7 @@ NpcBase::NpcBase()
 
 	mesh->UpdatePoseOnlyWhenRendered = true;
 
-	animator = NpcAnimatorBase(this);
+	animator = std::make_unique<NpcAnimatorBase>(this);
 
 	Tags.push_back("npc");
 	Tags.push_back(fractionTag);
@@ -78,7 +78,7 @@ void NpcBase::DoInterpolatedAnimationUpdate()
 void NpcBase::ProcessAnimationEvent(AnimationEvent& event)
 {
 
-	animator.UsePrecomputedFrames = false;
+	animator->UsePrecomputedFrames = false;
 	UpdateAnimations();
 
 }
@@ -461,7 +461,14 @@ void NpcBase::AsyncUpdate()
 
 	vec3 curMove = MathHelper::XZ(controller->GetVelocity());
 
-	if (isStunned() || mesh->InRagdoll)
+
+	if (IsPlayingRootMotionAnimation())
+	{
+
+		controller->SetVelocity(vec3(0, controller->GetVelocity().y, 0));
+
+	}
+	else if (isStunned() || mesh->InRagdoll)
 	{
 
 		UpdateStunnedReturn();
@@ -572,6 +579,7 @@ void NpcBase::AsyncUpdate()
 
 
 
+
 	UpdateAnimations();
 	UpdateReturnFromRagdoll();
 
@@ -614,7 +622,7 @@ void NpcBase::UpdateWeaponMesh()
 
 	weaponMesh->Visible = false;
 
-	if (animator.weapon_holds == false && animator.weapon_ready == false && animator.weapon_aims == false) return;
+	if (animator->weapon_holds == false && animator->weapon_ready == false && animator->weapon_aims == false) return;
 
 	if (taskState.AllowWeapon == false && DoingTask)
 	{
@@ -1342,6 +1350,11 @@ void NpcBase::UpdateTargetFollow()
 
 }
 
+bool NpcBase::IsPlayingRootMotionAnimation()
+{
+	return false;
+}
+
 void NpcBase::UpdateTargetAttack()
 {
 
@@ -1361,10 +1374,6 @@ void NpcBase::UpdateTargetAttack()
 
 	spineRotation = mix(spineRotation, desiredSpineRotation, Time::DeltaTimeF * 10);
 
-	if (auto stateRef = GetSimulationStateRef())
-	{
-		stateRef->dead = true;
-	}
 
 
 	if (target_attack && target_follow && target_sees)
@@ -1403,7 +1412,7 @@ void NpcBase::UpdateTargetAttack()
 		return;
 	}
 
-	animator.weapon_pendingAttack = true;
+	animator->weapon_pendingAttack = true;
 	attackDelay.AddDelay(0.5f + RandomHelper::RandomFloat() * 0.1f);
 
 	auto targetRef = Level::Current->FindEntityWithId(target_id);
@@ -1790,16 +1799,16 @@ void NpcBase::UpdateAnimations(bool forceFullUpdate)
 
 	if (isGuard)
 	{
-		animator.weapon_holds = target_underArrest && !isStunned();
-		animator.weapon_ready = target_follow && target_underArrest && !isStunned();
-		animator.weapon_aims = target_attack && animator.weapon_ready && target_attackInRange && !isStunned();
+		animator->weapon_holds = target_underArrest && !isStunned();
+		animator->weapon_ready = target_follow && target_underArrest && !isStunned();
+		animator->weapon_aims = target_attack && animator->weapon_ready && target_attackInRange && !isStunned();
 
-		animator.spineRotation = spineRotation;
+		animator->spineRotation = spineRotation;
 
 	}
 	else
 	{
-		animator.scared = (target_follow && target_attack) || (report_to_guard && currentInvestigation <= InvestigationReason::WeaponFire) || (report_to_guard && found_guard == false);
+		animator->scared = (target_follow && target_attack) || (report_to_guard && currentInvestigation <= InvestigationReason::WeaponFire) || (report_to_guard && found_guard == false);
 	}
 
 	if (EngineMain::MainInstance->SimulatingGameTicks)
@@ -1807,21 +1816,21 @@ void NpcBase::UpdateAnimations(bool forceFullUpdate)
 
 	if (mesh->WasRended || forceFullUpdate)
 	{
-		animator.UpdatePose = mesh->WasRended && mesh->InRagdoll == false || forceFullUpdate;
+		animator->UpdatePose = mesh->WasRended && mesh->InRagdoll == false || forceFullUpdate;
 
 		if (controller != nullptr)
 		{
-			animator.movementSpeed = length(controller->GetVelocity());
+			animator->movementSpeed = length(controller->GetVelocity());
 		}
 
-		animator.Update();
+		animator->Update();
 
-		auto pose = animator.GetResultPose();
+		auto pose = animator->GetResultPose();
 
 		mesh->PasteAnimationPose(pose);
 	}
 	if (forceFullUpdate == false)
-		animator.UsePrecomputedFrames = true;
+		animator->UsePrecomputedFrames = true;
 
 }
 
@@ -1847,7 +1856,7 @@ void NpcBase::LoadAssets()
 	getFromRagdollAnimation = new Animation(this);
 	getFromRagdollAnimation->LoadFromFile("GameData/animations/npc/standUp.glb");
 
-	animator.LoadAssetsIfNeeded();
+	animator->LoadAssetsIfNeeded();
 
 	//mesh->ColorTexture = AssetRegistry::GetTextureFromFile("GameData/cat.png");
 
@@ -2178,7 +2187,7 @@ void NpcBase::Serialize(json& target)
 
 	AnimationState taskAnimationState;
 
-	taskAnimationState = animator.taskAnimation->GetAnimationState();
+	taskAnimationState = animator->taskAnimation->GetAnimationState();
 
 	SERIALIZE_FIELD(target, taskAnimationState);
 
@@ -2332,8 +2341,8 @@ void NpcBase::Deserialize(json& source)
 	AnimationState taskAnimationState;
 	DESERIALIZE_FIELD(source, taskAnimationState);
 
-	if(animator.taskAnimation)
-		animator.taskAnimation->SetAnimationState(taskAnimationState);
+	if(animator->taskAnimation)
+		animator->taskAnimation->SetAnimationState(taskAnimationState);
 
 	DESERIALIZE_FIELD(source, DoingTask);
 	DESERIALIZE_FIELD(source, DoingTaskOld);
@@ -2358,7 +2367,7 @@ void NpcBase::Deserialize(json& source)
 		target_id = "";
 		target_attack = false;
 		target_follow = false;
-		animator.taskAnimation->StopAnimation();
+		animator->taskAnimation->StopAnimation();
 
 		UpdateObserver();
 	}

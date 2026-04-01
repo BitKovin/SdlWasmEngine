@@ -1,9 +1,9 @@
 {
     "blackboard": {
         "attackPosition": [
-            0.0,
-            0.0,
-            0.0
+            -0.35582423210144043,
+            1.429998755455017,
+            10.008906364440918
         ],
         "closestGuard": "",
         "flee_target": [
@@ -15,39 +15,39 @@
         "has_navpoint": true,
         "investigation": false,
         "investigation_target": [
-            0.0,
-            0.0,
-            0.0
+            0.10116743296384811,
+            2.2322919368743896,
+            6.850614070892334
         ],
-        "isGuard": false,
+        "isGuard": true,
         "navpoint_acceptance_radius": 0.0,
         "navpoint_has_wait_time": false,
         "navpoint_name": "np_0_0",
         "navpoint_wait_time": 0.0,
         "report_to_guard": false,
         "stunned": false,
-        "target": "$info_player_start_0",
-        "target_attack": false,
+        "target": "$player_0",
+        "target_attack": true,
         "target_attackInRange": false,
-        "target_follow": false,
-        "target_id": "",
-        "target_knowsLocation": false,
+        "target_follow": true,
+        "target_id": "$player_0",
+        "target_knowsLocation": true,
         "target_lastSeenPosition": [
-            0.0,
-            0.0,
-            0.0
+            -4.231084823608398,
+            1.429998755455017,
+            22.585912704467773
         ],
-        "target_sees": false,
-        "target_underArrest": false,
-        "task_acceptanceRadius": 0.30000001192092896,
+        "target_sees": true,
+        "target_underArrest": true,
+        "task_acceptanceRadius": 0.0,
         "task_acceptance_radius": 0.30000001192092896,
         "task_canBeCanceled": true,
         "task_doingJob": false,
-        "task_move": true,
+        "task_move": false,
         "task_moveLocation": [
-            -1.5,
-            1.0,
-            4.0
+            0.0,
+            0.0,
+            0.0
         ],
         "task_setOrientation": false
     },
@@ -391,7 +391,7 @@
                                                                                                                     {
                                                                                                                         "acceptance radius": {
                                                                                                                             "sourceType": 0,
-                                                                                                                            "value": 10.0
+                                                                                                                            "value": 3.0
                                                                                                                         },
                                                                                                                         "children": [],
                                                                                                                         "id": "node_a7ed1a08d5a764f5",
@@ -743,7 +743,7 @@
                                         "children": [
                                             {
                                                 "children": [],
-                                                "id": "node_76e24e4c7d54ec97",
+                                                "id": "node_263592a0a4e20367",
                                                 "name": "Task Not Doing",
                                                 "type": "Task_NotDoing"
                                             },
@@ -753,7 +753,7 @@
                                                     "value": 2.0
                                                 },
                                                 "children": [],
-                                                "id": "node_4033b312e4098716",
+                                                "id": "node_9f912af2afc709a6",
                                                 "name": "Move To Position",
                                                 "pretty path": {
                                                     "sourceType": 0,
@@ -767,12 +767,12 @@
                                             },
                                             {
                                                 "children": [],
-                                                "id": "node_7c982ceebf9cf512",
+                                                "id": "node_c839e09befbf42c2",
                                                 "name": "Finish Investigation",
                                                 "type": "FinishInvestigation"
                                             }
                                         ],
-                                        "id": "node_9627a82bb2f93729",
+                                        "id": "node_78b1104589d79e59",
                                         "name": "Sequence",
                                         "type": "SequenceNode"
                                     }
@@ -785,7 +785,7 @@
                                     "sourceType": 0,
                                     "value": false
                                 },
-                                "id": "node_1c4947c2fcee517d",
+                                "id": "node_911fb048029cb0c5",
                                 "inverse": false,
                                 "inverse finish before stop": false,
                                 "name": "investigation",
@@ -797,7 +797,7 @@
                                         "children": [
                                             {
                                                 "children": [],
-                                                "id": "node_b0d785f26677b6bb",
+                                                "id": "node_4752b56fac9cdc04",
                                                 "name": "Task Doing",
                                                 "type": "Task_Doing"
                                             },
@@ -815,7 +815,7 @@
                                                                                     "sourceType": 1
                                                                                 },
                                                                                 "children": [],
-                                                                                "id": "node_9d2550f49b7b1745",
+                                                                                "id": "node_9d2aac5d8ccedda0",
                                                                                 "name": "Move To Position",
                                                                                 "pretty path": {
                                                                                     "sourceType": 0,
@@ -829,18 +829,18 @@
                                                                             },
                                                                             {
                                                                                 "children": [],
-                                                                                "id": "node_b6093a06f5772ad3",
+                                                                                "id": "node_1c4176fa2ea6feb4",
                                                                                 "name": "Set Look Target From Current NavPoint",
                                                                                 "type": "SetLookTargetFromCurrentNavPoint"
                                                                             },
                                                                             {
                                                                                 "children": [],
-                                                                                "id": "node_3af419ca0476a6a3",
+                                                                                "id": "node_45bc938b7c7311aa",
                                                                                 "name": "Task Destination Reached",
                                                                                 "type": "TaskDestinationReached"
                                                                             }
                                                                         ],
-                                                                        "id": "node_7276298fea942f8a",
+                                                                        "id": "node_7797996621461697",
                                                                         "name": "Sequence",
                                                                         "type": "SequenceNode"
                                                                     }
@@ -853,14 +853,14 @@
                                                                     "sourceType": 0,
                                                                     "value": false
                                                                 },
-                                                                "id": "node_4c5c7b0cbec2203f",
+                                                                "id": "node_d6067ec967f882f6",
                                                                 "inverse": false,
                                                                 "inverse finish before stop": false,
                                                                 "name": "should move?",
                                                                 "type": "ConditionalDecorator"
                                                             }
                                                         ],
-                                                        "id": "node_97aee87e33aeea36",
+                                                        "id": "node_7f930ae62041f7bb",
                                                         "inverse": {
                                                             "sourceType": 0,
                                                             "value": false
@@ -881,14 +881,14 @@
                                                     "blackboardKey": "task_canBeCanceled",
                                                     "sourceType": 1
                                                 },
-                                                "id": "node_61bc60839592e9c9",
+                                                "id": "node_cf97f38ac8fc71d8",
                                                 "inverse": false,
                                                 "inverse finish before stop": true,
                                                 "name": "Conditional",
                                                 "type": "ConditionalDecorator"
                                             }
                                         ],
-                                        "id": "node_baa5050516008189",
+                                        "id": "node_c4b83225f03bf65e",
                                         "name": "Sequence",
                                         "type": "SequenceNode"
                                     }

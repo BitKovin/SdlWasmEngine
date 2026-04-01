@@ -311,6 +311,8 @@ GameStart::GameStart()
 
     Input::AddAction("reload_shaders")->AddKeyboardKey(SDL_KeyCode::SDLK_F3);
 
+    Input::AddAction("block")->AddKeyboardKey(SDL_KeyCode::SDLK_LCTRL);
+
     Input::AddAction("slotMelee");// ->AddKeyboardKey(SDL_KeyCode::SDLK_f);
     Input::AddAction("interact")->AddKeyboardKey(SDL_KeyCode::SDLK_f);
 

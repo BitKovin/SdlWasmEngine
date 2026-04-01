@@ -243,6 +243,12 @@
     <ClCompile Include="Entities\Player\Weapons\weapon_sword.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Entities\Npc\NpcGuardMelee.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Entities\Npc\Animators\NpcMeleeAnimator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Entities\Player\Player.hpp">
@@ -396,6 +402,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ParticleSystems\particle_system_meleeTrail.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Entities\Npc\Animators\NpcMeleeAnimator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

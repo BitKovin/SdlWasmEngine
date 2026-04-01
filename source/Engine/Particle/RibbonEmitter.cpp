@@ -51,17 +51,25 @@ bool RibbonEmitter::RenderRibbon(const std::vector<Particle>& inParticles)
     if (SimpleRibbon)
         particles = { inParticles.front(), inParticles.back() };
 
-    const int      n        = static_cast<int>(particles.size());
-    const uint32_t vCount   = static_cast<uint32_t>(n * 2);
+    const int      n = static_cast<int>(particles.size());
+    const uint32_t vCount = static_cast<uint32_t>(n * 2);
     const uint32_t idxCount = static_cast<uint32_t>((n - 1) * 6);
 
     const bgfx::VertexLayout layout = VertexData::Declaration();
 
-    if (bgfx::getAvailTransientVertexBuffer(vCount,   layout) < vCount)   return false;
-    if (bgfx::getAvailTransientIndexBuffer (idxCount, true)   < idxCount) return false;
+    if (bgfx::getAvailTransientVertexBuffer(vCount, layout) < vCount)   return false;
+    if (bgfx::getAvailTransientIndexBuffer(idxCount, true) < idxCount) return false;
 
     verts.resize(vCount);
     GenerateIndices(idxs, n);
+
+    // Pre-compute arc-length at each knot
+    std::vector<float> arcLen(n, 0.0f);
+    for (int i = 1; i < n; ++i)
+        arcLen[i] = arcLen[i - 1] + glm::length(particles[i].position - particles[i - 1].position);
+
+    const float totalLen = arcLen[n - 1];
+    const float invLen = (totalLen > 0.0f) ? 1.0f / totalLen : 1.0f;
 
     const vec3 camPos = Camera::finalizedPosition;
 
@@ -75,26 +83,26 @@ bool RibbonEmitter::RenderRibbon(const std::vector<Particle>& inParticles)
             : glm::normalize(particles[i - 1].position - P);
 
         vec3 camFwd = glm::normalize(P - camPos);
-        vec3 perp   = glm::normalize(glm::cross(dir, camFwd));
+        vec3 perp = glm::normalize(glm::cross(dir, camFwd));
 
-        const float half  = p.Size * 0.5f;
-        const int   b     = i * 2;
-        const float u     = static_cast<float>(i) / static_cast<float>(n - 1);
+        const float half = p.Size * 0.5f;
+        const int   b = i * 2;
+        const float u = arcLen[i] * invLen;  // arc-length U
         const vec3  light = GetLightForParticle(p);
         const vec4  color = p.Color * vec4(light, 1.0f) * vec4(1.0f, 1.0f, 1.0f, p.Transparency);
-        const vec3  nrm   = vec3(0.0f, 1.0f, 0.0f);
+        const vec3  nrm = vec3(0.0f, 1.0f, 0.0f);
 
-        verts[b + 0].Position           = P + perp * half;
-        verts[b + 0].Normal             = nrm;
-        verts[b + 0].TextureCoordinate  = vec2(u, 0.0f);
-        verts[b + 0].Color              = color;
-        verts[b + 0].SmoothNormal       = nrm;
+        verts[b + 0].Position = P + perp * half;
+        verts[b + 0].Normal = nrm;
+        verts[b + 0].TextureCoordinate = vec2(u, 0.0f);
+        verts[b + 0].Color = color;
+        verts[b + 0].SmoothNormal = nrm;
 
-        verts[b + 1].Position           = P - perp * half;
-        verts[b + 1].Normal             = nrm;
-        verts[b + 1].TextureCoordinate  = vec2(u, 1.0f);
-        verts[b + 1].Color              = color;
-        verts[b + 1].SmoothNormal       = nrm;
+        verts[b + 1].Position = P - perp * half;
+        verts[b + 1].Normal = nrm;
+        verts[b + 1].TextureCoordinate = vec2(u, 1.0f);
+        verts[b + 1].Color = color;
+        verts[b + 1].SmoothNormal = nrm;
     }
 
     primitiveCount = static_cast<int>(idxCount) / 3;
@@ -102,11 +110,11 @@ bool RibbonEmitter::RenderRibbon(const std::vector<Particle>& inParticles)
     bgfx::TransientVertexBuffer tvb;
     bgfx::TransientIndexBuffer  tib;
 
-    bgfx::allocTransientVertexBuffer(&tvb, vCount,   layout);
-    bgfx::allocTransientIndexBuffer (&tib, idxCount, true);
+    bgfx::allocTransientVertexBuffer(&tvb, vCount, layout);
+    bgfx::allocTransientIndexBuffer(&tib, idxCount, true);
 
-    memcpy(tvb.data, verts.data(), vCount   * sizeof(VertexData));
-    memcpy(tib.data, idxs.data(),  idxCount * sizeof(uint32_t));
+    memcpy(tvb.data, verts.data(), vCount * sizeof(VertexData));
+    memcpy(tib.data, idxs.data(), idxCount * sizeof(uint32_t));
 
     bgfx::setVertexBuffer(0, &tvb);
     bgfx::setIndexBuffer(&tib);

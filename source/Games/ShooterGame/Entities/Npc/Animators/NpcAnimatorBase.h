@@ -6,7 +6,7 @@ class NpcAnimatorBase : public Animator
 {
 public:
 
-	NpcAnimatorBase(Entity* ownerEntity) : Animator(ownerEntity) {}
+	 NpcAnimatorBase(Entity* ownerEntity) : Animator(ownerEntity) {}
 
 	float movementSpeed = 0;
 

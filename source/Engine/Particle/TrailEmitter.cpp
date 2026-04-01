@@ -56,37 +56,36 @@ bool TrailEmitter::RenderRibbon(const std::vector<Particle>& inParticles)
 
     const bgfx::VertexLayout layout = VertexData::Declaration();
 
-    if (bgfx::getAvailTransientVertexBuffer(vCount, layout) < vCount)   return false;
+    if (bgfx::getAvailTransientVertexBuffer(vCount, layout) < vCount)  return false;
     if (bgfx::getAvailTransientIndexBuffer(idxCount, true) < idxCount) return false;
 
     verts.resize(vCount);
     GenerateIndices(idxs, n);
 
-    const vec3 camPos = Camera::finalizedPosition;
+    // Pre-compute arc-length at each knot
+    std::vector<float> arcLen(n, 0.0f);
+    for (int i = 1; i < n; ++i)
+        arcLen[i] = arcLen[i - 1] + glm::length(particles[i].position - particles[i - 1].position);
+
+    const float totalLen = arcLen[n - 1];
+    const float invLen = (totalLen > 0.0f) ? 1.0f / totalLen : 1.0f;
 
     for (int i = 0; i < n; ++i)
     {
-        const Particle& p = inParticles[i];
+        const Particle& p = particles[i];
         const vec3      P = p.position;
 
-        // Derive the particle's local forward vector from its rotation
-        // quaternion (+Z column of the rotation matrix).
-        // C# equivalent: particle.globalRotation.GetForwardVector()
         const vec3 forward = MathHelper::GetForwardVector(p.globalRotation);
 
-        const float half = p.Size * 0.5f;  // C# uses particle.Scale / 2
+        const float half = p.Size * 0.5f;
 
-        // "Top" and "bottom" edges of the ribbon strip at this knot.
-        // C# equivalent (before RelativeMatrix — omitted, see note above):
-        //   p1 = p + halfSize
-        //   p2 = p - halfSize
         vec3 p1 = P + forward * half;
         vec3 p2 = P - forward * half;
 
         p1 = MathHelper::TransformVector(p1, RelativeTransform);
         p2 = MathHelper::TransformVector(p2, RelativeTransform);
 
-        const float u = static_cast<float>(i) / static_cast<float>(n - 1);
+        const float u = arcLen[i] * invLen;
         const vec3  light = GetLightForParticle(p);
         const vec4  color = p.Color * vec4(light, 1.0f) * vec4(1.0f, 1.0f, 1.0f, p.Transparency);
         const vec3  nrm = vec3(0.0f, 1.0f, 0.0f);
@@ -158,7 +157,7 @@ void TrailEmitter::DrawForward(mat4x4 view, mat4x4 projection)
     shader->SetUniform("view", view);
     shader->SetUniform("projection", projection);
     shader->SetUniform("world", glm::identity<mat4>());
-    shader->SetUniform("isViewmodel", false);
+    shader->SetUniform("isViewmodel", IsViewmodel);
     shader->SetUniform("is_particle", true);
     shader->SetUniform("is_decal", false);
 

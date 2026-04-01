@@ -244,7 +244,7 @@ public:
 	bool DoingTask = true;
 	bool DoingTaskOld = true;
 
-	NpcAnimatorBase animator = 0;
+	std::unique_ptr<NpcAnimatorBase> animator = 0;
 
 	bool isGuard = true;
 
@@ -314,6 +314,8 @@ public:
 
 	void UpdateTargetFollow();
 
+	virtual bool IsPlayingRootMotionAnimation();
+
 	virtual void UpdateTargetAttack();//updates all attack behavior. Like performing attack and setting attack location. By default is ranged
 
 	class NpcSimulationState* GetSimulationStateRef();
@@ -360,9 +362,11 @@ public:
 	void StopTask();
 	void UpdateTask();
 
+	virtual void WarnAboutAttack(Entity* from){}
+
 protected:
 
-	void UpdateAnimations(bool forceFullUpdate = false);
+	virtual void UpdateAnimations(bool forceFullUpdate = false);
 
 	void LoadAssets();
 

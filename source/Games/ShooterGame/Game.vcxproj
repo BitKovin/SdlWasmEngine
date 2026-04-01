@@ -388,12 +388,14 @@
     <ClCompile Include="Entities\Npc\Ai\Task_PatrolPoint.cpp" />
     <ClCompile Include="Entities\Npc\Ai\Task_SmokePoint.cpp" />
     <ClCompile Include="Entities\Npc\Animators\NpcAnimatorBase.cpp" />
+    <ClCompile Include="Entities\Npc\Animators\NpcMeleeAnimator.cpp" />
     <ClCompile Include="Entities\Npc\NpcBanditTest.cpp" />
     <ClCompile Include="Entities\Npc\NpcBase.cpp" />
     <ClCompile Include="Entities\Npc\NpcCivilianBase.cpp" />
     <ClCompile Include="Entities\Npc\NpcGuardBase.cpp" />
     <ClCompile Include="Entities\Enemy\Enemies\NpcHelper.cpp" />
     <ClCompile Include="Entities\Enemy\Enemies\NpcHumanAxe.cpp" />
+    <ClCompile Include="Entities\Npc\NpcGuardMelee.cpp" />
     <ClCompile Include="Entities\Player\InventoryMenu.cpp" />
     <ClCompile Include="Entities\Player\Player.cpp" />
     <ClCompile Include="Entities\Player\Player_Mantle.cpp" />
@@ -451,6 +453,7 @@
     <ClInclude Include="Entities\Npc\Ai\TaskSimpleAction.h" />
     <ClInclude Include="Entities\Npc\Ai\TaskWaypoint.h" />
     <ClInclude Include="Entities\Npc\Animators\NpcAnimatorBase.h" />
+    <ClInclude Include="Entities\Npc\Animators\NpcMeleeAnimator.h" />
     <ClInclude Include="Entities\Npc\NpcBase.h" />
     <ClInclude Include="Entities\Enemy\Enemies\NpcHelper.h" />
     <ClInclude Include="Entities\Enemy\Enemies\NpcHumanAxe.h" />
