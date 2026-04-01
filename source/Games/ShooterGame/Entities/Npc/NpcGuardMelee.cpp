@@ -446,6 +446,11 @@ public:
 		return meleeAnimator->actionAnimation->IsAnimationPlaying();
 	}
 
+	bool IsRotationAllowedDuringRootMotion() override
+	{
+		return attackDelay.Wait();
+	}
+
 	NpcGuardMelee()
 	{
 		isGuard = true;
@@ -466,22 +471,39 @@ public:
 		meleeAnimator->PlayActionAnimation(name, false);
 	}
 
+	float GetActionAnimationRemainingTime()
+	{
+		auto meleeAnimator = static_cast<NpcMeleeAnimator*>(animator.get());
+
+		if (meleeAnimator->actionAnimation->IsAnimationPlaying() == false) return 0;
+
+		return meleeAnimator->actionAnimation->GetAnimationDuration() - meleeAnimator->actionAnimation->GetAnimationTime();
+
+	}
+
 	void PerformMeleeAttack()
 	{
+
 		Logger::Log("PerformMeleeAttack");
 		PlayActionAnimation("sword_attack_main");
+
+		float duration = GetActionAnimationRemainingTime();
+
+		attackDelay.AddDelay(duration);
 	}
 
 	void PerformBaitingMeleeAttack()
 	{
 		Logger::Log("PerformBaitingMeleeAttack");
 		PlayActionAnimation("sword_attack_break");
+		attackDelay.AddDelay(GetActionAnimationRemainingTime());
 	}
 
 	void PerformBreakingAttack()
 	{
 		Logger::Log("PerformBreakingAttack");
 		PlayActionAnimation("sword_kick");
+		attackDelay.AddDelay(GetActionAnimationRemainingTime());
 	}
 
 	bool IsTargetBlocking()
@@ -633,6 +655,8 @@ public:
 			EnterState(MeleeState::IDLE);
 			return;
 		}
+
+		if (attackDelay.Wait()) return;
 
 		UpdateMeleeStateMachine();
 	}

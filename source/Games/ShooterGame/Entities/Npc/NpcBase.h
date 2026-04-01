@@ -315,6 +315,7 @@ public:
 	void UpdateTargetFollow();
 
 	virtual bool IsPlayingRootMotionAnimation();
+	virtual bool IsRotationAllowedDuringRootMotion();
 
 	virtual void UpdateTargetAttack();//updates all attack behavior. Like performing attack and setting attack location. By default is ranged
 

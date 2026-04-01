@@ -461,19 +461,30 @@ void NpcBase::AsyncUpdate()
 
 	vec3 curMove = MathHelper::XZ(controller->GetVelocity());
 
+	bool lockAtTarget = ((target_attack && target_sees && target_attackInRange && isGuard) || (target_follow && target_sees && length(curMove) < 1)) && DoingTask == false;
 
-	if (IsPlayingRootMotionAnimation())
-	{
-
-		controller->SetVelocity(vec3(0, controller->GetVelocity().y, 0));
-
-	}
-	else if (isStunned() || mesh->InRagdoll)
+	if (isStunned() || mesh->InRagdoll)
 	{
 
 		UpdateStunnedReturn();
 
 		controller->SetVelocity(vec3(0,controller->GetVelocity().y, 0));
+
+	}
+	else if (IsPlayingRootMotionAnimation())
+	{
+
+		controller->SetVelocity(vec3(0, controller->GetVelocity().y, 0));
+
+		if (lockAtTarget && IsRotationAllowedDuringRootMotion())
+		{
+			auto targetRef = Level::Current->FindEntityWithId(target_id);
+
+			desiredLookVector = targetRef->Position - Position;
+
+			movingDirection = MathHelper::Interp(movingDirection, desiredLookVector, Time::DeltaTimeF, 15.0f);
+
+		}
 
 	}
 	else if (movementLockDelay.Wait())
@@ -492,9 +503,6 @@ void NpcBase::AsyncUpdate()
 	}
 	else
 	{
-
-		bool lockAtTarget = ((target_attack && target_sees && target_attackInRange && isGuard) || (target_follow && target_sees && length(curMove) < 1)) && DoingTask == false;
-
 		desiredDirection = vec3(0);
 
 		if (pathFollow.reachedTarget == false || pathFollow.CalculatedPath == false)
@@ -1355,6 +1363,11 @@ bool NpcBase::IsPlayingRootMotionAnimation()
 	return false;
 }
 
+bool NpcBase::IsRotationAllowedDuringRootMotion()
+{
+	return false;
+}
+
 void NpcBase::UpdateTargetAttack()
 {
 
@@ -1829,8 +1842,8 @@ void NpcBase::UpdateAnimations(bool forceFullUpdate)
 
 		mesh->PasteAnimationPose(pose);
 	}
-	if (forceFullUpdate == false)
-		animator->UsePrecomputedFrames = true;
+	//if (forceFullUpdate == false)
+		//animator->UsePrecomputedFrames = true;
 
 }
 
