@@ -65,6 +65,15 @@ void Animator::LoadAssetsIfNeeded()
 	loaded = true;
 }
 
+vector<AnimationEvent> Animator::PullAnimationEvents()
+{
+
+	auto copy = pendingAnimationEvents;
+	pendingAnimationEvents.clear();
+
+	return copy;
+}
+
 Animation* Animator::AddAnimation(string path, std::string name, bool loop)
 {
 

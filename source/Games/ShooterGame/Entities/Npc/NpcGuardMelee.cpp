@@ -5,6 +5,8 @@
 #include <Entities/Player/Weapons/Projectiles/Bullet.h>
 #include "Animators/NpcMeleeAnimator.h"
 
+#include <Entities/Enemy/Enemies/NpcHelper.h>
+
 class NpcGuardMelee : public NpcBase
 {
 	// ─────────────────────────────────────────────────────────────────────────
@@ -50,6 +52,8 @@ class NpcGuardMelee : public NpcBase
 	// ── member variables ──────────────────────────────────────────────────────
 
 protected:
+
+	Delay stunDelay;
 
 	MeleeState meleeState = MeleeState::IDLE;
 	Delay      stateTimer;           // general-purpose countdown for the active state
@@ -414,6 +418,73 @@ protected:
 		} // end switch
 	}
 
+	void Stun()
+	{
+		PlayActionAnimation("stun",0.2,1.2);
+		attackDelay.AddDelay(GetActionAnimationRemainingTime());
+		stunDelay.AddDelay(GetActionAnimationRemainingTime());
+	}
+
+	void DoNormalAttackDamage()
+	{
+
+		vec3 start = Position + vec3(0,0.5f,0);
+
+		auto hit = Physics::SphereTrace(start, start + MathHelper::GetForwardVector(mesh->Rotation), 0.3, BodyType::GroupHitTest, {}, {this});
+
+		if (hit.hasHit)
+		{
+			if (hit.entity->HasTag("player"))
+			{
+				if (NpcHelper::CheckParry(MathHelper::GetForwardVector(mesh->Rotation), hit.entity))
+				{
+					OnParried();
+					Stun();
+					return;
+				}
+				else
+				{
+					hit.entity->OnPointDamage(15, hit.shapePosition, MathHelper::FastNormalize(hit.shapePosition - Position), hit.hitboxName, this, this);
+					
+				}
+			}
+		}
+
+	}
+
+	void DoBreakAttackDamage()
+	{
+
+		vec3 start = Position + vec3(0, 0.5f, 0);
+
+		auto hit = Physics::SphereTrace(start, start + MathHelper::GetForwardVector(mesh->Rotation), 0.3, BodyType::GroupHitTest, {}, { this });
+
+		if (hit.hasHit)
+		{
+			if (hit.entity->HasTag("player"))
+			{
+				hit.entity->OnPointDamage(10, hit.shapePosition, MathHelper::FastNormalize(hit.shapePosition - Position), hit.hitboxName, this, this);
+			}
+		}
+
+	}
+
+
+	void ProcessAnimationEvent(const AnimationEvent& event)
+	{
+		if (event.eventName == "attack_sword_normal")
+		{
+			DoNormalAttackDamage();
+		}
+		else if (event.eventName == "attack_sword_break")
+		{
+			DoBreakAttackDamage();
+		} 
+		else if (event.eventName == "attack_kick")
+		{
+			DoBreakAttackDamage();
+		}
+	}
 
 	void UpdateAnimations(bool forceFullUpdate = false) override
 	{
@@ -424,14 +495,18 @@ protected:
 
 		NpcBase::UpdateAnimations(forceFullUpdate);
 
-
+		if (controller == nullptr) return;
 
 		vec3 currPos = controller->GetPosition();
-
 		auto rootMotion = meleeAnimator->actionAnimation->PullRootMotion();
-
-
 		controller->SetPosition(currPos + rootMotion.Position);
+
+		auto events = meleeAnimator->PullAnimationEvents();
+
+		for (auto& event : events)
+		{
+			ProcessAnimationEvent(event);
+		}
 
 	}
 
@@ -451,6 +526,11 @@ public:
 		return attackDelay.Wait();
 	}
 
+	bool isStunned() override
+	{
+		return NpcBase::isStunned() || stunDelay.Wait();
+	}
+
 	NpcGuardMelee()
 	{
 		isGuard = true;
@@ -465,10 +545,10 @@ public:
 	}
 
 
-	void PlayActionAnimation(std::string name)
+	void PlayActionAnimation(std::string name, float blendIn = 0.3f, float blendOut = 0.3f)
 	{
 		auto meleeAnimator = static_cast<NpcMeleeAnimator*>(animator.get());
-		meleeAnimator->PlayActionAnimation(name, false);
+		meleeAnimator->PlayActionAnimation(name, false, blendIn, blendOut);
 	}
 
 	float GetActionAnimationRemainingTime()

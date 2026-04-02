@@ -286,7 +286,7 @@ public:
 
 	void OnDamage(float Damage, Entity* DamageCauser = nullptr, Entity* Weapon = nullptr);
 
-	bool isStunned();
+	virtual bool isStunned();
 
 	void StartStunnedRagdoll();
 	void UpdateStunnedReturn();

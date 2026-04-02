@@ -109,13 +109,17 @@ AnimationPose NpcMeleeAnimator::ProcessResultPose()
 
 		auto actionPose = actionAnimation->GetAnimationPose();
 
-		taskResult = AnimationPose::Lerp(actionPose, taskResult, 0);
+		float remainTime = actionAnimation->GetAnimationDuration() - actionAnimation->GetAnimationTime();
+
+		float blend = std::clamp(remainTime / actionBlendOut,0.0f,1.0f);
+
+		taskResult = AnimationPose::Lerp(actionPose, taskResult, 1.0f - blend);// should be inverced to get root motion from 2nd one
 	}
 
 	return taskResult;
 }
 
-void NpcMeleeAnimator::PlayActionAnimation(std::string animationName, bool loop)
+void NpcMeleeAnimator::PlayActionAnimation(std::string animationName, bool loop, float blendIn, float blendOut)
 {
 
 	if (actionAnimation->IsAnimationPlaying() == false)
@@ -123,11 +127,12 @@ void NpcMeleeAnimator::PlayActionAnimation(std::string animationName, bool loop)
 		actionAnimation->PasteAnimationPose(lastPose);
 	}
 
-	actionAnimation->PlayAnimation(animationName, loop, 0.3f);
+	actionAnimation->PlayAnimation(animationName, loop, blendIn);
+	actionBlendOut = blendOut;
 
 }
 
-void NpcMeleeAnimator::PlayActionAnimation()
+void NpcMeleeAnimator::StopActionAnimation()
 {
 
 	if (actionAnimation->currentAnimationData)

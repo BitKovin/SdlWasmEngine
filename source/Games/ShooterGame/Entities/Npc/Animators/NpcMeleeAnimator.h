@@ -14,9 +14,11 @@ public:
 
 	bool IsPlayingActionAnimation();
 
-	void PlayActionAnimation(std::string animationName, bool loop);
+	void PlayActionAnimation(std::string animationName, bool loop, float blendIn = 0.3f, float blendOut = 0.3f);
 
-	void PlayActionAnimation();
+	void StopActionAnimation();
+
+	float actionBlendOut = 0.3f;
 
 protected:
 

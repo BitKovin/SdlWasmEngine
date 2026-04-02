@@ -19,6 +19,8 @@ public:
 
 	void LoadAssetsIfNeeded();
 
+	vector<AnimationEvent> PullAnimationEvents();
+
 protected:
 
 	AnimationPose lastPose;

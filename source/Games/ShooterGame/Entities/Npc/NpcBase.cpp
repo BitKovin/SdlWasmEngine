@@ -1812,8 +1812,8 @@ void NpcBase::UpdateAnimations(bool forceFullUpdate)
 
 	if (isGuard)
 	{
-		animator->weapon_holds = target_underArrest && !isStunned();
-		animator->weapon_ready = target_follow && target_underArrest && !isStunned();
+		animator->weapon_holds = target_underArrest;
+		animator->weapon_ready = target_follow && target_underArrest;
 		animator->weapon_aims = target_attack && animator->weapon_ready && target_attackInRange && !isStunned();
 
 		animator->spineRotation = spineRotation;
