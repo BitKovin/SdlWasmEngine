@@ -953,21 +953,27 @@ void SkeletalMesh::ApplyWorldSpaceBoneTransforms(std::unordered_map<hashed_strin
 
 void SkeletalMesh::PlayAnimation(std::string name, bool Loop, float interpIn)
 {
-
 	if (model == nullptr) return;
 
 	SetLooped(Loop);
 	animator.set(name);
 	PlayAnimation(interpIn);
-	oldRootMotionPos = vec3();
-	oldRootMotionRot = vec3();
 	animator.totalRootMotionPosition = vec3();
 	animator.totalRootMotionRotation = vec3();
 	animator.oldRootBoneTransform = MathHelper::Transform();
 	rootMotionBasisQuat = quat();
-	currentAnimationData = GetAnimationDataFromName(name);	
+	currentAnimationData = GetAnimationDataFromName(name);
 	oldAnimationEventTime = -1;
 	Update(0.0001f);
+
+	positionOffset = vec3();
+	rotationOffset = vec3();
+
+	// Sync AFTER Update — absorbs the first-frame root bone starting offset
+	// into oldRootMotionPos so PullRootMotion() doesn't emit it as phantom delta
+	oldRootMotionPos = animator.totalRootMotionPosition;
+	oldRootMotionRot = animator.totalRootMotionRotation;
+
 	boneTransforms = animator.getBoneMatrices();
 }
 

@@ -47,6 +47,8 @@ protected:
 
     AnimationState animationStateSaveData;
 
+	bool canBeStunRagdolled = true;
+
     Delay inAttackDelay;
     Delay afterAttackDelay;
 
@@ -79,7 +81,7 @@ protected:
 
     void PlaySoundEffect(std::string eventName);
 
-    virtual void ProcessAnimationEvent(AnimationEvent& event) = 0;
+    virtual void ProcessAnimationEvent(AnimationEvent& event) {};
 
     virtual void Attack() = 0;
 

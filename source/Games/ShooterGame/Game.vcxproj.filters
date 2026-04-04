@@ -258,6 +258,9 @@
     <ClCompile Include="Entities\Player\Weapons\Projectiles\CannonBullet.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Entities\Enemy\Enemies\NpcZombie.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Entities\Player\Player.hpp">

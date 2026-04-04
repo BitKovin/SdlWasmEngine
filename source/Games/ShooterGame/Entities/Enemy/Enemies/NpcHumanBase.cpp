@@ -337,10 +337,14 @@ void NpcHumanBase::OnPointDamage(float Damage, vec3 Point, vec3 Direction, strin
     Damage *= mesh->GetHitboxDamageMultiplier(bone);
     Entity::OnPointDamage(Damage, Point, Direction, bone, DamageCauser, Weapon);
 
-    if (bone == "calf_l" || bone == "calf_r" || bone == "thigh_l" || bone == "thigh_r")
+    if (canBeStunRagdolled)
     {
-        StartStunnedRagdoll();
+        if (bone == "calf_l" || bone == "calf_r" || bone == "thigh_l" || bone == "thigh_r")
+        {
+            StartStunnedRagdoll();
+        }
     }
+
 
     if (mesh->GetHitboxDamageMultiplier(bone) > 1.1f && dead)
     {

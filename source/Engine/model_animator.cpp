@@ -333,9 +333,24 @@ void Animator::update(float dt)
 
     if (Loop)
     {
-        m_currTime = std::fmod(m_currTime, m_currClip->duration);
-        if (m_currTime < 0.f) m_currTime += m_currClip->duration; // guard for negative dt
+        if (m_currTime >= m_currClip->duration && UpdatePose)
+        {
+            // Phase 1: accumulate motion from current baseline to end of clip
+            evaluateClip(m_currClip->duration);
+            totalRootMotionPosition += rootBoneTransform.Position - oldRootBoneTransform.Position;
+            totalRootMotionRotation += MathHelper::ToYawPitchRoll(
+                glm::inverse(oldRootBoneTransform.RotationQuaternion) *
+                rootBoneTransform.RotationQuaternion);
 
+            // Phase 2: seed oldRootBoneTransform from frame 0 so the next
+            // updateRootMotion() computes delta from start, not from end —
+            // preventing the backward snap on wrap
+            evaluateClip(0.f);
+            oldRootBoneTransform = rootBoneTransform;
+        }
+
+        m_currTime = std::fmod(m_currTime, m_currClip->duration);
+        if (m_currTime < 0.f) m_currTime += m_currClip->duration;
     }
     else
     {
@@ -350,7 +365,7 @@ void Animator::update(float dt)
     {
         evaluateClip(m_currTime);
         if (UpdatePose) [[likely]]
-            updateRootMotion();
+            updateRootMotion(); // now computes P_curr - P_start correctly
     }
 }
 
