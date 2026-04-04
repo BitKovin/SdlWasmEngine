@@ -943,15 +943,15 @@ public:
 
 	struct HitResult
 	{
-		bool hasHit;
-		vec3 position;   // World space hit position.
-		vec3 shapePosition;   // World space hit position.
-		vec3 normal;     // World space hit normal.
-		const JPH::Body* hitbody; // ID of the hit body.
-		float fraction;  // Fraction along the ray where the hit occurred.
-		Entity* entity;
-		string hitboxName;
-		string surfaceName;
+		bool hasHit = false;
+		vec3 position = {};   // World space hit position.
+		vec3 shapePosition = {};   // World space hit position.
+		vec3 normal = {};     // World space hit normal.
+		const JPH::Body* hitbody = nullptr; // ID of the hit body.
+		float fraction = 1;  // Fraction along the ray where the hit occurred.
+		Entity* entity = nullptr;
+		string hitboxName = "";
+		string surfaceName = "";
 	};
 
 	static vector<Physics::HitResult> PointTrace(
@@ -987,6 +987,9 @@ public:
 	};
 	
 	static HitResult SphereTrace(const vec3 start, const vec3 end, float radius, const BodyType mask = BodyType::GroupHitTest, const vector<Body*> ignoreList = {}, const vector<Entity*> entityIgnoreList = {});
+	static std::vector<HitResult> MultiLineTrace(const vec3 start, const vec3 end, const BodyType mask, const vector<Body*> ignoreList, const vector<Entity*> entityIgnoreList);
+	static std::vector<HitResult> MultiSphereTrace(const vec3 start, const vec3 end, float radius, const BodyType mask, const vector<Body*> ignoreList, const vector<Entity*> entityIgnoreList);
+	static std::vector<Physics::HitResult> MultiSphereOverlap(const vec3 center, float radius, const BodyType mask, const vector<Body*> ignoreList, const vector<Entity*> entityIgnoreList);
 	static HitResult SphereTraceForEntity(vector<Entity*> entityties, const vec3 start, const vec3 end, float radius, const BodyType mask = BodyType::GroupHitTest, const vector<Body*> ignoreList = {});
 
 	static HitResult CylinderTrace(const vec3 start, const vec3 end, float radius, float halfHeight, const BodyType mask = BodyType::GroupHitTest, const vector<Body*> ignoreList = {}, const vector<Entity*> entityIgnoreList = {});

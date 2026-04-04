@@ -10,6 +10,7 @@ public:
 
     weapon_pistol() : WeaponFirearm() 
     {
+		params.ammoType = WeaponAmmoType::PistolBullets;
         params.modelPath = "GameData/models/player/weapons/pistol/pistol.glb";
         params.texturesLocation = "GameData/models/player/weapons/pistol/pistol.glb/";
         params.modelPathTp = "GameData/models/player/weapons/pistol/pistol_tp.glb";
@@ -25,7 +26,7 @@ public:
         params.switchDelayOnAttack = 0.2f;
         params.weaponOffset = vec3(0.0, 0.00, -0.0);
         params.bulletSpeed = 200.0f;
-        params.bulletDamage = 14.0f;
+        params.bulletDamage = 19.0f;
         params.range = 80.0f;
         params.fireAnimation = "fire";
         params.fireAnimInterpInTime = 0.08f;

@@ -4,9 +4,11 @@ $input v_texcoord0, v_color0, v_normal, v_world, v_texcoord1
 
 SAMPLER2D(u_texture, 0);
 
+uniform vec4 modelColor;
+
 void main()
 {
-    vec4 texColor = texture2D(u_texture, v_texcoord0) * v_color0;
+    vec4 texColor = texture2D(u_texture, v_texcoord0) * v_color0 * modelColor;
 
     float alpha = texColor.a;
 

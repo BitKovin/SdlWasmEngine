@@ -377,6 +377,7 @@
     <ClCompile Include="Entities\Enemy\Enemies\NpcHumanGun.cpp" />
     <ClCompile Include="Entities\Enemy\IEnemy.cpp" />
     <ClCompile Include="Entities\Enviroment\Door.cpp" />
+    <ClCompile Include="Entities\Explosion.cpp" />
     <ClCompile Include="Entities\NpcSimulationManager.cpp" />
     <ClCompile Include="Entities\Npc\Ai\TaskPairedAction.cpp" />
     <ClCompile Include="Entities\Npc\Ai\TaskPhasedAction.cpp" />
@@ -406,9 +407,11 @@
     <ClCompile Include="Entities\Player\Weapons\Animators\Animator_Rifle.cpp" />
     <ClCompile Include="Entities\Player\Weapons\Projectiles\Bullet.cpp" />
     <ClCompile Include="Entities\Player\Weapons\Projectiles\CaneProjectile.cpp" />
+    <ClCompile Include="Entities\Player\Weapons\Projectiles\CannonBullet.cpp" />
     <ClCompile Include="Entities\Player\Weapons\WeaponBase.cpp" />
     <ClCompile Include="Entities\Player\Weapons\WeaponFirearm.cpp" />
     <ClCompile Include="Entities\Player\Weapons\weapon_cane.cpp" />
+    <ClCompile Include="Entities\Player\Weapons\weapon_cannon.cpp" />
     <ClCompile Include="Entities\Player\Weapons\weapon_lefthand_empty.cpp" />
     <ClCompile Include="Entities\Player\Weapons\weapon_mpsd.cpp" />
     <ClCompile Include="Entities\Player\Weapons\weapon_pistol.cpp" />
@@ -446,6 +449,7 @@
     <ClInclude Include="Entities\Enemy\Enemies\NpcHumanGun.h" />
     <ClInclude Include="Entities\Enviroment\Door.h" />
     <ClInclude Include="Entities\Enemy\IEnemy.h" />
+    <ClInclude Include="Entities\Explosion.h" />
     <ClInclude Include="Entities\NpcSimulationManager.h" />
     <ClInclude Include="Entities\Npc\Ai\TaskPairedAction.h" />
     <ClInclude Include="Entities\Npc\Ai\TaskPhasedAction.h" />

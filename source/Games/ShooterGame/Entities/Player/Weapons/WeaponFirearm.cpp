@@ -23,6 +23,8 @@ void WeaponFirearm::Start() {
 	attackDelay.AddDelay(params.switchDelayTime - 0.1f);
 	SwitchDelay.AddDelay(params.switchDelayTime);
 
+	AmmoType = params.ammoType;
+
 	Update();
 	AsyncUpdate();
 	LateUpdate();
@@ -36,6 +38,8 @@ void WeaponFirearm::LoadAssets()
 	if (thirdPersonAnimator == nullptr)
 		thirdPersonAnimator = make_unique<WeaponAnimator>();
 	thirdPersonAnimator->LoadAssetsIfNeeded();
+
+	PreloadEntityType(params.bulletClass);
 
 	// RIGHT HAND
 	viewmodel = new SkeletalMesh(owner);
@@ -170,6 +174,12 @@ void WeaponFirearm::Update()
 
 void WeaponFirearm::PerformAttack()
 {
+
+	if (owner->GetAmmo(params.ammoType) <= 0)
+	{
+		return;
+	}
+
 	if (params.hasActiveSpread)
 		activeSpread += params.spreadIncreasePerShot;
 
@@ -260,11 +270,13 @@ void WeaponFirearm::PerformAttack()
 			FireSingleBullet(startLoc, vec4(0));
 	}
 
+	owner->ConsumeAmmo(AmmoType, 1);
+
 }
 
 void WeaponFirearm::FireSingleBullet(const vec3& startLoc, const vec4& gridOffset)
 {
-	Bullet* bullet = new Bullet();
+	Bullet* bullet = static_cast<Bullet*>(LevelObjectFactory::instance().create(params.bulletClass));
 	Level::Current->AddEntity(bullet);
 
 	bullet->debuffOnHit = params.debuffOnHit;
@@ -288,6 +300,7 @@ void WeaponFirearm::FireSingleBullet(const vec3& startLoc, const vec4& gridOffse
 		endLoc += offset * hit.fraction;
 	}
 
+	bullet->damageCauser = owner;
 	bullet->Speed = params.bulletSpeed;
 	bullet->Position = startLoc + offset * 0.002f;
 	bullet->Rotation = MathHelper::FindLookAtRotation(startLoc, endLoc);

@@ -82,6 +82,15 @@ class Player : public Entity
 
 private:
 
+	std::map<WeaponAmmoType, int> ammoCounts = { {WeaponAmmoType::None,0},
+												{WeaponAmmoType::PistolBullets,32},
+												{WeaponAmmoType::ShotgunShells,16},
+												{WeaponAmmoType::CannonBullets,2} };
+	std::map<WeaponAmmoType, int> ammoLimits = {{WeaponAmmoType::None,0}, 
+												{WeaponAmmoType::PistolBullets,64},
+												{WeaponAmmoType::ShotgunShells,32},
+												{WeaponAmmoType::CannonBullets,12} };
+
 	float maxSpeed = 6.0f;
 	float maxSpeedAir = 2;
 	float acceleration = 90;
@@ -89,12 +98,12 @@ private:
 
 	vec3 velocity = vec3(0);
 
-	bool canRun = true;
-	bool canDash = false;
+	bool canRun = false;
+	bool canDash = true;
 
 	vec3 oldPos = vec3();
 
-	Delay jumpDelay;
+
 
 	bool freeFly = false;
 
@@ -172,9 +181,12 @@ private:
 	static constexpr float MantleCooldown = 0.35f;
 
 	vec3 weaponRunRotation = vec3(-8.9f, 30.0f, -9.21f);
-	vec3 runRotatePoint = vec3(-0.1f,-0.290f,0.45f);
+	vec3 weaponSlideRotation = vec3(0, 0, -16);
+	vec3 runRotatePoint = vec3(-0.05,-0.1,0.45);// vec3(-0.1f, -0.290f, 0.45f);
 
-	float WalkSpeed = 4.0f;
+	float slideInterp = 0;
+
+	float WalkSpeed = 5.0f;
 	float CrouchSpeed = 2.5f;
 	float RunSpeed = 6.5f;
 
@@ -328,6 +340,8 @@ private:
 
 public:
 
+	Delay jumpDelay;
+
 	int freeWalljumps = 1;
 	float stamina = 3;
 	bool disableStaminaRegenUntilGrounded = false;
@@ -441,6 +455,12 @@ public:
 
 	void CreateWeapon(const string& className);
 	void DestroyWeapon();
+
+	int GetAmmoLimit(WeaponAmmoType type);
+	int GetAmmo(WeaponAmmoType type);
+	int SetAmmo(WeaponAmmoType type, int amount);
+	int ConsumeAmmo(WeaponAmmoType type, int amount);
+	int AddAmmo(WeaponAmmoType type, int amount);
 
 	vec3 GetBobForMainWeapon();
 

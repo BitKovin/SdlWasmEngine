@@ -249,6 +249,15 @@
     <ClCompile Include="Entities\Npc\Animators\NpcMeleeAnimator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Entities\Player\Weapons\weapon_cannon.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Entities\Explosion.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Entities\Player\Weapons\Projectiles\CannonBullet.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Entities\Player\Player.hpp">
@@ -405,6 +414,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Entities\Npc\Animators\NpcMeleeAnimator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Entities\Explosion.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

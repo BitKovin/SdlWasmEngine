@@ -18,6 +18,7 @@
 #include <string>
 #include <unordered_set>
 
+#include <BgfxStateManager.h>
 
 class Entity;
 
@@ -56,6 +57,7 @@ protected:
 	vec3 finalizedPosition = vec3(0);
 	vec3 finalizedRotation = vec3(0);
 	vec3 finalizedScale = vec3(1);
+	vec4 finalizedColor = vec4(1);
 	std::unordered_set<std::string> finalMeshHideList{};
 
 public:
@@ -97,6 +99,10 @@ public:
 	bool GravityAlignedRotation = false; //should engine automatically rotate model to align with gravity vector as part of model matrix?
 
 	float Brightness = 1.0f;
+
+	BgfxStateManager::Blend blendMode = BgfxStateManager::Blend::Alpha;
+	
+	vec4 Color = vec4(1.0f);
 
 	std::unordered_set<std::string> MeshHideList{};
 

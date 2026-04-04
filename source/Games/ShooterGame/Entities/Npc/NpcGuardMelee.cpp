@@ -53,6 +53,7 @@ class NpcGuardMelee : public NpcBase
 
 protected:
 
+
 	Delay stunDelay;
 
 	MeleeState meleeState = MeleeState::IDLE;
@@ -118,8 +119,6 @@ protected:
 		if (nextAttackIsBreak)
 		{
 			nextAttackIsBreak = false;
-			// 45 % chance to feint into the break (harder to react to);
-			// 55 % chance to go direct (faster, less telegraphed).
 			if (RandomHelper::RandomFloat() < 0.45f)
 				PerformBaitingMeleeAttack();
 			else
@@ -128,7 +127,6 @@ protected:
 		}
 
 		// ── Priority 2: escalate on repeated active blocks ────────────────────
-		// Gradually forgive old blocks so the NPC doesn't stay on guardbreak forever
 		if (!blockCountDecayTimer.Wait())
 		{
 			playerBlockCount = std::max(0, playerBlockCount - 1);
@@ -137,21 +135,24 @@ protected:
 
 		const bool targetIsBlocking = IsTargetBlocking();
 
-		if (targetIsBlocking)
+		if (playerBlockCount >= 3)
 		{
+			// 3+ consecutive blocks: force a guard-break, reset the cycle
 			PerformBreakingAttack();
 			playerBlockCount = 0;
 		}
-		else if (playerBlockCount >= 2 && targetIsBlocking)
+		else if (playerBlockCount == 2 && targetIsBlocking)
 		{
+			// 2 blocks and they're still holding guard: feint to open them up
 			PerformBaitingMeleeAttack();
+			// intentionally don't reset – if the feint is also blocked, next hit is a break
 		}
 		else
 		{
 			PerformMeleeAttack();
 		}
 
-		// If the player was blocking when we connected, note the failure for next time
+		// Record the block AFTER choosing the attack, so escalation uses the previous count
 		if (targetIsBlocking)
 			playerBlockCount++;
 	}
@@ -491,7 +492,7 @@ protected:
 
 		auto meleeAnimator = static_cast<NpcMeleeAnimator*>(animator.get());
 		meleeAnimator->actionAnimation->Rotation = mesh->Rotation;
-
+		meleeAnimator->blocking = isCurrentlyBlocking;
 
 		NpcBase::UpdateAnimations(forceFullUpdate);
 
@@ -537,7 +538,7 @@ public:
 		modelPath = "GameData/models/npc/guard.glb";
 		hostileTags.insert("bandit");
 
-		attackRange = 6;   // start approach logic outside this radius
+		attackRange = 8;   // start approach logic outside this radius
 		attackDesiredRange = 2.0f; // tight melee engagement radius
 
 		animator = std::make_unique<NpcMeleeAnimator>(this);
@@ -617,8 +618,8 @@ public:
 		return glm::distance(Position, targetRef->Position) < 2.0f;
 	}
 
-	void StartBlock() {}
-	void StopBlock() {}
+	void StartBlock() { Logger::Log("StartBlock"); }
+	void StopBlock() { Logger::Log("StopBlock"); }
 
 	// ─────────────────────────────────────────────────────────────────────────
 	//  OnParried – called by animation code when this NPC's attack is perfectly
@@ -706,6 +707,7 @@ public:
 
 	void UpdateTargetAttack() override
 	{
+
 		// Always track spine rotation toward the target for natural body posture
 		vec3 desiredSpineRotation = vec3();
 		if (target_follow)
@@ -762,9 +764,12 @@ public:
 		// ── Retreating: step directly away ───────────────────────────────────
 		if (meleeState == MeleeState::RETREATING)
 		{
-			vec3  awayDir = MathHelper::Normalized(MathHelper::XZ(Position - targetPos));
-			float dist = 3.2f + RandomHelper::RandomFloat() * 2.0f;
-			vec3  candidate = Position + awayDir * dist;
+			vec3 awayDir = MathHelper::Normalized(MathHelper::XZ(Position - targetPos));
+			float currentDist = glm::length(MathHelper::XZ(Position - targetPos));
+			float maxSafeDist = attackRange * 0.80f;   // never leave the engagement bubble
+			float wantedDist = currentDist + 1.8f + RandomHelper::RandomFloat() * 1.4f;
+			float retreatDist = std::min(wantedDist, maxSafeDist);
+			vec3  candidate = targetPos + awayDir * retreatDist;
 
 			auto hit = Physics::CylinderTrace(Position, candidate, 0.5f, 0.8f,
 				BodyType::World | BodyType::MainBody);

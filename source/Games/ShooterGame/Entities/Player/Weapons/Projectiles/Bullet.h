@@ -4,16 +4,19 @@
 
 #include <Particle/ParticleSystem.hpp>
 
+#include <Physics.h>
+
 class Bullet : public Entity
 {
 
-private:
+protected:
 
 	vec3 oldPos;
 	float traveledDistance = 0;
 
 public:
 
+	Entity* damageCauser = nullptr;
 
 	std::string OwnerTag = "player";
 
@@ -41,6 +44,6 @@ public:
 
 	void Update();
 
-
+	virtual void TargetHit(Physics::HitResult hit);
 
 };

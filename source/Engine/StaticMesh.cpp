@@ -47,6 +47,7 @@ void StaticMesh::FinalizeFrameData()
 	finalizedRotation = Rotation;
 	finalizedScale = Scale;
 	finalMeshHideList = std::unordered_set<std::string>(MeshHideList);
+	finalizedColor = Color;
 
 }
 
@@ -126,13 +127,12 @@ void StaticMesh::DrawForward(mat4x4 view, mat4x4 projection)
 
 	auto startState = BgfxStateManager::GetState();
 
-	if (Transparent == false)
-	{
 
-		BgfxStateManager::SetWriteDepth(DepthWrite);
+	BgfxStateManager::SetWriteDepth(DepthWrite);
 
-	}
-
+	
+	
+	BgfxStateManager::SetBlend(blendMode);
 
 	BgfxStateManager::SetCull(TwoSided ? BgfxStateManager::Cull::None : BgfxStateManager::Cull::CW);
 
@@ -151,6 +151,8 @@ void StaticMesh::DrawForward(mat4x4 view, mat4x4 projection)
 	mat4x4 world = finalizedWorld;
 
 	auto lightData = GetLightVolData();
+
+	forward_shader_program->SetUniform("modelColor", finalizedColor);
 
 	forward_shader_program->SetUniform("light_color", lightData.ambientColor);
 	forward_shader_program->SetUniform("direct_light_color", lightData.directColor);
@@ -228,10 +230,10 @@ void StaticMesh::DrawForward(mat4x4 view, mat4x4 projection)
 			Texture* texture = mesh.cachedBaseColor;
 			Texture* textureEm = mesh.cachedEmissiveColor;
 
-			if (Transparent)
+			if (Transparent && mesh.transparentTexture)
 			{
 
-				BgfxStateManager::SetWriteDepth(mesh.transparentTexture == false);
+				BgfxStateManager::SetWriteDepth(false);
 
 			}
 
@@ -280,6 +282,8 @@ void StaticMesh::DrawDepth(mat4x4 view, mat4x4 projection)
 {
 	if (model == nullptr) return;
 	if (DepthPrePath == false) return;
+
+	if (Color.a < 1.0f) return;
 
 	auto startState = BgfxStateManager::GetState();
 

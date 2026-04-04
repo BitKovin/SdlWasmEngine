@@ -47,6 +47,7 @@ public:
 	std::shared_ptr<OverheatProgressBar> progressBar;
 
     weapon_mpsd() : WeaponFirearm() {
+        params.ammoType = WeaponAmmoType::PistolBullets;
         params.modelPath = "GameData/models/player/weapons/stg44/stg44.glb";
         params.fireSoundEvent = "event:/Weapons/pistol/pistol_fire";
         params.modelPathTp = "GameData/models/player/weapons/mpsd/mpsd_tp.glb";

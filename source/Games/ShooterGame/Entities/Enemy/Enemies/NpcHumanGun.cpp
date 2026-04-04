@@ -11,6 +11,8 @@ NpcHumanGun::NpcHumanGun()
     ClassName = "npc_human_gun";
     maxSpeed = 4.2f;
     mesh->Scale = vec3(1.15f);
+	Health = 80;
+	MaxHealth = 80;
 }
 
 void NpcHumanGun::ProcessAnimationEvent(AnimationEvent& event)

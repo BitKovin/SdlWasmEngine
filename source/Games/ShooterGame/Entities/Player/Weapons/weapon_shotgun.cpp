@@ -2,7 +2,9 @@
 
 class weapon_shotgun : public WeaponFirearm {
 public:
-    weapon_shotgun() : WeaponFirearm() {
+    weapon_shotgun() : WeaponFirearm() 
+    {
+        params.ammoType = WeaponAmmoType::ShotgunShells;
         params.modelPath = "GameData/models/player/weapons/shotgun/shotgun.glb";
         params.texturesLocation = "GameData/models/player/weapons/shotgun/shotgun.glb/";
         params.fireSoundEvent = "GameData/sounds/weapons/shotgun/shotgun_fire2.wav";
@@ -14,7 +16,7 @@ public:
         params.switchDelayOnAttack = 0.2f;
         params.weaponOffset = vec3(0.013, 0.013, -0.096);
         params.bulletSpeed = 200.0f; // Assumed same
-        params.bulletDamage = 90.0f / 21.0f;
+        params.bulletDamage = 60.0f / 21.0f;
         params.range = 70.0f;
         params.fireAnimation = "attack";
         params.fireAnimInterpInTime = 0.15f; // No speed specified, assume default

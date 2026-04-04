@@ -1037,6 +1037,254 @@ Physics::HitResult Physics::SphereTrace(const vec3 start, const vec3 end, float 
 	return hit;
 }
 
+// Multi Line Trace (collects ALL hits along the ray, sorted closest → farthest)
+std::vector<Physics::HitResult> Physics::MultiLineTrace(const vec3 start, const vec3 end, const BodyType mask,
+	const vector<Body*> ignoreList, const vector<Entity*> entityIgnoreList)
+{
+	std::vector<HitResult> outHits;
+
+	JPH::Vec3 startLoc = ToPhysics(start);
+	JPH::Vec3 endLoc = ToPhysics(end);
+
+	JPH::RRayCast ray;
+	ray.mOrigin = startLoc;
+	ray.mDirection = endLoc - startLoc;
+
+	TraceBodyFilter filter;
+	filter.mask = mask;
+	filter.ignoreList = ignoreList;
+	filter.entityIgnoreList = entityIgnoreList;
+
+	// Jolt multi-hit raycast requires RayCastSettings + the templated collector
+	JPH::RayCastSettings rayCastSettings; // defaults are fine for most use-cases
+	JPH::AllHitCollisionCollector<JPH::CastRayCollector> collector;
+
+	physics_system->GetNarrowPhaseQuery().CastRay(ray, rayCastSettings, collector, {}, {}, filter);
+
+	collector.Sort(); // built-in sort (closest → farthest) – fixes your lambda ambiguity error
+
+	for (const JPH::RayCastResult& result : collector.mHits)
+	{
+		HitResult hit{};
+		hit.fraction = result.mFraction;
+		hit.shapePosition = mix(start, end, hit.fraction);
+		hit.position = FromPhysics(ray.GetPointOnRay(result.mFraction));
+		hit.normal = vec3(0, 0, 0);
+		hit.hitbody = nullptr;
+		hit.hasHit = false;
+		hit.entity = nullptr;
+		hit.hitboxName = "";
+		hit.surfaceName = "";
+
+		JPH::BodyLockRead body_lock(physics_system->GetBodyLockInterface(), result.mBodyID);
+		if (!body_lock.Succeeded()) continue;
+
+		const JPH::Body* body = &body_lock.GetBody();
+		if (!body) continue;
+
+		// Same surface normal + name logic as your original LineTrace
+		hit.normal = FromPhysics(body->GetWorldSpaceSurfaceNormal(result.mSubShapeID2, ray.GetPointOnRay(result.mFraction)));
+
+		const JPH::Shape* root_shape = body->GetShape();
+		JPH::SubShapeID remainder;
+		const JPH::Shape* hit_shape = root_shape->GetLeafShape(result.mSubShapeID2, remainder);
+		if (hit_shape)
+		{
+			int hitSurfaceId = (int)hit_shape->GetUserData();
+			if (hitSurfaceId)
+				hit.surfaceName = FindSurfacyById(hitSurfaceId);
+		}
+
+		hit.hitbody = body;
+
+		auto* props = reinterpret_cast<BodyData*>(body->GetUserData());
+		if (props == nullptr || props->OwnerEntity == nullptr || props->OwnerEntity->Destroyed)
+			continue;
+
+		hit.entity = props->OwnerEntity;
+		hit.hitboxName = props->hitboxName;
+		hit.hasHit = true;
+
+		outHits.push_back(hit);
+	}
+
+	return outHits;
+}
+
+// Multi Sphere Trace (collects ALL hits along the sphere sweep, sorted closest → farthest)
+std::vector<Physics::HitResult> Physics::MultiSphereTrace(const vec3 start, const vec3 end, float radius,
+	const BodyType mask, const vector<Body*> ignoreList, const vector<Entity*> entityIgnoreList)
+{
+	std::vector<HitResult> outHits;
+
+	// Create sphere shape (identical to your single SphereTrace)
+	auto sphere_shape_settings = JPH::SphereShapeSettings();
+	sphere_shape_settings.SetEmbedded();
+	sphere_shape_settings.mRadius = radius;
+	JPH::Shape::ShapeResult shape_result = sphere_shape_settings.Create();
+	if (shape_result.HasError())
+	{
+		Logger::Log(shape_result.GetError().c_str());
+		return outHits;
+	}
+	JPH::ShapeRefC sphere_shape = shape_result.Get();
+
+	JPH::Vec3 startLoc = ToPhysics(start);
+	JPH::Vec3 endLoc = ToPhysics(end);
+	JPH::Vec3 direction = endLoc - startLoc;
+	JPH::RMat44 start_transform = JPH::RMat44::sTranslation(startLoc);
+	JPH::RShapeCast shape_cast(sphere_shape, JPH::Vec3::sReplicate(1.0f), start_transform, direction);
+
+	TraceBodyFilter filter;
+	filter.mask = mask;
+	filter.ignoreList = ignoreList;
+	filter.entityIgnoreList = entityIgnoreList;
+
+	// Correct Jolt multi-hit collector for shape casts
+	JPH::AllHitCollisionCollector<JPH::CastShapeCollector> collector;
+	physics_system->GetNarrowPhaseQuery().CastShape(shape_cast, JPH::ShapeCastSettings(), JPH::Vec3::sZero(), collector, {}, {}, filter);
+
+	collector.Sort(); // built-in sort (closest → farthest)
+
+	for (const JPH::ShapeCastResult& result : collector.mHits)
+	{
+		HitResult hit{};
+		hit.fraction = result.mFraction;
+		hit.shapePosition = mix(start, end, hit.fraction);
+		hit.position = FromPhysics(result.mContactPointOn2);
+		hit.normal = vec3(0, 0, 0);
+		hit.hitbody = nullptr;
+		hit.hasHit = false;
+		hit.entity = nullptr;
+		hit.hitboxName = "";
+		hit.surfaceName = "";
+
+		JPH::BodyLockRead body_lock(physics_system->GetBodyLockInterface(), result.mBodyID2);
+		if (!body_lock.Succeeded()) continue;
+
+		const JPH::Body* body = &body_lock.GetBody();
+		if (!body) continue;
+
+		// Same normal + surface name logic as your original SphereTrace
+		hit.normal = FromPhysics(body->GetWorldSpaceSurfaceNormal(result.mSubShapeID2, result.mContactPointOn2));
+
+		const JPH::Shape* root_shape = body->GetShape();
+		JPH::SubShapeID remainder;
+		const JPH::Shape* hit_shape = root_shape->GetLeafShape(result.mSubShapeID2, remainder);
+		if (hit_shape)
+		{
+			int hitSurfaceId = (int)hit_shape->GetUserData();
+			if (hitSurfaceId)
+				hit.surfaceName = FindSurfacyById(hitSurfaceId);
+		}
+
+		hit.hitbody = body;
+
+		auto* props = reinterpret_cast<BodyData*>(body->GetUserData());
+		if (props == nullptr || props->OwnerEntity == nullptr || props->OwnerEntity->Destroyed)
+			continue;
+
+		hit.entity = props->OwnerEntity;
+		hit.hitboxName = props->hitboxName;
+		hit.hasHit = true;
+
+		outHits.push_back(hit);
+	}
+
+	return outHits;
+}
+
+std::vector<Physics::HitResult> Physics::MultiSphereOverlap(const vec3 center, float radius,
+	const BodyType mask, const vector<Body*> ignoreList, const vector<Entity*> entityIgnoreList)
+{
+	std::vector<HitResult> outHits;
+
+	// Create the sphere shape
+	auto sphere_shape_settings = JPH::SphereShapeSettings(radius);  // simpler constructor
+	sphere_shape_settings.SetEmbedded();
+	JPH::Shape::ShapeResult shape_result = sphere_shape_settings.Create();
+	if (shape_result.HasError())
+	{
+		Logger::Log(shape_result.GetError().c_str());
+		return outHits;
+	}
+	JPH::ShapeRefC sphere_shape = shape_result.Get();   // keep as RefC, do NOT call .Get() again
+
+	JPH::Vec3 physCenter = ToPhysics(center);
+	JPH::RMat44 transform = JPH::RMat44::sTranslation(physCenter);
+
+	TraceBodyFilter filter;
+	filter.mask = mask;
+	filter.ignoreList = ignoreList;
+	filter.entityIgnoreList = entityIgnoreList;
+
+	// Correct collector for CollideShape
+	JPH::AllHitCollisionCollector<JPH::CollideShapeCollector> collector;
+
+	// Correct CollideShape call
+	JPH::CollideShapeSettings collideSettings;   // default settings are usually fine
+
+	physics_system->GetNarrowPhaseQuery().CollideShape(
+		sphere_shape,                          // const Shape*
+		JPH::Vec3::sReplicate(1.0f),           // shape scale
+		transform,                             // center of mass transform
+		collideSettings,                       // CollideShapeSettings (was missing)
+		JPH::RVec3::sZero(),                   // base offset (usually zero)
+		collector,                             // collector
+		{},                                    // BroadPhaseLayerFilter (default)
+		{},                                    // ObjectLayerFilter (default)
+		filter,                                // BodyFilter (your TraceBodyFilter should derive from BodyFilter)
+		{}                                     // ShapeFilter (default)
+	);
+
+	collector.Sort();   // closest to farthest based on penetration
+
+	for (const JPH::CollideShapeResult& result : collector.mHits)
+	{
+		HitResult hit{};
+		hit.fraction = 0.0f;
+		hit.shapePosition = center;
+		hit.position = FromPhysics(result.mContactPointOn2);
+		hit.normal = FromPhysics(result.mPenetrationAxis.NormalizedOr(JPH::Vec3(0, 1, 0))); // safe fallback
+		hit.hitbody = nullptr;
+		hit.hasHit = false;
+		hit.entity = nullptr;
+		hit.hitboxName = "";
+		hit.surfaceName = "";
+
+		JPH::BodyLockRead body_lock(physics_system->GetBodyLockInterface(), result.mBodyID2);
+		if (!body_lock.Succeeded()) continue;
+
+		const JPH::Body* body = &body_lock.GetBody();
+		if (!body) continue;
+
+		// Surface name logic (same as your other traces)
+		const JPH::Shape* root_shape = body->GetShape();
+		JPH::SubShapeID remainder;
+		const JPH::Shape* hit_shape = root_shape->GetLeafShape(result.mSubShapeID2, remainder);
+		if (hit_shape)
+		{
+			int hitSurfaceId = (int)hit_shape->GetUserData();
+			if (hitSurfaceId)
+				hit.surfaceName = FindSurfacyById(hitSurfaceId);
+		}
+
+		hit.hitbody = body;
+
+		auto* props = reinterpret_cast<BodyData*>(body->GetUserData());
+		if (props == nullptr || props->OwnerEntity == nullptr || props->OwnerEntity->Destroyed)
+			continue;
+
+		hit.entity = props->OwnerEntity;
+		hit.hitboxName = props->hitboxName;
+		hit.hasHit = true;
+
+		outHits.push_back(hit);
+	}
+
+	return outHits;
+}
+
 Physics::HitResult Physics::SphereTraceForEntity(vector<Entity*> entityties, const vec3 start, const vec3 end, float radius, const BodyType mask, const vector<Body*> ignoreList)
 {
 	HitResult hit;

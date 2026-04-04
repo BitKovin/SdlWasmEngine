@@ -29,17 +29,20 @@ void PlayerHud::Init(Player* playerRef)
 	hudCanvas->AddChild(crosshair);
 
     text = make_shared<UiText>();
-
     text->position = vec2(20, -20);
-
     text->origin = vec2(0, 1);
     text->pivot = vec2(0, 1);
-
     text->text = std::to_string((int)player->Health);
+
+    ammoText = make_shared<UiText>();
+    ammoText->position = vec2(-20, -20);
+    ammoText->origin = vec2(1, 1);
+    ammoText->pivot = vec2(1, 1);
+	hudCanvas->AddChild(ammoText);
 
 
     hudCanvas->AddChild(text);
-    //hudCanvas->AddChild(crosshair);
+    hudCanvas->AddChild(crosshair);
 
 
 
@@ -71,6 +74,17 @@ void PlayerHud::Init(Player* playerRef)
 void PlayerHud::Update()
 {
     text->text = std::to_string((int)player->Health) + "\n" + to_string(player->stamina);
+
+    ammoText->text = "";
+    if (player->currentWeapon)
+    {
+        if (player->currentWeapon->AmmoType != WeaponAmmoType::None)
+        {
+            int ammoCount = player->GetAmmo(player->currentWeapon->AmmoType);
+            int ammoLimit = player->GetAmmoLimit(player->currentWeapon->AmmoType);
+            ammoText->text = to_string(ammoCount) + " / " + to_string(ammoLimit);
+		}
+    }
 
     crosshair->visible = !useIndicator->visible;
 

@@ -32,6 +32,17 @@ void NpcMeleeAnimator::Update()
 		locomotion->PlayAnimation(desiredLocomotionAnimation, true, 0.3);
 	}
 
+	std::string desiredSwordAnimation = "sword_idle";
+
+	if(blocking)
+		desiredSwordAnimation = "sword_block";
+
+	if (blockAnimation->currentAnimationData->animationName != desiredSwordAnimation)
+	{
+		blockAnimation->PasteAnimationPose(lastPose);
+		blockAnimation->PlayAnimation(desiredSwordAnimation, true, 0.3);
+	}
+
 	Animator::Update();
 
 }
@@ -45,6 +56,7 @@ void NpcMeleeAnimator::LoadAssets()
 {
 	locomotion = AddAnimation("GameData/models/npc/base.glb", "idle");
 	pistol = AddAnimation("GameData/models/npc/base.glb", "idle", false);
+	blockAnimation = AddAnimation("GameData/models/npc/base.glb", "sword_block", false);
 	taskAnimation = AddAnimation("GameData/models/npc/base.glb", "idle", false);
 	taskAnimation->StopAnimation();
 
@@ -63,32 +75,15 @@ AnimationPose NpcMeleeAnimator::ProcessResultPose()
 
 	AnimationPose weaponResultPose;
 
-	if (weapon_holds && false)
+	if (weapon_holds)
 	{
-
-		hashed_string startBone = "clavicle_r";
-
-		if (weapon_ready || weapon_aims)
-		{
-
-			spineRotation.x = glm::clamp(spineRotation.x, -70.0f, 70.0f);
-			spineRotation.y = glm::clamp(spineRotation.y, -30.0f, 30.0f);
-
-			if (weapon_aims)
-			{
-				pistolPos.boneTransforms["spine_02"] = pistolPos.boneTransforms["spine_02"] * MathHelper::GetRotationMatrix(vec3(spineRotation.y, spineRotation.y * 0.3f, -spineRotation.x * 0.75f));
-			}
-
-
-			startBone = "spine_01";
-		}
-
-		weaponResultPose = AnimationPose::LayeredLerp(startBone, pistol->GetRootNode(), locomotionPose, pistolPos, true, 1);// AnimationPose::Lerp(locomotion, painPose, PainProgress);
+		weaponResultPose = AnimationPose::LayeredLerp("spine_01", locomotion->GetRootNode(), locomotionPose, blockAnimation->GetAnimationPose(), 1, 1);
 	}
 	else
 	{
 		weaponResultPose = locomotionPose;
 	}
+		
 
 	AnimationPose taskResult;
 

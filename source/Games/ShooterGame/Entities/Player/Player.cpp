@@ -69,6 +69,7 @@ void Player::Start()
 	PreloadEntityType("weapon_shotgun");
 	PreloadEntityType("weapon_tommy");
 	PreloadEntityType("weapon_sniper");
+	PreloadEntityType("weapon_cannon");
 	PreloadEntityType("weapon_swords");
 	PreloadEntityType("weapon_mpsd");
 
@@ -87,7 +88,7 @@ void Player::Start()
 		AddItemToInventory("weapon_pistol"); // Add pistol to inventory first so it's equipped by default
 		AddItemToInventory("weapon_shotgun");
 		AddItemToInventory("weapon_tommy");
-		AddItemToInventory("weapon_sniper");
+		AddItemToInventory("weapon_cannon");
 		AddItemToInventory("weapon_cane");
 		AddItemToInventory("weapon_mpsd");
 
@@ -145,14 +146,14 @@ void Player::Start()
 	else
 	{
 		// Slots mode - use original system
-		AddWeaponByName("weapon_sword");
+		AddWeaponByName("weapon_pistol");
 		AddWeaponByName("weapon_shotgun");
 		AddWeaponByName("weapon_mpsd");
-		AddWeaponByName("weapon_sniper");
+		AddWeaponByName("weapon_cannon");
 
 		// Offhand weapons for slots mode
 		offhandWeapons.push_back("weapon_cane");
-		desiredOffhandWeapon = 1;
+		desiredOffhandWeapon = 2;
 	}
 
 	cameraRotation.y = Rotation.y;
@@ -308,6 +309,16 @@ void Player::UpdateWalkMovement(vec2 input)
 	{
 		velocity = UpdateAirVelocity(movement, velocity);
 	}
+
+	if (controller.isCrouched)
+	{
+		slideInterp += Time::DeltaTime * 5.0f;
+	}
+	else
+	{
+		slideInterp -= Time::DeltaTime * 5.0f;
+	}
+	slideInterp = glm::clamp(slideInterp, 0.0f, 1.0f);
 
 	velocity.y = controller.GetVelocity().y;
 
@@ -592,7 +603,7 @@ void Player::TryWallJump()
 	if (jumpDelay.Wait()) return;
 
 
-	auto hit = Physics::SphereTrace(Position, Position + vec3(0, -0.1f, 0), 0.6f, BodyType::GroupCollisionTest & ~BodyType::CharacterCapsule, {}, { this });
+	auto hit = Physics::SphereTrace(Position, Position + velocity*0.01f, 0.6f, BodyType::GroupCollisionTest & ~BodyType::CharacterCapsule, {}, { this });
 
 	if (hit.hasHit)
 	{
@@ -783,6 +794,70 @@ void Player::DestroyWeapon()
 		currentWeapon = nullptr;
 	}
 	currentMainWeaponUUID = "";
+}
+
+int Player::GetAmmoLimit(WeaponAmmoType type)
+{
+	return ammoLimits[type];
+}
+
+int Player::GetAmmo(WeaponAmmoType type)
+{
+	auto it = ammoCounts.find(type);
+	if (it == ammoCounts.end())
+		return 0;
+
+	return it->second;
+}
+
+int Player::SetAmmo(WeaponAmmoType type, int amount)
+{
+	int limit = 0;
+	auto limitIt = ammoLimits.find(type);
+	if (limitIt != ammoLimits.end())
+		limit = limitIt->second;
+
+	// clamp
+	if (amount < 0) amount = 0;
+	if (amount > limit) amount = limit;
+
+	ammoCounts[type] = amount;
+	return ammoCounts[type];
+}
+
+int Player::ConsumeAmmo(WeaponAmmoType type, int amount)
+{
+	if (amount <= 0)
+		return GetAmmo(type);
+
+	int current = GetAmmo(type);
+
+	current -= amount;
+	if (current < 0)
+		current = 0;
+
+	ammoCounts[type] = current;
+	return current;
+}
+
+int Player::AddAmmo(WeaponAmmoType type, int amount)
+{
+	if (amount <= 0)
+		return GetAmmo(type);
+
+	int current = GetAmmo(type);
+
+	int limit = 0;
+	auto limitIt = ammoLimits.find(type);
+	if (limitIt != ammoLimits.end())
+		limit = limitIt->second;
+
+	current += amount;
+	if (current > limit)
+		current = limit;
+
+	ammoCounts[type] = current;
+	return current;
 }
 
 // ============================================================================
@@ -1381,10 +1456,16 @@ void Player::UpdateWeapon()
 		disableOffhandWeapon = firearm->akimbo
 			|| (currentWeapon && currentWeapon->SupportsOffhandWeapon == false);
 	}
+	else
+	{
+		disableOffhandWeapon = currentWeapon && currentWeapon->SupportsOffhandWeapon == false;
+	}
 
 	vec3 relativeWeaponPos = vec3();
 
-	vec3 currentWeaponRunRotation = lerp(vec3(), weaponRunRotation, RunProgress);
+	vec3 currentWeaponSlideRotation = lerp(vec3(), weaponSlideRotation, slideInterp);
+
+	vec3 currentWeaponRunRotation = lerp(currentWeaponSlideRotation, weaponRunRotation, RunProgress);
 
 	vec3 rotatedWeaponPos = MathHelper::RotateAroundPoint(relativeWeaponPos, runRotatePoint, currentWeaponRunRotation);
 
@@ -1394,6 +1475,8 @@ void Player::UpdateWeapon()
 	glm::quat qResult = qCurrent * qAdd;
 
 	rotatedWeaponPos -= mix(vec3(), vec3(-0.05f, 0.02, 0.05), RunProgress);
+
+	rotatedWeaponPos -= mix(vec3(), vec3(0,0.025,0), slideInterp);
 
 	vec3 scaledBob = bob * mix(vec3(1), vec3(2.5, 2.2f, 2.2f), RunProgress);
 
@@ -1905,7 +1988,8 @@ void Player::Update()
 		UpdateInventoryWeaponSwitch();
 	}
 
-
+	if(currentWeapon && currentWeapon->SupportsOffhandWeapon == false)
+		disableOffhandWeapon = true;
 
 	// Offhand weapon management (Slots mode only)
 	// In Inventory mode, offhand is managed through OffhandWeapon or DualWeapon items
@@ -2299,7 +2383,7 @@ void Player::Serialize(json& target)
 
 	SERIALIZE_FIELD(target, currentMainWeaponUUID);
 	SERIALIZE_FIELD(target, currentOffhandWeaponUUID);
-
+	SERIALIZE_FIELD(target, ammoCounts);
 
 	SERIALIZE_FIELD(target, isSliding);
 	SERIALIZE_FIELD(target, mantleDelay);
@@ -2328,6 +2412,7 @@ void Player::Deserialize(json& source)
 
 	DESERIALIZE_FIELD(source, currentMainWeaponUUID);
 	DESERIALIZE_FIELD(source, currentOffhandWeaponUUID);
+	DESERIALIZE_FIELD(source, ammoCounts);
 
 	// Deserialize inventory system
 	if (source.contains("weaponSystemMode"))

@@ -47,6 +47,9 @@ public:
 	{
 		LateUpdateWhenPaused = true;
 		startTrailDelay.AddDelay(100000000.0f); // start inert — only arms after StartAttack sets it
+
+		SupportsOffhandWeapon = true;
+
 	}
 
 	// -----------------------------------------------------------------------

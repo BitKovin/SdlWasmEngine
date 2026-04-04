@@ -2,7 +2,9 @@
 
 class weapon_tommy : public WeaponFirearm {
 public:
-    weapon_tommy() : WeaponFirearm() {
+    weapon_tommy() : WeaponFirearm() 
+    {
+		params.ammoType = WeaponAmmoType::PistolBullets;
         params.modelPath = "GameData/models/player/weapons/tommy/tommy.glb";
         params.texturesLocation = "GameData/models/player/weapons/tommy/tommy.glb/";
         params.fireSoundEvent = "event:/Weapons/pistol/pistol_fire";

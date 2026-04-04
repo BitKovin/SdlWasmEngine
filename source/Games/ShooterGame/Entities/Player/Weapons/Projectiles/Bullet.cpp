@@ -66,21 +66,7 @@ void Bullet::Update()
 		if (hit.entity->HasTag(OwnerTag) == false)
 		{
 
-			hit.entity->OnPointDamage(Damage, hit.position, MathHelper::FastNormalize(Position - oldPos), hit.hitboxName, this, this);
-			
-
-			IEnemy* enemy = dynamic_cast<IEnemy*>(hit.entity);
-
-			if(enemy)
-			{
-				if (debuffStacks > 0 && debuffOnHit != "")
-				{
-					enemy->AddDebuffStacks(debuffOnHit, debuffStacks);
-				}
-
-			}
-
-			Physics::AddImpulseAtLocation(hit.hitbody, forward * (Damage + 2) * 14.0f, hit.position);
+			TargetHit(hit);
 
 		}
 
@@ -107,5 +93,27 @@ void Bullet::Update()
 	}
 
 	oldPos = Position;
+
+}
+
+void Bullet::TargetHit(Physics::HitResult hit)
+{
+
+	hit.entity->OnPointDamage(Damage, hit.position, MathHelper::FastNormalize(Position - oldPos), hit.hitboxName, damageCauser, this);
+
+
+	IEnemy* enemy = dynamic_cast<IEnemy*>(hit.entity);
+
+	if (enemy)
+	{
+		if (debuffStacks > 0 && debuffOnHit != "")
+		{
+			enemy->AddDebuffStacks(debuffOnHit, debuffStacks);
+		}
+
+	}
+
+	vec3 forward = MathHelper::GetForwardVector(Rotation);
+	Physics::AddImpulseAtLocation(hit.hitbody, forward * (Damage + 2) * 14.0f, hit.position);
 
 }

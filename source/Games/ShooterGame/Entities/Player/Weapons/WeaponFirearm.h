@@ -8,7 +8,9 @@
 
 #include <string>
 
-struct FirearmParams {
+struct FirearmParams 
+{
+	WeaponAmmoType ammoType = WeaponAmmoType::None;
 	std::string modelPath = "";
 	std::string texturesLocation = "";
 	std::string modelPathTp = "";
@@ -17,6 +19,7 @@ struct FirearmParams {
 	std::string fireAnimation = "fire";
 	std::string drawAnimation = "draw";
 	std::string boneMuzzle = "muzzle";
+	std::string bulletClass = "bullet";
 	float fireVolume = 0.5f;
 	bool fireSoundIs2D = true;
 	bool useOneshotSound = false;

@@ -8,7 +8,9 @@ public:
     float aimProgress = 0.0f;
     vec3 weaponAimOffset = vec3(0.062707, 0.033706, -0.0f);
 
-    weapon_sniper() : WeaponFirearm() {
+    weapon_sniper() : WeaponFirearm() 
+    {
+		params.ammoType = WeaponAmmoType::CannonBullets;
         params.modelPath = "GameData/models/player/weapons/sniper/sniper.glb";
         params.texturesLocation = "GameData/models/player/weapons/sniper/sniper.glb/";
         params.modelPathTp = "GameData/models/player/weapons/sniper/sniper_tp.glb";

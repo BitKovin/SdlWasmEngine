@@ -18,6 +18,14 @@ struct WeaponSlotData
 	NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(WeaponSlotData, className,slot,priority)
 };
 
+enum class WeaponAmmoType : uint8_t
+{
+	None = 0,
+	PistolBullets,
+	ShotgunShells,
+	CannonBullets
+};
+
 class Player;
 
 class Weapon : public Entity
@@ -28,6 +36,8 @@ protected:
 	Delay SwitchDelay;
 
 public:
+
+	WeaponAmmoType AmmoType = WeaponAmmoType::None;
 
 	float HideWeapon = 0;
 

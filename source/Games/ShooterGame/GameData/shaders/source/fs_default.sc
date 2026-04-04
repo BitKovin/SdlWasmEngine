@@ -20,6 +20,8 @@ uniform vec4 fog_end;
 uniform vec4 fog_opacity;
 uniform vec4 fog_color;
 
+uniform vec4 modelColor;
+
 uniform vec4 PointLightsNumber;
 
 #ifndef MAX_POINT_LIGHTS
@@ -94,7 +96,7 @@ vec4 ApplyFog(vec4 fragColor, vec3 worldPosition)
 
 void main()
 {
-    vec4  texColor = texture2D(u_texture, v_texcoord0) * v_color0;
+    vec4  texColor = texture2D(u_texture, v_texcoord0) * v_color0 * modelColor;
     vec3  color    = texColor.rgb;
     float alpha    = texColor.a;
 

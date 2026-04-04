@@ -76,6 +76,7 @@ private:
 
 	std::shared_ptr<UiButton> img;
 	std::shared_ptr<UiText> text;
+	std::shared_ptr<UiText> ammoText;
 	std::shared_ptr<UiCrosshair> crosshair;
 
 	std::shared_ptr<UiText> frameRate;

@@ -6,10 +6,10 @@ REGISTER_ENTITY(NpcHumanAxe, "npc_human_axe")
 NpcHumanAxe::NpcHumanAxe()
 {
     ClassName = "npc_human_axe";
-    maxSpeed = 6.0f;
+    maxSpeed = 5.0f;
 
-    Health = 110;
-    MaxHealth = 110;
+    Health = 80;
+    MaxHealth = 80;
 }
 
 void NpcHumanAxe::ProcessAnimationEvent(AnimationEvent& event)

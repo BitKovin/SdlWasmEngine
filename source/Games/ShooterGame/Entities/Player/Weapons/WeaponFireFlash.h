@@ -17,7 +17,7 @@ public:
 
 	void LateUpdate()
 	{
-		float progress = saturate(Time::GameTime - SpawnTime) / duration;
+		float progress = glm::clamp((float)((Time::GameTime - SpawnTime) / duration),0.0f,1.0f);
 
 		if (progress >= 1)
 		{
