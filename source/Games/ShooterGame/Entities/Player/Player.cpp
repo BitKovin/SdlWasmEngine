@@ -72,9 +72,7 @@ void Player::Start()
 	PreloadEntityType("weapon_cannon");
 	PreloadEntityType("weapon_swords");
 	PreloadEntityType("weapon_mpsd");
-
 	PreloadEntityType("weapon_lefthand_empty");
-
 	PreloadEntityType("weapon_cane");
 
 	// Add weapons based on current weapon system mode

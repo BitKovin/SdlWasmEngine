@@ -398,6 +398,7 @@
     <ClCompile Include="Entities\Enemy\Enemies\NpcHelper.cpp" />
     <ClCompile Include="Entities\Enemy\Enemies\NpcHumanAxe.cpp" />
     <ClCompile Include="Entities\Npc\NpcGuardMelee.cpp" />
+    <ClCompile Include="Entities\Pickup\PickupBase.cpp" />
     <ClCompile Include="Entities\Player\InventoryMenu.cpp" />
     <ClCompile Include="Entities\Player\Player.cpp" />
     <ClCompile Include="Entities\Player\Player_Mantle.cpp" />
@@ -462,6 +463,7 @@
     <ClInclude Include="Entities\Npc\NpcBase.h" />
     <ClInclude Include="Entities\Enemy\Enemies\NpcHelper.h" />
     <ClInclude Include="Entities\Enemy\Enemies\NpcHumanAxe.h" />
+    <ClInclude Include="Entities\Pickup\PickupBase.h" />
     <ClInclude Include="Entities\Player\InventoryMenu.h" />
     <ClInclude Include="Entities\Player\Player.hpp" />
     <ClInclude Include="Entities\Player\PlayerBodyAnimator.h" />

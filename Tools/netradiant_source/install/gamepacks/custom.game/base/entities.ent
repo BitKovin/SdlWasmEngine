@@ -1,193 +1,137 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="utf-8"?>
 <classes>
-
-    <!-- Player Start -->
     <point name="info_player_start" color="0 1 0" box="-16 -16 -24 16 16 32">
-        <string key="targetname" name="Name"></string>
-        <angle key="angle" name="Yaw Angle" value="0"></angle>
+        <string key="targetname" name="Name" />
+        <angle key="angle" name="Yaw Angle" value="0" />
+        <string key="classname" name="Classname" value="info_player_start">The classname of the entity.</string>
     </point>
-
-<group name="func_group" color="0 .4375 .7">
-This is not an entity as such. It is strictly an editor utility to group world brushes and patches together for convenience (selecting, moving, copying, applying special compilation parameters etc). You cannot group entities with this. Func_group contents is merged into worldspawn entity during compilation process.
-<!--
-        OLD TERRAIN KEYS (Note: Obsolete with Q3Map2)
-<texture key="alphamap" name="Alphamap">This is the path/name for the art file used to guide the mapping of textures on the terrain surface.</texture>
-<integer key="layers" name="Layers">This Integer value denotes number of unique root shaders that will be used on the terrain.</integer>
-<texture key="shader" name="Metashader">This is the path to the metashader used to assign textures to the terrain entity.</texture>
-<boolean key="terrain" name="Is Terrain">this is an on/off flag. When set to 1, the entity becomes a terrain entity. Note: Unnecessary when compiling with Q3Map2. See Q3Map2 keys.</boolean>
--->
--------- Q3MAP2 KEYS --------
-<real key="_lightmapscale" name="Lightmap Scale" value="1">Floating point value, scaling the resolution of lightmaps on brushes/patches in this entity (default 1.0).</real>
-<integer key="_castshadows" name="Shadow Caster Level" value="1">Allows per-entity control over shadow casting. Defaults to 0 on entities, 1 on world. 0 = no shadow casting. 1 = cast shadows on world. &gt; 1 = cast shadows on entities with _rs (or _receiveshadows) with the corresponding value, AND world. Negative values imply same, but DO NOT cast shadows on world.</integer>
-<integer key="_receiveshadows" name="Shadow Receiver Level" value="1">Allows per-entity control over shadow reception. Defaults to 1 on everything (world shadows). 0 = receives NO shadows. &gt; 1 = receive shadows only from corresponding keyed entities (see above) and world. &lt; 1 = receive shadows ONLY from corresponding keyed entities.</integer>
-<texture key="_celshader" name="Cel Shader">Sets the cel shader used for this geometry. Note: Omit the "textures/" prefix.</texture>
--------- Q3MAP2 TERRAIN KEYS --------
-<texture key="_indexmap" name="Terrain Blending Map">Path/name for the art file used to guide the mapping of textures on the terrain surface.</texture>
-<integer key="_layers" name="Terrain Layers">Number of unique root shaders that will be used on the terrain.</integer>
-<texture key="_shader" name="Terrain MetaShader">Path to the metashader used to assign textures to the terrain entity. Note: Omit the "textures/" prefix.</texture>
--------- NOTES --------
+    <group name="func_group" color="0 0.4375 0.7">
+This is not an entity as such. It is strictly an editor utility to group world brushes and patches together for convenience (selecting, moving, copying, applying special compilation parameters etc). You cannot group entities with this. Func_group contents is merged into worldspawn entity during compilation process. -------- Q3MAP2 KEYS -------- -------- Q3MAP2 TERRAIN KEYS -------- -------- NOTES --------
 To make a func_group into a terrain entity, refer to the Terrain Construction documentation.
-</group>
-
+<real key="_lightmapscale" name="Lightmap Scale" value="1">Floating point value, scaling the resolution of lightmaps on brushes/patches in this entity (default 1.0).</real><integer key="_castshadows" name="Shadow Caster Level" value="1">Allows per-entity control over shadow casting. Defaults to 0 on entities, 1 on world. 0 = no shadow casting. 1 = cast shadows on world. &gt; 1 = cast shadows on entities with _rs (or _receiveshadows) with the corresponding value, AND world. Negative values imply same, but DO NOT cast shadows on world.</integer><integer key="_receiveshadows" name="Shadow Receiver Level" value="1">Allows per-entity control over shadow reception. Defaults to 1 on everything (world shadows). 0 = receives NO shadows. &gt; 1 = receive shadows only from corresponding keyed entities (see above) and world. &lt; 1 = receive shadows ONLY from corresponding keyed entities.</integer><texture key="_celshader" name="Cel Shader">Sets the cel shader used for this geometry. Note: Omit the "textures/" prefix.</texture><texture key="_indexmap" name="Terrain Blending Map">Path/name for the art file used to guide the mapping of textures on the terrain surface.</texture><integer key="_layers" name="Terrain Layers">Number of unique root shaders that will be used on the terrain.</integer><texture key="_shader" name="Terrain MetaShader">Path to the metashader used to assign textures to the terrain entity. Note: Omit the "textures/" prefix.</texture><string key="classname" name="Classname" value="func_group">The classname of the entity.</string></group>
     <point name="env_door" color="0.6 0.4 0.4" box="-12 -12 0 12 12 32">
-        <angle key="angle" name="Yaw Angle" value="0"/>
-        <string key="targetname" name="Name" value=""/>
-        <model key="model" name="Model Path" value="models/tools/door.obj"></model>
-        <!-- Animations are hardcoded in C++: sit_down, sitting_idle, stand_up -->
+        <angle key="angle" name="Yaw Angle" value="0" />
+        <string key="targetname" name="Name" />
+        <model key="model" name="Model Path" value="models/tools/door.obj" />
+        <string key="classname" name="Classname" value="env_door">The classname of the entity.</string>
     </point>
-
     <point name="nav_point" color="0 0.5 0" box="-8 -8 0 8 8 32">
-        <angle key="angle" name="Yaw Angle" value="0"></angle>
-        <string key="targetname" name="Name" value=""></string>
-        <target key="target" name="Next nav point"/>
-        <real key="waitTime" name="Wait Time before moving to next point" value = "0"/>
-        <real key="acceptanceRadius" name="Acceptance Radius" value = "0.3"/>
+        <angle key="angle" name="Yaw Angle" value="0" />
+        <string key="targetname" name="Name" />
+        <target key="target" name="Next nav point" />
+        <real key="waitTime" name="Wait Time before moving to next point" value="0" />
+        <real key="acceptanceRadius" name="Acceptance Radius" value="0.3" />
+        <string key="classname" name="Classname" value="nav_point">The classname of the entity.</string>
     </point>
-
     <point name="task_smoke" color="0.7 0.3 0.1" box="-8 -8 -16 8 8 32">
-        <angle key="angle" name="Yaw Angle" value="0"/>
-        <string key="targetname" name="Name" value=""/>
-        <target key="target" name="Next task after smoking"/>
-        <real key="duration" name="Smoking Duration (seconds)" value="23.0"/>
-        <real key="acceptanceRadius" name="Acceptance Radius" value="0.3"/>
+        <angle key="angle" name="Yaw Angle" value="0" />
+        <string key="targetname" name="Name" />
+        <target key="target" name="Next task after smoking" />
+        <real key="duration" name="Smoking Duration (seconds)" value="23.0" />
+        <real key="acceptanceRadius" name="Acceptance Radius" value="0.3" />
+        <string key="classname" name="Classname" value="task_smoke">The classname of the entity.</string>
     </point>
-
     <point name="task_chair" color="0.6 0.4 0.8" box="-12 -12 0 12 12 32">
-        <angle key="angle" name="Yaw Angle" value="0"/>
-        <string key="targetname" name="Name" value=""/>
-        <target key="target" name="Next task after standing up"/>
-        <real key="acceptanceRadius" name="Acceptance Radius" value="0.3"/>
-        <real key="duration" name="Duration" value="8.0"/>
-        <model key="model" name="Model Path" value="models/tools/sittingPos.obj"></model>
-        <!-- Animations are hardcoded in C++: sit_down, sitting_idle, stand_up -->
+        <angle key="angle" name="Yaw Angle" value="0" />
+        <string key="targetname" name="Name" />
+        <target key="target" name="Next task after standing up" />
+        <real key="acceptanceRadius" name="Acceptance Radius" value="0.3" />
+        <real key="duration" name="Duration" value="8.0" />
+        <model key="model" name="Model Path" value="models/tools/sittingPos.obj" />
+        <string key="classname" name="Classname" value="task_chair">The classname of the entity.</string>
     </point>
-
     <point name="task_chat" color="0.2 0.7 0.8" box="-10 -10 -16 10 10 32">
-        <angle key="angle" name="Yaw Angle" value="0"/>
-        <string key="targetname" name="Name" value=""/>
-        <target key="target" name="Next task after chat ends"/>
-        <string key="partner" name="Partner chat point (must be another task_chat)" value=""/>
-        <real key="duration" name="Chat Duration (seconds)" value="30.0"/>
-        <real key="waitTimeout" name="Max wait for partner (seconds)" value="10.0"/>
-        <real key="acceptanceRadius" name="Acceptance Radius" value="0.3"/>
+        <angle key="angle" name="Yaw Angle" value="0" />
+        <string key="targetname" name="Name" />
+        <target key="target" name="Next task after chat ends" />
+        <string key="partner" name="Partner chat point (must be another task_chat)" />
+        <real key="duration" name="Chat Duration (seconds)" value="30.0" />
+        <real key="waitTimeout" name="Max wait for partner (seconds)" value="10.0" />
+        <real key="acceptanceRadius" name="Acceptance Radius" value="0.3" />
+        <string key="classname" name="Classname" value="task_chat">The classname of the entity.</string>
     </point>
-
-
     <point name="npc_guard" color="0.2 0.3 0.8" box="-16 -16 -32 16 16 32">
-        <angle key="angle" name="Yaw Angle" value="0"/>
-        <string key="targetname" name="Name" value=""/>
-        <target key="target" name="Start Task"/>
+        <angle key="angle" name="Yaw Angle" value="0" />
+        <string key="targetname" name="Name" />
+        <target key="target" name="Start Task" />
+        <string key="classname" name="Classname" value="npc_guard">The classname of the entity.</string>
     </point>
-
     <point name="npc_civilian" color="0.7 0.7 0.3" box="-16 -16 -32 16 16 32">
-        <angle key="angle" name="Yaw Angle" value="0"/>
-        <string key="targetname" name="Name" value=""/>
-        <target key="target" name="Start Task"/>
+        <angle key="angle" name="Yaw Angle" value="0" />
+        <string key="targetname" name="Name" />
+        <target key="target" name="Start Task" />
+        <string key="classname" name="Classname" value="npc_civilian">The classname of the entity.</string>
     </point>
-
     <group name="area_restricted" color="0 0.5 1">
-        <integer key="RestrictionLevel" name="Restriction Level" value="1"></integer>
+        <integer key="RestrictionLevel" name="Restriction Level" value="1" />
+        <string key="classname" name="Classname" value="area_restricted">The classname of the entity.</string>
     </group>
-
-    <!-- Trigger -->
     <group name="trigger" color="0 0.5 1">
-        <target key="target" name="Target"/>
-        <boolean key="_cs" name="Cast Shadows" value="0"/>
-        <string key="onEnterAction" name="On Enter" value="trigger_enter"/>
-        <string key="onExitAction" name="On Exit" value="trigger_exit"/>
-        <string key="targetname" name="Name"></string>
+        <target key="target" name="Target" />
+        <boolean key="_cs" name="Cast Shadows" value="0" />
+        <string key="onEnterAction" name="On Enter" value="trigger_enter" />
+        <string key="onExitAction" name="On Exit" value="trigger_exit" />
+        <string key="targetname" name="Name" />
+        <string key="classname" name="Classname" value="trigger">The classname of the entity.</string>
     </group>
-
     <group name="triggerOnce" color="0 0.5 1">
-        <target key="target" name="Target"/>
-        <string key="onEnterAction" name="On Enter" value="trigger_enter"/>
-        <boolean key="_cs" name="Cast Shadows" value="0"/>
-        <string key="targetname" name="Name"></string>
+        <target key="target" name="Target" />
+        <string key="onEnterAction" name="On Enter" value="trigger_enter" />
+        <boolean key="_cs" name="Cast Shadows" value="0" />
+        <string key="targetname" name="Name" />
+        <string key="classname" name="Classname" value="triggerOnce">The classname of the entity.</string>
     </group>
-
     <group name="triggerTravel" color="0.5 0.5 1">
-        <string key="targetLevel" name="Target Level" value="GameData/maps/test.bsp"/>
-        <string key="targetPlayerStart" name="Target Player Start" value="ps_1"/>
+        <string key="targetLevel" name="Target Level" value="GameData/maps/test.bsp" />
+        <string key="targetPlayerStart" name="Target Player Start" value="ps_1" />
+        <string key="classname" name="Classname" value="triggerTravel">The classname of the entity.</string>
     </group>
-
-
-    <!-- Weapon Pickup -->
     <point name="weaponPickup" color="1 0 0" box="-20 -20 -20 20 20 20">
-        <string key="type" name="Weapon Type" value="weapon_pistol_double"></string>
-        <string key="targetname" name="Name"></string>
+        <string key="type" name="Weapon Type" value="weapon_pistol_double" />
+        <string key="targetname" name="Name" />
+        <string key="classname" name="Classname" value="weaponPickup">The classname of the entity.</string>
     </point>
-
-    <!-- Custom Entities -->
     <point name="ent_cat_point" color="1 0.2 0.8" box="-16 -16 -16 16 16 16">
-        <!-- Custom cat point entity -->
+        <string key="classname" name="Classname" value="ent_cat_point">The classname of the entity.</string>
     </point>
-
     <point name="spawner" color="1 0.2 0.8" box="-16 -16 -32 16 16 16">
-        <string key="className" name="Class Name" value="npc_base"></string>
-        <boolean key="autoTrigger" name="Auto Trigger" value="npc_base"></boolean>
-        <string key="targetname" name="Name"></string>
-        <target key="target" name="Target"></target>
-        <angles key="angles" name="Rotation" value="0 0 0"></angles>
-        <angle key="angle" name="Rotation" value="0"></angle>
-        <string key="onSpawned" name="On Spawn" value="spawned"></string>
-        <string key="onDespawned" name="On Despawn" value="despawned"></string>
+        <string key="className" name="Class Name" value="npc_base" />
+        <boolean key="autoTrigger" name="Auto Trigger" value="npc_base" />
+        <string key="targetname" name="Name" />
+        <target key="target" name="Target" />
+        <angles key="angles" name="Rotation" value="0 0 0" />
+        <angle key="angle" name="Rotation" value="0" />
+        <string key="onSpawned" name="On Spawn" value="spawned" />
+        <string key="onDespawned" name="On Despawn" value="despawned" />
+        <string key="classname" name="Classname" value="spawner">The classname of the entity.</string>
     </point>
-
     <point name="counter" color="1 1 0.4" box="-16 -16 -32 16 16 16">
-        <integer key="startNum" name="Start Number" value="0"></integer>
-        <integer key="targetNum" name="Target Number" value="0"></integer>
-        <target key="target" name="Target"></target>
-        <string key="onReached" name="On Reached" value="reached"></string>
-        <string key="targetname" name="Name"></string>
+        <integer key="startNum" name="Start Number" value="0" />
+        <integer key="targetNum" name="Target Number" value="0" />
+        <target key="target" name="Target" />
+        <string key="onReached" name="On Reached" value="reached" />
+        <string key="targetname" name="Name" />
+        <string key="classname" name="Classname" value="counter">The classname of the entity.</string>
     </point>
-
-    <!-- Destructible Brush -->
     <group name="destructible" color="0.8 0.2 0.2">
-        <real key="health" name="Health" value="30"></real>
-        <string key="particleSystem" name="Particle System" value="destructionWood"></string>
-        <string key="targetname" name="Name"></string>
+        <real key="health" name="Health" value="30" />
+        <string key="particleSystem" name="Particle System" value="destructionWood" />
+        <string key="targetname" name="Name" />
+        <string key="classname" name="Classname" value="destructible">The classname of the entity.</string>
     </group>
-
-    
-    <group name="vis_through" color="0.8 0.2 0.2"> </group>
-
-    <!-- Static Mesh -->
-    <point name="misc_model" color="1 .5 .25" box="-16 -16 -16 16 16 16">
-        Generic placeholder for inserting models to map. Model triangles are baked to BSP.
+    <group name="vis_through" color="0.8 0.2 0.2">
+        <string key="classname" name="Classname" value="vis_through">The classname of the entity.</string>
+    </group>
+    <point name="misc_model" color="1 0.5 0.25" box="-16 -16 -16 16 16 16">
+Generic placeholder for inserting models to map. Model triangles are baked to BSP.
         MD3, ASE, 3DS, OBJ, FM, LWO, MD2, MDC, MS3D model formats are supported.
-        -------- Q3MAP2 KEYS --------
-        <model key="model" name="Model File">Path/name of model to use (e.g. models/mapobjects/teleporter/teleporter.md3).</model>
-        <angle key="angle" name="Yaw Angle">Direction in which model will be oriented.</angle>
-        <angles key="angles" name="Pitch Yaw Roll">Individual control of PITCH, YAW, and ROLL (default 0 0 0).</angles>
-        <real key="modelscale" name="Uniform Scale" value="1">Floating-point value used to scale a model up or down (default 1.0).</real>
-        <real3 key="modelscale_vec" name="Scale XYZ" value="1 1 1">Floating-point vector used to scale a model's axes individually (default 1.0 1.0 1.0).</real3>
-        <array key="_remap" name="Shader Remaps">Used to remap textures/shaders in the model. To remap all shaders to a given shader, use "*;models/mymodel/mytexture". To remap a specific shader, use "models/mymodel/old;models/mymodel/new". Any key starting with _remap prefix will work, so if you need more remappings, create _remap2, _remap3 etc keys.</array>
-        <target key="target" name="Target">Used to attach the misc_model to a brush entity, where its "targetname" key is the same value.</target>
-        <real key="_lightmapscale" name="Lightmap Scale" value="1">Floating point value, scaling the resolution of lightmaps on this model (if model is using lightmapped shaders) (default 1.0).</real>
-        <integer key="_castshadows" name="Shadow Caster Level" value="1">Allows per-entity control over shadow casting. Defaults to 0 on entities, 1 on world. 0 = no shadow casting. 1 = cast shadows on world. &gt; 1 = cast shadows on entities with _rs (or _receiveshadows) with the corresponding value, AND world. Negative values imply same, but DO NOT cast shadows on world.</integer>
-        <integer key="_receiveshadows" name="Shadow Receiver Level" value="1">Allows per-entity control over shadow reception. Defaults to 1 on everything (world shadows). 0 = receives NO shadows. &gt; 1 = receive shadows only from corresponding keyed entities (see above) and world. &lt; 1 = receive shadows ONLY from corresponding keyed entities.</integer>
-        <texture key="_celshader" name="Cel Shader">Sets the cel shader used for this geometry. Note: Omit the "textures/" prefix.</texture>
-        <real key="_clipdepth" name="Autoclip thickness" value="2">Autoclip brushes thickness (default 2.0).</real>
-        -------- SPAWNFLAGS --------
-        <flag key="_RMG_BSP" name="_RMG_BSP" bit="0">in SoF2, append a _RMG_BSP suffix to shader names instead of _BSP</flag>
-        <flag key="CLIPMODEL" name="Clip Model" bit="1">Clips the model for player/weapon collisions; extruding every face along most perpendicular axial direction. For use on large architectural or terrain models, not for small decorative models.</flag>
-        <flag key="FORCEMETA" name="Force Meta" bit="2">Toggles on q3map_forceMeta for lightmapped models. Converts model triangles to bsp metasurfaces.</flag>
-        <flag key="EXTRUDE_FACE" name="EXTRUDE_FACE_NORMALS" bit="3">extrude along the model face normals for clipping</flag>
-        <flag key="EXTRUDE_TERRAIN" name="EXTRUDE_TERRAIN" bit="4">extrude each surface of the model along its average axial direction ( up/down/west/east/north/south ); faces with not matching direction (or too steep) are clipped in default mode</flag>
-        <flag key="COLOR_TO_ALPHA" name="COLOR_TO_ALPHA" bit="5">use the color value as alpha (for terrain blending)</flag>
-        <flag key="EXTRUDE_VERTEX" name="EXTRUDE_VERTEX_NORMALS" bit="7">extrude along the model vertex normals for clipping; accurate collisions, if normals are fine; bad ones are replaced with 45 degrees to face</flag>
-        <flag key="PYRAMIDAL_CLIP" name="PYRAMIDAL_CLIP" bit="8">pyramidal clipping brushes (4-sided); accurate collisions</flag>
-        <flag key="EXTRUDE_DOWN" name="EXTRUDE_DOWNWARDS" bit="9">for horizontal terrain; when not possible, extrude in default mode</flag>
-        <flag key="EXTRUDE_UP" name="EXTRUDE_UPWARDS" bit="10">-//-</flag>
-        <flag key="MAX_EXTRUDE" name="MAX_EXTRUDE" bit="11">Extrude to the max/min point of every model surface to reduce bsp size (uses axial back plane)</flag>
-        <flag key="AXIAL_BACKPLANE" name="AXIAL_BACKPLANE" bit="12">use axial back plane for clipping brushes to effectively reduce bsp size; might cause unwanted collisions, make sure to -debugclip; negative _clipdepth / -clipdepth limits max thickness of resulting brushes (making non-axial backplane, if hit the limit)</flag>
-        other possible modes of clipping:
+        -------- Q3MAP2 KEYS -------- -------- SPAWNFLAGS -------- other possible modes of clipping:
         CLIPMODEL+AXIAL_BACKPLANE
         EXTRUDE_FACE_NORMALS+PYRAMIDAL_CLIP - truncated pyramid with 45 degrees sides
         EXTRUDE_TERRAIN+MAX_EXTRUDE
         EXTRUDE_TERRAIN+AXIAL_BACKPLANE
         EXTRUDE_VERTEX_NORMALS + PYRAMIDAL_CLIP - vertex normals mode: don't check for sides, sticking outwards
-        PYRAMIDAL_CLIP+AXIAL_BACKPLANE - pyramid with 3 of 4 sides axial (->small bsp)
+        PYRAMIDAL_CLIP+AXIAL_BACKPLANE - pyramid with 3 of 4 sides axial (-&gt;small bsp)
         EXTRUDE_DOWNWARDS+EXTRUDE_UPWARDS
         EXTRUDE_DOWNWARDS+MAX_EXTRUDE
         EXTRUDE_DOWNWARDS+AXIAL_BACKPLANE
@@ -195,120 +139,69 @@ To make a func_group into a terrain entity, refer to the Terrain Construction do
         EXTRUDE_DOWNWARDS+EXTRUDE_UPWARDS+AXIAL_BACKPLANE
         EXTRUDE_UPWARDS+MAX_EXTRUDE
         EXTRUDE_UPWARDS+AXIAL_BACKPLANE
-    </point>
-
-    <point name="counter" color="0.8 0.3 0.7" box="-5 -5 -6 5 5 6">
-    
-        <string key="targetname" name="Name"></string>
-        <integer key="startNum" name="Start Number" value="0"></integer>
-        <integer key="targetNum" name="Target Number" value="1"></integer>
-        <string key="target" name="Target"></string>
-        <string key="onReached" name="on reached event" value = "reached"></string>
-    </point>
-
-
+<model key="model" name="Model File">Path/name of model to use (e.g. models/mapobjects/teleporter/teleporter.md3).</model><angle key="angle" name="Yaw Angle">Direction in which model will be oriented.</angle><angles key="angles" name="Pitch Yaw Roll">Individual control of PITCH, YAW, and ROLL (default 0 0 0).</angles><real key="modelscale" name="Uniform Scale" value="1">Floating-point value used to scale a model up or down (default 1.0).</real><real3 key="modelscale_vec" name="Scale XYZ" value="1 1 1">Floating-point vector used to scale a model's axes individually (default 1.0 1.0 1.0).</real3><array key="_remap" name="Shader Remaps">Used to remap textures/shaders in the model. To remap all shaders to a given shader, use "*;models/mymodel/mytexture". To remap a specific shader, use "models/mymodel/old;models/mymodel/new". Any key starting with _remap prefix will work, so if you need more remappings, create _remap2, _remap3 etc keys.</array><target key="target" name="Target">Used to attach the misc_model to a brush entity, where its "targetname" key is the same value.</target><real key="_lightmapscale" name="Lightmap Scale" value="1">Floating point value, scaling the resolution of lightmaps on this model (if model is using lightmapped shaders) (default 1.0).</real><integer key="_castshadows" name="Shadow Caster Level" value="1">Allows per-entity control over shadow casting. Defaults to 0 on entities, 1 on world. 0 = no shadow casting. 1 = cast shadows on world. &gt; 1 = cast shadows on entities with _rs (or _receiveshadows) with the corresponding value, AND world. Negative values imply same, but DO NOT cast shadows on world.</integer><integer key="_receiveshadows" name="Shadow Receiver Level" value="1">Allows per-entity control over shadow reception. Defaults to 1 on everything (world shadows). 0 = receives NO shadows. &gt; 1 = receive shadows only from corresponding keyed entities (see above) and world. &lt; 1 = receive shadows ONLY from corresponding keyed entities.</integer><texture key="_celshader" name="Cel Shader">Sets the cel shader used for this geometry. Note: Omit the "textures/" prefix.</texture><real key="_clipdepth" name="Autoclip thickness" value="2">Autoclip brushes thickness (default 2.0).</real><flag key="_RMG_BSP" name="_RMG_BSP" bit="0">in SoF2, append a _RMG_BSP suffix to shader names instead of _BSP</flag><flag key="CLIPMODEL" name="Clip Model" bit="1">Clips the model for player/weapon collisions; extruding every face along most perpendicular axial direction. For use on large architectural or terrain models, not for small decorative models.</flag><flag key="FORCEMETA" name="Force Meta" bit="2">Toggles on q3map_forceMeta for lightmapped models. Converts model triangles to bsp metasurfaces.</flag><flag key="EXTRUDE_FACE" name="EXTRUDE_FACE_NORMALS" bit="3">extrude along the model face normals for clipping</flag><flag key="EXTRUDE_TERRAIN" name="EXTRUDE_TERRAIN" bit="4">extrude each surface of the model along its average axial direction ( up/down/west/east/north/south ); faces with not matching direction (or too steep) are clipped in default mode</flag><flag key="COLOR_TO_ALPHA" name="COLOR_TO_ALPHA" bit="5">use the color value as alpha (for terrain blending)</flag><flag key="EXTRUDE_VERTEX" name="EXTRUDE_VERTEX_NORMALS" bit="7">extrude along the model vertex normals for clipping; accurate collisions, if normals are fine; bad ones are replaced with 45 degrees to face</flag><flag key="PYRAMIDAL_CLIP" name="PYRAMIDAL_CLIP" bit="8">pyramidal clipping brushes (4-sided); accurate collisions</flag><flag key="EXTRUDE_DOWN" name="EXTRUDE_DOWNWARDS" bit="9">for horizontal terrain; when not possible, extrude in default mode</flag><flag key="EXTRUDE_UP" name="EXTRUDE_UPWARDS" bit="10">-//-</flag><flag key="MAX_EXTRUDE" name="MAX_EXTRUDE" bit="11">Extrude to the max/min point of every model surface to reduce bsp size (uses axial back plane)</flag><flag key="AXIAL_BACKPLANE" name="AXIAL_BACKPLANE" bit="12">use axial back plane for clipping brushes to effectively reduce bsp size; might cause unwanted collisions, make sure to -debugclip; negative _clipdepth / -clipdepth limits max thickness of resulting brushes (making non-axial backplane, if hit the limit)</flag><string key="classname" name="Classname" value="misc_model">The classname of the entity.</string></point>
     <point name="logicOnce" color="0.6 0.1 0.7" box="-4 -4 -4 4 4 4">
-        <string key="targetname" name="Name"></string>
+        <string key="targetname" name="Name" />
+        <string key="classname" name="Classname" value="logicOnce">The classname of the entity.</string>
     </point>
-
-    <!-- Moveable Brush -->
     <group name="func_door" color="0.8 0.8 0.2">
-
-        <string key="targetname" name="Name"></string>
-
-        <real3 key="targetLocation" name="Target Location" value="0 0 0">
-            <!-- World‐space XYZ target position -->
-        </real3>
-        <string key="rotationPointName" name="rotationPointName" value="">
-            <!-- Name of the point/origin to rotate around -->
-        </string>
-        <real key="time" name="Time" value="1">
-            <!-- Duration (in seconds) for the move -->
-        </real>
+        <string key="targetname" name="Name" />
+        <real3 key="targetLocation" name="Target Location" value="0 0 0" />
+        <string key="rotationPointName" name="rotationPointName" />
+        <real key="time" name="Time" value="1" />
+        <string key="classname" name="Classname" value="func_door">The classname of the entity.</string>
     </group>
-
-
     <point name="transformPoint" color="0 0 0" box="-3 -3 -3 3 3 3">
-        <angles key="angles" name="Rotation" value="0 0 0"></angles>
-        <string key="targetname" name="Name"></string>
+        <angles key="angles" name="Rotation" value="0 0 0" />
+        <string key="targetname" name="Name" />
+        <string key="classname" name="Classname" value="transformPoint">The classname of the entity.</string>
     </point>
-
     <point name="static_mesh" color="1 0 0" box="-5 -5 -5 5 5 5">
-        <model key="model" name="Model Path" value="models/test.obj"></model>
-        <string key="texture" name="Texture"></string>
+        <model key="model" name="Model Path" value="models/test.obj" />
+        <string key="texture" name="Texture" />
         <real key="modelscale" name="Uniform Scale" value="32">Floating-point value used to scale a model up or down (default 32).</real>
         <real3 key="modelscale_vec" name="Scale XYZ" value="1 1 1">Floating-point vector used to scale a model's axes individually (default 1.0 1.0 1.0).</real3>
-        <angles key="angles" name="Rotation" value="0 0 0"></angles>
-        <string key="targetname" name="Name"></string>
+        <angles key="angles" name="Rotation" value="0 0 0" />
+        <string key="targetname" name="Name" />
+        <string key="classname" name="Classname" value="static_mesh">The classname of the entity.</string>
     </point>
-
-    <!-- Audio -->
     <point name="music_player" color="0.6 0.12 0.6" box="-15 -15 -15 15 15 15">
-        <string key="bankName" name="Sound Bank" value="Music.bank"></string>
-        <string key="eventName" name="Event Name"></string>
-        <real key="volume" name="Volume" value="0.5"></real>
-        <real key="fadeTime" name="Fade Time" value="1"></real>
-        <string key="targetname" name="Name"></string>
+        <string key="bankName" name="Sound Bank" value="Music.bank" />
+        <string key="eventName" name="Event Name" />
+        <real key="volume" name="Volume" value="0.5" />
+        <real key="fadeTime" name="Fade Time" value="1" />
+        <string key="targetname" name="Name" />
+        <string key="classname" name="Classname" value="music_player">The classname of the entity.</string>
     </point>
-
-    <!-- Navigation -->
     <group name="navBlock" color="0.2 0.2 0.2">
-        <!-- Blocks AI navigation -->
+        <string key="classname" name="Classname" value="navBlock">The classname of the entity.</string>
     </group>
-
-	<point name="light" color=".65 .65 1" box="-8 -8 -8 8 8 8">
-		Non-displayed point light source. The -pointscale and -scale arguments to Q3Map2 affect the brightness of these lights. The -skyscale argument affects brightness of entity sun lights.
-		-------- Q3MAP2 KEYS --------
-		<real key="light" name="Light Intensity" value="300">Overrides the default 300 intensity. Negative values may be used for negative lights.</real>
-		<color key="_color" name="Light Color" value="1 1 1">Weighted RGB value of light color (default 1.0 1.0 1.0 = white).</color>
-		<target key="target" name="Target">Lights pointed at a target (info_null / target_position) will be spotlights.</target>
-		<real key="radius" name="Spotlight Radius" value="64">Overrides the default 64 unit radius of a spotlight at the target point.</real>
-		<boolean key="_sun" name="Sun">Set this key to 1 on a spotlight to make an infinite sun light.</boolean>
-		<real key="fade" name="Linear Fade" value="1">Fades light attenuation. Only affects linear lights.</real>
-		<real key="scale" name="Intensity Scale" value="1">Scales the "light" value.</real>
-		<real key="_deviance" name="Penumbra Deviance" value="0">Penumbra effect - distance measured in world units for point/spot lights, and degrees for suns (~0.5-3).</real>
-		<integer key="_samples" name="Penumbra Samples" value="1">Penumbra effect - the number of random jitters distributed over the solid arc (~16).</integer>
-		<boolean key="_filter" name="Lightmap Filtering">Set this key to 1 to toggle on lightmap filtering.</boolean>
-		<real key="_filterradius" name="Filter Radius">Filters lightmaps within set radius.</real>
-		<real key="_anglescale" name="Light Attenuation Scale" value="1">Scales light attenuation. Smaller values lessens angle attenuation, larger values for sharper, more faceted lighting (default 1.0).</real>
-		<integer key="style" name="Light Style Index">Light style index number associated with worldspawn light style. Values are between 1 and 31.</integer>
-		-------- SPAWNFLAGS --------
-		<flag key="LINEAR" name="Linear Falloff" bit="0">Use a linear falloff. Default is inverse distance squared (more realistic).</flag>
-		<flag key="NOANGLE" name="No Angle Attenuation" bit="1">Ignore angle attenuation.</flag>
-		<flag key="NOGRIDLIGHT" name="Not Dynamic" bit="4">Do not affect the lightgrid (dynamic entity lighting).</flag>
-		<flag key="UNNORMALIZED" name="Unnormalized" bit="5">Do not normalize light color.</flag>
-		<flag key="ATTENDISTANCE" name="Distance attenuation" bit="6">Use distance attenuation used for sun and area lights.</flag>
-	</point>
-
-	<group name="worldspawn" color="0 0 0">
-		Entity, which stores regular static map primitives (brushes and patches).
-		-------- KEYS --------
-		<string key="message" name="Logon Message">Text to print at user logon. Used for name of level.</string>
-		<sound key="music" name="Music File">Path/name of looping .wav file used for level's music (e.g. music/sonic5.wav). Specifying two files, like 'music/fla22k_04_intro.wav music/fla22k_04_loop.wav' will make former to play once and latter looped then.</sound>
-		<real key="gravity" name="Gravity" value="800">Gravity of level (default normal gravity: 800).</real>
-		-------- Q3MAP2 KEYS --------
-		<integer key="gridsize" name="Dynamic Light Granularity" value="64 64 128">Granularity of the lightgrid, created by q3map, which is used to dynamically light certain game objects, like players and items. Value is three integers separated by spaces, representing number of units between grid points in X Y Z. Default gridsize value is 64 64 128. Use larger powers of 2 to reduce BSP size and compile time on very large maps.</integer>
-		<integer key="_blocksize" name="BSP Block Size" value="1024 1024 1024">Map compiler splits the BSP tree along axial planes (X, Y and Z) for optimization. It does it as often, as specified in _blocksize key for respective axis (in units) (default 1024 1024 1024, 0 = disable, setting single value 'N' equals to setting 'N N N'). I.e. lower values result in more splits and vice versa. Increase the blocksize using larger powers of 2 to reduce compile times on very large maps with a low structural brush density. Maps, having flat architecture, might work better with horizontal splits disabled ('N N 0').</integer>
-		<real key="_ambient" name="Ambient Intensity" value="0">Adds a constant value to overall lighting (default 0, range 0 - 255). Only recommended use is small values for cosmetic purposes, as high values will have a tendency to flatten out variations in light and shade.</real>
-		<color key="_color" name="Ambient Color" value="1 1 1">RGB color value for ambient and other global light parameters (default is 1 1 1).</color>
-		<real key="_minlight" name="Min Lightmap Intensity" value="0">Minimum light value, levelwide. Uses the _color key to set color. Since it does not add unlike ambient, but overrides existing light values, affected areas will get flat constant light. Therefore use is highly not recommended!</real>
-		<real key="_minvertexlight" name="Min Vertex Intensity" value="0">Minimum vertex lighting, levelwide.</real>
-		<real key="_mingridlight" name="Min Dynamic Intensity" value="0">Minimum lightgrid (dynamic entity lighting) levelwide.</real>
-		<string key="_floodlight" name="FloodLight" value="240 240 255 1024 128 1">A sextet of values "r g b dist intensity directional_power" to set global floodlight parameters (good defaults are 240 240 255 1024 128 1). Floodlight effect is sort of Ambient Occlusion.</string>
-		<boolean key="_keeplights" name="Keep Light Entities">Keep light entities in the BSP. Normally stripped out by the BSP process and read from the .map file by the lighting phase.</boolean>
-		<boolean key="_noshadersun" name="Ignore Shader Sun">Ignore q3map_sun/sun directives in sky shaders and ONLY use entity sun lights.</boolean>
-		<real key="_farplanedist" name="Far Clip Distance">Limit on how many units the vis phase of compilation can see. Used in combination with level-wide fog, it can help reduce r_speeds on large, open maps.</real>
-		<texture key="_foghull" name="Fog Hull Shader">Shader to use for "fog hull". Foghull shader should be a sky shader. Omit the "textures/" prefix.</texture>
-		<real key="_lightmapscale" name="Lightmap Scale" value="1">Floating point value, scaling the resolution of lightmaps on brushes/patches in the world. Can be overridden in func_group (or other entities) (default 1.0).</real>
-		<integer key="_castshadows" name="Shadow Caster Level" value="1">Allows per-entity control over shadow casting. Defaults to 0 on entities, 1 on world. 0 = no shadow casting. 1 = cast shadows on world. &gt; 1 = cast shadows on entities with _rs (or _receiveshadows) with the corresponding value, AND world. Negative values imply same, but DO NOT cast shadows on world.</integer>
-		<integer key="_receiveshadows" name="Shadow Receiver Level" value="1">Allows per-entity control over shadow reception. Defaults to 1 on everything (world shadows). 0 = receives NO shadows. &gt; 1 = receive shadows only from corresponding keyed entities (see above) and world. &lt; 1 = receive shadows ONLY from corresponding keyed entities.</integer>
-		<texture key="_celshader" name="Cel Shader">Sets the cel shader used for this geometry. Note: Omit the "textures/" prefix.</texture> Overridable in entities.
-		<string key="_styleNalphaGen" name="Style Light alphaGen">*IMPORTANT* Replace "N" in the key "_styleNalphaGen" with an integer between 1 and 31 as your style index. Values takes standard shader waveform functions (e.g. wave sin 0.5 0.3 0.25 1.5)</string>
-		<string key="_styleNrgbGen" name="Style Light rgbGen">*IMPORTANT* Replace "N" in the key "_styleNrgbGen" with an integer between 1 and 31 as your style index. Values take standard shader waveform functions (e.g. wave sin 0.5 0.3 0.25 1.5)</string>
-		-------- Q3MAP2 TERRAIN KEYS --------
-		<texture key="_indexmap" name="Terrain Blending Map">Path/name for the art file used to guide the mapping of textures on the terrain surface.</texture>
-		<integer key="_layers" name="Terrain Layers">Number of unique root shaders that will be used on the terrain.</integer>
-		<texture key="_shader" name="Terrain MetaShader">Path to the metashader used to assign textures to the terrain entity. Note: Omit the "textures/" prefix.</texture>
-		</group>
-
+    <point name="light" color="0.65 0.65 1" box="-8 -8 -8 8 8 8">
+Non-displayed point light source. The -pointscale and -scale arguments to Q3Map2 affect the brightness of these lights. The -skyscale argument affects brightness of entity sun lights.
+		-------- Q3MAP2 KEYS -------- -------- SPAWNFLAGS --------
+<real key="light" name="Light Intensity" value="300">Overrides the default 300 intensity. Negative values may be used for negative lights.</real><color key="_color" name="Light Color" value="1 1 1">Weighted RGB value of light color (default 1.0 1.0 1.0 = white).</color><target key="target" name="Target">Lights pointed at a target (info_null / target_position) will be spotlights.</target><real key="radius" name="Spotlight Radius" value="64">Overrides the default 64 unit radius of a spotlight at the target point.</real><boolean key="_sun" name="Sun">Set this key to 1 on a spotlight to make an infinite sun light.</boolean><real key="fade" name="Linear Fade" value="1">Fades light attenuation. Only affects linear lights.</real><real key="scale" name="Intensity Scale" value="1">Scales the "light" value.</real><real key="_deviance" name="Penumbra Deviance" value="0">Penumbra effect - distance measured in world units for point/spot lights, and degrees for suns (~0.5-3).</real><integer key="_samples" name="Penumbra Samples" value="1">Penumbra effect - the number of random jitters distributed over the solid arc (~16).</integer><boolean key="_filter" name="Lightmap Filtering">Set this key to 1 to toggle on lightmap filtering.</boolean><real key="_filterradius" name="Filter Radius">Filters lightmaps within set radius.</real><real key="_anglescale" name="Light Attenuation Scale" value="1">Scales light attenuation. Smaller values lessens angle attenuation, larger values for sharper, more faceted lighting (default 1.0).</real><integer key="style" name="Light Style Index">Light style index number associated with worldspawn light style. Values are between 1 and 31.</integer><flag key="LINEAR" name="Linear Falloff" bit="0">Use a linear falloff. Default is inverse distance squared (more realistic).</flag><flag key="NOANGLE" name="No Angle Attenuation" bit="1">Ignore angle attenuation.</flag><flag key="NOGRIDLIGHT" name="Not Dynamic" bit="4">Do not affect the lightgrid (dynamic entity lighting).</flag><flag key="UNNORMALIZED" name="Unnormalized" bit="5">Do not normalize light color.</flag><flag key="ATTENDISTANCE" name="Distance attenuation" bit="6">Use distance attenuation used for sun and area lights.</flag><string key="classname" name="Classname" value="light">The classname of the entity.</string></point>
+    <group name="worldspawn" color="0 0 0">
+Entity, which stores regular static map primitives (brushes and patches).
+		-------- KEYS -------- -------- Q3MAP2 KEYS -------- Overridable in entities. -------- Q3MAP2 TERRAIN KEYS --------
+<string key="message" name="Logon Message">Text to print at user logon. Used for name of level.</string><sound key="music" name="Music File">Path/name of looping .wav file used for level's music (e.g. music/sonic5.wav). Specifying two files, like 'music/fla22k_04_intro.wav music/fla22k_04_loop.wav' will make former to play once and latter looped then.</sound><real key="gravity" name="Gravity" value="800">Gravity of level (default normal gravity: 800).</real><integer key="gridsize" name="Dynamic Light Granularity" value="64 64 128">Granularity of the lightgrid, created by q3map, which is used to dynamically light certain game objects, like players and items. Value is three integers separated by spaces, representing number of units between grid points in X Y Z. Default gridsize value is 64 64 128. Use larger powers of 2 to reduce BSP size and compile time on very large maps.</integer><integer key="_blocksize" name="BSP Block Size" value="1024 1024 1024">Map compiler splits the BSP tree along axial planes (X, Y and Z) for optimization. It does it as often, as specified in _blocksize key for respective axis (in units) (default 1024 1024 1024, 0 = disable, setting single value 'N' equals to setting 'N N N'). I.e. lower values result in more splits and vice versa. Increase the blocksize using larger powers of 2 to reduce compile times on very large maps with a low structural brush density. Maps, having flat architecture, might work better with horizontal splits disabled ('N N 0').</integer><real key="_ambient" name="Ambient Intensity" value="0">Adds a constant value to overall lighting (default 0, range 0 - 255). Only recommended use is small values for cosmetic purposes, as high values will have a tendency to flatten out variations in light and shade.</real><color key="_color" name="Ambient Color" value="1 1 1">RGB color value for ambient and other global light parameters (default is 1 1 1).</color><real key="_minlight" name="Min Lightmap Intensity" value="0">Minimum light value, levelwide. Uses the _color key to set color. Since it does not add unlike ambient, but overrides existing light values, affected areas will get flat constant light. Therefore use is highly not recommended!</real><real key="_minvertexlight" name="Min Vertex Intensity" value="0">Minimum vertex lighting, levelwide.</real><real key="_mingridlight" name="Min Dynamic Intensity" value="0">Minimum lightgrid (dynamic entity lighting) levelwide.</real><string key="_floodlight" name="FloodLight" value="240 240 255 1024 128 1">A sextet of values "r g b dist intensity directional_power" to set global floodlight parameters (good defaults are 240 240 255 1024 128 1). Floodlight effect is sort of Ambient Occlusion.</string><boolean key="_keeplights" name="Keep Light Entities">Keep light entities in the BSP. Normally stripped out by the BSP process and read from the .map file by the lighting phase.</boolean><boolean key="_noshadersun" name="Ignore Shader Sun">Ignore q3map_sun/sun directives in sky shaders and ONLY use entity sun lights.</boolean><real key="_farplanedist" name="Far Clip Distance">Limit on how many units the vis phase of compilation can see. Used in combination with level-wide fog, it can help reduce r_speeds on large, open maps.</real><texture key="_foghull" name="Fog Hull Shader">Shader to use for "fog hull". Foghull shader should be a sky shader. Omit the "textures/" prefix.</texture><real key="_lightmapscale" name="Lightmap Scale" value="1">Floating point value, scaling the resolution of lightmaps on brushes/patches in the world. Can be overridden in func_group (or other entities) (default 1.0).</real><integer key="_castshadows" name="Shadow Caster Level" value="1">Allows per-entity control over shadow casting. Defaults to 0 on entities, 1 on world. 0 = no shadow casting. 1 = cast shadows on world. &gt; 1 = cast shadows on entities with _rs (or _receiveshadows) with the corresponding value, AND world. Negative values imply same, but DO NOT cast shadows on world.</integer><integer key="_receiveshadows" name="Shadow Receiver Level" value="1">Allows per-entity control over shadow reception. Defaults to 1 on everything (world shadows). 0 = receives NO shadows. &gt; 1 = receive shadows only from corresponding keyed entities (see above) and world. &lt; 1 = receive shadows ONLY from corresponding keyed entities.</integer><texture key="_celshader" name="Cel Shader">Sets the cel shader used for this geometry. Note: Omit the "textures/" prefix.</texture><string key="_styleNalphaGen" name="Style Light alphaGen">*IMPORTANT* Replace "N" in the key "_styleNalphaGen" with an integer between 1 and 31 as your style index. Values takes standard shader waveform functions (e.g. wave sin 0.5 0.3 0.25 1.5)</string><string key="_styleNrgbGen" name="Style Light rgbGen">*IMPORTANT* Replace "N" in the key "_styleNrgbGen" with an integer between 1 and 31 as your style index. Values take standard shader waveform functions (e.g. wave sin 0.5 0.3 0.25 1.5)</string><texture key="_indexmap" name="Terrain Blending Map">Path/name for the art file used to guide the mapping of textures on the terrain surface.</texture><integer key="_layers" name="Terrain Layers">Number of unique root shaders that will be used on the terrain.</integer><texture key="_shader" name="Terrain MetaShader">Path to the metashader used to assign textures to the terrain entity. Note: Omit the "textures/" prefix.</texture><string key="classname" name="Classname" value="worldspawn">The classname of the entity.</string></group>
+    <point name="item_ammo_shotgun" color="1 0 0" box="-5 -5 -0 5 5 5">
+        <string key="classname" name="Classname" value="item_ammo_shotgun">The classname of the entity.</string>
+        <model key="model" name="Model Path" value="models/pickups/shotgunAmmo.obj" />
+        <real key="modelscale" name="Uniform Scale" value="1">Will by scaled by 32 in engine.</real>
+        <angles key="angles" name="Rotation" value="0 0 0" />
+        <string key="targetname" name="Name" />
+        <target key="target" name="Target">Targetname of entity to activate/target.</target>
+        <string key="onPickupEvent" name="On Pickup" />
+        <angle key="angle" name="Yaw Angle" value="0">Yaw rotation in degrees. 0 = East, 90 = South, etc.</angle>
+    </point>
+    <point name="item_ammo_pistol" color="1 0 0" box="-5 -5 -0 5 5 5">
+        <model key="model" name="Model Path" value="models/pickups/pistolAmmo.obj" />
+        <string key="classname" name="Classname" value="item_ammo_pistol">The classname of the entity.</string>
+        <real key="modelscale" name="Uniform Scale" value="1">Will by scaled by 32 in engine.</real>
+        <angles key="angles" name="Rotation" value="0 0 0" />
+        <string key="targetname" name="Name" />
+        <target key="target" name="Target">Targetname of entity to activate/target.</target>
+        <string key="onPickupEvent" name="On Pickup" />
+        <angle key="angle" name="Yaw Angle" value="0">Yaw rotation in degrees. 0 = East, 90 = South, etc.</angle>
+    </point>
 </classes>

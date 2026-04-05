@@ -1372,10 +1372,10 @@
 {
 "classname" "light"
 "origin" "-80 -640 176"
-"light" "15"
+"light" "10"
 "target" "sun_target"
 "_sun" "1"
-"_color" "0.0666667 0 1"
+"_color" "0.34902 0.34902 1"
 }
 // entity 3
 {
@@ -4485,4 +4485,9 @@
 "spawnflags" "1"
 "fade" "0.8"
 "_color" "1 0.960784 0.529412"
+}
+// entity 86
+{
+"classname" "item_ammo_shotgun"
+"origin" "76 224 20"
 }

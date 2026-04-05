@@ -4486,3 +4486,13 @@
 "fade" "0.8"
 "_color" "1 0.960784 0.529412"
 }
+// entity 86
+{
+"classname" "item_ammo_shotgun"
+"origin" "76 224 20"
+}
+// entity 87
+{
+"classname" "item_ammo_shotgun"
+"origin" "-32 32 32"
+}

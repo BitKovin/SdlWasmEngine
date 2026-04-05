@@ -15,6 +15,7 @@
 #include "../IEnemy.h"
 #include "../../../UI/Enemy/UiNpcDebuffs.h"
 #include <UI/WorldSpace/UiBilboard.h>
+#include <Character/CharacterController.h>
 
 class TestNpc : public Entity, public IEnemy
 {
@@ -27,6 +28,8 @@ private:
 	PathFollowQuery pathFollow;
 
 	SoundPlayer* soundPlayer = nullptr;
+
+	CharacterController controller;
 
 	float maxSpeed = 6.5f;
 	float speed = 4;

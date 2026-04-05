@@ -77,7 +77,7 @@ void NpcZombie::UpdateAttackDamage()
         MathHelper::GetForwardVector(mesh->Rotation) * 1.2f + Position,
         0.45f,
         BodyType::World | BodyType::CharacterCapsule,
-        { LeadBody });
+        { controller.body });
 
     // No contact yet — keep checking each frame so parry timing can land
     if (!hit.hasHit || !hit.entity->HasTag("player")) return;
@@ -121,6 +121,9 @@ void NpcZombie::AsyncUpdate()
         return;
     }
 
+    controller.Update(Time::DeltaTimeF);
+    Position = controller.GetPosition();
+
     UpdatePerception();
     UpdateStatusWidgets();
     UpdateDebuffs(Time::DeltaTimeF);
@@ -135,17 +138,10 @@ void NpcZombie::AsyncUpdate()
     auto rootMotion = mesh->PullRootMotion();
     if (stuned || stunnedRagdoll)
     {
-        if (LeadBody != nullptr)
-        {
-            Physics::MoveBody(LeadBody, rootMotion.Position);
-
-            if (rootMotion.Position != vec3())
-                Physics::SetLinearVelocity(LeadBody, vec3(0, LeadBody->GetLinearVelocity().GetY(), 0));
-        }
-        else
-        {
-            Position += rootMotion.Position;
-        }
+        Position += rootMotion.Position;
+        controller.SetPosition(Position);
+        if (rootMotion.Position != vec3())
+            controller.SetVelocity(vec3(0, controller.GetVelocity().y, 0));
 
         if (rootMotion.Rotation != vec3())
         {
@@ -171,7 +167,7 @@ void NpcZombie::AsyncUpdate()
     mesh->UpdateHitboxes();
 
     soundPlayer->Position = vec3(mesh->GetBoneMatrixWorld("head")[3]);
-    soundPlayer->Velocity = FromPhysics(LeadBody->GetLinearVelocity());
+    soundPlayer->Velocity = controller.GetVelocity();
 
     if (dead || stuned || stunnedRagdoll || returningFromRagdoll) return;
 
@@ -185,8 +181,8 @@ void NpcZombie::AsyncUpdate()
 
         if (attacking) // still attacking after state update — hold in place
         {
-            vec3 vel = FromPhysics(LeadBody->GetLinearVelocity());
-            Physics::SetLinearVelocity(LeadBody, vec3(0, vel.y, 0));
+            vec3 vel = controller.GetVelocity();
+            controller.SetVelocity(vec3(0, vel.y, 0));
             return;
         }
     }
@@ -199,8 +195,8 @@ void NpcZombie::AsyncUpdate()
         if (mesh->GetAnimationName() != "idle")
             mesh->PlayAnimation("idle", true, 0.5f);
 
-        vec3 vel = FromPhysics(LeadBody->GetLinearVelocity());
-        Physics::SetLinearVelocity(LeadBody, vec3(0, vel.y, 0));
+        vec3 vel = controller.GetVelocity();
+        controller.SetVelocity(vec3(0, vel.y, 0));
         return;
     }
     else if (mesh->GetAnimationName() == "idle")
@@ -235,16 +231,8 @@ void NpcZombie::AsyncUpdate()
     movingDirection = mix(movingDirection, desiredDirection, Time::DeltaTime * 10.0);
     movingDirection = MathHelper::FastNormalize(movingDirection);
 
-    vec3 currentVelocity = FromPhysics(LeadBody->GetLinearVelocity());
-    vec3 currentHorizontalVel(currentVelocity.x, 0.0f, currentVelocity.z);
-    vec3 desiredHorizontalVel = movingDirection * speed;
-
-    float dt = Time::DeltaTime;
-    vec3 neededAcceleration = (desiredHorizontalVel - currentHorizontalVel) / dt;
-    vec3 forceToApply = neededAcceleration * 40.0f;
-
-    LeadBody->AddForce(ToPhysics(vec3(forceToApply.x, 0.0f, forceToApply.z)));
-    Physics::Activate(LeadBody);
+    vec3 vel = controller.GetVelocity();
+    controller.SetVelocity(vec3(movingDirection.x * speed, vel.y, movingDirection.z * speed));
 
     mesh->Rotation = vec3(0, MathHelper::FindLookAtRotation(vec3(), movingDirection).y, 0);
 }

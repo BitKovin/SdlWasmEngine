@@ -26,16 +26,12 @@ public:
 	GameStart();
 	~GameStart();
 
-	Rml::ElementDocument* pauseMenuDoc = nullptr;
-    Rml::ElementDocument* settingsMenuDoc = nullptr;
-    Rml::ElementDocument* videoSettingsMenuDoc = nullptr;
-
 
     void testHttp();
 
 	void Start()
 	{
-
+        LoadConstantAssets();
         LoadingScreenSystem::SetLoadingCanvas(std::make_shared<UiDefaultLoadingScreen>());
 
         auto mapArg = EngineMain::MainInstance->Arguments.find("map");
@@ -162,80 +158,32 @@ public:
 
 	}
 
-	VideoSettingsModel videoSettingsModel;
-
-    void ConstructPauseMenu()
+    void LoadConstantAssets()
     {
-        
-		pauseMenuDoc = RmlUiContext::Main->LoadDocument("GameData/ui/pause.rml");
+		AssetRegistry::LoadingConstantAssets = true;
 
-        RmlUiEvents::onClick(pauseMenuDoc, "backBtn", []()
+		PreloadEntityType("info_player_start");
+        PreloadEntityType("player");
+        PreloadEntityType("npc_zombie");
+        PreloadEntityType("npc_human_axe");
+        PreloadEntityType("npc_human_gun");
+        PreloadEntityType("bullet");
+
+        auto entityTypes = LevelObjectFactory::instance().GetRegistry();
+
+        for (auto& type : entityTypes)
+        {
+            auto& className = type.first;
+
+			if (StringHelper::StartsWith(className, "weapon_"))
             {
-				PauseGameManager::SetGamePaused(false);
-            });
-        RmlUiEvents::onClick(pauseMenuDoc, "optionsBtn", [&]()
-            {
-				RmlUiContext::Main->PopModal();
-				RmlUiContext::Main->PushModal(settingsMenuDoc);
-            });
+                PreloadEntityType(className);
+            }
 
+        }
 
-		settingsMenuDoc = RmlUiContext::Main->LoadDocument("GameData/ui/settings.rml");
-        RmlUiEvents::onClick(settingsMenuDoc, "backBtn", [&]()
-            {
-                
-                RmlUiContext::Main->PopModal();
-                RmlUiContext::Main->PushModal(pauseMenuDoc);
-            });
-
-        RmlUiEvents::onClick(settingsMenuDoc, "videoBtn", [&]()
-            {
-                
-				RmlUiContext::Main->PopModal();
-
-				VideoSettings::InitModelData(videoSettingsModel);
-                videoSettingsModel.DirtyAll();
-
-                Rml::Element* elem = videoSettingsMenuDoc->GetElementById("resolution");
-                if (!elem)
-                    return;
-
-                // Correct cast to ElementFormControlSelect
-                Rml::ElementFormControlSelect* select = dynamic_cast<Rml::ElementFormControlSelect*>(elem);
-                if (!select)
-                    return; // element is not a select, bail out
-
-                // Now you can use RemoveAll() and Add()
-                select->RemoveAll();
-                for (const auto& res : videoSettingsModel.resolutions)
-                {
-                    select->Add(res, res, res == videoSettingsModel.selected_resolution);
-                }
-                select->SetValue(videoSettingsModel.selected_resolution);
-
-                RmlUiContext::Main->PushModal(videoSettingsMenuDoc);
-            });
-
-
-        videoSettingsModel.Create(RmlUiContext::Main->GetContext(), "videoSettings");
-		VideoSettings::InitModelData(videoSettingsModel);
-        videoSettingsModel.DirtyAll();
-
-        videoSettingsMenuDoc = RmlUiContext::Main->LoadDocument("GameData/ui/videoSettings.rml");
-        RmlUiEvents::onClick(videoSettingsMenuDoc, "backBtn", [&]()
-            {
-                RmlUiContext::Main->PopModal();
-				RmlUiContext::Main->PushModal(settingsMenuDoc);
-            });
-        VideoSettings::BindVideoSettingsCallbacks(videoSettingsMenuDoc);
-
-
-	}
-
-    void ConstructMenus()
-    {
-        ConstructPauseMenu();
-	}
+		AssetRegistry::LoadingConstantAssets = false;
+    }
 
 private:
 
@@ -252,7 +200,6 @@ GameStart::GameStart()
 
 
 	UpdateWhenPaused = true;
-    ConstructMenus();
 
     Spawn("npcSimulationManager");
 

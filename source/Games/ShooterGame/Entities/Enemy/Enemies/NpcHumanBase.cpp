@@ -123,9 +123,7 @@ void NpcHumanBase::Start()
     mesh->Position = Position - vec3(0, 1, 0);
     mesh->Rotation = Rotation;
 
-    LeadBody = Physics::CreateCharacterBody(this, Position, 0.5, 2, 50);
-
-    Physics::SetGravityFactor(LeadBody, 4);
+    controller.Init(this, Position, 0.5f, 2.0f);
 
     desiredDirection = MathHelper::XZ(MathHelper::GetForwardVector(Rotation));
     movingDirection = desiredDirection;
@@ -171,12 +169,12 @@ void NpcHumanBase::UpdateStunnedReturn()
 
     vec3 pelvisPos = FromPhysics(pelvisBody->GetPosition());
 
-    vec3 vel = FromPhysics(LeadBody->GetLinearVelocity());
-    Physics::SetLinearVelocity(LeadBody, vec3(0, vel.y, 0));
+    vec3 vel = controller.GetVelocity();
+    controller.SetVelocity(vec3(0, vel.y, 0));
 
     Position = pelvisPos + vec3(0, 1.5f, 0);
-    Physics::SetBodyPosition(LeadBody, Position);
-    Physics::SetLinearVelocity(LeadBody, vec3());
+    controller.SetPosition(Position);
+    controller.SetVelocity(vec3());
 
     if (stunnedRagdollDelay.Wait()) return;
 
@@ -212,7 +210,7 @@ void NpcHumanBase::StartReturnFromRagdoll()
     auto pelvisTransformWorld = MathHelper::DecomposeMatrix(mesh->GetBoneMatrixWorld("pelvis"));
 
     Position = pelvisTransformWorld.Position + vec3(0, 1.0f, 0);
-    Physics::SetBodyPosition(LeadBody, Position);
+    controller.SetPosition(Position);
 
     float oldRot = mesh->Rotation.y;
 
@@ -254,8 +252,8 @@ void NpcHumanBase::UpdateReturnFromRagdoll()
 
     if (returningFromRagdoll == false) return;
 
-    vec3 vel = FromPhysics(LeadBody->GetLinearVelocity());
-    Physics::SetLinearVelocity(LeadBody, vec3(0, vel.y, 0));
+    vec3 vel = controller.GetVelocity();
+    controller.SetVelocity(vec3(0, vel.y, 0));
 
     getFromRagdollAnimation->Update(ModifyAnimationSpeed(1.0f));
 
@@ -309,15 +307,14 @@ void NpcHumanBase::Death()
 
     mesh->StartRagdoll();
     mesh->SetAnimationPaused(true);
-    Physics::SetLinearVelocity(LeadBody, vec3(0));
+    controller.SetVelocity(vec3(0));
 
     PlaySoundEffect("event:/NPC/Enemy1/Enemy1Death");
 
     GetDebuffsList().clear();
     UpdateStatusWidgets();
 
-    Physics::DestroyBody(LeadBody);
-    LeadBody = nullptr;
+    controller.Destroy();
 
     CallActionOnEntityWithId(OwnerId, "despawned");
 
@@ -371,12 +368,9 @@ void NpcHumanBase::OnDamage(float Damage, Entity* DamageCauser, Entity* Weapon)
 
     if (DamageCauser != nullptr)
     {
-        if (LeadBody)
-        {
-            LeadBody->SetLinearVelocity(LeadBody->GetLinearVelocity() / 2.0f);
-            speed /= 2.0f;
-            PlaySoundEffect("event:/NPC/Enemy1/Enemy1Damage");
-        }
+        controller.SetVelocity(controller.GetVelocity() / 2.0f);
+        speed /= 2.0f;
+        PlaySoundEffect("event:/NPC/Enemy1/Enemy1Damage");
     }
 
     if (Health < 30)
@@ -450,12 +444,11 @@ void NpcHumanBase::Deserialize(json& source)
     DESERIALIZE_FIELD(source, ragdollPose);
     DESERIALIZE_FIELD(source, getFromRagdollAnimationSaveState);
 
-    Physics::SetBodyPosition(LeadBody, Position);
+    controller.SetPosition(Position);
 
     if (dead)
     {
-        Physics::DestroyBody(LeadBody);
-        LeadBody = nullptr;
+        controller.Destroy();
 
         soundPlayer->Destroy();
 

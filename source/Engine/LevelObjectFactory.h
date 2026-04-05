@@ -19,6 +19,8 @@ public:
 
     Entity* create(const std::string& technicalName) const;
 
+	std::map<std::string, CreateEntityFn> GetRegistry() const { return registry_; }
+
 private:
     LevelObjectFactory() = default;
     ~LevelObjectFactory() = default;

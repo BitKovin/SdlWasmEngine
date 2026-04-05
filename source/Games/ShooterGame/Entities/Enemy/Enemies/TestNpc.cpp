@@ -63,11 +63,9 @@ void TestNpc::Start()
 
 	//Drawables.push_back(mesh);
 
-	LeadBody = Physics::CreateCharacterBody(this, Position, 0.5, 2, 50);
+    controller.Init(this, Position, 0.5f, 2.0f);
 
 	Logger::Log("started npc\n");
-
-	Physics::SetGravityFactor(LeadBody, 4);
 
 	desiredDirection = MathHelper::XZ(MathHelper::GetForwardVector(Rotation));
 	movingDirection = desiredDirection;
@@ -113,18 +111,13 @@ void TestNpc::Death()
 
 	if (dead) return;
 
-	//mesh->ClearHitboxes();
 	mesh->StartRagdoll();
 	mesh->SetAnimationPaused(true);
-	Physics::SetLinearVelocity(LeadBody, vec3(0));
+	controller.SetVelocity(vec3(0));
 
 	PlaySoundEffect("event:/NPC/Dog/DogDeath");
 
-	//Physics::SetBodyType(LeadBody, BodyType::None);
-	//Physics::SetCollisionMask(LeadBody, BodyType::World);
-
-	Physics::DestroyBody(LeadBody);
-	LeadBody = nullptr;
+	controller.Destroy();
 
 	CallActionOnEntityWithId(OwnerId, "despawned");
 
@@ -168,12 +161,8 @@ void TestNpc::OnDamage(float Damage, Entity* DamageCauser, Entity* Weapon)
 
 	if (DamageCauser != nullptr)
 	{
-		if (LeadBody)
-		{
-			LeadBody->SetLinearVelocity(LeadBody->GetLinearVelocity() / 2.0f);
-			speed /= 2.0f;
-			//HurtSoundPlayer->Play();
-		}
+		controller.SetVelocity(controller.GetVelocity() / 2.0f);
+		speed /= 2.0f;
 	}
 
 	if (Health < 30)
@@ -189,7 +178,7 @@ void TestNpc::UpdateAttackDamage()
 
 	if (attackingDamage == false) return;
 
-	auto hit = Physics::SphereTrace(Position, MathHelper::GetForwardVector(mesh->Rotation)*0.75f + Position, 0.2f, BodyType::World | BodyType::CharacterCapsule, { LeadBody });
+	auto hit = Physics::SphereTrace(Position, MathHelper::GetForwardVector(mesh->Rotation)*0.75f + Position, 0.2f, BodyType::World | BodyType::CharacterCapsule, { controller.body });
 
 	if (hit.hasHit)
 	{
@@ -226,6 +215,12 @@ void TestNpc::AsyncUpdate()
 
 	}
 
+	if (!dead)
+	{
+		controller.Update(Time::DeltaTimeF);
+		Position = controller.GetPosition();
+	}
+
 	UpdateStatusWidgets();
 
 	UpdateDebuffs(Time::DeltaTimeF);
@@ -248,20 +243,10 @@ void TestNpc::AsyncUpdate()
 
 	auto rootMotion = mesh->PullRootMotion();
 
-	if (LeadBody != nullptr)
-	{
-		Physics::MoveBody(LeadBody, rootMotion.Position);
-
-		if (rootMotion.Position != vec3())
-		{
-			Physics::SetLinearVelocity(LeadBody, vec3(0, LeadBody->GetLinearVelocity().GetY(), 0));
-		}
-
-	}
-	else
-	{
-		Position += MathHelper::ClampLength(rootMotion.Position, 0.0f, 0.2f);
-	}
+	Position += rootMotion.Position;
+	controller.SetPosition(Position);
+	if (rootMotion.Position != vec3())
+		controller.SetVelocity(vec3(0, controller.GetVelocity().y, 0));
 	
 	if (rootMotion.Rotation != vec3())
 	{
@@ -281,7 +266,7 @@ void TestNpc::AsyncUpdate()
 	soundPlayer->Position = Position;
 
 
-	soundPlayer->Velocity = FromPhysics(LeadBody->GetLinearVelocity());
+	soundPlayer->Velocity = controller.GetVelocity();
 
 
 	Entity* target = Player::Instance;
@@ -330,33 +315,11 @@ void TestNpc::AsyncUpdate()
 
 	movingDirection = MathHelper::FastNormalize(movingDirection);
 
-	// Get the current horizontal velocity (preserving the vertical component from physics)
-	vec3 currentVelocity = FromPhysics(LeadBody->GetLinearVelocity());
-	vec3 currentHorizontalVel(currentVelocity.x, 0.0f, currentVelocity.z);
-
-	// Determine the desired horizontal velocity (5.0f is the intended speed)
-	vec3 desiredHorizontalVel = movingDirection * speed;
-
-	// Calculate the change in velocity you need to achieve over the current frame
-	// Using Time::DeltaTime (dt) to convert velocity difference to the required acceleration
-	float dt = Time::DeltaTime;
-	vec3 neededAcceleration = (desiredHorizontalVel - currentHorizontalVel) / dt;
-
-	// Retrieve the body mass to calculate the needed force (F = m * a)
-	float mass = 10;
-	vec3 forceToApply = neededAcceleration * mass;
-
-	// Only apply horizontal forces to avoid interfering with the vertical (gravity, jump, etc.)
-	vec3 horizontalForce(forceToApply.x, 0.0f, forceToApply.z);
-
-	if (EngineMain::MainInstance->LoadingFrames > 0)
+	if (EngineMain::MainInstance->LoadingFrames == 0)
 	{
-		horizontalForce = vec3(0); //weird delta time during loading
+		vec3 vel = controller.GetVelocity();
+		controller.SetVelocity(vec3(movingDirection.x * speed, vel.y, movingDirection.z * speed));
 	}
-	// Apply the calculated force to the body
-	LeadBody->AddForce(ToPhysics(horizontalForce));
-
-	Physics::Activate(LeadBody);
 
 	mesh->Rotation = vec3(0,MathHelper::FindLookAtRotation(vec3(), movingDirection).y, 0);
 
@@ -400,18 +363,14 @@ void TestNpc::Deserialize(json& source)
 	DESERIALIZE_FIELD(source, fleeing);
 
 
-	Physics::SetBodyPosition(LeadBody, Position);
-
+	controller.SetPosition(Position);
 
 	if (dead)
 	{
-		Physics::DestroyBody(LeadBody);
-		LeadBody = nullptr;
+		controller.Destroy();
 
 		soundPlayer->Destroy();
 		soundPlayer = nullptr;
-
-
 	}
 
 

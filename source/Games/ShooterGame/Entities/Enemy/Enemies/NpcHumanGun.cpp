@@ -107,6 +107,10 @@ void NpcHumanGun::AsyncUpdate()
 
         return;
     }
+
+    controller.Update(Time::DeltaTimeF);
+    Position = controller.GetPosition();
+
     UpdatePerception();
 
     accuracyModifier -= Time::DeltaTimeF / 3.0f;
@@ -131,19 +135,10 @@ void NpcHumanGun::AsyncUpdate()
 
     auto rootMotion = mesh->PullRootMotion();
 
-    if (LeadBody != nullptr)
-    {
-        Physics::MoveBody(LeadBody, rootMotion.Position);
-
-        if (rootMotion.Position != vec3())
-        {
-            Physics::SetLinearVelocity(LeadBody, vec3(0, LeadBody->GetLinearVelocity().GetY(), 0));
-        }
-    }
-    else
-    {
-        Position += rootMotion.Position;
-    }
+    Position += rootMotion.Position;
+    controller.SetPosition(Position);
+    if (rootMotion.Position != vec3())
+        controller.SetVelocity(vec3(0, controller.GetVelocity().y, 0));
 
     if (rootMotion.Rotation != vec3())
     {
@@ -158,7 +153,7 @@ void NpcHumanGun::AsyncUpdate()
 
     soundPlayer->Position = vec3(mesh->GetBoneMatrixWorld("head")[3]);
 
-    soundPlayer->Velocity = FromPhysics(LeadBody->GetLinearVelocity());
+    soundPlayer->Velocity = controller.GetVelocity();
 
     if (dead || stuned || stunnedRagdoll || returningFromRagdoll) return;
 
@@ -170,8 +165,8 @@ void NpcHumanGun::AsyncUpdate()
 
         afterAttackDelay.AddDelay(2);
 
-        vec3 vel = FromPhysics(LeadBody->GetLinearVelocity());
-        Physics::SetLinearVelocity(LeadBody, vec3(0, vel.y, 0));
+        vec3 vel = controller.GetVelocity();
+        controller.SetVelocity(vec3(0, vel.y, 0));
         return;
     }
 
@@ -264,22 +259,8 @@ void NpcHumanGun::AsyncUpdate()
 
     movingDirection = MathHelper::FastNormalize(movingDirection);
 
-    vec3 currentVelocity = FromPhysics(LeadBody->GetLinearVelocity());
-    vec3 currentHorizontalVel(currentVelocity.x, 0.0f, currentVelocity.z);
-
-    vec3 desiredHorizontalVel = movingDirection * speed;
-
-    float dt = Time::DeltaTime;
-    vec3 neededAcceleration = (desiredHorizontalVel - currentHorizontalVel) / dt;
-
-    float mass = 40;
-    vec3 forceToApply = neededAcceleration * mass;
-
-    vec3 horizontalForce(forceToApply.x, 0.0f, forceToApply.z);
-
-    LeadBody->AddForce(ToPhysics(horizontalForce));
-
-    Physics::Activate(LeadBody);
+    vec3 vel = controller.GetVelocity();
+    controller.SetVelocity(vec3(movingDirection.x * speed, vel.y, movingDirection.z * speed));
 
     mesh->Rotation = vec3(0, MathHelper::FindLookAtRotation(vec3(), movingDirection).y, 0);
 }

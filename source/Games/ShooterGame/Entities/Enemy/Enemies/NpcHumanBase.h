@@ -25,11 +25,16 @@
 #include "NpcHelper.h"
 #include <Animation.h>
 
+#include <Character/CharacterController.h>
+
 #include <AiPerception/Observer.h>
 
 class NpcHumanBase : public Entity, public IEnemy
 {
 protected:
+
+	CharacterController controller;
+
     vec3 desiredDirection = vec3();
     vec3 movingDirection = vec3();
 

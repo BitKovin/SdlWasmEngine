@@ -8,6 +8,7 @@ std::unordered_map<std::string, CubemapTexture*> AssetRegistry::textureCubeCache
 std::unordered_map<std::string, roj::SkinnedModel*> AssetRegistry::skinnedModelCache;
 std::unordered_map<std::string, roj::SkinnedModel*> AssetRegistry::skinnedModelAnimationCache;
 std::set<std::string> AssetRegistry::loadedAssetsDuringLoading;
+std::set<std::string> AssetRegistry::constantlyLoaded;
 
 void AssetRegistry::ClearMemory()
 {
@@ -139,7 +140,7 @@ void AssetRegistry::ClearUnusedMemory()
 
 bool AssetRegistry::IsAssetUsed(std::string filename)
 {
-	return loadedAssetsDuringLoading.count(filename);
+	return loadedAssetsDuringLoading.count(filename) || constantlyLoaded.count(filename);
 }
 
 void AssetRegistry::ReloadShaders()
@@ -251,6 +252,9 @@ void AssetRegistry::MarkAsUsed(std::string filename)
 	if (loadingLevel == false) return;
 
 	loadedAssetsDuringLoading.insert(filename);
+
+	if(LoadingConstantAssets)
+		constantlyLoaded.insert(filename);
 
 }
 

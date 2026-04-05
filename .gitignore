@@ -39,21 +39,38 @@ CMakeUserPresets.json
 # Mono auto generated files
 mono_crash.*
 
-# Build results
-[Dd]ebug/
-[Dd]ebugPublic/
-[Rr]elease/
-[Rr]eleases/
-x64/
-x86/
-[Ww][Ii][Nn]32/
-[Aa][Rr][Mm]/
-[Aa][Rr][Mm]64/
-bld/
-[Bb]in/
-[Oo]bj/
-[Ll]og/
-[Ll]ogs/
+# Build results (recursive inside /source/ and /source/Platforms/)
+source/**/[Dd]ebug/
+source/**/[Dd]ebugPublic/
+source/**/[Rr]elease/
+source/**/[Rr]eleases/
+source/**/x64/
+source/**/x86/
+source/**/[Ww][Ii][Nn]32/
+source/**/[Aa][Rr][Mm]/
+source/**/[Aa][Rr][Mm]64/
+source/**/bld/
+source/**/[Bb]in/
+source/**/[Oo]bj/
+source/**/[Ll]og/
+source/**/[Ll]ogs/
+
+Platforms/**/[Dd]ebug/
+Platforms/**/[Dd]ebugPublic/
+Platforms/**/[Rr]elease/
+Platforms/**/[Rr]eleases/
+Platforms/**/x64/
+Platforms/**/x86/
+Platforms/**/[Ww][Ii][Nn]32/
+Platforms/**/[Aa][Rr][Mm]/
+Platforms/**/[Aa][Rr][Mm]64/
+Platforms/**/bld/
+Platforms/**/[Bb]in/
+Platforms/**/[Oo]bj/
+Platforms/**/[Ll]og/
+Platforms/**/[Ll]ogs/
+
+Intermediage/*
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/

@@ -24,6 +24,7 @@ private:
     static std::unordered_map<std::string, roj::SkinnedModel*> skinnedModelAnimationCache;
 
     static std::set<std::string> loadedAssetsDuringLoading;
+    static std::set<std::string> constantlyLoaded;
 
     static inline bool loadingLevel = false;
 
@@ -31,6 +32,8 @@ private:
 
 
 public:
+
+	static inline bool LoadingConstantAssets = false;
 	
     static void ClearMemory();
     static void ClearUnusedMemory();
