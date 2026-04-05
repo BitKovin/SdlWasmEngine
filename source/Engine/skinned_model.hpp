@@ -31,6 +31,7 @@ namespace roj
         bgfx::VertexBufferHandle vbh = BGFX_INVALID_HANDLE;
         bgfx::IndexBufferHandle  ibh = BGFX_INVALID_HANDLE;
 
+
         bgfx::VertexLayout layout;
 
         std::vector<MeshTexture> textures;
@@ -261,6 +262,8 @@ struct EvaluatableClip
 struct SkinnedModel
 {
     std::vector<SkinnedMesh> meshes;
+
+    bool m_isOBJ = false;
 
     // ── Hot-path ─────────────────────────────────────────────────────────────
     FlatSkeleton skeleton;

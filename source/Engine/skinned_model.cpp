@@ -434,6 +434,24 @@ SkinnedMesh ModelLoader<SkinnedMesh>::processMesh(aiMesh* mesh, const aiScene* s
 
     std::vector<MeshTexture> textures = getMeshTextures(scene->mMaterials[mesh->mMaterialIndex], scene);
 
+    // OBJ files rarely embed texture paths; fall back to <materialName>.png as diffuse.
+    if (m_model.m_isOBJ)
+    {
+        const bool hasDiffuse = std::any_of(textures.begin(), textures.end(),
+            [](const MeshTexture& t) {
+                return t.type == aiTextureType_BASE_COLOR || t.type == aiTextureType_DIFFUSE;
+            });
+
+        if (!hasDiffuse)
+        {
+            const std::string matName = scene->mMaterials[mesh->mMaterialIndex]->GetName().C_Str();
+            MeshTexture fallback;
+            fallback.type = aiTextureType_BASE_COLOR;
+            fallback.src = matName + ".png";
+            textures.insert(textures.begin(), fallback);   // insert first so ProcessDefaultTextures sees it
+        }
+    }
+
     skinMesh.materialName = scene->mMaterials[mesh->mMaterialIndex]->GetName().C_Str();
 
     skinMesh.textures = textures;
@@ -516,6 +534,10 @@ bool ModelLoader<SkinnedMesh>::load(const std::string& path)
         m_cachedScene    = m_scene;
         m_lastLoadedPath = path;
     }
+
+    // after: m_relativeDir = "GameData/";
+    m_model.m_isOBJ = path.size() >= 4 &&
+        StringHelper::ToLower(path.substr(path.size() - 4)) == ".obj";
 
     if (!m_scene || (m_scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) || !m_scene->mRootNode)
     {

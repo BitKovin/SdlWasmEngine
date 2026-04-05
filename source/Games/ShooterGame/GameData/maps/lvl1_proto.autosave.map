@@ -4489,10 +4489,34 @@
 // entity 86
 {
 "classname" "item_ammo_shotgun"
-"origin" "76 224 20"
+"origin" "104 212 20"
 }
 // entity 87
 {
+"classname" "item_ammo_pistol"
+"origin" "100.898 167.102 20"
+"angle" "90"
+}
+// entity 88
+{
+"classname" "item_ammo_pistol_cannon"
+"origin" "96.0998 312.1 20"
+"angle" "90"
+}
+// entity 89
+{
+"classname" "item_ammo_pistol_cannon"
+"origin" "96.0998 288.1 20"
+"angle" "90"
+}
+// entity 90
+{
 "classname" "item_ammo_shotgun"
-"origin" "-32 32 32"
+"origin" "104 232 20"
+}
+// entity 91
+{
+"classname" "item_ammo_pistol"
+"origin" "100.898 139.102 20"
+"angle" "90"
 }

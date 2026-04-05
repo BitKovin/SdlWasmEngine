@@ -398,6 +398,9 @@
     <ClCompile Include="Entities\Enemy\Enemies\NpcHelper.cpp" />
     <ClCompile Include="Entities\Enemy\Enemies\NpcHumanAxe.cpp" />
     <ClCompile Include="Entities\Npc\NpcGuardMelee.cpp" />
+    <ClCompile Include="Entities\Pickup\PickupAmmoCannon.cpp" />
+    <ClCompile Include="Entities\Pickup\PickupAmmoPistol.cpp" />
+    <ClCompile Include="Entities\Pickup\PickupAmmoShotgun.cpp" />
     <ClCompile Include="Entities\Pickup\PickupBase.cpp" />
     <ClCompile Include="Entities\Player\InventoryMenu.cpp" />
     <ClCompile Include="Entities\Player\Player.cpp" />
