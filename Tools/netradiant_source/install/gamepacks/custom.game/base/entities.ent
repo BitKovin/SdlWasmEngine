@@ -30,6 +30,7 @@ To make a func_group into a terrain entity, refer to the Terrain Construction do
         <real key="duration" name="Smoking Duration (seconds)" value="23.0" />
         <real key="acceptanceRadius" name="Acceptance Radius" value="0.3" />
         <string key="classname" name="Classname" value="task_smoke">The classname of the entity.</string>
+        <angles key="angles" name="Pitch Yaw Roll" value="0 0 0">Full rotation: Pitch Yaw Roll in degrees.</angles>
     </point>
     <point name="task_chair" color="0.6 0.4 0.8" box="-12 -12 0 12 12 32">
         <angle key="angle" name="Yaw Angle" value="0" />
@@ -39,6 +40,7 @@ To make a func_group into a terrain entity, refer to the Terrain Construction do
         <real key="duration" name="Duration" value="8.0" />
         <model key="model" name="Model Path" value="models/tools/sittingPos.obj" />
         <string key="classname" name="Classname" value="task_chair">The classname of the entity.</string>
+        <angles key="angles" name="Pitch Yaw Roll" value="0 0 0">Full rotation: Pitch Yaw Roll in degrees.</angles>
     </point>
     <point name="task_chat" color="0.2 0.7 0.8" box="-10 -10 -16 10 10 32">
         <angle key="angle" name="Yaw Angle" value="0" />
@@ -49,18 +51,21 @@ To make a func_group into a terrain entity, refer to the Terrain Construction do
         <real key="waitTimeout" name="Max wait for partner (seconds)" value="10.0" />
         <real key="acceptanceRadius" name="Acceptance Radius" value="0.3" />
         <string key="classname" name="Classname" value="task_chat">The classname of the entity.</string>
+        <angles key="angles" name="Pitch Yaw Roll" value="0 0 0">Full rotation: Pitch Yaw Roll in degrees.</angles>
     </point>
     <point name="npc_guard" color="0.2 0.3 0.8" box="-16 -16 -32 16 16 32">
         <angle key="angle" name="Yaw Angle" value="0" />
         <string key="targetname" name="Name" />
         <target key="target" name="Start Task" />
         <string key="classname" name="Classname" value="npc_guard">The classname of the entity.</string>
+        <angles key="angles" name="Pitch Yaw Roll" value="0 0 0">Full rotation: Pitch Yaw Roll in degrees.</angles>
     </point>
     <point name="npc_civilian" color="0.7 0.7 0.3" box="-16 -16 -32 16 16 32">
         <angle key="angle" name="Yaw Angle" value="0" />
         <string key="targetname" name="Name" />
         <target key="target" name="Start Task" />
         <string key="classname" name="Classname" value="npc_civilian">The classname of the entity.</string>
+        <angles key="angles" name="Pitch Yaw Roll" value="0 0 0">Full rotation: Pitch Yaw Roll in degrees.</angles>
     </point>
     <group name="area_restricted" color="0 0.5 1">
         <integer key="RestrictionLevel" name="Restriction Level" value="1" />
@@ -112,6 +117,8 @@ To make a func_group into a terrain entity, refer to the Terrain Construction do
         <string key="onReached" name="On Reached" value="reached" />
         <string key="targetname" name="Name" />
         <string key="classname" name="Classname" value="counter">The classname of the entity.</string>
+        <angle key="angle" name="Yaw Angle" value="0">Yaw rotation in degrees. 0 = East, 90 = South, etc.</angle>
+        <angles key="angles" name="Pitch Yaw Roll" value="0 0 0">Full rotation: Pitch Yaw Roll in degrees.</angles>
     </point>
     <group name="destructible" color="0.8 0.2 0.2">
         <real key="health" name="Health" value="30" />
@@ -155,6 +162,7 @@ Generic placeholder for inserting models to map. Model triangles are baked to BS
         <angles key="angles" name="Rotation" value="0 0 0" />
         <string key="targetname" name="Name" />
         <string key="classname" name="Classname" value="transformPoint">The classname of the entity.</string>
+        <angle key="angle" name="Yaw Angle" value="0">Yaw rotation in degrees. 0 = East, 90 = South, etc.</angle>
     </point>
     <point name="static_mesh" color="1 0 0" box="-5 -5 -5 5 5 5">
         <model key="model" name="Model Path" value="models/test.obj" />
@@ -164,6 +172,7 @@ Generic placeholder for inserting models to map. Model triangles are baked to BS
         <angles key="angles" name="Rotation" value="0 0 0" />
         <string key="targetname" name="Name" />
         <string key="classname" name="Classname" value="static_mesh">The classname of the entity.</string>
+        <angle key="angle" name="Yaw Angle" value="0">Yaw rotation in degrees. 0 = East, 90 = South, etc.</angle>
     </point>
     <point name="music_player" color="0.6 0.12 0.6" box="-15 -15 -15 15 15 15">
         <string key="bankName" name="Sound Bank" value="Music.bank" />
@@ -193,18 +202,16 @@ Entity, which stores regular static map primitives (brushes and patches).
         <string key="targetname" name="Name" />
         <target key="target" name="Target">Targetname of entity to activate/target.</target>
         <string key="onPickupEvent" name="On Pickup" />
-        <angle key="angle" name="Yaw Angle" value="0">Yaw rotation in degrees. 0 = East, 90 = South, etc.</angle>
     </point>
     <point name="item_ammo_shotgun" color="1 0 0" box="-5 -5 -0 5 5 5">
-        <model key="model" name="Model Path" value="models/pickups/shotgunAmmo.obj" />
         <integer key="ammoAmount" name="Ammo Amount" value="16" />
+        <model key="model" name="Model Path" value="models/pickups/shotgunAmmo.obj" />
         <string key="classname" name="Classname" value="item_ammo_shotgun">The classname of the entity.</string>
         <real key="modelscale" name="Uniform Scale" value="1">Will by scaled by 32 in engine.</real>
         <angles key="angles" name="Rotation" value="0 0 0" />
         <string key="targetname" name="Name" />
         <target key="target" name="Target">Targetname of entity to activate/target.</target>
         <string key="onPickupEvent" name="On Pickup" />
-        <angle key="angle" name="Yaw Angle" value="0">Yaw rotation in degrees. 0 = East, 90 = South, etc.</angle>
     </point>
     <point name="item_ammo_cannon" color="1 0 0" box="-5 -5 -0 5 5 5">
         <model key="model" name="Model Path" value="models/pickups/cannonAmmo.obj" />
@@ -215,6 +222,5 @@ Entity, which stores regular static map primitives (brushes and patches).
         <string key="targetname" name="Name" />
         <target key="target" name="Target">Targetname of entity to activate/target.</target>
         <string key="onPickupEvent" name="On Pickup" />
-        <angle key="angle" name="Yaw Angle" value="0">Yaw rotation in degrees. 0 = East, 90 = South, etc.</angle>
     </point>
 </classes>

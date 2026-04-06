@@ -78,7 +78,7 @@ void PathFollowQuery::CalculatePathOnThread()
 		return;
 	}
 
-    auto path = NavigationSystem::FindSimplePath(s, t, acceptanceRadius, &reachedTarget);
+    auto path = NavigationSystem::FindSimplePath(s, t, acceptanceRadius, &reachedTarget, allowPartialPath);
 
     if (path.empty())
     {

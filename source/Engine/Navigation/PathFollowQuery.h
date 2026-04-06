@@ -26,6 +26,8 @@ public:
 
 	bool reachedTarget = true;
 
+	bool allowPartialPath = false;
+
 	Delay isPerformingDelay;
 
 	bool Async = true;

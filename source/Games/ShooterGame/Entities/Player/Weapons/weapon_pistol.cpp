@@ -44,8 +44,8 @@ public:
             CameraShake::ShakeType::SingleWave // shakeType
         );
 
-		params.debuffOnHit = "QuicksilverDebuff";
-		params.debuffStacksOnHit = 55.0f;
+		//params.debuffOnHit = "QuicksilverDebuff";
+		//params.debuffStacksOnHit = 55.0f;
 
         thirdPersonAnimator = make_unique<Animator_OneHand>(this);
 

@@ -568,7 +568,7 @@ static bool IsPointReallyOnPoly(dtNavMeshQuery* navQuery,
     return (dx * dx + dz * dz) <= horizTolSq;
 }
 
-std::vector<glm::vec3> NavigationSystem::FindSimplePath(glm::vec3 start, glm::vec3 target, float acceptanceRadius, bool* outReached)
+std::vector<glm::vec3> NavigationSystem::FindSimplePath(glm::vec3 start, glm::vec3 target, float acceptanceRadius, bool* outReached, bool allowPartialPath)
 {
     if (outReached) *outReached = false;
 
@@ -676,8 +676,7 @@ std::vector<glm::vec3> NavigationSystem::FindSimplePath(glm::vec3 start, glm::ve
     {
         navQuery->closestPointOnPoly(polyPath[polyCount - 1], gPos, gNearest, nullptr);
 
-        // Check if the best reachable point is within acceptance radius of start
-        float partialDist = dtVdist(sPos, gNearest);
+        float partialDist = dtVdist(sNearest, gNearest);  // use sNearest, not sPos
         if (partialDist <= acceptanceRadius)
         {
             if (outReached) *outReached = true;
@@ -694,14 +693,24 @@ std::vector<glm::vec3> NavigationSystem::FindSimplePath(glm::vec3 start, glm::ve
     int            strCount = 0;
 
     if (dtStatusFailed(navQuery->findStraightPath(
-        sNearest,  // Use closest point on navmesh for start
+        sNearest,
         reached ? gPos : gNearest,
         polyPath, polyCount,
         straight, flags, strPolys,
         &strCount, MAX_STRAIGHT, DT_STRAIGHTPATH_ALL_CROSSINGS)))
     {
-        //dtFreeNavMeshQuery(navQuery);
-        //return outPath;
+        if (allowPartialPath)
+        {
+            if (dtVdist(sNearest, gNearest) <= acceptanceRadius)
+            {
+                if (outReached) *outReached = true;
+                dtFreeNavMeshQuery(navQuery);
+                return {};
+            }
+
+            dtFreeNavMeshQuery(navQuery);
+            return { glm::vec3(gNearest[0], gNearest[1], gNearest[2]) };
+        }
     }
 
     // --- 5) Build glm path (skip the first point, it's the start) ---

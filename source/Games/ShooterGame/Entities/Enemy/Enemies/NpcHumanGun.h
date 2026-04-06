@@ -6,11 +6,21 @@ class NpcHumanGun : public NpcHumanBase
 {
 private:
     Delay cantAttackDelay;
-    Delay stopMovingDelay;
 
     float accuracyModifier = 0;
 
+    float attackDesiredRange = 30;
+
     vec3 desiredTargetLocation = vec3();
+
+    // Shoot-and-scoot state
+    int shotsFired = 0;
+    int shotsPerBurst = 0;
+    bool repositioning = false;
+    vec3 repositionTarget = vec3();
+
+    bool CheckAttackLOS(vec3 location, vec3 targetLocation);
+    bool CheckAttackLocation(vec3 location, vec3 targetLocation);
 
     bool LineOfSightCheck(Entity* targetEntity);
 
@@ -22,6 +32,8 @@ protected:
     void Attack() override;
 
     void LoadAssets() override;
+
+    vec3 FindAttackLocation();
 
 public:
     NpcHumanGun();

@@ -62,6 +62,11 @@ Renderer::Renderer()
         DetailDirectionalShadowMapFBO->attachDepth(DetailDirectionalShadowMap);
     }
 
+    const bgfx::Caps* caps = bgfx::getCaps();
+    uint32_t maxFBs = caps->limits.maxFrameBuffers;
+
+	Logger::Log("Max framebuffers supported by GPU: " + to_string(maxFBs));
+
     InitFullscreenBuffers();
 }
 

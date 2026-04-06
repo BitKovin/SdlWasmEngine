@@ -6,6 +6,10 @@ float RandomHelper::RandomFloat()
 {
 	return static_cast<float>(rand()) / (float)RAND_MAX;
 }
+int RandomHelper::RandomInt()
+{
+    return static_cast<int>(rand()) / (float)RAND_MAX;
+}
 
 vec3 RandomHelper::RandomPosition(float radius)
 {

@@ -124,6 +124,7 @@ void NpcHumanBase::Start()
     mesh->Rotation = Rotation;
 
     controller.Init(this, Position, 0.5f, 2.0f);
+    controller.movementQuality = CharacterControllerMovementQuality::NpcGeneric;
 
     desiredDirection = MathHelper::XZ(MathHelper::GetForwardVector(Rotation));
     movingDirection = desiredDirection;

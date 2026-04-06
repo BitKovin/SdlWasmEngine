@@ -513,7 +513,7 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 	// -------------------------------------------------------
 	if (movementQuality == CharacterControllerMovementQuality::NpcGeneric)
 	{
-		constexpr float flatThreshold = 0.997f; // ~cos(4.4 degrees)
+		constexpr float flatThreshold = 0.99f; // ~cos(4.4 degrees)
 
 		bool centerHit = CheckGroundAt(
 			FromPhysics(body->GetPosition()) - heightOffset,
