@@ -338,7 +338,12 @@ private:
 	// so we don't recompute the same thing twice per frame.
 	void UpdateSlide(vec2 input, const vec3& downhillDir, float netSlopeAccel);
 
+	void Death();
+
 public:
+
+	bool dead = false;
+	Delay deathAnimDelay;
 
 	Delay jumpDelay;
 

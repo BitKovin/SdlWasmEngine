@@ -344,7 +344,7 @@ public:
 			PerformMeleeAttack();
 		}
 
-		if (Input::GetAction("attack2")->Pressed())
+		if (Input::GetAction("attack2")->Pressed() && CanAttack())
 		{
 			if (attackDelay.Wait() == false)
 			{

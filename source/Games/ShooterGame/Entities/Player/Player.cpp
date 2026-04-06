@@ -510,6 +510,14 @@ void Player::UpdateSlide(vec2 input, const vec3& downhillDir, float netSlopeAcce
 		StopSlide();
 }
 
+void Player::Death()
+{
+
+	dead = true;
+	deathAnimDelay.AddDelay(0.35f);
+
+}
+
 void Player::UpdateBikeMovement(vec2 input)
 {
 	// Bike movement parameters
@@ -1402,6 +1410,7 @@ bool Player::HasStamina()
 
 void Player::ConsumeStamina(float amount)
 {
+
 	stamina = std::max(stamina - amount, 0.0f);
 	disableStaminaRegenUntilGrounded = true;
 }
@@ -1485,6 +1494,9 @@ void Player::UpdateWeapon()
 		currentWeapon->Position = MathHelper::TransformVector(rotatedWeaponPos, Camera::GetMatrix()) + MathHelper::TransformVector(scaledBob, Camera::GetRotationMatrix()) * currentWeapon->bobScale;
 		currentWeapon->Rotation = MathHelper::ToYawPitchRoll(qResult);// +vec3(40.0f, 30.0f, 30.0f) * bike_progress;
 
+		if(dead)
+			currentWeapon->Rotation.x += std::min(deathAnimDelay.GetProgress(), 1.0f) * 50.0f;
+
 		if (currentWeapon->Illegal)
 		{
 			observationTarget->tags.insert("illegal_weapon");
@@ -1497,6 +1509,8 @@ void Player::UpdateWeapon()
 
 		currentOffhandWeapon->Position = Camera::position + MathHelper::TransformVector(vec3(0, -bob.y + 0.001, bob.x) * 2.0f, Camera::GetRotationMatrix());
 		currentOffhandWeapon->Rotation = lerp(cameraRotation, Camera::rotation, 0.3f);
+		if (dead)
+			currentOffhandWeapon->Rotation.x += std::min(deathAnimDelay.GetProgress(), 1.0f) * 30.0f;
 
 	}
 
@@ -1787,7 +1801,7 @@ void Player::Update()
 	}
 
 
-	if (Input::LockCursor)
+	if (Input::LockCursor && dead == false)
 	{
 
 		float fovScale = Camera::FOV / 75.0f;
@@ -1833,6 +1847,11 @@ void Player::Update()
 	if (length(input) > 1)
 		input = normalize(input);
 
+	if (dead)
+	{
+		input = vec2(0);
+	}
+
 	if (canRun)
 	{
 
@@ -1849,6 +1868,9 @@ void Player::Update()
 	RunProgress = std::clamp(RunProgress, 0.0f, 1.0f);
 
 	maxSpeed = controller.isCrouched ? CrouchSpeed : std::lerp(WalkSpeed, RunSpeed, RunProgress);
+
+	if(dead)
+		maxSpeed = 0;
 
 	if (on_bike == false)
 	{
@@ -1892,6 +1914,9 @@ void Player::Update()
 	vec3 right = MathHelper::GetRightVector(Camera::rotation);
 
 	Camera::rotation.z = -dot(velocity, right) * mix(-0.2f, 0.3f, bike_progress);
+
+	if(dead)
+		Camera::rotation.z = lerp(Camera::rotation.z, 30, std::min(deathAnimDelay.GetProgress(),1.0f));
 
 	if (InThirdPerson() == false)
 	{
@@ -1950,176 +1975,183 @@ void Player::Update()
 	}
 
 
-
-	if (Input::GetAction("qSave")->Pressed())
+	if (dead == false)
 	{
-		GameSaveSystem::SaveGameToFile("quicksave");
+		if (Input::GetAction("qSave")->Pressed())
+		{
+			GameSaveSystem::SaveGameToFile("quicksave");
+		}
 	}
+
 
 	if (Input::GetAction("qLoad")->Pressed())
 	{
 		GameSaveSystem::LoadGameFromFile("quicksave");
 	}
 
-	// Weapon switching logic based on current mode
-	if (weaponSystemMode == WeaponSystemMode::Slots && isMantling == false)
+	if (dead == false)
 	{
-		// Original slot-based weapon switching with lazy loading
-		if (currentWeapon != nullptr)
+
+		// Weapon switching logic based on current mode
+		if (weaponSystemMode == WeaponSystemMode::Slots && isMantling == false)
 		{
-			if (currentWeapon->Data.slot != currentSlot)
+			// Original slot-based weapon switching with lazy loading
+			if (currentWeapon != nullptr)
 			{
-				if (currentWeapon->CanChangeSlot())
+				if (currentWeapon->Data.slot != currentSlot)
 				{
-					SwitchWeapon(weaponSlots[currentSlot]);
-				}
-			}
-		}
-		else
-		{
-			SwitchToSlot(currentSlot);
-		}
-	}
-	else if (weaponSystemMode == WeaponSystemMode::Inventory)
-	{
-		// Inventory-based weapon switching with lazy loading
-		UpdateInventoryWeaponSwitch();
-	}
-
-	if(currentWeapon && currentWeapon->SupportsOffhandWeapon == false)
-		disableOffhandWeapon = true;
-
-	// Offhand weapon management (Slots mode only)
-	// In Inventory mode, offhand is managed through OffhandWeapon or DualWeapon items
-	if (weaponSystemMode == WeaponSystemMode::Slots && isMantling == false)
-	{
-		if (disableOffhandWeapon)
-		{
-			offhandWeapon = 0;
-		}
-		else
-		{
-			offhandWeapon = desiredOffhandWeapon;
-		}
-
-		if (offhandWeapons.empty() == false)
-		{
-
-			if (currentOffhandWeapon != nullptr)
-			{
-				if (currentOffhandWeapon->ClassName != offhandWeapons[offhandWeapon])
-				{
-					if (currentOffhandWeapon->CanChangeSlot())
+					if (currentWeapon->CanChangeSlot())
 					{
-						SwitchWeaponOffhand(offhandWeapons[offhandWeapon]);
+						SwitchWeapon(weaponSlots[currentSlot]);
 					}
-
 				}
 			}
 			else
 			{
-				SwitchWeaponOffhand(offhandWeapons[offhandWeapon]);
+				SwitchToSlot(currentSlot);
 			}
 		}
+		else if (weaponSystemMode == WeaponSystemMode::Inventory)
+		{
+			// Inventory-based weapon switching with lazy loading
+			UpdateInventoryWeaponSwitch();
+		}
+
+		if (currentWeapon && currentWeapon->SupportsOffhandWeapon == false)
+			disableOffhandWeapon = true;
+
+		// Offhand weapon management (Slots mode only)
+		// In Inventory mode, offhand is managed through OffhandWeapon or DualWeapon items
+		if (weaponSystemMode == WeaponSystemMode::Slots && isMantling == false)
+		{
+			if (disableOffhandWeapon)
+			{
+				offhandWeapon = 0;
+			}
+			else
+			{
+				offhandWeapon = desiredOffhandWeapon;
+			}
+
+			if (offhandWeapons.empty() == false)
+			{
+
+				if (currentOffhandWeapon != nullptr)
+				{
+					if (currentOffhandWeapon->ClassName != offhandWeapons[offhandWeapon])
+					{
+						if (currentOffhandWeapon->CanChangeSlot())
+						{
+							SwitchWeaponOffhand(offhandWeapons[offhandWeapon]);
+						}
+
+					}
+				}
+				else
+				{
+					SwitchWeaponOffhand(offhandWeapons[offhandWeapon]);
+				}
+			}
+		}
+
+		if (Input::GetAction("slotMelee")->Pressed())
+			SwitchToMeleeWeapon();
+
+		// Adaptive input handling - works with both Slots and Inventory modes
+		if (weaponSystemMode == WeaponSystemMode::Slots)
+		{
+			// Slot-based system (original behavior)
+			if (Input::GetAction("slot1")->Pressed())
+				SwitchToSlot(0);
+
+			if (Input::GetAction("slot2")->Pressed())
+				SwitchToSlot(1);
+
+			if (Input::GetAction("slot3")->Pressed())
+				SwitchToSlot(2);
+
+			if (Input::GetAction("slot4")->Pressed())
+				SwitchToSlot(3);
+
+			if (Input::GetAction("slot5")->Pressed())
+				SwitchToSlot(4);
+
+			if (Input::GetAction("slot6")->Pressed())
+				SwitchToSlot(5);
+
+			if (Input::GetAction("lastSlot")->Pressed())
+				SwitchToSlot(lastSlot);
+		}
+		else if (weaponSystemMode == WeaponSystemMode::Inventory)
+		{
+			// Inventory-based system (uses inventory indices)
+			// Pressing the same weapon key twice will hide/unequip the weapon
+
+			if (Input::GetAction("slot1")->Pressed())
+			{
+				if (inventory.size() > 0)
+				{
+					SwitchToInventoryItem(inventory[0].uid, false);
+				}
+			}
+
+			if (Input::GetAction("slot2")->Pressed())
+			{
+				if (inventory.size() > 1)
+				{
+					SwitchToInventoryItem(inventory[1].uid, false);
+				}
+			}
+
+			if (Input::GetAction("slot3")->Pressed())
+			{
+				if (inventory.size() > 2)
+				{
+					SwitchToInventoryItem(inventory[2].uid, false);
+				}
+			}
+
+			if (Input::GetAction("slot4")->Pressed())
+			{
+				if (inventory.size() > 3)
+				{
+					SwitchToInventoryItem(inventory[3].uid, false);
+				}
+			}
+
+			if (Input::GetAction("slot5")->Pressed())
+			{
+				if (inventory.size() > 4)
+				{
+					SwitchToInventoryItem(inventory[4].uid, false);
+				}
+			}
+
+			if (Input::GetAction("slot6")->Pressed())
+			{
+
+				Logger::Log("Inventory size: " + to_string(inventory.size()));
+
+				if (inventory.size() > 5)
+				{
+					SwitchToInventoryItem(inventory[5].uid, false);
+				}
+			}
+
+			if (Input::GetAction("lastSlot")->Pressed())
+			{
+				SwitchToInventoryItem(lastInventoryUUID, false);
+			}
+
+			if (Input::GetAction("inventory")->Pressed())
+			{
+				Spawn("inventory_menu")->Start();
+			}
+
+		}
+
+		UpdateInteraction();
 	}
-
-	if (Input::GetAction("slotMelee")->Pressed())
-		SwitchToMeleeWeapon();
-
-	// Adaptive input handling - works with both Slots and Inventory modes
-	if (weaponSystemMode == WeaponSystemMode::Slots)
-	{
-		// Slot-based system (original behavior)
-		if (Input::GetAction("slot1")->Pressed())
-			SwitchToSlot(0);
-
-		if (Input::GetAction("slot2")->Pressed())
-			SwitchToSlot(1);
-
-		if (Input::GetAction("slot3")->Pressed())
-			SwitchToSlot(2);
-
-		if (Input::GetAction("slot4")->Pressed())
-			SwitchToSlot(3);
-
-		if (Input::GetAction("slot5")->Pressed())
-			SwitchToSlot(4);
-
-		if (Input::GetAction("slot6")->Pressed())
-			SwitchToSlot(5);
-
-		if (Input::GetAction("lastSlot")->Pressed())
-			SwitchToSlot(lastSlot);
-	}
-	else if (weaponSystemMode == WeaponSystemMode::Inventory)
-	{
-		// Inventory-based system (uses inventory indices)
-		// Pressing the same weapon key twice will hide/unequip the weapon
-
-		if (Input::GetAction("slot1")->Pressed())
-		{
-			if (inventory.size() > 0)
-			{
-				SwitchToInventoryItem(inventory[0].uid, false);
-			}
-		}
-
-		if (Input::GetAction("slot2")->Pressed())
-		{
-			if (inventory.size() > 1)
-			{
-				SwitchToInventoryItem(inventory[1].uid, false);
-			}
-		}
-
-		if (Input::GetAction("slot3")->Pressed())
-		{
-			if (inventory.size() > 2)
-			{
-				SwitchToInventoryItem(inventory[2].uid, false);
-			}
-		}
-
-		if (Input::GetAction("slot4")->Pressed())
-		{
-			if (inventory.size() > 3)
-			{
-				SwitchToInventoryItem(inventory[3].uid, false);
-			}
-		}
-
-		if (Input::GetAction("slot5")->Pressed())
-		{
-			if (inventory.size() > 4)
-			{
-				SwitchToInventoryItem(inventory[4].uid, false);
-			}
-		}
-
-		if (Input::GetAction("slot6")->Pressed())
-		{
-
-			Logger::Log("Inventory size: " + to_string(inventory.size()));
-
-			if (inventory.size() > 5)
-			{
-				SwitchToInventoryItem(inventory[5].uid, false);
-			}
-		}
-
-		if (Input::GetAction("lastSlot")->Pressed())
-		{
-			SwitchToInventoryItem(lastInventoryUUID, false);
-		}
-
-		if (Input::GetAction("inventory")->Pressed())
-		{
-			Spawn("inventory_menu")->Start();
-		}
-
-	}
-
-	UpdateInteraction();
 
 }
 
@@ -2252,7 +2284,14 @@ void Player::UpdateBody()
 	{
 		//Camera::position = MathHelper::DecomposeMatrix(bodyMesh->GetBoneMatrixWorld("head")).Position + playerForward * 0.3f;
 
-		Camera::position = bodyMesh->Position + WorldOrientationManager::TransformDirectionToWorld(playerForward) * 0.3f + WorldOrientationManager::GetUpVector() * controller.GetCameraHeight();
+		float cameraHeight = controller.GetCameraHeight();
+
+		if (dead)
+		{
+			cameraHeight = lerp(cameraHeight, 0.2f, std::min(deathAnimDelay.GetProgress(), 1.0f));
+		}
+
+		Camera::position = bodyMesh->Position + WorldOrientationManager::TransformDirectionToWorld(playerForward) * 0.3f + WorldOrientationManager::GetUpVector() * cameraHeight;
 
 		float feetHeight = controller.GetSmoothPosition().y - controller.height / 2.0f;
 
@@ -2293,9 +2332,17 @@ bool Player::InThirdPerson()
 
 void Player::OnDamage(float Damage, Entity* DamageCauser, Entity* Weapon)
 {
+
+	if (dead)return;
+
 	Entity::OnDamage(Damage, DamageCauser, Weapon);
 
 	ScoreSystem::Instance().takeDamage(Damage);
+
+	if (Health <= 0)
+	{
+		Death();
+	}
 
 }
 
