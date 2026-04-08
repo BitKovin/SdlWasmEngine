@@ -251,6 +251,8 @@ private:
 	void Jump()
 	{
 
+		if (dead)return;
+
 		controller.UnCrouch();
 
 		vec3 velocity = controller.GetVelocity();
@@ -522,6 +524,8 @@ public:
 	void StartBike();
 	void StopBike();
 	void ToggleBike();
+
+	void OnLevelEnd();
 
 protected:
 

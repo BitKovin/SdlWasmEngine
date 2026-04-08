@@ -2603,3 +2603,16 @@ void Player::LoadAssets()
 	bodyAnimator.LoadAssetsIfNeeded();
 
 }
+
+void Player::OnLevelEnd()
+{
+	Hud.~PlayerHud();
+	Hud = PlayerHud();
+
+	if (currentWeapon)
+		currentWeapon->Destroy();
+
+	if (currentOffhandWeapon)
+		currentOffhandWeapon->Destroy();
+
+}

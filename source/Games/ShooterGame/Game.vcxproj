@@ -403,6 +403,7 @@
     <ClCompile Include="Entities\Pickup\PickupAmmoShotgun.cpp" />
     <ClCompile Include="Entities\Pickup\PickupBase.cpp" />
     <ClCompile Include="Entities\Player\InventoryMenu.cpp" />
+    <ClCompile Include="Entities\Player\LevelEndLogic.cpp" />
     <ClCompile Include="Entities\Player\Player.cpp" />
     <ClCompile Include="Entities\Player\Player_Mantle.cpp" />
     <ClCompile Include="Entities\Player\player_start.cpp" />
@@ -410,6 +411,7 @@
     <ClCompile Include="Entities\Player\Weapons\Animators\Animator_Akimbo.cpp" />
     <ClCompile Include="Entities\Player\Weapons\Animators\Animator_OneHand.cpp" />
     <ClCompile Include="Entities\Player\Weapons\Animators\Animator_Rifle.cpp" />
+    <ClCompile Include="Entities\Player\LevelEndCamera.cpp" />
     <ClCompile Include="Entities\Player\Weapons\Projectiles\Bullet.cpp" />
     <ClCompile Include="Entities\Player\Weapons\Projectiles\CaneProjectile.cpp" />
     <ClCompile Include="Entities\Player\Weapons\Projectiles\CannonBullet.cpp" />

@@ -195,6 +195,7 @@ struct CachedFaceTextureData
     int lightmapId = 0;
     bool transparent = false;
     int numOfIndices = 0;
+	std::vector<int> animatedTextureFrames; // Stores indices of animated texture frames (if any)
 };
 
 struct LightVolPointData {

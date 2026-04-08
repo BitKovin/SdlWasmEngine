@@ -365,8 +365,10 @@ void Level::AsyncUpdate(bool paused)
 	updateJobs.reserve(objects.size()); // Pre-allocate for efficiency
 
 	for (auto var : objects) {
-		if (var->UpdateWhenPaused || paused == false) {
-			updateJobs.emplace_back([var]() { var->AsyncUpdate(); });
+		if (var->UpdateWhenPaused || paused == false) 
+		{
+			if (var->UpdateEnabled)
+				updateJobs.emplace_back([var]() { var->AsyncUpdate(); });
 		}
 	}
 
@@ -448,7 +450,8 @@ void Level::Update(bool paused)
 	{
 		if (var->UpdateWhenPaused || paused == false && var->Destroyed == false)
 		{
-			var->Update();
+			if(var->UpdateEnabled)
+				var->Update();
 		}
 
 	}
@@ -467,7 +470,8 @@ void Level::LateUpdate(bool paused)
 	{
 		if (var->LateUpdateWhenPaused || paused == false && var->Destroyed == false)
 		{
-			var->LateUpdate();
+			if (var->UpdateEnabled)
+				var->LateUpdate();
 		}
 	}
 	AddPendingLevelObjects();

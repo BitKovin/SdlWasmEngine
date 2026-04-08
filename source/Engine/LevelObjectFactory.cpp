@@ -53,7 +53,7 @@ void LevelObjectFactory::registerDefaults()
     REGISTER_ENTITY_INLINE("worldspawn", WorldSpawn);
     REGISTER_ENTITY_INLINE("spawner", Spawner);
     REGISTER_ENTITY_INLINE("counter", Counter);
-    REGISTER_ENTITY_INLINE("logicOnce", LogicOnce);
+    REGISTER_ENTITY_INLINE("logic_once", LogicOnce);
     REGISTER_ENTITY_INLINE("transformPoint", TransformPoint);
     REGISTER_ENTITY_INLINE("destructible", DestructibleBrush);
     REGISTER_ENTITY_INLINE("func_door", MovebleBrush);

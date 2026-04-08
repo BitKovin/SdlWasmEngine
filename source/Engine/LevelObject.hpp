@@ -19,6 +19,8 @@ public:
 	bool UpdateWhenPaused = false;
 	bool LateUpdateWhenPaused = false;
 
+	bool UpdateEnabled = true;
+
 	LevelObject(){}
 	virtual ~LevelObject() = default;
 

@@ -1361,6 +1361,15 @@
 ( -2770 -5314 18 ) ( -2800 -5314 18 ) ( -2770 -5314 16 ) lq_conc/conc4_1 0 0 0 1 1 0 0 0
 ( -2768 -5358 18 ) ( -2768 -5358 16 ) ( -2768 -5410 18 ) lq_conc/conc4_1 0 0 0 1 1 0 0 0
 }
+// brush 150
+{
+( -112 -160 64 ) ( -112 -352 64 ) ( -272 -160 64 ) lq_liquidsky/plus_3blood_f1 0 0 0 1 1 0 0 0
+( -112 -160 32 ) ( -272 -160 32 ) ( -112 -160 16 ) lq_liquidsky/plus_3blood_f1 0 0 0 1 1 0 0 0
+( -112 -160 32 ) ( -112 -160 16 ) ( -112 -352 32 ) lq_liquidsky/plus_3blood_f1 0 0 0 1 1 0 0 0
+( -272 -352 16 ) ( -112 -352 16 ) ( -272 -160 16 ) lq_liquidsky/plus_3blood_f1 0 0 0 1 1 0 0 0
+( -272 -352 16 ) ( -272 -352 32 ) ( -112 -352 16 ) lq_liquidsky/plus_3blood_f1 0 0 0 1 1 0 0 0
+( -272 -352 16 ) ( -272 -160 16 ) ( -272 -352 32 ) lq_liquidsky/plus_3blood_f1 0 0 0 1 1 0 0 0
+}
 }
 // entity 1
 {
@@ -2838,7 +2847,7 @@
 ( -1280 -5984 52 ) ( -1280 -5728 20 ) ( -1280 -5728 52 ) lq_dev/trigger 0 0 0 1 1 0 0 0
 ( -1088 -5984 52 ) ( -1248 -5984 20 ) ( -1248 -5984 52 ) lq_dev/trigger 0 0 0 1 1 0 0 0
 ( -1088 -5728 20 ) ( -1248 -5984 20 ) ( -1088 -5984 20 ) lq_dev/trigger 0 0 0 1 1 0 0 0
-( -1088 -5728 52 ) ( -1248 -5984 52 ) ( -1248 -5728 52 ) lq_dev/trigger 0 0 0 1 1 0 0 0
+( -1088 -5728 68 ) ( -1248 -5984 68 ) ( -1248 -5728 68 ) lq_dev/trigger 0 0 0 1 1 0 0 0
 ( -1088 -5728 52 ) ( -1248 -5728 20 ) ( -1088 -5728 20 ) lq_dev/trigger 0 0 0 1 1 0 0 0
 ( -992 -5728 52 ) ( -992 -5984 20 ) ( -992 -5984 52 ) lq_dev/trigger 0 0 0 1 1 0 0 0
 }
@@ -4499,13 +4508,13 @@
 }
 // entity 88
 {
-"classname" "item_ammo_pistol_cannon"
+"classname" "item_ammo_cannon"
 "origin" "96.0998 312.1 20"
 "angle" "90"
 }
 // entity 89
 {
-"classname" "item_ammo_pistol_cannon"
+"classname" "item_ammo_cannon"
 "origin" "96.0998 288.1 20"
 "angle" "90"
 }
@@ -4519,4 +4528,37 @@
 "classname" "item_ammo_pistol"
 "origin" "100.898 139.102 20"
 "angle" "90"
+}
+// entity 92
+{
+"classname" "triggerOnce"
+"target" "level_end"
+// brush 0
+{
+( -2704 -4672 128 ) ( -2704 -4832 128 ) ( -2752 -4672 128 ) lq_dev/trigger 0 0 0 1 1 0 0 0
+( -2704 -4672 32 ) ( -2752 -4672 32 ) ( -2704 -4672 16 ) lq_dev/trigger 0 0 0 1 1 0 0 0
+( -2704 -4672 32 ) ( -2704 -4672 16 ) ( -2704 -4832 32 ) lq_dev/trigger 0 0 0 1 1 0 0 0
+( -2752 -4832 16 ) ( -2704 -4832 16 ) ( -2752 -4672 16 ) lq_dev/trigger 0 0 0 1 1 0 0 0
+( -2752 -4832 16 ) ( -2752 -4832 32 ) ( -2704 -4832 16 ) lq_dev/trigger 0 0 0 1 1 0 0 0
+( -2752 -4832 16 ) ( -2752 -4672 16 ) ( -2752 -4832 32 ) lq_dev/trigger 0 0 0 1 1 0 0 0
+}
+}
+// entity 93
+{
+"classname" "transformPoint"
+"origin" "-992 -5200 336"
+"targetname" "level_end_camera_start"
+}
+// entity 94
+{
+"classname" "transformPoint"
+"origin" "-864 -4288 112"
+"targetname" "level_end_camera_target"
+}
+// entity 95
+{
+"classname" "logic_level_end"
+"origin" "-2832 -4736 64"
+"nextLevel" "test"
+"targetname" "level_end"
 }

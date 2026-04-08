@@ -514,9 +514,59 @@ int CQuake3BSP::GetFaceTextureNativeId(int cachedTextureId) const
 void CQuake3BSP::PreloadFace(int index)
 {
     tBSPFace* pFace = &m_pFaces[index];
-
     string textureName = string(pTextures[pFace->textureID].strName);
-    int    nameL = (int)textureName.length();
+    int nameL = (int)textureName.length();
+
+    // === Automatic animated texture detection with full folder support ===
+    // Now correctly handles real Quake 3-style paths like:
+    //   "textures/lq_liquid/+1water"
+    //   "textures/liquids/plus_0fslime"
+    //   "+0water" (no folder)
+    // Detects any frame (+0xxx, +10xxx, plus_0xxx, plus_42xxx) and
+    // automatically loads the complete animation sequence (0, 1, 2, ...) 
+    // from the exact same folder.
+    bool isAnimated = false;
+    string directory;      // e.g. "textures/lq_liquid/"
+    string baseFilename;   // e.g. "water"
+    string animPrefix = ""; // "+" or "plus_"
+    int currentFrame = 0;
+
+    if (!textureName.empty()) {
+        // Split into directory + filename (supports both / and \ for cross-platform)
+        size_t lastSlash = textureName.find_last_of("/\\");
+        directory = (lastSlash != string::npos) ? textureName.substr(0, lastSlash + 1) : "";
+        string filename = (lastSlash != string::npos) ? textureName.substr(lastSlash + 1) : textureName;
+
+        // Parse filename only for animation markers
+        if (!filename.empty()) {
+            if (filename[0] == '+') {
+                animPrefix = "+";
+                size_t pos = 1;
+                currentFrame = 0;
+                while (pos < filename.size() && isdigit(static_cast<unsigned char>(filename[pos]))) {
+                    currentFrame = currentFrame * 10 + (filename[pos] - '0');
+                    ++pos;
+                }
+                if (pos > 1 && pos < filename.size()) {
+                    baseFilename = filename.substr(pos);
+                    isAnimated = true;
+                }
+            }
+            else if (filename.size() > 5 && filename.substr(0, 5) == "plus_") {
+                animPrefix = "plus_";
+                size_t pos = 5;
+                currentFrame = 0;
+                while (pos < filename.size() && isdigit(static_cast<unsigned char>(filename[pos]))) {
+                    currentFrame = currentFrame * 10 + (filename[pos] - '0');
+                    ++pos;
+                }
+                if (pos > 5 && pos < filename.size()) {
+                    baseFilename = filename.substr(pos);
+                    isAnimated = true;
+                }
+            }
+        }
+    }
 
     bool isCube = false;
     if (nameL > 5) {
@@ -529,7 +579,6 @@ void CQuake3BSP::PreloadFace(int index)
 
     // ShaderProgram is only referenced during rendering, not preload.
     string texturePath = "GameData/" + textureName + ".png";
-
     if (isCube) {
         auto splitPath = StringHelper::Split(texturePath, '/');
         string fileName = splitPath[splitPath.size() - 1];
@@ -542,12 +591,8 @@ void CQuake3BSP::PreloadFace(int index)
     else
         faceTexture = AssetRegistry::GetTextureFromFile(texturePath)->getID();
 
-    // Determine lightmap native ID using the abstracted helper.
-    // When lightmaps were loaded from BSP data, GetLightmapNativeId handles
-    // the slot lookup and falls back to the missing-lightmap texture.
-    // When lightmaps come from external .tga files, AssetRegistry is used.
+    // Determine lightmap native ID (unchanged)
     int lightmapId = 0;
-
     if (m_numOfLightmaps > 0)
     {
         lightmapId = GetLightmapNativeId(pFace->lightmapID);
@@ -555,21 +600,17 @@ void CQuake3BSP::PreloadFace(int index)
     else if (!isCube)
     {
         string lightMapPath = GetLightMapFilePathFromId(pFace->lightmapID, filePath);
-
         if (lightMapPath.empty())
         {
-            // No lightmap file found for this face; use missing-lightmap fallback.
-			lightmapId = GetLightmapNativeId(-1);
+            lightmapId = GetLightmapNativeId(-1);
         }
         else
         {
-            auto   lmTex = AssetRegistry::GetTextureFromFile(lightMapPath);
+            auto lmTex = AssetRegistry::GetTextureFromFile(lightMapPath);
             lightmapId = (lmTex && lmTex->getID() != 0)
                 ? (int)lmTex->getID()
-                : GetLightmapNativeId(-1); // missing fallback
+                : GetLightmapNativeId(-1);
         }
-
-
     }
 
     CachedFaceTextureData data;
@@ -579,6 +620,31 @@ void CQuake3BSP::PreloadFace(int index)
     data.textureName = textureName;
     data.transparent = textureName.ends_with("_t");
     data.numOfIndices = pFace->numOfIndices;
+    data.animatedTextureFrames = {};
+
+    // === Collect ALL frames of the animation (if detected) ===
+    // Frames are loaded in the exact same folder as the original texture.
+    if (isAnimated && !baseFilename.empty() && !isCube) {
+        std::vector<int> animFrames;
+        const int MAX_FRAMES = 64;  // safety limit (Quake animations are tiny)
+
+        for (int f = 0; f < MAX_FRAMES; ++f) {
+            string frameFilename = animPrefix + std::to_string(f) + baseFilename;
+            string frameFullTextureName = directory + frameFilename;
+            string framePath = "GameData/" + frameFullTextureName + ".png";
+
+            auto frameTex = AssetRegistry::GetTextureFromFile(framePath);
+            if (!frameTex || frameTex->getID() == 0) {
+                break;  // stop at first missing frame (standard Quake behavior)
+            }
+            animFrames.push_back((int)frameTex->getID());
+        }
+
+        if (!animFrames.empty()) {
+            data.animatedTextureFrames = std::move(animFrames);
+        }
+    }
+
     cachedFaces[index] = data;
 }
 
@@ -1149,6 +1215,14 @@ bool CQuake3BSP::RenderMergedFace(int mergedIndex, bool lightmap,
     const CachedFaceTextureData& data = cachedFaces[mergedFace.referenceFace];
 
     int faceTexture = GetFaceTextureNativeId(data.textureId);
+
+	if (data.animatedTextureFrames.size() > 0)
+    {
+        // Simple frame animation: cycle through frames based on time.
+        uint64_t timeMs = Time::GameTime * 1000.0f;
+        size_t frameIndex = (timeMs / 100) % data.animatedTextureFrames.size(); // Change frame every 100ms
+        faceTexture = GetFaceTextureNativeId(data.animatedTextureFrames[frameIndex]);
+    }
 
     // Select lightmap: use white texture when lightmaps are disabled
     int lmId = lightmap ? data.lightmapId : GetWhiteLightmapNativeId();
