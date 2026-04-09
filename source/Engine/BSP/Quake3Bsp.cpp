@@ -776,6 +776,49 @@ void CQuake3BSP::PreloadFace(int index)
     string textureName(rawTexName);
     int nameL = (int)textureName.length();
 
+    bool isAnimated = false;
+    string directory;      // e.g. "textures/lq_liquid/"
+    string baseFilename;   // e.g. "water"
+    string animPrefix = ""; // "+" or "plus_"
+    int currentFrame = 0;
+
+    if (!textureName.empty()) {
+        // Split into directory + filename (supports both / and \ for cross-platform)
+        size_t lastSlash = textureName.find_last_of("/\\");
+        directory = (lastSlash != string::npos) ? textureName.substr(0, lastSlash + 1) : "";
+        string filename = (lastSlash != string::npos) ? textureName.substr(lastSlash + 1) : textureName;
+
+        // Parse filename only for animation markers
+        if (!filename.empty()) {
+            if (filename[0] == '+') {
+                animPrefix = "+";
+                size_t pos = 1;
+                currentFrame = 0;
+                while (pos < filename.size() && isdigit(static_cast<unsigned char>(filename[pos]))) {
+                    currentFrame = currentFrame * 10 + (filename[pos] - '0');
+                    ++pos;
+                }
+                if (pos > 1 && pos < filename.size()) {
+                    baseFilename = filename.substr(pos);
+                    isAnimated = true;
+                }
+            }
+            else if (filename.size() > 5 && filename.substr(0, 5) == "plus_") {
+                animPrefix = "plus_";
+                size_t pos = 5;
+                currentFrame = 0;
+                while (pos < filename.size() && isdigit(static_cast<unsigned char>(filename[pos]))) {
+                    currentFrame = currentFrame * 10 + (filename[pos] - '0');
+                    ++pos;
+                }
+                if (pos > 5 && pos < filename.size()) {
+                    baseFilename = filename.substr(pos);
+                    isAnimated = true;
+                }
+            }
+        }
+    }
+
     bool isCube = nameL > 5
         && textureName[nameL - 1] == 'e' && textureName[nameL - 2] == 'b'
         && textureName[nameL - 3] == 'u' && textureName[nameL - 4] == 'c';
@@ -840,6 +883,27 @@ void CQuake3BSP::PreloadFace(int index)
         for (int slot = 1; slot < BSP_MAX_LIGHTMAP_STYLES; ++slot) {
             data.lightmapStyles[slot] = LS_NONE;
             data.lightmapIds[slot] = GetLightmapNativeId(-1);
+        }
+    }
+
+    if (isAnimated && !baseFilename.empty() && !isCube) {
+        std::vector<int> animFrames;
+        const int MAX_FRAMES = 64;  // safety limit (Quake animations are tiny)
+
+        for (int f = 0; f < MAX_FRAMES; ++f) {
+            string frameFilename = animPrefix + std::to_string(f) + baseFilename;
+            string frameFullTextureName = directory + frameFilename;
+            string framePath = "GameData/" + frameFullTextureName + ".png";
+
+            auto frameTex = AssetRegistry::GetTextureFromFile(framePath);
+            if (!frameTex || frameTex->getID() == 0) {
+                break;  // stop at first missing frame (standard Quake behavior)
+            }
+            animFrames.push_back((int)frameTex->getID());
+        }
+
+        if (!animFrames.empty()) {
+            data.animatedTextureFrames = std::move(animFrames);
         }
     }
 
@@ -1033,14 +1097,27 @@ LightVolPointData CQuake3BSP::GetLightvolColorPoint(const glm::vec3& position, b
             if (m_isRBSP == false)
                 styleWeight = 2.0f;
 
+
             for (int s = 0; s < BSP_MAX_LIGHTMAP_STYLES; ++s) {
                 if (vol.styles[s] == LS_NONE) continue;
                 const glm::vec3 styleColor = GetStyleColor(vol.styles[s]);
                 if (styleColor == glm::vec3(0.0f)) continue; // style is off – skip
+
+				float ambientFactor = 1.0f;
+
+                if (s > 0)
+                {
+                    auto maxDirectionalLight = std::max(std::max(vol.directional[s][0], vol.directional[s][1]), vol.directional[s][2]);
+
+					ambientFactor = std::min(maxDirectionalLight / 255.0f * 5.0f, 1.0f);
+
+                }
+
+
                 ambient += glm::vec3(
                     vol.ambient[s][0] / 255.0f,
                     vol.ambient[s][1] / 255.0f,
-                    vol.ambient[s][2] / 255.0f) * styleColor * styleWeight;
+                    vol.ambient[s][2] / 255.0f) * styleColor * styleWeight * ambientFactor;
                 directional += glm::vec3(
                     vol.directional[s][0] / 255.0f,
                     vol.directional[s][1] / 255.0f,
@@ -1251,17 +1328,59 @@ bool CQuake3BSP::IsClusterVisible(int sourceCluster, int testCluster)
     return (byteValue & (1 << bitIndex)) != 0;
 }
 
+// You can move this somewhere global / static
+struct QLightStyle
+{
+    std::string pattern;
+};
+
+static QLightStyle g_LightStyles[64] =
+{
+    { "m" },                                            // 0 normal
+    { "mmnmmommommnonmmonqnmmo" },                      // 1 flicker
+    { "abcdefghijklmnopqrstuvwxyzyxwvutsrqponmlkjihgfedcba" }, // 2 pulse
+    { "mmmmmaaaaammmmmaaaaaabcdefgabcdefg" },            // 3 candle
+    { "mamamamamama" },                                 // 4 fast strobe
+    { "jklmnopqrstuvwxyzyxwvutsrqponmlkj" },             // 5 gentle pulse
+    { "nmonqnmomnmomomno" },                            // 6 flicker
+    { "mmmaaaabcdefgmmmmaaaammmaamm" },                  // 7 candle
+    { "mmmaaammmaaammmabcdefaaaammmmabcdefmmmaaaa" },    // 8 candle
+    { "aaaaaaaazzzzzzzz" },                             // 9 slow strobe
+    { "mmamammmmammamamaaamammma" },                    // 10 fluorescent
+    { "abcdefghijklmnopqrrqponmlkjihgfedcba" }           // 11 pulse no black
+    // rest default empty
+};
+
 glm::vec3 CQuake3BSP::GetStyleColor(uint8_t style) const
 {
-    if (style == LS_NORMAL) return glm::vec3(1.0f); // always on, full white
-    if (style == LS_NONE)   return glm::vec3(0.0f); // unused slot, black
+    if (style == LS_NORMAL) return glm::vec3(1.0f);
+    if (style == LS_NONE)   return glm::vec3(0.0f);
 
-	//return rand() / (float)RAND_MAX < 0.5f ? glm::vec3(1.0f) : glm::vec3(0.0f);
 
-    // TODO: index into a lightstyle animation table driven by game time.
-    // e.g. return Level::Current->GetLightStyleColor(style);
-    return glm::vec3(0.0f); // placeholder: all switchable styles on at full
-}
+
+    const std::string& pattern = g_LightStyles[style].pattern;
+
+    if (pattern.empty())
+        return glm::vec3(1.0f); // fallback
+
+    // --- TIME ---
+    // Quake uses ~10 Hz animation
+    float time = Time::GameTime;   // seconds
+    float speed = 10.0f;
+
+    int frame = (int)(time * speed) % pattern.size();
+
+    char c = pattern[frame];
+
+    // --- CHAR → BRIGHTNESS ---
+    // 'a' = 0, 'm' = 1.0, 'z' = 2.0
+    float value = (c - 'a') / float('m' - 'a');
+
+    // Optional clamp (Quake sometimes exceeds 1.0 slightly)
+    // value = glm::clamp(value, 0.0f, 2.0f);
+
+    return glm::vec3(value);
+}   
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Rendering
@@ -1466,6 +1585,14 @@ bool CQuake3BSP::RenderMergedFace(int mergedIndex, bool lightmap,
 
     int faceTexture = GetFaceTextureNativeId(data.textureId);
     if (faceTexture == 0) return false;
+
+    if (data.animatedTextureFrames.size() > 0)
+    {
+        // Simple frame animation: cycle through frames based on time.
+        uint64_t timeMs = Time::GameTime * 1000.0f;
+        size_t frameIndex = (timeMs / 100) % data.animatedTextureFrames.size(); // Change frame every 100ms
+        faceTexture = GetFaceTextureNativeId(data.animatedTextureFrames[frameIndex]);
+    }
 
     Shader* shader = ShaderManager::GetShaderProgram(
         "vs_bsp", data.isCube ? "fs_bsp_cube" : "fs_bsp");

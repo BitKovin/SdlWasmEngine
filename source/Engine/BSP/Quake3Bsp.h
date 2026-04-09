@@ -324,6 +324,8 @@ struct CachedFaceTextureData
     uint8_t lightmapStyles[BSP_MAX_LIGHTMAP_STYLES]= { LS_NONE, LS_NONE, LS_NONE, LS_NONE };
     int     numActiveSlots                         = 1;
 
+    std::vector<int> animatedTextureFrames;
+
     bool   transparent = false;
     int    numOfIndices = 0;
 };
