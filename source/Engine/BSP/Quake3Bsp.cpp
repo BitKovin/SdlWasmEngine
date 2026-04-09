@@ -39,7 +39,9 @@ CQuake3BSP::CQuake3BSP()
     : m_numOfVerts(0), m_numOfFaces(0), m_numOfIndices(0),
     m_numOfTextures(0), m_numOfLightmaps(0),
     numVisibleFaces(0), skipindices(0),
-    m_pVerts(nullptr), m_pFaces(nullptr), m_pIndices(nullptr),
+    m_pVerts(nullptr), m_pVertsRBSP(nullptr),
+    m_pFaces(nullptr), m_pFacesRBSP(nullptr),
+    m_pIndices(nullptr),
     pTextures(nullptr), pLightmaps(nullptr), cachedFaces(nullptr),
     textureID(0), count(0), indcount(0), tcoordcount(0)
 {}
@@ -61,7 +63,9 @@ CQuake3BSP::~CQuake3BSP()
     }
 
     delete[] m_pVerts;
+    delete[] m_pVertsRBSP;
     delete[] m_pFaces;
+    delete[] m_pFacesRBSP;
     delete[] m_pIndices;
     delete[] pTextures;
     delete[] pLightmaps;
@@ -74,6 +78,42 @@ CQuake3BSP::~CQuake3BSP()
 // ─────────────────────────────────────────────────────────────────────────────
 // LoadBSP
 // ─────────────────────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ConvertRBSPFace
+// Converts a 148-byte RBSP/FBSP face to the canonical 104-byte tBSPFace.
+// Slot 0 of each 4-element array is the base (always-on) style and maps
+// directly to the existing single-slot fields used by the rest of the engine.
+// ─────────────────────────────────────────────────────────────────────────────
+/*static*/ tBSPFace CQuake3BSP::ConvertRBSPFace(const tBSPFaceRBSP& s)
+{
+    tBSPFace d{};
+    d.textureID = s.textureID;
+    d.effect = s.effect;
+    d.type = s.type;
+    d.startVertIndex = s.startVertIndex;
+    d.numOfVerts = s.numOfVerts;
+    d.startIndex = s.startIndex;
+    d.numOfIndices = s.numOfIndices;
+    // Base lightmap is always slot 0 (LS_NORMAL).
+    // If the slot is unused (LS_NONE) fall back to -1 (no lightmap).
+    d.lightmapID = (s.lightmapStyles[0] != LS_NONE) ? s.lightmapNum[0] : -1;
+
+    if (s.lightmapStyles[1] != LS_NONE)
+        Logger::Log("");
+
+    d.lMapCorner[0] = s.lMapCorner[0][0];
+    d.lMapCorner[1] = s.lMapCorner[0][1];
+    d.lMapSize[0] = s.lMapSize[0];
+    d.lMapSize[1] = s.lMapSize[1];
+    d.lMapPos = s.lMapPos;
+    d.lMapVecs[0] = s.lMapVecs[0];
+    d.lMapVecs[1] = s.lMapVecs[1];
+    d.vNormal = s.vNormal;
+    d.size[0] = s.size[0];
+    d.size[1] = s.size[1];
+    return d;
+}
 
 bool CQuake3BSP::LoadBSP(const char* filename)
 {
@@ -101,6 +141,41 @@ bool CQuake3BSP::LoadBSP(const char* filename)
 
     tBSPHeader header;
     memcpy(&header, base, sizeof(header));
+
+    // ── Format detection ──────────────────────────────────────────────────────
+    uint32_t ident = 0;
+    memcpy(&ident, header.strID, 4);
+    m_bspIdent = ident;
+    m_bspVersion = header.version;
+
+    if (ident == BSP_IDENT_FBSP) {
+        m_isFBSP = true;
+        m_isRBSP = true;
+        m_lightmapSize = BSP_LIGHTMAP_SIZE_FBSP;
+        printf("BSP format: FBSP v%d (qFusion/Warsow) — 512x512 lightmaps, 4-slot styles\n",
+            header.version);
+    }
+    else if (ident == BSP_IDENT_RBSP) {
+        m_isFBSP = false;
+        m_isRBSP = true;
+        m_lightmapSize = BSP_LIGHTMAP_SIZE_IBSP;
+        printf("BSP format: RBSP v%d (Raven Software) — 128x128 lightmaps, 4-slot styles\n",
+            header.version);
+    }
+    else if (ident == BSP_IDENT_IBSP) {
+        m_isFBSP = false;
+        m_isRBSP = false;
+        m_lightmapSize = BSP_LIGHTMAP_SIZE_IBSP;
+        printf("BSP format: IBSP v%d (%s) — 128x128 lightmaps\n",
+            header.version,
+            header.version == BSP_VERSION_WOLF ? "RTCW/ET" : "Quake 3");
+    }
+    else {
+        char id[5] = {};
+        memcpy(id, header.strID, 4);
+        printf("ERROR:: Unknown BSP magic '%.4s' (0x%08X)\n", id, ident);
+        return false;
+    }
 
     tBSPLump lumps[kMaxLumps];
     memcpy(lumps, base + sizeof(header), sizeof(lumps));
@@ -240,34 +315,68 @@ bool CQuake3BSP::LoadBSP(const char* filename)
         }
     }
 
-    // LightVols
     {
-        size_t cnt = 0;
-        if (checkLump(kLightVolumes, sizeof(tBSPLightvol), cnt)) {
-            lightVols.resize(cnt);
-            memcpy(lightVols.data(), base + lumps[kLightVolumes].offset, cnt * sizeof(tBSPLightvol));
+        if (m_isRBSP) {
+            // Lump 15: palette of bspGridPoint_t (already deduplicated by q3map2)
+            const auto& LP = lumps[kLightVolumes];
+            const size_t paletteCount = (LP.offset >= 0 && LP.length > 0
+                && size_t(LP.offset) + size_t(LP.length) <= totalSize)
+                ? size_t(LP.length) / sizeof(tBSPLightvolRBSP) : 0;
 
-            std::unordered_map<uint64_t, uint32_t> lookup;
-            lookup.reserve(cnt);
-            lightVolIndices.reserve(cnt);
+            if (paletteCount > 0) {
+                const uint8_t* ptr = base + LP.offset;
+                lightVolPaletteRBSP.resize(paletteCount);
+                memcpy(lightVolPaletteRBSP.data(), ptr, paletteCount * sizeof(tBSPLightvolRBSP));
 
-            for (const auto& lv : lightVols) {
-                uint64_t key = 0;
-                memcpy(&key, &lv, sizeof(tBSPLightvol));
-                auto [it, inserted] = lookup.emplace(key, (uint32_t)lightVolPalette.size());
-                if (inserted)
-                    lightVolPalette.push_back(lv);
-                lightVolIndices.push_back(it->second);
+                // Build the canonical IBSP palette from it (sum all active style slots)
+                lightVolPalette.resize(paletteCount);
+                for (size_t j = 0; j < paletteCount; ++j) {
+                    const tBSPLightvolRBSP& r = lightVolPaletteRBSP[j];
+                    tBSPLightvol& lv = lightVolPalette[j];
+                    uint32_t a0 = 0, a1 = 0, a2 = 0, d0 = 0, d1 = 0, d2 = 0;
+                    for (int s = 0; s < BSP_MAX_LIGHTMAP_STYLES; ++s) {
+                        if (r.styles[s] == LS_NONE && s > 0) continue;
+                        a0 += r.ambient[s][0]; a1 += r.ambient[s][1]; a2 += r.ambient[s][2];
+                        d0 += r.directional[s][0]; d1 += r.directional[s][1]; d2 += r.directional[s][2];
+                    }
+                    lv.ambient[0] = (uint8_t)std::min(255u, a0);
+                    lv.ambient[1] = (uint8_t)std::min(255u, a1);
+                    lv.ambient[2] = (uint8_t)std::min(255u, a2);
+                    lv.directional[0] = (uint8_t)std::min(255u, d0);
+                    lv.directional[1] = (uint8_t)std::min(255u, d1);
+                    lv.directional[2] = (uint8_t)std::min(255u, d2);
+                    lv.dir[0] = r.dir[0];
+                    lv.dir[1] = r.dir[1];
+                }
             }
 
-            lightVolIndices.shrink_to_fit();
-            lightVolPalette.shrink_to_fit();
+            // Lump 17: per-cell uint16_t indices into the palette
+            const auto& LA = lumps[kLightArray];
+            const size_t indexCount = (LA.offset >= 0 && LA.length > 0
+                && size_t(LA.offset) + size_t(LA.length) <= totalSize)
+                ? size_t(LA.length) / sizeof(uint16_t) : 0;
 
-            Logger::Log("Compressed light volumes from " + std::to_string(lightVols.size()) +
-                " to " + std::to_string(lightVolPalette.size()));
+            lightVolIndices.resize(indexCount);
+            if (indexCount > 0) {
+                const uint16_t* src = reinterpret_cast<const uint16_t*>(base + LA.offset);
+                for (size_t j = 0; j < indexCount; ++j)
+                    lightVolIndices[j] = src[j];
+            }
 
-            lightVols.clear();
-            lightVols.shrink_to_fit();
+            Logger::Log("RBSP LightGrid: palette=" + std::to_string(paletteCount) +
+                " cells=" + std::to_string(indexCount));
+
+        }
+        else {
+            // IBSP: lump 15 is a flat per-cell array, no index lump
+            size_t cnt = 0;
+            if (checkLump(kLightVolumes, sizeof(tBSPLightvol), cnt)) {
+                const uint8_t* ptr = base + lumps[kLightVolumes].offset;
+                lightVolPalette.resize(cnt);
+                memcpy(lightVolPalette.data(), ptr, cnt * sizeof(tBSPLightvol));
+                lightVolIndices.resize(cnt);
+                std::iota(lightVolIndices.begin(), lightVolIndices.end(), 0u);
+            }
         }
     }
 
@@ -283,19 +392,57 @@ bool CQuake3BSP::LoadBSP(const char* filename)
 
     // Vertices (Y-up swap)
     {
-        size_t cnt = 0;
-        if (checkLump(kVertices, sizeof(tBSPVertex), cnt)) {
-            m_numOfVerts = static_cast<int>(cnt);
-            m_pVerts = new tBSPVertex[cnt];
-            const uint8_t* ptr = base + lumps[kVertices].offset;
-            for (size_t i = 0; i < cnt; ++i) {
-                memcpy(&m_pVerts[i], ptr + i * sizeof(tBSPVertex), sizeof(tBSPVertex));
-                float t = m_pVerts[i].vPosition.y;
-                m_pVerts[i].vPosition.y = m_pVerts[i].vPosition.z;
-                m_pVerts[i].vPosition.z = -t;
-                t = m_pVerts[i].vNormal.y;
-                m_pVerts[i].vNormal.y = m_pVerts[i].vNormal.z;
-                m_pVerts[i].vNormal.z = -t;
+        if (m_isRBSP) {
+            // FBSP/RBSP: 80-byte on-disk vertex with 4 lightmap slots
+            size_t cnt = 0;
+            if (checkLump(kVertices, sizeof(tBSPVertexRBSP), cnt)) {
+                m_numOfVerts = static_cast<int>(cnt);
+                m_pVerts = new tBSPVertex[cnt];
+                m_pVertsRBSP = new tBSPVertexRBSP[cnt];
+                const uint8_t* ptr = base + lumps[kVertices].offset;
+                for (size_t i = 0; i < cnt; ++i) {
+                    tBSPVertexRBSP raw{};
+                    memcpy(&raw, ptr + i * sizeof(tBSPVertexRBSP), sizeof(tBSPVertexRBSP));
+
+                    // Y-up swap on position and normal
+                    float t = raw.vPosition.y;
+                    raw.vPosition.y = raw.vPosition.z;
+                    raw.vPosition.z = -t;
+                    t = raw.vNormal.y;
+                    raw.vNormal.y = raw.vNormal.z;
+                    raw.vNormal.z = -t;
+
+                    // Keep the full raw vertex for multi-slot UV access
+                    m_pVertsRBSP[i] = raw;
+
+                    // Canonical IBSP-shaped vertex (slot 0 only)
+                    m_pVerts[i].vPosition = raw.vPosition;
+                    m_pVerts[i].vTextureCoord = raw.vTextureCoord;
+                    m_pVerts[i].vLightmapCoord = raw.vLightmapCoord[0];
+                    m_pVerts[i].vNormal = raw.vNormal;
+                    m_pVerts[i].color[0] = raw.color[0][0];
+                    m_pVerts[i].color[1] = raw.color[0][1];
+                    m_pVerts[i].color[2] = raw.color[0][2];
+                    m_pVerts[i].color[3] = raw.color[0][3];
+                }
+            }
+        }
+        else {
+            // IBSP: 44-byte on-disk vertex (original path)
+            size_t cnt = 0;
+            if (checkLump(kVertices, sizeof(tBSPVertex), cnt)) {
+                m_numOfVerts = static_cast<int>(cnt);
+                m_pVerts = new tBSPVertex[cnt];
+                const uint8_t* ptr = base + lumps[kVertices].offset;
+                for (size_t i = 0; i < cnt; ++i) {
+                    memcpy(&m_pVerts[i], ptr + i * sizeof(tBSPVertex), sizeof(tBSPVertex));
+                    float t = m_pVerts[i].vPosition.y;
+                    m_pVerts[i].vPosition.y = m_pVerts[i].vPosition.z;
+                    m_pVerts[i].vPosition.z = -t;
+                    t = m_pVerts[i].vNormal.y;
+                    m_pVerts[i].vNormal.y = m_pVerts[i].vNormal.z;
+                    m_pVerts[i].vNormal.z = -t;
+                }
             }
         }
     }
@@ -309,11 +456,36 @@ bool CQuake3BSP::LoadBSP(const char* filename)
             memcpy(m_pIndices, base + lumps[kIndices].offset, cntIdx * sizeof(int));
         }
 
-        size_t cntFaces = 0;
-        if (checkLump(kFaces, sizeof(tBSPFace), cntFaces)) {
-            m_numOfFaces = static_cast<int>(cntFaces);
-            m_pFaces = new tBSPFace[cntFaces];
-            memcpy(m_pFaces, base + lumps[kFaces].offset, cntFaces * sizeof(tBSPFace));
+        // ── Faces: choose the right on-disk struct size ────────────────────────
+        // IBSP: tBSPFace      = 104 bytes (single lightmap slot, no styles)
+        // RBSP/FBSP: tBSPFaceRBSP = 148 bytes (4 lightmap + style slots)
+        // We always store the canonical tBSPFace internally; RBSP faces are
+        // converted via ConvertRBSPFace() which maps slot 0 → the single slot.
+        {
+            const size_t onDiskSize = m_isRBSP ? sizeof(tBSPFaceRBSP)
+                : sizeof(tBSPFace);
+            const auto& L = lumps[kFaces];
+            if (L.offset >= 0 && L.length >= 0 &&
+                size_t(L.offset) + size_t(L.length) <= totalSize &&
+                L.length % onDiskSize == 0)
+            {
+                const size_t cnt = L.length / onDiskSize;
+                const uint8_t* ptr = base + L.offset;
+                m_numOfFaces = static_cast<int>(cnt);
+                m_pFaces = new tBSPFace[cnt];
+
+                if (m_isRBSP) {
+                    m_pFacesRBSP = new tBSPFaceRBSP[cnt];
+                    for (size_t fi = 0; fi < cnt; ++fi) {
+                        memcpy(&m_pFacesRBSP[fi], ptr + fi * sizeof(tBSPFaceRBSP),
+                            sizeof(tBSPFaceRBSP));
+                        m_pFaces[fi] = ConvertRBSPFace(m_pFacesRBSP[fi]);
+                    }
+                }
+                else {
+                    memcpy(m_pFaces, ptr, cnt * sizeof(tBSPFace));
+                }
+            }
         }
 
         size_t cntTex = 0;
@@ -327,13 +499,38 @@ bool CQuake3BSP::LoadBSP(const char* filename)
             }
         }
 
-        size_t cntLM = 0;
-        if (checkLump(kLightmaps, sizeof(tBSPLightmap), cntLM)) {
-            m_numOfLightmaps = static_cast<int>(cntLM);
-            pLightmaps = new tBSPLightmap[cntLM];
-            memcpy(pLightmaps, base + lumps[kLightmaps].offset, cntLM * sizeof(tBSPLightmap));
-            for (int i = 0; i < m_numOfLightmaps; ++i)
-                Rbuffers.G_lightMaps.push_back(pLightmaps[i]);
+        // ── Lightmaps: atlas size differs per format ───────────────────────────
+        // IBSP / RBSP: 128×128 × 3 = 49152 bytes per atlas
+        // FBSP:        512×512 × 3 = 786432 bytes per atlas
+        {
+            const int    lmSz = m_lightmapSize;
+            const size_t bytesPerLM = size_t(lmSz) * lmSz * 3;
+            const auto& L = lumps[kLightmaps];
+
+            if (L.offset >= 0 && L.length >= 0 &&
+                size_t(L.offset) + size_t(L.length) <= totalSize &&
+                bytesPerLM > 0 && L.length % bytesPerLM == 0)
+            {
+                const size_t cnt = L.length / bytesPerLM;
+                m_numOfLightmaps = static_cast<int>(cnt);
+                const uint8_t* ptr = base + L.offset;
+
+                if (!m_isFBSP) {
+                    // Legacy path: keep the tBSPLightmap raw array for compat
+                    pLightmaps = new tBSPLightmap[cnt];
+                    memcpy(pLightmaps, ptr, cnt * sizeof(tBSPLightmap));
+                    for (int i = 0; i < m_numOfLightmaps; ++i)
+                        Rbuffers.G_lightMaps_Legacy.push_back(pLightmaps[i]);
+                }
+
+                // Always populate the unified G_lightMaps container
+                Rbuffers.G_lightMaps.reserve(cnt);
+                for (size_t i = 0; i < cnt; ++i) {
+                    tBSPLightmapData lmd(lmSz);
+                    memcpy(lmd.pixels.data(), ptr + i * bytesPerLM, bytesPerLM);
+                    Rbuffers.G_lightMaps.push_back(std::move(lmd));
+                }
+            }
         }
     }
 
@@ -358,12 +555,38 @@ void CQuake3BSP::BuildVBO()
         CreateRenderBuffers(index);
         numVisibleFaces++;
     }
+
+    // Fill extra lightmap UV slots (1-3) for RBSP/FBSP faces now that all
+    // faces and their raw tBSPVertexRBSP data are available.
+    FillExtraLightmapUVs();
+}
+
+// Populates v_faceLightmapUVs[face][1..3] from the raw RBSP vertex data.
+// Slot 0 is already set in CreateVBO. This is a no-op for IBSP.
+void CQuake3BSP::FillExtraLightmapUVs()
+{
+    if (!m_pFacesRBSP || !m_pVertsRBSP) return;
+
+    for (int fi = 0; fi < m_numOfFaces; ++fi) {
+        const tBSPFaceRBSP& rf = m_pFacesRBSP[fi];
+        auto& uvSets = Rbuffers.v_faceLightmapUVs[fi];
+
+        for (int slot = 1; slot < BSP_MAX_LIGHTMAP_STYLES; ++slot) {
+            if (rf.lightmapStyles[slot] == LS_NONE) continue; // unused slot
+            uvSets[slot].resize(rf.numOfVerts);
+            for (int v = 0; v < rf.numOfVerts; ++v) {
+                uvSets[slot][v] = m_pVertsRBSP[rf.startVertIndex + v].vLightmapCoord[slot];
+            }
+        }
+    }
 }
 
 void CQuake3BSP::CreateVBO(int index)
 {
     tBSPFace* pFace = &m_pFaces[index];
     auto& vertices = Rbuffers.v_faceVBOs[index];
+    auto& uvSets = Rbuffers.v_faceLightmapUVs[index];
+    for (auto& uv : uvSets) uv.clear();
 
     for (int v = 0; v < pFace->numOfVerts; v++) {
         const tBSPVertex& bspVert = m_pVerts[pFace->startVertIndex + v];
@@ -372,15 +595,28 @@ void CQuake3BSP::CreateVBO(int index)
         vd.Position = bspVert.vPosition;
         vd.Normal = bspVert.vNormal;
         vd.TextureCoordinate = bspVert.vTextureCoord;
-        vd.ShadowMapCoords = bspVert.vLightmapCoord;
+        vd.ShadowMapCoords = bspVert.vLightmapCoord; // slot 0
 
         vd.Color = glm::vec4(
-            (float)bspVert.color[0] / 255.0f,
-            (float)bspVert.color[1] / 255.0f,
-            (float)bspVert.color[2] / 255.0f,
-            (float)bspVert.color[3] / 255.0f);
+            bspVert.color[0] / 255.0f,
+            bspVert.color[1] / 255.0f,
+            bspVert.color[2] / 255.0f,
+            bspVert.color[3] / 255.0f);
+
+        // Pack lightmap UVs for slots 1-3 into unused attributes
+        if (m_pVertsRBSP) {
+            const tBSPVertexRBSP& rv = m_pVertsRBSP[pFace->startVertIndex + v];
+            vd.Tangent = glm::vec3(rv.vLightmapCoord[1], 0.0f); // slot 1
+            vd.BiTangent = glm::vec3(rv.vLightmapCoord[2], 0.0f); // slot 2
+            vd.SmoothNormal = glm::vec3(rv.vLightmapCoord[3], 0.0f); // slot 3
+        }
 
         vertices.push_back(vd);
+
+        // Always record slot 0 in the explicit UV array for uniform access.
+        uvSets[0].push_back(bspVert.vLightmapCoord);
+        // Slots 1-3 are filled by FillExtraLightmapUVs() after all verts are loaded,
+        // because we need the raw tBSPVertexRBSP data which is held separately.
     }
 
     auto bounds = BoundingBox::FromVertices(vertices);
@@ -412,7 +648,7 @@ void CQuake3BSP::CreateIndices(int index)
 void CQuake3BSP::CreateRenderBuffers(int index)
 {
     const auto& vertices = Rbuffers.v_faceVBOs[index];
-    const auto& indices  = Rbuffers.v_faceIDXs[index];
+    const auto& indices = Rbuffers.v_faceIDXs[index];
 
     auto& fb = FB_array.FB_Idx[index];
 
@@ -442,36 +678,39 @@ void CQuake3BSP::GenerateLightmap()
             v,v,v,v,  v,v,v,v,
             v,v,v,v,  v,v,v,v
         };
-        // Texture(data, width, height, format, generateMipmaps)
         m_missingLightmap = std::make_shared<Texture>(pixels, 2, 2, bgfx::TextureFormat::RGBA8, false);
-		m_missingLightmap->setName("Missing Lightmap");
+        m_missingLightmap->setName("Missing Lightmap");
     }
 
-    // ── White lightmap (full-bright 2×2 RGBA) ────────────────────────────────
+    // ── White (black) lightmap (2×2 RGBA) ────────────────────────────────────
     {
-        uint8_t pixels[16] = {
-            0,0,0,0,  0,0,0,0,
-            0,0,0,0,  0,0,0,0
-        };
+        uint8_t pixels[16] = { 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0 };
         m_whiteLightmap = std::make_shared<Texture>(pixels, 2, 2, bgfx::TextureFormat::RGBA8, false);
-		m_whiteLightmap->setName("Black Lightmap");
+        m_whiteLightmap->setName("Black Lightmap");
     }
 
-    // ── Per-BSP-lightmap textures (128×128 RGB) ───────────────────────────────
-    // The Texture(data, width, height, format) constructor uploads the pixel
-    // data and sets appropriate filtering/wrap parameters internally, so no
-    // manual glTexParameteri calls are needed here.
+    // ── Per-BSP lightmap textures ─────────────────────────────────────────────
+    // G_lightMaps holds tBSPLightmapData with a runtime .size field (128 for
+    // IBSP/RBSP, 512 for FBSP) so the GPU upload path is identical for both.
     m_lightmapTextures.reserve(Rbuffers.G_lightMaps.size());
     for (size_t i = 0; i < Rbuffers.G_lightMaps.size(); ++i)
     {
-        const uint8_t* pixels =
-            reinterpret_cast<const uint8_t*>(Rbuffers.G_lightMaps[i].imageBits);
+        const tBSPLightmapData& lmd = Rbuffers.G_lightMaps[i];
 
-        // generateMipmaps = true to match original glGenerateMipmap call
-        auto tex = std::make_shared<Texture>(pixels, 128, 128, bgfx::TextureFormat::RGB8, true);
-		tex->setName("BSP Lightmap " + std::to_string(i));
+        auto tex = std::make_shared<Texture>(
+            lmd.pixels.data(),
+            lmd.size, lmd.size,
+            bgfx::TextureFormat::RGB8,
+            true /*generateMipmaps*/);
+        tex->setName("BSP Lightmap " + std::to_string(i) +
+            (m_isFBSP ? " (FBSP 512)" : " (128)"));
         m_lightmapTextures.push_back(std::move(tex));
     }
+
+    printf("GenerateLightmap: uploaded %zu lightmap atlas(es) at %dx%d (%s)\n",
+        m_lightmapTextures.size(),
+        m_lightmapSize, m_lightmapSize,
+        m_isFBSP ? "FBSP" : (m_isRBSP ? "RBSP" : "IBSP"));
 }
 
 void CQuake3BSP::GenerateTexture()
@@ -499,6 +738,14 @@ int CQuake3BSP::GetWhiteLightmapNativeId() const
     return m_whiteLightmap ? (int)m_whiteLightmap->getID() : 0;
 }
 
+int CQuake3BSP::GetFaceLightmapId(int faceIndex, int slot) const
+{
+    if (faceIndex < 0 || faceIndex >= m_numOfFaces) return GetLightmapNativeId(-1);
+    if (slot < 0 || slot >= BSP_MAX_LIGHTMAP_STYLES)  return GetLightmapNativeId(-1);
+    if (!cachedFaces) return GetLightmapNativeId(-1);
+    return cachedFaces[faceIndex].lightmapIds[slot];
+}
+
 int CQuake3BSP::GetFaceTextureNativeId(int cachedTextureId) const
 {
     // cachedTextureId is stored as the raw GL texture id obtained from
@@ -513,135 +760,86 @@ int CQuake3BSP::GetFaceTextureNativeId(int cachedTextureId) const
 
 void CQuake3BSP::PreloadFace(int index)
 {
-    tBSPFace* pFace = &m_pFaces[index];
-    string textureName = string(pTextures[pFace->textureID].strName);
+    // Resolve texture name from either face type
+    const char* rawTexName = nullptr;
+    int numOfIndices = 0;
+
+    if (m_isFBSP && m_pFacesRBSP) {
+        rawTexName = pTextures[m_pFacesRBSP[index].textureID].strName;
+        numOfIndices = m_pFacesRBSP[index].numOfIndices;
+    }
+    else {
+        rawTexName = pTextures[m_pFaces[index].textureID].strName;
+        numOfIndices = m_pFaces[index].numOfIndices;
+    }
+
+    string textureName(rawTexName);
     int nameL = (int)textureName.length();
 
-    // === Automatic animated texture detection with full folder support ===
-    // Now correctly handles real Quake 3-style paths like:
-    //   "textures/lq_liquid/+1water"
-    //   "textures/liquids/plus_0fslime"
-    //   "+0water" (no folder)
-    // Detects any frame (+0xxx, +10xxx, plus_0xxx, plus_42xxx) and
-    // automatically loads the complete animation sequence (0, 1, 2, ...) 
-    // from the exact same folder.
-    bool isAnimated = false;
-    string directory;      // e.g. "textures/lq_liquid/"
-    string baseFilename;   // e.g. "water"
-    string animPrefix = ""; // "+" or "plus_"
-    int currentFrame = 0;
+    bool isCube = nameL > 5
+        && textureName[nameL - 1] == 'e' && textureName[nameL - 2] == 'b'
+        && textureName[nameL - 3] == 'u' && textureName[nameL - 4] == 'c';
 
-    if (!textureName.empty()) {
-        // Split into directory + filename (supports both / and \ for cross-platform)
-        size_t lastSlash = textureName.find_last_of("/\\");
-        directory = (lastSlash != string::npos) ? textureName.substr(0, lastSlash + 1) : "";
-        string filename = (lastSlash != string::npos) ? textureName.substr(lastSlash + 1) : textureName;
-
-        // Parse filename only for animation markers
-        if (!filename.empty()) {
-            if (filename[0] == '+') {
-                animPrefix = "+";
-                size_t pos = 1;
-                currentFrame = 0;
-                while (pos < filename.size() && isdigit(static_cast<unsigned char>(filename[pos]))) {
-                    currentFrame = currentFrame * 10 + (filename[pos] - '0');
-                    ++pos;
-                }
-                if (pos > 1 && pos < filename.size()) {
-                    baseFilename = filename.substr(pos);
-                    isAnimated = true;
-                }
-            }
-            else if (filename.size() > 5 && filename.substr(0, 5) == "plus_") {
-                animPrefix = "plus_";
-                size_t pos = 5;
-                currentFrame = 0;
-                while (pos < filename.size() && isdigit(static_cast<unsigned char>(filename[pos]))) {
-                    currentFrame = currentFrame * 10 + (filename[pos] - '0');
-                    ++pos;
-                }
-                if (pos > 5 && pos < filename.size()) {
-                    baseFilename = filename.substr(pos);
-                    isAnimated = true;
-                }
-            }
-        }
-    }
-
-    bool isCube = false;
-    if (nameL > 5) {
-        isCube =
-            (textureName[nameL - 1] == 'e') &&
-            (textureName[nameL - 2] == 'b') &&
-            (textureName[nameL - 3] == 'u') &&
-            (textureName[nameL - 4] == 'c');
-    }
-
-    // ShaderProgram is only referenced during rendering, not preload.
     string texturePath = "GameData/" + textureName + ".png";
     if (isCube) {
-        auto splitPath = StringHelper::Split(texturePath, '/');
-        string fileName = splitPath[splitPath.size() - 1];
-        texturePath = "GameData/env/" + fileName;
+        auto parts = StringHelper::Split(texturePath, '/');
+        texturePath = "GameData/env/" + parts.back();
     }
 
-    int faceTexture;
-    if (isCube)
-        faceTexture = AssetRegistry::GetTextureCubeFromFile(texturePath)->getID();
-    else
-        faceTexture = AssetRegistry::GetTextureFromFile(texturePath)->getID();
-
-    // Determine lightmap native ID (unchanged)
-    int lightmapId = 0;
-    if (m_numOfLightmaps > 0)
-    {
-        lightmapId = GetLightmapNativeId(pFace->lightmapID);
-    }
-    else if (!isCube)
-    {
-        string lightMapPath = GetLightMapFilePathFromId(pFace->lightmapID, filePath);
-        if (lightMapPath.empty())
-        {
-            lightmapId = GetLightmapNativeId(-1);
-        }
-        else
-        {
-            auto lmTex = AssetRegistry::GetTextureFromFile(lightMapPath);
-            lightmapId = (lmTex && lmTex->getID() != 0)
-                ? (int)lmTex->getID()
-                : GetLightmapNativeId(-1);
-        }
-    }
+    int faceTexture = isCube
+        ? AssetRegistry::GetTextureCubeFromFile(texturePath)->getID()
+        : AssetRegistry::GetTextureFromFile(texturePath)->getID();
 
     CachedFaceTextureData data;
     data.isCube = isCube;
-    data.lightmapId = lightmapId;
     data.textureId = faceTexture;
     data.textureName = textureName;
     data.transparent = textureName.ends_with("_t");
-    data.numOfIndices = pFace->numOfIndices;
-    data.animatedTextureFrames = {};
+    data.numOfIndices = numOfIndices;
+    data.numActiveSlots = 1;
 
-    // === Collect ALL frames of the animation (if detected) ===
-    // Frames are loaded in the exact same folder as the original texture.
-    if (isAnimated && !baseFilename.empty() && !isCube) {
-        std::vector<int> animFrames;
-        const int MAX_FRAMES = 64;  // safety limit (Quake animations are tiny)
+    // Helper: resolve a lightmap atlas index to a native GPU texture ID
+    auto resolveLM = [&](int lmAtlasIndex) -> int {
+        if (m_numOfLightmaps > 0)
+            return GetLightmapNativeId(lmAtlasIndex);
+        if (isCube)
+            return 0;
+        string path = GetLightMapFilePathFromId(lmAtlasIndex, filePath);
+        if (path.empty()) return GetLightmapNativeId(-1);
+        auto tex = AssetRegistry::GetTextureFromFile(path);
+        return (tex && tex->getID() != 0) ? (int)tex->getID() : GetLightmapNativeId(-1);
+        };
 
-        for (int f = 0; f < MAX_FRAMES; ++f) {
-            string frameFilename = animPrefix + std::to_string(f) + baseFilename;
-            string frameFullTextureName = directory + frameFilename;
-            string framePath = "GameData/" + frameFullTextureName + ".png";
+    if (m_isFBSP && m_pFacesRBSP) {
+        const tBSPFaceRBSP& rf = m_pFacesRBSP[index];
 
-            auto frameTex = AssetRegistry::GetTextureFromFile(framePath);
-            if (!frameTex || frameTex->getID() == 0) {
-                break;  // stop at first missing frame (standard Quake behavior)
+        // Slot 0
+        bool slot0active = (rf.lightmapStyles[0] != LS_NONE) && (rf.lightmapNum[0] >= 0);
+        data.lightmapStyles[0] = rf.lightmapStyles[0];
+        data.lightmapIds[0] = slot0active ? resolveLM(rf.lightmapNum[0]) : GetLightmapNativeId(-1);
+        data.lightmapId = data.lightmapIds[0];
+
+        // Slots 1-3
+        for (int slot = 1; slot < BSP_MAX_LIGHTMAP_STYLES; ++slot) {
+            data.lightmapStyles[slot] = rf.lightmapStyles[slot];
+            bool active = (rf.lightmapStyles[slot] != LS_NONE) && (rf.lightmapNum[slot] >= 0);
+            if (active) {
+                data.lightmapIds[slot] = resolveLM(rf.lightmapNum[slot]);
+                ++data.numActiveSlots;
             }
-            animFrames.push_back((int)frameTex->getID());
+            else {
+                data.lightmapIds[slot] = GetLightmapNativeId(-1);
+            }
         }
-
-        if (!animFrames.empty()) {
-            data.animatedTextureFrames = std::move(animFrames);
+    }
+    else {
+        // IBSP — single slot only
+        data.lightmapStyles[0] = LS_NORMAL;
+        data.lightmapIds[0] = resolveLM(m_pFaces[index].lightmapID);
+        data.lightmapId = data.lightmapIds[0];
+        for (int slot = 1; slot < BSP_MAX_LIGHTMAP_STYLES; ++slot) {
+            data.lightmapStyles[slot] = LS_NONE;
+            data.lightmapIds[slot] = GetLightmapNativeId(-1);
         }
     }
 
@@ -674,7 +872,18 @@ void CQuake3BSP::BuildMergedModels()
         {
             string texId = to_string(m_pFaces[i].textureID);
             string lightmapId = to_string(m_pFaces[i].lightmapID);
-            string finalStr = modelId + "|" + texId + "|" + lightmapId;
+
+            // Also key on style slots 1-3 for FBSP
+            string styleKey = "";
+            if (m_pFacesRBSP) {
+                const tBSPFaceRBSP& rf = m_pFacesRBSP[i];
+                for (int s = 1; s < BSP_MAX_LIGHTMAP_STYLES; ++s) {
+                    styleKey += "|" + to_string(rf.lightmapStyles[s]);
+                    styleKey += ":" + to_string(rf.lightmapNum[s]);
+                }
+            }
+
+            string finalStr = modelId + "|" + texId + "|" + lightmapId + styleKey;
 
             if (facesMap.find(finalStr) == facesMap.end())
                 facesMap[finalStr] = vector<int>();
@@ -811,15 +1020,32 @@ LightVolPointData CQuake3BSP::GetLightvolColorPoint(const glm::vec3& position, b
         -> std::tuple<glm::vec3, glm::vec3, glm::vec3>
         {
             int idx = z * (lightVolGridDims.x * lightVolGridDims.y) + y * lightVolGridDims.x + x;
-            const tBSPLightvol& vol = GetLightVol(idx);
-            glm::vec3 ambient(
-                static_cast<float>(vol.ambient[0]) / 255.0f,
-                static_cast<float>(vol.ambient[1]) / 255.0f,
-                static_cast<float>(vol.ambient[2]) / 255.0f);
-            glm::vec3 directional(
-                static_cast<float>(vol.directional[0]) / 255.0f,
-                static_cast<float>(vol.directional[1]) / 255.0f,
-                static_cast<float>(vol.directional[2]) / 255.0f);
+            const tBSPLightvolRBSP& vol = GetLightVolRBSP(idx);
+
+            // Accumulate all active style slots weighted by their animated style colour.
+            // For IBSP the RBSP wrapper already put everything in slot 0 with style
+            // LS_NORMAL, so the loop still produces the correct single-slot result.
+            glm::vec3 ambient(0.0f);
+            glm::vec3 directional(0.0f);
+
+			float styleWeight = 0.6f; // empirically chosen to match in-engine brightness
+
+            if (m_isRBSP == false)
+                styleWeight = 2.0f;
+
+            for (int s = 0; s < BSP_MAX_LIGHTMAP_STYLES; ++s) {
+                if (vol.styles[s] == LS_NONE) continue;
+                const glm::vec3 styleColor = GetStyleColor(vol.styles[s]);
+                if (styleColor == glm::vec3(0.0f)) continue; // style is off – skip
+                ambient += glm::vec3(
+                    vol.ambient[s][0] / 255.0f,
+                    vol.ambient[s][1] / 255.0f,
+                    vol.ambient[s][2] / 255.0f) * styleColor * styleWeight;
+                directional += glm::vec3(
+                    vol.directional[s][0] / 255.0f,
+                    vol.directional[s][1] / 255.0f,
+                    vol.directional[s][2] / 255.0f) * styleColor * styleWeight;
+            }
             return { ambient, directional, computeLightDirection(vol.dir) };
         };
 
@@ -924,16 +1150,20 @@ LightVolPointData CQuake3BSP::GetLightvolColorPoint(const glm::vec3& position, b
 
                     int idx = z * (lightVolGridDims.x * lightVolGridDims.y) +
                         y * lightVolGridDims.x + x;
-                    const tBSPLightvol& vol = GetLightVol(idx);
-                    LightData ld{
-                        glm::vec3(vol.ambient[0] / 255.0f,
-                                  vol.ambient[1] / 255.0f,
-                                  vol.ambient[2] / 255.0f),
-                        glm::vec3(vol.directional[0] / 255.0f,
-                                  vol.directional[1] / 255.0f,
-                                  vol.directional[2] / 255.0f),
-                        computeLightDirection(vol.dir)
-                    };
+                    const tBSPLightvolRBSP& vol = GetLightVolRBSP(idx);
+                    glm::vec3 fbAmb(0.0f), fbDir(0.0f);
+                    for (int s = 0; s < BSP_MAX_LIGHTMAP_STYLES; ++s) {
+                        if (vol.styles[s] == LS_NONE) continue;
+                        const glm::vec3 sc = GetStyleColor(vol.styles[s]);
+                        if (sc == glm::vec3(0.0f)) continue;
+                        fbAmb += glm::vec3(vol.ambient[s][0] / 255.0f,
+                            vol.ambient[s][1] / 255.0f,
+                            vol.ambient[s][2] / 255.0f) * sc;
+                        fbDir += glm::vec3(vol.directional[s][0] / 255.0f,
+                            vol.directional[s][1] / 255.0f,
+                            vol.directional[s][2] / 255.0f) * sc;
+                    }
+                    LightData ld{ fbAmb, fbDir, computeLightDirection(vol.dir) };
 
                     if (d2 < bestDist2) {
                         bestDist2 = d2;
@@ -1019,6 +1249,18 @@ bool CQuake3BSP::IsClusterVisible(int sourceCluster, int testCluster)
 
     unsigned char byteValue = visData.vecs[byteIndex];
     return (byteValue & (1 << bitIndex)) != 0;
+}
+
+glm::vec3 CQuake3BSP::GetStyleColor(uint8_t style) const
+{
+    if (style == LS_NORMAL) return glm::vec3(1.0f); // always on, full white
+    if (style == LS_NONE)   return glm::vec3(0.0f); // unused slot, black
+
+	//return rand() / (float)RAND_MAX < 0.5f ? glm::vec3(1.0f) : glm::vec3(0.0f);
+
+    // TODO: index into a lightstyle animation table driven by game time.
+    // e.g. return Level::Current->GetLightStyleColor(style);
+    return glm::vec3(0.0f); // placeholder: all switchable styles on at full
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1159,8 +1401,6 @@ bool CQuake3BSP::RenderSingleFace(int index, bool lightmap,
     const CachedFaceTextureData& data = cachedFaces[index];
 
     int faceTexture = GetFaceTextureNativeId(data.textureId);
-    int lmId = data.lightmapId; // already a native ID stored at preload time
-
     if (faceTexture == 0) return false;
 
     Shader* shader = ShaderManager::GetShaderProgram(
@@ -1172,14 +1412,24 @@ bool CQuake3BSP::RenderSingleFace(int index, bool lightmap,
     shader->SetUniform("direct_light_dir", lightData.direction);
 
     bgfx::TextureHandle albedoHandle = { static_cast<uint16_t>(faceTexture) };
-    bgfx::TextureHandle lmHandle     = { static_cast<uint16_t>(lmId) };
-
     if (data.isCube)
         shader->SetCubemapTexture("s_bspTexture", albedoHandle);
     else
         shader->SetTexture("s_bspTexture", albedoHandle);
 
-    shader->SetTexture("s_bspLightmap", lmHandle);
+    // Bind all active lightmap slots. Slot 0 is always s_bspLightmap (primary).
+    // Slots 1-3 are s_bspLightmap1 .. s_bspLightmap3 for multi-style blending.
+    static const char* lmSamplers[BSP_MAX_LIGHTMAP_STYLES] = {
+        "s_bspLightmap", "s_bspLightmap1", "s_bspLightmap2", "s_bspLightmap3"
+    };
+    int missingId = m_missingLightmap ? (int)m_missingLightmap->getID() : 0;
+    for (int s = 0; s < BSP_MAX_LIGHTMAP_STYLES; ++s) {
+        int lmId = (s < data.numActiveSlots) ? data.lightmapIds[s] : missingId;
+        bgfx::TextureHandle lmHandle = { static_cast<uint16_t>(lmId) };
+        shader->SetTexture(lmSamplers[s], lmHandle);
+    }
+    shader->SetUniform("numLightmapSlots", (float)data.numActiveSlots);
+
     shader->SetUniform("view", Camera::finalizedView);
     shader->SetUniform("projection", Camera::finalizedProjection);
     shader->SetUniform("model", model);
@@ -1215,18 +1465,6 @@ bool CQuake3BSP::RenderMergedFace(int mergedIndex, bool lightmap,
     const CachedFaceTextureData& data = cachedFaces[mergedFace.referenceFace];
 
     int faceTexture = GetFaceTextureNativeId(data.textureId);
-
-	if (data.animatedTextureFrames.size() > 0)
-    {
-        // Simple frame animation: cycle through frames based on time.
-        uint64_t timeMs = Time::GameTime * 1000.0f;
-        size_t frameIndex = (timeMs / 100) % data.animatedTextureFrames.size(); // Change frame every 100ms
-        faceTexture = GetFaceTextureNativeId(data.animatedTextureFrames[frameIndex]);
-    }
-
-    // Select lightmap: use white texture when lightmaps are disabled
-    int lmId = lightmap ? data.lightmapId : GetWhiteLightmapNativeId();
-
     if (faceTexture == 0) return false;
 
     Shader* shader = ShaderManager::GetShaderProgram(
@@ -1235,20 +1473,44 @@ bool CQuake3BSP::RenderMergedFace(int mergedIndex, bool lightmap,
 
     shader->SetUniform("useVertexLight",
         data.lightmapId == (m_missingLightmap ? (int)m_missingLightmap->getID() : 0));
-
     shader->SetUniform("light_color", lightData.ambientColor);
     shader->SetUniform("direct_light_color", lightData.directColor);
     shader->SetUniform("direct_light_dir", lightData.direction);
+	shader->SetUniform("isRBSP", m_isRBSP);
 
     bgfx::TextureHandle albedoHandle = { static_cast<uint16_t>(faceTexture) };
-    bgfx::TextureHandle lmHandle     = { static_cast<uint16_t>(lmId) };
-
     if (data.isCube)
         shader->SetCubemapTexture("s_bspTexture", albedoHandle);
     else
         shader->SetTexture("s_bspTexture", albedoHandle);
 
-    shader->SetTexture("s_bspLightmap", lmHandle);
+    // Bind all active lightmap slots. When lightmaps are disabled, fall back to
+    // the black/white dummy for slot 0 and missing for the rest.
+    static const char* lmSamplers[BSP_MAX_LIGHTMAP_STYLES] = {
+        "s_bspLightmap", "s_bspLightmap1", "s_bspLightmap2", "s_bspLightmap3"
+    };
+    int missingId = m_missingLightmap ? (int)m_missingLightmap->getID() : 0;
+    for (int s = 0; s < BSP_MAX_LIGHTMAP_STYLES; ++s) {
+        int lmId;
+        if (!lightmap) {
+            lmId = (s == 0) ? GetWhiteLightmapNativeId() : missingId;
+        }
+        else {
+            lmId = (s < data.numActiveSlots) ? data.lightmapIds[s] : missingId;
+        }
+        bgfx::TextureHandle lmHandle = { static_cast<uint16_t>(lmId) };
+        shader->SetTexture(lmSamplers[s], lmHandle);
+    }
+    shader->SetUniform("numLightmapSlots", (float)(lightmap ? data.numActiveSlots : 0));
+
+    static const char* styleUniforms[BSP_MAX_LIGHTMAP_STYLES] = {
+    "lmStyleColor0", "lmStyleColor1", "lmStyleColor2", "lmStyleColor3"
+    };
+    for (int s = 0; s < BSP_MAX_LIGHTMAP_STYLES; ++s) {
+        glm::vec3 sc = GetStyleColor(data.lightmapStyles[s]);
+        shader->SetUniform(styleUniforms[s], glm::vec4(sc, 1.0f));
+    }
+
     shader->SetUniform("view", Camera::finalizedView);
     shader->SetUniform("projection", Camera::finalizedProjection);
     shader->SetUniform("model", model);
@@ -1260,11 +1522,8 @@ bool CQuake3BSP::RenderMergedFace(int mergedIndex, bool lightmap,
     bgfx::setIndexBuffer(mergedFace.ibo);
 
     BgfxStateManager::Apply();
-
     shader->Submit(ViewIdManager::GetCurrentId());
-
     BgfxStateManager::SetState(startState);
-
     return true;
 }
 
@@ -1305,7 +1564,7 @@ void CQuake3BSP::BuildStaticOpaqueObstacles()
 
         OpaqueModelVBO modelVBO;
 
-		if (vertices.size() > 0 && indices.size() > 0)
+        if (vertices.size() > 0 && indices.size() > 0)
         {
             const bgfx::Memory* vMem = bgfx::copy(
                 vertices.data(),
@@ -1350,8 +1609,8 @@ std::string CQuake3BSP::GetLightMapFilePathFromId(int id, const std::string& fil
         tmp /= 10;
     }
 
-    if(digits[3] == '-')
-		return ""; // invalid ID
+    if (digits[3] == '-')
+        return ""; // invalid ID
 
     result.append(digits, 4);
     result += ".tga";
@@ -1734,7 +1993,7 @@ void BSPModelRef::FinalizeFrameData()
 
 void BSPModelRef::DrawForward(mat4x4 view, mat4x4 projection)
 {
-    
+
     auto state = BgfxStateManager::GetState();
 
     if (Transparent)
@@ -1752,21 +2011,21 @@ void BSPModelRef::DrawForward(mat4x4 view, mat4x4 projection)
 
 
 
-	BgfxStateManager::SetState(state);
+    BgfxStateManager::SetState(state);
 
 }
 
 void BSPModelRef::DrawDepth(mat4x4 view, mat4x4 projection)
 {
     const auto& vbo = bsp->opaqueVBOs[id];
-	if (vbo.IndexCount == 0)
+    if (vbo.IndexCount == 0)
         return;
 
     if (Transparent) return;
 
     if (!bgfx::isValid(vbo.vbo) || !bgfx::isValid(vbo.ibo)) return;
 
-    Shader* shader = ShaderManager::GetShaderProgram("vs_bsp", "fs_empty");
+    Shader* shader = ShaderManager::GetShaderProgram("vs_bsp", "fs_bsp_empty");
     shader->UseProgram();
     shader->SetUniform("view", view);
     shader->SetUniform("projection", projection);

@@ -28,7 +28,7 @@
   brushtypes="quake3"
   patchtypes="quake3"
   default_scale="1.0"
-  q3map2_type="quake3"
+  q3map2_type="qfusion"
   no_patch="0" 
   no_bsp_monitor="0"
 

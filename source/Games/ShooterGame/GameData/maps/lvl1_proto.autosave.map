@@ -4562,3 +4562,11 @@
 "nextLevel" "test"
 "targetname" "level_end"
 }
+// entity 96
+{
+"classname" "light"
+"origin" "-1664 -5280 48"
+"light" "1000"
+"_color" "1 0 0"
+"style" "10"
+}

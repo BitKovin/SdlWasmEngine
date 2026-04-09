@@ -24,7 +24,7 @@ default
 	sampleSize 0
 }
 
-3 // ESurfaceType::Triangles V: 701 I: 1755 
+3 // ESurfaceType::Triangles V: 711 I: 1755 
 {
 	shader models/tools/door_texture
 	sampleSize 0

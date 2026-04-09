@@ -4532,6 +4532,7 @@
 // entity 92
 {
 "classname" "triggerOnce"
+"target" "level_end"
 // brush 0
 {
 ( -2704 -4672 128 ) ( -2704 -4832 128 ) ( -2752 -4672 128 ) lq_dev/trigger 0 0 0 1 1 0 0 0
@@ -4553,4 +4554,18 @@
 "classname" "transformPoint"
 "origin" "-864 -4288 112"
 "targetname" "level_end_camera_target"
+}
+// entity 95
+{
+"classname" "logic_level_end"
+"origin" "-2832 -4736 64"
+"nextLevel" "test"
+"targetname" "level_end"
+}
+// entity 96
+{
+"classname" "light"
+"origin" "-1664 -5280 48"
+"light" "1000"
+"_color" "1 0 0"
 }

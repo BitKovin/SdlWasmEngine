@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <project version="2.0">
-<var name="mbspc">&quot;[RadiantPath]mbspc.[ExecutableType]&quot;</var>
-<var name="q3map2">&quot;[RadiantPath]q3map2.[ExecutableType]&quot; -v[ExtraResourcePaths]<cond value="[MonitorAddress]"> -connect [MonitorAddress]</cond> -game quake3 -fs_basepath &quot;[EnginePath]&quot;<cond value="[GameName]"> -fs_game [GameName]</cond></var>
 <var name="bspzip">&quot;[RadiantPath]../../BspZip.exe&quot;</var>
+<var name="mbspc">&quot;[RadiantPath]mbspc.[ExecutableType]&quot;</var>
+<var name="q3map2">&quot;[RadiantPath]q3map2.[ExecutableType]&quot; -v[ExtraResourcePaths]<cond value="[MonitorAddress]"> -connect [MonitorAddress]</cond> -game qfusion -fs_basepath &quot;[EnginePath]&quot;<cond value="[GameName]"> -fs_game [GameName]</cond></var>
 <build name="Single: bsp">
 <command>[q3map2] -meta &quot;[MapFile]&quot;</command>
 </build>
@@ -10,7 +10,7 @@
 <command>[q3map2] -meta -noob &quot;[MapFile]&quot;</command>
 </build>
 <build name="Single: vis">
-<command>[q3map2] -vis -saveprt -saveprt &quot;[MapFile]&quot;</command>
+<command>[q3map2] -vis -saveprt &quot;[MapFile]&quot;</command>
 </build>
 <build name="Single: light">
 <command>[q3map2] -light -fast &quot;[MapFile]&quot;</command>
@@ -18,25 +18,27 @@
 <separator/>
 <build name="[test] quick and very crude">
 <command>[q3map2] -meta -samplesize 64 &quot;[MapFile]&quot;</command>
-<command>[q3map2] -vis -saveprt -fast -saveprt &quot;[MapFile]&quot;</command>
+<command>[q3map2] -vis -fast -saveprt &quot;[MapFile]&quot;</command>
 <command>[q3map2] -light -fast -nogrid &quot;[MapFile]&quot;</command>
 <command>[bspzip] &quot;[BspFile]&quot;</command>
 </build>
 <build name="[test] quick and very crude +noOb">
 <command>[q3map2] -meta -noob -samplesize 64 &quot;[MapFile]&quot;</command>
-<command>[q3map2] -vis -saveprt -fast -saveprt &quot;[MapFile]&quot;</command>
+<command>[q3map2] -vis -fast -saveprt &quot;[MapFile]&quot;</command>
 <command>[q3map2] -light -fast -nogrid &quot;[MapFile]&quot;</command>
 <command>[bspzip] &quot;[BspFile]&quot;</command>
 </build>
 <separator/>
 <build name="(Final)">
 <command>[q3map2] -meta &quot;[MapFile]&quot;</command>
+<command></command>
 <command>[q3map2] -vis -saveprt &quot;[MapFile]&quot;</command>
 <command>[q3map2] -light -fast  -patchshadows -samples 2 -filter -bounce 2 -shade -bouncegrid -gamma 2 -compensate 2 -threads 24 -dirty -lightmapsize 256 &quot;[MapFile]&quot;</command>
 <command>[bspzip] &quot;[BspFile]&quot;</command>
 </build>
 <build name="(Final) Best">
 <command>[q3map2] -meta &quot;[MapFile]&quot;</command>
+<command></command>
 <command>[q3map2] -vis -saveprt &quot;[MapFile]&quot;</command>
 <command>[q3map2] -light -patchshadows -samples 4 -super 2 -shade -samplesize 1 -bouncegrid -filter -filterwindow 2 -dirty -bounce 5 -gamma 2 -compensate 2 -threads 24 -lightmapsize 2048 &quot;[MapFile]&quot;</command>
 <command>[bspzip] &quot;[BspFile]&quot;</command>
@@ -51,7 +53,7 @@
 <command>[q3map2] -convert -format obj -shadersasbitmap &quot;[BspFile]&quot;</command>
 </build>
 <separator/>
-<build name="make .zip">
+<build name="make .pk3">
 <command>[bspzip] &quot;[BspFile]&quot;</command>
 </build>
 <build name="make .aas">

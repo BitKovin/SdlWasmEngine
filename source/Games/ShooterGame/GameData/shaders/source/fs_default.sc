@@ -75,9 +75,9 @@ vec3 CalculateLight(vec3 normal, vec3 worldPosition)
 
 
     float factor = clamp(dot(normal, normalize(direct_light_dir.xyz)) * 0.8 + 0.2, 0.0, 1.0);
-    vec3 light   = mix(light_color.rgb, direct_light_color.rgb, factor);
+    vec3 light   = light_color.rgb +  direct_light_color.rgb * factor;
 
-    light *= 3.0;
+    //light *= 3.0;
 
     int numLights = min(MAX_POINT_LIGHTS, int(PointLightsNumber.x));
     for (int i = 0; i < numLights; i++)
