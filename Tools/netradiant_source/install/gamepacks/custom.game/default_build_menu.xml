@@ -33,14 +33,14 @@
 <command>[q3map2] -meta &quot;[MapFile]&quot;</command>
 <command></command>
 <command>[q3map2] -vis -saveprt &quot;[MapFile]&quot;</command>
-<command>[q3map2] -light -fast  -patchshadows -samples 2 -filter -bounce 2 -shade -bouncegrid -gamma 2 -compensate 2 -threads 24 -dirty -lightmapsize 256 &quot;[MapFile]&quot;</command>
+<command>[q3map2] -light -fast  -patchshadows -samples 2 -filter -bounce 2 -shade -bouncegrid -gamma 1.5 -compensate 2 -threads 24 -dirty -lightmapsize 256 &quot;[MapFile]&quot;</command>
 <command>[bspzip] &quot;[BspFile]&quot;</command>
 </build>
 <build name="(Final) Best">
 <command>[q3map2] -meta &quot;[MapFile]&quot;</command>
 <command></command>
 <command>[q3map2] -vis -saveprt &quot;[MapFile]&quot;</command>
-<command>[q3map2] -light -patchshadows -samples 4 -super 2 -shade -samplesize 1 -bouncegrid -filter -filterwindow 2 -dirty -bounce 5 -gamma 2 -compensate 2 -threads 24 -lightmapsize 2048 &quot;[MapFile]&quot;</command>
+<command>[q3map2] -light -patchshadows -samples 4 -super 2 -shade -samplesize 1 -bouncegrid -filter -filterwindow 2 -dirty -bounce 5 -gamma 1.5 -compensate 2 -threads 24 -lightmapsize 2048 &quot;[MapFile]&quot;</command>
 <command>[bspzip] &quot;[BspFile]&quot;</command>
 </build>
 <separator/>

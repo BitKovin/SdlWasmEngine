@@ -617,7 +617,7 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 		for (int i = 0; i < numOfIterations; i++)
 		{
 			float angle = (2.0f * M_PI / numOfIterations) * i;
-			vec3  offset = vec3(cos(angle), 0.0f, sin(angle)) * (radius * r - 0.11f);
+			vec3  offset = vec3(cos(angle), 0.0f, sin(angle)) * (radius * r - rayRadius - 0.05f);
 
 			bool hit = CheckGroundAt(
 				FromPhysics(body->GetPosition()) + offset - heightOffset,

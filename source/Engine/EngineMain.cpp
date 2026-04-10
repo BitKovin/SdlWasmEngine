@@ -806,6 +806,8 @@ void EngineMain::Render()
         LoadingScreenSystem::Draw();
         return;
     }
+
+    bgfx::frame();
 }
 
 void EngineMain::ForceUpdateScreenSize()
@@ -846,6 +848,6 @@ void EngineMain::ForceUpdateScreenSize()
 void EngineMain::FinishRender()
 {
 
-	bgfx::frame();
+
 
 }

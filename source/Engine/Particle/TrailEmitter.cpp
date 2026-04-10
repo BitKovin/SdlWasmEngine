@@ -96,13 +96,11 @@ bool TrailEmitter::RenderRibbon(const std::vector<Particle>& inParticles)
         verts[b + 0].Normal = nrm;
         verts[b + 0].TextureCoordinate = vec2(u, 0.0f);
         verts[b + 0].Color = color;
-        verts[b + 0].SmoothNormal = nrm;
 
         verts[b + 1].Position = p2;
         verts[b + 1].Normal = nrm;
         verts[b + 1].TextureCoordinate = vec2(u, 1.0f);
         verts[b + 1].Color = color;
-        verts[b + 1].SmoothNormal = nrm;
     }
 
     primitiveCount = static_cast<int>(idxCount) / 3;

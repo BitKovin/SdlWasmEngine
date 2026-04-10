@@ -2083,6 +2083,7 @@ void NpcBase::StopTargetFollow(const std::string& id)
 		info.currentCrime = Crime::None;
 		pathFollow.reachedTarget = false;
 		pathFollow.FoundTarget = true;
+		pathFollow.acceptanceRadius = 1;
 	}
 	else
 	{

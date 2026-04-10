@@ -608,7 +608,7 @@ void CQuake3BSP::CreateVBO(int index)
             const tBSPVertexRBSP& rv = m_pVertsRBSP[pFace->startVertIndex + v];
             vd.Tangent = glm::vec3(rv.vLightmapCoord[1], 0.0f); // slot 1
             vd.BiTangent = glm::vec3(rv.vLightmapCoord[2], 0.0f); // slot 2
-            vd.SmoothNormal = glm::vec3(rv.vLightmapCoord[3], 0.0f); // slot 3
+            vd.TextureCoordinates2 = glm::vec2(rv.vLightmapCoord[3]); // slot 3
         }
 
         vertices.push_back(vd);
@@ -937,11 +937,13 @@ void CQuake3BSP::BuildMergedModels()
             string texId = to_string(m_pFaces[i].textureID);
             string lightmapId = to_string(m_pFaces[i].lightmapID);
 
+
             // Also key on style slots 1-3 for FBSP
             string styleKey = "";
             if (m_pFacesRBSP) {
                 const tBSPFaceRBSP& rf = m_pFacesRBSP[i];
-                for (int s = 1; s < BSP_MAX_LIGHTMAP_STYLES; ++s) {
+                for (int s = 1; s < BSP_MAX_LIGHTMAP_STYLES; ++s) 
+                {
                     styleKey += "|" + to_string(rf.lightmapStyles[s]);
                     styleKey += ":" + to_string(rf.lightmapNum[s]);
                 }

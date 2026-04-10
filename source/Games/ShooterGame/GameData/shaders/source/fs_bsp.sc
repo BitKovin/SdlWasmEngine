@@ -62,6 +62,10 @@ vec4 ApplyFog(vec4 fragColor, vec3 pixelPosition)
 
 void main()
 {
+
+    //gl_FragColor = vec4(v_texcoord4.x,v_texcoord4.y,0,1);
+    //return;
+
     vec4 o_texture = texture2D(s_bspTexture, v_texcoord0);
 
     vec3 o_lightmap = vec3_splat(0.0);

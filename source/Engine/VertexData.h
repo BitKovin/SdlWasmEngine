@@ -12,7 +12,7 @@ struct VertexData {
     glm::vec3 BiTangent = glm::vec3();
     float     BlendIndices[4] = { 0, 0, 0, 0 };
     glm::vec4 BlendWeights = glm::vec4();
-    glm::vec3 SmoothNormal = glm::vec3();
+    glm::vec2 TextureCoordinates2 = glm::vec2();
     glm::vec4 Color = glm::vec4(1.0f);
     glm::vec2 ShadowMapCoords = glm::vec2(0.0f);
 
@@ -27,7 +27,7 @@ struct VertexData {
             .add(bgfx::Attrib::Bitangent, 3, bgfx::AttribType::Float)   // (unused in shader, but keeps stride)
             .add(bgfx::Attrib::Indices, 4, bgfx::AttribType::Float)   // a_indices (bone indices as float)
             .add(bgfx::Attrib::Weight, 4, bgfx::AttribType::Float)   // a_weight
-            .add(bgfx::Attrib::TexCoord1, 3, bgfx::AttribType::Float)   // a_smoothNormal
+            .add(bgfx::Attrib::TexCoord1, 2, bgfx::AttribType::Float)   // a_textureCoordinates2
             .add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Float)   // a_color0
             .add(bgfx::Attrib::TexCoord2, 2, bgfx::AttribType::Float)   // a_texcoord1  (ShadowMapCoords)
             .end();

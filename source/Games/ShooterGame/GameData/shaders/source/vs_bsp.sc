@@ -1,4 +1,4 @@
-$input a_position, a_normal, a_texcoord0, a_texcoord2, a_color0, a_tangent, a_bitangent, a_smoothNormal
+$input a_position, a_normal, a_texcoord0, a_texcoord2, a_color0, a_tangent, a_bitangent, a_texcoord1
 $output v_texcoord0, v_color0, v_normal, v_world, v_texcoord1, v_texcoord2, v_texcoord3, v_texcoord4
 
 #include <bgfx_shader.sh>
@@ -26,6 +26,6 @@ void main()
     v_texcoord1 = a_texcoord2;       // lightmap slot 0
     v_texcoord2 = a_tangent.xy;      // lightmap slot 1
     v_texcoord3 = a_bitangent.xy;    // lightmap slot 2
-    v_texcoord4 = a_smoothNormal.xy;    // lightmap slot 3
+    v_texcoord4 = a_texcoord1;    // lightmap slot 3
     v_color0    = a_color0;
 }
