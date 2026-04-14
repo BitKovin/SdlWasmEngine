@@ -37,6 +37,10 @@ struct UniformEntry
     uint16_t           num = 1; // array element count passed to bgfx::setUniform
 };
 
+struct DefaultUniformValue {
+    std::vector<float> data;
+};
+
 // ---------------------------------------------------------------------------
 // TextureEntry — buffered texture binding
 // ---------------------------------------------------------------------------
@@ -153,8 +157,10 @@ public:
 
     std::unordered_map<std::string, uint8_t> ParseAllSamplerSlots() ;
 
+    void ParseDefaultUniforms(const std::string& source);
+
     std::unordered_map<hashed_string, std::string>
-        ParseAllTextureBindings() const;
+        ParseAllTextureBindings();
 
     void ApplyTextureBindings();
 
@@ -185,6 +191,8 @@ private:
     // -----------------------------------------------------------------------
     mutable std::unordered_map<std::string, UniformEntry> m_uniformBuffer;
     mutable std::unordered_map<std::string, TextureEntry> m_textureBuffer;
+
+    std::unordered_map<std::string, DefaultUniformValue> m_defaultUniforms;
 
     // Apply all buffered uniforms and textures to bgfx state.
     // Called internally by Submit() before bgfx::submit().

@@ -60,6 +60,8 @@ void TestNpc::Start()
 
 	mesh->Position = Position - vec3(0, 1, 0);
 	mesh->Rotation = Rotation;
+	mesh->MeshCustomShaderParams["rim_color"] = vec4(1.5f, 1.2f, 0.0f, 1.0f);
+	mesh->MeshCustomShaderParams["rim_pow"] = vec4(2.0f);
 
 	//Drawables.push_back(mesh);
 

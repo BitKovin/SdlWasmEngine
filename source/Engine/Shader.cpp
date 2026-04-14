@@ -111,7 +111,7 @@ void Shader::ReflectUniforms(bgfx::ShaderHandle vsh, bgfx::ShaderHandle fsh)
 {
     m_uniforms.clear();
 
-    // 🔥 NEW: get real sampler slots from shader source
+    //  NEW: get real sampler slots from shader source
     auto samplerSlots = ParseAllSamplerSlots();
 
     bgfx::ShaderHandle stages[2] = { vsh, fsh };
@@ -194,7 +194,10 @@ void Shader::ReflectUniforms(bgfx::ShaderHandle vsh, bgfx::ShaderHandle fsh)
                     " → slot " + std::to_string(u.samplerSlot));
             }
         }
+
     }
+
+
 }
 
 // ---------------------------------------------------------------------------
@@ -762,6 +765,17 @@ void Shader::UseProgram()
     m_uniformBuffer.clear();
     m_textureBuffer.clear();
 
+    for (auto& [name, def] : m_defaultUniforms)
+    {
+        // Only apply if the uniform actually exists in the reflected metadata
+        if (m_uniforms.count(name))
+        {
+            auto& entry = m_uniformBuffer[name];
+            entry.data = def.data;
+            entry.num = 1;
+        }
+    }
+
     ApplyTextureBindings();  // writes into m_textureBuffer via SetTexture()
 }
 
@@ -854,9 +868,39 @@ Shader::ParseAllSamplerSlots()
     return result;
 }
 
+void Shader::ParseDefaultUniforms(const std::string& source)
+{
+    // Regex matches: uniform <type> <name>; // @ (<f>, <f>, <f>, <f>)
+    // Group 1: name, Group 2-5: float values
+    std::regex reDefault(R"(uniform\s+\w+\s+(\w+)\s*;[^\n]*\/\/\s*@\s*\(\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^)]+)\s*\))");
+
+    std::smatch match;
+    auto it = source.cbegin();
+    while (std::regex_search(it, source.cend(), match, reDefault))
+    {
+        std::string name = match[1].str();
+
+        DefaultUniformValue val;
+        try {
+            val.data = {
+                std::stof(match[2].str()),
+                std::stof(match[3].str()),
+                std::stof(match[4].str()),
+                std::stof(match[5].str())
+            };
+            m_defaultUniforms[name] = val;
+        }
+        catch (const std::exception& e) {
+            Logger::Log("Shader error: Failed to parse default value for " + name + " - " + e.what());
+        }
+
+        it = match.suffix().first;
+    }
+}
+
 // Read both .sh source files and merge their @texture annotations.
 std::unordered_map<hashed_string, std::string>
-Shader::ParseAllTextureBindings() const
+Shader::ParseAllTextureBindings()
 {
     std::unordered_map<hashed_string, std::string> result;
 
@@ -866,6 +910,8 @@ Shader::ParseAllTextureBindings() const
 
         const std::string source = FileSystemEngine::ReadFile(path);
         if (source.empty()) continue;
+
+		ParseDefaultUniforms(source);
 
         auto parsed = ParseTextureBindings(source);
         for (auto& [k, v] : parsed)

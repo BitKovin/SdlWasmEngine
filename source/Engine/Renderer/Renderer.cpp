@@ -95,6 +95,10 @@ void Renderer::RenderLevel(Level* level)
 
     RenderCameraForward(level->VissibleRenderList);
 
+
+    ViewIdManager::GiveNextId();
+	bgfx::setViewMode(ViewIdManager::GetCurrentId(), bgfx::ViewMode::Sequential);
+
     ivec2 screenResolution = GetScreenResolution();
     BlurAccumulatedBuffer->resize(screenResolution.x, screenResolution.y);
     BlurResultBuffer->resize(screenResolution.x, screenResolution.y);
@@ -280,7 +284,7 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
             static_cast<uint16_t>(res.y));
 
         bgfx::ViewId vid = ViewIdManager::GetCurrentId();
-        bgfx::setViewMode(vid, bgfx::ViewMode::Default);
+        bgfx::setViewMode(vid, bgfx::ViewMode::Sequential);
 
         // Clear depth only — no color attachment on this FBO.
         bgfx::setViewClear(vid, BGFX_CLEAR_DEPTH, kClearBlack, 1.0f, 0);
@@ -320,6 +324,7 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
 
         bgfx::ViewId vid = ViewIdManager::GetCurrentId();
         bgfx::setViewMode(vid, bgfx::ViewMode::Default);
+        bgfx::setViewClear(vid, BGFX_CLEAR_NONE);
 
         // Clear color only — depth was already written by Pass A.
         //bgfx::setViewClear(vid, BGFX_CLEAR_COLOR, kClearBlack, 1.0f, 0);
@@ -329,6 +334,8 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
         BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::LEqual);
         BgfxStateManager::SetCull(BgfxStateManager::Cull::CW);
         BgfxStateManager::SetMSAA(MultiSampleCount > 0);
+
+		bgfx::setViewName(vid, "ForwardOpaquePass");
 
         for (auto* mesh : VissibleRenderList)
         {
@@ -340,8 +347,16 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
             mesh->DrawForward(Camera::finalizedView, P);
         }
 
+        forwardFBO->bind(0, 0,
+            static_cast<uint16_t>(res.x),
+            static_cast<uint16_t>(res.y));
+
+        vid = ViewIdManager::GetCurrentId();
+
+        bgfx::setViewClear(vid, BGFX_CLEAR_NONE);
 
         bgfx::setViewMode(vid, bgfx::ViewMode::Sequential);
+		bgfx::setViewName(vid, "ForwardTransparentPass");
 
         // Transparent: RGB+A write, no depth write, lequal test, alpha blend.
         BgfxStateManager::Reset();

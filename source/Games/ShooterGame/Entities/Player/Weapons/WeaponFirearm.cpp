@@ -102,6 +102,10 @@ void WeaponFirearm::LoadAssets()
 	armsLeft->GravityAlignedRotation = true;
 	thirdPersonModel->GravityAlignedRotation = true;
 
+	viewmodel->MeshCustomShaderParams["rim_pow"] = vec4(6);
+	viewmodel->MeshCustomShaderParams["specular_pow"] = vec4(8);
+	viewmodel->MeshCustomShaderParams["specular_scale"] = vec4(0.2);
+
 }
 
 void WeaponFirearm::SetAkimbo(bool enabled)

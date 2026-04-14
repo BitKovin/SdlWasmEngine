@@ -48,6 +48,7 @@ void StaticMesh::FinalizeFrameData()
 	finalizedScale = Scale;
 	finalMeshHideList = std::unordered_set<std::string>(MeshHideList);
 	finalizedColor = Color;
+	finalizedMeshCustomShaderParams = MeshCustomShaderParams;
 
 }
 

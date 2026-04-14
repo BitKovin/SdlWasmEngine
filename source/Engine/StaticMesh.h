@@ -32,7 +32,10 @@ protected:
 
 	virtual void ApplyAdditionalShaderParams(Shader* shader_program)
 	{
-
+		for (auto& param : finalizedMeshCustomShaderParams)
+		{
+			shader_program->SetUniform(param.first, param.second);
+		}
 	}
 
 	string PixelShader = "fs_default";
@@ -59,6 +62,7 @@ protected:
 	vec3 finalizedScale = vec3(1);
 	vec4 finalizedColor = vec4(1);
 	std::unordered_set<std::string> finalMeshHideList{};
+	std::map<std::string, vec4> finalizedMeshCustomShaderParams{};
 
 public:
 
@@ -105,6 +109,8 @@ public:
 	vec4 Color = vec4(1.0f);
 
 	std::unordered_set<std::string> MeshHideList{};
+
+	std::map<std::string, vec4> MeshCustomShaderParams{};
 
 	StaticMesh(Entity* owner)
 	{

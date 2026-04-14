@@ -18,6 +18,11 @@ uniform vec4 fog_end;
 uniform vec4 fog_opacity;
 uniform vec4 fog_color;
 
+uniform vec4 rim_pow; // @ (4.0, 0.0, 0.0, 0.0) - Controls rim thickness
+uniform vec4 rim_color; // @ (1.0, 1.0, 0.2, 1.0) - Rim color
+uniform vec4 specular_pow; // @ (5.0, 0.0, 0.0, 0.0) - Controls specular sharpness
+uniform vec4 specular_scale; // @ (0.05, 0.0, 0.0, 0.0) - Scales specular intensity
+
 uniform vec4 modelColor;
 uniform vec4 PointLightsNumber;
 
@@ -52,7 +57,7 @@ float ComputeStyledSpecular(vec3 normal, vec3 lightDir, vec3 viewDir)
     vec3 half_vector = normalize(lightDir + viewDir);
     float NdotH = max(dot(normal, half_vector), 0.0);
 
-    float specular_raw = pow(NdotH, 5.0); 
+    float specular_raw = pow(NdotH, specular_pow.x); 
     float specular = smoothstep(0.5, 0.8, specular_raw);
 
     // FIX: Replaced 'step' with 'smoothstep' for a soft fade-out
@@ -61,7 +66,7 @@ float ComputeStyledSpecular(vec3 normal, vec3 lightDir, vec3 viewDir)
     
     specular *= litMask;
 
-    return specular * 0.05;
+    return specular * specular_scale.x;
 }
 
 // ==========================================
@@ -156,13 +161,13 @@ vec3 CalculateContourRim(vec3 normal, vec3 viewDir)
     // Adjust these constants to tune the look:
     // Power (4.0) controls thickness (higher = thinner)
     // Smoothstep creates a crisp edge characteristic of "styled" art
-    float rimEdge = pow(rim, 3.6);
+    float rimEdge = pow(rim, rim_pow.x);
     rimEdge = smoothstep(0.3, 0.7, rimEdge);
     
     rimEdge *= max(0.0, dot(normal, vec3(0.0, 1.0, 0.0))* 0.8 + 0.2); // Optional: Emphasize rim on upward-facing surfaces
 
     // You can multiply by a specific color or the directional light color
-    return rimEdge * 0.1 * vec3(1.0,1.0,0.5); // Slightly warm rim color
+    return rimEdge * 0.1 * rim_color.rgb; // Slightly warm rim color
 }
 
 // ==========================================

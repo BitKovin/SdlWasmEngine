@@ -208,6 +208,7 @@ protected:
 
 	void ApplyAdditionalShaderParams(Shader* shader_program)
 	{
+		StaticMesh::ApplyAdditionalShaderParams(shader_program);
 		shader_program->SetUniform("finalBonesMatrices", finalizedBoneTransforms);
 	}
 
