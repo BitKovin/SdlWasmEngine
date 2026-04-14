@@ -1,5 +1,5 @@
-$input a_position, a_normal, a_texcoord0, a_texcoord2, a_indices, a_weight, a_color0
-$output v_texcoord0, v_color0, v_normal, v_world, v_texcoord1
+$input a_position, a_normal, a_texcoord0, a_texcoord2, a_indices, a_weight, a_color0, a_tangent, a_bitangent
+$output v_texcoord0, v_color0, v_normal, v_world, v_texcoord1, v_tangent, v_bitangent
 
 #include <bgfx_shader.sh>
 
@@ -82,4 +82,31 @@ void main()
     v_color0    = vec4(brightness.x, brightness.x, brightness.x, 1.0) * a_color0;
     v_texcoord0 = a_texcoord0;
     v_texcoord1 = a_texcoord2;
+
+    // === FIXED TBN CONSTRUCTION (bgfx-safe + robust handedness) ===
+    vec3 N = normalize(mul(normalMatrix, a_normal));
+
+    // Transform tangent (still using the normal matrix so it respects mirroring)
+    vec3 T = normalize(mul(normalMatrix, a_tangent));
+
+    // Re-orthogonalize tangent (Gram-Schmidt) — important after skinning
+    T = normalize(T - N * dot(N, T));
+
+    // Recompute bitangent from cross product
+    vec3 B = cross(N, T);
+
+    // === CRITICAL FIX: handedness from MODEL SPACE (not after transform) ===
+    // This is the rock-solid way used in glTF, MikkTSpace, Unity, Unreal, etc.
+    // It matches exactly what your normal-map baker expected.
+    vec3 model_T = a_tangent;
+    vec3 model_N = a_normal;
+    vec3 model_cross = cross(model_N, model_T);
+    float handedness = (dot(model_cross, a_bitangent) > 0.0) ? 1.0 : -1.0;
+
+    B *= handedness;
+
+    v_normal    = N;
+    v_tangent   = T;
+    v_bitangent = B;
+
 }

@@ -16,7 +16,7 @@ public:
 	CharacterController();
 	~CharacterController();
 
-	void Init(Entity* owner, vec3 position, float radius = 0.5, float height = 1.8);
+	void Init(Entity* owner, vec3 position, float radius = 0.5, float height = 1.8, float mass = 30);
 
 	void Destroy();
 

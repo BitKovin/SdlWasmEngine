@@ -608,7 +608,7 @@ void CQuake3BSP::CreateVBO(int index)
             const tBSPVertexRBSP& rv = m_pVertsRBSP[pFace->startVertIndex + v];
             vd.Tangent = glm::vec3(rv.vLightmapCoord[1], 0.0f); // slot 1
             vd.BiTangent = glm::vec3(rv.vLightmapCoord[2], 0.0f); // slot 2
-            vd.TextureCoordinates2 = glm::vec2(rv.vLightmapCoord[3]); // slot 3
+            vd.TextureCoordinate2 = glm::vec2(rv.vLightmapCoord[3]); // slot 3
         }
 
         vertices.push_back(vd);
@@ -1525,7 +1525,7 @@ bool CQuake3BSP::RenderSingleFace(int index, bool lightmap,
     if (faceTexture == 0) return false;
 
     Shader* shader = ShaderManager::GetShaderProgram(
-        "bsp", data.isCube ? "bsp_cube" : "bsp");
+        "bsp", data.isCube ? "bsp/bsp_cube" : "bsp/bsp");
     shader->UseProgram();
 
     shader->SetUniform("light_color", lightData.ambientColor);
@@ -1597,7 +1597,7 @@ bool CQuake3BSP::RenderMergedFace(int mergedIndex, bool lightmap,
     }
 
     Shader* shader = ShaderManager::GetShaderProgram(
-        "vs_bsp", data.isCube ? "fs_bsp_cube" : "fs_bsp");
+        "vs_bsp", data.isCube ? "bsp/fs_bsp_cube" : "bsp/fs_bsp");
     shader->UseProgram();
 
     shader->SetUniform("useVertexLight",
@@ -2154,7 +2154,7 @@ void BSPModelRef::DrawDepth(mat4x4 view, mat4x4 projection)
 
     if (!bgfx::isValid(vbo.vbo) || !bgfx::isValid(vbo.ibo)) return;
 
-    Shader* shader = ShaderManager::GetShaderProgram("vs_bsp", "fs_bsp_empty");
+    Shader* shader = ShaderManager::GetShaderProgram("bsp/vs_bsp", "bsp/fs_bsp_empty");
     shader->UseProgram();
     shader->SetUniform("view", view);
     shader->SetUniform("projection", projection);

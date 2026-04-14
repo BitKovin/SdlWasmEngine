@@ -15,14 +15,14 @@ CharacterController::~CharacterController()
 }
 
 
-void CharacterController::Init(Entity* owner, vec3 position, float radius, float height)
+void CharacterController::Init(Entity* owner, vec3 position, float radius, float height, float mass)
 {
 	this->owner = owner;
 	this->standingHeight = height;
 
 	Destroy();
 
-	body = Physics::CreateCharacterCylinderBody(owner, position, radius, height - stepHeight, 30);
+	body = Physics::CreateCharacterCylinderBody(owner, position, radius, height - stepHeight, mass);
 	body->GetMotionProperties()->SetLinearDamping(0);
 
 	Physics::GetBodyData(body)->dynamicCollisionGroupOrMask = true;

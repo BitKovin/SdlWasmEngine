@@ -1,5 +1,5 @@
 $input a_position, a_texcoord0, i_data0, i_data1, i_data2, i_data3, i_data4
-$output v_texcoord0, v_color0, v_normal, v_world, v_texcoord1
+$output v_texcoord0, v_color0, v_normal, v_world, v_texcoord1, v_tangent, v_bitangent
 
 #include <bgfx_shader.sh>
 
@@ -27,4 +27,8 @@ void main()
         v_normal = normalize(model[2].xyz);
     else
         v_normal = vec3(0.0, 1.0, 0.0);
+
+    v_tangent = vec3(0.0,0.0,0.0);
+    v_bitangent = vec3(0.0,0.0,0.0);
+
 }

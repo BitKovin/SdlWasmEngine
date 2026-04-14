@@ -12,7 +12,7 @@ struct VertexData {
     glm::vec3 BiTangent = glm::vec3();
     float     BlendIndices[4] = { 0, 0, 0, 0 };
     glm::vec4 BlendWeights = glm::vec4();
-    glm::vec2 TextureCoordinates2 = glm::vec2();
+    glm::vec2 TextureCoordinate2 = glm::vec2();
     glm::vec4 Color = glm::vec4(1.0f);
     glm::vec2 ShadowMapCoords = glm::vec2(0.0f);
 

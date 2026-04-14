@@ -395,8 +395,8 @@ std::vector<VertexData> ModelLoader<SkinnedMesh>::getMeshVertices(aiMesh* mesh)
             v.Normal = { mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z };
         if (mesh->mTextureCoords[0])
             v.TextureCoordinate = { mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y };
-        else
-            v.TextureCoordinate = glm::vec2(0.f);
+        if (mesh->mTextureCoords[1])
+            v.TextureCoordinate2 = { mesh->mTextureCoords[1][i].x, mesh->mTextureCoords[1][i].y };
         v.Tangent   = { mesh->mTangents[i].x,   mesh->mTangents[i].y,   mesh->mTangents[i].z };
         v.BiTangent = { mesh->mBitangents[i].x, mesh->mBitangents[i].y, mesh->mBitangents[i].z };
         int cc = -1;
@@ -528,7 +528,7 @@ bool ModelLoader<SkinnedMesh>::load(const std::string& path)
         std::vector<uint8_t> fileData = FileSystemEngine::ReadFileBinary(path);
         if (fileData.empty()) { m_infoLog += "Failed to read: " + path + "\n"; return false; }
         m_scene = m_import.ReadFileFromMemory(fileData.data(), fileData.size(),
-            aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs |
+            aiProcess_Triangulate | aiProcess_FlipUVs |
             aiProcess_CalcTangentSpace | aiProcess_LimitBoneWeights |
             aiProcess_JoinIdenticalVertices | aiProcess_GlobalScale, path.c_str());
         m_cachedScene    = m_scene;

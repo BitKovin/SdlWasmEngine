@@ -163,6 +163,7 @@ void Explosion::BuildParticles()
             m->TexturesLocation = kTex;
 			m->blendMode = BgfxStateManager::Blend::Additive;
             //m->SetPixelShader("fs_unlit");
+            m->SetPixelShader("fs_default_simple");
             m->Transparent = true;
             m->DepthWrite = false;
             m->TwoSided = true;

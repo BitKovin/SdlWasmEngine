@@ -87,7 +87,7 @@ private:
 												{WeaponAmmoType::ShotgunShells,16},
 												{WeaponAmmoType::CannonBullets,2} };
 	std::map<WeaponAmmoType, int> ammoLimits = {{WeaponAmmoType::None,0}, 
-												{WeaponAmmoType::PistolBullets,64},
+												{WeaponAmmoType::PistolBullets,96},
 												{WeaponAmmoType::ShotgunShells,32},
 												{WeaponAmmoType::CannonBullets,12} };
 

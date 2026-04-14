@@ -123,13 +123,13 @@ void NpcHumanBase::Start()
     mesh->Position = Position - vec3(0, 1, 0);
     mesh->Rotation = Rotation;
 
-    controller.Init(this, Position, 0.5f, 2.0f);
+    controller.Init(this, Position, 0.5f, 2.0f, 5);
     controller.movementQuality = CharacterControllerMovementQuality::NpcGeneric;
 
     desiredDirection = MathHelper::XZ(MathHelper::GetForwardVector(Rotation));
     movingDirection = desiredDirection;
 
-    pathFollow.CalculatePathOnThread();
+    //pathFollow.CalculatePathOnThread();
 
     soundPlayer = SoundPlayer::Create();
 
