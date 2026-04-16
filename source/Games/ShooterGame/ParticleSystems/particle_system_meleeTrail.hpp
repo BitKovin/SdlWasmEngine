@@ -1,5 +1,5 @@
 #include <Particle/GlobalParticleSystem.hpp>
-#include "TrailEmitter.h"
+#include <Particle/TrailEmitter.h>
 
 // ---------------------------------------------------------------------------
 // particle_meleeTrail

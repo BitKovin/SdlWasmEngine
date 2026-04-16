@@ -1,0 +1,34 @@
+<rml>
+
+    <head>
+        <title>RmlUi Filter Test</title>
+        <link type="text/css" href="style.rcss" />
+        <link type="text/css" href="base.rcss" />
+    </head>
+
+    <body data-title="RmlUi Filter Test">
+        <h1>RmlUi Filter Test</h1>
+        <p>If this text is blurred, filters are working.</p>
+
+        <div class="focus_wrapper">
+            <input type="text" id="username" placeholder="Type something here..." nav-down="#username2" />
+            <div class="indicator"></div>
+        </div>
+
+        <div class="focus_wrapper">
+            <input type="text" id="username2" placeholder="Type something here..." nav-down="#username3" />
+            <div class="indicator"></div>
+        </div>
+
+        <div class="focus_wrapper">
+            <input type="text" id="username3" placeholder="Type something here..." nav-down="#username" />
+            <div class="indicator"></div>
+        </div>
+
+        <div class="focus_wrapper">
+            <button id="testBtn" nav-up="auto">Click Me</button>
+            <div class="indicator"></div>
+        </div>
+
+    </body>
+</rml>

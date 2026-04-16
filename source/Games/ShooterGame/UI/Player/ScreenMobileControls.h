@@ -30,6 +30,11 @@ public:
 
 	}
 
+	~ScreenMobileControls()
+	{
+		Logger::Log("ScreenMobileControls destroyed");
+	}
+
 	void Update()
 	{
 

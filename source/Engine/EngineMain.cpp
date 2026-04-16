@@ -729,7 +729,7 @@ void EngineMain::Render()
 	BgfxStateManager::Reset();
     BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Always);
 
-
+	bgfx::touch(ViewIdManager::GetCurrentId());
     Viewport.Draw();
     UiElement::DrawingLate = true;
 

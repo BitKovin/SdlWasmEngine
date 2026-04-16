@@ -1,0 +1,44 @@
+{
+    "ammo_count": {
+        "isExposed": true,
+        "isRuntimeOnly": false,
+        "name": "ammo_count",
+        "type": "int",
+        "value": "94"
+    },
+    "has_target": {
+        "isExposed": true,
+        "isRuntimeOnly": false,
+        "name": "has_target",
+        "type": "bool",
+        "value": "false"
+    },
+    "health": {
+        "isExposed": true,
+        "isRuntimeOnly": false,
+        "name": "health",
+        "type": "float",
+        "value": "96.400002"
+    },
+    "target_distance": {
+        "isExposed": true,
+        "isRuntimeOnly": false,
+        "name": "target_distance",
+        "type": "float",
+        "value": "-4.800000"
+    },
+    "test": {
+        "isExposed": true,
+        "isRuntimeOnly": false,
+        "name": "test",
+        "type": "float",
+        "value": "1.200000"
+    },
+    "test2": {
+        "isExposed": false,
+        "isRuntimeOnly": false,
+        "name": "test2",
+        "type": "bool",
+        "value": "false"
+    }
+}

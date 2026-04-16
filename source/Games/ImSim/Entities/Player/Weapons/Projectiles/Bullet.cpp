@@ -1,0 +1,119 @@
+#include "Bullet.h"
+
+#include <Physics.h>
+
+#include <Particle/GlobalParticleSystem.hpp>
+
+#include <Entities/PointLight.h>
+
+#include "../../Player.hpp"
+
+#include "../../../Enemy/IEnemy.h"
+REGISTER_ENTITY(Bullet, "bullet")
+
+Bullet::Bullet()
+{
+
+}
+
+Bullet::~Bullet()
+{
+}
+
+void Bullet::Start()
+{
+
+	oldPos = Position;
+
+	trail = (ParticleSystem*)Spawn("bullet_trail");
+	trail->Position = Position;
+	trail->Rotation = Rotation;
+	trail->Start();
+
+	if (OwnerTag == "player")
+	{
+		owner = Player::Instance;
+	}
+
+
+}	
+
+void Bullet::Update()
+{
+
+	float travelDistance = Speed * Time::DeltaTimeF;
+
+	traveledDistance += travelDistance;
+
+	vec3 forward = MathHelper::GetForwardVector(Rotation);
+
+	Position += MathHelper::GetForwardVector(Rotation) * travelDistance;
+
+	trail->Position = Position;
+
+	auto hit = Physics::LineTrace(oldPos, Position, BodyType::GroupHitTest, {}, {owner});
+
+
+	if (hit.hasHit)
+	{
+
+		if (hit.entity == owner)
+		{
+			oldPos = Position;
+			return;
+		}
+
+		if (hit.entity->HasTag(OwnerTag) == false)
+		{
+
+			TargetHit(hit);
+
+		}
+
+
+
+		//Logger::Log(hit.surfaceName);
+
+		//GlobalParticleSystem::SpawnParticleAt("hit_flesh", hit.position, MathHelper::FindLookAtRotation(vec3(0), MathHelper::FastNormalize(Position - oldPos)), vec3(2.0f));
+
+
+		Destroy();
+		trail->Position = hit.position;
+		trail->StopAll();
+		trail = nullptr;
+		return;
+	}
+
+	if (traveledDistance > MaxDistance)
+	{
+		Destroy();
+		trail->Position = hit.position;
+		trail->StopAll();
+		trail = nullptr;
+	}
+
+	oldPos = Position;
+
+}
+
+void Bullet::TargetHit(Physics::HitResult hit)
+{
+
+	hit.entity->OnPointDamage(Damage, hit.position, MathHelper::FastNormalize(Position - oldPos), hit.hitboxName, damageCauser, this);
+
+
+	IEnemy* enemy = dynamic_cast<IEnemy*>(hit.entity);
+
+	if (enemy)
+	{
+		if (debuffStacks > 0 && debuffOnHit != "")
+		{
+			enemy->AddDebuffStacks(debuffOnHit, debuffStacks);
+		}
+
+	}
+
+	vec3 forward = MathHelper::GetForwardVector(Rotation);
+	Physics::AddImpulseAtLocation(hit.hitbody, forward * (Damage + 2) * 14.0f, hit.position);
+
+}

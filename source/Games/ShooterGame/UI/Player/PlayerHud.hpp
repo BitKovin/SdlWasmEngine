@@ -63,6 +63,12 @@ public:
 
 	void Update();
 
+	void SetVisible(bool visible)
+	{
+		hudCanvas->visible = visible;
+		ScreenControls->visible = visible;
+	}
+
 	std::shared_ptr<ScreenMobileControls> ScreenControls;
 
 private:

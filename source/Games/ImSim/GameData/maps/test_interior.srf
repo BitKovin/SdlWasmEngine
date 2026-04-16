@@ -1,0 +1,116 @@
+default
+{
+	castShadows 1
+	receiveShadows 1
+	sampleSize 16
+	longestCurve 0.000000
+}
+
+0 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_dev/floor_orange_b
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+1 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_dev/floor_orange_b
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+2 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_dev/floor_orange_b
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+3 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_dev/floor_orange_b
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+4 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_dev/floor_orange_b
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+5 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_dev/floor_orange_b
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+6 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/building_1/b1_f1
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+7 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/building_1/b1_f1
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+8 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/building_1/b1_f1
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+9 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/building_1/b1_f1
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+10 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_dev/trigger
+	entity 3
+	castShadows 0
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+11 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_dev/trigger
+	entity 3
+	castShadows 0
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+12 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_dev/trigger
+	entity 3
+	castShadows 0
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+13 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_dev/trigger
+	entity 3
+	castShadows 0
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+14 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_dev/trigger
+	entity 3
+	castShadows 0
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+15 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_dev/trigger
+	entity 3
+	castShadows 0
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+

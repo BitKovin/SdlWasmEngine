@@ -1,0 +1,37 @@
+{
+    "animations": [
+        {
+            "animationEvents": [],
+            "animationName": "run"
+        },
+        {
+            "animationEvents": [],
+            "animationName": "attack"
+        },
+        {
+            "animationEvents": [
+                {
+                    "eventName": "throw",
+                    "time": 0.2199999988079071,
+                    "userData1": "",
+                    "userData2": "",
+                    "userData3": ""
+                }
+            ],
+            "animationName": "throw"
+        },
+        {
+            "animationEvents": [
+                {
+                    "eventName": "restore_size",
+                    "time": 0.49000000953674316,
+                    "userData1": "",
+                    "userData2": "",
+                    "userData3": ""
+                }
+            ],
+            "animationName": "grab"
+        }
+    ],
+    "hitboxes": []
+}

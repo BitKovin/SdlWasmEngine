@@ -1,7 +1,7 @@
 #ifndef ASSIMP_REVISION_H_INC
 #define ASSIMP_REVISION_H_INC
 
-#define GitVersion 0x5c54f1bc
+#define GitVersion 0x28a7d833
 #define GitBranch "main"
 
 #define VER_MAJOR 6
@@ -16,7 +16,7 @@
 #if (GitVersion == 0)
 #define VER_FILEVERSION_STR         STR(VER_MAJOR) "." STR(VER_MINOR) "." STR(VER_PATCH) "." STR(VER_BUILD)
 #else
-#define VER_FILEVERSION_STR         STR(VER_MAJOR) "." STR(VER_MINOR) "." STR(VER_PATCH) "." STR(VER_BUILD) " (Commit 5c54f1bc)"
+#define VER_FILEVERSION_STR         STR(VER_MAJOR) "." STR(VER_MINOR) "." STR(VER_PATCH) "." STR(VER_BUILD) " (Commit 28a7d833)"
 #endif
 #define VER_COPYRIGHT_STR           "\xA9 2006-2023"
 

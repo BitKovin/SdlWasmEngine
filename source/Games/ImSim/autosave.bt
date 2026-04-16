@@ -1,0 +1,16 @@
+{
+    "blackboard": {
+        "ammo_count": 94,
+        "has_target": false,
+        "health": 96.4000015258789,
+        "target_distance": -4.800000190734863,
+        "test": 1.2000000476837158,
+        "test2": false
+    },
+    "isRunning": false,
+    "root": {
+        "children": [],
+        "name": "Sequence",
+        "type": "SequenceNode"
+    }
+}

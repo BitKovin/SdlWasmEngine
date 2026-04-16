@@ -13,7 +13,14 @@ PlayerHud::PlayerHud()
 
 PlayerHud::~PlayerHud()
 {
-    EngineMain::Viewport.RemoveChild(hudCanvas);
+    if (hudCanvas)
+        EngineMain::Viewport.RemoveChild(hudCanvas);
+
+    if (ScreenControls)
+        EngineMain::Viewport.RemoveChild(ScreenControls);
+
+    hudCanvas.reset();
+    ScreenControls.reset();
 }
 
 void PlayerHud::Init(Player* playerRef)

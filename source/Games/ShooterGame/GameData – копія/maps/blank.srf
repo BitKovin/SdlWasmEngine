@@ -1,0 +1,80 @@
+default
+{
+	castShadows 1
+	receiveShadows 1
+	sampleSize 16
+	longestCurve 0.000000
+}
+
+0 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/skies/skybox1_cube
+	sampleSize 0
+}
+
+1 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/skies/skybox1_cube
+	sampleSize 0
+}
+
+2 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/skies/skybox1_cube
+	sampleSize 0
+}
+
+3 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/skies/skybox1_cube
+	sampleSize 0
+}
+
+4 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/skies/skybox1_cube
+	sampleSize 0
+}
+
+5 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/skies/skybox1_cube
+	sampleSize 0
+}
+
+6 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/generic/grass
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+7 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/generic/grass
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+8 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/generic/grass
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+9 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/generic/grass
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+10 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/generic/grass
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+11 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/generic/grass
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+

@@ -23,6 +23,8 @@ public:
 
 		Debuff::AddStacks(amount);
 
+        if (target_ == nullptr) return;
+
         if (target_->HasDebuff("DisbalanceDebuff"))
         {
 

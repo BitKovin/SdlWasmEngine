@@ -70,6 +70,11 @@ Renderer::Renderer()
     InitFullscreenBuffers();
 }
 
+vec3 snapToGrid(vec3 position, float gridSize)
+{
+    return round(position / gridSize) * gridSize;
+}
+
 Renderer::~Renderer()
 {
     delete colorBuffer;
