@@ -11,6 +11,8 @@
 #include "../Physics.h"
 #include "../Camera.h"
 
+#include <ShaderManager.h>
+
 void CMD_Help(const std::vector<std::string>& args)
 {
 	Console::Get().PrintCommands(Console::ArgString(args, 0));
@@ -69,11 +71,30 @@ void CMD_SpawnEntity(const std::vector<std::string>& args)
 	}
 }
 
+void CMD_SavePSO(const std::vector<std::string>& args)
+{
+	// Implementation for saving PSO goes here
+	Console::Get().AddLog("Saving PSO...");
+
+	ShaderManager::SavePSOsToFile("GameData/PSOs/pso_cache.json");
+
+}
+
+void CMD_LoadPSO(const std::vector<std::string>& args)
+{
+	// Implementation for loading PSO goes here
+	Console::Get().AddLog("Loading PSO...");
+	ShaderManager::CompilePSOsFromFile("GameData/PSOs/pso_cache.json");
+}
+
 void ConsoleDefaultCommands::RegisterAll()
 {
 
 	REGISTER_CONSOLE_CMD("help", "Displays all commands", CMD_Help);
 	REGISTER_CONSOLE_CMD("level.load", "Loads BSP level. Adds .bsp", CMD_LoadLevel);
 	REGISTER_CONSOLE_CMD("spawn", "Spawns an entity of specified type", CMD_SpawnEntity);
+
+	REGISTER_CONSOLE_CMD("pso.save", "Saves PSO cache to file", CMD_SavePSO);
+	REGISTER_CONSOLE_CMD("pso.load", "Loads PSO cache from file", CMD_LoadPSO);
 
 }

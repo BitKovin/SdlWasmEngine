@@ -1,0 +1,219 @@
+{
+    "psos": [
+        {
+            "pixelShader": "fs_motionBlur",
+            "renderState": 72057868915835023,
+            "vertexShader": "vs_fullscreen"
+        },
+        {
+            "pixelShader": "fs_copy",
+            "renderState": 72057868915835023,
+            "vertexShader": "vs_fullscreen"
+        },
+        {
+            "pixelShader": "fs_motionBlur_apply",
+            "renderState": 72057868915835023,
+            "vertexShader": "vs_fullscreen"
+        },
+        {
+            "pixelShader": "fs_postprocessing",
+            "renderState": 72057868915835023,
+            "vertexShader": "vs_fullscreen"
+        },
+        {
+            "pixelShader": "fs_fxaa_simple",
+            "renderState": 72057869018996879,
+            "vertexShader": "vs_fullscreen"
+        },
+        {
+            "pixelShader": "fs_ui_textured",
+            "renderState": 72057869022154895,
+            "vertexShader": "vs_ui"
+        },
+        {
+            "pixelShader": "ui/fs_progressBar",
+            "renderState": 72057869022154895,
+            "vertexShader": "vs_ui"
+        },
+        {
+            "pixelShader": "fs_empty",
+            "renderState": 72057937635311648,
+            "vertexShader": "vs_default"
+        },
+        {
+            "pixelShader": "fs_empty",
+            "renderState": 72057868915834912,
+            "vertexShader": "vs_default"
+        },
+        {
+            "pixelShader": "bsp/fs_bsp_empty",
+            "renderState": 72057937635311648,
+            "vertexShader": "bsp/vs_bsp"
+        },
+        {
+            "pixelShader": "fs_mask",
+            "renderState": 72057868915834912,
+            "vertexShader": "vs_default"
+        },
+        {
+            "pixelShader": "fs_mask",
+            "renderState": 72057937635311648,
+            "vertexShader": "vs_default"
+        },
+        {
+            "pixelShader": "fs_default",
+            "renderState": 72057937741631535,
+            "vertexShader": "vs_default"
+        },
+        {
+            "pixelShader": "fs_default",
+            "renderState": 72057869022154799,
+            "vertexShader": "vs_default"
+        },
+        {
+            "pixelShader": "bsp/fs_bsp",
+            "renderState": 72057937635311663,
+            "vertexShader": "vs_bsp"
+        },
+        {
+            "pixelShader": "bsp/fs_bsp_cube",
+            "renderState": 72057937635311663,
+            "vertexShader": "vs_bsp"
+        },
+        {
+            "pixelShader": "bsp/fs_bsp",
+            "renderState": 72057662863724591,
+            "vertexShader": "vs_bsp"
+        },
+        {
+            "pixelShader": "fs_default",
+            "renderState": 72057594144247855,
+            "vertexShader": "vs_default"
+        },
+        {
+            "pixelShader": "fs_default",
+            "renderState": 72057662863724591,
+            "vertexShader": "vs_default"
+        },
+        {
+            "pixelShader": "fs_motionBlur",
+            "renderState": 72057869018996879,
+            "vertexShader": "vs_fullscreen"
+        },
+        {
+            "pixelShader": "fs_copy",
+            "renderState": 72057869018996879,
+            "vertexShader": "vs_fullscreen"
+        },
+        {
+            "pixelShader": "fs_motionBlur_apply",
+            "renderState": 72057869018996879,
+            "vertexShader": "vs_fullscreen"
+        },
+        {
+            "pixelShader": "fs_postprocessing",
+            "renderState": 72057869018996879,
+            "vertexShader": "vs_fullscreen"
+        },
+        {
+            "pixelShader": "fs_ui_textured",
+            "renderState": 72057869018996879,
+            "vertexShader": "vs_ui"
+        },
+        {
+            "pixelShader": "ui/fs_progressBar",
+            "renderState": 72057869018996879,
+            "vertexShader": "vs_ui"
+        },
+        {
+            "pixelShader": "fs_empty",
+            "renderState": 72057869018996879,
+            "vertexShader": "vs_default"
+        },
+        {
+            "pixelShader": "bsp/fs_bsp_empty",
+            "renderState": 72057869018996879,
+            "vertexShader": "bsp/vs_bsp"
+        },
+        {
+            "pixelShader": "fs_mask",
+            "renderState": 72057869018996879,
+            "vertexShader": "vs_default"
+        },
+        {
+            "pixelShader": "fs_default",
+            "renderState": 72057869018996879,
+            "vertexShader": "vs_default"
+        },
+        {
+            "pixelShader": "bsp/fs_bsp",
+            "renderState": 72057869018996879,
+            "vertexShader": "vs_bsp"
+        },
+        {
+            "pixelShader": "bsp/fs_bsp_cube",
+            "renderState": 72057869018996879,
+            "vertexShader": "vs_bsp"
+        },
+        {
+            "pixelShader": "fs_unlit_rect",
+            "renderState": 72057869018996879,
+            "vertexShader": "vs_default"
+        },
+        {
+            "pixelShader": "fs_customId",
+            "renderState": 72057869018996879,
+            "vertexShader": "vs_default"
+        },
+        {
+            "pixelShader": "fs_unlit",
+            "renderState": 72057869018996879,
+            "vertexShader": "vs_default"
+        },
+        {
+            "pixelShader": "fs_unlit",
+            "renderState": 72057869018996879,
+            "vertexShader": "vs_instanced_billboard"
+        },
+        {
+            "pixelShader": "game/fs_debuff",
+            "renderState": 72057869018996879,
+            "vertexShader": "vs_ui"
+        },
+        {
+            "pixelShader": "fs_default_simple",
+            "renderState": 72057869018996879,
+            "vertexShader": "vs_default"
+        },
+        {
+            "pixelShader": "fs_unlit_rect",
+            "renderState": 72057869022154799,
+            "vertexShader": "vs_default"
+        },
+        {
+            "pixelShader": "fs_customId",
+            "renderState": 72057662863724687,
+            "vertexShader": "vs_default"
+        },
+        {
+            "pixelShader": "fs_unlit",
+            "renderState": 72057594144247855,
+            "vertexShader": "vs_default"
+        },
+        {
+            "pixelShader": "fs_default_simple",
+            "renderState": 72057594076876847,
+            "vertexShader": "vs_default"
+        },
+        {
+            "pixelShader": "fs_unlit",
+            "renderState": 72057594144247855,
+            "vertexShader": "vs_instanced_billboard"
+        },
+        {
+            "pixelShader": "game/fs_debuff",
+            "renderState": 72057869022154895,
+            "vertexShader": "vs_ui"
+        }
+    ]
+}

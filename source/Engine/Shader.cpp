@@ -6,6 +6,9 @@
 #include <cstring>
 #include <unordered_set>
 
+#include <ShaderManager.h>
+#include <BgfxStateManager.h>
+
 // ---------------------------------------------------------------------------
 // Static member definitions
 // ---------------------------------------------------------------------------
@@ -781,6 +784,10 @@ void Shader::UseProgram()
 
 void Shader::Submit(uint16_t viewId) const
 {
+
+
+    ShaderManager::RegisterPSO(BgfxStateManager::GetState(), m_vsSourcePath, m_fsSourcePath);
+    
     FlushBuffers();                    // setUniform + setTexture for everything buffered
     bgfx::submit(viewId, m_program);
 }
