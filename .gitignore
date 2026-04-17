@@ -454,3 +454,4 @@ Build/sourceLibraries/assimp/lib/libassimp.a
 source/Distribution/Engine.lib
 Build/ShooterGame/linux/lib/libengine.a
 BuildLinux/librmlui.a
+Build/ShooterGame/emscripten/bin/main.data

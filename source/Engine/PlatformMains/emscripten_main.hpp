@@ -23,6 +23,8 @@
 #include "../EngineMain.h"
 #include "PlatformWindowData.h"
 
+#include <FileSystem/EmscriptenFileSystem.h>
+
 using namespace PlatformWindowData;
 
 // ------------------------------------------------------------
@@ -210,6 +212,8 @@ int main(int argc, char* args[])
 #endif
 
     EngineMain::MainInstance = engine;
+
+	engine->FileSystem = std::make_shared<EmscriptenFileSystem>();
 
     SDL_GetWindowSize(window, &w, &h);
     initial_screen_size = ivec2(w, h);

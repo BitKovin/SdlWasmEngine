@@ -1,47 +1,54 @@
 #include "ZipVFS.h"
 #include <algorithm>
 #include <iostream>
-#include <mutex>
-#include <set>
-#include <unordered_map>
-#include <unordered_set>
-#include <filesystem>
 #include "../Compression/zip/zip.h"
 #include <Compression/miniz.h>
 
-namespace fs = std::filesystem;
-
-ZipVFS& ZipVFS::Instance() {
-    static ZipVFS inst;
-    return inst;
+ZipArchiveHandle::~ZipArchiveHandle() {
+    if (archive) zip_close(archive);
 }
 
-bool ZipVFS::Init(const std::string& rootPath) {
+ZipArchiveHandle::ZipArchiveHandle(ZipArchiveHandle&& other) noexcept {
+    archive = other.archive;
+    memoryBuffer = std::move(other.memoryBuffer);
+    other.archive = nullptr;
+}
+
+ZipArchiveHandle& ZipArchiveHandle::operator=(ZipArchiveHandle&& other) noexcept {
+    if (this != &other) {
+        if (archive) zip_close(archive);
+        archive = other.archive;
+        memoryBuffer = std::move(other.memoryBuffer);
+        other.archive = nullptr;
+    }
+    return *this;
+}
+
+ZipVFS::ZipVFS(IFileSystem* backend, const std::string& rootPath)
+    : m_backend(backend), m_rootPath(rootPath) {}
+
+ZipVFS::~ZipVFS() { Shutdown(); }
+
+bool ZipVFS::Init() {
     std::lock_guard<std::mutex> lock(m_mutex);
     m_index.clear();
     m_zipFiles.clear();
-    m_nestedZipData.clear();
+
+    if (!m_backend) return false;
 
     std::vector<std::string> foundZips;
-    if (!scanForZips(rootPath, foundZips)) {
-        std::cerr << "ZipVFS: failed scanning for zips under: " << rootPath << "\n";
-        return false;
-    }
+    if (!scanForZips(foundZips)) return false;
 
     std::sort(foundZips.begin(), foundZips.end());
     m_zipFiles = foundZips;
 
-    // index each zip with nesting support
     for (const auto& zp : m_zipFiles) {
-        if (!indexSingleZip(rootPath, zp, "", 0)) {
-            std::cerr << "ZipVFS: failed indexing zip: " << zp << "\n";
+        if (!indexSingleZip(zp, "", 0)) {
             m_index.clear();
             m_zipFiles.clear();
-            m_nestedZipData.clear();
             return false;
         }
     }
-
     return true;
 }
 
@@ -49,370 +56,263 @@ void ZipVFS::Shutdown() {
     std::lock_guard<std::mutex> lock(m_mutex);
     m_index.clear();
     m_zipFiles.clear();
-    m_nestedZipData.clear();
 }
 
-bool ZipVFS::scanForZips(const std::string& rootPath, std::vector<std::string>& outZipPaths) {
+bool ZipVFS::scanForZips(std::vector<std::string>& outZipPaths) {
     try {
-        if (!fs::exists(rootPath)) return true;
+        std::vector<std::string> dirsToScan = { m_rootPath };
+        while (!dirsToScan.empty()) {
+            std::string currentDir = dirsToScan.back();
+            dirsToScan.pop_back();
 
-        for (auto const& dirEntry : fs::recursive_directory_iterator(rootPath)) {
-            if (!dirEntry.is_regular_file()) continue;
+            auto entries = m_backend->GetFilesInPath(currentDir);
+            for (const auto& entry : entries) {
+                std::string fullPath = currentDir;
+                if (!fullPath.empty() && fullPath.back() != '/') fullPath += '/';
+                fullPath += entry;
 
-            auto ext = dirEntry.path().extension().string();
-            std::transform(ext.begin(), ext.end(), ext.begin(),
-                [](unsigned char c) { return std::tolower(c); });
-
-            if (ext == ".zip" || ext == ".pak") {
-                outZipPaths.push_back(dirEntry.path().string());
+                if (m_backend->IsDirectory(fullPath)) dirsToScan.push_back(fullPath);
+                else if (isZipFile(entry)) outZipPaths.push_back(fullPath);
             }
         }
         return true;
     }
-    catch (const std::exception& e) {
-        std::cerr << "ZipVFS: exception while scanning zips: " << e.what() << "\n";
-        return false;
-    }
+    catch (...) { return false; }
 }
 
 bool ZipVFS::isZipFile(const std::string& filename) {
-    auto ext = fs::path(filename).extension().string();
-    std::transform(ext.begin(), ext.end(), ext.begin(),
-        [](unsigned char c) { return std::tolower(c); });
+    size_t dotPos = filename.find_last_of('.');
+    if (dotPos == std::string::npos) return false;
+    std::string ext = filename.substr(dotPos);
+    std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
     return (ext == ".zip" || ext == ".pak");
 }
 
-bool ZipVFS::indexSingleZip(const std::string& rootPath, const std::string& zipPath,
-    const std::string& virtualPrefix, int nestingDepth) {
-    const int MAX_NESTING_DEPTH = 10;
-    if (nestingDepth > MAX_NESTING_DEPTH) {
-        std::cerr << "ZipVFS: max nesting depth exceeded for: " << zipPath << "\n";
-        return false;
-    }
+ZipArchiveHandle ZipVFS::openZip(const std::string& zipPath) {
+    ZipArchiveHandle handle;
+    std::string physical = m_backend->GetPhysicalPath(zipPath);
 
-    zip_t* za = openZipFromPathOrMemory(zipPath);
-    if (!za) {
-        std::cerr << "ZipVFS: failed to open zip: " << zipPath << "\n";
-        return false;
-    }
-
-    // Calculate the virtual path prefix for entries in this zip
-    std::string entryPrefix;
-
-    if (nestingDepth == 0) {
-        // Top-level zip: mount in a directory named after the zip file (without extension)
-        fs::path zipFilePath(zipPath);
-        std::string zipFileName = zipFilePath.stem().string();  // filename without extension
-
-        // Get relative path of zip file to rootPath
-        fs::path zipFsPath = zipFilePath.parent_path();
-        fs::path rootFsPath = fs::path(rootPath);
-        fs::path mountPath;
-
-        try {
-            mountPath = fs::relative(zipFsPath, rootFsPath);
-        }
-        catch (...) {
-            mountPath.clear();
-        }
-
-        // Construct: rootPath + relative_dir + zip_name_without_ext + /
-        entryPrefix = rootPath;
-
-        std::string relativeDir = mountPath.generic_string();
-        if (!relativeDir.empty() && relativeDir != ".") {
-            if (relativeDir.back() != '/') relativeDir += '/';
-            entryPrefix += relativeDir;
-        }
-
-        //entryPrefix += zipFileName + "/";
+    if (!physical.empty()) {
+        handle.archive = zip_open(physical.c_str(), 0, 'r');
     }
     else {
-        // Nested zip: use provided virtual prefix
-        entryPrefix = virtualPrefix;
+        auto dataOpt = m_backend->ReadFileBinary(zipPath);
+        if (dataOpt) {
+            handle.memoryBuffer = std::move(*dataOpt);
+            handle.archive = zip_stream_open(reinterpret_cast<const char*>(handle.memoryBuffer.data()), handle.memoryBuffer.size(), 0, 'r');
+        }
+    }
+    return handle;
+}
+
+bool ZipVFS::indexSingleZip(const std::string& zipPath, const std::string& virtualPrefix, int nestingDepth) {
+    if (nestingDepth > 10) return false;
+
+    ZipArchiveHandle handle = openZip(zipPath);
+    if (!handle.archive) return false;
+
+    std::string entryPrefix = virtualPrefix;
+    if (nestingDepth == 0) {
+        entryPrefix = m_rootPath;
+        if (!entryPrefix.empty() && entryPrefix.back() != '/') entryPrefix += "/";
+        std::string relDir = "";
+        if (zipPath.rfind(entryPrefix, 0) == 0) {
+            relDir = zipPath.substr(entryPrefix.size());
+            size_t lastSlash = relDir.rfind('/');
+            relDir = (lastSlash != std::string::npos) ? relDir.substr(0, lastSlash + 1) : "";
+        }
+        entryPrefix += relDir;
     }
 
-    int total = zip_entries_total(za);
+    int total = zip_entries_total(handle.archive);
     if (total < 0) total = 0;
 
     std::vector<NestedZipEntry> nestedZips;
-
     for (int i = 0; i < total; ++i) {
-        if (zip_entry_openbyindex(za, i) < 0) {
-            zip_close(za);
-            return false;
-        }
+        if (zip_entry_openbyindex(handle.archive, i) < 0) return false;
 
-        const char* name = zip_entry_name(za);
-        if (!name) {
-            zip_entry_close(za);
-            continue;
-        }
+        const char* name = zip_entry_name(handle.archive);
+        if (!name) { zip_entry_close(handle.archive); continue; }
 
         std::string entryName(name);
-
-        // Construct full virtual path using the calculated prefix
         std::string vpath = entryPrefix + entryName;
+        if (vpath.rfind("./", 0) == 0) vpath = vpath.substr(2);
 
-        if (vpath.rfind("./", 0) == 0)
-            vpath = vpath.substr(2);
-
-        // Check if this entry is a nested zip file
-        bool isNested = isZipFile(entryName);
-
-        if (isNested) {
-            // Store for later extraction and indexing
-            NestedZipEntry nested;
-            nested.virtualPath = vpath;
-            nested.parentZipPath = zipPath;
-            nested.entryIndex = i;
-            nested.entryName = entryName;
-            nestedZips.push_back(nested);
-
-            std::cout << "ZipVFS: Found nested zip: " << vpath
-                << " (depth " << nestingDepth << ")\n";
+        if (isZipFile(entryName)) {
+            nestedZips.push_back({ vpath, zipPath, i, entryName });
         }
 
-        // Add ALL entries to index (including nested zips themselves)
         SourceEntry src;
         src.zipPath = zipPath;
         src.entryIndex = i;
-        src.uncompressedSize = static_cast<uint64_t>(zip_entry_size(za));
-        
-        mz_zip_archive* archive = reinterpret_cast<mz_zip_archive*>(za);
-        mz_zip_archive_file_stat fileStat{};
-        if (mz_zip_reader_file_stat(archive, static_cast<mz_uint>(i), &fileStat)) {
-            src.mtime = static_cast<uint64_t>(fileStat.m_time);
-        }
-        else {
-            src.mtime = 0;
-        }
+        src.uncompressedSize = static_cast<uint64_t>(zip_entry_size(handle.archive));
 
-        src.isNested = (nestingDepth > 0);
+        mz_zip_archive* archive = reinterpret_cast<mz_zip_archive*>(handle.archive);
+        mz_zip_archive_file_stat fileStat{};
+        src.mtime = mz_zip_reader_file_stat(archive, static_cast<mz_uint>(i), &fileStat) ? static_cast<uint32_t>(fileStat.m_time) : 0;
+        src.isNested = false;
 
         m_index[vpath].push_back(src);
-
-        // Sort by zipPath (alphabetically descending for priority)
         auto& vec = m_index[vpath];
-        std::sort(vec.begin(), vec.end(),
-            [](const SourceEntry& a, const SourceEntry& b) {
-                return a.zipPath > b.zipPath;
-            });
+        std::sort(vec.begin(), vec.end(), [](const SourceEntry& a, const SourceEntry& b) { return a.zipPath > b.zipPath; });
 
-        zip_entry_close(za);
+        zip_entry_close(handle.archive);
     }
 
-    zip_close(za);
-
-    // Process nested zips AFTER closing parent zip
     for (const auto& nested : nestedZips) {
-        if (!extractAndIndexNestedZip(rootPath, nested, nestingDepth + 1)) {
-            std::cerr << "ZipVFS: failed to process nested zip: "
-                << nested.entryName << " in " << nested.parentZipPath << "\n";
-            return false;
-        }
+        if (!extractAndIndexNestedZip(nested, nestingDepth + 1)) return false;
     }
-
     return true;
 }
 
-bool ZipVFS::extractAndIndexNestedZip(const std::string& rootPath,
-    const NestedZipEntry& nested,
-    int currentDepth) {
-    std::cout << "ZipVFS: Extracting nested zip: " << nested.virtualPath << "\n";
+bool ZipVFS::extractAndIndexNestedZip(const NestedZipEntry& nested, int currentDepth) {
+    ZipArchiveHandle parentHandle = openZip(nested.parentZipPath);
+    if (!parentHandle.archive) return false;
 
-    // Open parent zip (could be file or memory)
-    zip_t* za = openZipFromPathOrMemory(nested.parentZipPath);
-    if (!za) {
-        std::cerr << "ZipVFS: Failed to reopen parent zip: " << nested.parentZipPath << "\n";
-        return false;
-    }
+    if (zip_entry_openbyindex(parentHandle.archive, nested.entryIndex) < 0) return false;
+    void* buf = nullptr; size_t bufsize = 0;
+    int r = zip_entry_read(parentHandle.archive, &buf, &bufsize);
+    zip_entry_close(parentHandle.archive);
 
-    if (zip_entry_openbyindex(za, nested.entryIndex) < 0) {
-        zip_close(za);
-        std::cerr << "ZipVFS: Failed to open nested entry at index " << nested.entryIndex << "\n";
-        return false;
-    }
+    if (r < 0 || !buf) return false;
 
-    // Read nested zip data into memory
-    void* buf = nullptr;
-    size_t bufsize = 0;
-    int r = zip_entry_read(za, &buf, &bufsize);
-
-    zip_entry_close(za);
-    zip_close(za);
-
-    if (r < 0 || buf == nullptr || bufsize == 0) {
-        if (buf) free(buf);
-        std::cerr << "ZipVFS: Failed to read nested zip data\n";
-        return false;
-    }
-
-    // Store the nested zip data in memory
-    std::vector<uint8_t> zipData(static_cast<uint8_t*>(buf),
-        static_cast<uint8_t*>(buf) + bufsize);
+    ZipArchiveHandle nestedHandle;
+    nestedHandle.memoryBuffer.assign(static_cast<uint8_t*>(buf), static_cast<uint8_t*>(buf) + bufsize);
     free(buf);
 
-    // Generate unique identifier for this nested zip
-    std::string nestedZipId = "memory://" + std::to_string(m_nestedZipData.size()) +
-        "/" + nested.entryName;
+    nestedHandle.archive = zip_stream_open(reinterpret_cast<const char*>(nestedHandle.memoryBuffer.data()), nestedHandle.memoryBuffer.size(), 0, 'r');
+    if (!nestedHandle.archive) return false;
 
-    m_nestedZipData[nestedZipId] = std::move(zipData);
-
-    std::cout << "ZipVFS: Stored nested zip in memory: " << nestedZipId
-        << " (" << m_nestedZipData[nestedZipId].size() << " bytes)\n";
-
-    // Calculate virtual prefix for nested content
-    // Use the PARENT DIRECTORY of the nested zip file (unpack in place)
     std::string nestedPrefix = nested.virtualPath;
-
-    // Get parent directory by finding last slash
     size_t lastSlash = nestedPrefix.rfind('/');
-    if (lastSlash != std::string::npos) {
-        nestedPrefix = nestedPrefix.substr(0, lastSlash + 1);  // Keep trailing slash
-    }
-    else {
-        nestedPrefix = "";  // Root directory
-    }
+    nestedPrefix = (lastSlash != std::string::npos) ? nestedPrefix.substr(0, lastSlash + 1) : "";
 
-    std::cout << "ZipVFS: Indexing nested zip with prefix: " << nestedPrefix << "\n";
+    int total = zip_entries_total(nestedHandle.archive);
+    if (total < 0) total = 0;
 
-    // Recursively index the nested zip (now stored in memory)
-    return indexSingleZip(rootPath, nestedZipId, nestedPrefix, currentDepth);
-}
+    for (int i = 0; i < total; ++i) {
+        if (zip_entry_openbyindex(nestedHandle.archive, i) < 0) return false;
 
-zip_t* ZipVFS::openZipFromPathOrMemory(const std::string& zipPath) {
-    // Check if this is a memory-based zip
-    if (zipPath.rfind("memory://", 0) == 0) {
-        auto it = m_nestedZipData.find(zipPath);
-        if (it == m_nestedZipData.end()) {
-            std::cerr << "ZipVFS: Memory zip not found: " << zipPath << "\n";
-            return nullptr;
-        }
+        const char* name = zip_entry_name(nestedHandle.archive);
+        if (!name) { zip_entry_close(nestedHandle.archive); continue; }
 
-        // Open from memory using zip_stream_open
-        const auto& data = it->second;
-        zip_t* za = zip_stream_open(reinterpret_cast<const char*>(data.data()),
-            data.size(), 0, 'r');
-        if (!za) {
-            std::cerr << "ZipVFS: zip_stream_open failed for: " << zipPath << "\n";
-        }
-        return za;
+        std::string entryName(name);
+        std::string vpath = nestedPrefix + entryName;
+        if (vpath.rfind("./", 0) == 0) vpath = vpath.substr(2);
+
+        SourceEntry src;
+        src.zipPath = nested.parentZipPath;
+        src.entryIndex = i;
+        src.parentZipPath = nested.parentZipPath;
+        src.parentEntryIndex = nested.entryIndex;
+        src.isNested = true;
+        src.uncompressedSize = static_cast<uint64_t>(zip_entry_size(nestedHandle.archive));
+
+        mz_zip_archive* archive = reinterpret_cast<mz_zip_archive*>(nestedHandle.archive);
+        mz_zip_archive_file_stat fileStat{};
+        src.mtime = mz_zip_reader_file_stat(archive, static_cast<mz_uint>(i), &fileStat) ? static_cast<uint32_t>(fileStat.m_time) : 0;
+
+        m_index[vpath].push_back(src);
+        auto& vec = m_index[vpath];
+        std::sort(vec.begin(), vec.end(), [](const SourceEntry& a, const SourceEntry& b) { return a.zipPath > b.zipPath; });
+
+        zip_entry_close(nestedHandle.archive);
     }
-    else {
-        // Regular file-based zip
-        return zip_open(zipPath.c_str(), 0, 'r');
-    }
+    return true;
 }
 
 std::optional<std::vector<uint8_t>> ZipVFS::readFromZip(const SourceEntry& src) {
-    zip_t* za = openZipFromPathOrMemory(src.zipPath);
-    if (!za) {
-        std::cerr << "ZipVFS: readFromZip failed to open: " << src.zipPath << "\n";
-        return std::nullopt;
+    // Open parent zip. (If it's nested, open the parent zip. If not, open the direct zip).
+    ZipArchiveHandle parentHandle = openZip(src.isNested ? src.parentZipPath : src.zipPath);
+    if (!parentHandle.archive) return std::nullopt;
+
+    zip_t* targetArchive = parentHandle.archive;
+    ZipArchiveHandle nestedHandle;
+
+    if (src.isNested) {
+        if (zip_entry_openbyindex(parentHandle.archive, src.parentEntryIndex) < 0) return std::nullopt;
+        void* buf = nullptr; size_t bufsize = 0;
+        int r = zip_entry_read(parentHandle.archive, &buf, &bufsize);
+        zip_entry_close(parentHandle.archive);
+
+        if (r < 0 || !buf) return std::nullopt;
+
+        nestedHandle.memoryBuffer.assign(static_cast<uint8_t*>(buf), static_cast<uint8_t*>(buf) + bufsize);
+        free(buf);
+
+        nestedHandle.archive = zip_stream_open(reinterpret_cast<const char*>(nestedHandle.memoryBuffer.data()), nestedHandle.memoryBuffer.size(), 0, 'r');
+        if (!nestedHandle.archive) return std::nullopt;
+        targetArchive = nestedHandle.archive;
     }
 
-    if (zip_entry_openbyindex(za, src.entryIndex) < 0) {
-        zip_close(za);
-        std::cerr << "ZipVFS: readFromZip zip_entry_openbyindex failed for "
-            << src.zipPath << " index " << src.entryIndex << "\n";
-        return std::nullopt;
-    }
+    if (zip_entry_openbyindex(targetArchive, src.entryIndex) < 0) return std::nullopt;
+    void* fileBuf = nullptr; size_t fileBufSize = 0;
+    int r = zip_entry_read(targetArchive, &fileBuf, &fileBufSize);
+    zip_entry_close(targetArchive);
 
-    void* buf = nullptr;
-    size_t bufsize = 0;
-    int r = zip_entry_read(za, &buf, &bufsize);
+    if (r < 0 || !fileBuf) return std::nullopt;
 
-    if (r < 0 || buf == nullptr || bufsize == 0) {
-        zip_entry_close(za);
-        zip_close(za);
-        if (buf) free(buf);
-        return std::nullopt;
-    }
-
-    std::vector<uint8_t> out;
-    out.resize(bufsize);
-    memcpy(out.data(), buf, bufsize);
-    free(buf);
-
-    zip_entry_close(za);
-    zip_close(za);
+    std::vector<uint8_t> out(fileBufSize);
+    memcpy(out.data(), fileBuf, fileBufSize);
+    free(fileBuf);
 
     return out;
 }
 
-std::optional<std::string> ZipVFS::ReadFileAsText(const std::string& virtualPath) {
-    auto binOpt = ReadFileAsBinary(virtualPath);
+std::optional<std::string> ZipVFS::ReadFile(const std::string& virtualPath) {
+    auto binOpt = ReadFileBinary(virtualPath);
     if (!binOpt) return std::nullopt;
     return std::string(binOpt->begin(), binOpt->end());
 }
 
-std::optional<std::vector<uint8_t>> ZipVFS::ReadFileAsBinary(const std::string& virtualPath) {
+std::optional<std::vector<uint8_t>> ZipVFS::ReadFileBinary(const std::string& virtualPath) {
     std::lock_guard<std::mutex> lock(m_mutex);
-
     auto it = m_index.find(virtualPath);
-    if (it == m_index.end()) {
-        //std::cerr << "ZipVFS: File not found in index: " << virtualPath << "\n";
-        return std::nullopt;
-    }
+    if (it == m_index.end() || it->second.empty()) return std::nullopt;
 
-    const auto& sources = it->second;
-    if (sources.empty()) return std::nullopt;
-
-    // Try reading from sources in priority order
-    for (const auto& src : sources) {
+    for (const auto& src : it->second) {
         auto readRes = readFromZip(src);
-        if (readRes) {
-            std::cout << "ZipVFS: Successfully read " << virtualPath
-                << " from " << src.zipPath << "\n";
-            return readRes;
-        }
+        if (readRes) return readRes;
     }
-
-    std::cerr << "ZipVFS: Failed to read from any source for: " << virtualPath << "\n";
     return std::nullopt;
 }
 
 std::vector<std::string> ZipVFS::GetFilesInPath(const std::string& virtualDir) {
     std::lock_guard<std::mutex> lock(m_mutex);
     std::vector<std::string> out;
-
     std::string prefix = virtualDir;
-    if (!prefix.empty() && prefix.back() != '/')
-        prefix += '/';
-
-    std::unordered_set<std::string> foundNames;
+    if (!prefix.empty() && prefix.back() != '/') prefix += '/';
 
     for (const auto& kv : m_index) {
-        const std::string& fullPath = kv.first;
-        if (fullPath.rfind(prefix, 0) != 0) continue;
+        if (kv.first.rfind(prefix, 0) != 0) continue;
 
-        std::string rest = fullPath.substr(prefix.size());
+        std::string rest = kv.first.substr(prefix.size());
         if (rest.empty()) continue;
 
         auto pos = rest.find('/');
-        std::string entryName;
-        if (pos == std::string::npos) {
-            entryName = rest;
-        }
-        else {
-            entryName = rest.substr(0, pos);
-        }
+        std::string entryName = (pos == std::string::npos) ? rest : rest.substr(0, pos);
 
-        if (foundNames.insert(entryName).second) {
+        if (std::find(out.begin(), out.end(), entryName) == out.end()) {
             out.push_back(entryName);
         }
     }
-
     return out;
+}
+
+bool ZipVFS::IsDirectory(const std::string& path) {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    std::string prefix = path;
+    if (!prefix.empty() && prefix.back() != '/') prefix += '/';
+
+    for (const auto& kv : m_index) {
+        if (kv.first.rfind(prefix, 0) == 0) return true;
+    }
+    return false;
 }
 
 uint32_t ZipVFS::GetFileModificationTime(const std::string& virtualPath) {
     std::lock_guard<std::mutex> lock(m_mutex);
-
     auto it = m_index.find(virtualPath);
-    if (it == m_index.end()) return 0;
-    if (it->second.empty()) return 0;
-
+    if (it == m_index.end() || it->second.empty()) return 0;
     return it->second.front().mtime;
 }

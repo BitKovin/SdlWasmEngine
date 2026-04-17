@@ -19,6 +19,11 @@
 #include <BgfxStateManager.h>
 #include <Renderer/Abstractions/ViewIdManager.h>
 
+#include <FileSystem/NativeFileSystem.h>
+#include <FileSystem/ZipVFS.h>
+
+#include <memory>
+
 #include <UI/UiNavigation.h>
 #include <UI/UiFocusPointer.h>
 
@@ -171,6 +176,11 @@ void EngineMain::Init(std::vector<std::string> args)
 
     Arguments = ParseCommands(args);
 
+    if (FileSystem == nullptr)
+        FileSystem = std::make_shared<NativeFileSystem>();
+
+	FileSystemEngine::AddFileSystem(FileSystem);
+    FileSystemEngine::AddFileSystem(std::make_shared<ZipVFS>(FileSystem.get()));
 
     LevelObjectFactory::instance().registerDefaults();
     BehaviorTree::RegisterTypes();

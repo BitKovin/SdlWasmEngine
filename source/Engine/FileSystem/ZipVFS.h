@@ -1,62 +1,77 @@
 #pragma once
 
-#include <cstdint>
-#include <map>
+#include "IFileSystem.h"
 #include <mutex>
-#include <optional>
-#include <string>
-#include <vector>
 #include <unordered_map>
+#include <memory>
 
-// Forward declaration
 struct zip_t;
 
 struct SourceEntry {
-    std::string zipPath;  // Can be file path or "memory://..." identifier
+    std::string zipPath;
     int entryIndex;
-    uint64_t uncompressedSize;
-    uint32_t mtime; //modification time
+
+    // Support for nesting without persistent memory footprint
     bool isNested = false;
+    std::string parentZipPath;
+    int parentEntryIndex = -1;
+
+    uint64_t uncompressedSize;
+    uint32_t mtime;
 };
 
 struct NestedZipEntry {
     std::string virtualPath;
-    std::string parentZipPath;  // Can be file path or "memory://..." identifier
+    std::string parentZipPath;
     int entryIndex;
     std::string entryName;
 };
 
-class ZipVFS {
+// RAII Wrapper to hold temporary in-memory zip files and their backing buffers
+struct ZipArchiveHandle {
+    zip_t* archive = nullptr;
+    std::vector<uint8_t> memoryBuffer;
+
+    ZipArchiveHandle() = default;
+    ~ZipArchiveHandle();
+    ZipArchiveHandle(const ZipArchiveHandle&) = delete;
+    ZipArchiveHandle& operator=(const ZipArchiveHandle&) = delete;
+    ZipArchiveHandle(ZipArchiveHandle&& other) noexcept;
+    ZipArchiveHandle& operator=(ZipArchiveHandle&& other) noexcept;
+};
+
+class ZipVFS : public IFileSystem {
 public:
-    static ZipVFS& Instance();
+    ZipVFS(IFileSystem* backend, const std::string& rootPath = "GameData/");
+    ~ZipVFS() override;
 
-    bool Init(const std::string& rootPath);
-    void Shutdown();
+    bool Init() override;
+    void Shutdown() override;
 
-    std::optional<std::string> ReadFileAsText(const std::string& virtualPath);
-    std::optional<std::vector<uint8_t>> ReadFileAsBinary(const std::string& virtualPath);
-    std::vector<std::string> GetFilesInPath(const std::string& virtualDir);
-    uint32_t GetFileModificationTime(const std::string& virtualPath);
+    std::optional<std::string> ReadFile(const std::string& path) override;
+    std::optional<std::vector<uint8_t>> ReadFileBinary(const std::string& path) override;
+    std::vector<std::string> GetFilesInPath(const std::string& path) override;
+    bool IsDirectory(const std::string& path) override;
+    uint32_t GetFileModificationTime(const std::string& path) override;
+
+    bool WriteSaveFile(const std::string& path, const std::string& content) override { return false; }
+    bool WriteSaveFileBinary(const std::string& path, const std::vector<uint8_t>& data) override { return false; }
+    std::optional<std::string> ReadSaveFile(const std::string& path) override { return std::nullopt; }
+    std::optional<std::vector<uint8_t>> ReadSaveFileBinary(const std::string& path) override { return std::nullopt; }
 
 private:
-    ZipVFS() = default;
-    ~ZipVFS() { Shutdown(); }
-    ZipVFS(const ZipVFS&) = delete;
-    ZipVFS& operator=(const ZipVFS&) = delete;
-
-    bool scanForZips(const std::string& rootPath, std::vector<std::string>& outZipPaths);
-    bool indexSingleZip(const std::string& rootPath, const std::string& zipPath,
-        const std::string& virtualPrefix, int nestingDepth);
-    bool extractAndIndexNestedZip(const std::string& rootPath,
-        const NestedZipEntry& nested,
-        int currentDepth);
+    bool scanForZips(std::vector<std::string>& outZipPaths);
+    bool indexSingleZip(const std::string& zipPath, const std::string& virtualPrefix, int nestingDepth);
+    bool extractAndIndexNestedZip(const NestedZipEntry& nested, int currentDepth);
     bool isZipFile(const std::string& filename);
-    zip_t* openZipFromPathOrMemory(const std::string& zipPath);
 
+    ZipArchiveHandle openZip(const std::string& zipPath);
     std::optional<std::vector<uint8_t>> readFromZip(const SourceEntry& src);
+
+    IFileSystem* m_backend;
+    std::string m_rootPath;
 
     std::mutex m_mutex;
     std::unordered_map<std::string, std::vector<SourceEntry>> m_index;
     std::vector<std::string> m_zipFiles;
-    std::unordered_map<std::string, std::vector<uint8_t>> m_nestedZipData;  // memory://<id> -> zip data
 };

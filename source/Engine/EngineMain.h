@@ -24,6 +24,8 @@
 #include "Renderer/Renderer.h"
 #include "SaveSystem/LevelSaveSystem.h"
 
+#include <FileSystem/FileSystem.h>
+
 class RmlUiContext;
 
 class EngineMain
@@ -33,6 +35,8 @@ private:
 
 
 public:
+
+	std::shared_ptr<IFileSystem> FileSystem;
 
     Renderer* MainRenderer;
 

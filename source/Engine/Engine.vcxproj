@@ -349,7 +349,9 @@
     <ClCompile Include="Entities\Brushes\TriggerBase.cpp" />
     <ClCompile Include="Entities\PointLight.cpp" />
     <ClCompile Include="Entities\transformPoint.cpp" />
+    <ClCompile Include="FileSystem\EmscriptenFileSystem.cpp" />
     <ClCompile Include="FileSystem\FileSystem.cpp" />
+    <ClCompile Include="FileSystem\NativeFileSystem.cpp" />
     <ClCompile Include="FileSystem\ZipVFS.cpp" />
     <ClCompile Include="Helpers\ByteCompressor.cpp" />
     <ClCompile Include="Helpers\CSVParser.cpp" />
@@ -498,7 +500,10 @@
     <ClInclude Include="Entities\StaticMeshEntity.h" />
     <ClInclude Include="Entities\transformPoint.h" />
     <ClInclude Include="Entities\WorldSpawn.h" />
+    <ClInclude Include="FileSystem\EmscriptenFileSystem.h" />
     <ClInclude Include="FileSystem\FileSystem.h" />
+    <ClInclude Include="FileSystem\IFileSystem.h" />
+    <ClInclude Include="FileSystem\NativeFileSystem.h" />
     <ClInclude Include="FileSystem\ZipVFS.h" />
     <ClInclude Include="FogManager.h" />
     <ClInclude Include="Helpers\ByteCompressor.h" />
