@@ -110,9 +110,100 @@ private:
             bpp == 4 ? 3 : STBIR_ALPHA_CHANNEL_NONE,  // alpha channel index
             bpp == 4 ? STBIR_FLAG_ALPHA_PREMULTIPLIED : 0,
             STBIR_EDGE_CLAMP,
-            STBIR_FILTER_CATMULLROM,   // sharp, no box-blur compounding
+            STBIR_FILTER_BOX,   // sharp, no box-blur compounding
             STBIR_COLORSPACE_LINEAR,
             nullptr);
+    }
+
+    static void downsample2x2Box(
+        const uint8_t* src, int srcW, int srcH,
+        uint8_t* dst, int dstW, int dstH,
+        int bpp)
+    {
+        for (int y = 0; y < dstH; ++y) {
+            for (int x = 0; x < dstW; ++x) {
+                for (int c = 0; c < bpp; ++c) {
+                    int sx = x * 2;
+                    int sy = y * 2;
+
+                    // Average 2x2 block
+                    int p00 = src[(sy * srcW + sx) * bpp + c];
+                    int p10 = (sx + 1 < srcW) ? src[(sy * srcW + sx + 1) * bpp + c] : p00;
+                    int p01 = (sy + 1 < srcH) ? src[((sy + 1) * srcW + sx) * bpp + c] : p00;
+                    int p11 = (sx + 1 < srcW && sy + 1 < srcH) ?
+                        src[((sy + 1) * srcW + sx + 1) * bpp + c] : p00;
+
+                    dst[(y * dstW + x) * bpp + c] = (uint8_t)((p00 + p10 + p01 + p11) / 4);
+                }
+            }
+        }
+    }
+
+    void setupTexture_VeryFastMips(int w, int h,
+        bgfx::TextureFormat::Enum format,
+        const void* pixels,
+        bool generateMipmaps)
+    {
+        if (w <= 0 || h <= 0 || !pixels) {
+            std::cerr << "setupTexture: invalid arguments\n";
+            return;
+        }
+
+        const int bpp = (int)bytesPerPixel(format);
+
+        const bool hasMips = generateMipmaps && (w > 1 || h > 1);
+        const uint8_t numMips = hasMips
+            ? (uint8_t)(1 + (int)std::floor(std::log2((double)std::max(w, h))))
+            : 1;
+
+        m_handle = bgfx::createTexture2D(
+            (uint16_t)w, (uint16_t)h,
+            hasMips, 1, format, buildFlags());
+
+        if (!bgfx::isValid(m_handle)) {
+            std::cerr << "bgfx::createTexture2D failed\n";
+            return;
+        }
+
+        // Upload mip 0
+        bgfx::updateTexture2D(m_handle, 0, 0,
+            0, 0, (uint16_t)w, (uint16_t)h,
+            bgfx::copy(pixels, (uint32_t)(w * h * bpp)));
+
+        // Generate mipmaps with simple 2x2 box filter
+        if (hasMips) {
+            std::vector<uint8_t> srcMip((const uint8_t*)pixels,
+                (const uint8_t*)pixels + w * h * bpp);
+            int currentW = w;
+            int currentH = h;
+
+            for (uint8_t mip = 1; mip < numMips; ++mip) {
+                const int dstW = std::max(1, currentW / 2);
+                const int dstH = std::max(1, currentH / 2);
+
+                std::vector<uint8_t> dstMip((size_t)dstW * dstH * bpp);
+
+                // Simple 2x2 box filter
+                downsample2x2Box(srcMip.data(), currentW, currentH,
+                    dstMip.data(), dstW, dstH, bpp);
+
+                bgfx::updateTexture2D(m_handle, 0, mip,
+                    0, 0, (uint16_t)dstW, (uint16_t)dstH,
+                    bgfx::copy(dstMip.data(), (uint32_t)dstMip.size()));
+
+                srcMip = std::move(dstMip);
+                currentW = dstW;
+                currentH = dstH;
+            }
+        }
+
+        width = w;
+        height = h;
+        ResourceStatistics::Instance().registerResource(
+            ResourceType::Texture, m_handle.idx,
+            (size_t)w * h * bpp,
+            "Texture_" + std::to_string(w) + "x" + std::to_string(h) + formatSuffix(format));
+        valid = true;
     }
 
     // -----------------------------------------------------------------------
@@ -129,6 +220,9 @@ private:
                 << (pixels ? "ok" : "null") << ")\n";
             return;
         }
+
+		setupTexture_VeryFastMips(w, h, format, pixels, generateMipmaps);
+        return;
 
         const int bpp = (int)bytesPerPixel(format);
 
