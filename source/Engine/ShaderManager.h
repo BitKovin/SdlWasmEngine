@@ -180,7 +180,7 @@ public:
         psoCache[key] = state;
         psoList.push_back(state);
 
-        Logger::Log("Registered new PSO: " + vertexShaderName + " | " + pixelShaderName);
+        Logger::Log("Registered new PSO: " + vertexShaderName + " | " + pixelShaderName + " | " + to_string(renderState));
     }
 
 

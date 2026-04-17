@@ -135,6 +135,8 @@ void EngineMain::initGame()
     Level::Current->AddEntity(ent);
     ent->Start();
 
+    ShaderManager::CompilePSOsFromFile("GameData/PSOs/pso_cache.json");
+
     return;
 
     Level::OpenLevel("GameData/Maps/test2.map");

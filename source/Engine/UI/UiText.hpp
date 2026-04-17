@@ -10,6 +10,11 @@ const float StaticFontSize = 200;
 
 class UiText : public UiElement
 {
+
+private:
+
+    std::string finalizedText = "";
+
 public:
     UiRenderer::FontHandle font = 0;
     std::string text;
@@ -29,6 +34,12 @@ public:
         UiElement::Update();
     }
 
+    void FinalizeChildren() override
+    {
+        UiElement::FinalizeChildren();
+        finalizedText = text;
+    }
+
     virtual glm::vec2 GetSize() override
     {
         if (font == UiRenderer::INVALID_FONT) return glm::vec2(0.f);
@@ -43,7 +54,7 @@ public:
         // box) in screen space, fully accounting for any ancestor rotation.
         // scale drives the atlas-pixel → screen-pixel mapping independently.
         const glm::vec2 scale(fontSize / StaticFontSize);
-        UiRenderer::DrawText(text, font, finalizedMatrix, textColor * GetFinalColor(), scale);
+        UiRenderer::DrawText(finalizedText, font, finalizedMatrix, textColor * GetFinalColor(), scale);
 
         UiElement::Draw();
     }
