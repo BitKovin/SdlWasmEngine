@@ -114,7 +114,7 @@ public:
 		AddChild(healthBarBg);
 
 		healthBar = std::make_shared<UiImage>();
-		healthBar->ImagePath = "GameData/textures/ui/white.png";
+		healthBar->ImagePath = "GameData/cat.png";
 		healthBar->size = glm::vec2(600, 40);
 		healthBar->pivot = vec2(0.0f);
 		healthBar->inheritParentColor = false;

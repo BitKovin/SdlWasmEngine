@@ -48,7 +48,7 @@ void main()
 
         coord.y = 1.0 - coord.y;
     #else
-
+        coord.y = 1.0 - coord.y;
     #endif
 
     // Slight UV offset can be negative; clamp instead of snapping to zero

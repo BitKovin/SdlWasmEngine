@@ -246,7 +246,7 @@ set(WASM_COMMON_LINK_OPTIONS
     "SHELL:-s STACK_SIZE=500000"
     #"SHELL:-fsanitize=address,undefined"
     "SHELL:-sFETCH"
-    "SHELL:-sASYNCIFY"
+    #"SHELL:-sASYNCIFY"
 
     "SHELL:-s NO_DISABLE_EXCEPTION_CATCHING"
     "SHELL:-s WASM=1"

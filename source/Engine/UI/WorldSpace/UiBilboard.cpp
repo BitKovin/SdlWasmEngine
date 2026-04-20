@@ -59,12 +59,29 @@ bool UiBilboardAtlas::TryAllocate(ivec2 reqSize, BillboardAllocation& outAlloc)
 
             float tw = (float)texture->width();
             float th = (float)texture->height();
-            outAlloc.uvRect = vec4(
-                (float)x / tw,          // minU
-                (float)y / th,          // minV
-                (float)(x + w) / tw,    // maxU
-                (float)(y + h) / th     // maxV
-            );
+
+            float minU = (float)x / tw;
+            float maxU = (float)(x + w) / tw;
+            float minV, maxV;
+
+            const bgfx::RendererType::Enum renderer = bgfx::getRendererType();
+            if (renderer == bgfx::RendererType::OpenGL ||
+                renderer == bgfx::RendererType::OpenGLES)
+            {
+                // bgfx translates setViewRect into glViewport(x, atlasH-y-h, w, h),
+                // so rendered pixels land at the complementary Y in the texture.
+                minV = 1.0f - (float)(y + h) / th;
+                maxV = 1.0f - (float)y / th;
+            }
+            else
+            {
+                // Non-GL render-to-texture writes content Y-flipped relative to
+                // what the UI renderer emits; read the slot upside-down to cancel it.
+                minV = (float)(y + h) / th;
+                maxV = (float)y / th;
+            }
+
+            outAlloc.uvRect = vec4(minU, minV, maxU, maxV);
 
             return true;
         }

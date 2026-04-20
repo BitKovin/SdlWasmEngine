@@ -61,7 +61,7 @@ float ComputeStyledDiffuse(vec3 normal, vec3 lightDir)
     float high_curve = smoothstep(mid_start, mid_end, factor);
 
 
-    return mix(low_curve, high_curve, curve_mix);
+    return mix(mix(low_curve, high_curve, curve_mix),factor, 0.5);
 
 }
 

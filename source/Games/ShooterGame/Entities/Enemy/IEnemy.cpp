@@ -24,20 +24,27 @@ void IEnemy::AddDebuff(const std::shared_ptr<Debuff>& debuff)
 
 void IEnemy::AddDebuffStacks(const std::string& debuffName, float stacks)
 {
+    // 1. Grab a shared_ptr copy so it survives even if debuffs_.clear() is called
+    std::shared_ptr<Debuff> debuffToUpdate = nullptr;
     for (auto& d : debuffs_)
     {
         if (d->GetName() == debuffName)
         {
-            d->AddStacks(stacks);
-            return;
+            debuffToUpdate = d;
+            break;
         }
     }
 
+    if (debuffToUpdate)
+    {
+        debuffToUpdate->AddStacks(stacks);
+        return;
+    }
 
+    // 2. If not found, create it as before
     auto debuff = DebuffFactory::Instance().CreateDebuff(debuffName);
     AddDebuff(debuff);
     debuff->AddStacks(stacks - 1);
-
 }
 
 void IEnemy::UpdateDebuffs(float deltaTime)

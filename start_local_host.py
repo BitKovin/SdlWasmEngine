@@ -14,8 +14,10 @@ class CORSRequestHandler(http.server.SimpleHTTPRequestHandler):
         # Required for SharedArrayBuffer / Emscripten pthreads
         self.send_header("Cross-Origin-Opener-Policy", "same-origin")
         self.send_header("Cross-Origin-Embedder-Policy", "require-corp")
-        # Optional for cross-origin resources (if needed)
+
+        # CORS (be careful exposing publicly)
         self.send_header("Access-Control-Allow-Origin", "*")
+
         super().end_headers()
 
     def guess_type(self, path):
@@ -31,12 +33,19 @@ class CORSRequestHandler(http.server.SimpleHTTPRequestHandler):
         path = super().translate_path(path)
         return os.path.normpath(path)
 
+
+# 🔥 Threaded + reusable server (important for public use)
+class ThreadingHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
+    allow_reuse_address = True
+
+
 if __name__ == "__main__":
     print(f"Serving files from: {os.getcwd()}")
-    print(f"Starting server at http://localhost:{PORT}")
+    print(f"Starting server at http://0.0.0.0:{PORT}")
+    print("Public URL: http://<your-public-ip>:8779")
 
     try:
-        with socketserver.TCPServer(("", PORT), CORSRequestHandler) as httpd:
+        with ThreadingHTTPServer(("0.0.0.0", PORT), CORSRequestHandler) as httpd:
             print("Server ready with COOP/COEP headers")
             print("Press Ctrl+C to stop")
             httpd.serve_forever()

@@ -533,6 +533,7 @@ namespace UiRenderer {
         s_texturedShader->SetUniform("u_Model", BuildQuadModel(pos, size, rotation, pivot));
         s_texturedShader->SetUniform("u_Color", color);
         s_texturedShader->SetTexture("u_Texture", texture);
+        s_texturedShader->SetUniform("bilboard", customViewport);
 
         SubmitQuad(s_texturedShader);
     }
@@ -892,6 +893,7 @@ namespace UiRenderer {
         s_texturedShader->SetUniform("u_Model", BuildQuadModelFromMat3(transform, size));
         s_texturedShader->SetUniform("u_Color", color);
         s_texturedShader->SetTexture("u_Texture", texture);
+        s_texturedShader->SetUniform("bilboard", customViewport);
         SubmitQuad(s_texturedShader);
     }
 

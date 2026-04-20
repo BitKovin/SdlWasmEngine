@@ -147,3 +147,18 @@ std::optional<std::vector<uint8_t>> EmscriptenFileSystem::ReadSaveFileBinary(con
     return NativeFileSystem::ReadSaveFileBinary(path);
 #endif
 }
+
+std::vector<std::string> EmscriptenFileSystem::GetFilesInPath(const std::string& path) {
+#ifdef __EMSCRIPTEN__
+    // If the logical path starts with "SaveData/", map it to the IndexedDB mount point
+    // exactly the same way WriteSaveFile/ReadSaveFile do (no stripping of "SaveData/")
+    if (path.rfind("SaveData/", 0) == 0) {
+        std::string fullPath = "/saves/" + path;
+        return NativeFileSystem::GetFilesInPath(fullPath);
+    }
+    // All other paths (assets, etc.) fall back to normal MEMFS behavior
+    return NativeFileSystem::GetFilesInPath(path);
+#else
+    return NativeFileSystem::GetFilesInPath(path);
+#endif
+}

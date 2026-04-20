@@ -16,4 +16,7 @@ public:
     // Binary overrides (routing through text)
     bool WriteSaveFileBinary(const std::string& path, const std::vector<uint8_t>& data) override;
     std::optional<std::vector<uint8_t>> ReadSaveFileBinary(const std::string& path) override;
+
+    // Standard VFS override for save data (maps to the persistent /saves/ mount)
+    std::vector<std::string> GetFilesInPath(const std::string& path) override;
 };
