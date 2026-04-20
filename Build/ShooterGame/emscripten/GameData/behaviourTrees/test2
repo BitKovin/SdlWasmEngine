@@ -1,0 +1,125 @@
+{
+    "blackboard": {
+        "close_to_player": true,
+        "sees_player": true
+    },
+    "isRunning": false,
+    "root": {
+        "children": [
+            {
+                "children": [
+                    {
+                        "children": [
+                            {
+                                "children": [
+                                    {
+                                        "children": [
+                                            {
+                                                "children": [],
+                                                "message": {
+                                                    "sourceType": 0,
+                                                    "value": "attacking player"
+                                                },
+                                                "name": "PrintMessage",
+                                                "type": "PrintMessageNode"
+                                            },
+                                            {
+                                                "children": [],
+                                                "hold": {
+                                                    "sourceType": 0,
+                                                    "value": true
+                                                },
+                                                "name": "Hold",
+                                                "type": "HoldTask"
+                                            }
+                                        ],
+                                        "name": "Sequence",
+                                        "type": "SequenceNode"
+                                    }
+                                ],
+                                "condition": {
+                                    "blackboardKey": "close_to_player",
+                                    "sourceType": 1
+                                },
+                                "finish before stop": true,
+                                "inverse": false,
+                                "name": "attack",
+                                "type": "ConditionalDecorator"
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "children": [
+                                            {
+                                                "children": [],
+                                                "message": {
+                                                    "sourceType": 0,
+                                                    "value": "moving to player"
+                                                },
+                                                "name": "PrintMessage",
+                                                "type": "PrintMessageNode"
+                                            },
+                                            {
+                                                "children": [],
+                                                "hold": {
+                                                    "sourceType": 0,
+                                                    "value": true
+                                                },
+                                                "name": "Hold",
+                                                "type": "HoldTask"
+                                            }
+                                        ],
+                                        "name": "Sequence",
+                                        "type": "SequenceNode"
+                                    }
+                                ],
+                                "condition": {
+                                    "blackboardKey": "sees_player",
+                                    "sourceType": 1
+                                },
+                                "finish before stop": true,
+                                "inverse": false,
+                                "name": "follow",
+                                "type": "ConditionalDecorator"
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "children": [],
+                                        "message": {
+                                            "sourceType": 0,
+                                            "value": "doing work"
+                                        },
+                                        "name": "PrintMessage",
+                                        "type": "PrintMessageNode"
+                                    },
+                                    {
+                                        "children": [],
+                                        "name": "Wait",
+                                        "type": "WaitNode",
+                                        "waitTime": {
+                                            "sourceType": 0,
+                                            "value": 0.5
+                                        }
+                                    }
+                                ],
+                                "name": "work",
+                                "type": "SequenceNode"
+                            }
+                        ],
+                        "name": "Selector",
+                        "type": "SelectorNode"
+                    }
+                ],
+                "name": "Sequence",
+                "type": "SequenceNode"
+            }
+        ],
+        "name": "Repeat",
+        "repeatCount": {
+            "sourceType": 0,
+            "value": -1
+        },
+        "type": "RepeatDecorator"
+    }
+}

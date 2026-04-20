@@ -1,4 +1,5 @@
 ﻿#define _HAS_STD_BYTE 0
+#define SDL_MAIN_HANDLED
 #include "../malloc_override.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,6 +12,7 @@
 #include <array>
 #include <dinput.h>
 #include <SDL2/SDL_syswm.h>
+#include <SDL2/SDL_main.h>
 #include <direct.h>
 #pragma comment(lib, "dinput8.lib")
 #pragma comment(lib, "dxguid.lib")

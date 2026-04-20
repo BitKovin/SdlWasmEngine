@@ -1,0 +1,55 @@
+{
+    "blackboard": {
+        "holding": true
+    },
+    "isRunning": false,
+    "root": {
+        "children": [
+            {
+                "children": [
+                    {
+                        "children": [
+                            {
+                                "children": [],
+                                "message": {
+                                    "sourceType": 0,
+                                    "value": "Hello"
+                                },
+                                "name": "PrintMessage",
+                                "type": "PrintMessageNode"
+                            },
+                            {
+                                "children": [],
+                                "hold": {
+                                    "blackboardKey": "holding",
+                                    "sourceType": 1
+                                },
+                                "name": "Hold",
+                                "type": "HoldTask"
+                            },
+                            {
+                                "children": [],
+                                "message": {
+                                    "sourceType": 0,
+                                    "value": "Hello222"
+                                },
+                                "name": "PrintMessage",
+                                "type": "PrintMessageNode"
+                            }
+                        ],
+                        "name": "Sequence",
+                        "type": "SequenceNode"
+                    }
+                ],
+                "name": "Sequence",
+                "type": "SequenceNode"
+            }
+        ],
+        "name": "Repeat",
+        "repeatCount": {
+            "sourceType": 0,
+            "value": -1
+        },
+        "type": "RepeatDecorator"
+    }
+}

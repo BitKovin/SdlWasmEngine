@@ -60,16 +60,12 @@ EngineMain::~EngineMain()
 
 void EngineMain::UpdateScreenSize()
 {
-
     glm::ivec2 oldScreenSize = ScreenSize;
 
 #if __EMSCRIPTEN__
-
     int width, height;
-
     EMSCRIPTEN_RESULT result = emscripten_get_canvas_element_size("#canvas", &width, &height);
-
-    if (result == EMSCRIPTEN_RESULT_SUCCESS) 
+    if (result == EMSCRIPTEN_RESULT_SUCCESS)
     {
         ScreenSize = ivec2(width, height);
     }
@@ -77,29 +73,23 @@ void EngineMain::UpdateScreenSize()
     {
         printf("failed to get screen resolution\n");
     }
-
-
 #else
-
     int w, h;
-
     SDL_GetWindowSize(Window, &w, &h);
-
-
     ScreenSize.x = w;
     ScreenSize.y = h;
+#endif
 
-#endif // __EMSCRIPTEN__
-
-	if (ScreenSize != oldScreenSize)
+    if (ScreenSize != oldScreenSize)
     {
-        if(RmlContext)
-		    RmlContext->OnResize(ScreenSize.x, ScreenSize.y);
+        if (RmlContext)
+            RmlContext->OnResize(ScreenSize.x, ScreenSize.y);
 
-		bgfx::reset(ScreenSize.x, ScreenSize.y, BGFX_RESET_NONE);
+        bgfx::reset(ScreenSize.x, ScreenSize.y, BGFX_RESET_NONE);
 
+        bgfx::setViewRect(0, 0, 0, ScreenSize.x, ScreenSize.y);
+        bgfx::setViewRect(255, 0, 0, ScreenSize.x, ScreenSize.y);
     }
-
 }
 
 void EngineMain::ToggleFullscreen()

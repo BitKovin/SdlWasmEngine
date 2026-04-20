@@ -16,7 +16,6 @@ NpcHumanAxe::NpcHumanAxe()
 
 void NpcHumanAxe::ProcessAnimationEvent(AnimationEvent& event)
 {
-    Logger::Log(event.eventName);
 
     if (event.eventName == "attack_start")
     {

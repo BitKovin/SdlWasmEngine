@@ -7,6 +7,10 @@
 
 #include <Renderer/Abstractions/ViewIdManager.h>
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
 void LoadingScreenSystem::Init()
 {
 
@@ -67,7 +71,11 @@ void LoadingScreenSystem::Draw()
     // Present frame
     bgfx::frame();
 
+#ifdef emscripten_sleep
+
+    emscripten_sleep(0); // yield to browser → canvas updates visually
+#endif
+
     ViewIdManager::Reset();
 
 }
-

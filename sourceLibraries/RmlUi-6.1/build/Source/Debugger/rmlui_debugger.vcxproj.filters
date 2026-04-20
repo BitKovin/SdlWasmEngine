@@ -1,0 +1,90 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Debugger\Debugger.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Debugger\DebuggerPlugin.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Debugger\DebuggerSystemInterface.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Debugger\ElementContextHook.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Debugger\ElementDebugDocument.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Debugger\ElementInfo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Debugger\ElementLog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Debugger\Geometry.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Debugger\BeaconSource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Debugger\CommonSource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Debugger\DebuggerPlugin.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Debugger\DebuggerSystemInterface.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Debugger\ElementContextHook.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Debugger\ElementDebugDocument.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Debugger\ElementInfo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Debugger\ElementLog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Debugger\FontSource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Debugger\Geometry.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Debugger\InfoSource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Debugger\LogSource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Debugger\MenuSource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Debugger\Debugger.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Debugger\Header.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Debugger.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Debugger\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{026B77F2-EB09-38B3-B695-555838C2676C}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{0BE310EA-B6CD-3BE2-BE70-23F397133611}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

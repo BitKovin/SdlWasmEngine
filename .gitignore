@@ -455,3 +455,7 @@ source/Distribution/Engine.lib
 Build/ShooterGame/linux/lib/libengine.a
 BuildLinux/librmlui.a
 Build/ShooterGame/emscripten/bin/main.data
+Build/ShooterGame/lib/engine.lib
+Build/ShooterGame/lib/libengine.a
+Build/ShooterGame/lib/ShooterGame.exp
+Build/ShooterGame/lib/ShooterGame.lib

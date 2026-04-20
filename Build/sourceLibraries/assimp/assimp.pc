@@ -5,5 +5,5 @@ Name: MyProject
 Description: Import various well-known 3D model formats in an uniform manner.
 Version: 6.0.2
 Libs: -L${libdir} -lassimp
-Libs.private:  -loptimized;F:/Tools/emsdk/upstream/emscripten/cache/sysroot/lib/wasm32-emscripten/libz.a;debug;F:/Tools/emsdk/upstream/emscripten/cache/sysroot/lib/wasm32-emscripten/libz.a
+Libs.private:  
 Cflags: -I${includedir}

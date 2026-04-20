@@ -1,4 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
+
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
 project(MyProject)
 
 # ——————————————————————————————————————————————————————————
@@ -47,10 +50,14 @@ elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
 endif()
 
 
+
 # ——————————————————————————————————————————————————————————————————————
 # Engine library
 # ——————————————————————————————————————————————————————————
-file(GLOB_RECURSE ENGINE_SOURCES "${CMAKE_SOURCE_DIR}/source/Engine/*.cpp")
+file(GLOB_RECURSE ENGINE_SOURCES
+    "${CMAKE_SOURCE_DIR}/source/Engine/*.cpp"
+    "${CMAKE_SOURCE_DIR}/source/Engine/*.c"
+)
 
 add_library(engine STATIC ${ENGINE_SOURCES})
 
@@ -60,31 +67,16 @@ target_include_directories(engine
         "${CMAKE_SOURCE_DIR}/source/Engine"   # <Renderer/...>
         "${CMAKE_SOURCE_DIR}/libraries"       # third-party headers
 )
-if(LINUX)
-    add_library(mimalloc::mimalloc STATIC IMPORTED GLOBAL)
-    set_target_properties(mimalloc::mimalloc PROPERTIES
-        IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/Lib/Linux/libmimalloc.a"
-    )
-
-    # Find other Linux dependencies
-    find_package(GLEW       REQUIRED)
-    find_package(OpenGL     REQUIRED)
-    find_package(OpenAL     REQUIRED)
-    find_package(ZLIB       REQUIRED)
-
-    # Link OpenAL via imported target
-    target_link_libraries(engine PRIVATE OpenAL::OpenAL)
-
-    # Link the rest as before
-    target_link_libraries(engine PRIVATE
-        GLEW::GLEW
-        OpenGL::GL
-        ZLIB::ZLIB
-        mimalloc::mimalloc 
-    )
-endif()
 
 set(LIB_DIR "${CMAKE_SOURCE_DIR}/sourceLibraries")
+
+
+if(NOT EMSCRIPTEN)
+    
+    add_subdirectory(${LIB_DIR}/openAlSoft)
+    target_link_libraries(engine PUBLIC OpenAL)
+
+endif()
 
 # --------------------------------------------------
 # RmlUi (vendored)
@@ -94,13 +86,21 @@ set(RMLUI_BUILD_TESTS   OFF CACHE BOOL "" FORCE)
 set(RMLUI_BUILD_LUA     OFF CACHE BOOL "" FORCE)
 set(RMLUI_ENABLE_DEBUGGER ON CACHE BOOL "" FORCE)
 
-add_subdirectory(
-    "${LIB_DIR}/RmlUi-6.1"
-)
+# 1. Add Freetype
+add_subdirectory(${LIB_DIR}/RmlUi-6.1/Dependencies/freetype)
+
+# 2. Create the ALIAS that RmlUi is looking for
+add_library(Freetype::Freetype ALIAS freetype)
+
+# 3. Link Freetype to your engine
+target_link_libraries(engine PUBLIC Freetype::Freetype)
+
+# 4. Add RmlUi (it will now successfully find Freetype::Freetype)
+add_subdirectory("${LIB_DIR}/RmlUi-6.1")
 
 target_link_libraries(engine PUBLIC
     RmlUi::RmlUi
-	RmlUi::Debugger
+    RmlUi::Debugger
 )
 # ——————————————————————————————————————————————————————————
 
@@ -114,36 +114,11 @@ add_subdirectory("${LIB_DIR}/SDL")
 
 target_link_libraries(engine PUBLIC SDL2::SDL2)
 
-# --------------------------------------------------
-# SDL2 TTF (vendored)
-# --------------------------------------------------
-add_subdirectory("${LIB_DIR}/SDL_ttf")
-
-# SDL_ttf only exports SDL2_ttf::SDL2_ttf for shared builds.
-# For static builds (including Emscripten), create the alias manually.
-if(NOT TARGET SDL2_ttf::SDL2_ttf)
-    if(TARGET SDL2_ttf)
-        add_library(SDL2_ttf::SDL2_ttf ALIAS SDL2_ttf)
-    elseif(TARGET SDL2_ttf-static)
-        add_library(SDL2_ttf::SDL2_ttf ALIAS SDL2_ttf-static)
-    else()
-        # Dump all targets to help debug
-        message(FATAL_ERROR 
-            "Could not find SDL2_ttf or SDL2_ttf-static after add_subdirectory. "
-            "Check what targets SDL_ttf actually exports by searching its CMakeLists.txt "
-            "for add_library calls."
-        )
-    endif()
-endif()
-
-target_link_libraries(engine PUBLIC SDL2_ttf::SDL2_ttf)
 
 add_subdirectory(${LIB_DIR}/fmod)
 target_link_libraries(engine PUBLIC fmod)
 
 
-
-# Jolt shipping configuration
 
 # Jolt shipping configuration
 set(ENABLE_ASSERTS              OFF CACHE BOOL "" FORCE)
@@ -162,6 +137,7 @@ endif()
 add_subdirectory(${LIB_DIR}/JoltPhysics-5.3.0/Build/)
 target_link_libraries(engine PUBLIC Jolt::Jolt)
 
+# assimp
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(ASSIMP_BUILD_ASSIMP_TOOLS OFF CACHE BOOL "" FORCE)
@@ -175,7 +151,7 @@ set(ASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT OFF CACHE BOOL "" FORCE)
 set(ASSIMP_BUILD_OBJ_IMPORTER ON CACHE BOOL "" FORCE)   # .obj
 set(ASSIMP_BUILD_GLTF_IMPORTER ON CACHE BOOL "" FORCE)  # .glb / .gltf
 
-set(ASSIMP_BUILD_ZLIB OFF CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_ZLIB ON CACHE BOOL "" FORCE)
 
 add_subdirectory(${LIB_DIR}/assimp)
 target_link_libraries(engine PUBLIC assimp)
@@ -211,6 +187,11 @@ if(EMSCRIPTEN)
     endif()
 endif()
 
+#7zip
+set(BIT7Z_AUTO_FORMAT ON CACHE BOOL "enable auto format support" FORCE)
+add_subdirectory(${LIB_DIR}/bit7z)
+target_link_libraries(engine PUBLIC bit7z)
+
 # ——————————————————————————————————————————————————————————
 # Resolve GAME_DIR, create source/game folder if missing, save selection
 # ——————————————————————————————————————————————————————————
@@ -230,6 +211,10 @@ endif()
 
 message(STATUS "Using game source directory: ${GAME_DIR}")
 
+set(OUTPUT_BASE_DIR "${CMAKE_SOURCE_DIR}/Build/${GAME_NAME}/${PLATFORM_DIR}")
+file(MAKE_DIRECTORY "${OUTPUT_BASE_DIR}")
+file(MAKE_DIRECTORY "${OUTPUT_BASE_DIR}/bin" "${OUTPUT_BASE_DIR}/lib" "${OUTPUT_BASE_DIR}/assets")
+
 # ——————————————————————————————————————————————————————————
 # Common WASM linker flags (for the final module)
 # ——————————————————————————————————————————————————————————
@@ -247,11 +232,12 @@ set(WASM_COMMON_LINK_OPTIONS
     #"SHELL:-fsanitize=address,undefined"
     "SHELL:-sFETCH"
     #"SHELL:-sASYNCIFY"
+    
 
     "SHELL:-s NO_DISABLE_EXCEPTION_CATCHING"
     "SHELL:-s WASM=1"
     "SHELL:-s ASSERTIONS=1"
-    "SHELL:--preload-file ${GAME_DIR}/GameData@/GameData"
+    "SHELL:--preload-file ${OUTPUT_BASE_DIR}/GameData@/GameData"
     "SHELL:-s GL_SUPPORT_AUTOMATIC_ENABLE_EXTENSIONS=1"
     "SHELL:-lidbfs.js"
     "SHELL:-msimd128"
@@ -265,6 +251,13 @@ set(WASM_COMMON_LINK_OPTIONS
 
     #"SHELL:--profiling-funcs"
 )
+
+message(STATUS "--------------------------------------------------")
+message(STATUS "GAME_NAME:       ${GAME_NAME}")
+message(STATUS "OUTPUT_BASE_DIR: ${OUTPUT_BASE_DIR}")
+message(STATUS "Linker Flag:     ${OUTPUT_BASE_DIR}/GameData@/GameData")
+message(STATUS "--------------------------------------------------")
+
 if (EMSCRIPTEN AND ENABLE_PTHREADS)
     # PTHREADS: threads require fixed TOTAL_MEMORY and thread flags. Remove memory-growth usage.
     list(APPEND WASM_COMMON_LINK_OPTIONS
@@ -303,10 +296,6 @@ else()
     # fallback: lower-case system name
     string(TOLOWER "${CMAKE_SYSTEM_NAME}" PLATFORM_DIR)
 endif()
-
-set(OUTPUT_BASE_DIR "${CMAKE_SOURCE_DIR}/Build/${GAME_NAME}/${PLATFORM_DIR}")
-file(MAKE_DIRECTORY "${OUTPUT_BASE_DIR}")
-file(MAKE_DIRECTORY "${OUTPUT_BASE_DIR}/bin" "${OUTPUT_BASE_DIR}/lib" "${OUTPUT_BASE_DIR}/assets")
 
 # set global output dirs (single-config and multi-config)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${OUTPUT_BASE_DIR}/bin")
@@ -357,6 +346,8 @@ if (NOT GAME_SOURCES)
 endif()
 
 add_executable(${GAME_TARGET_NAME} ${GAME_SOURCES})
+
+include(${CMAKE_SOURCE_DIR}/BuildScripts/PrepareGameData.cmake)
 
 # include directories for the game
 target_include_directories(${GAME_TARGET_NAME}

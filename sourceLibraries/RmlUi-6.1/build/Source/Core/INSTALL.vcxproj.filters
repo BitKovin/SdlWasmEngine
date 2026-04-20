@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\build\CMakeFiles\95157e857b64d236e449c319e98e6b5c\INSTALL_force.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{43309590-F24A-303C-B87A-0C171B97BB27}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

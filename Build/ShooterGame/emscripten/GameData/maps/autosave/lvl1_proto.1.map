@@ -1,0 +1,40 @@
+// Game: GenericEngine
+// Format: Quake2
+// entity 0
+{
+"classname" "worldspawn"
+"_tb_textures" "textures\lq_conc;textures\lq_dev;textures\lq_greek;textures\lq_medieval;textures\lq_terra;textures\skies"
+// brush 0
+{
+( -576 -64 -16 ) ( -576 -63 -16 ) ( -576 -64 -15 ) lq_dev/floor_grey_b 0 0 0 0.5 0.5
+( -64 -1024 -16 ) ( -64 -1024 -15 ) ( -63 -1024 -16 ) lq_dev/floor_grey_b 0 0 0 0.5 0.5
+( -64 -64 -16 ) ( -63 -64 -16 ) ( -64 -63 -16 ) lq_dev/floor_grey_b 0 0 0 0.5 0.5
+( 64 64 16 ) ( 64 65 16 ) ( 65 64 16 ) lq_dev/floor_grey_b 0 0 0 0.5 0.5
+( 64 448 16 ) ( 65 448 16 ) ( 64 448 17 ) lq_dev/floor_grey_b 0 0 0 0.5 0.5
+( 256 64 16 ) ( 256 64 17 ) ( 256 65 16 ) lq_dev/floor_grey_b 0 0 0 0.5 0.5
+}
+// brush 1
+{
+( 256 -1024 -32 ) ( 256 -1023 -32 ) ( 256 -1024 -31 ) lq_dev/floor_orange_b 0 0 0 1 1
+( 256 -1024 -32 ) ( 256 -1024 -31 ) ( 257 -1024 -32 ) lq_dev/floor_orange_b 0 0 0 1 1
+( 256 -1024 -32 ) ( 257 -1024 -32 ) ( 256 -1023 -32 ) lq_dev/floor_orange_b 0 0 0 1 1
+( 288 448 448 ) ( 288 449 448 ) ( 289 448 448 ) lq_dev/floor_orange_b 0 0 0 1 1
+( 288 448 0 ) ( 289 448 0 ) ( 288 448 1 ) lq_dev/floor_orange_b 0 0 0 1 1
+( 480 448 0 ) ( 480 448 1 ) ( 480 449 0 ) lq_dev/floor_orange_b 0 0 0 1 1
+}
+// brush 2
+{
+( -14432 -15744 -3520 ) ( -14432 -15743 -3520 ) ( -14432 -15744 -3519 ) lq_dev/sky_dev 0 0 0 1 1
+( -1600 -23616 -3520 ) ( -1600 -23616 -3519 ) ( -1599 -23616 -3520 ) lq_dev/sky_dev 0 0 0 1 1
+( -1600 -15744 -3520 ) ( -1599 -15744 -3520 ) ( -1600 -15743 -3520 ) lq_dev/sky_dev 0 0 0 1 1
+( -1376 -2656 3616 ) ( -1376 -2655 3616 ) ( -1375 -2656 3616 ) lq_dev/sky_dev 0 0 0 1 1
+( -1376 5824 3616 ) ( -1375 5824 3616 ) ( -1376 5824 3617 ) lq_dev/sky_dev 0 0 0 1 1
+( 12128 -2656 3616 ) ( 12128 -2656 3617 ) ( 12128 -2655 3616 ) lq_dev/sky_dev 0 0 0 1 1
+}
+}
+// entity 1
+{
+"classname" "info_player_start"
+"origin" "-144 416 40"
+"angle" "270"
+}

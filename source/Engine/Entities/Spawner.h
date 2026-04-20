@@ -50,7 +50,6 @@ public:
 			entity->OnAction("triggerOnPlayer");
 		}
 		
-		Logger::Log("calling action");
 
 		CallActionOnEveryEntityWithName(actionTarget, onSpawnedAction);
 
@@ -58,8 +57,6 @@ public:
 
 	void OnAction(string action)
 	{
-
-		Logger::Log("spawner received action " + action);
 
 		if (action == "despawned")
 		{

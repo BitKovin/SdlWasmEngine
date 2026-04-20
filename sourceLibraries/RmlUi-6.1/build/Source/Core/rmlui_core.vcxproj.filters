@@ -1,0 +1,1344 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\build\Source\Core\CMakeFiles\rmlui_core.dir\cmake_pch.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\BaseXMLParser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Box.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\CallbackTexture.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Clock.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\CompiledFilterShader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\ComputedValues.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\ComputeProperty.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Context.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\ContextInstancer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\ContextInstancerDefault.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\ConvolutionFilter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Core.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\DataController.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\DataControllerDefault.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\DataExpression.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\DataModel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\DataModelHandle.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\DataTypeRegister.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\DataVariable.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\DataView.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\DataViewDefault.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Decorator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\DecoratorGradient.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\DecoratorNinePatch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\DecoratorShader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\DecoratorText.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\DecoratorTiled.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\DecoratorTiledBox.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\DecoratorTiledHorizontal.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\DecoratorTiledImage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\DecoratorTiledVertical.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\DecoratorUtilities.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\DocumentHeader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\EffectSpecification.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Element.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\ElementAnimation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\ElementBackgroundBorder.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\ElementDefinition.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\ElementDocument.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\ElementEffects.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\ElementHandle.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\ElementInstancer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\ElementMeta.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\ElementScroll.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\ElementStyle.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\ElementText.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\ElementUtilities.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Event.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\EventDispatcher.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\EventInstancer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\EventInstancerDefault.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\EventListenerInstancer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\EventSpecification.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Factory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\FileInterface.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\FileInterfaceDefault.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Filter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\FilterBasic.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\FilterBlur.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\FilterDropShadow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\FontEffect.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\FontEffectBlur.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\FontEffectGlow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\FontEffectInstancer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\FontEffectOutline.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\FontEffectShadow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\FontEngineInterface.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Geometry.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\GeometryBackgroundBorder.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\GeometryBoxShadow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Log.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\LogDefault.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Math.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Memory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\MeshUtilities.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\ObserverPtr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Plugin.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\PluginRegistry.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Profiling.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\PropertiesIteratorView.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Property.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\PropertyDefinition.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\PropertyDictionary.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\PropertyParserAnimation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\PropertyParserBoxShadow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\PropertyParserColorStopList.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\PropertyParserColour.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\PropertyParserDecorator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\PropertyParserFilter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\PropertyParserFontEffect.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\PropertyParserKeyword.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\PropertyParserNumber.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\PropertyParserRatio.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\PropertyParserString.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\PropertyParserTransform.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\PropertySpecification.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\RenderInterface.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\RenderInterfaceCompatibility.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\RenderManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\RenderManagerAccess.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\ScrollController.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Spritesheet.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Stream.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\StreamFile.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\StreamMemory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\StringUtilities.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\StyleSheet.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\StyleSheetContainer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\StyleSheetFactory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\StyleSheetNode.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\StyleSheetParser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\StyleSheetSelector.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\StyleSheetSpecification.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\SystemInterface.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Template.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\TemplateCache.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Texture.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\TextureDatabase.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\TextureLayout.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\TextureLayoutRectangle.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\TextureLayoutRow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\TextureLayoutTexture.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Traits.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Transform.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\TransformPrimitive.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\TransformState.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\TransformUtilities.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Tween.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\TypeConverter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\URL.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Variant.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\WidgetScroll.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\XMLNodeHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\XMLNodeHandlerBody.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\XMLNodeHandlerDefault.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\XMLNodeHandlerHead.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\XMLNodeHandlerTemplate.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\XMLParser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\XMLParseTools.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Elements\ElementFormControl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Elements\ElementFormControlInput.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Elements\ElementFormControlSelect.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Elements\ElementFormControlTextArea.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Elements\ElementForm.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Elements\ElementImage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Elements\ElementLabel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Elements\ElementProgress.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Elements\ElementTabSet.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Elements\ElementTextSelection.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Elements\InputTypeButton.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Elements\InputTypeCheckbox.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Elements\InputType.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Elements\InputTypeRadio.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Elements\InputTypeRange.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Elements\InputTypeSubmit.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Elements\InputTypeText.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Elements\WidgetDropDown.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Elements\WidgetSlider.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Elements\WidgetTextInput.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Elements\WidgetTextInputMultiLine.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Elements\WidgetTextInputSingleLine.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Elements\WidgetTextInputSingleLinePassword.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Elements\XMLNodeHandlerSelect.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Elements\XMLNodeHandlerTabSet.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Elements\XMLNodeHandlerTextArea.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Layout\BlockContainer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Layout\BlockFormattingContext.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Layout\ContainerBox.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Layout\FlexFormattingContext.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Layout\FloatedBoxSpace.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Layout\FormattingContext.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Layout\InlineBox.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Layout\InlineContainer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Layout\InlineLevelBox.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Layout\LayoutBox.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Layout\LayoutDetails.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Layout\LayoutEngine.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Layout\LayoutPools.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Layout\LineBox.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Layout\ReplacedFormattingContext.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Layout\TableFormattingContext.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Layout\TableFormattingDetails.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\FontEngineDefault\FontEngineInterfaceDefault.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\FontEngineDefault\FontFace.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\FontEngineDefault\FontFaceHandleDefault.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\FontEngineDefault\FontFaceLayer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\FontEngineDefault\FontFamily.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\FontEngineDefault\FontProvider.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\FontEngineDefault\FreeTypeInterface.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Clock.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\ComputeProperty.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\ContextInstancerDefault.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\ControlledLifetimeResource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\DataController.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\DataControllerDefault.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\DataExpression.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\DataModel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\DataView.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\DataViewDefault.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\DecoratorGradient.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\DecoratorNinePatch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\DecoratorShader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\DecoratorText.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\DecoratorTiled.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\DecoratorTiledBox.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\DecoratorTiledHorizontal.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\DecoratorTiledImage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\DecoratorTiledVertical.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\DecoratorUtilities.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\DocumentHeader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\ElementAnimation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\ElementBackgroundBorder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\ElementDefinition.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\ElementEffects.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\ElementHandle.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\ElementMeta.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\ElementStyle.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\EventDispatcher.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\EventInstancerDefault.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\EventSpecification.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\FileInterfaceDefault.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\FilterBasic.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\FilterBlur.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\FilterDropShadow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\FontEffectBlur.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\FontEffectGlow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\FontEffectOutline.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\FontEffectShadow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\GeometryBackgroundBorder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\GeometryBoxShadow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\IdNameMap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\LogDefault.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Memory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\PluginRegistry.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Pool.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\precompiled.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\PropertiesIterator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\PropertyParserAnimation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\PropertyParserBoxShadow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\PropertyParserColorStopList.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\PropertyParserColour.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\PropertyParserDecorator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\PropertyParserFilter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\PropertyParserFontEffect.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\PropertyParserKeyword.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\PropertyParserNumber.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\PropertyParserRatio.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\PropertyParserString.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\PropertyParserTransform.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\PropertyShorthandDefinition.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\RenderManagerAccess.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\ScrollController.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\StreamFile.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\StyleSheetFactory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\StyleSheetNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\StyleSheetParser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\StyleSheetSelector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Template.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\TemplateCache.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\TextureDatabase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\TextureLayout.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\TextureLayoutRectangle.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\TextureLayoutRow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\TextureLayoutTexture.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\TransformState.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\TransformUtilities.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\WidgetScroll.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\XMLNodeHandlerBody.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\XMLNodeHandlerDefault.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\XMLNodeHandlerHead.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\XMLNodeHandlerTemplate.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\XMLParseTools.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Config\Config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\BaseXMLParser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Box.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\CallbackTexture.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Colour.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Colour.inl">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\CompiledFilterShader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\ComputedValues.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Containers\itlib\flat_map.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Containers\itlib\flat_set.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Containers\robin_hood.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Context.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\ContextInstancer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\ConvolutionFilter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Core.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\DataModelHandle.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\DataStructHandle.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\DataTypeRegister.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\DataTypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\DataVariable.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Debug.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\DecorationTypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Decorator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Dictionary.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\EffectSpecification.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Element.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Element.inl">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\ElementDocument.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\ElementInstancer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\ElementScroll.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Elements\ElementForm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Elements\ElementFormControl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Elements\ElementFormControlInput.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Elements\ElementFormControlSelect.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Elements\ElementFormControlTextArea.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Elements\ElementProgress.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Elements\ElementTabSet.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\ElementText.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\ElementUtilities.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Event.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\EventInstancer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\EventListener.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\EventListenerInstancer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Factory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\FileInterface.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Filter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\FontEffect.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\FontEffectInstancer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\FontEngineInterface.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\FontGlyph.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\FontMetrics.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Geometry.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Header.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\ID.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Input.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Log.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Math.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Matrix4.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Matrix4.inl">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Mesh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\MeshUtilities.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\NumericValue.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\ObserverPtr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Platform.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Plugin.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Profiling.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\PropertiesIteratorView.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Property.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\PropertyDefinition.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\PropertyDictionary.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\PropertyIdSet.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\PropertyParser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\PropertySpecification.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Rectangle.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\RenderBox.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\RenderInterface.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\RenderInterfaceCompatibility.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\RenderManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\ScriptInterface.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\ScrollTypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Span.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Spritesheet.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\StableVector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Stream.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\StreamMemory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\StringUtilities.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\StyleSheet.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\StyleSheetContainer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\StyleSheetSpecification.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\StyleSheetTypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\StyleTypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\SystemInterface.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\TextInputContext.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\TextInputHandler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\TextShapingContext.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Texture.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Traits.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Transform.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\TransformPrimitive.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Tween.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\TypeConverter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\TypeConverter.inl">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Types.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\UniqueRenderResource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Unit.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\URL.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Utilities.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Variant.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Variant.inl">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Vector2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Vector2.inl">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Vector3.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Vector3.inl">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Vector4.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Vector4.inl">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\Vertex.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\XMLNodeHandler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Include\RmlUi\Core\XMLParser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Elements\ElementImage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Elements\ElementLabel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Elements\ElementTextSelection.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Elements\InputTypeButton.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Elements\InputTypeCheckbox.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Elements\InputType.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Elements\InputTypeRadio.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Elements\InputTypeRange.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Elements\InputTypeSubmit.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Elements\InputTypeText.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Elements\WidgetDropDown.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Elements\WidgetSlider.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Elements\WidgetTextInput.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Elements\WidgetTextInputMultiLine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Elements\WidgetTextInputSingleLine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Elements\WidgetTextInputSingleLinePassword.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Elements\XMLNodeHandlerSelect.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Elements\XMLNodeHandlerTabSet.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Elements\XMLNodeHandlerTextArea.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Layout\BlockContainer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Layout\BlockFormattingContext.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Layout\ContainerBox.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Layout\FlexFormattingContext.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Layout\FloatedBoxSpace.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Layout\FormattingContext.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Layout\InlineBox.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Layout\InlineContainer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Layout\InlineLevelBox.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Layout\InlineTypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Layout\LayoutBox.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Layout\LayoutDetails.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Layout\LayoutEngine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Layout\LayoutPools.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Layout\LineBox.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Layout\ReplacedFormattingContext.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Layout\TableFormattingContext.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\Layout\TableFormattingDetails.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\FontEngineDefault\FontEngineInterfaceDefault.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\FontEngineDefault\FontFace.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\FontEngineDefault\FontFaceHandleDefault.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\FontEngineDefault\FontFaceLayer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\FontEngineDefault\FontFamily.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\FontEngineDefault\FontProvider.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\FontEngineDefault\FontTypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\FontEngineDefault\FreeTypeInterface.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\build\Source\Core\CMakeFiles\rmlui_core.dir\Debug\cmake_pch.hxx">
+      <Filter>Precompile Header File</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\build\Source\Core\CMakeFiles\rmlui_core.dir\Release\cmake_pch.hxx">
+      <Filter>Precompile Header File</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\build\Source\Core\CMakeFiles\rmlui_core.dir\MinSizeRel\cmake_pch.hxx">
+      <Filter>Precompile Header File</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\build\Source\Core\CMakeFiles\rmlui_core.dir\RelWithDebInfo\cmake_pch.hxx">
+      <Filter>Precompile Header File</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="F:\Git\SdlWasmEngine\sourceLibraries\RmlUi-6.1\Source\Core\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{026B77F2-EB09-38B3-B695-555838C2676C}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Precompile Header File">
+      <UniqueIdentifier>{EF42EB2E-2C2E-316E-A023-921F95B55528}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{0BE310EA-B6CD-3BE2-BE70-23F397133611}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,32 @@
+newmtl __TB_empty
+
+newmtl brushes/__TB_empty
+map_Kd textures/brushes/__TB_empty.png
+
+newmtl brushes/brickPBR
+map_Kd textures/brushes/brickPBR.png
+
+newmtl brushes/bricks
+map_Kd textures/brushes/bricks.png
+
+newmtl brushes/foil
+map_Kd textures/brushes/foil.png
+
+newmtl brushes/hole_t
+map_Kd textures/brushes/hole_t.png
+
+newmtl brushes/libreQuake/lq_terra/badlawn
+map_Kd textures/brushes/libreQuake/lq_terra/badlawn.png
+
+newmtl brushes/light
+map_Kd textures/brushes/light.png
+
+newmtl brushes/mask_test_m
+map_Kd textures/brushes/mask_test_m.png
+
+newmtl brushes/mirror
+map_Kd textures/brushes/mirror.png
+
+newmtl brushes/trigger_t
+map_Kd textures/brushes/trigger_t.png
+

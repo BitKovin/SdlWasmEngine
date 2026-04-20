@@ -34,7 +34,6 @@ void TestNpc::UpdateFleeTarget()
 void TestNpc::ProcessAnimationEvent(AnimationEvent& event)
 {
 	
-	Logger::Log(event.eventName);
 
 	if (event.eventName == "attack_start")
 	{

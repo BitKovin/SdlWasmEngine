@@ -4,8 +4,6 @@
 
 #else
 
-#define JPH_DEBUG_RENDERER	
-
 #endif
 
 
