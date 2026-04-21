@@ -20,6 +20,8 @@ public:
 
 	void Start();
 
+	virtual bool CanBeTriggered(Entity* entity);
+
 	void FromData(EntityData data);
 
 	void OnBodyEntered(Body* body, Entity* entity);

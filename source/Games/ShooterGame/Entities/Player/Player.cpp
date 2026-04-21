@@ -2437,6 +2437,9 @@ void Player::Serialize(json& target)
 	SERIALIZE_FIELD(target, isMantling);
 	SERIALIZE_FIELD(target, mantleProgress);
 	SERIALIZE_FIELD(target, mantleSnapPosition);
+
+	SERIALIZE_FIELD(target, keysInventory);
+
 }
 
 void Player::Deserialize(json& source)
@@ -2475,6 +2478,8 @@ void Player::Deserialize(json& source)
 	DESERIALIZE_FIELD(source, isMantling);
 	DESERIALIZE_FIELD(source, mantleProgress);
 	DESERIALIZE_FIELD(source, mantleSnapPosition);
+
+	DESERIALIZE_FIELD(source, keysInventory);
 
 	// Restore weapon based on mode
 	if (weaponSystemMode == WeaponSystemMode::Slots)

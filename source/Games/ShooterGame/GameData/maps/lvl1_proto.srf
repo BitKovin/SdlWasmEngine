@@ -6561,3 +6561,51 @@ default
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
+920 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/trigger
+	entity 99
+	castShadows 0
+	sampleSize 0
+}
+
+921 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/trigger
+	entity 99
+	castShadows 0
+	sampleSize 0
+}
+
+922 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/trigger
+	entity 99
+	castShadows 0
+	sampleSize 0
+}
+
+923 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/trigger
+	entity 99
+	castShadows 0
+	sampleSize 0
+}
+
+924 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/trigger
+	entity 99
+	castShadows 0
+	sampleSize 0
+}
+
+925 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/trigger
+	entity 99
+	castShadows 0
+	sampleSize 0
+}
+

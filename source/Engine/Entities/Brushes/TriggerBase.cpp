@@ -6,6 +6,11 @@ void TriggerBase::Start()
 	DestroyDrawables();
 }
 
+bool TriggerBase::CanBeTriggered(Entity* player)
+{
+	return true;
+}
+
 void TriggerBase::FromData(EntityData data)
 {
 	Entity::FromData(data);
@@ -18,6 +23,7 @@ void TriggerBase::FromData(EntityData data)
 
 void TriggerBase::OnBodyEntered(Body* body, Entity* entity)
 {
+	if (CanBeTriggered(entity) == false)return;
 	if (entity->HasTag("player"))
 	{
 		CallActionOnEveryEntityWithName(targetName, onEnterAction);
@@ -27,7 +33,7 @@ void TriggerBase::OnBodyEntered(Body* body, Entity* entity)
 
 void TriggerBase::OnBodyExited(Body* body, Entity* entity)
 {
-
+	if (CanBeTriggered(entity) == false)return;
 	if (entity->HasTag("player"))
 	{
 		CallActionOnEveryEntityWithName(targetName, onExitAction);

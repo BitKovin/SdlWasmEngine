@@ -13,6 +13,7 @@ class PickupAmmoShotgun : public PickupBase
 		if (player->GetAmmo(ammoType) == player->GetAmmoLimit(ammoType)) return;
 		player->AddAmmo(ammoType, ammoAmount);
 		Destroy();
+		PickupBase::OnPickup(player);
 	}
 
 	void FromData(EntityData data) override

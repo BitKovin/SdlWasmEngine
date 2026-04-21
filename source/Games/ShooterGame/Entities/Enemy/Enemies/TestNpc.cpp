@@ -244,8 +244,31 @@ void TestNpc::AsyncUpdate()
 
 	auto rootMotion = mesh->PullRootMotion();
 
-	Position += rootMotion.Position;
-	controller.SetPosition(Position);
+	if (length(rootMotion.Position) > 0.1)
+	{
+
+		auto hit = Physics::SphereTrace(Position, Position + rootMotion.Position, 0.2, BodyType::GroupCollisionTest, {}, {this});
+
+		if(hit.hasHit)
+		{
+
+			Position = hit.shapePosition + hit.normal * 0.2f;
+			controller.SetPosition(Position);
+		}
+		else
+		{
+			Position += rootMotion.Position;
+			controller.SetPosition(Position);
+		}
+
+	}
+	else
+	{
+		Position += rootMotion.Position;
+		controller.SetPosition(Position);
+	}
+
+
 	if (rootMotion.Position != vec3())
 		controller.SetVelocity(vec3(0, controller.GetVelocity().y, 0));
 	

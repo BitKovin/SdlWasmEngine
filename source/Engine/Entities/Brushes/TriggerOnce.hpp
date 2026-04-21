@@ -13,6 +13,7 @@ public:
 	
 	void OnBodyEntered(Body* body, Entity* entity)
 	{
+		if (CanBeTriggered(entity) == false)return;
 		TriggerBase::OnBodyEntered(body, entity);
 
 		if (entity->HasTag("player"))

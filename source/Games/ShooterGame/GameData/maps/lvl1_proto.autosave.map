@@ -4662,3 +4662,24 @@
 ( -496 -1580 16 ) ( -496 -1580 48 ) ( -496 -1612 16 ) common/caulk 0 0 0 1 1 0 0 0
 }
 }
+// entity 98
+{
+"classname" "item_key_red"
+"origin" "-1840 -4992 48"
+}
+// entity 99
+{
+"classname" "trigger_key_once"
+"target" "b1_of1_book_hid"
+"onEnterAction" "open"
+"requiredKey" "red"
+// brush 0
+{
+( -1784 -5320 16 ) ( -1784 -5264 16 ) ( -1784 -5320 24 ) common/trigger 56 0 0 1 1 0 0 0
+( -1760 -5312 16 ) ( -1760 -5312 24 ) ( -1720 -5312 16 ) common/trigger 16 0 -0 1 1 0 0 0
+( -1760 -5320 16 ) ( -1720 -5320 16 ) ( -1760 -5264 16 ) common/trigger 16 8 0 1 1 0 0 0
+( -1720 -5264 64 ) ( -1720 -5320 64 ) ( -1760 -5264 64 ) common/trigger 16 8 0 1 1 0 0 0
+( -1720 -5272 24 ) ( -1760 -5272 24 ) ( -1720 -5272 16 ) common/trigger 16 0 -0 1 1 0 0 0
+( -1704 -5264 24 ) ( -1704 -5264 16 ) ( -1704 -5320 24 ) common/trigger 56 0 0 1 1 0 0 0
+}
+}

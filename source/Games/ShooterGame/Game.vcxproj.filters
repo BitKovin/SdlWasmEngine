@@ -282,6 +282,27 @@
     <ClCompile Include="Entities\VideoInWorldTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Entities\Pickup\Keys\KeyRed.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Entities\Pickup\Keys\KeyGreen.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Entities\Pickup\Keys\KeyBlue.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Entities\Pickup\Keys\KeySecret.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Entities\Pickup\Keys\KeySpecial.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Entities\Triggers\TriggerKeyOnce.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Entities\Triggers\TriggerKeyMultiple.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Entities\Player\Player.hpp">
@@ -444,6 +465,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Entities\Pickup\PickupBase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Entities\Pickup\Keys\PickupKeyBase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Entities\Pickup\Keys\KeyTypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -285,4 +285,42 @@ Entity, which stores regular static map primitives (brushes and patches).
         <flag key="no_dificuly_normal" name="Don't spawn on Normal" bit="1" />
         <flag key="no_dificuly_hard" name="Don't spawn on Hard" bit="2" />
     </point>
+    <point name="item_key_red" color="1 0 0.023529411764705882" box="-16 -16 -16 16 16 16">
+red key
+<string key="classname" name="Classname" value="item_key_red">The classname of the entity.</string><model key="model" name="Model Path" value="models/pickups/shotgunAmmo.obj" /><real key="modelscale" name="Uniform Scale" value="1">Will by scaled by 32 in engine.</real><string key="targetname" name="Name" /><target key="target" name="Target">Targetname of entity to activate/target.</target><string key="onPickupEvent" name="On Pickup" /><angle key="angle" name="Yaw Angle" value="0">Yaw rotation in degrees. 0 = East, 90 = South, etc.</angle><angles key="angles" name="Pitch Yaw Roll" value="0 0 0">Full rotation: Pitch Yaw Roll in degrees.</angles><integer key="spawnflags" name="Spawnflags" value="0">Bitmask of spawning flags.</integer><flag key="no_dificuly_easy" name="Don't spawn on Easy" bit="0" /><flag key="no_dificuly_normal" name="Don't spawn on Normal" bit="1" /><flag key="no_dificuly_hard" name="Don't spawn on Hard" bit="2" /></point>
+    <point name="item_key_blue" color="0 0 1" box="-16 -16 -16 16 16 16">
+red key
+<string key="classname" name="Classname" value="item_key_blue">The classname of the entity.</string><model key="model" name="Model Path" value="models/pickups/shotgunAmmo.obj" /><real key="modelscale" name="Uniform Scale" value="1">Will by scaled by 32 in engine.</real><string key="targetname" name="Name" /><target key="target" name="Target">Targetname of entity to activate/target.</target><string key="onPickupEvent" name="On Pickup" /><angle key="angle" name="Yaw Angle" value="0">Yaw rotation in degrees. 0 = East, 90 = South, etc.</angle><angles key="angles" name="Pitch Yaw Roll" value="0 0 0">Full rotation: Pitch Yaw Roll in degrees.</angles><integer key="spawnflags" name="Spawnflags" value="0">Bitmask of spawning flags.</integer><flag key="no_dificuly_easy" name="Don't spawn on Easy" bit="0" /><flag key="no_dificuly_normal" name="Don't spawn on Normal" bit="1" /><flag key="no_dificuly_hard" name="Don't spawn on Hard" bit="2" /></point>
+    <point name="item_key_secret" color="0.8901960784313725 0.06666666666666667 0.9333333333333333" box="-16 -16 -16 16 16 16">
+red key
+<string key="classname" name="Classname" value="item_key_secret">The classname of the entity.</string><model key="model" name="Model Path" value="models/pickups/shotgunAmmo.obj" /><real key="modelscale" name="Uniform Scale" value="1">Will by scaled by 32 in engine.</real><string key="targetname" name="Name" /><target key="target" name="Target">Targetname of entity to activate/target.</target><string key="onPickupEvent" name="On Pickup" /><angle key="angle" name="Yaw Angle" value="0">Yaw rotation in degrees. 0 = East, 90 = South, etc.</angle><angles key="angles" name="Pitch Yaw Roll" value="0 0 0">Full rotation: Pitch Yaw Roll in degrees.</angles><integer key="spawnflags" name="Spawnflags" value="0">Bitmask of spawning flags.</integer><flag key="no_dificuly_easy" name="Don't spawn on Easy" bit="0" /><flag key="no_dificuly_normal" name="Don't spawn on Normal" bit="1" /><flag key="no_dificuly_hard" name="Don't spawn on Hard" bit="2" /></point>
+    <point name="item_key_special" color="0.9921568627450981 0.9411764705882353 0.00784313725490196" box="-16 -16 -16 16 16 16">
+red key
+<string key="classname" name="Classname" value="item_key_special">The classname of the entity.</string><model key="model" name="Model Path" value="models/pickups/shotgunAmmo.obj" /><real key="modelscale" name="Uniform Scale" value="1">Will by scaled by 32 in engine.</real><string key="targetname" name="Name" /><target key="target" name="Target">Targetname of entity to activate/target.</target><string key="onPickupEvent" name="On Pickup" /><angle key="angle" name="Yaw Angle" value="0">Yaw rotation in degrees. 0 = East, 90 = South, etc.</angle><angles key="angles" name="Pitch Yaw Roll" value="0 0 0">Full rotation: Pitch Yaw Roll in degrees.</angles><integer key="spawnflags" name="Spawnflags" value="0">Bitmask of spawning flags.</integer><flag key="no_dificuly_easy" name="Don't spawn on Easy" bit="0" /><flag key="no_dificuly_normal" name="Don't spawn on Normal" bit="1" /><flag key="no_dificuly_hard" name="Don't spawn on Hard" bit="2" /></point>
+    <point name="item_key_green" color="0 1 0.25098039215686274" box="-16 -16 -16 16 16 16">
+red key
+<string key="classname" name="Classname" value="item_key_green">The classname of the entity.</string><model key="model" name="Model Path" value="models/pickups/shotgunAmmo.obj" /><real key="modelscale" name="Uniform Scale" value="1">Will by scaled by 32 in engine.</real><string key="targetname" name="Name" /><target key="target" name="Target">Targetname of entity to activate/target.</target><string key="onPickupEvent" name="On Pickup" /><angle key="angle" name="Yaw Angle" value="0">Yaw rotation in degrees. 0 = East, 90 = South, etc.</angle><angles key="angles" name="Pitch Yaw Roll" value="0 0 0">Full rotation: Pitch Yaw Roll in degrees.</angles><integer key="spawnflags" name="Spawnflags" value="0">Bitmask of spawning flags.</integer><flag key="no_dificuly_easy" name="Don't spawn on Easy" bit="0" /><flag key="no_dificuly_normal" name="Don't spawn on Normal" bit="1" /><flag key="no_dificuly_hard" name="Don't spawn on Hard" bit="2" /></point>
+    <group name="trigger_key_once" color="0.5 0.5 0.5">
+        <array key="requiredKeys" name="Required Key">for example:
+red
+red green
+red green blue</array>
+        <string key="classname" name="Classname" value="trigger_key_once">The classname of the entity.</string>
+        <target key="target" name="Target" />
+        <string key="onEnterAction" name="On Enter" value="trigger_enter" />
+        <boolean key="_cs" name="Cast Shadows" value="0" />
+        <string key="targetname" name="Name" />
+    </group>
+    <group name="trigger_key_multi" color="0.5 0.5 0.5">
+        <array key="requiredKeys" name="Required Keys">for example:
+red
+red green
+red green blue</array>
+        <string key="classname" name="Classname" value="trigger_key_multi">The classname of the entity.</string>
+        <target key="target" name="Target" />
+        <boolean key="_cs" name="Cast Shadows" value="0" />
+        <string key="onEnterAction" name="On Enter" value="trigger_enter" />
+        <string key="onExitAction" name="On Exit" value="trigger_exit" />
+        <string key="targetname" name="Name" />
+    </group>
 </classes>

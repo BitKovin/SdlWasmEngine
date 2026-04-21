@@ -42,9 +42,10 @@
 
 #include <InteractionSystem/IInteractive.h>
 
+#include <Entities/Pickup/Keys/KeyTypes.h>
+
 // Forward declaration for custom item logic
 class Player;
-
 
 
 // Inventory system structures
@@ -90,6 +91,7 @@ private:
 												{WeaponAmmoType::PistolBullets,96},
 												{WeaponAmmoType::ShotgunShells,32},
 												{WeaponAmmoType::CannonBullets,12} };
+
 
 	float maxSpeed = 6.0f;
 	float maxSpeedAir = 2;
@@ -343,6 +345,9 @@ private:
 	void Death();
 
 public:
+
+
+	std::set<DoorKey> keysInventory;
 
 	bool dead = false;
 	Delay deathAnimDelay;

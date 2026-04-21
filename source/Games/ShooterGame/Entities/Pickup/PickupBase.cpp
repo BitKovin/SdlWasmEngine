@@ -23,3 +23,21 @@ void PickupBase::OnBodyEntered(Body* body, Entity* entity)
 	}
 
 }
+
+void PickupBase::FromData(EntityData data)
+{
+
+	Entity::FromData(data);
+
+	target = data.GetPropertyString("target");
+	pickupEvent = data.GetPropertyString("onPickupEvent");
+
+
+}
+
+void PickupBase::OnPickup(Player* player)
+{
+
+	CallActionOnEveryEntityWithName(target, pickupEvent);
+
+}
