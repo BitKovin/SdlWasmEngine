@@ -823,15 +823,39 @@ void CQuake3BSP::PreloadFace(int index)
         && textureName[nameL - 1] == 'e' && textureName[nameL - 2] == 'b'
         && textureName[nameL - 3] == 'u' && textureName[nameL - 4] == 'c';
 
-    string texturePath = "GameData/" + textureName + ".png";
+    std::string basePath = "GameData/" + textureName;
     if (isCube) {
-        auto parts = StringHelper::Split(texturePath, '/');
-        texturePath = "GameData/env/" + parts.back();
+        auto parts = StringHelper::Split(basePath, '/');
+        basePath = "GameData/env/" + parts.back();
     }
 
-    int faceTexture = isCube
-        ? AssetRegistry::GetTextureCubeFromFile(texturePath)->getID()
-        : AssetRegistry::GetTextureFromFile(texturePath)->getID();
+    std::vector<std::string> extensions = { ".png", ".jpg", ".jpeg" };
+
+    int faceTexture = m_whiteLightmap->getID();
+
+    if (isCube) {
+        CubemapTexture* tex = nullptr;
+
+        for (const auto& ext : extensions) {
+            tex = AssetRegistry::GetTextureCubeFromFile(basePath + ext);
+            if (tex && tex->valid) {
+                faceTexture = tex->getID();
+                break;
+            }
+        }
+    }
+    else {
+        Texture* tex = nullptr;
+
+        for (const auto& ext : extensions) {
+            tex = AssetRegistry::GetTextureFromFile(basePath + ext);
+            if (tex && tex->valid) {
+                faceTexture = tex->getID();
+                break;
+            }
+        }
+    }
+
 
     CachedFaceTextureData data;
     data.isCube = isCube;

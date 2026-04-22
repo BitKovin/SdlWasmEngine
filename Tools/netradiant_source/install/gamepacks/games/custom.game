@@ -17,7 +17,7 @@
   unknowngamename="Custom Quake III modification"
   shaderpath="scripts"
   archivetypes="pk3"
-  texturetypes="png"
+  texturetypes="png jpg"
   modeltypes="obj glb"
   soundtypes="wav"
   maptypes="mapq3"

@@ -1425,6 +1425,33 @@
 ( -1024 -4928 16 ) ( -960 -4928 16 ) ( -1024 -4928 80 ) common/caulk 0 0 0 1 1 0 0 0
 ( -988 -5808 16 ) ( -988 -5808 252.135559082 ) ( -752 -5816 16 ) common/caulk 0 0 0 1 1 0 0 0
 }
+// brush 157
+{
+( -1728 -5232 208 ) ( -1728 -5488 208 ) ( -1984 -5232 208 ) building_1/b1_f3 0 0 0 1 1 0 0 0
+( -1728 -5232 208 ) ( -1984 -5232 208 ) ( -1728 -5232 192 ) building_1/b1_f3 0 0 0 1 1 0 0 0
+( -1728 -5232 208 ) ( -1728 -5232 192 ) ( -1728 -5488 208 ) building_1/b1_f3 0 0 0 1 1 0 0 0
+( -1984 -5488 192 ) ( -1728 -5488 192 ) ( -1984 -5232 192 ) building_1/b1_f3 0 0 0 1 1 0 0 0
+( -1984 -5488 192 ) ( -1984 -5488 208 ) ( -1728 -5488 192 ) building_1/b1_f3 0 0 0 1 1 0 0 0
+( -1984 -5488 192 ) ( -1984 -5232 192 ) ( -1984 -5488 208 ) building_1/b1_f3 0 0 0 1 1 0 0 0
+}
+// brush 158
+{
+( -1968 -5232 352 ) ( -1968 -5488 352 ) ( -1984 -5232 352 ) building_1/b1_f3 0 0 0 1 1 0 0 0
+( -1968 -5232 224 ) ( -1984 -5232 224 ) ( -1968 -5232 208 ) building_1/b1_f3 0 0 0 1 1 0 0 0
+( -1968 -5232 224 ) ( -1968 -5232 208 ) ( -1968 -5488 224 ) building_1/b1_f3 0 0 0 1 1 0 0 0
+( -1984 -5488 208 ) ( -1968 -5488 208 ) ( -1984 -5232 208 ) building_1/b1_f3 0 0 0 1 1 0 0 0
+( -1984 -5488 208 ) ( -1984 -5488 224 ) ( -1968 -5488 208 ) building_1/b1_f3 0 0 0 1 1 0 0 0
+( -1984 -5488 208 ) ( -1984 -5232 208 ) ( -1984 -5488 224 ) building_1/b1_f3 0 0 0 1 1 0 0 0
+}
+// brush 159
+{
+( -1856 -5248 368 ) ( -1856 -5504 368 ) ( -1984 -5248 368 ) building_1/b1_f3 0 0 0 1 1 0 0 0
+( -1856 -5248 368 ) ( -1984 -5248 368 ) ( -1856 -5248 352 ) building_1/b1_f3 0 0 0 1 1 0 0 0
+( -1728 -5248 368 ) ( -1728 -5248 352 ) ( -1728 -5504 368 ) building_1/b1_f3 0 0 0 1 1 0 0 0
+( -1984 -5504 352 ) ( -1856 -5504 352 ) ( -1984 -5248 352 ) building_1/b1_f3 0 0 0 1 1 0 0 0
+( -1984 -5504 352 ) ( -1984 -5504 368 ) ( -1856 -5504 352 ) building_1/b1_f3 0 0 0 1 1 0 0 0
+( -1952 -5504 352 ) ( -1952 -5248 352 ) ( -1952 -5504 368 ) building_1/b1_f3 0 0 0 1 1 0 0 0
+}
 }
 // entity 1
 {
@@ -4665,7 +4692,9 @@
 // entity 98
 {
 "classname" "item_key_red"
-"origin" "-1840 -4992 48"
+"origin" "-1856 -4992 48"
+"model" "models/pickups/key.obj"
+"angle" "0"
 }
 // entity 99
 {
@@ -4673,7 +4702,7 @@
 "target" "b1_of1_book_hid"
 "onEnterAction" "open"
 "requiredKey" "red"
-"requiredKeys" "red"
+"requiredKeys" "red blue"
 // brush 0
 {
 ( -1784 -5320 16 ) ( -1784 -5264 16 ) ( -1784 -5320 24 ) common/trigger 56 0 0 1 1 0 0 0
@@ -4683,4 +4712,61 @@
 ( -1720 -5272 24 ) ( -1760 -5272 24 ) ( -1720 -5272 16 ) common/trigger 16 0 -0 1 1 0 0 0
 ( -1704 -5264 24 ) ( -1704 -5264 16 ) ( -1704 -5320 24 ) common/trigger 56 0 0 1 1 0 0 0
 }
+}
+// entity 100
+{
+"classname" "item_key_blue"
+"origin" "-1808 -4992 48"
+"model" "models/pickups/key.obj"
+}
+// entity 101
+{
+"classname" "misc_model"
+"origin" "-591.727 -5719.03 112"
+"model" "models/enviroment/sewers/Serwers.obj"
+"modelscale" "32"
+"angle" "180"
+"_lightmapscale" "0.5"
+"spawnflags" "12"
+}
+// entity 102
+{
+"classname" "misc_model"
+"origin" "-591.727 -5438.03 112"
+"model" "models/enviroment/sewers/Serwers_001.obj"
+"modelscale" "32"
+"angle" "180"
+"_lightmapscale" "0.5"
+"spawnflags" "12"
+}
+// entity 103
+{
+"classname" "light"
+"origin" "-96 16 192"
+"light" "100"
+}
+// entity 104
+{
+"classname" "misc_model"
+"origin" "-308.897 -5718.82 112"
+"model" "models/enviroment/sewers/Serwers.obj"
+"modelscale" "32"
+"angle" "-90"
+"_lightmapscale" "0.5"
+"spawnflags" "12"
+}
+// entity 105
+{
+"classname" "misc_model"
+"origin" "-309.107 -5437.99 112"
+"model" "models/enviroment/sewers/Serwers.obj"
+"modelscale" "32"
+"_lightmapscale" "0.5"
+"spawnflags" "12"
+}
+// entity 106
+{
+"classname" "light"
+"origin" "-443 -5679 152"
+"light" "200"
 }
