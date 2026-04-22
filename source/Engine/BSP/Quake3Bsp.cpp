@@ -833,6 +833,8 @@ void CQuake3BSP::PreloadFace(int index)
 
     int faceTexture = m_whiteLightmap->getID();
 
+    bool transparentPixels = false;
+
     if (isCube) {
         CubemapTexture* tex = nullptr;
 
@@ -851,6 +853,7 @@ void CQuake3BSP::PreloadFace(int index)
             tex = AssetRegistry::GetTextureFromFile(basePath + ext);
             if (tex && tex->valid) {
                 faceTexture = tex->getID();
+                transparentPixels = tex->transparent;
                 break;
             }
         }
@@ -861,7 +864,7 @@ void CQuake3BSP::PreloadFace(int index)
     data.isCube = isCube;
     data.textureId = faceTexture;
     data.textureName = textureName;
-    data.transparent = textureName.ends_with("_t");
+    data.transparent = textureName.ends_with("_t") || transparentPixels;
     data.numOfIndices = numOfIndices;
     data.numActiveSlots = 1;
 

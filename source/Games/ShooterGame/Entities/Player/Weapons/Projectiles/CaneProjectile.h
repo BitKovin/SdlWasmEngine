@@ -3,6 +3,7 @@
 #include <Entity.h>
 
 #include <Particle/ParticleSystem.hpp>
+#include <StaticMesh.h>
 
 class CaneProjectile : public Entity
 {

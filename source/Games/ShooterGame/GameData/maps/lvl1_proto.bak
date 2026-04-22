@@ -4726,8 +4726,8 @@
 "model" "models/enviroment/sewers/Serwers.obj"
 "modelscale" "32"
 "angle" "180"
-"_lightmapscale" "1"
-"spawnflags" "4"
+"_lightmapscale" "0.5"
+"spawnflags" "12"
 }
 // entity 102
 {
@@ -4736,8 +4736,8 @@
 "model" "models/enviroment/sewers/Serwers_001.obj"
 "modelscale" "32"
 "angle" "180"
-"_lightmapscale" "1"
-"spawnflags" "4"
+"_lightmapscale" "0.5"
+"spawnflags" "12"
 }
 // entity 103
 {
@@ -4752,8 +4752,8 @@
 "model" "models/enviroment/sewers/Serwers.obj"
 "modelscale" "32"
 "angle" "-90"
-"_lightmapscale" "1"
-"spawnflags" "4"
+"_lightmapscale" "0.5"
+"spawnflags" "12"
 }
 // entity 105
 {
@@ -4761,12 +4761,39 @@
 "origin" "-309.107 -5437.99 112"
 "model" "models/enviroment/sewers/Serwers.obj"
 "modelscale" "32"
-"_lightmapscale" "1"
-"spawnflags" "4"
+"_lightmapscale" "0.5"
+"spawnflags" "12"
 }
 // entity 106
 {
 "classname" "light"
 "origin" "-443 -5679 152"
 "light" "200"
+}
+// entity 107
+{
+"classname" "misc_model"
+"origin" "-248.897 -5778.82 47"
+"model" "models/enviroment/sewers/Trash_M.obj"
+"modelscale" "32"
+"angle" "-90"
+"_lightmapscale" "0.5"
+}
+// entity 108
+{
+"classname" "misc_model"
+"origin" "-398.754 -5798.24 47"
+"model" "models/enviroment/sewers/Trash_M_01.obj"
+"modelscale" "32"
+"angle" "14.8097"
+"_lightmapscale" "0.5"
+}
+// entity 109
+{
+"classname" "misc_model"
+"origin" "-589.897 -5696.82 21"
+"model" "models/enviroment/sewers/debris_01.obj"
+"modelscale" "32"
+"angle" "-90"
+"_lightmapscale" "0.5"
 }

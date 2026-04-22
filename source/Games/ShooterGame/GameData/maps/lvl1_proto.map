@@ -4770,3 +4770,48 @@
 "origin" "-443 -5679 152"
 "light" "200"
 }
+// entity 107
+{
+"classname" "misc_model"
+"origin" "-248.897 -5778.82 47"
+"model" "models/enviroment/sewers/Trash_M.obj"
+"modelscale" "32"
+"angle" "-90"
+"_lightmapscale" "0.5"
+}
+// entity 108
+{
+"classname" "misc_model"
+"origin" "-398.754 -5798.24 47"
+"model" "models/enviroment/sewers/Trash_M_01.obj"
+"modelscale" "32"
+"angle" "14.8097"
+"_lightmapscale" "0.5"
+}
+// entity 109
+{
+"classname" "misc_model"
+"origin" "-589.897 -5696.82 21"
+"model" "models/enviroment/sewers/debris_01.obj"
+"modelscale" "32"
+"angle" "-90"
+"_lightmapscale" "0.5"
+}
+// entity 110
+{
+"classname" "misc_model"
+"origin" "-589.897 -5391.82 21"
+"model" "models/enviroment/sewers/debris_01.obj"
+"modelscale" "32"
+"angle" "-90"
+"_lightmapscale" "0.5"
+}
+// entity 111
+{
+"classname" "misc_model"
+"origin" "-374.897 -5437.82 21"
+"model" "models/enviroment/sewers/debris_01.obj"
+"modelscale" "32"
+"angle" "-90"
+"_lightmapscale" "0.5"
+}

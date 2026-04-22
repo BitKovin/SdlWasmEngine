@@ -3,7 +3,7 @@
 #include <Entity.h>
 #include <Navigation/Navigation.hpp>
 #include <imgui/imgui.h>
-
+#include <StaticMesh.h>
 #include <InteractionSystem/IInteractive.h>
 
 class Door : public Entity , public IInteractive
