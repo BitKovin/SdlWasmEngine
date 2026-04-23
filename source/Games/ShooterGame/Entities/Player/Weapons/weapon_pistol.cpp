@@ -11,8 +11,8 @@ public:
     weapon_pistol() : WeaponFirearm() 
     {
 		params.ammoType = WeaponAmmoType::PistolBullets;
-        params.modelPath = "GameData/models/player/weapons/pistol/pistol.glb";
-        params.texturesLocation = "GameData/models/player/weapons/pistol/pistol.glb/";
+        params.modelPath = "GameData/models/player/weapons/pistol/revolver.glb";
+        params.texturesLocation = "GameData/models/player/weapons/pistol/revolver.glb/";
         params.modelPathTp = "GameData/models/player/weapons/pistol/pistol_tp.glb";
         params.texturesLocationTp = "GameData/models/player/weapons/pistol/pistol_tp.glb/";
         params.fireSoundEvent = "event:/Weapons/pistol/pistol_fire";
@@ -21,12 +21,15 @@ public:
         params.baseSpread = 0.1f;
         params.spreadIncreasePerShot = 0.1f;
         params.maxActiveSpread = 0.8f;
-        params.attackDelayTime = 0.35f;
-        params.switchDelayTime = 0.3f;
+        //params.attackDelayTime = 0.35f;
+        //params.switchDelayTime = 0.3f;
+        params.attackDelayTime = 0.55f;
+        params.switchDelayTime = 0.5f;
         params.switchDelayOnAttack = 0.2f;
-        params.weaponOffset = vec3(0.0, 0.00, -0.0);
+        params.weaponOffset = vec3(0.0, -0.01, -0.0);
         params.bulletSpeed = 200.0f;
-        params.bulletDamage = 19.0f;
+        //params.bulletDamage = 19.0f;
+        params.bulletDamage = 25.0f;
         params.range = 80.0f;
         params.fireAnimation = "fire";
         params.fireAnimInterpInTime = 0.08f;
@@ -43,6 +46,8 @@ public:
             0.5f,                              // falloff
             CameraShake::ShakeType::SingleWave // shakeType
         );
+
+        
 
 		//params.debuffOnHit = "QuicksilverDebuff";
 		//params.debuffStacksOnHit = 55.0f;

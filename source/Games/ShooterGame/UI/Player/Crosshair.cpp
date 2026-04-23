@@ -56,7 +56,14 @@ UiCrosshair::UiCrosshair()
 	bottomImage->color = crosshairColor;
 	AddChild(bottomImage);
 
-
+	simpleCross = std::make_shared<UiImage>();
+	simpleCross->ImagePath = "GameData/textures/ui/crosshair_cross.png";
+	simpleCross->pivot = vec2(0.5f, 0.5f);
+	simpleCross->position = vec2(0.0f, 0);
+	simpleCross->size = vec2(32, 32);
+	simpleCross->color = vec4(1,1,1,0.7f);
+	simpleCross->PixelShader = "fs_ui_textured_point";
+	AddChild(simpleCross);
 }
 
 UiCrosshair::~UiCrosshair()
@@ -66,6 +73,9 @@ UiCrosshair::~UiCrosshair()
 void UiCrosshair::Update()
 {
 
+	simpleCross->visible = UseSimpleCross;
+
+	leftImage->visible = rightImage->visible = topImage->visible = bottomImage->visible = dotImage->visible = !UseSimpleCross;
 
 	Player* player = Player::Instance;
 

@@ -73,6 +73,8 @@ public:
         return debuffs_;
 	}   
 
+    bool widgetVisible = false;
+
 protected:
     std::vector<std::shared_ptr<Debuff>> debuffs_;
 

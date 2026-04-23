@@ -414,7 +414,7 @@ void TestNpc::UpdateStatusWidgets()
 	statusWidget->TwoSided = true;
 	statusWidget->Update();
 
-	statusWidget->Visible = !dead;
+	statusWidget->Visible = !dead && widgetVisible;
 
 }
 

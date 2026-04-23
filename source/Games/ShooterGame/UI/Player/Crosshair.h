@@ -17,7 +17,11 @@ public:
 	std::shared_ptr<UiImage> topImage;
 	std::shared_ptr<UiImage> bottomImage;
 
+	std::shared_ptr<UiImage> simpleCross;
+
 	void Update() override;
+
+	bool UseSimpleCross = true;
 
 private:
 

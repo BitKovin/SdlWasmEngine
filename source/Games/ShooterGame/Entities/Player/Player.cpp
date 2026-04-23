@@ -38,6 +38,12 @@ void Player::Start()
 
 	Entity::Start();
 
+	playerLight = new PointLight();
+	Level::Current->AddEntity(playerLight);
+	playerLight->Start();
+	playerLight->intensity = 0.1f;
+	playerLight->radius = 10;
+
 	started = true;
 
 	Instance = this;
@@ -2197,6 +2203,13 @@ void Player::LateUpdate()
 	}
 
 	Hud.Update();
+
+	if (playerLight)
+	{
+		playerLight->Position = Camera::position;
+		playerLight->Rotation = Camera::rotation;
+
+	}
 
 }
 

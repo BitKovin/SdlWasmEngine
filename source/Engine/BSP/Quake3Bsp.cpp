@@ -1127,6 +1127,7 @@ LightVolPointData CQuake3BSP::GetLightvolColorPoint(const glm::vec3& position, b
                 styleWeight = 2.0f;
 
 
+
             for (int s = 0; s < BSP_MAX_LIGHTMAP_STYLES; ++s) {
                 if (vol.styles[s] == LS_NONE) continue;
                 const glm::vec3 styleColor = GetStyleColor(vol.styles[s]);
@@ -1151,6 +1152,9 @@ LightVolPointData CQuake3BSP::GetLightvolColorPoint(const glm::vec3& position, b
                     vol.directional[s][0] / 255.0f,
                     vol.directional[s][1] / 255.0f,
                     vol.directional[s][2] / 255.0f) * styleColor * styleWeight;
+
+
+
             }
             return { ambient, directional, computeLightDirection(vol.dir) };
         };

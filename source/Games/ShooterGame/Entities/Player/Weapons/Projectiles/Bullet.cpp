@@ -51,8 +51,8 @@ void Bullet::Update()
 
 	trail->Position = Position;
 
-	auto hit = Physics::LineTrace(oldPos, Position, BodyType::GroupHitTest, {}, {owner});
-
+	//auto hit = Physics::LineTrace(oldPos, Position, BodyType::GroupHitTest, {}, {owner});
+	auto hit = Physics::SphereTrace(oldPos, Position,0.07f, BodyType::GroupHitTest, {}, { owner });
 
 	if (hit.hasHit)
 	{

@@ -44,6 +44,8 @@
 
 #include <Entities/Pickup/Keys/KeyTypes.h>
 
+#include <Entities/PointLight.h>
+
 // Forward declaration for custom item logic
 class Player;
 
@@ -92,6 +94,8 @@ private:
 												{WeaponAmmoType::ShotgunShells,32},
 												{WeaponAmmoType::CannonBullets,12} };
 
+
+	PointLight* playerLight = nullptr;
 
 	float maxSpeed = 6.0f;
 	float maxSpeedAir = 2;

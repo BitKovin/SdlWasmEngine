@@ -55,8 +55,12 @@ public:
         params.useOneshotSound = true;
         params.pitchModifier = 1.2f;
         params.fireVolume = 0.4f;
-        params.baseSpread = 0.15f;
-        params.spreadIncreasePerShot = 0.05f;
+
+        //params.baseSpread = 0.15f;
+        //params.spreadIncreasePerShot = 0.05f;
+
+        params.baseSpread = 0.02f;
+        params.spreadIncreasePerShot = 0.01f;
         params.maxActiveSpread = 0.7f;
         params.velocitySpreadDivisor = 15.5f;
         params.attackDelayTime = BASE_ATTACK_DELAY;

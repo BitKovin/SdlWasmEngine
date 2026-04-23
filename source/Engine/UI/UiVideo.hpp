@@ -46,7 +46,7 @@ public:
             if (PixelShader.empty())
                 UiRenderer::DrawTexturedRect(finalizedMatrix, finalizedSize, tex->getHandle(), GetFinalColor());
             else
-                UiRenderer::DrawTexturedRectShader(finalizedMatrix, finalizedSize, tex->getHandle(), GetFinalColor(), PixelShader);
+                UiRenderer::DrawTexturedRectShader(finalizedMatrix, finalizedSize, tex->getHandle(), GetFinalColor(), PixelShader, tex->height, tex->width);
         }
 
         UiElement::Draw();

@@ -484,7 +484,7 @@ void NpcHumanBase::UpdateStatusWidgets()
     statusWidget->TwoSided = true;
     statusWidget->Update();
 
-    statusWidget->Visible = !dead;
+    statusWidget->Visible = !dead && widgetVisible;
 }
 
 void NpcHumanBase::UpdateDebugUI()

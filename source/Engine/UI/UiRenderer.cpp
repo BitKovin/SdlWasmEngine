@@ -898,14 +898,21 @@ namespace UiRenderer {
     }
 
     void DrawTexturedRectShader(const glm::mat3& transform, const glm::vec2& size,
-        bgfx::TextureHandle texture, const glm::vec4& color, const string& shader)
+        bgfx::TextureHandle texture, const glm::vec4& color, const string& shader, float textureHeight, float textureWidth)
     {
-        auto* sp = ShaderManager::GetShaderProgram("ui", shader);
+        auto* sp = ShaderManager::GetShaderProgram("vs_ui", shader);
         sp->UseProgram();
         SetShaderProjection(sp);
         sp->SetUniform("u_Model", BuildQuadModelFromMat3(transform, size));
         sp->SetUniform("u_Color", color);
         sp->SetTexture("u_Texture", texture);
+
+        vec4 textureSize = {
+            (float)textureWidth, (float)textureHeight,
+            1.0f / textureWidth, 1.0f / textureHeight
+        };
+
+        sp->SetUniform("u_TextureSize", textureSize);
         SubmitQuad(sp);
     }
 

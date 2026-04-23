@@ -69,7 +69,6 @@ public:
 		Health = 80;
 		MaxHealth = 80;
 
-		mesh->UpdatePoseOnlyWhenRendered = true;
 
 		Tags.push_back("enemy");
 

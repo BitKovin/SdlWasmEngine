@@ -56,7 +56,7 @@ namespace UiRenderer {
     void DrawTexturedRectShader(const glm::mat3& transform, const glm::vec2& size,
                                 bgfx::TextureHandle texture,
                                 const glm::vec4& color,
-                                const string& shader);
+                                const string& shader, float textureHeight, float textureWidth);
 
     // Textured rectangle with a custom pixel shader (multiple parameter maps).
     void DrawTexturedRectShaderParams(const glm::mat3& transform, const glm::vec2& size,

@@ -542,10 +542,10 @@ struct game_qfusion : game_default
 		maxSurfaceVerts = 65535;
 		maxSurfaceIndexes = 393210;
 		lightmapSize = 512;
-		lightmapsRGB = true;
-		texturesRGB = true;
-		colorsRGB = true;
-		lightAngleHL = true;
+		//lightmapsRGB = true;
+		//texturesRGB = true;
+		//colorsRGB = true;
+		//lightAngleHL = true;
 		noStyles = true;
 		keepLights = true;
 		patchSubdivisions = 4;
