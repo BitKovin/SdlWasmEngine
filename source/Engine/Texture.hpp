@@ -47,8 +47,56 @@ public:
         if (bgfx::isValid(m_handle))
             bgfx::setName(m_handle, name.c_str(), (int32_t)name.size());
     }
+
+    glm::vec3 SampleRGB(float u, float v) const
+    {
+        if (!valid || m_pixels.empty() || width <= 0 || height <= 0)
+            return glm::vec3(0.0f);
+
+        // Wrap UVs (repeat)
+        u = u - std::floor(u);
+        v = v - std::floor(v);
+
+        // Convert to pixel space
+        float x = u * (width - 1);
+        float y = v * (height - 1);
+
+        int x0 = (int)x;
+        int y0 = (int)y;
+        int x1 = std::min(x0 + 1, width - 1);
+        int y1 = std::min(y0 + 1, height - 1);
+
+        float tx = x - x0;
+        float ty = y - y0;
+
+        auto sample = [&](int px, int py) -> glm::vec3
+            {
+                const uint8_t* p = &m_pixels[(py * width + px) * m_bpp];
+                return glm::vec3(
+                    p[0] / 255.0f,
+                    p[1] / 255.0f,
+                    p[2] / 255.0f
+                );
+            };
+
+        glm::vec3 c00 = sample(x0, y0);
+        glm::vec3 c10 = sample(x1, y0);
+        glm::vec3 c01 = sample(x0, y1);
+        glm::vec3 c11 = sample(x1, y1);
+
+        // Bilinear interpolation
+        glm::vec3 cx0 = glm::mix(c00, c10, tx);
+        glm::vec3 cx1 = glm::mix(c01, c11, tx);
+
+        return glm::mix(cx0, cx1, ty);
+    }
+
 private:
     bgfx::TextureHandle m_handle = BGFX_INVALID_HANDLE;
+
+    std::vector<uint8_t> m_pixels; // CPU copy (RGBA8 assumed)
+    int m_bpp = 4; // bytes per pixel
+
     // -----------------------------------------------------------------------
     // Helpers
     // -----------------------------------------------------------------------
@@ -195,6 +243,10 @@ private:
             }
         }
 
+        m_pixels.assign((const uint8_t*)pixels,
+            (const uint8_t*)pixels + (size_t)w * h * bpp);
+        m_bpp = bpp;
+
         width = w;
         height = h;
         ResourceStatistics::Instance().registerResource(
@@ -203,6 +255,8 @@ private:
             "Texture*" + std::to_string(w) + "x" + std::to_string(h) + formatSuffix(format));
         valid = true;
     }
+
+
     // -----------------------------------------------------------------------
     // Core upload
     // -----------------------------------------------------------------------

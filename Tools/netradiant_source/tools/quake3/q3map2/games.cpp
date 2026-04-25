@@ -550,7 +550,7 @@ struct game_qfusion : game_default
 		keepLights = true;
 		patchSubdivisions = 4;
 		patchShadows = true;
-		deluxeMap = true;
+		//deluxeMap = true;
 		miniMapBorder = 1.0f / 66.0f;
 		miniMapNameFormat = "../minimaps/%s.tga";
 		bspIdent = "FBSP";

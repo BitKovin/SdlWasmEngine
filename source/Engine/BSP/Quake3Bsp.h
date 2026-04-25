@@ -593,6 +593,12 @@ public:
     LightVolPointData GetLightvolColorPoint(const glm::vec3& position, bool wallCheck = false);
     LightVolPointData GetLightvolColor(const glm::vec3& position, bool wallCheck = false);
 
+    // Casts a ray from 'start' to 'end' (engine Y-up world space, BSP units)
+    // against worldspawn (model 0) faces that carry a lightmap.
+    // Returns the bilinearly-filtered RGB lightmap colour at the first hit,
+    // or vec3(0) if the ray misses all lit geometry.
+    glm::vec3 LinetraceLightmapColor(glm::vec3 start, glm::vec3 end);
+
     int  FindClusterAtPosition(glm::vec3 cameraPos);
     bool IsClusterVisible(int sourceCluster, int testCluster);
 
@@ -625,6 +631,15 @@ private:
     // Slot 0 of the 4-element arrays maps to the existing single-slot fields.
     // The raw face is also kept in m_pFacesRBSP for multi-style access.
     static tBSPFace ConvertRBSPFace(const tBSPFaceRBSP& src);
+
+    // Samples the lightmap colour at a world-space hit point on a given face.
+    // For embedded lightmaps (G_lightMaps) performs bilinear filtering on raw
+    // CPU pixel data.  For external lightmaps (per-face TGA files) it delegates
+    // to Texture::SampleRGB() — a placeholder that must be implemented in
+    // Texture.hpp / Texture.cpp to perform CPU-side texel lookup.
+    //
+    // hitPos : engine Y-up world space, BSP units (same frame as v_faceVBOs).
+    glm::vec3 SampleLightmapFace(int faceIndex, const glm::vec3& hitPos);
 };
 
 

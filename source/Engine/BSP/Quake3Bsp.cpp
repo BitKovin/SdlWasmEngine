@@ -1320,6 +1320,276 @@ LightVolPointData CQuake3BSP::GetLightvolColor(const glm::vec3& position, bool w
     return centerData;
 }
 
+glm::vec3 CQuake3BSP::SampleLightmapFace(int faceIndex, const glm::vec3& hitPos)
+{
+    const tBSPFace& face = m_pFaces[faceIndex];
+    const auto& verts = Rbuffers.v_faceVBOs[faceIndex];
+    const auto& indices = Rbuffers.v_faceIDXs[faceIndex];
+
+    if (verts.empty() || indices.size() < 3) return glm::vec3(0.0f);
+
+    // ── Find Barycentric Coordinates for the hit point ────────────
+    bool found = false;
+    float bU = 0.0f, bV = 0.0f, bW = 0.0f;
+    int hitIdx0 = 0, hitIdx1 = 0, hitIdx2 = 0;
+
+    for (size_t i = 0; i + 2 < indices.size(); i += 3)
+    {
+        hitIdx0 = indices[i + 0];
+        hitIdx1 = indices[i + 1];
+        hitIdx2 = indices[i + 2];
+
+        glm::vec3 A = verts[hitIdx0].Position;
+        glm::vec3 B = verts[hitIdx1].Position;
+        glm::vec3 C = verts[hitIdx2].Position;
+
+        glm::vec3 e0 = B - A;
+        glm::vec3 e1 = C - A;
+        glm::vec3 e2 = hitPos - A;
+
+        float d00 = glm::dot(e0, e0);
+        float d01 = glm::dot(e0, e1);
+        float d11 = glm::dot(e1, e1);
+        float d20 = glm::dot(e2, e0);
+        float d21 = glm::dot(e2, e1);
+
+        float denom = d00 * d11 - d01 * d01;
+        if (fabsf(denom) < 1e-8f) continue; // Degenerate triangle
+
+        bV = (d11 * d20 - d01 * d21) / denom;
+        bW = (d00 * d21 - d01 * d20) / denom;
+        bU = 1.0f - bV - bW;
+
+        // Expand tolerance slightly for floating point inaccuracies from raycast hits
+        if (bU >= -1e-4f && bV >= -1e-4f && bW >= -1e-4f)
+        {
+            found = true;
+            break;
+        }
+    }
+
+    if (!found)
+    {
+        // Fallback: If precision issues caused all tests to fail, use the closest vertex
+        float minDist2 = std::numeric_limits<float>::max();
+        for (size_t i = 0; i < verts.size(); ++i)
+        {
+            float d2 = glm::distance2(hitPos, verts[i].Position);
+            if (d2 < minDist2)
+            {
+                minDist2 = d2;
+                hitIdx0 = hitIdx1 = hitIdx2 = i;
+                bU = 1.0f; bV = 0.0f; bW = 0.0f;
+            }
+        }
+    }
+
+    // ── Helper: Sample a single lightmap slot ────────────
+    auto sampleAtlas = [&](int lmAtlasIndex, glm::vec2 uv) -> glm::vec3 {
+        if (lmAtlasIndex < 0) return glm::vec3(0.0f);
+
+        // Embedded CPU lightmap
+        if (lmAtlasIndex < static_cast<int>(Rbuffers.G_lightMaps.size()))
+        {
+            const tBSPLightmapData& lmd = Rbuffers.G_lightMaps[lmAtlasIndex];
+            const int sz = lmd.size;
+
+            const float fs = uv.x * static_cast<float>(sz);
+            const float ft = uv.y * static_cast<float>(sz);
+
+            const int x0 = glm::clamp(static_cast<int>(floorf(fs)), 0, sz - 1);
+            const int y0 = glm::clamp(static_cast<int>(floorf(ft)), 0, sz - 1);
+            const int x1 = glm::clamp(x0 + 1, 0, sz - 1);
+            const int y1 = glm::clamp(y0 + 1, 0, sz - 1);
+
+            const float fx = fs - floorf(fs);
+            const float fy = ft - floorf(ft);
+
+            auto texel = [&](int px, int py) -> glm::vec3 {
+                const int base = (py * sz + px) * 3;
+                return glm::vec3(
+                    lmd.pixels[base + 0] / 255.0f,
+                    lmd.pixels[base + 1] / 255.0f,
+                    lmd.pixels[base + 2] / 255.0f);
+                };
+
+            return glm::mix(
+                glm::mix(texel(x0, y0), texel(x1, y0), fx),
+                glm::mix(texel(x0, y1), texel(x1, y1), fx),
+                fy);
+        }
+
+        // External lightmap: delegate to Texture::SampleRGB
+        if (lmAtlasIndex < static_cast<int>(m_lightmapTextures.size()))
+        {
+            const auto& tex = m_lightmapTextures[lmAtlasIndex];
+            if (tex && tex->valid) return tex->SampleRGB(uv.x, uv.y);
+        }
+
+        const std::string path = GetLightMapFilePathFromId(lmAtlasIndex, filePath);
+        if (!path.empty())
+        {
+            Texture* tex = AssetRegistry::GetTextureFromFile(path);
+            if (tex && tex->valid) return tex->SampleRGB(uv.x, uv.y);
+        }
+
+        return glm::vec3(0.0f);
+        };
+
+    // ── Accumulate Light Styles ────────────
+    glm::vec3 finalColor(0.0f);
+
+    for (int slot = 0; slot < BSP_MAX_LIGHTMAP_STYLES; ++slot)
+    {
+        uint8_t style = LS_NONE;
+        int lmIndex = -1;
+
+        if (m_isRBSP && m_pFacesRBSP)
+        {
+            style = m_pFacesRBSP[faceIndex].lightmapStyles[slot];
+            lmIndex = m_pFacesRBSP[faceIndex].lightmapNum[slot];
+        }
+        else
+        {
+            if (slot == 0) {
+                style = LS_NORMAL;
+                lmIndex = face.lightmapID;
+            }
+        }
+
+        if (style == LS_NONE || lmIndex < 0) continue;
+
+        glm::vec3 styleColor = GetStyleColor(style);
+        if (styleColor == glm::vec3(0.0f)) continue; // Style is dark, skip sampling
+
+        // Get the UV array for this specific slot. If empty, fall back to slot 0.
+        const auto& uvSets = Rbuffers.v_faceLightmapUVs[faceIndex];
+        const auto& activeUVSet = uvSets[slot].empty() ? uvSets[0] : uvSets[slot];
+
+        // Safety check to ensure we don't read out of bounds
+        if (hitIdx0 >= activeUVSet.size() || hitIdx1 >= activeUVSet.size() || hitIdx2 >= activeUVSet.size())
+            continue;
+
+        // Interpolate UVs using our earlier calculated Barycentric weights
+        glm::vec2 lightmapUV = bU * activeUVSet[hitIdx0] +
+            bV * activeUVSet[hitIdx1] +
+            bW * activeUVSet[hitIdx2];
+
+        glm::vec3 sampledColor = sampleAtlas(lmIndex, lightmapUV);
+
+        finalColor += sampledColor * styleColor;
+    }
+
+    return finalColor;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LinetraceLightmapColor
+//
+// Casts a ray from 'start' to 'end' in engine Y-up BSP-unit space and returns
+// the lightmap colour at the closest hit on a lit worldspawn face.
+//
+// Optimisation — cluster PVS culling:
+//   Only faces in leaves visible from the start cluster are tested.  Because
+//   BSP PVS encodes which rooms can see each other, faces in unreachable rooms
+//   are trivially culled before any geometry math is done.  This mirrors how
+//   classic Quake/Q2 renderers bounded their own lightmap sampling loops.
+//   When no vis data is available every worldspawn face is tested (safe
+//   fallback identical to the previous implementation).
+//
+// Returns vec3(0) when the ray misses all lit geometry or lightmap data is
+// absent.
+// ─────────────────────────────────────────────────────────────────────────────
+
+glm::vec3 CQuake3BSP::LinetraceLightmapColor(glm::vec3 start, glm::vec3 end)
+{
+    if (models.empty()) return glm::vec3(0.0f);
+
+    const glm::vec3 rayDir = end - start;
+    const float     rayLen = glm::length(rayDir);
+    if (rayLen < 1e-6f) return glm::vec3(0.0f);
+    const glm::vec3 rayDirN = rayDir / rayLen;
+
+    // ── Build candidate face list via cluster PVS ─────────────────────────────
+    // FindClusterAtPosition takes engine-scale positions (÷ MAP_SCALE).
+    // Our start/end are in BSP units, so divide before passing.
+    const tBSPModel& world        = models[0];
+    const int        startCluster = FindClusterAtPosition(start / MAP_SCALE);
+    const bool       hasVis       = (startCluster >= 0 && !visData.vecs.empty());
+
+    // Bitset tracks which faces have already been queued to avoid duplicates
+    // (the same face can appear in multiple leaves).
+    std::vector<bool> queued(m_numOfFaces, false);
+    std::vector<int>  candidates;
+    candidates.reserve(512);
+
+    for (const tBSPLeaf& leaf : leafs)
+    {
+        if (leaf.cluster < 0) continue;
+
+        // Skip leaves whose cluster is not visible from the ray origin.
+        if (hasVis && !IsClusterVisible(startCluster, leaf.cluster)) continue;
+
+        for (int i = 0; i < leaf.n_leaffaces; ++i)
+        {
+            const int fi = leafFaces[leaf.leafface + i];
+
+            // Only worldspawn faces (model 0) with a baked lightmap.
+            if (fi < 0 || fi >= m_numOfFaces)             continue;
+            if (fi < world.face || fi >= world.face + world.n_faces) continue;
+            if (m_pFaces[fi].lightmapID < 0)              continue;
+            if (queued[fi])                                continue;
+
+            queued[fi] = true;
+            candidates.push_back(fi);
+        }
+    }
+
+    // ── Möller–Trumbore ray-triangle intersection ─────────────────────────────
+    float     bestT    = rayLen;
+    int       bestFace = -1;
+    glm::vec3 bestHit  = glm::vec3(0.0f);
+
+    for (const int fi : candidates)
+    {
+        const auto& verts   = Rbuffers.v_faceVBOs[fi];
+        const auto& indices = Rbuffers.v_faceIDXs[fi];
+        if (verts.empty() || indices.size() < 3) continue;
+
+        for (size_t i = 0; i + 2 < indices.size(); i += 3)
+        {
+            const glm::vec3& v0 = verts[indices[i + 0]].Position;
+            const glm::vec3& v1 = verts[indices[i + 1]].Position;
+            const glm::vec3& v2 = verts[indices[i + 2]].Position;
+
+            const glm::vec3 e1 = v1 - v0;
+            const glm::vec3 e2 = v2 - v0;
+            const glm::vec3 h  = glm::cross(rayDirN, e2);
+            const float     a  = glm::dot(e1, h);
+            if (fabsf(a) < 1e-7f) continue;   // parallel / degenerate
+
+            const float     f  = 1.0f / a;
+            const glm::vec3 sv = start - v0;
+            const float     u  = f * glm::dot(sv, h);
+            if (u < 0.0f || u > 1.0f) continue;
+
+            const glm::vec3 q = glm::cross(sv, e1);
+            const float     v = f * glm::dot(rayDirN, q);
+            if (v < 0.0f || u + v > 1.0f) continue;
+
+            const float t = f * glm::dot(e2, q);
+            if (t < 1e-4f || t >= bestT) continue;  // behind origin or farther
+
+            bestT    = t;
+            bestFace = fi;
+            bestHit  = start + rayDirN * t;
+        }
+    }
+
+    if (bestFace < 0) return glm::vec3(0.0f);
+    return SampleLightmapFace(bestFace, bestHit);
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Cluster / visibility
 // ─────────────────────────────────────────────────────────────────────────────

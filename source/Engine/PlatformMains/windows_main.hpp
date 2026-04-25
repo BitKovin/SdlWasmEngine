@@ -353,6 +353,7 @@ int main(int argc, char* args[])
     init.resolution.height = 600;
     init.resolution.reset = BGFX_RESET_NONE;   // no vsync (matches your old SDL_GL_SetSwapInterval(0))
 
+
     if (!bgfx::init(init)) {
         fprintf(stderr, "bgfx::init failed!\n");
         return 1;
