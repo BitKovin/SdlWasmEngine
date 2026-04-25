@@ -447,6 +447,7 @@
     <ClCompile Include="ParticleSystems\CaneTrail.cpp" />
     <ClCompile Include="ParticleSystems\Fog.cpp" />
     <ClCompile Include="ParticleSystems\HitBlood.cpp" />
+    <ClCompile Include="ParticleSystems\WeaponSmoke.cpp" />
     <ClCompile Include="Systems\ScoreSystem\ScoreSystem.cpp" />
     <ClCompile Include="UI\General\UiLocationTileDrop.cpp" />
     <ClCompile Include="UI\LoadingScreen\UiDefaultLoadingScreen.cpp" />

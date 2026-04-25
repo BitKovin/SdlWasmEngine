@@ -44,7 +44,7 @@ void ParticleEmitter::Update(float deltaTime)
         return;
 
     std::lock_guard<std::recursive_mutex> lock(particlesMutex);
-
+    emitterTime += deltaTime;
     elapsedTime += deltaTime;
     if (elapsedTime > Duration)
         Emitting = false;
@@ -153,6 +153,7 @@ void ParticleEmitter::DrawForward(mat4x4 view, mat4x4 projection)
 
     BgfxStateManager::SetWriteDepth(false);
     BgfxStateManager::SetCull(BgfxStateManager::Cull::None);
+    BgfxStateManager::SetBlend(BlendMode);
 
     Shader* shader = ShaderManager::GetShaderProgram("vs_instanced_billboard", PixelShader);
     if (shader == nullptr) return;

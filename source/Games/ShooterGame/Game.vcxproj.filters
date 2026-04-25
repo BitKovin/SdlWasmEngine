@@ -303,6 +303,9 @@
     <ClCompile Include="Entities\Triggers\TriggerKeyMultiple.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ParticleSystems\WeaponSmoke.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Entities\Player\Player.hpp">

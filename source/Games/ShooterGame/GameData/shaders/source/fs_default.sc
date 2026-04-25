@@ -177,7 +177,7 @@ vec3 CalculateDirectionalDiffuse(vec3 normal, vec3 lightDir)
     vec3 ambient = light_color.rgb * 0.7f; // Base ambient
     vec3 diffuse = direct_light_color.rgb;
 
-    return mix(ambient, diffuse, diffuse_factor);
+    return mix(ambient, diffuse, diffuse_factor) * 1.0;
 }
 
 vec3 CalculateDirectionalSpecular(vec3 normal, vec3 lightDir, vec3 viewDir)
@@ -249,7 +249,8 @@ void main()
     vec3 emissive = texture2D(u_textureEmissive, v_texcoord0).rgb;
 
     // View-dependent rim light
-    vec3 rim = CalculateContourRim(normal, viewDir);
+    vec3 rim = vec3(0,0,0);
+    //rim = CalculateContourRim(normal, viewDir);
 
     // Composition (Light Weight Mixing)
     vec3 finalColor =

@@ -92,7 +92,7 @@
         view = CalculateView();
         projection = perspective(radians(FOV), AspectRatio, 0.05f, FarPlane);
 
-        projectionOcclusion = perspective(radians(FOV * 1.3f), AspectRatio, 0.05f, FarPlane);
+        projectionOcclusion = perspective(radians(FOV * 1.3f), AspectRatio, 0.01f, FarPlane);
 
         projectionViewmodel = perspective(radians(ViewmodelFOV), AspectRatio, 0.01f, 1.0f);
 

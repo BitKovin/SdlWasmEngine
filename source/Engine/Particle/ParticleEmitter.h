@@ -16,6 +16,8 @@
 
 #include "../AssetRegistry.h"
 
+#include <BgfxStateManager.h>
+
 struct Particle {
 	glm::vec3 position = vec3();
 	glm::vec3 position2 = vec3();
@@ -74,7 +76,7 @@ public:
 		Particles.push_back(particle);
 	}
 
-	void Update(float deltaTime);
+	virtual void Update(float deltaTime);
 
 	virtual Particle UpdateParticle(Particle particle, float deltaTime)
 	{
@@ -123,6 +125,7 @@ public:
 
 	int currentId = -1;
 	float elapsedTime = 0;
+	float emitterTime = 0;
 	bool Emitting = true;
 	bool destroyed = false;
 
@@ -140,6 +143,8 @@ public:
 	string PixelShader = "fs_unlit";
 
 	bool DepthSorting = true;
+
+	BgfxStateManager::Blend BlendMode = BgfxStateManager::Blend::Alpha;
 
 	static void InitBilboardVaoIfNeeded();
 	static void DestroyBillboardVao();

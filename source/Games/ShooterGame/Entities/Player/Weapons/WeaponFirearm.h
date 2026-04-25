@@ -8,6 +8,8 @@
 
 #include <string>
 
+#include <ParticleSystem.hpp>
+
 struct FirearmParams 
 {
 	WeaponAmmoType ammoType = WeaponAmmoType::None;
@@ -113,6 +115,8 @@ public:
 	void LateUpdate() override;
 	WeaponSlotData GetDefaultData() override;
 
+	void Destroy() override;
+
 	virtual AnimationPose ApplyWeaponAnimation(AnimationPose thirdPersonPose);
 
 	// Runtime akimbo functions
@@ -120,6 +124,14 @@ public:
 
 protected:
 
+	void StopTrail(ParticleSystem* trail);
+
 	float akimboDistanceProgress = 0.0f;
+
+	ParticleSystem* smokeTrail = nullptr;
+	Delay stopEmittingSmokeDelay;
+
+	ParticleSystem* smokeTrailL = nullptr;
+	Delay stopEmittingSmokeDelayL;
 
 };

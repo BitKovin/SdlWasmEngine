@@ -1069,7 +1069,15 @@ bool CQuake3BSP::CheckLightProbeAcess(const glm::vec3& position, const glm::vec3
 LightVolPointData CQuake3BSP::GetLightvolColorPoint(const glm::vec3& position, bool wallCheck)
 {
     if (lightVolIndices.empty())
-        return { vec3(0), vec3(0.3f), vec3(0, -1, 0) };
+    {
+        vec3 lightmapColor = LinetraceLightmapColor(position, position - vec3(0, MAP_SCALE * 10, 0));
+
+        LightVolPointData data;
+        data.ambientColor = lightmapColor / 2.0f;
+        data.directColor = lightmapColor;
+        data.direction = vec3(0,1,0);
+        return data;
+    }
 
     // Engine Y-up → Quake Z-up
     glm::vec3 pos_quake(position.x, -position.z, position.y);
@@ -1124,7 +1132,7 @@ LightVolPointData CQuake3BSP::GetLightvolColorPoint(const glm::vec3& position, b
 			float styleWeight = 0.6f; // empirically chosen to match in-engine brightness
 
             if (m_isRBSP == false)
-                styleWeight = 2.0f;
+                styleWeight = 1.0f;
 
 
 

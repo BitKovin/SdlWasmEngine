@@ -127,6 +127,15 @@ void WeaponFirearm::SetAkimbo(bool enabled)
 	akimboPrev = akimbo;
 }
 
+void WeaponFirearm::StopTrail(ParticleSystem* trail)
+{
+
+	if (trail == nullptr) return;
+
+	trail->StopAll();
+	trail->DestroyWithDelay(3);
+}
+
 void WeaponFirearm::Update()
 {
 	Weapon::Update();
@@ -276,6 +285,36 @@ void WeaponFirearm::PerformAttack()
 
 	owner->ConsumeAmmo(AmmoType, 1);
 
+	if (fireLeft)
+	{
+
+		if (smokeTrailL == nullptr || smokeTrailL->emitters.empty() || smokeTrailL->emitters[0]->emitterTime > 1)
+		{
+			smokeTrailL = static_cast<ParticleSystem*>(Spawn("weapon_smoke"));
+			smokeTrailL->Start();
+
+		}
+
+		stopEmittingSmokeDelayL.AddDelay(1);
+		smokeTrailL->emitters[0]->emitterTime = 0;
+
+	}
+	else
+	{
+
+		if (smokeTrail == nullptr || smokeTrail->emitters.empty() || smokeTrail->emitters[0]->emitterTime > 1)
+		{
+			smokeTrail = static_cast<ParticleSystem*>(Spawn("weapon_smoke"));
+			smokeTrail->Start();
+
+		}
+
+		stopEmittingSmokeDelay.AddDelay(1);
+		smokeTrail->emitters[0]->emitterTime = 0;
+
+	}
+
+
 }
 
 void WeaponFirearm::FireSingleBullet(const vec3& startLoc, const vec4& gridOffset)
@@ -356,6 +395,36 @@ void WeaponFirearm::AsyncUpdate()
 		poseL.SetBoneTransformEuler("clavicle_l", leftHandPose);
 		armsLeft->PasteAnimationPose(poseL);
 	}
+
+	if (smokeTrail)
+	{
+		mat4 boneMat = (viewmodel)->GetBoneMatrixWorld("weapon_fire_point");
+		vec3 startLoc = MathHelper::DecomposeMatrix(boneMat).Position;
+
+		smokeTrail->Position = startLoc;
+		
+		if (stopEmittingSmokeDelay.Wait() == false)
+		{
+			StopTrail(smokeTrail);
+		}
+
+	}
+
+	if (smokeTrailL)
+	{
+		mat4 boneMat = (viewmodelLeft)->GetBoneMatrixWorld("weapon_fire_point");
+		vec3 startLoc = MathHelper::DecomposeMatrix(boneMat).Position;
+
+		smokeTrailL->Position = startLoc;
+
+		if (stopEmittingSmokeDelayL.Wait() == false)
+		{
+			StopTrail(smokeTrailL);
+		}
+
+	}
+
+
 }
 
 void WeaponFirearm::LateUpdate()
@@ -395,6 +464,14 @@ WeaponSlotData WeaponFirearm::GetDefaultData() {
 	data.className = "firearm";
 	data.slot = 0;
 	return data;
+}
+
+void WeaponFirearm::Destroy()
+{
+
+	Weapon::Destroy();
+	StopTrail(smokeTrail);
+
 }
 
 AnimationPose WeaponFirearm::ApplyWeaponAnimation(AnimationPose thirdPersonPose)

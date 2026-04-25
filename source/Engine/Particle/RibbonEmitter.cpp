@@ -146,6 +146,7 @@ void RibbonEmitter::DrawForward(mat4x4 view, mat4x4 projection)
 
     BgfxStateManager::SetWriteDepth(false);
     BgfxStateManager::SetCull(BgfxStateManager::Cull::None);
+    BgfxStateManager::SetBlend(BlendMode);
 
     Shader* shader = ShaderManager::GetShaderProgram("vs_default", PixelShader);
     if (shader == nullptr) return;
