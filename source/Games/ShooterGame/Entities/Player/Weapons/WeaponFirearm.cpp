@@ -471,7 +471,7 @@ void WeaponFirearm::Destroy()
 
 	Weapon::Destroy();
 	StopTrail(smokeTrail);
-
+	StopTrail(smokeTrailL);
 }
 
 AnimationPose WeaponFirearm::ApplyWeaponAnimation(AnimationPose thirdPersonPose)

@@ -60,7 +60,7 @@ UiCrosshair::UiCrosshair()
 	simpleCross->ImagePath = "GameData/textures/ui/crosshair_cross.png";
 	simpleCross->pivot = vec2(0.5f, 0.5f);
 	simpleCross->position = vec2(0.0f, 0);
-	simpleCross->size = vec2(32, 32);
+	simpleCross->size = vec2(32, 32) / 1.5f;
 	simpleCross->color = vec4(1,1,1,0.7f);
 	simpleCross->PixelShader = "fs_ui_textured_point";
 	AddChild(simpleCross);

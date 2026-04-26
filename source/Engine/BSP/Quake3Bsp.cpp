@@ -942,6 +942,8 @@ void CQuake3BSP::PreloadFaces()
     cachedFaces = new CachedFaceTextureData[m_numOfFaces];
     for (int i = 0; i < m_numOfFaces; i++)
         PreloadFace(i);
+
+    PrecomputeFaceAABBs();
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1491,24 +1493,35 @@ glm::vec3 CQuake3BSP::SampleLightmapFace(int faceIndex, const glm::vec3& hitPos)
     return finalColor;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// LinetraceLightmapColor
-//
-// Casts a ray from 'start' to 'end' in engine Y-up BSP-unit space and returns
-// the lightmap colour at the closest hit on a lit worldspawn face.
-//
-// Optimisation — cluster PVS culling:
-//   Only faces in leaves visible from the start cluster are tested.  Because
-//   BSP PVS encodes which rooms can see each other, faces in unreachable rooms
-//   are trivially culled before any geometry math is done.  This mirrors how
-//   classic Quake/Q2 renderers bounded their own lightmap sampling loops.
-//   When no vis data is available every worldspawn face is tested (safe
-//   fallback identical to the previous implementation).
-//
-// Returns vec3(0) when the ray misses all lit geometry or lightmap data is
-// absent.
-// ─────────────────────────────────────────────────────────────────────────────
+void CQuake3BSP::PrecomputeFaceAABBs()
+{
+    m_faceAABBs.resize(m_numOfFaces);
+    for (int fi = 0; fi < m_numOfFaces; ++fi)
+    {
+        glm::vec3 mn(1e30f), mx(-1e30f);
+        for (const auto& v : Rbuffers.v_faceVBOs[fi])
+        {
+            mn = glm::min(mn, v.Position);
+            mx = glm::max(mx, v.Position);
+        }
+        // Expand slightly to avoid fp gaps at shared edges
+        m_faceAABBs[fi] = { mn - 0.5f, mx + 0.5f };
+    }
+}
 
+// ── Fast slab AABB test ───────────────────────────────────────────────────────
+static inline bool RayAABB(const glm::vec3& orig, const glm::vec3& invDir,
+    const glm::vec3& mn, const glm::vec3& mx,
+    float maxT)
+{
+    const glm::vec3 t0 = (mn - orig) * invDir;
+    const glm::vec3 t1 = (mx - orig) * invDir;
+    const float tEnter = glm::compMax(glm::min(t0, t1));
+    const float tExit = glm::compMin(glm::max(t0, t1));
+    return tExit >= tEnter && tExit >= 1e-4f && tEnter <= maxT;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 glm::vec3 CQuake3BSP::LinetraceLightmapColor(glm::vec3 start, glm::vec3 end)
 {
     if (models.empty()) return glm::vec3(0.0f);
@@ -1518,67 +1531,91 @@ glm::vec3 CQuake3BSP::LinetraceLightmapColor(glm::vec3 start, glm::vec3 end)
     if (rayLen < 1e-6f) return glm::vec3(0.0f);
     const glm::vec3 rayDirN = rayDir / rayLen;
 
-    // ── Build candidate face list via cluster PVS ─────────────────────────────
-    // FindClusterAtPosition takes engine-scale positions (÷ MAP_SCALE).
-    // Our start/end are in BSP units, so divide before passing.
-    const tBSPModel& world        = models[0];
-    const int        startCluster = FindClusterAtPosition(start / MAP_SCALE);
-    const bool       hasVis       = (startCluster >= 0 && !visData.vecs.empty());
+    const glm::vec3 invDir(
+        1.0f / (fabsf(rayDirN.x) > 1e-9f ? rayDirN.x : 1e-9f),
+        1.0f / (fabsf(rayDirN.y) > 1e-9f ? rayDirN.y : 1e-9f),
+        1.0f / (fabsf(rayDirN.z) > 1e-9f ? rayDirN.z : 1e-9f));
 
-    // Bitset tracks which faces have already been queued to avoid duplicates
-    // (the same face can appear in multiple leaves).
-    std::vector<bool> queued(m_numOfFaces, false);
-    std::vector<int>  candidates;
-    candidates.reserve(512);
+    static std::mutex            s_mutex;
+    static std::vector<uint32_t> faceStamp;
+    static uint32_t              stampGen = 0;
+    static std::vector<int>      candidates;
+    static glm::vec3             cachedPos = glm::vec3(1e30f);
+    static int                   cachedCluster = -1;
+
+    std::lock_guard<std::mutex> lock(s_mutex);
+
+    if ((int)faceStamp.size() != m_numOfFaces)
+    {
+        faceStamp.assign(m_numOfFaces, 0);
+        stampGen = 0;
+    }
+    const uint32_t thisStamp = ++stampGen;
+    candidates.clear();
+
+    const glm::vec3 scaledStart = start / MAP_SCALE;
+    if (scaledStart != cachedPos)
+    {
+        cachedCluster = FindClusterAtPosition(scaledStart);
+        cachedPos = scaledStart;
+    }
+    const int  startCluster = cachedCluster;
+    const bool hasVis = (startCluster >= 0 && !visData.vecs.empty());
+
+    const tBSPModel& world = models[0];
+    const int        worldFaceEnd = world.face + world.n_faces;
 
     for (const tBSPLeaf& leaf : leafs)
     {
-        if (leaf.cluster < 0) continue;
-
-        // Skip leaves whose cluster is not visible from the ray origin.
+        if (leaf.cluster < 0)                                        continue;
         if (hasVis && !IsClusterVisible(startCluster, leaf.cluster)) continue;
 
         for (int i = 0; i < leaf.n_leaffaces; ++i)
         {
             const int fi = leafFaces[leaf.leafface + i];
+            if ((unsigned)fi >= (unsigned)m_numOfFaces) continue;
+            if (fi < world.face || fi >= worldFaceEnd)  continue;
+            if (m_pFaces[fi].lightmapID < 0)            continue;
+            if (faceStamp[fi] == thisStamp)             continue;
 
-            // Only worldspawn faces (model 0) with a baked lightmap.
-            if (fi < 0 || fi >= m_numOfFaces)             continue;
-            if (fi < world.face || fi >= world.face + world.n_faces) continue;
-            if (m_pFaces[fi].lightmapID < 0)              continue;
-            if (queued[fi])                                continue;
-
-            queued[fi] = true;
+            faceStamp[fi] = thisStamp;
             candidates.push_back(fi);
         }
     }
 
-    // ── Möller–Trumbore ray-triangle intersection ─────────────────────────────
-    float     bestT    = rayLen;
+    float     bestT = rayLen;
     int       bestFace = -1;
-    glm::vec3 bestHit  = glm::vec3(0.0f);
+    glm::vec3 bestHit = glm::vec3(0.0f);
 
     for (const int fi : candidates)
     {
-        const auto& verts   = Rbuffers.v_faceVBOs[fi];
+        if (!m_faceAABBs.empty())
+        {
+            const FaceAABB& box = m_faceAABBs[fi];
+            if (!RayAABB(start, invDir, box.mn, box.mx, bestT))
+                continue;
+        }
+
+        const auto& verts = Rbuffers.v_faceVBOs[fi];
         const auto& indices = Rbuffers.v_faceIDXs[fi];
         if (verts.empty() || indices.size() < 3) continue;
 
-        for (size_t i = 0; i + 2 < indices.size(); i += 3)
+        const size_t triCount = indices.size() / 3;
+        for (size_t i = 0; i < triCount; ++i)
         {
-            const glm::vec3& v0 = verts[indices[i + 0]].Position;
-            const glm::vec3& v1 = verts[indices[i + 1]].Position;
-            const glm::vec3& v2 = verts[indices[i + 2]].Position;
+            const glm::vec3& v0 = verts[indices[i * 3 + 0]].Position;
+            const glm::vec3& v1 = verts[indices[i * 3 + 1]].Position;
+            const glm::vec3& v2 = verts[indices[i * 3 + 2]].Position;
 
             const glm::vec3 e1 = v1 - v0;
             const glm::vec3 e2 = v2 - v0;
-            const glm::vec3 h  = glm::cross(rayDirN, e2);
-            const float     a  = glm::dot(e1, h);
-            if (fabsf(a) < 1e-7f) continue;   // parallel / degenerate
+            const glm::vec3 h = glm::cross(rayDirN, e2);
+            const float     a = glm::dot(e1, h);
+            if (fabsf(a) < 1e-7f) continue;
 
-            const float     f  = 1.0f / a;
+            const float     f = 1.0f / a;
             const glm::vec3 sv = start - v0;
-            const float     u  = f * glm::dot(sv, h);
+            const float     u = f * glm::dot(sv, h);
             if (u < 0.0f || u > 1.0f) continue;
 
             const glm::vec3 q = glm::cross(sv, e1);
@@ -1586,11 +1623,11 @@ glm::vec3 CQuake3BSP::LinetraceLightmapColor(glm::vec3 start, glm::vec3 end)
             if (v < 0.0f || u + v > 1.0f) continue;
 
             const float t = f * glm::dot(e2, q);
-            if (t < 1e-4f || t >= bestT) continue;  // behind origin or farther
+            if (t < 1e-4f || t >= bestT) continue;
 
-            bestT    = t;
+            bestT = t;
             bestFace = fi;
-            bestHit  = start + rayDirN * t;
+            bestHit = start + rayDirN * t;
         }
     }
 

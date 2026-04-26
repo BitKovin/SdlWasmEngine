@@ -1738,10 +1738,18 @@ void Player::TryStep(vec3 dir)
 
 void Player::Update()
 {
-
+	
+	/*
 	vec3 lightmapColor = Level::Current->BspData.LinetraceLightmapColor(Camera::position * MAP_SCALE, (Camera::position + Camera::Forward() * 10.0f) * MAP_SCALE);
 
 	Logger::Log(to_string(lightmapColor));
+
+
+	for (int i = 0; i < 200; i++)
+	{
+		Level::Current->BspData.LinetraceLightmapColor(Camera::position * MAP_SCALE, (Camera::position + Camera::Forward() * 10.0f) * MAP_SCALE);
+	}
+	*/
 
 	if (EngineMain::MainInstance->SimulatingGameTicks) return;
 

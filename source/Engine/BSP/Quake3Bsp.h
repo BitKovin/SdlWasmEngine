@@ -640,6 +640,12 @@ private:
     //
     // hitPos : engine Y-up world space, BSP units (same frame as v_faceVBOs).
     glm::vec3 SampleLightmapFace(int faceIndex, const glm::vec3& hitPos);
+
+    void PrecomputeFaceAABBs();
+
+    struct FaceAABB { glm::vec3 mn, mx; };
+    std::vector<FaceAABB> m_faceAABBs;   // built once after BSP load
+
 };
 
 

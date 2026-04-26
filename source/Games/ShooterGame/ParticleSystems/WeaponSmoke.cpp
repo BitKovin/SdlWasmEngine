@@ -33,7 +33,7 @@ public:
 		float t = particle.lifeTime / deathTime;
 		float eased = easeOutCubic(t);
 
-		float verticalSpeed = mix(1.5f, 0.2f, eased);
+		float verticalSpeed = mix(1.4f, 0.6f, eased);
 
 		particle.position += vec3(0, verticalSpeed, 0) * Time::DeltaTimeF;
 
