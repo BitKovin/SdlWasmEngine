@@ -96,7 +96,7 @@ void CharacterController::Update(float deltaTime)
 
 	currentGroundNormal = walkableNormal;
 
-	DebugDraw::Line(GetPosition() - vec3(0, 1, 0) * height / 2.0f, GetPosition() - vec3(0, 1, 0) * height / 2.0f + walkableNormal);
+	//DebugDraw::Line(GetPosition() - vec3(0, 1, 0) * height / 2.0f, GetPosition() - vec3(0, 1, 0) * height / 2.0f + walkableNormal);
 
 	if (onGround == false)
 	{
@@ -225,7 +225,7 @@ void CharacterController::Update(float deltaTime)
 		vec3 slopeTangent = velocity - slopeNormal * dot(velocity, slopeNormal);
 		applyVelocity = slopeTangent;
 		applyVelocity.y = velocity.y;
-		//applyVelocity += notWalkableNormal * 0.5f;
+		applyVelocity += notWalkableNormal * 0.5f;
 		UpdateSmoothPosition(deltaTime * 2);
 	}
 	else if (onGround == false && standsOnGround)
@@ -692,7 +692,7 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 
 	const int totalHits = walkHits + steepHits;
 	hitsGround = hitsGround && (totalHits > 0);
-	canStand = hitsGround && (GroundAngleDeg(avgNormal) <= groundMaxAngle) && canStand && walkHits>=steepHits;
+	canStand = hitsGround && (GroundAngleDeg(avgNormal) <= groundMaxAngle) && canStand && walkHits>2;
 }
 
 bool CharacterController::CheckGroundAt(vec3 location, float checkRadius, float& outheight, bool& canStand, vec3& normal, const Body** hitBody)
