@@ -30,11 +30,14 @@ public:
 
 			if (m)
 			{
+
+				m->Static = false;
+
 				auto b = m->GetBoundingBox();
 
 				boundsPoints.push_back(b.Min);
 				boundsPoints.push_back(b.Max);
-
+				
 			}
 
 		}

@@ -25,7 +25,7 @@ public:
 
 		float deathTime = particle.deathTime - 0.5f;
 
-		float systemTransparency = MathHelper::MapRange(emitterTime, 1, 2.5f, 1, 0);
+		float systemTransparency = MathHelper::MapRange(emitterTime, 1, 1.8f, 1, 0);
 
 		particle.Transparency = mix(0.1, 1.0, (deathTime - particle.lifeTime) / deathTime) * systemTransparency;
 		particle.Size = mix(0.055f, 0.025f, (deathTime - particle.lifeTime) / deathTime);
@@ -59,13 +59,16 @@ public:
 
 		RibbonEmitter::Update(deltaTime);
 
-		if (emitterTime > 2) Emitting = false;
+		if (emitterTime > 1.4f) { Emitting = false; }
 			
-
-		if (Particles.size() > 0)
+		if (emitterTime < 1.45f)
 		{
-			Particles[Particles.size() - 1].position = Position;
+			if (Particles.size() > 0)
+			{
+				Particles[Particles.size() - 1].position = Position;
+			}
 		}
+
 
 	}
 

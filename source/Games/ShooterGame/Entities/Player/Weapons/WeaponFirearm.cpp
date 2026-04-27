@@ -132,6 +132,11 @@ void WeaponFirearm::StopTrail(ParticleSystem* trail)
 
 	if (trail == nullptr) return;
 
+	for (auto em : trail->emitters)
+	{
+		em->emitterTime = 1.1f;
+	}
+
 	trail->StopAll();
 	trail->DestroyWithDelay(3);
 }
@@ -402,11 +407,6 @@ void WeaponFirearm::AsyncUpdate()
 		vec3 startLoc = MathHelper::DecomposeMatrix(boneMat).Position;
 
 		smokeTrail->Position = startLoc;
-		
-		if (stopEmittingSmokeDelay.Wait() == false)
-		{
-			StopTrail(smokeTrail);
-		}
 
 	}
 
@@ -416,11 +416,6 @@ void WeaponFirearm::AsyncUpdate()
 		vec3 startLoc = MathHelper::DecomposeMatrix(boneMat).Position;
 
 		smokeTrailL->Position = startLoc;
-
-		if (stopEmittingSmokeDelayL.Wait() == false)
-		{
-			StopTrail(smokeTrailL);
-		}
 
 	}
 

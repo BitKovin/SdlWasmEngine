@@ -1759,13 +1759,24 @@ void CQuake3BSP::RenderBSP(const glm::vec3& cameraPos, tBSPModel& model,
 
     // bgfx: depth writes are controlled per-draw via BGFX_STATE_WRITE_Z in the shader submit call.
     // Opaque pass uses depth write (set in RenderMergedFace / RenderSingleFace state flags).
-
     if (!lightmap)
     {
-        vec3 min = vec3(model.mins[0], model.mins[1], model.mins[2]);
-        vec3 max = vec3(model.maxs[0], model.maxs[1], model.maxs[2]);
-        lightData = GetLightvolColorPoint((min + max) / 2.0f);
-        lightData *= 2.5;// 2.5f;
+        // model.mins/maxs are already in engine Y-up space after the LoadBSP
+        // axis swap, but still in raw BSP units (not divided by MAP_SCALE).
+        const vec3 localCenter(
+            (model.mins[0] + model.maxs[0]) * 0.5f,
+            (model.mins[1] + model.maxs[1]) * 0.5f,
+            (model.mins[2] + model.maxs[2]) * 0.5f
+        );
+
+        // modelMatrix maps raw-BSP local space → engine world space (MAP_SCALE-divided).
+        // Apply it directly — no axis re-conversion needed, the swap already happened at load.
+        const vec3 worldCenter_engine = vec3(modelMatrix * vec4(localCenter, 1.0f));
+
+
+        // GetLightvolColorPoint expects raw BSP units (engine Y-up), so scale back up.
+        lightData = GetLightvolColorPoint(worldCenter_engine * MAP_SCALE);
+        lightData *= 2.5f;
     }
 
     std::vector<bool> renderedFaces(m_numOfFaces);
@@ -2252,7 +2263,7 @@ static void AddPhysicsBodyForEntityAndModel(Entity* entity, BSPModelRef& model)
 
     RefConst<Shape> finalShape = Physics::CreateStaticCompoundShapeFromConvexShapes(shapes);
 
-    Body* body = Physics::CreateBodyFromShape(entity, vec3(0), finalShape, 300, entity->Static ? JPH::EMotionType::Static : JPH::EMotionType::Kinematic, entity->DefaultBrushGroup, entity->DefaultBrushCollisionMask);
+    Body* body = Physics::CreateBodyFromShape(entity, vec3(0), finalShape, 10, entity->Static ? JPH::EMotionType::Static : JPH::EMotionType::Kinematic, entity->DefaultBrushGroup, entity->DefaultBrushCollisionMask);
 
     Physics::SetBodyPosition(body, bodyPos);
 

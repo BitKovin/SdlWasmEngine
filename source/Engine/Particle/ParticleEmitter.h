@@ -129,9 +129,9 @@ public:
 	bool Emitting = true;
 	bool destroyed = false;
 
-	int InitialSpawnCount;
-	float Duration;
-	float SpawnRate;
+	int InitialSpawnCount = 0;
+	float Duration = 100000;
+	float SpawnRate = 0;
 	glm::vec3 Position = vec3(0);
 	glm::vec3 Rotation = vec3(0);
 	glm::vec3 Scale = vec3(1);

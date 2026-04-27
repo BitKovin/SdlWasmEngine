@@ -21,8 +21,8 @@ public:
         params.maxActiveSpread = 0.8f;
         //params.attackDelayTime = 0.35f;
         //params.switchDelayTime = 0.3f;
-        params.attackDelayTime = 1.05f;
-        params.switchDelayTime = 1.0f;
+        params.attackDelayTime = 1.25f;
+        params.switchDelayTime = 1.2f;
         params.switchDelayOnAttack = 0.2f;
         params.weaponOffset = vec3(0.0, -0.01, -0.0);
         params.bulletSpeed = 200.0f;
