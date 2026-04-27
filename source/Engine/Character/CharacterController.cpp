@@ -1,5 +1,7 @@
 #include "CharacterController.h"
 
+#include <cassert>
+
 CharacterController::CharacterController()
 {
 	currentCameraHeight = cameraHeightStanding;
@@ -88,10 +90,13 @@ void CharacterController::Update(float deltaTime)
 	// -------------------------------
 	float verticalPosition;
 	bool standsOnGround;
+	vec3 walkableNormal = vec3();
 	vec3 notWalkableNormal = vec3();
-	UpdateGroundCheck(standsOnGround, verticalPosition, onGround, notWalkableNormal);
+	UpdateGroundCheck(standsOnGround, verticalPosition, onGround, walkableNormal, notWalkableNormal);
 
-	currentGroundNormal = notWalkableNormal;
+	currentGroundNormal = walkableNormal;
+
+	DebugDraw::Line(GetPosition() - vec3(0, 1, 0) * height / 2.0f, GetPosition() - vec3(0, 1, 0) * height / 2.0f + walkableNormal);
 
 	if (onGround == false)
 	{
@@ -179,25 +184,30 @@ void CharacterController::Update(float deltaTime)
 		onGround = false;
 	}
 
-	if (standsOnGround && velocity.y < 0)
+	if (onGround && velocity.y < 0)
 	{
-		velocity.y -= gravity * deltaTime * (1.0f - notWalkableNormal.y);
+		velocity.y -= gravity * deltaTime * (1.0f - walkableNormal.y);
 	}
 	else
 	{
 		velocity.y -= gravity * deltaTime;
 	}
 
-	if (standsOnGround && velocity.y <= 0)
+	if (onGround && velocity.y <= 0)
 	{
 		vec3 currentPosition = FromPhysics(body->GetPosition());
 		float newVerticalPosition = verticalPosition + stepHeight / 2.0f + height / 2.0f;
-		Physics::SweepBody(body, vec3(currentPosition.x, newVerticalPosition, currentPosition.z));
 
-		float moved = currentPosition.y - FromPhysics(body->GetPosition()).y;
-		if (std::abs(moved) > 0.001f)   // ignore float drift / already-snapped frames
+		float snapDelta = newVerticalPosition - currentPosition.y;
+		if (std::abs(snapDelta) > 0.005f)
 		{
-			heightSmoothOffset += moved;
+			Physics::SweepBody(body, vec3(currentPosition.x, newVerticalPosition, currentPosition.z));
+
+			float moved = currentPosition.y - FromPhysics(body->GetPosition()).y;
+			if (std::abs(moved) > 0.001f && movementQuality != CharacterControllerMovementQuality::NpcGeneric)
+			{
+				heightSmoothOffset += moved;
+			}
 		}
 	}
 
@@ -215,6 +225,7 @@ void CharacterController::Update(float deltaTime)
 		vec3 slopeTangent = velocity - slopeNormal * dot(velocity, slopeNormal);
 		applyVelocity = slopeTangent;
 		applyVelocity.y = velocity.y;
+		//applyVelocity += notWalkableNormal * 0.5f;
 		UpdateSmoothPosition(deltaTime * 2);
 	}
 	else if (onGround == false && standsOnGround)
@@ -234,6 +245,12 @@ void CharacterController::Update(float deltaTime)
 
 			UpdateSmoothPosition(deltaTime * 2);
 		}
+	}
+
+	if (glm::isnan(applyVelocity).x || glm::isnan(applyVelocity).y || glm::isnan(applyVelocity).z)
+	{
+		assert(false);
+		applyVelocity = vec3(0.01f);
 	}
 
 	// -------------------------------
@@ -493,13 +510,14 @@ float CharacterController::GroundAngleDeg(const glm::vec3& normal)
 	return glm::degrees(GroundAngleRad(normal));
 }
 
-void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedGroundHeight, bool& canStand, vec3& avgNormal)
+void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedGroundHeight, bool& canStand, vec3& avgNormal, vec3& notWalkableNormal)
 {
 	hitsGround = false;
 	calculatedGroundHeight = 0;
-	avgNormal = vec3(0, 0, 0);
+	avgNormal = vec3(0, 1, 0);
 	canStand = false;
 	standingOnBody = nullptr;
+	notWalkableNormal = vec3(0,1,0);
 
 	vec3 heightOffset = vec3(0, stepHeight, 0);
 	float outheight = 0;
@@ -566,6 +584,10 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 		numOfIterations = 4;
 		startRadius = 1;
 		rayRadius = 0;
+
+		if(length(GetVelocity())>0.2f)
+			startRadius = 0.5f;
+
 	}
 
 	// --- walkable bucket ---
@@ -659,9 +681,18 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 		calculatedGroundHeight = steepHeightSum / static_cast<float>(steepHits);
 	}
 
+	if (steepNormalCount > 0)
+	{
+		notWalkableNormal = steepNormalSum / static_cast<float>(steepNormalCount);
+	}
+	else
+	{
+		notWalkableNormal = vec3(0,1,0);
+	}
+
 	const int totalHits = walkHits + steepHits;
 	hitsGround = hitsGround && (totalHits > 0);
-	canStand = hitsGround && (GroundAngleDeg(avgNormal) <= groundMaxAngle) && canStand;
+	canStand = hitsGround && (GroundAngleDeg(avgNormal) <= groundMaxAngle) && canStand && walkHits>=steepHits;
 }
 
 bool CharacterController::CheckGroundAt(vec3 location, float checkRadius, float& outheight, bool& canStand, vec3& normal, const Body** hitBody)

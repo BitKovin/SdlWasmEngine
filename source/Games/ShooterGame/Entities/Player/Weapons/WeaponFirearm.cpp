@@ -134,7 +134,7 @@ void WeaponFirearm::StopTrail(ParticleSystem* trail)
 
 	for (auto em : trail->emitters)
 	{
-		em->emitterTime = 1.1f;
+		em->emitterTime = 1.2f;
 	}
 
 	trail->StopAll();

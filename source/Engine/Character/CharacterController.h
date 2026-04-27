@@ -99,7 +99,7 @@ private:
 
 	bool CanStandUp();
 
-	void UpdateGroundCheck(bool& hitsGround, float& calculatedCharacterHeight, bool& canStand, vec3& notWalkableNormal);
+	void UpdateGroundCheck(bool& hitsGround, float& calculatedCharacterHeight, bool& canStand, vec3& walkableNormal, vec3& notWalkableNormal);
 
 	bool CheckGroundAt(vec3 location, float radius, float& height, bool& canStand, vec3& normal, const Body** hitBody);
 
