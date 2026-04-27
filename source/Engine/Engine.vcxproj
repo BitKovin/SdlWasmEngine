@@ -346,6 +346,7 @@
     <ClCompile Include="Console\Console.cpp" />
     <ClCompile Include="Console\ConsoleDefaultCommands.cpp" />
     <ClCompile Include="Entities\Brushes\AreaBase.hpp" />
+    <ClCompile Include="Entities\Brushes\DynamicPhysicsBrush.hpp" />
     <ClCompile Include="Entities\Brushes\TriggerBase.cpp" />
     <ClCompile Include="Entities\PointLight.cpp" />
     <ClCompile Include="Entities\transformPoint.cpp" />

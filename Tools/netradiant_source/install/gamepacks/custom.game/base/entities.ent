@@ -323,4 +323,8 @@ red green blue</array>
         <string key="onExitAction" name="On Exit" value="trigger_exit" />
         <string key="targetname" name="Name" />
     </group>
+    <group name="func_physics_dynamic" color="0.5 0.5 0.5">
+dynamic object that is affected by physics
+
+<string key="classname" name="Classname" value="func_physics_dynamic">The classname of the entity.</string><string key="targetname" name="Name">Logical name of this entity. Used by other entities to target it.</string><angle key="angle" name="Yaw Angle" value="0">Yaw rotation in degrees. 0 = East, 90 = South, etc.</angle><angles key="angles" name="Pitch Yaw Roll" value="0 0 0">Full rotation: Pitch Yaw Roll in degrees.</angles><integer key="spawnflags" name="Spawnflags" value="0">Bitmask of spawning flags.</integer><flag key="no_dificuly_easy" name="Don't spawn on Easy" bit="0" /><flag key="no_dificuly_normal" name="Don't spawn on Normal" bit="1" /><flag key="no_dificuly_hard" name="Don't spawn on Hard" bit="2" /></group>
 </classes>

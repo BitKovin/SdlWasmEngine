@@ -20,7 +20,7 @@ struct FirearmParams
 	std::string fireSoundEvent = "event:/Weapons/pistol/pistol_fire";
 	std::string fireAnimation = "fire";
 	std::string drawAnimation = "draw";
-	std::string boneMuzzle = "muzzle";
+	std::string boneMuzzle = "weapon_fire_point";
 	std::string bulletClass = "bullet";
 	float fireVolume = 0.5f;
 	bool fireSoundIs2D = true;

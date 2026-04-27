@@ -3,7 +3,7 @@
 {
 "classname" "worldspawn"
 "_tb_textures" "textures;textures\FPSTextures;textures\FPSTextures_HD;textures\Ground;textures\building_1;textures\common;textures\delvenPack;textures\generic;textures\levelPlans;textures\lq_conc;textures\lq_dev;textures\lq_flesh;textures\lq_greek;textures\lq_health_ammo;textures\lq_legacy;textures\lq_liquidsky;textures\lq_mayan;textures\lq_medieval;textures\lq_metal;textures\lq_palette;textures\lq_props;textures\lq_tech;textures\lq_terra;textures\lq_utility;textures\lq_wood;textures\metal;textures\noise;textures\particles;textures\pp;textures\skies;textures\tormentPack;textures\ui;textures\ui\debuffs;textures\wall;textures\water;textures\wood"
-"_ambient" "10"
+"_ambient" "5"
 "gridsize" "32 32 32"
 "_noshadersun" "1"
 "_tb_mod" "textures"
@@ -1533,6 +1533,33 @@
 ( -1168 -4320 96 ) ( -1120 -4320 96 ) ( -1168 -4320 144 ) common/caulk 0 0 0 1 1 0 0 0
 ( -1168 -4896 240 ) ( -1008 -4896 240 ) ( -1168 -4896 80 ) common/caulk 0 0 0 1 1 0 0 0
 }
+// brush 169
+{
+( 112 -272 48 ) ( 112 -320 48 ) ( 48 -272 48 ) NULL 0 0 0 1 1 0 0 0
+( 112 -272 32 ) ( 48 -272 32 ) ( 112 -272 16 ) NULL 0 0 0 1 1 0 0 0
+( 96 -272 32 ) ( 96 -272 16 ) ( 96 -320 32 ) NULL 0 0 0 1 1 0 0 0
+( 48 -320 16 ) ( 112 -320 16 ) ( 48 -272 16 ) NULL 0 0 0 1 1 0 0 0
+( 48 -320 16 ) ( 48 -320 32 ) ( 112 -320 16 ) NULL 0 0 0 1 1 0 0 0
+( 48 -320 16 ) ( 48 -272 16 ) ( 48 -320 32 ) NULL 0 0 0 1 1 0 0 0
+}
+// brush 170
+{
+( 32 -272 48 ) ( 32 -320 48 ) ( -16 -272 48 ) NULL 0 0 0 1 1 0 0 0
+( 32 -272 32 ) ( -16 -272 32 ) ( 32 -272 16 ) NULL 0 0 0 1 1 0 0 0
+( 32 -272 32 ) ( 32 -272 16 ) ( 32 -320 32 ) NULL 0 0 0 1 1 0 0 0
+( -16 -320 16 ) ( 32 -320 16 ) ( -16 -272 16 ) NULL 0 0 0 1 1 0 0 0
+( -16 -320 16 ) ( -16 -320 32 ) ( 32 -320 16 ) NULL 0 0 0 1 1 0 0 0
+( -16 -320 16 ) ( -16 -272 16 ) ( -16 -320 32 ) NULL 0 0 0 1 1 0 0 0
+}
+// brush 171
+{
+( 80 -272 160 ) ( 80 -320 160 ) ( 16 -272 160 ) NULL 0 0 0 1 1 0 0 0
+( 80 -272 64 ) ( 16 -272 64 ) ( 80 -272 48 ) NULL 0 0 0 1 1 0 0 0
+( 64 -272 64 ) ( 64 -272 48 ) ( 64 -320 64 ) NULL 0 0 0 1 1 0 0 0
+( 16 -320 48 ) ( 80 -320 48 ) ( 16 -272 48 ) NULL 0 0 0 1 1 0 0 0
+( 16 -320 48 ) ( 16 -320 64 ) ( 80 -320 48 ) NULL 0 0 0 1 1 0 0 0
+( 16 -320 48 ) ( 16 -272 48 ) ( 16 -320 64 ) NULL 0 0 0 1 1 0 0 0
+}
 }
 // entity 1
 {
@@ -1544,7 +1571,7 @@
 {
 "classname" "light"
 "origin" "-80 -640 176"
-"light" "50"
+"light" "30"
 "target" "sun_target"
 "_sun" "1"
 "_color" "0.34902 0.34902 1"

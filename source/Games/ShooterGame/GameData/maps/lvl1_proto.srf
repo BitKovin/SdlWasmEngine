@@ -7402,3 +7402,115 @@ default
 	sampleSize 0
 }
 
+1040 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_props/radiowood
+	entity 111
+	castShadows 0
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+1041 // ESurfaceType::Meta V: 12 I: 30 planar
+{
+	shader textures/lq_props/radiowood
+	entity 111
+	castShadows 0
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+1042 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_props/radiowood
+	entity 111
+	castShadows 0
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+1043 // ESurfaceType::Meta V: 12 I: 30 planar
+{
+	shader textures/lq_props/radiowood
+	entity 111
+	castShadows 0
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+1044 // ESurfaceType::Meta V: 6 I: 12 planar
+{
+	shader textures/lq_props/radiowood
+	entity 111
+	castShadows 0
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+1045 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_props/radiowood
+	entity 111
+	castShadows 0
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+1046 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_props/radiowood
+	entity 111
+	castShadows 0
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+1047 // ESurfaceType::Meta V: 8 I: 18 planar
+{
+	shader textures/lq_props/radiowood
+	entity 111
+	castShadows 0
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+1048 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_props/radiowood
+	entity 111
+	castShadows 0
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+1049 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_props/radiowood
+	entity 111
+	castShadows 0
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+1050 // ESurfaceType::Meta V: 6 I: 12 planar
+{
+	shader textures/lq_props/radiowood
+	entity 111
+	castShadows 0
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+1051 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_props/radiowood
+	entity 111
+	castShadows 0
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+1052 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_props/radiowood
+	entity 111
+	castShadows 0
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+1053 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_props/radiowood
+	entity 111
+	castShadows 0
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+

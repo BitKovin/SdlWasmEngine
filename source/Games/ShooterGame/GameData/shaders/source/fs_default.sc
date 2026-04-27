@@ -174,7 +174,7 @@ vec3 CalculateDirectionalDiffuse(vec3 normal, vec3 lightDir)
     
     // Deadlock anchors exposure to a target value. We do this by setting a strong ambient floor
     // combined with the heavily weighted directional light.
-    vec3 ambient = light_color.rgb * 0.7f; // Base ambient
+    vec3 ambient = light_color.rgb * 0.9f; // Base ambient
     vec3 diffuse = direct_light_color.rgb;
 
     return mix(ambient, diffuse, diffuse_factor) * 1.0;

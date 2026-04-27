@@ -46,6 +46,7 @@ Entity* LevelObjectFactory::create(const std::string& technicalName) const
 #include "Entities/Brushes/TriggerBase.hpp"
 #include "Entities/Brushes/TriggerOnce.hpp"
 #include "Entities/Brushes/vis_through.hpp"
+#include "Entities/Brushes/DynamicPhysicsBrush.hpp"
 
 void LevelObjectFactory::registerDefaults()
 {
@@ -60,4 +61,5 @@ void LevelObjectFactory::registerDefaults()
     REGISTER_ENTITY_INLINE("trigger", TriggerBase);
     REGISTER_ENTITY_INLINE("triggerOnce", TriggerOnce);
     REGISTER_ENTITY_INLINE("vis_through", vis_through);
+    REGISTER_ENTITY_INLINE("func_physics_dynamic", DynamicPhysicsBrush);
 }
