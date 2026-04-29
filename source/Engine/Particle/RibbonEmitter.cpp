@@ -12,6 +12,7 @@
 RibbonEmitter::RibbonEmitter()
 {
     DepthSorting = false;
+    ParticleCulling = false;
 }
 
 RibbonEmitter::~RibbonEmitter()
@@ -159,6 +160,9 @@ void RibbonEmitter::DrawForward(mat4x4 view, mat4x4 projection)
     shader->SetUniform("isViewmodel", false);
     shader->SetUniform("is_particle", true);
     shader->SetUniform("is_decal",    false);
+
+    shader->SetUniform("viewmodelScaleFactor", 1);
+    shader->SetUniform("isViewmodel", IsViewmodel);
 
     Renderer::SetSurfaceShaderUniforms(shader);
 

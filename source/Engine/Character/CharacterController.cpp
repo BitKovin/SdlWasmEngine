@@ -179,7 +179,7 @@ void CharacterController::Update(float deltaTime)
 	// -------------------------------
 	vec3 velocity = GetVelocity();
 
-	if (velocity.y > 0)
+	if (velocity.y > 0.1f)
 	{
 		onGround = false;
 	}
@@ -220,12 +220,27 @@ void CharacterController::Update(float deltaTime)
 
 	if (onGround == false && standsOnGround && (velocity.y <= 0))
 	{
-		// Project velocity onto slope plane
 		vec3 slopeNormal = normalize(notWalkableNormal);
-		vec3 slopeTangent = velocity - slopeNormal * dot(velocity, slopeNormal);
-		applyVelocity = slopeTangent;
-		applyVelocity.y = velocity.y;
-		applyVelocity += notWalkableNormal * 0.5f;
+
+		// 1. Calculate how much of our velocity is pointing INTO the slope
+		float velocityIntoSlope = dot(velocity, slopeNormal);
+
+		// 2. Only alter velocity if we are actually moving into the unwalkable surface
+		if (velocityIntoSlope < 0)
+		{
+			// Clip the velocity. This removes the inward force and leaves 
+			// ONLY the velocity running parallel down the slope.
+			applyVelocity = velocity - slopeNormal * velocityIntoSlope;
+
+			// Optional: Apply a slight over-bounce to prevent floating point penetration
+			// applyVelocity = velocity - slopeNormal * (velocityIntoSlope * 1.001f);
+		}
+		else
+		{
+			// If moving away from the slope (e.g. jumping off), keep the trajectory
+			applyVelocity = velocity;
+		}
+
 		UpdateSmoothPosition(deltaTime * 2);
 	}
 	else if (onGround == false && standsOnGround)
@@ -324,26 +339,6 @@ void CharacterController::UpdateSmoothPosition(float deltaTime)
 {
 
 	heightSmoothOffset *= std::exp(-stepSmoothingSpeed * deltaTime);
-	return;
-
-	if (heightSmoothOffset != 0)
-	{
-
-		if (heightSmoothOffset > 0)
-		{
-			heightSmoothOffset -= deltaTime * stepSmoothingSpeed;
-
-			heightSmoothOffset = glm::clamp(heightSmoothOffset, 0.0f, 0.4f);
-		}
-
-		if (heightSmoothOffset < 0)
-		{
-			heightSmoothOffset += deltaTime * stepSmoothingSpeed;
-
-			heightSmoothOffset = glm::clamp(heightSmoothOffset, -1.0f, 0.0f);
-		}
-
-	}
 
 }
 
@@ -692,7 +687,7 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 
 	const int totalHits = walkHits + steepHits;
 	hitsGround = hitsGround && (totalHits > 0);
-	canStand = hitsGround && (GroundAngleDeg(avgNormal) <= groundMaxAngle) && canStand && walkHits>2;
+	canStand = hitsGround && (GroundAngleDeg(avgNormal) <= groundMaxAngle) && canStand && walkHits>3;
 }
 
 bool CharacterController::CheckGroundAt(vec3 location, float checkRadius, float& outheight, bool& canStand, vec3& normal, const Body** hitBody)

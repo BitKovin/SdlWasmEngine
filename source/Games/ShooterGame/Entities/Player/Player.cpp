@@ -72,6 +72,7 @@ void Player::Start()
 
 	PreloadEntityType("weapon_sword");
 	PreloadEntityType("weapon_pistol");
+	PreloadEntityType("weapon_revolver");
 	PreloadEntityType("weapon_pistol_silent");
 	PreloadEntityType("weapon_shotgun");
 	PreloadEntityType("weapon_tommy");
@@ -151,7 +152,7 @@ void Player::Start()
 	else
 	{
 		// Slots mode - use original system
-		AddWeaponByName("weapon_pistol_silent");
+		AddWeaponByName("weapon_pistol");
 		AddWeaponByName("weapon_shotgun");
 		AddWeaponByName("weapon_mpsd");
 		AddWeaponByName("weapon_cannon");

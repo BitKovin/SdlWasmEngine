@@ -2,17 +2,17 @@
 #include "Animators/Animator_Akimbo.h"
 #include "Animators/Animator_OneHand.h"
 
-class weapon_pistol : public WeaponFirearm {
+class weapon_revolver : public WeaponFirearm {
 public:
     bool Silencer = false;
 
 
 
-    weapon_pistol() : WeaponFirearm() 
+    weapon_revolver() : WeaponFirearm()
     {
-		params.ammoType = WeaponAmmoType::PistolBullets;
-        params.modelPath = "GameData/models/player/weapons/pistol/pistol.glb";
-        params.texturesLocation = "GameData/models/player/weapons/pistol/pistol.glb/";
+        params.ammoType = WeaponAmmoType::PistolBullets;
+        params.modelPath = "GameData/models/player/weapons/pistol/revolver.glb";
+        params.texturesLocation = "GameData/models/player/weapons/pistol/revolver.glb/";
         params.modelPathTp = "GameData/models/player/weapons/pistol/pistol_tp.glb";
         params.texturesLocationTp = "GameData/models/player/weapons/pistol/pistol_tp.glb/";
         params.fireSoundEvent = "event:/Weapons/pistol/pistol_fire";
@@ -21,11 +21,12 @@ public:
         params.baseSpread = 0.1f;
         params.spreadIncreasePerShot = 0.1f;
         params.maxActiveSpread = 0.8f;
-        params.attackDelayTime = 0.35f;
-        params.switchDelayTime = 0.3f;
-
+        //params.attackDelayTime = 0.35f;
+        //params.switchDelayTime = 0.3f;
+        params.attackDelayTime = 0.55f;
+        params.switchDelayTime = 0.5f;
         params.switchDelayOnAttack = 0.2f;
-        //params.weaponOffset = vec3(0.0, -0.01, -0.0);
+        params.weaponOffset = vec3(0.0, -0.01, -0.0);
         params.bulletSpeed = 200.0f;
         //params.bulletDamage = 19.0f;
         params.bulletDamage = 25.0f;
@@ -46,29 +47,29 @@ public:
             CameraShake::ShakeType::SingleWave // shakeType
         );
 
-        
 
-		//params.debuffOnHit = "QuicksilverDebuff";
-		//params.debuffStacksOnHit = 55.0f;
+
+        //params.debuffOnHit = "QuicksilverDebuff";
+        //params.debuffStacksOnHit = 55.0f;
 
         thirdPersonAnimator = make_unique<Animator_OneHand>(this);
 
     }
 
-    void Update() override 
+    void Update() override
     {
         params.pitchModifier = Silencer ? 2.8f : 1.0f;
         WeaponFirearm::Update();
 
     }
 
-    void AsyncUpdate() override 
+    void AsyncUpdate() override
     {
         WeaponFirearm::AsyncUpdate();
 
-	}
+    }
 
-    void LateUpdate() override 
+    void LateUpdate() override
     {
         WeaponFirearm::LateUpdate();
         viewmodel->MeshHideList.clear();
@@ -82,15 +83,15 @@ public:
     }
 
 
-    WeaponSlotData GetDefaultData() override 
+    WeaponSlotData GetDefaultData() override
     {
         WeaponSlotData data = WeaponFirearm::GetDefaultData();
-        data.className = "weapon_pistol";
+        data.className = "weapon_revolver";
         return data;
     }
 
-   
+
 
 };
 
-REGISTER_ENTITY(weapon_pistol, "weapon_pistol")
+REGISTER_ENTITY(weapon_revolver, "weapon_revolver")

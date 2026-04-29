@@ -12,6 +12,7 @@
 TrailEmitter::TrailEmitter()
 {
     DepthSorting = false;
+    ParticleCulling = false;
 }
 
 TrailEmitter::~TrailEmitter()
@@ -159,6 +160,9 @@ void TrailEmitter::DrawForward(mat4x4 view, mat4x4 projection)
     shader->SetUniform("isViewmodel", IsViewmodel);
     shader->SetUniform("is_particle", true);
     shader->SetUniform("is_decal", false);
+
+    shader->SetUniform("viewmodelScaleFactor", 1);
+    shader->SetUniform("isViewmodel", IsViewmodel);
 
     Renderer::SetSurfaceShaderUniforms(shader);
 

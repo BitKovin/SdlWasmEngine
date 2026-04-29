@@ -13,6 +13,7 @@ public:
 		Emitting = true;
 		InitialSpawnCount = 1;
 		SimpleRibbon = false;
+		IsViewmodel = true;
 	}
 
 	float easeOutCubic(float val)
@@ -25,9 +26,7 @@ public:
 
 		float deathTime = particle.deathTime - 0.5f;
 
-		float systemTransparency = MathHelper::MapRange(emitterTime, 1, 1.8f, 1, 0);
-
-		particle.Transparency = mix(0.1, 1.0, (deathTime - particle.lifeTime) / deathTime) * systemTransparency;
+		particle.Transparency = mix(0.1, 1.0, (deathTime - particle.lifeTime) / deathTime);
 		particle.Size = mix(0.055f, 0.025f, (deathTime - particle.lifeTime) / deathTime);
 
 		float t = particle.lifeTime / deathTime;
@@ -44,10 +43,13 @@ public:
 	{
 		Particle particle = ParticleEmitter::GetNewParticle();
 
+		float systemTransparency = MathHelper::MapRange(emitterTime, 0.5, 1.8f, 1, 0);
+
 		particle.Size = 0.03f;
-		particle.Color = vec4(0.8, 0.8, 0.8, 0.2);
+		particle.Color = vec4(0.8, 0.8, 0.8, 0.2 * systemTransparency);
+
 		particle.Transparency = 0.8;
-		particle.deathTime = 1.3f;
+		particle.deathTime = 1.5f;
 
 		return particle;
 	}
@@ -59,9 +61,9 @@ public:
 
 		RibbonEmitter::Update(deltaTime);
 
-		if (emitterTime > 1.4f) { Emitting = false; }
+		if (emitterTime > 1.8f) { Emitting = false; }
 			
-		if (emitterTime < 1.45f)
+		if (emitterTime < 1.85f)
 		{
 			if (Particles.size() > 0)
 			{

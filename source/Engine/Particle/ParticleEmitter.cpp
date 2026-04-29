@@ -186,7 +186,11 @@ void ParticleEmitter::DrawForward(mat4x4 view, mat4x4 projection)
     shader->SetUniform("view", view);
     shader->SetUniform("projection", projection);
     shader->SetUniform("is_decal", isDecal);          // only is_decal needed
-    shader->SetUniform("isViewmodel", false);
+
+    shader->SetUniform("viewmodelScaleFactor", 1);
+    shader->SetUniform("isViewmodel", IsViewmodel);
+
+
 
     Renderer::SetSurfaceShaderUniforms(shader);
 
@@ -273,12 +277,17 @@ void ParticleEmitter::FinalizeFrameData()
         instances.reserve(finalizedParticles.size());
         for (const auto& particle : finalizedParticles)
         {
-            if (!Camera::frustum.IsSphereVisible(particle.position, particle.Size))
-                continue;
 
-            int targetC = Level::Current->BspData.FindClusterAtPosition(particle.position);
-            if (!Level::Current->BspData.IsClusterVisible(cameraC, targetC))
-                continue;
+            if (ParticleCulling)
+            {
+                if (!Camera::frustum.IsSphereVisible(particle.position, particle.Size))
+                    continue;
+
+                int targetC = Level::Current->BspData.FindClusterAtPosition(particle.position);
+                if (!Level::Current->BspData.IsClusterVisible(cameraC, targetC))
+                    continue;
+            }
+
 
             mat4x4 world;
             if (particle.UseWorldRotation)
