@@ -410,36 +410,56 @@ FMOD::Studio::Bank* SoundManager::LoadBankFromPath(
     if (it != loadedBanks.end())
         return it->second;
 
-    // 2) read .bank into RAM
-    std::vector<uint8_t> bankData;
-    try {
-        bankData = FileSystemEngine::ReadFileBinary(bankPath);
-    }
-    catch (const std::exception& e) {
-        printf("[FMOD] Failed to read bank '%s': %s\n",
-            bankPath.c_str(), e.what());
-        loadedBanks[bankPath] = nullptr;
-        return nullptr;
-    }
-
-    // 3) load from memory
     FMOD::Studio::Bank* bank = nullptr;
-    FMOD_RESULT result = studioSystem->loadBankMemory(
-        /* memory      */ reinterpret_cast<const char*>(bankData.data()),
-        /* size        */ static_cast<int>(bankData.size()),
-        /* mem mode    */ FMOD_STUDIO_LOAD_MEMORY,
-        /* load flags  */ FMOD_STUDIO_LOAD_BANK_NORMAL,
-        /* out bank    */ &bank
+    FMOD_RESULT result;
+
+    // 2) Try loading directly from disk first
+    result = studioSystem->loadBankFile(
+        bankPath.c_str(),
+        FMOD_STUDIO_LOAD_BANK_NORMAL,
+        &bank
     );
 
-    if (result != FMOD_OK || !bank)
+    if (result == FMOD_OK && bank)
     {
-        printf("[FMOD] Failed to load bank '%s' from memory (%d): %s\n",
-            bankPath.c_str(), result, FMOD_ErrorString(result));
-        loadedBanks[bankPath] = nullptr;
-        return nullptr;
+        printf("[FMOD] Bank loaded from disk: %s\n", bankPath.c_str());
     }
-    printf("[FMOD] Bank metadata loaded from memory: %s\n", bankPath.c_str());
+    else
+    {
+        printf("[FMOD] loadBankFile failed for '%s' (%d): %s\n",
+            bankPath.c_str(), result, FMOD_ErrorString(result));
+
+        // 3) Fallback: read file manually into memory
+        std::vector<uint8_t> bankData;
+        try {
+            bankData = FileSystemEngine::ReadFileBinary(bankPath);
+        }
+        catch (const std::exception& e) {
+            printf("[FMOD] Failed to read bank '%s': %s\n",
+                bankPath.c_str(), e.what());
+            loadedBanks[bankPath] = nullptr;
+            return nullptr;
+        }
+
+        
+        result = studioSystem->loadBankMemory(
+            reinterpret_cast<const char*>(bankData.data()),
+            static_cast<int>(bankData.size()),
+            FMOD_STUDIO_LOAD_MEMORY, // or MEMORY_POINT (see note below)
+            FMOD_STUDIO_LOAD_BANK_NORMAL,
+            &bank
+        );
+
+        if (result != FMOD_OK || !bank)
+        {
+            printf("[FMOD] Failed to load bank '%s' from memory (%d): %s\n",
+                bankPath.c_str(), result, FMOD_ErrorString(result));
+            loadedBanks[bankPath] = nullptr;
+            return nullptr;
+        }
+
+        printf("[FMOD] Bank loaded from memory: %s\n", bankPath.c_str());
+    }
 
     // 4) optionally load sample data
     if (loadSampleData)
