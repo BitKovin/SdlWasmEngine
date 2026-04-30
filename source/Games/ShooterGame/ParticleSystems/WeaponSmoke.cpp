@@ -24,7 +24,7 @@ public:
 	Particle UpdateParticle(Particle particle, float deltaTime) override
 	{
 
-		float deathTime = particle.deathTime - 0.5f;
+		float deathTime = particle.deathTime - 0.1f;
 
 		particle.Transparency = mix(0.1, 1.0, (deathTime - particle.lifeTime) / deathTime);
 		particle.Size = mix(0.055f, 0.025f, (deathTime - particle.lifeTime) / deathTime);
@@ -32,7 +32,7 @@ public:
 		float t = particle.lifeTime / deathTime;
 		float eased = easeOutCubic(t);
 
-		float verticalSpeed = mix(1.4f, 0.6f, eased);
+		float verticalSpeed = mix(0.8f, 0.25f, eased);
 
 		particle.position += vec3(0, verticalSpeed, 0) * Time::DeltaTimeF;
 
@@ -49,7 +49,7 @@ public:
 		particle.Color = vec4(0.8, 0.8, 0.8, 0.2 * systemTransparency);
 
 		particle.Transparency = 0.8;
-		particle.deathTime = 1.5f;
+		particle.deathTime = 1.4f;
 
 		return particle;
 	}

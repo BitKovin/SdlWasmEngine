@@ -25,21 +25,13 @@
 
 #include "../../Ai/NpcTasks/TaskState.h"
 
+#include "Investigations/InvestigationBase.h"
+
 #include <unordered_map>
 #include <set>
 #include <limits>
 
-enum class InvestigationReason
-{
-	TargetSeen,
-	NpcInTrouble,
-	WeaponFire,
-	Body,
-	Explosion,
-	LoudNoise,
-	Noise,
-	None
-};
+
 
 enum class Crime
 {
@@ -179,19 +171,18 @@ protected:
 	std::set<hashed_string> friendlyTags = {}; // tags that are always considered friendly
 	float forgetTime = 6000000.0f; // seconds to forget unseen targets
 
-	bool report_to_guard = false;
-	bool found_guard = false;
-	std::string closestGuard = "";
 
 	Delay findGuardCooldown = Delay();
 
-	InvestigationReason currentInvestigation = InvestigationReason::None;
-	vec3 investigation_target = vec3();
-	std::string investigation_targetId = "";
+
+
+	//InvestigationReason currentInvestigation = InvestigationReason::None;
+	//vec3 investigation_target = vec3();
+	//std::string investigation_targetId = "";
 
 	bool investigation_changed = false;
 
-	bool needToInvestigateBody = false;
+	bool needToInvestigateBody = false;// this body needs to be investigated
 
 	std::shared_ptr<ObservationTarget> observationTarget;
 
@@ -205,8 +196,6 @@ protected:
 
 	float detection_progress = 0.0f;
 
-	bool needHelpStunned = false;
-
 	bool stunnedRagdoll = false;
 	Delay stunnedRagdollDelay;
 	bool returningFromRagdoll = false;
@@ -215,8 +204,6 @@ protected:
 	Delay attackPositionUpdateDelay;
 
 	vec3 attackPosition = vec3();
-
-	Delay movementLockDelay = Delay();
 
 	vec3 spineRotation = vec3();
 
@@ -238,6 +225,13 @@ private:
 	short knowlageSharedThisFrame = 0;
 
 public:
+
+	bool needHelpStunned = false;
+	bool found_guard = false;
+	bool report_to_guard = false;
+	std::string closestGuard = "";
+	Delay movementLockDelay = Delay();
+	std::shared_ptr<InvestigationBase> currentInvestigation;
 
 	float Height = 1.8f;
 
@@ -339,7 +333,7 @@ public:
 
 	bool TryCommitCrime(Crime crime, std::string offender, vec3 pos);
 
-	void FinishInvestigation();
+	void InvestigationReachedDestination();
 
 	void PrepareToStartMovement();
 	void StopMovement();
@@ -365,13 +359,17 @@ public:
 
 	virtual void WarnAboutAttack(Entity* from){}
 
+	void ShareTargetKnowlageWith(NpcBase* anotherNpc);
+
+	void UpdateTargetLocation(std::string target, vec3 location);
+
 protected:
 
 	virtual void UpdateAnimations(bool forceFullUpdate = false);
 
 	void LoadAssets();
 
-	void ShareTargetKnowlageWith(NpcBase* anotherNpc);
+
 
 	void ShareTargetKnowlageWithFinal(NpcBase* anotherNpc);
 

@@ -40,8 +40,7 @@ public:
 		if (npcRef)
 		{
 
-
-			npcRef->FinishInvestigation();
+			npcRef->InvestigationReachedDestination();
 
 		}
 

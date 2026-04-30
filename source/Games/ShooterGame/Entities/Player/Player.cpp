@@ -94,7 +94,7 @@ void Player::Start()
 		AddItemToInventory("weapon_pistol"); // Add pistol to inventory first so it's equipped by default
 		AddItemToInventory("weapon_shotgun");
 		AddItemToInventory("weapon_tommy");
-		AddItemToInventory("weapon_cannon");
+		//AddItemToInventory("weapon_cannon");
 		AddItemToInventory("weapon_cane");
 		AddItemToInventory("weapon_mpsd");
 

@@ -157,7 +157,7 @@ private:
 	int CurrentClearance = 0;
 
 	// Inventory system
-	WeaponSystemMode weaponSystemMode = WeaponSystemMode::Slots; // Default to inventory mode
+	WeaponSystemMode weaponSystemMode = WeaponSystemMode::Inventory; // Default to inventory mode
 	std::vector<InventoryItem> inventory;
 
 	std::string lastInventoryUUID = "";      // Previously equipped inventory item UUID (for quick switch)

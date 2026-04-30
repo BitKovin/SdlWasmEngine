@@ -198,6 +198,7 @@ GameStart::GameStart()
 
     NpcBase::globalPhraceDelay = Delay();
 
+    LoadConstantAssets();
 
 	UpdateWhenPaused = true;
 

@@ -312,6 +312,9 @@
     <ClCompile Include="Entities\Player\Weapons\weapon_revolver.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Entities\Npc\Investigations\InvestigationBase.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Entities\Player\Player.hpp">
@@ -480,6 +483,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Entities\Pickup\Keys\KeyTypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Entities\Npc\Investigations\InvestigationBase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

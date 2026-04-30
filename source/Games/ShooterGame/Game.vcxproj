@@ -391,6 +391,7 @@
     <ClCompile Include="Entities\Npc\Ai\Task_SmokePoint.cpp" />
     <ClCompile Include="Entities\Npc\Animators\NpcAnimatorBase.cpp" />
     <ClCompile Include="Entities\Npc\Animators\NpcMeleeAnimator.cpp" />
+    <ClCompile Include="Entities\Npc\Investigations\InvestigationBase.cpp" />
     <ClCompile Include="Entities\Npc\NpcBanditTest.cpp" />
     <ClCompile Include="Entities\Npc\NpcBase.cpp" />
     <ClCompile Include="Entities\Npc\NpcCivilianBase.cpp" />
@@ -476,6 +477,7 @@
     <ClInclude Include="Entities\Npc\Ai\TaskWaypoint.h" />
     <ClInclude Include="Entities\Npc\Animators\NpcAnimatorBase.h" />
     <ClInclude Include="Entities\Npc\Animators\NpcMeleeAnimator.h" />
+    <ClInclude Include="Entities\Npc\Investigations\InvestigationBase.h" />
     <ClInclude Include="Entities\Npc\NpcBase.h" />
     <ClInclude Include="Entities\Enemy\Enemies\NpcHelper.h" />
     <ClInclude Include="Entities\Enemy\Enemies\NpcHumanAxe.h" />
