@@ -224,6 +224,8 @@ private:
 
 	short knowlageSharedThisFrame = 0;
 
+	std::shared_ptr<InvestigationBase> CreateInvestigationFromReason(InvestigationReason reason);
+
 public:
 
 	bool needHelpStunned = false;

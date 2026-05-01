@@ -1,9 +1,9 @@
 {
     "blackboard": {
         "attackPosition": [
-            -0.35582423210144043,
-            1.429998755455017,
-            10.008906364440918
+            0.0,
+            0.0,
+            0.0
         ],
         "closestGuard": "",
         "flee_target": [
@@ -26,23 +26,23 @@
         "navpoint_wait_time": 0.0,
         "report_to_guard": false,
         "stunned": false,
-        "target": "$player_0",
-        "target_attack": true,
+        "target": "",
+        "target_attack": false,
         "target_attackInRange": false,
-        "target_follow": true,
-        "target_id": "$player_0",
-        "target_knowsLocation": true,
+        "target_follow": false,
+        "target_id": "",
+        "target_knowsLocation": false,
         "target_lastSeenPosition": [
-            -4.231084823608398,
-            1.429998755455017,
-            22.585912704467773
+            0.0,
+            0.0,
+            0.0
         ],
-        "target_sees": true,
-        "target_underArrest": true,
+        "target_sees": false,
+        "target_underArrest": false,
         "task_acceptanceRadius": 0.0,
         "task_acceptance_radius": 0.30000001192092896,
-        "task_canBeCanceled": true,
-        "task_doingJob": false,
+        "task_canBeCanceled": false,
+        "task_doingJob": true,
         "task_move": false,
         "task_moveLocation": [
             0.0,
@@ -764,6 +764,16 @@
                                                     "sourceType": 1
                                                 },
                                                 "type": "MoveToPosition"
+                                            },
+                                            {
+                                                "children": [],
+                                                "id": "node_28cb551ac7dbf5f",
+                                                "name": "Wait",
+                                                "type": "WaitNode",
+                                                "waitTime": {
+                                                    "blackboardKey": "investigation_wait_time",
+                                                    "sourceType": 1
+                                                }
                                             },
                                             {
                                                 "children": [],

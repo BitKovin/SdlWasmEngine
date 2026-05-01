@@ -26,14 +26,23 @@
 #include <LevelTraversalSystem.h>
 #include "../NpcSimulationManager.h"
 
+#include "Investigations/InvestigationBase.h"
+#include "Investigations/BodyInvestigation.h"
+#include "Investigations/ExplosionInvestigation.h"
+#include "Investigations/LoudNoiseInvestigation.h"
+#include "Investigations/NoiseInvestigation.h"
+#include "Investigations/NpcInTroubleInvestigation.h"
+#include "Investigations/TargetSeenInvestigation.h"
+#include "Investigations/WeaponFireInvestigation.h"
+
 float NpcBase::GetDetectionSpeed(Crime crime) const
 {
 	switch (crime) {
 	case Crime::WeaponFire:
-	case Crime::WeaponFireSound:
-	case Crime::Group_Attack:
 	case Crime::NearBody:
 		return 10000.0f; // immediate
+	case Crime::WeaponFireSound:
+		return 1.5f;
 	case Crime::WeaponHolding:
 		return 1.0f;
 	case Crime::Trespassing:
@@ -42,6 +51,33 @@ float NpcBase::GetDetectionSpeed(Crime crime) const
 	default:
 		return 0.0f; // no detection buildup
 	}
+}
+
+std::shared_ptr<InvestigationBase> NpcBase::CreateInvestigationFromReason(InvestigationReason reason)
+{
+	switch (reason)
+	{
+	case InvestigationReason::TargetSeen:
+		return make_shared<TargetSeenInvestigation>(this);
+	case InvestigationReason::NpcInTrouble:
+		return make_shared<NpcInTroubleInvestigation>(this);
+	case InvestigationReason::WeaponFire:
+		return make_shared<WeaponFireInvestigation>(this);
+	case InvestigationReason::Body:
+		return make_shared<BodyInvestigation>(this);
+	case InvestigationReason::Explosion:
+		return make_shared<ExplosionInvestigation>(this);
+	case InvestigationReason::LoudNoise:
+		return make_shared<LoudNoiseInvestigation>(this);
+	case InvestigationReason::Noise:
+		return make_shared<NoiseInvestigation>(this);
+	default:
+		break;
+	case InvestigationReason::None:
+		return nullptr;
+	}
+
+	return make_shared<InvestigationBase>(this);
 }
 
 NpcBase::NpcBase()
@@ -748,8 +784,12 @@ void NpcBase::UpdateBT()
 
 	behaviorTree.GetBlackboard().SetValue("investigation", currentInvestigation != nullptr);
 
-	if(currentInvestigation)
+	if (currentInvestigation)
+	{
 		behaviorTree.GetBlackboard().SetValue("investigation_target", currentInvestigation->TargetLocation);
+		behaviorTree.GetBlackboard().SetValue("investigation_wait_time", currentInvestigation->DelayAfterReach);
+	}
+
 
 	behaviorTree.GetBlackboard().SetValue("report_to_guard", report_to_guard);
 	behaviorTree.GetBlackboard().SetValue("closestGuard", closestGuard);
@@ -891,7 +931,7 @@ void NpcBase::UpdateObserver()
 		}
 
 		//if weapon fire investigation, check for player proximity
-		if (currentInvestigation && currentInvestigation->reason == InvestigationReason::WeaponFire && target->HasTag("player") && distance(target->position, currentInvestigation->target) < 4)
+		if (currentInvestigation && currentInvestigation->reason == InvestigationReason::WeaponFire && target->ownerId == currentInvestigation->causer && distance(target->position, currentInvestigation->target) < 10)
 		{
 			if (min_crime > Crime::WeaponFireSound)
 			{
@@ -908,9 +948,9 @@ void NpcBase::UpdateObserver()
 			{
 				if (target2->npc == false)
 				{
-					if (target2->HasTag("player") || IsNeutral(target2))
+					if (IsNeutral(target2)) //neutrals can be blamed for any dead person
 					{
-						if (distance(target->position, target2->position) < 5)
+						if (distance(target->position, target2->position) < 8)
 						{
 							auto& suspectInfo = knownTargets[target2->ownerId];
 							float speed = IsNeutral(target2) ? GetDetectionSpeed(Crime::NearBody) : 10000.0f;
@@ -2176,6 +2216,19 @@ void NpcBase::Serialize(json& target)
 	SERIALIZE_FIELD(target, found_guard);
 	SERIALIZE_FIELD(target, closestGuard);
 
+	InvestigationReason investigationReason = InvestigationReason::None;
+	if (currentInvestigation)
+	{
+		investigationReason = currentInvestigation->reason;
+
+		auto investigationData = currentInvestigation->Serialize();
+
+		SERIALIZE_FIELD(target, investigationData);
+
+	}
+	SERIALIZE_FIELD(target, investigationReason);
+
+
 	//SERIALIZE_FIELD(target, currentInvestigation);
 
 	SERIALIZE_FIELD(target, investigation_changed);
@@ -2276,6 +2329,19 @@ void NpcBase::Deserialize(json& source)
 	DESERIALIZE_FIELD(source, closestGuard);
 
 	//DESERIALIZE_FIELD(source, currentInvestigation);
+
+	InvestigationReason investigationReason = InvestigationReason::None;
+	DESERIALIZE_FIELD(source, investigationReason);
+
+	if (investigationReason != InvestigationReason::None)
+	{
+		nlohmann::json investigationData;
+		DESERIALIZE_FIELD(source, investigationData);
+
+		currentInvestigation = CreateInvestigationFromReason(investigationReason);
+		currentInvestigation->Deserialize(investigationData);
+
+	}
 
 	DESERIALIZE_FIELD(source, investigation_changed);
 	DESERIALIZE_FIELD(source, needToInvestigateBody);
@@ -2776,7 +2842,7 @@ void NpcBase::TryStartInvestigation(InvestigationReason reason, vec3 target, str
 
 	investigation_changed = true;
 
-	currentInvestigation = make_shared<InvestigationBase>(this);
+	currentInvestigation = CreateInvestigationFromReason(reason);
 	currentInvestigation->Start(reason, target, causer, sharedByNpc);
 
 	
