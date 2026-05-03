@@ -726,7 +726,7 @@ ItemDbEntry Player::GetItemData(const std::string& itemID)
 
 void Player::SwitchToSlot(int slot, bool forceChange)
 {
-	if (!forceChange && !CanSwitchSlot(slot))
+	if ((!forceChange && !CanSwitchSlot(slot)) || weaponSuppressed)
 	{
 		if (slot != currentSlot) // currentWeapon->IsMelee() && 
 		{
@@ -945,11 +945,31 @@ bool Player::RemoveItemFromInventory(const std::string& uuid)
 	if (it == inventory.end())
 		return false;
 
-	// If this is the currently equipped item, unequip it first
-	if (uuid == currentInventoryUUID)
+	// If this is the currently equipped item, destroy the weapon objects directly
+	// without going through DestroyWeapon() — that function clears UUID state and
+	// looks indistinguishable from a manual deselect, which confuses the inventory.
+	if (uuid == currentInventoryUUID || uuid == currentMainWeaponUUID)
 	{
-		DestroyWeapon();
-		currentInventoryUUID = "";
+		if (currentWeapon)
+		{
+			currentWeapon->Destroy();
+			currentWeapon = nullptr;
+		}
+		currentMainWeaponUUID  = "";
+		currentInventoryUUID   = "";
+		weaponSuppressed       = false;
+		mainWasSuppressed      = false;
+	}
+
+	if (uuid == currentOffhandWeaponUUID)
+	{
+		if (currentOffhandWeapon)
+		{
+			currentOffhandWeapon->Destroy();
+			currentOffhandWeapon = nullptr;
+		}
+		currentOffhandWeaponUUID = "";
+		offhandWasSuppressed     = false;
 	}
 
 	// Update pending switch if it was pointing to this item
@@ -1052,6 +1072,13 @@ void Player::SwitchToInventoryItem(std::string uuid, bool forceChange)
 	if (!itemPtr)
 		return;
 
+
+	if (weaponSuppressed && !forceChange)
+	{
+		desiredInventoryUUID = uuid;
+		pendingInventorySwitch = true;
+		return;
+	}
 
 	// Check if we can switch
 	if (!forceChange && !CanSwitchToInventoryItem(uuid))
@@ -1252,6 +1279,9 @@ void Player::UpdateInventoryWeaponSwitch()
 	if (weaponSystemMode != WeaponSystemMode::Inventory)
 		return;
 
+	if (weaponSuppressed)
+		return;
+
 	// Check if there's a pending switch
 	if (pendingInventorySwitch && !desiredInventoryUUID.empty())
 	{
@@ -1268,10 +1298,9 @@ void Player::UpdateInventoryWeaponSwitch()
 	{
 		InventoryItem* currentItem = FindInventoryItemByUUID(currentInventoryUUID);
 
-		auto itemData = GetItemData(currentItem->itemID);
-
 		if (currentItem)
 		{
+			auto itemData = GetItemData(currentItem->itemID);
 			// Update main weapon data
 			if (currentWeapon && (itemData.itemType == InventoryItemType::MainWeapon ||
 				itemData.itemType == InventoryItemType::DualWeapon))
@@ -1292,6 +1321,154 @@ void Player::UpdateInventoryWeaponSwitch()
 // ============================================================================
 // END INVENTORY SYSTEM
 // ============================================================================
+
+bool Player::CanHoldWeapon() const
+{
+	if (dead)       return false;
+	if (isMantling) return false;
+	if (on_bike)    return false;
+	if (RunProgress >= 1.0f) return false;
+	return true;
+}
+
+bool Player::CanSuppressWeapons() const
+{
+	if (currentWeapon && !currentWeapon->CanChangeSlot())        return false;
+	if (currentOffhandWeapon && !currentOffhandWeapon->CanChangeSlot()) return false;
+	return true;
+}
+
+
+bool Player::TrySuppressWeapons(bool forceSuppress)
+{
+	// forceSuppress = true during mantle / death: ignore CanChangeSlot() so
+	// the weapon is always removed immediately (e.g. mid-reload during a mantle).
+	if (!forceSuppress && !CanSuppressWeapons())
+		return false;
+
+	weaponSuppressed = true;
+
+	// Snapshot before Destroy — DestroyWeapon/DestroyWeaponOffhand clear these fields.
+	const std::string savedMainUUID = currentMainWeaponUUID;
+	const std::string savedOffhandUUID = currentOffhandWeaponUUID;
+
+	mainWasSuppressed = (currentWeapon != nullptr) || !currentMainWeaponUUID.empty();
+	if (mainWasSuppressed)
+		DestroyWeapon();
+
+	offhandWasSuppressed = (currentOffhandWeapon != nullptr) || !currentOffhandWeaponUUID.empty();
+	if (offhandWasSuppressed)
+		DestroyWeaponOffhand();
+
+	// Restore the UUIDs so RestoreWeapons() can read them.
+	currentMainWeaponUUID = savedMainUUID;
+	currentOffhandWeaponUUID = savedOffhandUUID;
+
+	return true;
+}
+
+void Player::RestoreWeapons()
+{
+	weaponSuppressed = false;
+
+	// Snapshot everything before any Switch call mutates these fields.
+	const std::string mainTarget = !desiredInventoryUUID.empty()
+		? desiredInventoryUUID
+		: currentMainWeaponUUID;
+	const std::string offhandTarget = currentOffhandWeaponUUID;
+	const int         slotTarget = currentSlot;
+
+	// ── Main slot ─────────────────────────────────────────────────────────────
+	if (mainWasSuppressed)
+	{
+		if (weaponSystemMode == WeaponSystemMode::Inventory)
+		{
+			if (!mainTarget.empty())
+			{
+				currentMainWeaponUUID = "";
+				currentInventoryUUID  = "";
+				// Clear offhand UUID too: for DualWeapon items the UUID is shared
+				// between both slots, so leaving it set triggers the toggle-off
+				// branch inside SwitchToInventoryItem instead of recreating the weapon.
+				currentOffhandWeaponUUID = "";
+				SwitchToInventoryItem(mainTarget, /*forceChange=*/true);
+			}
+		}
+		else
+		{
+			SwitchToSlot(slotTarget, /*forceChange=*/true);
+		}
+	}
+
+	// ── Offhand slot ──────────────────────────────────────────────────────────
+	if (offhandWasSuppressed)
+	{
+		if (weaponSystemMode == WeaponSystemMode::Inventory)
+		{
+			if (!offhandTarget.empty())
+			{
+				// If the main-slot restore already recreated the offhand (DualWeapon
+				// items equip both slots together), skip to avoid a double-restore
+				// that would trigger the toggle-off path and destroy the weapon again.
+				if (currentOffhandWeapon != nullptr)
+				{
+					// Already alive — main restore handled it (e.g. DualWeapon).
+				}
+				else
+				{
+					currentOffhandWeaponUUID = "";
+					DestroyWeaponOffhand();
+
+					// offhandTarget is an inventory UUID, not an itemID —
+					// look up the item first, then re-equip via the normal path
+					// so ammo / state data is also restored correctly.
+					InventoryItem* offhandItem = FindInventoryItemByUUID(offhandTarget);
+					if (offhandItem)
+					{
+						SwitchToInventoryItem(offhandTarget, /*forceChange=*/true);
+					}
+				}
+			}
+		}
+		else
+		{
+			if (offhandWeapon >= 0
+				&& offhandWeapon < static_cast<int>(offhandWeapons.size())
+				&& !offhandWeapons[offhandWeapon].empty())
+			{
+
+				if (currentWeapon && currentWeapon->SupportsOffhandWeapon)
+				{
+					currentOffhandWeaponUUID = "";
+					DestroyWeaponOffhand();
+					SwitchWeaponOffhand(offhandWeapons[offhandWeapon]);
+				}
+
+			}
+		}
+	}
+
+	mainWasSuppressed = false;
+	offhandWasSuppressed = false;
+}
+
+void Player::UpdateWeaponSuppression()
+{
+	const bool shouldSuppress = !CanHoldWeapon();
+
+	if (shouldSuppress && !weaponSuppressed)
+	{
+		// Mantling and death are hard stops — the weapon must disappear
+		// immediately, even if it is mid-reload (CanChangeSlot returns false).
+		// For all other cases (e.g. bike) we wait for the weapon to allow it.
+		const bool forceSuppress = dead || isMantling;
+		TrySuppressWeapons(forceSuppress);
+	}
+	else if (!shouldSuppress && weaponSuppressed)
+	{
+		RestoreWeapons();
+	}
+}
 
 vec3 Player::GetBobForMainWeapon()
 {
@@ -1755,6 +1932,8 @@ void Player::Update()
 
 	if (EngineMain::MainInstance->SimulatingGameTicks) return;
 
+	UpdateWeaponSuppression();
+
 	UpdateStamina();
 
 	auto lightData = Level::Current->BspData.GetLightvolColorPoint(Position * MAP_SCALE, true);
@@ -2013,7 +2192,7 @@ void Player::Update()
 	{
 
 		// Weapon switching logic based on current mode
-		if (weaponSystemMode == WeaponSystemMode::Slots && isMantling == false)
+		if (weaponSystemMode == WeaponSystemMode::Slots && !weaponSuppressed)
 		{
 			// Original slot-based weapon switching with lazy loading
 			if (currentWeapon != nullptr)
@@ -2042,7 +2221,7 @@ void Player::Update()
 
 		// Offhand weapon management (Slots mode only)
 		// In Inventory mode, offhand is managed through OffhandWeapon or DualWeapon items
-		if (weaponSystemMode == WeaponSystemMode::Slots && isMantling == false)
+		if (weaponSystemMode == WeaponSystemMode::Slots && !weaponSuppressed)
 		{
 			if (disableOffhandWeapon)
 			{

@@ -298,8 +298,6 @@ void Player::UpdateMantle()
 	controller.SetVelocity(vec3(0));   // fight per-frame gravity integration
 	controller.heightSmoothOffset = 0;
 
-	DestroyWeapon();
-	DestroyWeaponOffhand();
 
 	// ── Finish ────────────────────────────────────────────────────────────────
 	if (mantleProgress >= 1.0f)

@@ -67,6 +67,8 @@ void Level::CloseLevel()
 
 	EngineMain::MainInstance->RmlContext->UnloadAllDocuments();
 
+	Input::ReleaseAllActions();
+
 	if (GameSaveSystem::LoadingGame == false && LevelTraversalSystem::Traveling == false)
 	{
 		LevelTraversalSystem::Reset();

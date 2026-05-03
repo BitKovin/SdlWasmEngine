@@ -60,18 +60,17 @@ struct InventoryItem
 	// Weapon data (used by MainWeapon, OffhandWeapon, DualWeapon types)
 	WeaponSlotData mainWeaponData;   // Main weapon data (ammo, className, etc.)
 	WeaponSlotData offhandWeaponData; // Offhand weapon data (for dual weapons or offhand items)
-	
+
 	int stackSize = 1;               // Number of items in stack (for stackable items)
 
 	InventoryItem() = default;
 
 	InventoryItem(const std::string& itemID, int stackSize = 1)
 		: itemID(itemID), stackSize(stackSize)
-	{
-	}
-	
+	{}
+
 	NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(InventoryItem, itemID, uid, mainWeaponData, offhandWeaponData, stackSize)
-	
+
 };
 
 enum class WeaponSystemMode
@@ -89,7 +88,7 @@ private:
 												{WeaponAmmoType::PistolBullets,32},
 												{WeaponAmmoType::ShotgunShells,16},
 												{WeaponAmmoType::CannonBullets,2} };
-	std::map<WeaponAmmoType, int> ammoLimits = {{WeaponAmmoType::None,0}, 
+	std::map<WeaponAmmoType, int> ammoLimits = { {WeaponAmmoType::None,0},
 												{WeaponAmmoType::PistolBullets,96},
 												{WeaponAmmoType::ShotgunShells,32},
 												{WeaponAmmoType::CannonBullets,12} };
@@ -104,8 +103,8 @@ private:
 
 	vec3 velocity = vec3(0);
 
-	bool canRun = false;
-	bool canDash = true;
+	bool canRun = true;
+	bool canDash = false;
 
 	vec3 oldPos = vec3();
 
@@ -157,7 +156,7 @@ private:
 	int CurrentClearance = 0;
 
 	// Inventory system
-	WeaponSystemMode weaponSystemMode = WeaponSystemMode::Inventory; // Default to inventory mode
+	WeaponSystemMode weaponSystemMode = WeaponSystemMode::Slots; // Default to inventory mode
 	std::vector<InventoryItem> inventory;
 
 	std::string lastInventoryUUID = "";      // Previously equipped inventory item UUID (for quick switch)
@@ -188,13 +187,41 @@ private:
 
 	vec3 weaponRunRotation = vec3(-8.9f, 30.0f, -9.21f);
 	vec3 weaponSlideRotation = vec3(0, 0, -16);
-	vec3 runRotatePoint = vec3(-0.05,-0.1,0.45);// vec3(-0.1f, -0.290f, 0.45f);
+	vec3 runRotatePoint = vec3(-0.05, -0.1, 0.45);// vec3(-0.1f, -0.290f, 0.45f);
 
 	float slideInterp = 0;
 
 	float WalkSpeed = 5.0f;
 	float CrouchSpeed = 2.5f;
 	float RunSpeed = 6.5f;
+
+	// ── Weapon suppression ────────────────────────────────────────────────────
+	// True while CanHoldWeapon() == false.  Weapon objects are destroyed but
+	// all UUID / slot state is preserved so RestoreWeapons() can rebuild them
+	// correctly for both weapon-type and entity-type inventory items.
+	bool weaponSuppressed = false;
+
+	// Records which slots had live weapon objects at the moment of suppression.
+	// Prevents RestoreWeapons() from recreating slots that were already empty.
+	bool mainWasSuppressed = false;
+	bool offhandWasSuppressed = false;
+
+	// Returns false if any live weapon's CanChangeSlot() blocks removal this frame.
+	// TrySuppressWeapons() polls this and is retried next frame if it returns false.
+	bool CanSuppressWeapons() const;
+
+	// Destroys live weapon objects in both slots, recording which were alive.
+	// Returns false (and leaves everything untouched) when CanSuppressWeapons()
+	// returns false — the caller should retry next frame.
+	// Pass forceSuppress = true (mantle / death) to skip CanChangeSlot checks
+	// and destroy weapons immediately regardless of their current state.
+	bool TrySuppressWeapons(bool forceSuppress = false);
+
+	// Recreates weapon objects from preserved UUID / slot state.
+	// Handles Inventory and Slots modes, weapon-type items, and entity-type items.
+	// Prefers desiredInventoryUUID over currentInventoryUUID for the main slot so
+	// that a switch requested during suppression is not silently discarded.
+	void RestoreWeapons();
 
 	glm::vec3 Friction(glm::vec3 vel, float factor = 60.0f) {
 		vel = MathHelper::XZ(vel);
@@ -383,7 +410,7 @@ public:
 	int currentSlot = 0;
 	std::vector<WeaponSlotData> weaponSlots;
 
-	std::vector<std::string> offhandWeapons = {"", "weapon_lefthand_empty"};
+	std::vector<std::string> offhandWeapons = { "", "weapon_lefthand_empty" };
 	int offhandWeapon = 0;
 	int desiredOffhandWeapon = 0;
 
@@ -450,7 +477,7 @@ public:
 	// Inventory system methods
 	void SetWeaponSystemMode(WeaponSystemMode mode);
 	WeaponSystemMode GetWeaponSystemMode() const { return weaponSystemMode; }
-	
+
 	// Inventory management
 	std::string AddItemToInventory(const std::string& itemID, int stackSize = 1);
 
@@ -460,14 +487,14 @@ public:
 	InventoryItem* FindInventoryItemByUUID(const std::string& uuid);
 	int FindInventoryItemByID(const std::string& itemID);
 	const std::vector<InventoryItem>& GetInventory() const { return inventory; }
-	
+
 	int GetInventorySlotIdByUUID(const std::string& uuid);
 
 	// Inventory weapon switching (with lazy switching support)
 	void SwitchToInventoryItem(std::string uuid, bool forceChange = false);
 	bool CanSwitchToInventoryItem(const std::string& uuid);
 	void UpdateInventoryWeaponSwitch(); // Call in Update() to handle lazy switching
-	
+
 
 	void CreateWeapon(const string& className);
 	void DestroyWeapon();
@@ -535,6 +562,24 @@ public:
 	void ToggleBike();
 
 	void OnLevelEnd();
+
+	// ── Weapon suppression ────────────────────────────────────────────────────
+
+	// Returns false whenever the player must not hold physical weapon objects
+	// (mantling, on bike, dead, etc.).  This is the single source of truth —
+	// callers that previously called DestroyWeapon() for these states should
+	// check this flag and let UpdateWeaponSuppression() manage the lifecycle.
+	bool CanHoldWeapon() const;
+
+	// Call once per Update(), before UpdateWeapon().
+	// Detects CanHoldWeapon() transitions and symmetrically destroys / recreates
+	// weapon objects across both slots, preserving all UUID and slot state.
+	// Switches requested during suppression are buffered and applied on restore.
+	void UpdateWeaponSuppression();
+
+	// True while weapons are suppressed (objects destroyed, state preserved).
+	// Useful for HUD / animation systems that need to know whether objects exist.
+	bool IsWeaponSuppressed() const { return weaponSuppressed; }
 
 protected:
 
