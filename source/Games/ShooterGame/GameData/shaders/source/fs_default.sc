@@ -75,7 +75,7 @@ float ComputeStyledSpecular(vec3 normal, vec3 lightDir, vec3 viewDir)
 
     // Deadlock NPR Specular Controls
     const float steps = 2.0;       // Number of specular rings
-    const float smoothness = 0.1; // Controls the softness of the blend. 
+    const float smoothness = 0.5;//0.1; // Controls the softness of the blend. 
                                    // 0.01 = hard snap, 0.5 = completely smooth/linear
 
     // Scale the raw specular up to the number of steps

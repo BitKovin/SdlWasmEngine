@@ -2,6 +2,7 @@
 
 #include "../EngineMain.h"
 #include "SoundManager.hpp"
+#include <Logger.hpp>
 
 #define SOUND_POOL_DEBUG
 
@@ -19,8 +20,7 @@ void SoundInstance::SourcePool::Init()
     if (dev) {
         alcGetIntegerv(dev, ALC_MONO_SOURCES, 1, (ALCint*)&maxMono);
         alcGetIntegerv(dev, ALC_STEREO_SOURCES, 1, (ALCint*)&maxStereo);
-        std::cerr << "[SourcePool] Device hints: maxMono=" << maxMono
-            << ", maxStereo=" << maxStereo << "\n";
+        Logger::Info("[SourcePool] Device hints: maxMono=%zu, maxStereo=%zu", maxMono, maxStereo);
     }
 
     if (maxMono > 100000)
@@ -29,8 +29,8 @@ void SoundInstance::SourcePool::Init()
     if(maxStereo > 100000)
         maxStereo = 32;
 
-    printf("max mono: %zu \n", maxMono);
-    printf("max stereo: %zu \n", maxStereo);
+    Logger::Info("max mono: %zu", maxMono);
+    Logger::Info("max stereo: %zu", maxStereo);
 
     // Ensure at least a minimum limit
     if (maxMono < 8) maxMono = 8;  // Arbitrary safe minimum

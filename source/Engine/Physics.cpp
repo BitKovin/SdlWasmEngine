@@ -5,6 +5,7 @@
 #include <unordered_set>
 #include <Jolt/Physics/Collision/CollisionCollectorImpl.h>
 #include <Jolt/Physics/Collision/CollidePointResult.h>
+#include <Logger.hpp>
 
 
 TempAllocatorImpl* Physics::tempMemAllocator = nullptr;
@@ -673,7 +674,7 @@ RefConst<Shape> Physics::CreateMeshShape(const std::vector<vec3>& vertices, cons
 	// Validate that the number of indices is a multiple of 3 (required for triangles)
 	if (indices.size() % 3 != 0)
 	{
-		printf("Error: Number of indices (%zu) must be a multiple of 3 to form complete triangles.\n", indices.size());
+		Logger::Error("Number of indices (%zu) must be a multiple of 3 to form complete triangles.", indices.size());
 		return RefConst<Shape>(); // Return empty shape on error
 	}
 
@@ -706,7 +707,7 @@ RefConst<Shape> Physics::CreateMeshShape(const std::vector<vec3>& vertices, cons
 	Shape::ShapeResult result = shapeSettings.Create();
 	if (result.HasError())
 	{
-		printf("Error creating mesh shape: %s\n", result.GetError().c_str());
+		Logger::Error("Error creating mesh shape: %s", result.GetError().c_str());
 		return RefConst<Shape>(); // Return empty shape on error
 	}
 

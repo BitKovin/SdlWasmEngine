@@ -182,7 +182,7 @@ private:
 	// Minimum free vertical space above the ledge surface for the player to stand.
 	static constexpr float MantleStandClearance = 0.15f;
 	// Total seconds for the full pull-up + vault-over animation.
-	static constexpr float MantleDuration = 0.750f;
+	static constexpr float MantleDuration = 1.050f;
 	// Seconds before another TryMantle() call is allowed.
 	static constexpr float MantleCooldown = 0.35f;
 

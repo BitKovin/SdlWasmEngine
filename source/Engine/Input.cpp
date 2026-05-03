@@ -11,6 +11,7 @@
 #include "Time.hpp"
 
 #include "EngineMain.h"
+#include <Logger.hpp>
 
 // Static member definitions for Input.
 glm::vec2 Input::MousePos;
@@ -149,7 +150,7 @@ void Input::UpdateMouse() {
         if (LockCursor)
         {
             SDL_SetRelativeMouseMode(SDL_TRUE);
-            printf("locking cursor\n");
+            Logger::Info("locking cursor");
             PendingWindowStateReset = true;
 
 #ifdef __EMSCRIPTEN__
@@ -162,7 +163,7 @@ void Input::UpdateMouse() {
             release_cursor_js();
 #endif // 
             SDL_SetRelativeMouseMode(SDL_FALSE);
-            printf("unlocking cursor\n");
+            Logger::Info("unlocking cursor");
             PendingWindowStateReset = true;
         }
     }

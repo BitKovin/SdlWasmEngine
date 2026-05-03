@@ -1,5 +1,7 @@
 #include "Player.hpp"
 
+#include <Helpers/CubicBezierEasing.hpp>
+
 void Player::TryMantle()
 {
 	// ── Guard 1: state / cooldown ─────────────────────────────────────────────
@@ -276,14 +278,16 @@ void Player::UpdateMantle()
 	mantleProgress += Time::DeltaTimeF / MantleDuration;
 	mantleProgress = glm::clamp(mantleProgress, 0.0f, 1.0f);
 
-	// ── Two-phase easing ──────────────────────────────────────────────────────
-	// smoothstep(t) = t² (3 – 2t)  — standard Hermite ease-in/ease-out.
-	auto smoothstep = [](float t) -> float { return t * t * (3.0f - 2.0f * t); };
+	float mantleEase = glm::smoothstep(0.0f, 1.0f, mantleProgress);
+	mantleEase = glm::mix(glm::smoothstep(0.0f, 1.0f, mantleEase), mantleEase, 0.2f);   // double-smooth for extra ease
+
+	CubicBezierEasing mantleBezier = CubicBezierEasing(.15, -0.2, .83, .89);
 
 	// Y phase: runs from t=0 to t=0.65 (pull-up)
-	float yPhase = smoothstep(glm::clamp(mantleProgress / 0.65f, 0.0f, 1.0f));
+	float yPhase = mantleBezier(glm::clamp(mantleEase / 0.65f, 0.0f, 1.0f));
 	// XZ phase: runs from t=0.35 to t=1.0 (vault-over)
-	float xzPhase = smoothstep(glm::clamp((mantleProgress - 0.35f) / 0.65f, 0.0f, 1.0f));
+	float xzPhase = mantleBezier(glm::clamp((mantleEase - 0.35f) / 0.65f, 0.0f, 1.0f));
+
 
 	vec3 pos;
 	pos.y = glm::mix(mantleSnapPosition.y, mantleTargetPosition.y, yPhase);

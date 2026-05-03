@@ -5,6 +5,7 @@
 #include <bgfx/bgfx.h>
 #include <ShaderManager.h>
 #include <Camera.h>
+#include <Logger.hpp>
 
 #include <Renderer/Abstractions/ViewIdManager.h>
 
@@ -70,7 +71,7 @@ void DebugDraw::Init()
     initialized = bgfx::isValid(program);
 
     if (!initialized)
-        fprintf(stderr, "[DebugDraw] Failed to load shaders – drawing disabled.\n");
+        Logger::Error("[DebugDraw] Failed to load shaders – drawing disabled.");
 }
 
 void DebugDraw::Shutdown()

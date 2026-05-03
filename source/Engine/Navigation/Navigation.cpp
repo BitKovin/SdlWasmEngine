@@ -19,6 +19,7 @@
 #include "Detour/DetourCommon.h"
 #include "NavigationGenerationHelpers.hpp"
 #include "NavigationFileHelper.h"
+#include <Logger.hpp>
 
 // Recast and Detour includes
 
@@ -97,11 +98,11 @@ void NavigationSystem::Update()
 
     if (dtStatusFailed(status))
     {
-        std::printf("Tile cache update failed. Status: %u\n", status);
+        Logger::Error("Tile cache update failed. Status: %u", status);
     }
     else if (!upToDate)
     {
-        //std::printf("Tile cache still processing updates.\n");
+        //Logger::Info("Tile cache still processing updates.");
     }
 
     g_crowd->update(Time::DeltaTimeF, nullptr);
@@ -479,11 +480,11 @@ void NavigationSystem::RemoveObstacle(dtObstacleRef obstacleRef)
     const dtStatus status = tileCache->removeObstacle(obstacleRef);
     if (dtStatusFailed(status))
     {
-        std::printf("Failed to remove obstacle with ref: %u. Status: %u\n", obstacleRef, status);
+        Logger::Error("Failed to remove obstacle with ref: %u. Status: %u", obstacleRef, status);
     }
     else
     {
-        //std::printf("Obstacle with ref: %u removed successfully.\n", obstacleRef);
+        //Logger::Info("Obstacle with ref: %u removed successfully.", obstacleRef);
 
     }
 
@@ -524,13 +525,13 @@ dtObstacleRef NavigationSystem::CreateObstacleBox(const glm::vec3& min, const gl
 
     if (dtStatusFailed(status))
     {
-        std::printf("Failed to add box obstacle. Status: %u\n", status);
+        Logger::Error("Failed to add box obstacle. Status: %u", status);
         return 0;
     }
 
     obstacles.push_back(obstacleRef);
 
-    //std::printf("Box obstacle added. Ref: %u\n", obstacleRef);
+    //Logger::Info("Box obstacle added. Ref: %u", obstacleRef);
     return obstacleRef;
 }
 

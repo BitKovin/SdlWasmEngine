@@ -6,6 +6,7 @@
 #include "Projectiles/CaneProjectile.h"
 #include <SoundSystem/FmodEventInstance.h>
 #include "../../Enemy/IEnemy.h"
+#include <Logger.hpp>
 
 
 class weapon_cane : public Weapon
@@ -252,7 +253,7 @@ public:
 
 		vec3 destinationPos = safePosition + directionToPlayer - playerToCameraDif + vec3(0, 0.1f, 0);
 
-		printf("%f \n", grabDelay.GetProgress());
+		Logger::Info("%f", grabDelay.GetProgress());
 
 		Player::Instance->MoveTo(lerp(grabStartPos, destinationPos, grabDelay.GetProgress()));
 

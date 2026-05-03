@@ -21,7 +21,7 @@ public:
 	// right(+X), left(-X), top(+Y), bottom(-Y), front(+Z), back(-Z)
 	CubemapTexture(const std::vector<std::string>& faces, bool generateMipmaps = false) {
 		if (faces.size() != 6) {
-			std::cerr << "Cubemap texture requires exactly 6 faces." << std::endl;
+			Logger::Error("Cubemap texture requires exactly 6 faces.");
 			return;
 		}
 		loadFromFiles(faces, generateMipmaps);
@@ -181,7 +181,7 @@ private:
 		// --- Load equirectangular source image ---
 		std::vector<uint8_t> fileData = FileSystemEngine::ReadFileBinary(panoramaPath);
 		if (fileData.empty()) {
-			std::cerr << "[Cubemap] Panorama file empty or not found: " << panoramaPath << "\n";
+			Logger::Error("[Cubemap] Panorama file empty or not found: %s", panoramaPath.c_str());
 			return;
 		}
 		int panoW = 0, panoH = 0, channels = 0;
@@ -278,7 +278,7 @@ private:
 	void loadFromFiles(const std::vector<std::string>& faces, bool generateMipmaps)
 	{
 		if (faces.size() != 6) {
-			std::cerr << "[Cubemap] Need 6 faces, got " << faces.size() << std::endl;
+			Logger::Error("[Cubemap] Need 6 faces, got %d", (int)faces.size());
 			return;
 		}
 		uint16_t faceSize = 0;
@@ -291,7 +291,7 @@ private:
 		{
 			std::vector<uint8_t> fileData = FileSystemEngine::ReadFileBinary(faces[i]);
 			if (fileData.empty()) {
-				std::cerr << "[Cubemap] File empty or not found: " << faces[i] << "\n";
+				Logger::Error("[Cubemap] File empty or not found: %s", faces[i].c_str());
 				loadSuccess = false;
 				continue;
 			}
@@ -303,8 +303,7 @@ private:
 				STBI_rgb_alpha
 			);
 			if (!pixels) {
-				std::cerr << "[Cubemap] stbi_load_from_memory failed for "
-					<< faces[i] << ": " << stbi_failure_reason() << std::endl;
+				Logger::Error("[Cubemap] stbi_load_from_memory failed for %s: %s", faces[i].c_str(), stbi_failure_reason());
 				loadSuccess = false;
 				continue;
 			}
@@ -314,8 +313,7 @@ private:
 				stbi_uc* rotated = rotate90_rgba(pixels, width, height, cw);
 				stbi_image_free(pixels);
 				if (!rotated) {
-					std::cerr << "[Cubemap] Rotation failed for "
-						<< faces[i] << std::endl;
+					Logger::Error("[Cubemap] Rotation failed for %s", faces[i].c_str());
 					loadSuccess = false;
 					continue;
 				}
@@ -330,8 +328,7 @@ private:
 				faceSize = (uint16_t)width;
 			}
 			else if (width != commonWidth || height != commonHeight) {
-				std::cerr << "[Cubemap] Face " << i << " size mismatch after processing: "
-					<< width << "x" << height << " vs " << commonWidth << "x" << commonHeight << std::endl;
+				Logger::Error("[Cubemap] Face %d size mismatch after processing: %dx%d vs %dx%d", i, width, height, commonWidth, commonHeight);
 				loadSuccess = false;
 			}
 			const size_t faceBytes = static_cast<size_t>(width) * height * 4;
@@ -368,7 +365,7 @@ private:
 			mem
 		);
 		if (!bgfx::isValid(m_handle)) {
-			std::cerr << "bgfx::createTextureCube failed (" << faceSize << ")\n";
+			Logger::Error("bgfx::createTextureCube failed (%d)", faceSize);
 			return;
 		}
 		// Resource statistics (identical logic to Texture.hpp)

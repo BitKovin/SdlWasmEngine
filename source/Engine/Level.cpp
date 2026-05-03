@@ -27,6 +27,7 @@
 #include "SpatialSound/SpatialSoundManager.h"
 
 #include <World/WorldOrientationManager.h>
+#include <Logger.hpp>
 
 Level* Level::Current = nullptr;
 
@@ -218,11 +219,11 @@ Level* Level::OpenLevel(string filePath)
 
 	if (isNewLevel) 
 	{
-		printf("generating nav mesh\n");
+		Logger::Info("generating nav mesh");
 
 		NavigationSystem::GenerateNavData();
 
-		printf("generated nav mesh\n");
+		Logger::Info("generated nav mesh");
 	}
 
 	SpatialSoundManager::BuildWorld();

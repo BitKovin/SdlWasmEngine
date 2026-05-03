@@ -509,6 +509,7 @@
     <ClInclude Include="FogManager.h" />
     <ClInclude Include="Helpers\ByteCompressor.h" />
     <ClInclude Include="Helpers\CSVParser.h" />
+    <ClInclude Include="Helpers\CubicBezierEasing.hpp" />
     <ClInclude Include="http\http_client.h" />
     <ClInclude Include="imgui\FA6FreeSolidFontData.h" />
     <ClInclude Include="imgui\fs_ocornut_imgui.bin.h" />

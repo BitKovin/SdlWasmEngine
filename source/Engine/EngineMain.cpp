@@ -29,6 +29,8 @@
 
 #include <Profiling/ResourceStatistics.hpp>
 
+#include <Logger.hpp>
+
 EngineMain* EngineMain::MainInstance = nullptr;
 
 UiViewport EngineMain::Viewport;
@@ -71,7 +73,7 @@ void EngineMain::UpdateScreenSize()
     }
     else
     {
-        printf("failed to get screen resolution\n");
+        Logger::Warning("failed to get screen resolution");
     }
 #else
     int w, h;
@@ -179,7 +181,7 @@ void EngineMain::Init(std::vector<std::string> args)
 
     UpdateScreenSize();
 
-    printf("init\n");
+    Logger::Info("init");
 
     MainThreadPool = new ThreadPool();
 
@@ -194,9 +196,9 @@ void EngineMain::Init(std::vector<std::string> args)
 
     ConsoleDefaultCommands::RegisterAll();
 
-    printf("initPhys\n");
+    Logger::Info("initPhys");
     Physics::Init();
-    printf("initPhys\n");
+    Logger::Info("initPhys");
 
     FileSystemEngine::Init();
 
@@ -832,10 +834,10 @@ void EngineMain::ForceUpdateScreenSize()
     {
         ScreenSize = ivec2(width, height);
     }
-    else
-    {
-        printf("failed to get screen resolution\n");
-    }
+	else
+	{
+		Logger::Warning("failed to get screen resolution");
+	}
 
 #else
 

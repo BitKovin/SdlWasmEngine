@@ -9,7 +9,7 @@
 #include <SDL2/SDL_video.h>
 #include "glm.h"
 
-#include "Logger.hpp"
+#include <Logger.hpp>
 
 // Forward declaration for InputAction.
 class InputAction;

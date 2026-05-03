@@ -1,5 +1,6 @@
 #pragma once
 #include "../Entity.h"
+#include <Logger.hpp>
 
 class Spawner : public Entity
 {

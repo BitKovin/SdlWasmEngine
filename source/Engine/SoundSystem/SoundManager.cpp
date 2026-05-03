@@ -4,6 +4,7 @@
 #include "fmod_include.h"
 
 #include "../FileSystem/FileSystem.h"
+#include <Logger.hpp>
 
 std::unordered_map<std::string, SoundBufferData> SoundManager::loadedBuffers;
 std::unordered_map<std::string, FMOD::Studio::Bank*> SoundManager::loadedBanks;
@@ -24,18 +25,18 @@ void SoundManager::InitContext(ALCcontext* context)
         return;
     }
 
-    printf("Vendor:   %s\n", alGetString(AL_VENDOR));
-    printf("Renderer: %s\n", alGetString(AL_RENDERER));
+    Logger::Info("Vendor:   %s", alGetString(AL_VENDOR));
+    Logger::Info("Renderer: %s", alGetString(AL_RENDERER));
 
     if (!alcIsExtensionPresent(device, "ALC_SOFT_HRTF"))
-        fprintf(stderr, "Error: ALC_SOFT_HRTF not supported\n");
+        Logger::Warning("ALC_SOFT_HRTF not supported");
 
     if (!alcIsExtensionPresent(device, "ALC_EXT_EFX"))
-        fprintf(stderr, "Error: ALC_EXT_EFX not supported\n");
+        Logger::Warning("ALC_EXT_EFX not supported");
 
     ALboolean hasFloat32 = alIsExtensionPresent("AL_EXT_float32");
     if (!hasFloat32)
-        printf("AL_EXT_float32 not supported\n");
+        Logger::Warning("AL_EXT_float32 not supported");
 
     alDistanceModel(AL_INVERSE_DISTANCE_CLAMPED);
 }
@@ -44,7 +45,7 @@ void SoundManager::InitContext(ALCcontext* context)
     do {                                                                  \
         FMOD_RESULT result = (x);                                         \
         if (result != FMOD_OK) {                                          \
-            printf("[FMOD ERROR] %s failed: %s (%d)\n",                   \
+            Logger::Error("[FMOD ERROR] %s failed: %s (%d)",              \
                    #x, FMOD_ErrorString(result), result);                \
             return;                                                       \
         }                                                                 \
@@ -78,8 +79,8 @@ void SoundManager::InitFmod()
     coreSystem->getDSPBufferSize(&size, &num);
 
 
-    printf("DSP Buffer Size: %u, Number of Buffers: %d\n", size, num);
-    
+    Logger::Info("DSP Buffer Size: %u, Number of Buffers: %d", size, num);
+
 
     //coreSystem->setSoftwareFormat(96000, FMOD_SPEAKERMODE::FMOD_SPEAKERMODE_STEREO, 0);
 
@@ -252,24 +253,24 @@ SoundBufferData SoundManager::LoadOrGetSoundFileBuffer(std::string path)
         fileData = FileSystemEngine::ReadFileBinary(path);
     }
     catch (const std::exception& e) {
-        printf("Failed to read WAV '%s': %s\n", path.c_str(), e.what());
+        Logger::Error("Failed to read WAV '%s': %s", path.c_str(), e.what());
         return SoundBufferData();
     }
 
     // 2) wrap it in an SDL_RWops
     SDL_RWops* rw = SDL_RWFromConstMem(fileData.data(), static_cast<int>(fileData.size()));
     if (!rw) {
-        printf("SDL_RWFromConstMem failed for '%s': %s\n", path.c_str(), SDL_GetError());
+        Logger::Error("SDL_RWFromConstMem failed for '%s': %s", path.c_str(), SDL_GetError());
         return SoundBufferData();
     }
 
     // 3) load WAV from that RWops, freeing the RWops on success/failure
     if (SDL_LoadWAV_RW(rw, /*freesrc=*/1, &wavSpec, &wavBuffer, &wavLength) == nullptr) {
-        printf("Failed to decode WAV '%s': %s\n", path.c_str(), SDL_GetError());
+        Logger::Error("Failed to decode WAV '%s': %s", path.c_str(), SDL_GetError());
         return SoundBufferData();
     }
 
-    printf("Loading WAV: channels=%d, format=%d, freq=%d\n",
+    Logger::Info("Loading WAV: channels=%d, format=%d, freq=%d",
         wavSpec.channels, wavSpec.format, wavSpec.freq);
 
     bool isStereo = wavSpec.channels > 1;
@@ -285,7 +286,7 @@ SoundBufferData SoundManager::LoadOrGetSoundFileBuffer(std::string path)
         else if (wavSpec.format == AUDIO_F32LSB || wavSpec.format == AUDIO_F32MSB)
             format = AL_FORMAT_MONO_FLOAT32;
         else {
-            printf("Unsupported format: %d\n", wavSpec.format);
+            Logger::Warning("Unsupported format: %d", wavSpec.format);
             SDL_FreeWAV(wavBuffer);
             return SoundBufferData();
         }
@@ -298,13 +299,13 @@ SoundBufferData SoundManager::LoadOrGetSoundFileBuffer(std::string path)
         else if (wavSpec.format == AUDIO_F32LSB || wavSpec.format == AUDIO_F32MSB)
             format = AL_FORMAT_STEREO_FLOAT32;
         else {
-            printf("Unsupported format: %d\n", wavSpec.format);
+            Logger::Warning("Unsupported format: %d", wavSpec.format);
             SDL_FreeWAV(wavBuffer);
             return SoundBufferData();
         }
     }
     else {
-        printf("Unsupported channel count: %d\n", wavSpec.channels);
+        Logger::Warning("Unsupported channel count: %d", wavSpec.channels);
         SDL_FreeWAV(wavBuffer);
         return SoundBufferData();
     }
@@ -313,7 +314,7 @@ SoundBufferData SoundManager::LoadOrGetSoundFileBuffer(std::string path)
     alGenBuffers(1, &buffer);
     ALenum err = alGetError();
     if (err != AL_NO_ERROR) {
-        printf("Error generating buffer: %s\n", alGetString(err));
+        Logger::Error("Error generating buffer: %s", alGetString(err));
         SDL_FreeWAV(wavBuffer);
         return SoundBufferData();
     }
@@ -321,7 +322,7 @@ SoundBufferData SoundManager::LoadOrGetSoundFileBuffer(std::string path)
     alBufferData(buffer, format, wavBuffer, wavLength, wavSpec.freq);
     err = alGetError();
     if (err != AL_NO_ERROR) {
-        printf("Error setting buffer data: %s\n", alGetString(err));
+        Logger::Error("Error setting buffer data: %s", alGetString(err));
         alDeleteBuffers(1, &buffer);
         SDL_FreeWAV(wavBuffer);
         return SoundBufferData();
@@ -344,7 +345,7 @@ SoundBufferData SoundManager::LoadOrGetSoundFileBuffer(std::string path)
     case AUDIO_F32LSB:
     case AUDIO_F32MSB:   bytesPerSample = 4; break;
     default:
-        printf("Unknown format for duration calculation: %d\n", wavSpec.format);
+        Logger::Warning("Unknown format for duration calculation: %d", wavSpec.format);
         alDeleteBuffers(1, &buffer);
         return SoundBufferData();
     }
@@ -401,7 +402,7 @@ FMOD::Studio::Bank* SoundManager::LoadBankFromPath(
 {
     if (!studioSystem)
     {
-        printf("[FMOD] LoadBankFromPath: studioSystem is null\n");
+        Logger::Error("[FMOD] LoadBankFromPath: studioSystem is null");
         return nullptr;
     }
 
@@ -422,11 +423,11 @@ FMOD::Studio::Bank* SoundManager::LoadBankFromPath(
 
     if (result == FMOD_OK && bank)
     {
-        printf("[FMOD] Bank loaded from disk: %s\n", bankPath.c_str());
+        Logger::Info("[FMOD] Bank loaded from disk: %s", bankPath.c_str());
     }
     else
     {
-        printf("[FMOD] loadBankFile failed for '%s' (%d): %s\n",
+        Logger::Warning("[FMOD] loadBankFile failed for '%s' (%d): %s",
             bankPath.c_str(), result, FMOD_ErrorString(result));
 
         // 3) Fallback: read file manually into memory
@@ -435,13 +436,13 @@ FMOD::Studio::Bank* SoundManager::LoadBankFromPath(
             bankData = FileSystemEngine::ReadFileBinary(bankPath);
         }
         catch (const std::exception& e) {
-            printf("[FMOD] Failed to read bank '%s': %s\n",
+            Logger::Error("[FMOD] Failed to read bank '%s': %s",
                 bankPath.c_str(), e.what());
             loadedBanks[bankPath] = nullptr;
             return nullptr;
         }
 
-        
+
         result = studioSystem->loadBankMemory(
             reinterpret_cast<const char*>(bankData.data()),
             static_cast<int>(bankData.size()),
@@ -452,13 +453,13 @@ FMOD::Studio::Bank* SoundManager::LoadBankFromPath(
 
         if (result != FMOD_OK || !bank)
         {
-            printf("[FMOD] Failed to load bank '%s' from memory (%d): %s\n",
+            Logger::Error("[FMOD] Failed to load bank '%s' from memory (%d): %s",
                 bankPath.c_str(), result, FMOD_ErrorString(result));
             loadedBanks[bankPath] = nullptr;
             return nullptr;
         }
 
-        printf("[FMOD] Bank loaded from memory: %s\n", bankPath.c_str());
+        Logger::Info("[FMOD] Bank loaded from memory: %s", bankPath.c_str());
     }
 
     // 4) optionally load sample data
@@ -466,10 +467,10 @@ FMOD::Studio::Bank* SoundManager::LoadBankFromPath(
     {
         result = bank->loadSampleData();
         if (result != FMOD_OK)
-            printf("[FMOD] Warning: sample data failed for '%s' (%d): %s\n",
+            Logger::Warning("[FMOD] Warning: sample data failed for '%s' (%d): %s",
                 bankPath.c_str(), result, FMOD_ErrorString(result));
         else
-            printf("[FMOD] Sample data loaded for: %s\n", bankPath.c_str());
+            Logger::Info("[FMOD] Sample data loaded for: %s", bankPath.c_str());
     }
 
     // 5) cache & return

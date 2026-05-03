@@ -2,6 +2,7 @@
 
 #include "../../Entity.h"
 #include "../transformPoint.h"
+#include <Logger.hpp>
 
 class MovebleBrush : public Entity
 {

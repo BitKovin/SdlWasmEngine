@@ -25,6 +25,8 @@
 #include <ShaderManager.h>
 #include <Physics.h>
 
+#include <Logger.hpp>
+
 #ifndef _MSC_VER
 #  define strcpy_s strcpy
 #  define strcat_s strcat
@@ -1134,7 +1136,7 @@ LightVolPointData CQuake3BSP::GetLightvolColorPoint(const glm::vec3& position, b
 			float styleWeight = 0.6f; // empirically chosen to match in-engine brightness
 
             if (m_isRBSP == false)
-                styleWeight = 1.0f;
+                styleWeight = 1.25f;
 
 
 
@@ -1776,7 +1778,7 @@ void CQuake3BSP::RenderBSP(const glm::vec3& cameraPos, tBSPModel& model,
 
         // GetLightvolColorPoint expects raw BSP units (engine Y-up), so scale back up.
         lightData = GetLightvolColorPoint(worldCenter_engine * MAP_SCALE);
-        lightData *= 2.5f;
+        lightData *= 2.0f;
     }
 
     std::vector<bool> renderedFaces(m_numOfFaces);

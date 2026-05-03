@@ -170,8 +170,9 @@ private:
         const void* pixels,
         bool generateMipmaps)
     {
-        if (w <= 0 || h <= 0 || !pixels) {
-            std::cerr << "setupTexture: invalid arguments\n";
+        if (w <= 0 || h <= 0 || !pixels) 
+        {
+            Logger::Error("setupTexture: invalid arguments");
             return;
         }
         const int bpp = (int)bytesPerPixel(format);
@@ -183,7 +184,7 @@ private:
             (uint16_t)w, (uint16_t)h,
             hasMips, 1, format, buildFlags());
         if (!bgfx::isValid(m_handle)) {
-            std::cerr << "bgfx::createTexture2D failed\n";
+            Logger::Error("bgfx::createTexture2D failed");
             return;
         }
         // Upload mip 0
@@ -266,9 +267,7 @@ private:
         bool generateMipmaps)
     {
         if (w <= 0 || h <= 0 || !pixels) {
-            std::cerr << "setupTexture: invalid arguments ("
-                << w << "x" << h << ", pixels="
-                << (pixels ? "ok" : "null") << ")\n";
+            Logger::Error("setupTexture: invalid arguments (%dx%d, pixels=%s)", w, h, pixels ? "ok" : "null");
             return;
         }
         setupTexture_VeryFastMips(w, h, format, pixels, generateMipmaps);
@@ -312,7 +311,7 @@ private:
             (uint16_t)base_w, (uint16_t)base_h,
             hasMips, 1, format, buildFlags());
         if (!bgfx::isValid(m_handle)) {
-            std::cerr << "bgfx::createTexture2D failed (" << base_w << "x" << base_h << ")\n";
+            Logger::Error("bgfx::createTexture2D failed (%dx%d)", base_w, base_h);
             return;
         }
         // -----------------------------------------------------------------------
@@ -367,7 +366,7 @@ private:
     void loadFromFile(const std::string& filename, bool generateMipmaps) {
         std::vector<uint8_t> fileData = FileSystemEngine::ReadFileBinary(filename);
         if (fileData.empty()) {
-            std::cerr << "Texture: file empty or not found: " << filename << "\n";
+            Logger::Error("Texture: file empty or not found: %s", filename.c_str());
             return;
         }
         loadFromMemoryCompressed(fileData.data(), fileData.size(), generateMipmaps);
@@ -379,13 +378,13 @@ private:
     }
     void loadFromMemoryCompressed(const unsigned char* data, size_t size, bool generateMipmaps) {
         if (!data || size == 0) {
-            std::cerr << "Texture: null or empty compressed data\n";
+            Logger::Error("Texture: null or empty compressed data");
             return;
         }
         int w, h, channels;
         unsigned char* pixels = stbi_load_from_memory(data, (int)size, &w, &h, &channels, 4);
         if (!pixels) {
-            std::cerr << "Texture: stbi_load_from_memory failed: " << stbi_failure_reason() << "\n";
+            Logger::Error("Texture: stbi_load_from_memory failed: %s", stbi_failure_reason());
             return;
         }
         setupTexture(w, h, bgfx::TextureFormat::RGBA8, pixels, generateMipmaps);
@@ -395,7 +394,7 @@ private:
         bgfx::TextureFormat::Enum format, bool generateMipmaps)
     {
         if (!data) {
-            std::cerr << "Texture: loadFromRawData called with null data pointer\n";
+            Logger::Error("Texture: loadFromRawData called with null data pointer");
             return;
         }
         setupTexture(w, h, format, data, generateMipmaps);
