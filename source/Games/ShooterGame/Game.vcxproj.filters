@@ -330,6 +330,9 @@
     <ClCompile Include="Entities\Npc\Investigations\WeaponFireInvestigation.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Entities\Triggers\TriggerLadder.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Entities\Player\Player.hpp">

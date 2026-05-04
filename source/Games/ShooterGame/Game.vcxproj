@@ -447,6 +447,7 @@
     <ClCompile Include="Entities\Test\TestSpatialSound.cpp" />
     <ClCompile Include="Entities\Triggers\TriggerKeyMultiple.cpp" />
     <ClCompile Include="Entities\Triggers\TriggerKeyOnce.cpp" />
+    <ClCompile Include="Entities\Triggers\TriggerLadder.cpp" />
     <ClCompile Include="Entities\Triggers\TriggerTravel.cpp" />
     <ClCompile Include="Entities\VideoInWorldTest.cpp" />
     <ClCompile Include="GameStart.cpp" />

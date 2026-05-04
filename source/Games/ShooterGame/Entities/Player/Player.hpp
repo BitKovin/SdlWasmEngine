@@ -79,6 +79,18 @@ enum class WeaponSystemMode
 	Inventory   // Full inventory system with item management
 };
 
+// ── Movement state machine ────────────────────────────────────────────────────
+// Single source of truth for the player's current locomotion mode.
+// UpdateWalkMovement() dispatches to a per-state update function each frame.
+// Transitions are always explicit: call Enter*/Exit* helpers, never set directly.
+enum class MoveState
+{
+	Default,   // Ground walk, air, wall-jump — the "normal" movement bucket
+	Sliding,   // Crouch-slide; shares setup code with Default via UpdateStateGroundAir
+	Mantling,  // Ledge pull-up animation; blocks all other input
+	OnLadder,  // Ladder climb; constant vertical speed, weapon hidden
+};
+
 class Player : public Entity
 {
 
@@ -93,6 +105,8 @@ private:
 												{WeaponAmmoType::ShotgunShells,32},
 												{WeaponAmmoType::CannonBullets,12} };
 
+
+	int numTouchingLadders = 0;
 
 	PointLight* playerLight = nullptr;
 
@@ -165,14 +179,6 @@ private:
 	Delay mantleDelay;
 	vec3 mantleStartPosition;
 	vec3 mantleTargetPosition;
-	// Whether the mantle animation is currently running.
-	// When true, UpdateWalkMovement returns immediately after calling UpdateMantle().
-	bool  isMantling = false;
-	// 0 → 1 over MantleDuration seconds, drives the two-phase easing curve.
-	float mantleProgress = 0.0f;
-	// Capsule-center the player is teleported to at mantle start
-	// (flush against the wall face, camera at ledge height = hanging pose).
-	vec3  mantleSnapPosition = vec3(0);
 	// Ledge height range relative to the player's current feet position.
 	static constexpr float MantleMinLedgeHeight = 0.3f;   // units above feet
 	static constexpr float MantleMaxLedgeHeight = 2.5f;   // units above feet
@@ -184,6 +190,10 @@ private:
 	static constexpr float MantleDuration = 1.050f;
 	// Seconds before another TryMantle() call is allowed.
 	static constexpr float MantleCooldown = 0.35f;
+	// 0 → 1 over MantleDuration seconds, drives the two-phase easing curve.
+	float mantleProgress = 0.0f;
+	// Capsule-center the player is teleported to at mantle start
+	vec3  mantleSnapPosition = vec3(0);
 
 	vec3 weaponRunRotation = vec3(-8.9f, 30.0f, -9.21f);
 	vec3 weaponSlideRotation = vec3(0, 0, -16);
@@ -259,6 +269,7 @@ private:
 
 		float currentSpeed = glm::dot(vel, wishdir);
 		float wishspeed = maxSpeedAir;
+
 		float addSpeed = wishspeed - currentSpeed;
 
 		if (addSpeed <= 0.0f) {
@@ -328,38 +339,47 @@ private:
 
 	friend class UseIndicator;
 
-	// State
-	bool  isSliding = false;
-	vec3  slideDir = vec3(0);       // normalized horizontal slide direction
+	// ── Movement state machine ────────────────────────────────────────────────
+	MoveState moveState = MoveState::Default;
+
+	// ── State predicates (read-only, derived from moveState) ─────────────────
+	bool IsMantling()  const { return moveState == MoveState::Mantling; }
+	bool IsSliding()   const { return moveState == MoveState::Sliding; }
+	bool IsOnLadder()  const { return moveState == MoveState::OnLadder; }
+
+	// ── Per-state update functions ────────────────────────────────────────────
+	// UpdateWalkMovement() dispatches to one of these every frame.
+	void UpdateStateGroundAir(vec2 input);  // Default + Sliding (shared setup)
+	void UpdateStateLadder(vec2 input);     // OnLadder
+
+	// ── Ladder helpers ────────────────────────────────────────────────────────
+	// EnterLadder/ExitLadder are the only places that set OnLadder state.
+	void EnterLadder(float inputY);
+	void ExitLadder();
+
+	// Ladder tuning
+	static constexpr float LadderClimbSpeed = 4.0f;   // units/sec up or down
+	static constexpr float LadderLookDeadZone = 5.0f;   // degrees of pitch before input activates
+
+	// ── Slide state ───────────────────────────────────────────────────────────
+	vec3  slideDir = vec3(0);          // normalized horizontal slide direction
 	Delay slideBoostCooldown;          // 2-second cooldown between slide boosts
 
 	bool  wasOnGround = false;
-	float airVerticalVelocity = 0.0f;   // vy captured while airborne, consumed on landing
+	float airVerticalVelocity = 0.0f;  // vy captured while airborne, consumed on landing
 
-	// Tuning constants
-	static constexpr float SlideInitialBoost = 1.5f;  // speed impulse added when slide starts (m/s)
-	static constexpr float SlideFriction = 4.0f;  // flat-ground deceleration (m/s²)
-	static constexpr float SlopeGravityScale = 1.5f;  // multiplier on slope-projected gravity
-	static constexpr float SlideSteerStrength = 0.4f;  // how quickly WASD can redirect the slide
-	static constexpr float SlideBoostCooldownTime = 2.0f;  // seconds between boosts
-
-	// Input dot-product threshold for auto-slide: player must be steering
-	// within ~45° of downhill (dot > 0.7).
+	// Slide tuning constants
+	static constexpr float SlideInitialBoost = 1.5f;
+	static constexpr float SlideFriction = 4.0f;
+	static constexpr float SlopeGravityScale = 1.5f;
+	static constexpr float SlideSteerStrength = 0.4f;
+	static constexpr float SlideBoostCooldownTime = 2.0f;
 	static constexpr float SlideInputAlignment = 0.7f;
-
-	// If player presses this hard against slide direction, slide is cancelled.
 	static constexpr float SlideCancelAlignment = -0.6f;
-
-	// Min net slope accel (m/s²) before auto-slide triggers while crouched + holding downhill.
-	// Prevents triggering on barely perceptible slopes.
 	static constexpr float SlopeTriggerThreshold = 1.5f;
-
-	// Fraction of vertical fall speed redirected to horizontal on slope landing.
 	static constexpr float LandingTransferScale = 0.5f;
 
-	// ── Methods ───────────────────────────────────────────────────────────────
-	// Computes slope downhill direction (XZ) and net acceleration (slope force - friction).
-	// Positive netAccel means the slope beats friction and will accelerate a slide.
+	// ── Slope helpers ─────────────────────────────────────────────────────────
 	void GetSlopeInfo(const vec3& groundNormal,
 		vec3& outDownhillDir,
 		float& outNetAccel) const;
@@ -369,8 +389,6 @@ private:
 
 	bool ShouldAutoSlide(const vec3& downhillDir, float netSlopeAccel, const vec3& wishDir) const;
 
-	// Per-frame slide physics.  downhillDir / netSlopeAccel come from GetSlopeInfo
-	// so we don't recompute the same thing twice per frame.
 	void UpdateSlide(vec2 input, const vec3& downhillDir, float netSlopeAccel);
 
 	void Death();
@@ -466,6 +484,8 @@ public:
 
 	void Start();
 
+	// UpdateWalkMovement is now a thin dispatcher to per-state functions.
+	// Add new locomotion modes by adding a MoveState value and an Update* method.
 	void UpdateWalkMovement(vec2 input);
 	void UpdateBikeMovement(vec2 input);
 
@@ -563,23 +583,23 @@ public:
 
 	void OnLevelEnd();
 
+	void StartedTouchLadder();
+	void StoppedTouchLadder();
+
 	// ── Weapon suppression ────────────────────────────────────────────────────
 
 	// Returns false whenever the player must not hold physical weapon objects
-	// (mantling, on bike, dead, etc.).  This is the single source of truth —
-	// callers that previously called DestroyWeapon() for these states should
-	// check this flag and let UpdateWeaponSuppression() manage the lifecycle.
+	// (mantling, on ladder, on bike, dead, etc.).
 	bool CanHoldWeapon() const;
 
 	// Call once per Update(), before UpdateWeapon().
-	// Detects CanHoldWeapon() transitions and symmetrically destroys / recreates
-	// weapon objects across both slots, preserving all UUID and slot state.
-	// Switches requested during suppression are buffered and applied on restore.
 	void UpdateWeaponSuppression();
 
 	// True while weapons are suppressed (objects destroyed, state preserved).
-	// Useful for HUD / animation systems that need to know whether objects exist.
 	bool IsWeaponSuppressed() const { return weaponSuppressed; }
+
+	// Expose current locomotion state for external systems (HUD, animation, etc.)
+	MoveState GetMoveState() const { return moveState; }
 
 protected:
 

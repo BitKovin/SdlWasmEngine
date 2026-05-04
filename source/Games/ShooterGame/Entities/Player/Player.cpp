@@ -173,35 +173,43 @@ void Player::Start()
 void Player::UpdateWalkMovement(vec2 input)
 {
 
-	if (isMantling)
-	{
-		UpdateMantle();
-		return;
-	}
 
+
+	if (numTouchingLadders == 1 && moveState != MoveState::OnLadder)
+		EnterLadder(input.y);
+
+	switch (moveState)
+	{
+	case MoveState::Mantling: UpdateMantle();            return;
+	case MoveState::OnLadder: UpdateStateLadder(input);  return;
+	default:                  UpdateStateGroundAir(input); return;
+	}
+}
+
+void Player::UpdateStateGroundAir(vec2 input)
+{
 	// ── Direction vectors ─────────────────────────────────────────────────
 	vec3 right = MathHelper::GetRightVector(Camera::rotation);
 	vec3 forward = MathHelper::GetForwardVector(vec3(0, Camera::rotation.y, 0));
 	if (freeFly) forward = Camera::Forward();
 
-	// wishDir: where the player *wants* to go (XZ, not normalized if no input)
 	vec3 wishDir3 = MathHelper::XZ(input.x * right + input.y * forward);
-	vec3 movement = input.x * right + input.y * forward; // full vec for legacy funcs
+	vec3 movement = input.x * right + input.y * forward;
 
 	velocity = controller.GetVelocity();
 	bool onGround = OnGround();
 
 	// ── Auto-detect mantleable ledge ─────────────────────────────────────────
-	// Runs every frame while airborne.  The -6 m/s threshold matches Guard 3
-	// inside TryMantle and prevents wasted traces during a hard fall.
 	if (!onGround && velocity.y > -30.0f && (Input::GetAction("jump")->Holding() || input.y > 0.5f))
 		TryMantle();
+
+	// If TryMantle() just succeeded this frame, don't run ground/air movement.
+	if (IsMantling()) return;
 
 	if (onGround)
 		bobProgress += glm::length(MathHelper::XZ(velocity)) * Time::DeltaTime;
 
 	// ── Slope info ────────────────────────────────────────────────────────
-	// Computed once per frame and shared by all checks below.
 	const vec3& groundNormal = controller.currentGroundNormal;
 	vec3  downhillDir;
 	float netSlopeAccel;
@@ -212,17 +220,14 @@ void Player::UpdateWalkMovement(vec2 input)
 		airVerticalVelocity = velocity.y;
 
 	// ─────────────────────────────────────────────────────────────────────
-	// LANDING EVENT  (fires once on the frame ground contact begins)
+	// LANDING EVENT
 	// ─────────────────────────────────────────────────────────────────────
 	bool justLanded = onGround && !wasOnGround;
 	if (justLanded)
 	{
-		float fallSpeed = -airVerticalVelocity; // positive = was falling
+		float fallSpeed = -airVerticalVelocity;
 		float slopeSlant = glm::length(vec2(groundNormal.x, groundNormal.z));
 
-		// Redirect part of the fall speed into horizontal momentum along the
-		// downhill direction.  On flat ground slopeSlant ≈ 0 → no transfer.
-		// Only fires when actually falling (not from a tiny hop).
 		if (fallSpeed > 1.0f && slopeSlant > 0.01f)
 		{
 			float transferred = fallSpeed * slopeSlant * LandingTransferScale;
@@ -230,14 +235,10 @@ void Player::UpdateWalkMovement(vec2 input)
 			velocity.x = horVel.x;
 			velocity.z = horVel.z;
 			controller.SetVelocity(vec3(horVel.x, controller.GetVelocity().y, horVel.z));
-			velocity = controller.GetVelocity(); // re-sync for checks below
+			velocity = controller.GetVelocity();
 		}
 
-		// Auto-start slide if crouched and fast enough.
-		// Covers: crouched in air → flat landing, and slope landing boost.
-		// ShouldAutoSlide is not called here — on landing we always slide if
-		// crouched and speed is sufficient regardless of slope angle.
-		if (controller.isCrouched && !isSliding)
+		if (controller.isCrouched && !IsSliding())
 		{
 			float horSpeed = glm::length(MathHelper::XZ(velocity));
 			if (horSpeed > CrouchSpeed)
@@ -248,11 +249,11 @@ void Player::UpdateWalkMovement(vec2 input)
 	// ─────────────────────────────────────────────────────────────────────
 	// CANCEL SLIDE IF AIRBORNE
 	// ─────────────────────────────────────────────────────────────────────
-	if (isSliding && !onGround)
+	if (IsSliding() && !onGround)
 		StopSlide();
 
 	// ─────────────────────────────────────────────────────────────────────
-	// CROUCH TOGGLE  (explicit player input)
+	// CROUCH TOGGLE
 	// ─────────────────────────────────────────────────────────────────────
 	if (Input::GetAction("crouch")->Pressed())
 	{
@@ -268,18 +269,13 @@ void Player::UpdateWalkMovement(vec2 input)
 				StartSlide(velocity);
 			else
 				controller.Crouch();
-			// If pressed in air: capsule shrinks now, StartSlide fires on landing.
 		}
 	}
 
 	// ─────────────────────────────────────────────────────────────────────
-	// AUTO-SLIDE FROM SLOPE  (crouched, not yet sliding)
+	// AUTO-SLIDE FROM SLOPE
 	// ─────────────────────────────────────────────────────────────────────
-	// ShouldAutoSlide checks:
-	//   • netSlopeAccel > SlopeTriggerThreshold
-	//   • current velocity is not going uphill
-	//   • input is within 45° of downhill (or no input → slope pulls freely)
-	if (!isSliding && onGround && controller.isCrouched)
+	if (!IsSliding() && onGround && controller.isCrouched)
 	{
 		if (ShouldAutoSlide(downhillDir, netSlopeAccel, wishDir3))
 			StartSlide(velocity);
@@ -288,15 +284,11 @@ void Player::UpdateWalkMovement(vec2 input)
 	// ─────────────────────────────────────────────────────────────────────
 	// MOVEMENT
 	// ─────────────────────────────────────────────────────────────────────
-	if (isSliding && onGround)
+	if (IsSliding() && onGround)
 	{
 		UpdateSlide(input, downhillDir, netSlopeAccel);
 
-		// Slide ran out of speed (StopSlide called inside UpdateSlide).
-		// Restart only if the slope is still winning AND we are actually
-		// moving in the downhill direction — prevents re-triggering when
-		// the player just slowed to a halt while pushing uphill.
-		if (!isSliding && controller.isCrouched)
+		if (!IsSliding() && controller.isCrouched)
 		{
 			vec3  horVel = MathHelper::XZ(velocity);
 			float movingDown = (glm::length(horVel) > 0.1f)
@@ -349,13 +341,13 @@ void Player::UpdateWalkMovement(vec2 input)
 		}
 		else if (onGround)
 		{
-			StopSlide(); // preserve xz momentum, only y changes
+			StopSlide();
 			Jump();
 		}
 		else
 		{
 			TryMantle();
-			if (!isMantling)
+			if (!IsMantling())
 			{
 				TryWallJump();
 				velocity = controller.GetVelocity();
@@ -386,7 +378,7 @@ void Player::GetSlopeInfo(const vec3& groundNormal,
 // Applies the initial speed boost and starts the crouch.
 void Player::StartSlide(const vec3& currentVelocity)
 {
-	isSliding = true;
+	moveState = MoveState::Sliding;
 
 	vec3  horVel = MathHelper::XZ(currentVelocity);
 	float speed = glm::length(horVel);
@@ -410,7 +402,8 @@ void Player::StartSlide(const vec3& currentVelocity)
 // Does NOT modify velocity — momentum carries over naturally.
 void Player::StopSlide()
 {
-	isSliding = false;
+	if (IsSliding())
+		moveState = MoveState::Default;
 }
 
 bool Player::ShouldAutoSlide(const vec3& downhillDir, float netSlopeAccel,
@@ -1324,9 +1317,10 @@ void Player::UpdateInventoryWeaponSwitch()
 
 bool Player::CanHoldWeapon() const
 {
-	if (dead)       return false;
-	if (isMantling) return false;
-	if (on_bike)    return false;
+	if (dead)         return false;
+	if (IsMantling()) return false;
+	if (IsOnLadder()) return false;   // ← new: hide weapon while climbing
+	if (on_bike)      return false;
 	if (RunProgress >= 1.0f) return false;
 	return true;
 }
@@ -1461,7 +1455,7 @@ void Player::UpdateWeaponSuppression()
 		// Mantling and death are hard stops — the weapon must disappear
 		// immediately, even if it is mid-reload (CanChangeSlot returns false).
 		// For all other cases (e.g. bike) we wait for the weapon to allow it.
-		const bool forceSuppress = dead || isMantling;
+		const bool forceSuppress = dead || IsMantling();
 		TrySuppressWeapons(forceSuppress);
 	}
 	else if (!shouldSuppress && weaponSuppressed)
@@ -2636,11 +2630,10 @@ void Player::Serialize(json& target)
 	SERIALIZE_FIELD(target, currentOffhandWeaponUUID);
 	SERIALIZE_FIELD(target, ammoCounts);
 
-	SERIALIZE_FIELD(target, isSliding);
+	target["moveState"] = static_cast<int>(moveState);
 	SERIALIZE_FIELD(target, mantleDelay);
 	SERIALIZE_FIELD(target, mantleStartPosition);
 	SERIALIZE_FIELD(target, mantleTargetPosition);
-	SERIALIZE_FIELD(target, isMantling);
 	SERIALIZE_FIELD(target, mantleProgress);
 	SERIALIZE_FIELD(target, mantleSnapPosition);
 
@@ -2677,11 +2670,11 @@ void Player::Deserialize(json& source)
 	DESERIALIZE_FIELD(source, currentInventoryUUID);
 	DESERIALIZE_FIELD(source, lastInventoryUUID);
 
-	DESERIALIZE_FIELD(source, isSliding);
+	if (source.contains("moveState"))
+	    moveState = static_cast<MoveState>(source["moveState"].get<int>());
 	DESERIALIZE_FIELD(source, mantleDelay);
 	DESERIALIZE_FIELD(source, mantleStartPosition);
 	DESERIALIZE_FIELD(source, mantleTargetPosition);
-	DESERIALIZE_FIELD(source, isMantling);
 	DESERIALIZE_FIELD(source, mantleProgress);
 	DESERIALIZE_FIELD(source, mantleSnapPosition);
 
@@ -2825,4 +2818,156 @@ void Player::OnLevelEnd()
 	if (currentOffhandWeapon)
 		currentOffhandWeapon->Destroy();
 
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EnterLadder
+//
+// Called by StartedTouchLadder when the touch count goes from 0 → 1.
+// Guards against interrupting mantling or other high-priority states.
+// ─────────────────────────────────────────────────────────────────────────────
+void Player::EnterLadder(float inputY)
+{
+	// Don't grab a ladder mid-mantle — mantle takes priority.
+	if (IsMantling()) return;
+	// Already on ladder — nothing to do.
+	if (IsOnLadder()) return;
+
+	float rotationXToCompare = -5;
+	float inputYToCompare = 0.8f;
+
+	if (cameraRotation.x > 0)
+	{
+
+
+		if (velocity.y > -0.6)
+		{
+
+			if (cameraRotation.x < -rotationXToCompare)
+				return;
+
+			if (inputY > -inputYToCompare)
+				return;
+		}
+
+	}
+	else
+	{
+		if (cameraRotation.x > rotationXToCompare)
+			return;
+
+		if (inputY < inputYToCompare)
+			return;
+	}
+
+
+
+	// Clean up any slide state before switching.
+	StopSlide();
+	controller.UnCrouch();
+
+	// Kill all velocity: player should "snap" to the ladder feel.
+	controller.SetVelocity(vec3(0));
+	velocity = vec3(0);
+
+	moveState = MoveState::OnLadder;
+
+	// Weapon suppression is automatic: CanHoldWeapon() returns false for OnLadder,
+	// and UpdateWeaponSuppression() (called each frame in Update) will handle the
+	// destroy/restore cycle without any extra work here.
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ExitLadder
+//
+// Called when the player is no longer touching any ladder.
+// Also called from UpdateStateLadder on jump-dismount.
+// ─────────────────────────────────────────────────────────────────────────────
+void Player::ExitLadder()
+{
+	if (!IsOnLadder()) return;
+	moveState = MoveState::Default;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// UpdateStateLadder  (called from UpdateWalkMovement dispatcher)
+//
+// Runs every frame while the player is on a ladder.
+// ─────────────────────────────────────────────────────────────────────────────
+void Player::UpdateStateLadder(vec2 input)
+{
+	// Safety: if somehow all triggers fired without matching enter, bail.
+	if (numTouchingLadders <= 0)
+	{
+		ExitLadder();
+		return;
+	}
+
+	// ── Jump: dismount the ladder ─────────────────────────────────────────────
+	if (Input::GetAction("jump")->PressedBuffered())
+	{
+		ExitLadder();
+
+		// Push the player away from the ladder so they don't immediately re-grab it.
+		// "Away" = backwards relative to camera yaw (opposite of where they're facing).
+		vec3 away = -MathHelper::GetForwardVector(vec3(0, cameraRotation.y, 0));
+		controller.SetVelocity(away * 3.5f + vec3(0, 5.0f, 0));
+		jumpDelay.AddDelay(0.35f);
+		return;
+	}
+
+	// ── Vertical speed from input + camera pitch ──────────────────────────────
+	//
+	// Camera pitch convention: negative = looking up, positive = looking down.
+	//
+	// When looking up   (pitch < -deadZone): W (input.y > 0) → climb up   (+y)
+	// When looking down (pitch > +deadZone): W (input.y > 0) → climb down (-y)
+	// Within the dead zone (roughly horizontal): forward input has no vertical effect.
+	//
+	// This mirrors classic Quake/Half-Life ladder feel.
+	//
+	float pitch = cameraRotation.x;
+	float climbVel = 0.0f;
+
+	if (pitch < -LadderLookDeadZone)
+	{
+		// Looking up — forward = climb up.
+		climbVel = input.y * LadderClimbSpeed;
+	}
+	else if (pitch > LadderLookDeadZone)
+	{
+		// Looking down — forward = climb down (mirrored).
+		climbVel = -input.y * LadderClimbSpeed;
+	}
+	// else: looking horizontally — no vertical movement from W/S.
+
+	// ── Lock horizontal, apply vertical ──────────────────────────────────────
+	// Zero XZ velocity every frame — the player is glued to the ladder rungs.
+	// We deliberately bypass gravity here by overwriting Y directly.
+	vec3 vel = vec3(0.0f, climbVel, 0.0f);
+	controller.SetVelocity(vel);
+
+	if (climbVel <= 0 && controller.onGround)
+		ExitLadder();
+
+	// Update position tracking so the inter-frame safety check in Update()
+	// doesn't flag the sudden velocity change as a teleport.
+	oldPos = controller.GetPosition();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// StartedTouchLadder / StoppedTouchLadder  (called by ladder trigger volumes)
+// ─────────────────────────────────────────────────────────────────────────────
+
+void Player::StartedTouchLadder()
+{
+	numTouchingLadders++;
+
+}
+
+void Player::StoppedTouchLadder()
+{
+	numTouchingLadders = std::max(0, numTouchingLadders - 1);
+	if (numTouchingLadders == 0 && IsOnLadder())
+		ExitLadder();
 }
