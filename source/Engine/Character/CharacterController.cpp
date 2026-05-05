@@ -11,9 +11,9 @@ CharacterController::CharacterController()
 CharacterController::~CharacterController()
 {
 	if (body)
-	{
 		Physics::DestroyBody(body);
-	}
+	if (sensorBody)
+		Physics::DestroyBody(sensorBody);
 }
 
 
@@ -24,26 +24,37 @@ void CharacterController::Init(Entity* owner, vec3 position, float radius, float
 
 	Destroy();
 
-	body = Physics::CreateCharacterCylinderBody(owner, position, radius, height - stepHeight, mass);
+	body = Physics::CreateCharacterBody(owner, position, radius, height - stepHeight, mass);
 	body->GetMotionProperties()->SetLinearDamping(0);
-
 	Physics::GetBodyData(body)->dynamicCollisionGroupOrMask = true;
+	Physics::GetBodyData(body)->sensorCollisionMode = SensorCollisionMode::NotCollideWithSensors;
 
+	// Sensor-only body: follows the character but only interacts with sensor volumes
+	sensorBody = Physics::CreateCharacterCylinderBody(owner, position, radius, height, mass);
+	sensorBody->GetMotionProperties()->SetLinearDamping(0);
+	Physics::GetBodyData(sensorBody)->dynamicCollisionGroupOrMask = true;
+	Physics::GetBodyData(sensorBody)->sensorCollisionMode = SensorCollisionMode::CollideOnlyWithSensors;
+	Physics::SetGravityFactor(sensorBody, 0);
 
 	this->height = height;
 	this->radius = radius;
 
 	Physics::SetGravityFactor(body, 0);
-
 }
 
 void CharacterController::Destroy()
 {
+	if (body)
+	{
+		Physics::DestroyBody(body);
+		body = nullptr;
+	}
+	if (sensorBody)
+	{
 
-	if (body == nullptr) return;
-
-	Physics::DestroyBody(body);
-	body = nullptr;
+		Physics::DestroyBody(sensorBody);
+		sensorBody = nullptr;
+	}
 }
 
 void CharacterController::Update(float deltaTime)
@@ -293,6 +304,13 @@ void CharacterController::Update(float deltaTime)
 		lastPlatformVelocity = linearVel + glm::cross(angularVel, worldOffset);
 	}
 
+	if (sensorBody && body)
+	{
+		Physics::SetBodyPosition(sensorBody, FromPhysics(body->GetPosition()) - vec3(0, stepHeight * 0.5f, 0));
+		Physics::SetLinearVelocity(sensorBody, FromPhysics(body->GetLinearVelocity()));	
+	}
+
+
 	// Update camera height target based on state
 	targetCameraHeight = (isCrouched) ? cameraHeightCrouching : cameraHeightStanding;
 
@@ -322,9 +340,9 @@ vec3 CharacterController::GetSmoothPosition()
 void CharacterController::SetPosition(vec3 position)
 {
 	if (body)
-	{
 		Physics::SetBodyPosition(body, position + vec3(0, stepHeight * 0.5f, 0));
-	}
+	if (sensorBody)
+		Physics::SetBodyPosition(sensorBody, position + vec3(0, stepHeight * 0.5f, 0));
 }
 
 void CharacterController::SetSmoothPosition(vec3 position)
@@ -359,6 +377,7 @@ float CharacterController::GetCameraHeight()
 	return currentCameraHeight;
 }
 
+// ── Crouch ─────────────────────────────────────────────────────────────────
 void CharacterController::Crouch()
 {
 	if (isCrouched) return;
@@ -371,7 +390,6 @@ void CharacterController::Crouch()
 	float delta = oldHeight - newHeight;
 	vec3 deltaPos(0.0f);
 
-
 	if (onGround)
 	{
 		deltaPos.y = -delta / 2.0f;
@@ -380,39 +398,38 @@ void CharacterController::Crouch()
 	{
 		float oldCam = cameraHeightStanding;
 		float newCam = cameraHeightCrouching;
-
-		deltaPos.y =
-			(newHeight - oldHeight) * 0.5f +
-			(oldCam - newCam);
-
+		deltaPos.y = (newHeight - oldHeight) * 0.5f + (oldCam - newCam);
 		currentCameraHeight = cameraHeightCrouching;
-
 	}
-
 
 	vec3 newBodyPos = currentBodyPos + deltaPos;
 
-	Destroy();
+	Destroy(); // destroys both body and sensorBody
 
 	stepHeight = 0.25f;
 
 	body = Physics::CreateCharacterCylinderBody(owner, newBodyPos, radius, newHeight - stepHeight, 30);
 	body->GetMotionProperties()->SetLinearDamping(0);
 	Physics::GetBodyData(body)->dynamicCollisionGroupOrMask = true;
+	Physics::GetBodyData(body)->sensorCollisionMode = SensorCollisionMode::NotCollideWithSensors;
 	Physics::SetGravityFactor(body, 0);
+
+	sensorBody = Physics::CreateCharacterCylinderBody(owner, newBodyPos, radius, newHeight - stepHeight, 30);
+	sensorBody->GetMotionProperties()->SetLinearDamping(0);
+	Physics::GetBodyData(sensorBody)->dynamicCollisionGroupOrMask = true;
+	Physics::GetBodyData(sensorBody)->sensorCollisionMode = SensorCollisionMode::CollideOnlyWithSensors;
+	Physics::SetGravityFactor(sensorBody, 0);
 
 	height = newHeight;
 	isCrouched = true;
 
-
-
 	SetVelocity(oldVel);
 }
 
+// ── UnCrouch ───────────────────────────────────────────────────────────────
 void CharacterController::UnCrouch()
 {
 	if (!isCrouched) return;
-
 	if (!CanStandUp()) return;
 
 	vec3 oldVel = GetVelocity();
@@ -431,13 +448,9 @@ void CharacterController::UnCrouch()
 	{
 		float oldCam = cameraHeightCrouching;
 		float newCam = cameraHeightStanding;
-
-		deltaPos.y =
-			(newHeight - oldHeight) * 0.5f +
-			(oldCam - newCam);
+		deltaPos.y = (newHeight - oldHeight) * 0.5f + (oldCam - newCam);
 		currentCameraHeight = cameraHeightStanding;
 	}
-
 
 	vec3 newBodyPos = currentBodyPos + deltaPos;
 
@@ -448,7 +461,14 @@ void CharacterController::UnCrouch()
 	body = Physics::CreateCharacterCylinderBody(owner, newBodyPos, radius, newHeight - stepHeight, 30);
 	body->GetMotionProperties()->SetLinearDamping(0);
 	Physics::GetBodyData(body)->dynamicCollisionGroupOrMask = true;
+	Physics::GetBodyData(body)->sensorCollisionMode = SensorCollisionMode::NotCollideWithSensors;
 	Physics::SetGravityFactor(body, 0);
+
+	sensorBody = Physics::CreateCharacterCylinderBody(owner, newBodyPos, radius, newHeight - stepHeight, 30);
+	sensorBody->GetMotionProperties()->SetLinearDamping(0);
+	Physics::GetBodyData(sensorBody)->dynamicCollisionGroupOrMask = true;
+	Physics::GetBodyData(sensorBody)->sensorCollisionMode = SensorCollisionMode::CollideOnlyWithSensors;
+	Physics::SetGravityFactor(sensorBody, 0);
 
 	height = newHeight;
 	isCrouched = false;
@@ -701,14 +721,14 @@ bool CharacterController::CheckGroundAt(vec3 location, float checkRadius, float&
 
 	if (checkRadius > 0)
 	{
-		result = Physics::CylinderTrace(start, end - vec3(0, 0.05f, 0), checkRadius, 0.05f, BodyType::GroupCollisionTest, { body });
+		result = Physics::CylinderTrace(start, end - vec3(0, 0.05f, 0), checkRadius, 0.05f, BodyType::GroupCollisionTest, { body, sensorBody }, {owner});
 
 		result.position = result.shapePosition - vec3(0, 0.02f, 0);
 
 	}
 	else
 	{
-		result = Physics::LineTrace(start, end, BodyType::GroupCollisionTest, { body });
+		result = Physics::LineTrace(start, end, BodyType::GroupCollisionTest, { body, sensorBody }, {owner});
 	}
 
 	*hitBody = result.hitbody;

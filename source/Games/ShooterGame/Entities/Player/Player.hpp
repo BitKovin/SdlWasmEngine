@@ -138,7 +138,8 @@ private:
 
 
 	SkeletalMesh* bikeMesh = nullptr;
-	SkeletalMesh* bikeArmsMesh = nullptr;
+
+	SkeletalMesh* armsMesh = nullptr;
 
 	bool on_bike = false;
 
@@ -448,9 +449,8 @@ public:
 		bikeMesh = new SkeletalMesh(this);
 		bikeMesh->Visible = false;
 		Drawables.push_back(bikeMesh);
-		bikeArmsMesh = new SkeletalMesh(this);
-		bikeArmsMesh->Visible = false;
-		Drawables.push_back(bikeArmsMesh);
+		armsMesh = new SkeletalMesh(this);
+		Drawables.push_back(armsMesh);
 
 		bodyMesh = new SkeletalMesh(this);
 		bodyMesh->TwoSided = true;

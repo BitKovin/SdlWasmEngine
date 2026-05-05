@@ -80,17 +80,65 @@ ValidateResult MyContactListener::OnContactValidate(const Body& inBody1, const B
 			return ValidateResult::RejectContact;
 		if (props2->mask == BodyType::None)
 			return ValidateResult::RejectContact;
-		// Only allow collision if both:
-		// 1. The first body's group is contained in the second body's mask.
-		// 2. The second body's group is contained in the first body's mask.
+
 		bool collide1 = (static_cast<uint32_t>(props1->group) & static_cast<uint32_t>(props2->mask)) != 0;
 		bool collide2 = (static_cast<uint32_t>(props2->group) & static_cast<uint32_t>(props1->mask)) != 0;
 		if (!collide1 && !collide2)
-			return ValidateResult::RejectContact;
-		if (props1->dynamicCollisionGroupOrMask || props2->dynamicCollisionGroupOrMask)
 		{
-			return ValidateResult::AcceptContact;
+			if (props1->dynamicCollisionGroupOrMask || props2->dynamicCollisionGroupOrMask)
+				return ValidateResult::RejectContact;
+			else
+				return ValidateResult::RejectAllContactsForThisBodyPair;
 		}
+
+		// Check SensorCollisionMode for each body against whether the other body is a sensor.
+		// body1's mode is validated against body2 being a sensor, and vice versa.
+		bool rejectBySensorMode = false;
+
+		const bool body1IsSensor = inBody1.IsSensor();
+		const bool body2IsSensor = inBody2.IsSensor();
+
+		// body1's rules: what kind of bodies does body1 want to collide with?
+		switch (props1->sensorCollisionMode)
+		{
+		case SensorCollisionMode::NotCollideWithSensors:
+			if (body2IsSensor) rejectBySensorMode = true;
+			break;
+		case SensorCollisionMode::CollideOnlyWithSensors:
+			if (!body2IsSensor) rejectBySensorMode = true;
+			break;
+		case SensorCollisionMode::CollideWithEverything:
+		default:
+			break;
+		}
+
+		// body2's rules: what kind of bodies does body2 want to collide with?
+		if (!rejectBySensorMode)
+		{
+			switch (props2->sensorCollisionMode)
+			{
+			case SensorCollisionMode::NotCollideWithSensors:
+				if (body1IsSensor) rejectBySensorMode = true;
+				break;
+			case SensorCollisionMode::CollideOnlyWithSensors:
+				if (!body1IsSensor) rejectBySensorMode = true;
+				break;
+			case SensorCollisionMode::CollideWithEverything:
+			default:
+				break;
+			}
+		}
+
+		if (rejectBySensorMode)
+		{
+			if (props1->dynamicCollisionGroupOrMask || props2->dynamicCollisionGroupOrMask)
+				return ValidateResult::RejectContact;
+			else
+				return ValidateResult::RejectAllContactsForThisBodyPair;
+		}
+
+		if (props1->dynamicCollisionGroupOrMask || props2->dynamicCollisionGroupOrMask)
+			return ValidateResult::AcceptContact;
 	}
 	return ValidateResult::AcceptAllContactsForThisBodyPair;
 }

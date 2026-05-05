@@ -43,7 +43,7 @@ public:
 
 	WeaponSlotData Data;
 
-	std::string ArmsModelPath = "GameData/models/player/arms_p.glb";
+	static inline std::string ArmsModelPath = "GameData/models/player/arms_p.glb";
 
 	bool Illegal = false;
 

@@ -180,10 +180,27 @@ void Player::UpdateWalkMovement(vec2 input)
 
 	switch (moveState)
 	{
-	case MoveState::Mantling: UpdateMantle();            return;
-	case MoveState::OnLadder: UpdateStateLadder(input);  return;
-	default:                  UpdateStateGroundAir(input); return;
+	case MoveState::Mantling: UpdateMantle();            break;
+	case MoveState::OnLadder: UpdateStateLadder(input);  break;
+	default:                  UpdateStateGroundAir(input); break;
 	}
+
+	bool runAnimation = RunProgress > 0.9 && currentWeapon == nullptr && currentOffhandWeapon == nullptr && IsSliding() == false;
+
+	auto currentAnim = armsMesh->GetAnimationName();
+
+	std::string desiredAnimation = "idle";
+
+	if (runAnimation)
+	{
+		desiredAnimation = "run";
+	}
+
+	if (currentAnim != desiredAnimation)
+	{
+		armsMesh->PlayAnimation(desiredAnimation, true, 0.2f);
+	}
+	armsMesh->Update(1);
 }
 
 void Player::UpdateStateGroundAir(vec2 input)
@@ -586,8 +603,8 @@ void Player::UpdateBikeMovement(vec2 input)
 	pose.SetBoneTransformEuler("upperarm_r", rightArm);
 
 	bikeMesh->PasteAnimationPose(pose);
-	bikeArmsMesh->PasteAnimationPose(bikeMesh->GetAnimationPose());
-	bikeArmsMesh->Rotation = bikeMesh->Rotation;
+	armsMesh->PasteAnimationPose(bikeMesh->GetAnimationPose());
+	armsMesh->Rotation = bikeMesh->Rotation;
 
 	if (Input::GetAction("jump")->Holding())
 	{
@@ -1321,7 +1338,7 @@ bool Player::CanHoldWeapon() const
 	if (IsMantling()) return false;
 	if (IsOnLadder()) return false;   // ← new: hide weapon while climbing
 	if (on_bike)      return false;
-	if (RunProgress >= 1.0f) return false;
+	if (RunProgress >= 0.65f) return false;
 	return true;
 }
 
@@ -1658,7 +1675,11 @@ void Player::UpdateWeapon()
 	glm::quat qCurrent = MathHelper::GetRotationQuaternion(lerp(cameraRotation, Camera::rotation, 0.75f));
 	glm::quat qAdd = MathHelper::GetRotationQuaternion(currentWeaponRunRotation);
 
-	glm::quat qResult = qCurrent * qAdd;
+	vec3 runHideRotation = vec3(glm::mix(0.0f, 20.0f, RunProgress), 0, 0);
+
+	glm::quat qRunHide = MathHelper::GetRotationQuaternion(runHideRotation);
+
+	glm::quat qResult = qCurrent * qRunHide * qAdd;
 
 	rotatedWeaponPos -= mix(vec3(), vec3(-0.05f, 0.02, 0.05), RunProgress);
 
@@ -1687,7 +1708,7 @@ void Player::UpdateWeapon()
 	{
 
 		currentOffhandWeapon->Position = Camera::position + MathHelper::TransformVector(vec3(0, -bob.y + 0.001, bob.x) * 2.0f, Camera::GetRotationMatrix());
-		currentOffhandWeapon->Rotation = lerp(cameraRotation, Camera::rotation, 0.3f);
+		currentOffhandWeapon->Rotation = lerp(cameraRotation, Camera::rotation , 0.3f) + runHideRotation;
 		if (dead)
 			currentOffhandWeapon->Rotation.x += std::min(deathAnimDelay.GetProgress(), 1.0f) * 30.0f;
 
@@ -2048,7 +2069,7 @@ void Player::Update()
 	if (canRun)
 	{
 
-		if (Input::GetAction("dash")->Holding() && input.y > 0.4f && OnGround())
+		if (Input::GetAction("dash")->Holding() && input.y > 0.4f && OnGround() && IsSliding() == false)
 		{
 			RunProgress += Time::DeltaTimeF * 4.0f;
 		}
@@ -2091,9 +2112,17 @@ void Player::Update()
 
 	Position = controller.GetSmoothPosition();
 
-	bikeArmsMesh->Rotation = bikeMesh->Rotation;
-	bikeArmsMesh->Position = bikeMesh->Position;
-	bikeArmsMesh->PasteAnimationPose(bikeMesh->GetAnimationPose());
+	if (on_bike)
+	{
+		armsMesh->Rotation = bikeMesh->Rotation;
+		armsMesh->Position = bikeMesh->Position;
+		armsMesh->PasteAnimationPose(bikeMesh->GetAnimationPose());
+	}
+	else
+	{
+
+	}
+
 
 	vec3 playerForward = MathHelper::GetForwardVector(vec3(0, cameraRotation.y, 0));
 
@@ -2397,6 +2426,9 @@ void Player::LateUpdate()
 		playerLight->Rotation = Camera::rotation;
 
 	}
+
+	armsMesh->Rotation = Camera::rotation;
+	armsMesh->Position = Camera::position;
 
 }
 
@@ -2793,8 +2825,9 @@ void Player::LoadAssets()
 	bikeMesh->PreloadAssets();
 	bikeMesh->PlayAnimation("hide", true);
 
-	bikeArmsMesh->LoadFromFile("GameData/arms.glb");
-	bikeArmsMesh->PreloadAssets();
+	armsMesh->LoadFromFile(Weapon::ArmsModelPath);
+	armsMesh->PreloadAssets();
+	armsMesh->IsViewmodel = true;
 
 	bodyMesh->LoadFromFile("GameData/models/player/body/player_body.glb");
 	bodyMesh->GravityAlignedRotation = true;

@@ -33,6 +33,7 @@ public:
 	void SetVelocity(vec3 vel);
 
 	Body* body = nullptr;
+	Body* sensorBody = nullptr;
 
 	const Body* standingOnBody = nullptr;
 

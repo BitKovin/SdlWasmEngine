@@ -117,6 +117,13 @@ inline BodyType& operator&=(BodyType& a, BodyType b) {
 class Entity;
 class SkeletalMesh;
 
+enum class SensorCollisionMode
+{
+	CollideWithEverything,
+	NotCollideWithSensors,
+	CollideOnlyWithSensors
+};
+
 struct BodyData 
 {
 
@@ -135,6 +142,8 @@ struct BodyData
 	string hitboxName = "";
 
 	SkeletalMesh* OwnerSkeletalMesh = nullptr; //for hitbox bodies
+
+	SensorCollisionMode sensorCollisionMode = SensorCollisionMode::CollideWithEverything;
 
 };
 
