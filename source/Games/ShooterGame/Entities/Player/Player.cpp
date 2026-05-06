@@ -2861,39 +2861,30 @@ void Player::OnLevelEnd()
 // ─────────────────────────────────────────────────────────────────────────────
 void Player::EnterLadder(float inputY)
 {
-	// Don't grab a ladder mid-mantle — mantle takes priority.
 	if (IsMantling()) return;
-	// Already on ladder — nothing to do.
 	if (IsOnLadder()) return;
 
-	float rotationXToCompare = -5;
-	float inputYToCompare = 0.8f;
+	// Mirror the exact movement formula from UpdateStateLadder.
+	float pitch = cameraRotation.x;
+	float climbVel = 0.0f;
 
-	if (cameraRotation.x > 0)
-	{
+	if (pitch < -LadderLookDeadZone)
+		climbVel = inputY * LadderClimbSpeed;       // looking up:   W=up, S=down
+	else if (pitch > LadderLookDeadZone)
+		climbVel = -inputY * LadderClimbSpeed;      // looking down: W=down, S=up
 
+	// No movement would result from grabbing — don't grab.
+	if (climbVel == 0.0f)
+		return;
 
-		if (velocity.y > -0.6)
-		{
+	// Backing into the ladder (inputY < 0) only makes sense when already falling.
+	if (inputY < 0.0f && velocity.y > -0.6f)
+		return;
 
-			if (cameraRotation.x < -rotationXToCompare)
-				return;
-
-			if (inputY > -inputYToCompare)
-				return;
-		}
-
-	}
-	else
-	{
-		if (cameraRotation.x > rotationXToCompare)
-			return;
-
-		if (inputY < inputYToCompare)
-			return;
-	}
-
-
+	// Looking down while grounded and walking forward — would just descend
+// into the floor. Don't grab.
+	if (pitch > LadderLookDeadZone && inputY > 0.0f && controller.onGround)
+		return;
 
 	// Clean up any slide state before switching.
 	StopSlide();

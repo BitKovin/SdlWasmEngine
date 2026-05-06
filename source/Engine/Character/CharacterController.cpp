@@ -86,7 +86,7 @@ void CharacterController::Update(float deltaTime)
 				vec3 targetPos = currentPos + platformDelta;
 
 				// sweep character to follow platform while resolving collisions
-				Physics::SweepBody(body, targetPos);
+				Physics::SweepBody(body, targetPos, {owner});
 			}
 
 			prevAttachWorldPos = attachWorldPos;
@@ -212,7 +212,7 @@ void CharacterController::Update(float deltaTime)
 		float snapDelta = newVerticalPosition - currentPosition.y;
 		if (std::abs(snapDelta) > 0.005f)
 		{
-			Physics::SweepBody(body, vec3(currentPosition.x, newVerticalPosition, currentPosition.z));
+			Physics::SweepBody(body, vec3(currentPosition.x, newVerticalPosition, currentPosition.z), {owner});
 
 			float moved = currentPosition.y - FromPhysics(body->GetPosition()).y;
 			if (std::abs(moved) > 0.001f && movementQuality != CharacterControllerMovementQuality::NpcGeneric)
@@ -576,6 +576,39 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 		// Sloped or missed — fall through to reduced NPC sample loop below
 	}
 
+
+	if (movementQuality == CharacterControllerMovementQuality::NpcLowQuality)
+	{
+		constexpr float flatThreshold = MathHelper::constexpr_cos(30.0f * M_PI / 180.0f); // ~cos(30 degrees)
+
+		bool centerHit = CheckGroundAt(
+			FromPhysics(body->GetPosition()) - heightOffset,
+			0,
+			outheight, outCanStand, outNormal, &hitBody);
+
+		if (centerHit && outNormal.y >= flatThreshold)
+		{
+			// Perfectly flat ground - no need to sample around ring
+			if (hitBody && Physics::GetBodyData(hitBody)->group == BodyType::CharacterCapsule)
+			{
+				Physics::AddImpulse(body, vec3(0, 1.1f, 0));
+			}
+
+			avgNormal = outNormal;
+			float heightComp = GetPosition().y - height / 2.0f - 0.001f;
+			hitsGround = (outheight > heightComp);
+			canStand = hitsGround && outCanStand;
+			calculatedGroundHeight = outheight;
+
+			if (outCanStand)
+				standingOnBody = hitBody;
+
+			return;
+		}
+
+		// Sloped or missed — fall through to reduced NPC sample loop below
+	}
+
 	// -------------------------------------------------------
 	// Full / reduced sample loop
 	// Walkable and non-walkable hits are accumulated separately.
@@ -587,11 +620,20 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 	int numOfIterations = 16;
 	float startRadius = 0.1f;
 	float rayRadius = 0.1f;
+	float radiusStep = 0.3f;
 
 	if (ThreadPool::Supported() == false)
 	{
 		startRadius = 0.405f;
 		numOfIterations = 4;
+	}
+
+	if (movementQuality == CharacterControllerMovementQuality::Player)
+	{
+		numOfIterations = 16;
+		startRadius = 0.1f;
+		rayRadius = 0.25f;
+		radiusStep = 0.25f;
 	}
 
 	if (movementQuality == CharacterControllerMovementQuality::NpcGeneric)
@@ -602,6 +644,17 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 
 		if(length(GetVelocity())>0.2f)
 			startRadius = 0.5f;
+
+	}
+
+	if (movementQuality == CharacterControllerMovementQuality::NpcLowQuality)
+	{
+		numOfIterations = 4;
+		startRadius = 1;
+		rayRadius = 0;
+
+		if (length(GetVelocity()) > 0.2f)
+			startRadius = 1.0f;
 
 	}
 
@@ -649,8 +702,16 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 		};
 
 	// Ring samples
-	for (float r = startRadius; r <= 1; r += 0.3f)
+	for (float r = startRadius; r <= 1; r += radiusStep)
 	{
+
+		if (movementQuality == CharacterControllerMovementQuality::Player)
+		{
+			numOfIterations = 4
+				+ 4 * (r <= 0.3f)
+				+ 8 * (r <= 0.4f);
+		}
+
 		for (int i = 0; i < numOfIterations; i++)
 		{
 			float angle = (2.0f * M_PI / numOfIterations) * i;
@@ -716,7 +777,7 @@ bool CharacterController::CheckGroundAt(vec3 location, float checkRadius, float&
 
 	Physics::HitResult result;
 
-	vec3 start = location;// +vec3(0, 0.1f, 0);
+	vec3 start = location + vec3(0, 0.2f, 0);
 	vec3 end = location - vec3(0, height / 2.0f + stepHeight, 0);
 
 	if (checkRadius > 0)

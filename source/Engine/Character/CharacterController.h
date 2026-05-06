@@ -5,8 +5,9 @@
 enum class CharacterControllerMovementQuality
 {
 
-	Player = 0,
-	NpcGeneric = 1
+	Player = 0,// Huge amount of shape casts, but very smooth movement. Use for player characters.
+	NpcGeneric = 1, // One shape cast, few line casts when on slope.
+	NpcLowQuality = 2 // One line cast, even less line casts, line casts only on steep slope.
 
 };
 

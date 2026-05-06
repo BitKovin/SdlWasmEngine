@@ -505,7 +505,7 @@ public:
 
 	}
 
-	static void SweepBody(Body* body, vec3 position)
+	static void SweepBody(Body* body, vec3 position, std::vector<Entity*> ignoreEntities = {})
 	{
 		if (body == nullptr) return;
 
@@ -517,7 +517,7 @@ public:
 		auto currentPos = body->GetPosition();
 		auto targetPos = position;
 
-		auto hit = ShapeTrace(body->GetShape(), FromPhysics(currentPos), targetPos,vec3(0.99), data->mask, {body});
+		auto hit = ShapeTrace(body->GetShape(), FromPhysics(currentPos), targetPos,vec3(0.99), data->mask, {body}, ignoreEntities);
 
 		if (hit.hasHit)
 		{

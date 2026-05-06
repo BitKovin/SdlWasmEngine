@@ -585,4 +585,15 @@ public:
 		return hash;
 	}
 
+	inline static constexpr double constexpr_cos(double x) {
+		// Normalize x to [-PI, PI] for better accuracy if needed
+		double term = 1.0;
+		double res = 1.0;
+		for (int i = 1; i <= 10; ++i) {
+			term *= -x * x / (2 * i * (2 * i - 1));
+			res += term;
+		}
+		return res;
+	}
+
 };

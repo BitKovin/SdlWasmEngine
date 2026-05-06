@@ -360,7 +360,7 @@ private:
 
 	// Ladder tuning
 	static constexpr float LadderClimbSpeed = 4.0f;   // units/sec up or down
-	static constexpr float LadderLookDeadZone = 5.0f;   // degrees of pitch before input activates
+	static constexpr float LadderLookDeadZone = 0.0f;   // degrees of pitch before input activates
 
 	// ── Slide state ───────────────────────────────────────────────────────────
 	vec3  slideDir = vec3(0);          // normalized horizontal slide direction
