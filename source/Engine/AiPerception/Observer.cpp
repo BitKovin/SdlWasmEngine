@@ -20,7 +20,7 @@ void Observer::UpdateVisibility(const std::vector<std::shared_ptr<ObservationTar
         {
             if (target->isTriggeredNpc && target->npc)
             {
-                //continue;
+                continue;
             }
         }
 

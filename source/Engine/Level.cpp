@@ -29,6 +29,8 @@
 #include <World/WorldOrientationManager.h>
 #include <Logger.hpp>
 
+#include <tracy/tracy/Tracy.hpp>
+
 Level* Level::Current = nullptr;
 
 string Level::pendingLoadLevelPath = "";
@@ -135,7 +137,7 @@ Level* Level::OpenLevel(string filePath)
 	Current = newLevel;
 
 
-	EngineMain::MainInstance->MainThreadPool = new ThreadPool();
+	EngineMain::MainInstance->MainThreadPool = new ThreadPool("Async Update Pool");
 
 	EngineMain::MainInstance->MainThreadPool->Start(ThreadPool::GetNumThreadsForAsyncUpdate());
 
@@ -367,11 +369,18 @@ void Level::AsyncUpdate(bool paused)
 	std::vector<std::function<void()>> updateJobs;
 	updateJobs.reserve(objects.size()); // Pre-allocate for efficiency
 
-	for (auto var : objects) {
+	for (auto var : objects) 
+	{
 		if (var->UpdateWhenPaused || paused == false) 
 		{
-			if (var->UpdateEnabled)
-				updateJobs.emplace_back([var]() { var->AsyncUpdate(); });
+			if (var->UpdateEnabled && var->wantsAsyncUpdate)
+				updateJobs.emplace_back([var]() 
+					{ 
+						ZoneScoped;
+						std::string zoneName = "Async Update Entity" + var->GetId();
+						ZoneName(zoneName.c_str(), zoneName.size());
+						var->AsyncUpdate();
+					});
 		}
 	}
 
@@ -453,10 +462,14 @@ void Level::Update(bool paused)
 	{
 		if (var->UpdateWhenPaused || paused == false && var->Destroyed == false)
 		{
-			if(var->UpdateEnabled)
+			if (var->UpdateEnabled)
+			{
+				ZoneScoped;
+				std::string zoneName = "Update Entity" + var->GetId();
+				ZoneName(zoneName.c_str(), zoneName.size());
 				var->Update();
+			}
 		}
-
 	}
 
 	AddPendingLevelObjects();
@@ -474,7 +487,12 @@ void Level::LateUpdate(bool paused)
 		if (var->LateUpdateWhenPaused || paused == false && var->Destroyed == false)
 		{
 			if (var->UpdateEnabled)
+			{
+				ZoneScoped;
+				std::string zoneName = "LateUpdate Entity" + var->GetId();
+				ZoneName(zoneName.c_str(), zoneName.size());
 				var->LateUpdate();
+			}
 		}
 	}
 	AddPendingLevelObjects();

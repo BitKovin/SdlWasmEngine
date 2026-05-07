@@ -216,6 +216,11 @@ public:
 
 	static void PreloadEntityType(std::string technicalName);
 
+	std::string GetId() override
+	{
+		return Id;
+	}
+
 protected:
 
 	void OnDispose()

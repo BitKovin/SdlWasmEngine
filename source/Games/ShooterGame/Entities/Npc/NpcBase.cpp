@@ -173,6 +173,8 @@ void NpcBase::Start()
 	mesh->Position = Position - vec3(0, controller->height / 2.0f, 0);
 	mesh->Rotation = Rotation;
 
+	pathFollow.allowPartialPath = true;
+
 }
 
 
@@ -1114,6 +1116,15 @@ void NpcBase::SelectPrimaryAndCopy()
 	{
 		const auto& info = pair.second;
 
+		if (info.id == target_id && target_follow)
+		{
+			if (Time::GameTime - info.lastSeenTime > 30)
+			{
+				StopTargetFollow(info.id);
+			}
+		}
+
+
 		// Calculate priority score (higher = more important)
 		int priority = 0;
 
@@ -1425,9 +1436,18 @@ void NpcBase::UpdateTargetAttack()
 
 		desiredSpineRotation = MathHelper::FindLookAtRotation(vec3(), localVector);
 
+		if (glm::isnan(desiredSpineRotation.x) || glm::isnan(desiredSpineRotation.y) || glm::isnan(desiredSpineRotation.z))
+		{
+			desiredSpineRotation = spineRotation;
+		}
+
 	}
 
 	spineRotation = mix(spineRotation, desiredSpineRotation, Time::DeltaTimeF * 10);
+	if (glm::isnan(spineRotation.x) || glm::isnan(spineRotation.y) || glm::isnan(spineRotation.z))
+	{
+		spineRotation = vec3();
+	}
 
 
 
@@ -1527,7 +1547,7 @@ bool NpcBase::CheckAttackLOS(vec3 location, vec3 targetLocation)
 
 	vec3 attackPos = location + vec3(0, 0.6f, 0) + attackDir;
 
-	auto hit = Physics::SphereTrace(attackPos, targetLocation + vec3(0, 0.65, 0), 0.1f, BodyType::GroupHitTest, mesh->hitboxBodies);
+	auto hit = Physics::SphereTrace(attackPos, targetLocation + vec3(0, 0.65, 0), 0.1f, BodyType::GroupHitTest, {}, {this});
 
 	if (hit.hasHit && hit.entity->Id != target_id)
 	{
@@ -1932,6 +1952,7 @@ void NpcBase::ShareTargetKnowlageWith(NpcBase* anotherNpc)
 
 		bool hasChanges = false;
 
+
 		if (anotherNpc->knownTargets.count(tId))
 		{
 			const auto& otherInfo = anotherNpc->knownTargets.at(tId);
@@ -1943,9 +1964,12 @@ void NpcBase::ShareTargetKnowlageWith(NpcBase* anotherNpc)
 			if (myInfo.attack && !otherInfo.attack) 
 				hasChanges = true;
 			if (myInfo.lastSeenTime > otherInfo.lastSeenTime + 0.2f) hasChanges = true;
-			if (myInfo.follow && myInfo.underArrest && !otherInfo.follow) hasChanges = true;
+
+			if (myInfo.follow && myInfo.underArrest && !otherInfo.follow
+				&& (Time::GameTime - myInfo.lastSeenTime < 25.0f)) hasChanges = true;
+
 			if (myInfo.sees && !otherInfo.sees) hasChanges = true;
-			if (myInfo.detection_progress >= 1 && otherInfo.detection_progress < 1) hasChanges = true;
+			if (myInfo.detection_progress >= 1 && otherInfo.detection_progress < 1 && myInfo.lastSeenTime > otherInfo.lastSeenTime + 0.2f) hasChanges = true;
 		}
 		else
 		{
@@ -1992,7 +2016,8 @@ void NpcBase::ShareTargetKnowlageWithFinal(NpcBase* anotherNpc)
 
 		auto& otherInfo = anotherNpc->knownTargets[tId];  // creates if missing
 
-		if (myInfo.follow && myInfo.underArrest && !otherInfo.follow)
+		if (myInfo.follow && myInfo.underArrest && !otherInfo.follow
+			&& (Time::GameTime - myInfo.lastSeenTime < 25.0f))
 		{
 			otherInfo.follow = true;
 		}
@@ -2013,13 +2038,20 @@ void NpcBase::ShareTargetKnowlageWithFinal(NpcBase* anotherNpc)
 			otherInfo.underArrestExpire = -1.0f;
 			otherInfo.follow = true;
 			otherInfo.underArrest = true;
+			otherInfo.lastSeenPosition = myInfo.lastSeenPosition;
+			otherInfo.lastSeenTime = myInfo.lastSeenTime - 0.15f;
+		}
+
+		if (myInfo.detection_progress >= 1 && otherInfo.detection_progress < 1 && myInfo.lastSeenTime > otherInfo.lastSeenTime + 0.2f)
+		{
+			otherInfo.detection_progress = 1;
 		}
 
 		if (myInfo.lastSeenTime > otherInfo.lastSeenTime)
 		{
 			otherInfo.lastSeenPosition = myInfo.lastSeenPosition;
-			otherInfo.lastSeenTime = myInfo.lastSeenTime;
-			otherInfo.stopUpdateLastSeenPositionDelay.AddDelay(0.5);
+			otherInfo.lastSeenTime = myInfo.lastSeenTime - 0.15f;
+			//otherInfo.stopUpdateLastSeenPositionDelay.AddDelay(0.5);
 		}
 
 		if (myInfo.currentCrime < otherInfo.currentCrime)
@@ -2027,10 +2059,7 @@ void NpcBase::ShareTargetKnowlageWithFinal(NpcBase* anotherNpc)
 			otherInfo.currentCrime = myInfo.currentCrime;
 		}
 
-		if (myInfo.detection_progress >= 1 && otherInfo.detection_progress < 1)
-		{
-			otherInfo.detection_progress = 1;
-		}
+
 	}
 }
 
@@ -2135,6 +2164,7 @@ void NpcBase::StopTargetFollow(const std::string& id)
 		info.sees = false;
 		info.lastSeenPosition = vec3();
 		info.currentCrime = Crime::None;
+		info.detection_progress = 0;
 		pathFollow.reachedTarget = false;
 		pathFollow.FoundTarget = true;
 		pathFollow.acceptanceRadius = 1;

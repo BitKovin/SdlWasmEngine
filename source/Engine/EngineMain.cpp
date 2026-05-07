@@ -31,6 +31,8 @@
 
 #include <Logger.hpp>
 
+#include <tracy/tracy/Tracy.hpp>
+
 EngineMain* EngineMain::MainInstance = nullptr;
 
 UiViewport EngineMain::Viewport;
@@ -167,6 +169,7 @@ void EngineMain::Init(std::vector<std::string> args)
     DebugUiEnabled = false;
 #endif // DISTRIBUTION
 
+    tracy::SetThreadName("Main Thread");
 
     Arguments = ParseCommands(args);
 
@@ -183,11 +186,11 @@ void EngineMain::Init(std::vector<std::string> args)
 
     Logger::Info("init");
 
-    MainThreadPool = new ThreadPool();
+    MainThreadPool = new ThreadPool("Tread Pool");
 
     MainThreadPool->Start(ThreadPool::GetNumThreadsForThreadPool());
 
-	GameUpdateSingleThreadPool = new ThreadPool();
+	GameUpdateSingleThreadPool = new ThreadPool("Game Thread Pool");
 	GameUpdateSingleThreadPool->Start(1);
 
     SoundManager::Initialize();
@@ -364,6 +367,8 @@ void EngineMain::FinishFrame()
 void EngineMain::MainLoop()
 {
     
+    ZoneScopedN("Frame");
+    FrameMark;
 
     if (frame == 5) //some platforms require it
     {
@@ -452,16 +457,20 @@ void EngineMain::MainLoop()
     Input::UpdateMouse();
 
     
-    if (asyncGameUpdate) 
+    if (asyncGameUpdate)
     {
-        GameUpdateSingleThreadPool->QueueJob([this]() {
-            GameUpdate();
-			});
-    }
-    else 
-    {
+        ZoneScopedN("GameUpdate (Async)");
 
-        // Run GameUpdate on the main thread.
+        GameUpdateSingleThreadPool->QueueJob([this]()
+            {
+                ZoneScopedN("GameUpdate Worker Job");
+                tracy::SetThreadName("Game Thread");
+                GameUpdate();
+            });
+    }
+    else
+    {
+        ZoneScopedN("GameUpdate (Sync)");
         GameUpdate();
     }
 
@@ -476,10 +485,10 @@ void EngineMain::MainLoop()
 
     if (asyncGameUpdate)
     {
+        ZoneScopedN("Wait GameUpdate Jobs");
         GameUpdateSingleThreadPool->WaitForFinish();
 
-		FinishFrame();
-
+        FinishFrame();
     }
 
 	RmlContext->Update(Time::DeltaTimeFNoTimeScale);
@@ -659,29 +668,60 @@ void EngineMain::SimulateGameTicksForTimeCombinedPrecision(float timeToSimulate)
 
 void EngineMain::GameUpdate()
 {
+    ZoneScopedN("GameUpdate");
 
-    NavigationSystem::Update();
-	if (Paused == false)
-		Physics::Simulate();
-    Physics::UpdateDebugDraw();
+    {
+        ZoneScopedN("Navigation");
+        NavigationSystem::Update();
+    }
 
-    Level::Current->UpdatePhysics();
+    {
+        ZoneScopedN("Physics");
+        if (Paused == false)
+            Physics::Simulate();
+    }
 
-    AiPerceptionSystem::Update();
+    {
+        ZoneScopedN("Physics Debug");
+        Physics::UpdateDebugDraw();
+    }
 
-    Level::Current->Update(Paused);
+    {
+        ZoneScopedN("Level Physics");
+        Level::Current->UpdatePhysics();
+    }
 
-    Level::Current->AsyncUpdate(Paused);
+    {
+        ZoneScopedN("AI Perception");
+        AiPerceptionSystem::Update();
+    }
 
-    Level::Current->LateUpdate(Paused);
+    {
+        ZoneScopedN("Level Update");
+        Level::Current->Update(Paused);
+    }
 
-    if(SimulatingGameTicks == false)
+    {
+        ZoneScopedN("Async Update");
+        Level::Current->AsyncUpdate(Paused);
+    }
+
+    {
+        ZoneScopedN("Late Update");
+        Level::Current->LateUpdate(Paused);
+    }
+
+    if (!SimulatingGameTicks)
+    {
+        ZoneScopedN("Audio");
         SoundManager::Update();
-
+    }
 }
 
 void EngineMain::Render()
 {
+
+    ZoneScopedN("Render");
 
 	ViewIdManager::Reset();
 
@@ -722,86 +762,111 @@ void EngineMain::Render()
     /* ============================================================
        UI PASS → render to transparent RT
        ============================================================ */
-
-    UiFrameBuffer->bind();
-    bgfx::setViewMode(ViewIdManager::GetCurrentId(), bgfx::ViewMode::Sequential);
-    bgfx::setViewClear(ViewIdManager::GetCurrentId(),
-        BGFX_CLEAR_COLOR | BGFX_CLEAR_STENCIL,
-        0x00000000, // transparent black
-        1.0f, 0);   // stencil cleared to 0
-
-	BgfxStateManager::Reset();
-    BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Always);
-
-	bgfx::touch(ViewIdManager::GetCurrentId());
-    Viewport.Draw();
-    UiElement::DrawingLate = true;
-
-    for (auto elem : UiElement::pendingLateDrawElements)
     {
-        elem->Draw();
+
+        ZoneScopedN("UI Pass");
+
+        UiFrameBuffer->bind();
+        bgfx::setViewMode(ViewIdManager::GetCurrentId(), bgfx::ViewMode::Sequential);
+        bgfx::setViewClear(ViewIdManager::GetCurrentId(),
+            BGFX_CLEAR_COLOR | BGFX_CLEAR_STENCIL,
+            0x00000000, // transparent black
+            1.0f, 0);   // stencil cleared to 0
+
+        BgfxStateManager::Reset();
+        BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Always);
+
+        bgfx::touch(ViewIdManager::GetCurrentId());
+        {
+            ZoneScopedN("Viewport Draw");
+            Viewport.Draw();
+            UiElement::DrawingLate = true;
+        }
+        {
+            ZoneScopedN("Late UI");
+            for (auto elem : UiElement::pendingLateDrawElements)
+            {
+                elem->Draw();
+            }
+        }
+
+        UiElement::DrawingLate = false;
+        UiElement::pendingLateDrawElements.clear();
+
+        UiRenderer::EndFrame();
+
+        UiFrameBuffer->unbind();
     }
-
-    UiElement::DrawingLate = false;
-    UiElement::pendingLateDrawElements.clear();
-
-    UiRenderer::EndFrame();
-
-    UiFrameBuffer->unbind();
-
-    ViewIdManager::GetCurrentId();
 
     /* ============================================================
        WORLD PASS — RenderLevel manages its own view IDs internally
        ============================================================ */
 
-    MainRenderer->RenderLevel(Level::Current);
+    {
+        ZoneScopedN("World Render");
+        MainRenderer->RenderLevel(Level::Current);
+    }
 
     /* ============================================================
        COMPOSITE UI OVER SCENE → swapchain (view 0)
        ============================================================ */
-
-    bgfx::setViewRect(ViewIdManager::GetCurrentId(), 0, 0,
-        (uint16_t)ScreenSize.x,
-        (uint16_t)ScreenSize.y);
-    bgfx::setViewFrameBuffer(ViewIdManager::GetCurrentId(), BGFX_INVALID_HANDLE); // default backbuffer
-
-
-    auto compositeShader = ShaderManager::GetShaderProgram(
-        "vs_fullscreen",
-        "fs_fxaa_simple"
-    );
-
-    compositeShader->SetTexture("screenTexture", UiRenderTexture->textureHandle());
-    compositeShader->SetUniform("screenSize",
-        vec2((float)ScreenSize.x, (float)ScreenSize.y));
-
-    // Premultiplied-alpha blend: RGB = src*1 + dst*(1-srcA)
-    BgfxStateManager::Reset();
-    BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Always);
-    BgfxStateManager::SetBlend(BgfxStateManager::Blend::Premultiplied);
-    BgfxStateManager::Apply();
-
-    MainRenderer->RenderFullscreenQuad(compositeShader);
-
-    RmlContext->Render();
-
-    if (DebugUiEnabled)
     {
-        Level::Current->DevUiUpdate();
 
-        bool open = true;
+        ZoneScopedN("Composite UI Pass");
 
-        if (Paused)
-        {
-            Console::Get().Draw("Console", &open);
-            ResourceStatistics::Instance().renderImGui();
-        }
+        bgfx::setViewRect(ViewIdManager::GetCurrentId(), 0, 0,
+            (uint16_t)ScreenSize.x,
+            (uint16_t)ScreenSize.y);
+        bgfx::setViewFrameBuffer(ViewIdManager::GetCurrentId(), BGFX_INVALID_HANDLE); // default backbuffer
 
 
-        RenderImGui();
+        auto compositeShader = ShaderManager::GetShaderProgram(
+            "vs_fullscreen",
+            "fs_fxaa_simple"
+        );
+
+        compositeShader->SetTexture("screenTexture", UiRenderTexture->textureHandle());
+        compositeShader->SetUniform("screenSize",
+            vec2((float)ScreenSize.x, (float)ScreenSize.y));
+
+        // Premultiplied-alpha blend: RGB = src*1 + dst*(1-srcA)
+        BgfxStateManager::Reset();
+        BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Always);
+        BgfxStateManager::SetBlend(BgfxStateManager::Blend::Premultiplied);
+        BgfxStateManager::Apply();
+
+        MainRenderer->RenderFullscreenQuad(compositeShader);
+
     }
 
+    {
+
+        ZoneScopedN("RML UI Pass");
+
+        RmlContext->Render();
+    }
+
+
+    {
+
+		ZoneScopedN("Debug UI");
+
+        if (DebugUiEnabled)
+        {
+            Level::Current->DevUiUpdate();
+
+            bool open = true;
+
+            if (Paused)
+            {
+                Console::Get().Draw("Console", &open);
+                ResourceStatistics::Instance().renderImGui();
+            }
+
+
+            RenderImGui();
+        }
+    }
 
     if (LoadingFrames > 0)
     {
@@ -811,7 +876,12 @@ void EngineMain::Render()
         return;
     }
 
-    bgfx::frame();
+    {
+
+		ZoneScopedN("Present");
+
+        bgfx::frame();
+    }
 }
 
 void EngineMain::ForceUpdateScreenSize()

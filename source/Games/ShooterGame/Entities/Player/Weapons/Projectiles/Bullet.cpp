@@ -80,6 +80,7 @@ void Bullet::Update()
 		Destroy();
 		trail->Position = hit.position;
 		trail->StopAll();
+		trail->DestroyWithDelay(0.5f);
 		trail = nullptr;
 		return;
 	}
@@ -89,6 +90,7 @@ void Bullet::Update()
 		Destroy();
 		trail->Position = hit.position;
 		trail->StopAll();
+		trail->DestroyWithDelay(0.5f);
 		trail = nullptr;
 	}
 

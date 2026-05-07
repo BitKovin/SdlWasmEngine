@@ -21,6 +21,8 @@ public:
 
 	bool UpdateEnabled = true;
 
+	bool wantsAsyncUpdate = true;
+
 	LevelObject(){}
 	virtual ~LevelObject() = default;
 
@@ -28,7 +30,8 @@ public:
 	virtual void LateUpdate() {}
 	virtual void UpdatePhysics() {}
 
-	virtual void AsyncUpdate(){}
+	//never call base class implementation of this
+	virtual void AsyncUpdate() { wantsAsyncUpdate = false; }
 
 	virtual void Start() {}
 
@@ -41,7 +44,10 @@ public:
 
 	}
 
-
+	virtual std::string GetId()
+	{
+		return "";
+	}
 
 	virtual void LoadAssetsIfNeeded(){}
 

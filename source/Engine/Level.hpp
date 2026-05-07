@@ -38,8 +38,6 @@ private:
 
 	std::recursive_mutex loadedEntitiesLock = std::recursive_mutex();
 
-	ThreadPool* asyncUpdateThreadPool;
-
 	static std::string pendingLoadLevelPath;
 
 	std::vector<LevelObject*> pendingAddLevelObjects;
@@ -53,6 +51,8 @@ private:
 
 
 public:
+
+	ThreadPool* asyncUpdateThreadPool;
 
 	static Level* Current;
 
@@ -79,7 +79,7 @@ public:
 
 	Level()
 	{
-		asyncUpdateThreadPool = new ThreadPool();
+		asyncUpdateThreadPool = new ThreadPool("Async Update Pool");
 		asyncUpdateThreadPool->Start(ThreadPool::GetNumThreadsForAsyncUpdate());
 	}
 

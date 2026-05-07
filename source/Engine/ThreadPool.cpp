@@ -6,6 +6,7 @@
 #include <atomic>
 #include <vector>
 #include <queue>
+#include <tracy/tracy/Tracy.hpp>
 using namespace std::chrono_literals;
 #endif
 
@@ -17,8 +18,31 @@ void ThreadPool::Start(uint32_t num_threads) {
     if (!threads_.empty()) return;
     stopping_ = false;
     threads_.reserve(num_threads);
-    for (uint32_t i = 0; i < num_threads; ++i) {
-        threads_.emplace_back(&ThreadPool::Worker, this);
+
+    // Shared counter — thread i waits until i-1 has registered
+    auto nameOrder = std::make_shared<std::atomic<uint32_t>>(0);
+
+    for (uint32_t i = 0; i < num_threads; ++i)
+    {
+        threads_.emplace_back([this, i, nameOrder]()
+            {
+				{
+
+					// Spin until it's our turn to register
+					while (nameOrder->load(std::memory_order_acquire) != i)
+						std::this_thread::yield();
+
+					std::string threadName = poolName_ + " Worker " + std::to_string(i);
+					tracy::SetThreadName(threadName.c_str());
+                    ZoneScopedN("thread creation");
+
+
+
+					// Signal next thread to register
+					nameOrder->fetch_add(1, std::memory_order_release);
+				}
+                Worker();
+            });
     }
 #endif
 }
@@ -56,7 +80,7 @@ void ThreadPool::Worker() {
             std::unique_lock<std::mutex> lk(mtx_);
 
             // Batch job extraction - grab multiple jobs if available
-            constexpr uint32_t BATCH_SIZE = 8;
+            constexpr uint32_t BATCH_SIZE = 1;
             uint32_t jobs_grabbed = 0;
 
             while (!jobs_.empty() && jobs_grabbed < BATCH_SIZE) {

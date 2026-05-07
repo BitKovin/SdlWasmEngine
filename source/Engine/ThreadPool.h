@@ -27,7 +27,8 @@
 
 class ThreadPool {
 public:
-    ThreadPool() = default;
+    ThreadPool(std::string name)
+        : poolName_(std::move(name)) {}
     ~ThreadPool() { Stop(); }
 
     void Start(uint32_t num_threads);
@@ -76,6 +77,8 @@ public:
 
 private:
     void Worker();
+
+    std::string poolName_;
 
 #ifndef DISABLE_THREADPOOL
     mutable std::mutex mtx_;

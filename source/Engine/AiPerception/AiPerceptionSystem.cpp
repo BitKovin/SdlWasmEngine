@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <utility>
 #include "../EngineMain.h"
+#include <tracy/tracy/Tracy.hpp>
+#include <Level.hpp>
 
 std::vector<std::shared_ptr<Observer>> AiPerceptionSystem::observers;
 std::vector<std::shared_ptr<ObservationTarget>> AiPerceptionSystem::targets;
@@ -49,6 +51,9 @@ void AiPerceptionSystem::Update()
 {
     const int frameDistrib = 4;
 
+    std::vector<std::function<void()>> updateJobs;
+    updateJobs.reserve(observers.size() / 3); // Pre-allocate for efficiency
+
     for (auto& observer : observers)
     {
         // Promote sounds emitted last frame into heardSounds so AI can read them this frame,
@@ -58,9 +63,23 @@ void AiPerceptionSystem::Update()
 
         if (observer->id % frameDistrib == EngineMain::MainInstance->frame % frameDistrib)
         {
-            observer->UpdateVisibility(targets);
+
+            updateJobs.emplace_back([observer]()
+                {
+                    ZoneScoped;
+                    std::string zoneName = "Observer " + observer->owner.str();
+                    ZoneName(zoneName.c_str(), zoneName.size());
+                    observer->UpdateVisibility(targets);
+				});
         }
     }
+
+    if (!updateJobs.empty()) {
+        Level::Current->asyncUpdateThreadPool->QueueJobs(std::move(updateJobs));
+    }
+
+    Level::Current->asyncUpdateThreadPool->WaitForFinish();
+
 }
 
 void AiPerceptionSystem::EmitSoundAt(const glm::vec3& position, float radius, int severity, std::string causerId)
