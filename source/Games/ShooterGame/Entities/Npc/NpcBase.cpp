@@ -2155,7 +2155,7 @@ void NpcBase::StopTargetFollow(const std::string& id)
 	{
 		auto& info = knownTargets[id];
 
-		if (info.underArrest)
+		if (info.underArrest && info.seesAndDetected)
 		{
 			PlayPhrace("target_lost");
 		}
