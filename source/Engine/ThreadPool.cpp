@@ -60,7 +60,11 @@ void ThreadPool::Worker() {
             localQueue.pop();
 
             performingJobs.fetch_add(1, std::memory_order_relaxed);
-            job();
+            {
+                ZoneScopedN("job");
+                job();
+            }
+
             performingJobs.fetch_sub(1, std::memory_order_relaxed);
 
             // Batch update work_count_ to reduce atomic operations

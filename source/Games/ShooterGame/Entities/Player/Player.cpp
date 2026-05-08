@@ -2069,7 +2069,7 @@ void Player::Update()
 	if (canRun)
 	{
 
-		if (Input::GetAction("dash")->Holding() && input.y > 0.4f && OnGround() && IsSliding() == false)
+		if (Input::GetAction("dash")->Holding() && input.y > 0.4f && OnGround() && controller.isCrouched == false)
 		{
 			RunProgress += Time::DeltaTimeF * 4.0f;
 		}

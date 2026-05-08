@@ -137,9 +137,9 @@ Level* Level::OpenLevel(string filePath)
 	Current = newLevel;
 
 
-	EngineMain::MainInstance->MainThreadPool = new ThreadPool("Async Update Pool");
+	EngineMain::MainInstance->MainThreadPool = new ThreadPool("Tread Pool");
 
-	EngineMain::MainInstance->MainThreadPool->Start(ThreadPool::GetNumThreadsForAsyncUpdate());
+	EngineMain::MainInstance->MainThreadPool->Start(ThreadPool::GetNumThreadsForThreadPool());
 
 	if (endsWith(filePath, ".bsp"))
 	{

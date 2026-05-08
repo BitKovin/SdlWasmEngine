@@ -35,6 +35,8 @@
 #include "Investigations/TargetSeenInvestigation.h"
 #include "Investigations/WeaponFireInvestigation.h"
 
+#include <tracy/tracy/Tracy.hpp>
+
 float NpcBase::GetDetectionSpeed(Crime crime) const
 {
 	switch (crime) {
@@ -451,41 +453,74 @@ void NpcBase::Update()
 
 void NpcBase::AsyncUpdate()
 {
+	ZoneScopedN("NpcBase::AsyncUpdate");
 
 	if (controller)
 	{
+		ZoneScopedN("Controller Update");
+
 		controller->Update(Time::DeltaTimeF);
 		Position = controller->GetSmoothPosition();
 	}
 
+	{
+		ZoneScopedN("PathFollow Wait");
 
-	pathFollow.WaitToFinish();
+		pathFollow.WaitToFinish();
+	}
 
 	if (dead == false)
 	{
-		UpdateObserver();
-		UpdateTargetFollow();
-		UpdateBT();
-		UpdateTargetAttack();
+		{
+			ZoneScopedN("UpdateObserver");
+			UpdateObserver();
+		}
 
-		UpdateScheduledTask();
+		{
+			ZoneScopedN("UpdateTargetFollow");
+			UpdateTargetFollow();
+		}
+
+		{
+			ZoneScopedN("UpdateBT");
+			UpdateBT();
+		}
+
+		{
+			ZoneScopedN("UpdateTargetAttack");
+			UpdateTargetAttack();
+		}
+
+		{
+			ZoneScopedN("UpdateScheduledTask");
+			UpdateScheduledTask();
+		}
 
 		if (currentInvestigation)
+		{
+			ZoneScopedN("Investigation Update");
 			currentInvestigation->Update(Time::DeltaTimeF);
-
+		}
 	}
-
 
 	if (dead)
 	{
-		UpdateAnimations();
-		if (mesh->WasRended)
 		{
-			mesh->UpdateHitboxes();
+			ZoneScopedN("Dead UpdateAnimations");
+			UpdateAnimations();
 		}
-		else if (tickIntervalDelay.Wait() == false)
+
 		{
-			mesh->UpdateHitboxes();
+			ZoneScopedN("Dead UpdateHitboxes");
+
+			if (mesh->WasRended)
+			{
+				mesh->UpdateHitboxes();
+			}
+			else if (tickIntervalDelay.Wait() == false)
+			{
+				mesh->UpdateHitboxes();
+			}
 		}
 
 		weaponMesh->Visible = false;
@@ -496,78 +531,107 @@ void NpcBase::AsyncUpdate()
 	auto headHitbox = mesh->FindHitboxByName("neck_01");
 
 	if (headHitbox)
+	{
 		VoiceSoundPlayer->Position = FromPhysics(headHitbox->GetPosition());
+	}
 
 	VoiceSoundPlayer->Velocity = controller->GetVelocity();
 
 	vec3 curMove = MathHelper::XZ(controller->GetVelocity());
 
-	bool lockAtTarget = ((target_attack && target_sees && target_attackInRange && isGuard) || (target_follow && target_sees && length(curMove) < 1)) && DoingTask == false;
+	bool lockAtTarget =
+		((target_attack && target_sees && target_attackInRange && isGuard)
+			|| (target_follow && target_sees && length(curMove) < 1))
+		&& DoingTask == false;
 
 	if (isStunned() || mesh->InRagdoll)
 	{
+		ZoneScopedN("Stunned/Ragdoll");
 
-		UpdateStunnedReturn();
+		{
+			ZoneScopedN("UpdateStunnedReturn");
+			UpdateStunnedReturn();
+		}
 
-		controller->SetVelocity(vec3(0,controller->GetVelocity().y, 0));
-
+		controller->SetVelocity(vec3(0, controller->GetVelocity().y, 0));
 	}
 	else if (IsPlayingRootMotionAnimation())
 	{
+		ZoneScopedN("RootMotion");
 
 		controller->SetVelocity(vec3(0, controller->GetVelocity().y, 0));
 
 		if (lockAtTarget && IsRotationAllowedDuringRootMotion())
 		{
+			ZoneScopedN("RootMotion LockAtTarget");
+
 			auto targetRef = Level::Current->FindEntityWithId(target_id);
 
 			desiredLookVector = targetRef->Position - Position;
 
-			movingDirection = MathHelper::Interp(movingDirection, desiredLookVector, Time::DeltaTimeF, 15.0f);
-
+			movingDirection = MathHelper::Interp(
+				movingDirection,
+				desiredLookVector,
+				Time::DeltaTimeF,
+				15.0f
+			);
 		}
-
 	}
 	else if (movementLockDelay.Wait())
 	{
+		ZoneScopedN("MovementLocked");
 
-		desiredDirection = MathHelper::Interp(curMove, vec3(), Time::DeltaTimeF, 5.0f);
+		desiredDirection = MathHelper::Interp(
+			curMove,
+			vec3(),
+			Time::DeltaTimeF,
+			5.0f
+		);
 
 		float gravity = controller->GetVelocity().y;
 
 		vec3 move = desiredDirection;
-
 		move.y = gravity;
 
 		controller->SetVelocity(move);
-
 	}
 	else
 	{
+		ZoneScopedN("Movement Update");
+
 		desiredDirection = vec3(0);
 
 		if (pathFollow.reachedTarget == false || pathFollow.CalculatedPath == false)
 		{
+			ZoneScopedN("PathFollow Request");
+
 			pathFollow.UpdateStartAndTarget(Position, desiredTargetLocation);
 			pathFollow.TryPerform();
 		}
 
-
-
 		if (pathFollow.reachedTarget == false && pathFollow.CalculatedPath)
 		{
+			ZoneScopedN("PathFollow Move");
 
-			UpdateDoorUpdate();
+			{
+				ZoneScopedN("UpdateDoorUpdate");
+				UpdateDoorUpdate();
+			}
 
 			vec3 dir = MathHelper::XZ(pathFollow.CalculatedTargetLocation - Position);
 
-			if (length(dir) > 0.001)
+			if (length(dir) > 0.001f)
 			{
 				vec3 newMove = normalize(dir) * speed;
 
 				vec3 curMove = MathHelper::XZ(controller->GetVelocity());
 
-				desiredDirection = MathHelper::Interp(curMove, newMove, Time::DeltaTimeF, 5.0f);
+				desiredDirection = MathHelper::Interp(
+					curMove,
+					newMove,
+					Time::DeltaTimeF,
+					5.0f
+				);
 
 				if (lockAtTarget == false)
 				{
@@ -576,96 +640,133 @@ void NpcBase::AsyncUpdate()
 
 				desiredLookVector = movingDirection;
 			}
-
 		}
 		else
 		{
+			ZoneScopedN("Idle Movement");
 
 			vec3 curMove = MathHelper::XZ(controller->GetVelocity());
 
-			desiredDirection = MathHelper::Interp(curMove, vec3(0), Time::DeltaTimeF, 8.0f);
+			desiredDirection = MathHelper::Interp(
+				curMove,
+				vec3(0),
+				Time::DeltaTimeF,
+				8.0f
+			);
 
 			if (lockAtTarget == false)
 			{
-				movingDirection = MathHelper::Interp(movingDirection, desiredLookVector, Time::DeltaTimeF, 2);
+				movingDirection = MathHelper::Interp(
+					movingDirection,
+					desiredLookVector,
+					Time::DeltaTimeF,
+					2
+				);
 			}
-
 		}
 
 		if (lockAtTarget)
 		{
+			ZoneScopedN("LockAtTarget");
+
 			auto targetRef = Level::Current->FindEntityWithId(target_id);
 
 			desiredLookVector = targetRef->Position - Position;
 
-			movingDirection = MathHelper::Interp(movingDirection, desiredLookVector, Time::DeltaTimeF, 4.0f);
-
+			movingDirection = MathHelper::Interp(
+				movingDirection,
+				desiredLookVector,
+				Time::DeltaTimeF,
+				4.0f
+			);
 		}
 
-
-
-		if (length(movingDirection) > 1.0f)
 		{
-			movingDirection = normalize(movingDirection);
+			ZoneScopedN("Normalize MovementDirection");
+
+			if (length(movingDirection) > 1.0f)
+			{
+				movingDirection = normalize(movingDirection);
+			}
+
+			if (length(movingDirection) < 0.5f && length(movingDirection) > 0.01f)
+			{
+				movingDirection = normalize(movingDirection) * 0.3f;
+			}
 		}
 
-		if (length(movingDirection) < 0.5f && length(movingDirection) > 0.01f)
 		{
-			movingDirection = normalize(movingDirection) * 0.3f;
+			ZoneScopedN("Apply Velocity");
+
+			float gravity = controller->GetVelocity().y;
+
+			vec3 move = desiredDirection;
+			move.y = gravity;
+
+			controller->SetVelocity(move);
 		}
-
-		float gravity = controller->GetVelocity().y;
-
-		vec3 move = desiredDirection;
-
-
-		move.y = gravity;
-
-		controller->SetVelocity(move);
-
-
 	}
 
-
-
-
-	UpdateAnimations();
-	UpdateReturnFromRagdoll();
-
-
-	mesh->Position = Position - vec3(0, controller->height / 2.0f, 0);
-	mesh->Rotation = vec3(0, MathHelper::FindLookAtRotation(vec3(), movingDirection).y, 0);
-
-	if (mesh->WasRended)
 	{
-		mesh->UpdateHitboxes();
+		ZoneScopedN("UpdateAnimations");
+		UpdateAnimations();
 	}
-	else if (tickIntervalDelay.Wait() == false)
+
 	{
-		mesh->UpdateHitboxes();
+		ZoneScopedN("UpdateReturnFromRagdoll");
+		UpdateReturnFromRagdoll();
 	}
 
-	UpdateWeaponMesh();
-
-	if (tickIntervalDelay.Wait() == false)
 	{
+		ZoneScopedN("Mesh Transform Update");
 
-		if (EngineMain::MainInstance->SimulatingGameTicks)
-		{
-			tickIntervalDelay.AddDelay(RandomHelper::RandomFloat() + 0.5f);
-		}
-		else
-		{
-			tickIntervalDelay.AddDelay(0.15f + distance(Position, Camera::position) / 200.0f);
-		}
+		mesh->Position = Position - vec3(0, controller->height / 2.0f, 0);
 
-
+		mesh->Rotation = vec3(
+			0,
+			MathHelper::FindLookAtRotation(vec3(), movingDirection).y,
+			0
+		);
 	}
 
+	{
+		ZoneScopedN("UpdateHitboxes");
 
+		if (mesh->WasRended)
+		{
+			mesh->UpdateHitboxes();
+		}
+		else if (tickIntervalDelay.Wait() == false)
+		{
+			mesh->UpdateHitboxes();
+		}
+	}
 
+	{
+		ZoneScopedN("UpdateWeaponMesh");
+		UpdateWeaponMesh();
+	}
 
+	{
+		ZoneScopedN("TickIntervalDelay");
+
+		if (tickIntervalDelay.Wait() == false)
+		{
+			if (EngineMain::MainInstance->SimulatingGameTicks)
+			{
+				tickIntervalDelay.AddDelay(RandomHelper::RandomFloat() + 0.5f);
+			}
+			else
+			{
+				tickIntervalDelay.AddDelay(
+					0.15f + distance(Position, Camera::position) / 200.0f
+				);
+			}
+		}
+	}
 }
+
+
 void NpcBase::UpdateWeaponMesh()
 {
 
@@ -821,7 +922,7 @@ void NpcBase::UpdateObserver()
 {
 
 	if (!observer) return;
-
+	std::unique_lock lock(targetsMutex);
 	observer->searchForTriggeredNpc = !target_follow && !target_attack && isGuard;
 
 	if (distance(Camera::finalizedPosition, Position) < 40)
@@ -864,6 +965,7 @@ void NpcBase::UpdateObserver()
 
 		if (neutral || hostile || knownTargets.count(target->ownerId))
 		{
+
 			auto& info = knownTargets[target->ownerId];
 			info.id = target->ownerId;
 
@@ -887,6 +989,7 @@ void NpcBase::UpdateObserver()
 		if (hostile)
 		{
 			min_crime = Crime::Group_Attack;
+
 			auto& info = knownTargets[target->ownerId];
 			info.attack = true;
 			info.underArrestExpire = -1;
@@ -954,6 +1057,7 @@ void NpcBase::UpdateObserver()
 					{
 						if (distance(target->position, target2->position) < 8)
 						{
+
 							auto& suspectInfo = knownTargets[target2->ownerId];
 							float speed = IsNeutral(target2) ? GetDetectionSpeed(Crime::NearBody) : 10000.0f;
 							suspectInfo.detection_progress = std::min(1.0f, suspectInfo.detection_progress + speed * Time::DeltaTimeF);
@@ -985,6 +1089,7 @@ void NpcBase::UpdateObserver()
 		// commit detection buildup per-target
 		if (min_crime != Crime::None)
 		{
+
 			auto& info = knownTargets[target->ownerId];
 
 			info.lastTimeSpotedCrime = Time::GameTime;
@@ -1327,7 +1432,7 @@ void NpcBase::UpdateTargetFollow()
 
 	}
 
-	auto& info = knownTargets[target_id];
+
 
 	speed = ((target_follow) || (currentInvestigation && currentInvestigation->Alerted())) ? 5 : 2;
 
@@ -1347,7 +1452,7 @@ void NpcBase::UpdateTargetFollow()
 	if (target_underArrest && observer)
 	{
 
-		if (observer->id % 3 == EngineMain::MainInstance->frame % 3)
+		if (observer->id % 7 == EngineMain::MainInstance->frame % 7)
 		{
 			auto observers = AiPerceptionSystem::GetObserversInRadius(observer->position, isGuard ? 13 : 6);
 
@@ -1384,6 +1489,10 @@ void NpcBase::UpdateTargetFollow()
 
 	if (target_underArrest && target_follow && target_sees && target_attack == false)
 	{
+		std::unique_lock lock(targetsMutex);
+
+		auto& info = knownTargets[target_id];
+
 		if (distance2(targetRef->Position, Position) < 15)
 		{
 			float decrease_rate = 0.5f;
@@ -1501,8 +1610,12 @@ void NpcBase::UpdateTargetAttack()
 
 		Player* playerRef = dynamic_cast<Player*>(targetRef);
 
+
+
 		if (playerRef)
 		{
+			predictedTargetPosition = playerRef->controller.GetSmoothPosition() - (vec3(0,1.0f,0) * playerRef->controller.height * 0.5f) + vec3(0, 1.0f, 0) * playerRef->controller.GetCameraHeight() - vec3(0,0.6f,0);
+
 			predictedTargetPosition += playerRef->controller.GetVelocity() * distance(Position, targetRef->Position) / bulletSpeed;
 		}
 		else
@@ -1941,46 +2054,54 @@ void NpcBase::LoadAssets()
 
 void NpcBase::ShareTargetKnowlageWith(NpcBase* anotherNpc)
 {
+	if (anotherNpc->fractionTag != fractionTag &&
+		friendlyTags.count(anotherNpc->fractionTag) == 0) return;
 
-	if (anotherNpc->fractionTag != fractionTag && friendlyTags.count(anotherNpc->fractionTag) == 0) return;
+	// Snapshot both maps separately, never holding two locks at once
+	std::unordered_map<std::string, TargetInfo> mySnapshot;
+	{
+		std::unique_lock lock(targetsMutex);
+		mySnapshot = knownTargets;
+	}
 
-	// Generalized sharing across knownTargets
-	for (const auto& pair : knownTargets)
+	std::unordered_map<std::string, TargetInfo> otherSnapshot;
+	{
+		std::unique_lock lock(anotherNpc->targetsMutex);
+		otherSnapshot = anotherNpc->knownTargets; //crash here
+	}
+
+	// All logic below runs on snapshots, no locks held at all
+	for (const auto& pair : mySnapshot)
 	{
 		const std::string& tId = pair.first;
 		const auto& myInfo = pair.second;
 
 		bool hasChanges = false;
 
-
-		if (anotherNpc->knownTargets.count(tId))
+		if (auto it = otherSnapshot.find(tId); it != otherSnapshot.end())
 		{
-			const auto& otherInfo = anotherNpc->knownTargets.at(tId);
+			const auto& otherInfo = it->second;
 
 			if (myInfo.underArrest && !otherInfo.underArrest) hasChanges = true;
-			if (myInfo.currentCrime < otherInfo.currentCrime) 
-				hasChanges = true;
+			if (myInfo.currentCrime < otherInfo.currentCrime) hasChanges = true;
 			if (myInfo.underArrestExpire < otherInfo.underArrestExpire - 0.2f) hasChanges = true;
-			if (myInfo.attack && !otherInfo.attack) 
-				hasChanges = true;
+			if (myInfo.attack && !otherInfo.attack) hasChanges = true;
 			if (myInfo.lastSeenTime > otherInfo.lastSeenTime + 0.2f) hasChanges = true;
-
 			if (myInfo.follow && myInfo.underArrest && !otherInfo.follow
 				&& (Time::GameTime - myInfo.lastSeenTime < 25.0f)) hasChanges = true;
-
 			if (myInfo.sees && !otherInfo.sees) hasChanges = true;
-			if (myInfo.detection_progress >= 1 && otherInfo.detection_progress < 1 && myInfo.lastSeenTime > otherInfo.lastSeenTime + 0.2f) hasChanges = true;
+			if (myInfo.detection_progress >= 1 && otherInfo.detection_progress < 1
+				&& myInfo.lastSeenTime > otherInfo.lastSeenTime + 0.2f) hasChanges = true;
 		}
 		else
 		{
-			// New target, share if active
 			if (myInfo.follow || myInfo.underArrest || myInfo.attack) hasChanges = true;
 		}
 
 		if (!hasChanges) continue;
 
 		if (distance(Position, anotherNpc->Position) > 2)
-			if (Physics::LineTrace(Position, anotherNpc->Position, BodyType::WorldOpaque).hasHit) 
+			if (Physics::LineTrace(Position, anotherNpc->Position, BodyType::WorldOpaque).hasHit)
 				continue;
 
 		shareKnowlageWith.push_back(anotherNpc);
@@ -2065,6 +2186,7 @@ void NpcBase::ShareTargetKnowlageWithFinal(NpcBase* anotherNpc)
 
 bool NpcBase::TryCommitCrime(Crime crime, std::string offender, vec3 pos)
 {
+	std::unique_lock lock(targetsMutex);
 	// Ensure we have memory for this offender
 	auto& info = knownTargets[offender];
 	info.id = offender;
@@ -2153,6 +2275,7 @@ void NpcBase::StopTargetFollow(const std::string& id)
 	// if we have per-target memory, update it; otherwise fallback to clearing primary
 	if (knownTargets.count(id))
 	{
+		std::unique_lock lock(targetsMutex);
 		auto& info = knownTargets[id];
 
 		if (info.underArrest && info.seesAndDetected)

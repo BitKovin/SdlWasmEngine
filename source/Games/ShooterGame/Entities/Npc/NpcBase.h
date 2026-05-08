@@ -165,6 +165,7 @@ protected:
 	bool target_attackInRange = false;
 
 	// Multi-target memory and tag lists
+	mutable std::recursive_mutex targetsMutex;
 	std::unordered_map<std::string, TargetInfo> knownTargets;
 	std::set<hashed_string> neutralTags = { "player" }; // default neutral tags
 	std::set<hashed_string> hostileTags = {}; // tags that are always considered hostile

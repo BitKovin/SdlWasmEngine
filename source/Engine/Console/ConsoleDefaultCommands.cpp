@@ -87,6 +87,13 @@ void CMD_LoadPSO(const std::vector<std::string>& args)
 	ShaderManager::CompilePSOsFromFile("GameData/PSOs/pso_cache.json");
 }
 
+void CMD_MaxFPS(const std::vector<std::string>& args)
+{
+	int maxFps = Console::ArgInt(args, 0, 60);
+	Time::SetTargetFrameRate(maxFps);
+	Console::Get().AddLog("Max FPS set to: %d", maxFps);
+}
+
 void ConsoleDefaultCommands::RegisterAll()
 {
 
@@ -96,5 +103,7 @@ void ConsoleDefaultCommands::RegisterAll()
 
 	REGISTER_CONSOLE_CMD("pso.save", "Saves PSO cache to file", CMD_SavePSO);
 	REGISTER_CONSOLE_CMD("pso.load", "Loads PSO cache from file", CMD_LoadPSO);
+
+	REGISTER_CONSOLE_CMD("maxfps", "Sets target frame rate", CMD_MaxFPS);
 
 }

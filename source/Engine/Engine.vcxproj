@@ -242,7 +242,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>JPH_DEBUG_RENDERER;DESKTOP;WINDOWS;TRACY_ENABLE;DEBUG;%(PreprocessorDefinitions);WIN32;_WINDOWS;_HAS_EXCEPTIONS=0;NDEBUG;JPH_OBJECT_STREAM;JPH_USE_AVX2;JPH_USE_AVX;JPH_USE_SSE4_1;JPH_USE_SSE4_2;JPH_USE_LZCNT;JPH_USE_TZCNT;JPH_USE_F16C;JPH_USE_FMADD;_CRT_SECURE_NO_WARNINGS;BX_CONFIG_DEBUG=1</PreprocessorDefinitions>
+      <PreprocessorDefinitions>JPH_DEBUG_RENDERER;DESKTOP;WINDOWS;TRACY_ENABLE;TRACY_ON_DEMAND;DEBUG;%(PreprocessorDefinitions);WIN32;_WINDOWS;_HAS_EXCEPTIONS=0;NDEBUG;JPH_OBJECT_STREAM;JPH_USE_AVX2;JPH_USE_AVX;JPH_USE_SSE4_1;JPH_USE_SSE4_2;JPH_USE_LZCNT;JPH_USE_TZCNT;JPH_USE_F16C;JPH_USE_FMADD;_CRT_SECURE_NO_WARNINGS;BX_CONFIG_DEBUG=1</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -262,7 +262,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>JPH_DEBUG_RENDERER;DESKTOP;WINDOWS;TRACY_ENABLE;%(PreprocessorDefinitions);WIN32;_WINDOWS;_HAS_EXCEPTIONS=0;NDEBUG;JPH_OBJECT_STREAM;JPH_USE_AVX2;JPH_USE_AVX;JPH_USE_SSE4_1;JPH_USE_SSE4_2;JPH_USE_LZCNT;JPH_USE_TZCNT;JPH_USE_F16C;JPH_USE_FMADD;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <PreprocessorDefinitions>JPH_DEBUG_RENDERER;DESKTOP;WINDOWS;TRACY_ENABLE;TRACY_ON_DEMAND;%(PreprocessorDefinitions);WIN32;_WINDOWS;_HAS_EXCEPTIONS=0;NDEBUG;JPH_OBJECT_STREAM;JPH_USE_AVX2;JPH_USE_AVX;JPH_USE_SSE4_1;JPH_USE_SSE4_2;JPH_USE_LZCNT;JPH_USE_TZCNT;JPH_USE_F16C;JPH_USE_FMADD;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
