@@ -333,6 +333,9 @@
     <ClCompile Include="Entities\Triggers\TriggerLadder.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Ai\BehaviorTreeTasks\TargetLostInvestigation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Entities\Player\Player.hpp">

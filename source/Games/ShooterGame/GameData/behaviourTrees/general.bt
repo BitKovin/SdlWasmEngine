@@ -1,9 +1,9 @@
 {
     "blackboard": {
         "attackPosition": [
-            0.0,
-            0.0,
-            0.0
+            18.961074829101563,
+            2.6795461177825928,
+            16.56519317626953
         ],
         "closestGuard": "",
         "flee_target": [
@@ -13,12 +13,13 @@
         ],
         "found_guard": false,
         "has_navpoint": true,
-        "investigation": false,
+        "investigation": true,
         "investigation_target": [
-            0.10116743296384811,
-            2.2322919368743896,
-            6.850614070892334
+            20.484708786010742,
+            1.3962899446487427,
+            16.12297248840332
         ],
+        "investigation_wait_time": 1.0,
         "isGuard": true,
         "navpoint_acceptance_radius": 0.0,
         "navpoint_has_wait_time": false,
@@ -26,11 +27,11 @@
         "navpoint_wait_time": 0.0,
         "report_to_guard": false,
         "stunned": false,
-        "target": "",
-        "target_attack": false,
+        "target": "$player_0",
+        "target_attack": true,
         "target_attackInRange": false,
         "target_follow": false,
-        "target_id": "",
+        "target_id": "$player_0",
         "target_knowsLocation": false,
         "target_lastSeenPosition": [
             0.0,
@@ -38,18 +39,18 @@
             0.0
         ],
         "target_sees": false,
-        "target_underArrest": false,
-        "task_acceptanceRadius": 0.0,
+        "target_underArrest": true,
+        "task_acceptanceRadius": 0.30000001192092896,
         "task_acceptance_radius": 0.30000001192092896,
-        "task_canBeCanceled": false,
-        "task_doingJob": true,
-        "task_move": false,
+        "task_canBeCanceled": true,
+        "task_doingJob": false,
+        "task_move": true,
         "task_moveLocation": [
-            0.0,
-            0.0,
-            0.0
+            -0.25,
+            0.5,
+            -4.34375
         ],
-        "task_setOrientation": false
+        "task_setOrientation": true
     },
     "isRunning": true,
     "root": {
@@ -503,9 +504,9 @@
                                                                                                                             },
                                                                                                                             {
                                                                                                                                 "children": [],
-                                                                                                                                "id": "node_1e9d90de7dfd99a1",
-                                                                                                                                "name": "Stop Target Follow",
-                                                                                                                                "type": "StopTargetFollow"
+                                                                                                                                "id": "node_8c679c3735e76fe5",
+                                                                                                                                "name": "Target Lost Investigation",
+                                                                                                                                "type": "TargetLostInvestigation"
                                                                                                                             }
                                                                                                                         ],
                                                                                                                         "id": "node_c870c7d9b794a3c8",
@@ -620,7 +621,7 @@
                                                                                     {
                                                                                         "acceptance radius": {
                                                                                             "sourceType": 0,
-                                                                                            "value": 2.5
+                                                                                            "value": 0.5
                                                                                         },
                                                                                         "children": [],
                                                                                         "id": "node_2bb45f24562df117",
@@ -647,13 +648,31 @@
                                                                                             {
                                                                                                 "children": [
                                                                                                     {
+                                                                                                        "acceptance radius": {
+                                                                                                            "sourceType": 0,
+                                                                                                            "value": 1.0
+                                                                                                        },
+                                                                                                        "children": [],
+                                                                                                        "id": "node_40b19d2730040466",
+                                                                                                        "name": "Move To Position",
+                                                                                                        "pretty path": {
+                                                                                                            "sourceType": 0,
+                                                                                                            "value": false
+                                                                                                        },
+                                                                                                        "target": {
+                                                                                                            "blackboardKey": "target_lastSeenPosition",
+                                                                                                            "sourceType": 1
+                                                                                                        },
+                                                                                                        "type": "MoveToPosition"
+                                                                                                    },
+                                                                                                    {
                                                                                                         "children": [],
                                                                                                         "id": "node_e544ad63105b8151",
                                                                                                         "name": "Wait",
                                                                                                         "type": "WaitNode",
                                                                                                         "waitTime": {
                                                                                                             "sourceType": 0,
-                                                                                                            "value": 5.0
+                                                                                                            "value": 0.5
                                                                                                         }
                                                                                                     },
                                                                                                     {
@@ -767,7 +786,7 @@
                                             },
                                             {
                                                 "children": [],
-                                                "id": "node_28cb551ac7dbf5f",
+                                                "id": "node_f4403944f9f7e110",
                                                 "name": "Wait",
                                                 "type": "WaitNode",
                                                 "waitTime": {

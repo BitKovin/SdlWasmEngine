@@ -121,6 +121,13 @@ protected:
 
 	SoundPlayer* VoiceSoundPlayer = nullptr;
 
+	struct TargetLostSpreadData
+	{
+		std::string targetId;
+		float lastSeenTime;
+		vec3 position;
+	};
+	std::vector<TargetLostSpreadData> pendingTargetLostSpreads;
 
 	float maxSpeed = 4;
 	float speed = 2.0;
@@ -325,6 +332,7 @@ public:
 
 	virtual vec3 FindAttackLocation(); //calculates attack location. By default for strafing
 
+	
 	void Serialize(json& target);
 	void Deserialize(json& source);
 
@@ -344,7 +352,12 @@ public:
 
 	// Overload: stop follow for a specific target id (new)
 	void StopTargetFollow();
-	void StopTargetFollow(const std::string& id);
+	void StopTargetFollow(const std::string id);
+
+	void TargetLost();
+
+	void StopTargetFollowFinal(const std::string& id, float originatorLastSeenTime, const vec3& originatorPosition);
+
 
 	void BodyInvestigated();
 

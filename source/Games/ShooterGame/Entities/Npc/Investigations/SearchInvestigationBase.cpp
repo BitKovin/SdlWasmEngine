@@ -124,7 +124,7 @@ bool SearchInvestigationBase::FindNextSearchPoint()
                              + static_cast<float>(attempt) * (twoPi / MaxCandidateAttempts());
 
         // Slight inner bias: more points closer to the origin, fewer at the edge.
-        float distNorm = 0.3f + (static_cast<float>(rand()) / RAND_MAX) * 0.7f;
+        float distNorm = 0.6f + (static_cast<float>(rand()) / RAND_MAX) * 0.4f;
         float dist     = distNorm * radius;
 
         vec3 candidate = searchOrigin + vec3(

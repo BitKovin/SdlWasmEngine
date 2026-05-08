@@ -469,6 +469,8 @@ void NpcBase::AsyncUpdate()
 		pathFollow.WaitToFinish();
 	}
 
+	//DebugDraw::Line(pathFollow.desiredTarget, pathFollow.desiredTarget + vec3(0, 1, 0));
+
 	if (dead == false)
 	{
 		{
@@ -800,6 +802,22 @@ void NpcBase::LateUpdate()
 	}
 	shareKnowlageWith = std::vector<NpcBase*>();
 	knowlageSharedThisFrame = 0;
+
+
+	if (!pendingTargetLostSpreads.empty())
+	{
+		for (auto& spreadData : pendingTargetLostSpreads)
+		{
+			StopTargetFollowFinal(
+				spreadData.targetId,
+				spreadData.lastSeenTime,
+				spreadData.position
+			);
+		}
+		pendingTargetLostSpreads.clear();
+	}
+
+
 }
 
 void NpcBase::UpdateDoorUpdate()
@@ -1128,10 +1146,26 @@ void NpcBase::UpdateObserver()
 	{
 		auto& info = it->second;
 
+		if (info.stopUpdateLastSeenPositionDelay.Wait() && info.sees == false)
+		{
+
+			Entity* ent = Level::Current->FindEntityWithId(info.id);
+
+			if (ent)
+			{
+				info.lastSeenPosition = ent->Position;
+			}
+
+		}
+
 		// Passive increase: sees + underArrest but not following
 		if (info.sees && info.underArrest && !info.follow)
 		{
-			float passive_speed = 0.33f;
+			float passive_speed = 0.65f;
+
+			if(currentInvestigation && currentInvestigation->reason == InvestigationReason::TargetSeen)
+				passive_speed = 1.0f;
+
 			info.detection_progress = std::min(1.0f, info.detection_progress + passive_speed * Time::DeltaTimeF);
 			if (info.detection_progress >= 1.0f)
 			{
@@ -1183,6 +1217,12 @@ void NpcBase::UpdateObserver()
 					StopTargetFollow(info.id);
 				}
 			}
+
+			if (info.detection_progress <= 0.0f || !info.sees)
+			{
+				info.seesAndDetected = false;
+			}
+
 		}
 
 		// if currently seeing and fully detected, add a short delay for lastSeen updates
@@ -1478,6 +1518,7 @@ void NpcBase::UpdateTargetFollow()
 	}
 
 	auto targetRef = Level::Current->FindEntityWithId(target_id);
+
 
 	target_attackInRange = distance(targetRef->Position, Position) < attackRange;
 
@@ -2268,19 +2309,24 @@ void NpcBase::StopTargetFollow()
 	StopTargetFollow(target_id);
 }
 
-void NpcBase::StopTargetFollow(const std::string& id)
+void NpcBase::StopTargetFollow(const std::string id)
 {
 	if (id.empty()) return;
 
-	// if we have per-target memory, update it; otherwise fallback to clearing primary
+	bool shouldSpread = false;
+	float originatorLastSeenTime = 0.0f;
+
+	// Only modify OUR OWN data - thread safe for this NPC
 	if (knownTargets.count(id))
 	{
 		std::unique_lock lock(targetsMutex);
 		auto& info = knownTargets[id];
 
-		if (info.underArrest && info.seesAndDetected)
+		// Capture data needed for spreading BEFORE we modify
+		if (info.underArrest && info.follow)
 		{
-			PlayPhrace("target_lost");
+			shouldSpread = true;
+			originatorLastSeenTime = info.lastSeenTime;
 		}
 
 		info.follow = false;
@@ -2297,6 +2343,7 @@ void NpcBase::StopTargetFollow(const std::string& id)
 		// fallback to previous behaviour
 		if (target_underArrest)
 		{
+			shouldSpread = true;
 			PlayPhrace("target_lost");
 		}
 		target_follow = false;
@@ -2316,6 +2363,56 @@ void NpcBase::StopTargetFollow(const std::string& id)
 		target_underArrest = false;
 		currentCrime = Crime::None;
 		detection_progress = 0.0f;
+	}
+
+	// Queue spreading to be executed in synchronized context (e.g., main thread)
+	if (shouldSpread)
+	{
+		pendingTargetLostSpreads.push_back({ id, originatorLastSeenTime, Position });
+	}
+}
+
+void NpcBase::TargetLost()
+{
+
+	auto targetId = target_id;
+	vec3 location = target_lastSeenPosition;
+
+	StopTargetFollow();
+	TryStartInvestigation(InvestigationReason::TargetSeen, location, targetId);
+
+}
+
+void NpcBase::StopTargetFollowFinal(const std::string& id, float originatorLastSeenTime, const vec3& originatorPosition)
+{
+	// Called from main thread or synchronized context - safe to modify other NPCs
+	PlayPhrace("target_lost");
+
+	auto observers = AiPerceptionSystem::GetObserversInRadius(originatorPosition, 5);
+
+	std::unordered_set<NpcBase*> visited;
+	visited.insert(this);
+
+	for (auto& ob : observers)
+	{
+		NpcBase* npc = dynamic_cast<NpcBase*>(ob->ownerPtr);
+		if (npc == nullptr) continue;
+		if (visited.count(npc) > 0) continue;
+
+		if (npc->fractionTag != fractionTag &&
+			friendlyTags.count(npc->fractionTag) == 0) continue;
+
+		if (npc->knownTargets.count(id) == 0) continue;
+		if (npc->knownTargets[id].follow == false) continue;
+
+		if (npc->knownTargets[id].lastSeenTime < originatorLastSeenTime + 1.0f)
+		{
+			visited.insert(npc);
+			npc->StopTargetFollow(id);
+
+			// Recursively spread from this NPC's position
+			npc->StopTargetFollowFinal(id, originatorLastSeenTime, npc->Position);
+		}
 	}
 }
 

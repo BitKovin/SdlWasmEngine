@@ -363,6 +363,7 @@
     <ClCompile Include="Ai\BehaviorTreeTasks\Lock.cpp" />
     <ClCompile Include="Ai\BehaviorTreeTasks\MoveToEntity.cpp" />
     <ClCompile Include="Ai\BehaviorTreeTasks\MoveToPosition.cpp" />
+    <ClCompile Include="Ai\BehaviorTreeTasks\TargetLostInvestigation.cpp" />
     <ClCompile Include="Ai\BehaviorTreeTasks\Task_Doing.cpp" />
     <ClCompile Include="Ai\BehaviorTreeTasks\Task_NotDoing.cpp" />
     <ClCompile Include="Ai\BehaviorTreeTasks\NpcTaskDoJob.cpp" />
