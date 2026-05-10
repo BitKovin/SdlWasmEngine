@@ -75,7 +75,7 @@ float ComputeStyledSpecular(vec3 normal, vec3 lightDir, vec3 viewDir)
 
     // Deadlock NPR Specular Controls
     const float steps = 2.0;       // Number of specular rings
-    const float smoothness = 0.1; // Controls the softness of the blend. 
+    const float smoothness = 0.5;//0.1; // Controls the softness of the blend. 
                                    // 0.01 = hard snap, 0.5 = completely smooth/linear
 
     // Scale the raw specular up to the number of steps
@@ -174,10 +174,10 @@ vec3 CalculateDirectionalDiffuse(vec3 normal, vec3 lightDir)
     
     // Deadlock anchors exposure to a target value. We do this by setting a strong ambient floor
     // combined with the heavily weighted directional light.
-    vec3 ambient = light_color.rgb * 0.4; // Base ambient
-    vec3 diffuse = direct_light_color.rgb * diffuse_factor;
+    vec3 ambient = light_color.rgb * 0.9f; // Base ambient
+    vec3 diffuse = direct_light_color.rgb;
 
-    return ambient + diffuse;
+    return mix(ambient, diffuse, diffuse_factor) * 1.0;
 }
 
 vec3 CalculateDirectionalSpecular(vec3 normal, vec3 lightDir, vec3 viewDir)
@@ -249,7 +249,8 @@ void main()
     vec3 emissive = texture2D(u_textureEmissive, v_texcoord0).rgb;
 
     // View-dependent rim light
-    vec3 rim = CalculateContourRim(normal, viewDir);
+    vec3 rim = vec3(0,0,0);
+    //rim = CalculateContourRim(normal, viewDir);
 
     // Composition (Light Weight Mixing)
     vec3 finalColor =

@@ -61,6 +61,12 @@ void SearchInvestigationBase::Update(float deltaTime)
 
 void SearchInvestigationBase::ReachedTarget()
 {
+
+    if (owner->isGuard == false && owner->report_to_guard)
+    {
+        Finish();
+    }
+
     if (searchPhase == SearchPhase::Inactive)
     {
         BeginSearch();

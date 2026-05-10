@@ -8,16 +8,20 @@ import zipfile
 
 SIZE_THRESHOLD = 20 * 1024 * 1024      # 20 MB
 SAVE_THRESHOLD = 10 * 1024 * 1024      # 10 MB
+MAX_UNPACK_ITERATIONS = 10
 
 
 def read_ignore_file(path):
     ignored = set()
+
     if path.exists():
         with open(path, "r", encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
+
                 if line:
                     ignored.add(line)
+
     return ignored
 
 
@@ -27,16 +31,23 @@ def should_ignore_dir(dir_path):
 
 def get_dir_size(path):
     total = 0
+
     for p in path.rglob("*"):
         if p.is_file():
             total += p.stat().st_size
+
     return total
 
 
 def zip_folder(folder_path):
     zip_path = folder_path.with_suffix(".zip")
 
-    with zipfile.ZipFile(zip_path, 'w', compression=zipfile.ZIP_DEFLATED) as zf:
+    with zipfile.ZipFile(
+        zip_path,
+        "w",
+        compression=zipfile.ZIP_DEFLATED
+    ) as zf:
+
         for file in folder_path.rglob("*"):
             if file.is_file():
                 # include the folder itself in archive
@@ -59,9 +70,15 @@ def maybe_compress(folder_path):
 
     if saved >= SAVE_THRESHOLD:
         shutil.rmtree(folder_path)
-        print(f"Compressed: {folder_path} -> {zip_path} (saved {saved // (1024*1024)} MB)")
+
+        print(
+            f"Compressed: {folder_path} -> "
+            f"{zip_path} (saved {saved // (1024 * 1024)} MB)"
+        )
+
     else:
         zip_path.unlink()
+
         print(f"Skipped compression (not worth it): {folder_path}")
 
 
@@ -75,6 +92,7 @@ def process_directory(src, dst):
     blacklist = read_ignore_file(ignore_file)
 
     for item in src.iterdir():
+
         if item.name in [".ignoreFiles", ".ignoreFolder"]:
             continue
 
@@ -89,6 +107,56 @@ def process_directory(src, dst):
             shutil.copy2(item, target)
 
 
+def unpack_zip(zip_path):
+    extract_dir = zip_path.parent
+
+    try:
+        with zipfile.ZipFile(zip_path, "r") as zf:
+            zf.extractall(extract_dir)
+
+        zip_path.unlink()
+
+        print(f"Extracted: {zip_path}")
+
+        return True
+
+    except zipfile.BadZipFile:
+        print(f"Bad zip file: {zip_path}")
+
+    except Exception as e:
+        print(f"Failed to extract {zip_path}: {e}")
+
+    return False
+
+
+def unpack_all_zips(root):
+    """
+    Recursively unpack zip files.
+    Repeats multiple passes to handle nested zips.
+    """
+
+    for iteration in range(MAX_UNPACK_ITERATIONS):
+
+        zip_files = list(root.rglob("*.zip"))
+
+        if not zip_files:
+            break
+
+        print(
+            f"Unpack iteration "
+            f"{iteration + 1}: {len(zip_files)} zip(s)"
+        )
+
+        extracted_any = False
+
+        for zip_file in zip_files:
+            if unpack_zip(zip_file):
+                extracted_any = True
+
+        if not extracted_any:
+            break
+
+
 def compress_top_level_dirs(output_root):
     for item in output_root.iterdir():
         if item.is_dir():
@@ -96,6 +164,7 @@ def compress_top_level_dirs(output_root):
 
 
 def main():
+
     if len(sys.argv) != 3:
         print("Usage: finalize_gamedata.py <input> <output>")
         sys.exit(1)
@@ -110,9 +179,13 @@ def main():
     if dst.exists():
         shutil.rmtree(dst)
 
+    # Step 1: copy everything
     process_directory(src, dst)
 
-    # 🔥 compression step
+    # Step 2: unpack nested zip files
+    unpack_all_zips(dst)
+
+    # Step 3: compress resulting folders
     compress_top_level_dirs(dst)
 
     print(f"Done: {dst}")

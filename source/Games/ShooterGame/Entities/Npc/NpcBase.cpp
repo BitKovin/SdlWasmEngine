@@ -279,19 +279,20 @@ void NpcBase::StartStunnedRagdoll()
 		DoInterpolatedAnimationUpdate();
 		mesh->StartRagdoll();
 		stunnedRagdoll = true;
+		pelvisBlendTimer = 0;
 	}
+
+	getFromRagdollAnimation->SetAnimationPaused(true);
 
 	stunnedRagdollDelay.AddDelay(2);
 	needHelpStunned = true;
-
+	returningFromRagdoll = false;
 }
 
 void NpcBase::UpdateStunnedReturn()
 {
 
 	if (stunnedRagdoll == false) return;
-
-
 
 	Body* pelvisBody = mesh->FindHitboxByName("pelvis");
 
@@ -321,8 +322,6 @@ void NpcBase::UpdateStunnedReturn()
 void NpcBase::StartReturnFromRagdoll()
 {
 
-	if (mesh->InRagdoll == false) return;
-
 
 
 	vec3 pelvisPos = MathHelper::DecomposeMatrix(mesh->GetBoneMatrixWorld("pelvis")).Position;
@@ -336,6 +335,13 @@ void NpcBase::StartReturnFromRagdoll()
 	bool onFront = MathHelper::GetUpVector(MathHelper::DecomposeMatrix(mesh->GetBoneMatrixWorld("pelvis")).Rotation).y > 0;
 
 	getFromRagdollAnimation->PlayAnimation(onFront ? "front" : "back", false, 0);
+
+	if (getFromRagdollAnimation->IsAnimationPlaying() == false)
+	{
+		Logger::Error("GetFromRagdoll animation not found!");
+		assert(false);
+	}
+		
 
 	auto pelvisTransformWorld = MathHelper::DecomposeMatrix(mesh->GetBoneMatrixWorld("pelvis"));
 
@@ -363,6 +369,9 @@ void NpcBase::StartReturnFromRagdoll()
 
 	ragdollPose.boneTransforms["pelvis"] = pelvisTransform.ToMatrix();
 
+	ragdollPelvisWorldPos = pelvisPos;
+	pelvisBlendTimer = 0.0f;
+
 	mesh->StopRagdoll();
 
 	returningFromRagdoll = true;
@@ -375,6 +384,8 @@ void NpcBase::StartReturnFromRagdoll()
 
 void NpcBase::UpdateReturnFromRagdoll()
 {
+
+
 
 	if (getFromRagdollAnimation->IsAnimationPlaying() == false)
 	{
@@ -391,7 +402,7 @@ void NpcBase::UpdateReturnFromRagdoll()
 
 	getFromRagdollAnimation->Update(1.0f);
 
-	float blendInTime = 0.5;
+	float blendInTime = 1.0;
 	float blendOutTime = 0.7f;
 
 	float lerpProgressFromStart = 1.0f - ((blendInTime - getFromRagdollAnimation->GetAnimationTime()) / blendInTime);
@@ -407,6 +418,19 @@ void NpcBase::UpdateReturnFromRagdoll()
 	newPose = AnimationPose::Lerp(meshPose, newPose, 1.0f - lerpProgressFromEnd);
 
 	mesh->PasteAnimationPose(newPose);
+
+	if (pelvisBlendTimer < 1.0f)
+	{
+		pelvisBlendTimer += Time::DeltaTimeF;
+		float t = saturate(pelvisBlendTimer / 1.0f);
+
+		vec3 animPelvisWorldPos = MathHelper::DecomposeMatrix(mesh->GetBoneMatrixWorld("pelvis")).Position;
+
+		vec3 targetPelvisWorldPos = mix(ragdollPelvisWorldPos, animPelvisWorldPos, t);
+
+		mesh->Position += targetPelvisWorldPos - animPelvisWorldPos;
+	}
+	
 
 }
 
@@ -715,11 +739,6 @@ void NpcBase::AsyncUpdate()
 	}
 
 	{
-		ZoneScopedN("UpdateReturnFromRagdoll");
-		UpdateReturnFromRagdoll();
-	}
-
-	{
 		ZoneScopedN("Mesh Transform Update");
 
 		mesh->Position = Position - vec3(0, controller->height / 2.0f, 0);
@@ -729,6 +748,11 @@ void NpcBase::AsyncUpdate()
 			MathHelper::FindLookAtRotation(vec3(), movingDirection).y,
 			0
 		);
+	}
+
+	{
+		ZoneScopedN("UpdateReturnFromRagdoll");
+		UpdateReturnFromRagdoll();
 	}
 
 	{
@@ -918,10 +942,10 @@ void NpcBase::UpdateBT()
 
 	behaviorTree.GetBlackboard().SetValue("flee_target", flee_target);
 
-	if (investigation_changed)
+	if (investigation_changed > 0)
 	{
-		behaviorTree.GetBlackboard().SetValue("investigation", false); //stopping investigation for one frame to reset logic
-		investigation_changed = false;
+		behaviorTree.GetBlackboard().SetValue("investigation", false); //stopping investigation for 3 frames to allow BT to react to investigation end
+		investigation_changed -= 1;
 	}
 
 	if (btEditorEnabled)
@@ -2030,7 +2054,7 @@ void NpcBase::UpdateAnimations(bool forceFullUpdate)
 	{
 		animator->weapon_holds = target_underArrest;
 		animator->weapon_ready = target_follow && target_underArrest;
-		animator->weapon_aims = target_attack && animator->weapon_ready && target_attackInRange && !isStunned();
+		animator->weapon_aims = target_attack && animator->weapon_ready && target_attackInRange && target_sees && !isStunned();
 
 		animator->spineRotation = spineRotation;
 
@@ -2378,7 +2402,24 @@ void NpcBase::TargetLost()
 	auto targetId = target_id;
 	vec3 location = target_lastSeenPosition;
 
-	StopTargetFollow();
+	if (knownTargets.count(targetId))
+	{
+		std::unique_lock lock(targetsMutex);
+		auto& info = knownTargets[targetId];
+
+		info.follow = false;
+		info.sees = false;
+		info.lastSeenPosition = vec3();
+		info.currentCrime = Crime::None;
+		info.detection_progress = 0;
+		pathFollow.reachedTarget = false;
+		pathFollow.FoundTarget = true;
+		pathFollow.acceptanceRadius = 1;
+	}
+
+	target_follow = false;
+	target_sees = false;
+
 	TryStartInvestigation(InvestigationReason::TargetSeen, location, targetId);
 
 }
@@ -2439,6 +2480,9 @@ void NpcBase::Serialize(json& target)
 	SERIALIZE_FIELD(target, animationStateSaveData);
 	SERIALIZE_FIELD(target, getFromRagdollAnimationSaveState);
 	SERIALIZE_FIELD(target, ragdollPose);
+
+	SERIALIZE_FIELD(target, ragdollPelvisWorldPos);
+	SERIALIZE_FIELD(target, pelvisBlendTimer);
 
 	SERIALIZE_FIELD(target, pathFollow.acceptanceRadius);
 	SERIALIZE_FIELD(target, pathFollow.CalculatedTargetLocation);
@@ -2552,6 +2596,9 @@ void NpcBase::Deserialize(json& source)
 	DESERIALIZE_FIELD(source, animationStateSaveData);
 	DESERIALIZE_FIELD(source, getFromRagdollAnimationSaveState);
 	DESERIALIZE_FIELD(source, ragdollPose);
+
+	DESERIALIZE_FIELD(source, ragdollPelvisWorldPos);
+	DESERIALIZE_FIELD(source, pelvisBlendTimer);
 
 	DESERIALIZE_FIELD(source, pathFollow.acceptanceRadius);
 	DESERIALIZE_FIELD(source, pathFollow.CalculatedTargetLocation);
@@ -3068,9 +3115,15 @@ void NpcBase::FindClosestGuard()
 void NpcBase::TryStartInvestigation(InvestigationReason reason, vec3 target, string causer, bool sharedByNpc)
 {
 
+	DebugDraw::Line(Position, target, 3.0f);
+
 	if (target_follow && reason == InvestigationReason::WeaponFire && causer == target_id)
 	{
 		target_stopUpdateLastSeenPositionDelay.AddDelay(0.5f);
+		
+		auto& targetInfo = knownTargets[target_id];
+		targetInfo.lastSeenPosition = target;
+
 	}
 
 	if (target_follow && target_underArrest == false && reason > InvestigationReason::Body)
@@ -3085,12 +3138,12 @@ void NpcBase::TryStartInvestigation(InvestigationReason reason, vec3 target, str
 
 	if (isGuard == false && reason == InvestigationReason::NpcInTrouble) return;
 
-	if (currentInvestigation && reason >= currentInvestigation->reason)
+	if (currentInvestigation && reason > currentInvestigation->reason)
 	{
 		return;
 	}
 
-	investigation_changed = true;
+	investigation_changed = 3;
 
 	currentInvestigation = CreateInvestigationFromReason(reason);
 	currentInvestigation->Start(reason, target, causer, sharedByNpc);

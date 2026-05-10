@@ -202,9 +202,9 @@ private:
 
 	float slideInterp = 0;
 
-	float WalkSpeed = 5.0f;
+	float WalkSpeed = 4.5f;
 	float CrouchSpeed = 2.5f;
-	float RunSpeed = 6.5f;
+	float RunSpeed = 7.5f;
 
 	// ── Weapon suppression ────────────────────────────────────────────────────
 	// True while CanHoldWeapon() == false.  Weapon objects are destroyed but

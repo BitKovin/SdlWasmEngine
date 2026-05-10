@@ -99,6 +99,11 @@ public:
                      float    thickness = 0.02f,
                      uint32_t color     = DebugColor::Red);
 
+	static void Point(vec3     position,
+		float    duration = 0.1f,
+		float    thickness = 0.02f,
+		uint32_t color = DebugColor::Red);
+
     static void Bounds(vec3     min,
                        vec3     max,
                        float    duration  = 0.1f,

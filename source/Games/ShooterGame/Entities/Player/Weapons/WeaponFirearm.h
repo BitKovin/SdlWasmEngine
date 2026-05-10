@@ -8,7 +8,7 @@
 
 #include <string>
 
-#include <ParticleSystem.hpp>
+#include <Particle/ParticleSystem.hpp>
 
 struct FirearmParams 
 {

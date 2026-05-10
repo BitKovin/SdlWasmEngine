@@ -588,6 +588,10 @@ void Animator::set(const hashed_string& name)
     auto legacyIt = m_model->animations.find(name);
     if (legacyIt != m_model->animations.end())
         m_currAnim = &legacyIt->second;
+
+    if (m_currAnim == nullptr)
+        assert(false);
+
 }
 
 void Animator::play()  { m_playing = true; m_currTime = 0.f; }

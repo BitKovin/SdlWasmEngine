@@ -102,6 +102,42 @@ void DebugDraw::Line(vec3 start, vec3 end,
         std::make_unique<DebugLineCommand>(start, end, color, static_cast<double>(duration)));
 }
 
+void DebugDraw::Point(vec3 position, float duration, float thickness, uint32_t color)
+{
+
+	std::vector<vec3> cubeVertexPositions = {
+		{ -1, -1, -1 },
+		{ 1, -1, -1 },
+		{ 1, 1, -1 },
+		{ -1, 1, -1 },
+		{ -1, -1, 1 },
+		{ 1, -1, 1 },
+		{ 1, 1, 1 },
+		{ -1, 1, 1 }
+	};
+
+	std::vector<vec3> unitDirections = {
+		{ 1, 0, 0 },
+		{ -1, 0, 0 },
+		{ 0, 1, 0 },
+		{ 0, -1, 0 },
+		{ 0, 0, 1 },
+		{ 0, 0, -1 }
+	};
+
+    for (auto& vertex : cubeVertexPositions)
+    {
+		Line(position, position + vertex, duration, thickness, color);
+    }
+    for (auto& vertex : unitDirections)
+    {
+        Line(position, position + vertex, duration, thickness, color);
+    }
+    
+
+
+}
+
 void DebugDraw::Bounds(vec3 min, vec3 max,
                        float duration, float thickness, uint32_t color)
 {

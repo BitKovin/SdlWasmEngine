@@ -188,7 +188,7 @@ protected:
 	//vec3 investigation_target = vec3();
 	//std::string investigation_targetId = "";
 
-	bool investigation_changed = false;
+	int investigation_changed = 0;
 
 	bool needToInvestigateBody = false;// this body needs to be investigated
 
@@ -233,6 +233,9 @@ private:
 	short knowlageSharedThisFrame = 0;
 
 	std::shared_ptr<InvestigationBase> CreateInvestigationFromReason(InvestigationReason reason);
+
+	vec3 ragdollPelvisWorldPos = vec3();
+	float pelvisBlendTimer = 0.0f;
 
 public:
 
