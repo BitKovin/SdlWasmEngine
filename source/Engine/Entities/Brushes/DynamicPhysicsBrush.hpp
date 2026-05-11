@@ -11,6 +11,7 @@ public:
 		Static = false;
 		DefaultBrushGroup = BodyType::MainBody;
 		DefaultBrushCollisionMask = BodyType::GroupCollisionTest;
+		SaveGame = true;
 	}
 
 	BoundingBox initialBounds;
@@ -49,7 +50,6 @@ public:
 	void AsyncUpdate()
 	{
 
-		Entity::AsyncUpdate();
 
 		for (auto model : Drawables)
 		{
@@ -62,6 +62,35 @@ public:
 			}
 
 		}
+
+	}
+
+	void Serialize(json& target)
+	{
+		Entity::Serialize(target);
+
+		vec3 velocity = FromPhysics(LeadBody->GetLinearVelocity());
+		vec3 angularVelocity = FromPhysics(LeadBody->GetAngularVelocity());
+
+		SERIALIZE_FIELD(target, velocity);
+		SERIALIZE_FIELD(target, angularVelocity);
+
+
+	}
+
+	void Deserialize(json& source)
+	{
+		Entity::Deserialize(source);
+		
+		vec3 velocity = vec3();
+		vec3 angularVelocity = vec3();
+
+		DESERIALIZE_FIELD(source, velocity);
+		DESERIALIZE_FIELD(source, angularVelocity);
+
+		Physics::SetBodyPositionAndRotation(LeadBody, Position, Rotation);
+		Physics::SetLinearVelocity(LeadBody, velocity);
+		Physics::SetAngularVelocity(LeadBody, angularVelocity);
 
 	}
 

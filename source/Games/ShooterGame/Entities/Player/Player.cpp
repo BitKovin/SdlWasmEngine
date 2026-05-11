@@ -2646,6 +2646,11 @@ void Player::Serialize(json& target)
 	SERIALIZE_FIELD(target, currentSlot);
 	SERIALIZE_FIELD(target, weaponSlots);
 
+	SERIALIZE_FIELD(target, RunProgress);
+	SERIALIZE_FIELD(target, weaponSuppressed);
+	SERIALIZE_FIELD(target, mainWasSuppressed);
+	SERIALIZE_FIELD(target, offhandWasSuppressed);
+
 	SERIALIZE_FIELD(target, NpcSimulationManager::worldSimulationState);
 
 	SERIALIZE_FIELD(target, offhandWeapons);
@@ -2669,7 +2674,23 @@ void Player::Serialize(json& target)
 	SERIALIZE_FIELD(target, mantleProgress);
 	SERIALIZE_FIELD(target, mantleSnapPosition);
 
+
+
 	SERIALIZE_FIELD(target, keysInventory);
+
+	json mainWeaponData;
+	if (currentWeapon)
+	{
+		currentWeapon->Serialize(mainWeaponData);
+	}
+	SERIALIZE_FIELD(target, mainWeaponData);
+
+	json offhandWeaponData;
+	if (currentOffhandWeapon)
+	{
+		currentOffhandWeapon->Serialize(offhandWeaponData);
+	}
+	SERIALIZE_FIELD(target, offhandWeaponData);
 
 }
 
@@ -2682,6 +2703,11 @@ void Player::Deserialize(json& source)
 	DESERIALIZE_FIELD(source, velocity);
 	DESERIALIZE_FIELD(source, currentSlot);
 	DESERIALIZE_FIELD(source, weaponSlots);
+
+	DESERIALIZE_FIELD(source, RunProgress);
+	DESERIALIZE_FIELD(source, weaponSuppressed);
+	DESERIALIZE_FIELD(source, mainWasSuppressed);
+	DESERIALIZE_FIELD(source, offhandWasSuppressed);
 
 	DESERIALIZE_FIELD(source, NpcSimulationManager::worldSimulationState);
 
@@ -2754,6 +2780,24 @@ void Player::Deserialize(json& source)
 	controller.SetVelocity(velocity);
 	Teleport(Position);
 
+	if (currentWeapon)
+	{
+		json mainWeaponData;
+		DESERIALIZE_FIELD(source, mainWeaponData);
+		currentWeapon->Deserialize(mainWeaponData);
+	}
+
+	if (currentOffhandWeapon)
+	{
+		json offhandWeaponData;
+		DESERIALIZE_FIELD(source, offhandWeaponData);
+		currentOffhandWeapon->Deserialize(offhandWeaponData);
+	}
+
+	if (weaponSuppressed)
+	{
+		TrySuppressWeapons(true);
+	}
 
 }
 

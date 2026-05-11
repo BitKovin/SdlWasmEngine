@@ -122,6 +122,9 @@ public:
 	// Runtime akimbo functions
 	void SetAkimbo(bool enabled);
 
+	void Serialize(json& target);
+	void Deserialize(json& source) override;
+
 protected:
 
 	void StopTrail(ParticleSystem* trail);

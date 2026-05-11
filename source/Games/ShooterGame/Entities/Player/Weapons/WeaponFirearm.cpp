@@ -478,3 +478,38 @@ AnimationPose WeaponFirearm::ApplyWeaponAnimation(AnimationPose thirdPersonPose)
 	thirdPersonModel->PasteAnimationPose(lastAppliedPose);
 	return lastAppliedPose;
 }
+
+void WeaponFirearm::Serialize(json& target)
+{
+	SERIALIZE_FIELD(target, attackDelay);
+	SERIALIZE_FIELD(target, SwitchDelay);
+	SERIALIZE_FIELD(target, activeSpread);
+	SERIALIZE_FIELD(target, recoilModelOffset);
+	SERIALIZE_FIELD(target, weaponAim);
+	SERIALIZE_FIELD(target, fireLeftNext);
+	
+	auto viewmodelData = viewmodel->GetAnimationState();
+	SERIALIZE_FIELD(target, viewmodelData);
+	auto viewmodelLeftData = viewmodelLeft->GetAnimationState();
+	SERIALIZE_FIELD(target, viewmodelLeftData);
+
+}
+
+void WeaponFirearm::Deserialize(json& source)
+{
+	DESERIALIZE_FIELD(source, attackDelay);
+	DESERIALIZE_FIELD(source, SwitchDelay);
+	DESERIALIZE_FIELD(source, activeSpread);
+	DESERIALIZE_FIELD(source, recoilModelOffset);
+	DESERIALIZE_FIELD(source, weaponAim);
+	DESERIALIZE_FIELD(source, fireLeftNext);
+
+	AnimationState viewmodelData;
+	DESERIALIZE_FIELD(source, viewmodelData);
+	viewmodel->SetAnimationState(viewmodelData);
+
+	AnimationState viewmodelLeftData;
+	DESERIALIZE_FIELD(source, viewmodelLeftData);
+	viewmodelLeft->SetAnimationState(viewmodelLeftData);
+
+}
