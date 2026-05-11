@@ -66,9 +66,9 @@ void Player::Start()
 
 
 
-	hitbox = Physics::CreateCharacterBody(this, Position, 0.3f, 1.2f, 0.1f, BodyType::HitBox, BodyType::None);
+	hitbox = Physics::CreateCharacterBody(this, Position, 0.25f, 1.0f, 0.1f, BodyType::HitBox, BodyType::None);
 	hitbox->SetMotionType(JPH::EMotionType::Kinematic);
-	Physics::ExcludedDrawBodies.insert(hitbox);
+	//Physics::ExcludedDrawBodies.insert(hitbox);
 
 	PreloadEntityType("weapon_sword");
 	PreloadEntityType("weapon_pistol");
@@ -2506,7 +2506,7 @@ void Player::UpdateBody()
 	//poseT["thigh_r"] = translate(Camera::position + Camera::Forward()) * scale(vec3(0.01f));
 	//bodyMesh->ApplyWorldSpaceBoneTransforms(poseT);
 
-
+	float cameraHeight = controller.GetCameraHeight();
 
 	if (InThirdPerson())
 	{
@@ -2516,7 +2516,7 @@ void Player::UpdateBody()
 	{
 		//Camera::position = MathHelper::DecomposeMatrix(bodyMesh->GetBoneMatrixWorld("head")).Position + playerForward * 0.3f;
 
-		float cameraHeight = controller.GetCameraHeight();
+
 
 		if (dead)
 		{
@@ -2545,7 +2545,8 @@ void Player::UpdateBody()
 	observationTarget->position = Position + vec3(0, 0.65f, 0);
 
 
-	Physics::SetBodyPosition(hitbox, Camera::position - vec3(0, 0.5f, 0));
+	Physics::SetBodyPosition(hitbox, bodyMesh->Position + WorldOrientationManager::TransformDirectionToWorld(playerForward) * 0.1f + WorldOrientationManager::GetUpVector() * cameraHeight - vec3(0,0.3,0));
+
 
 }
 
@@ -2864,9 +2865,9 @@ void Player::ToggleBike()
 
 void Player::LoadAssets()
 {
-	bikeMesh->LoadFromFile("GameData/models/player/bike/bike.glb");
-	bikeMesh->TexturesLocation = "GameData/models/player/bike/textures/";
-	bikeMesh->PreloadAssets();
+	//bikeMesh->LoadFromFile("GameData/models/player/bike/bike.glb");
+	//bikeMesh->TexturesLocation = "GameData/models/player/bike/textures/";
+	//bikeMesh->PreloadAssets();
 	bikeMesh->PlayAnimation("hide", true);
 
 	armsMesh->LoadFromFile(Weapon::ArmsModelPath);

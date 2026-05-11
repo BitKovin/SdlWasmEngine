@@ -18,7 +18,7 @@ uniform vec4 fog_end;
 uniform vec4 fog_opacity;
 uniform vec4 fog_color;
 
-uniform vec4 rim_pow; // @ (5.0, 0.0, 0.0, 0.0) - Controls rim thickness
+uniform vec4 rim_pow; // @ (4.0, 0.0, 0.0, 0.0) - Controls rim thickness
 uniform vec4 rim_color; // @ (1.0, 1.0, 0.2, 1.0) - Rim color
 uniform vec4 specular_pow; // @ (5.0, 0.0, 0.0, 0.0) - Controls specular sharpness
 uniform vec4 specular_scale; // @ (0.05, 0.0, 0.0, 0.0) - Scales specular intensity
@@ -75,7 +75,7 @@ float ComputeStyledSpecular(vec3 normal, vec3 lightDir, vec3 viewDir)
 
     // Deadlock NPR Specular Controls
     const float steps = 2.0;       // Number of specular rings
-    const float smoothness = 0.1; // Controls the softness of the blend. 
+    const float smoothness = 0.5;//0.1; // Controls the softness of the blend. 
                                    // 0.01 = hard snap, 0.5 = completely smooth/linear
 
     // Scale the raw specular up to the number of steps
@@ -118,7 +118,7 @@ vec3 CalculateContourRim(vec3 normal, vec3 viewDir)
     // This transitions from 1.0 at NdotV=0.2 (grazing) down to 0.0 at NdotV=0.4 (facing).
     float frontMask = smoothstep(0.4, 0.2, NdotV); 
     
-    return rimEdge * frontMask * rim_color.rgb * 0.07; 
+    return rimEdge * frontMask * rim_color.rgb * 0.1; 
 }
 
 // ==========================================
@@ -250,7 +250,7 @@ void main()
 
     // View-dependent rim light
     vec3 rim = vec3(0,0,0);
-    rim = CalculateContourRim(normal, viewDir);
+    //rim = CalculateContourRim(normal, viewDir);
 
     // Composition (Light Weight Mixing)
     vec3 finalColor =

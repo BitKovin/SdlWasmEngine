@@ -68,7 +68,7 @@ void NpcHumanAxe::UpdateAttackDamage()
 {
     if (attackingDamage == false) return;
 
-    auto hit = Physics::SphereTrace(Position, MathHelper::GetForwardVector(mesh->Rotation) * 1.2f + Position, 0.45f, BodyType::World | BodyType::CharacterCapsule, { controller.body });
+    auto hit = Physics::SphereTrace(Position, MathHelper::GetForwardVector(mesh->Rotation) * 1.2f + Position, 0.45f, BodyType::World | BodyType::CharacterCapsule, {}, {this});
 
     if (hit.hasHit)
     {

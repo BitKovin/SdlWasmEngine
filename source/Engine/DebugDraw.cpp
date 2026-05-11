@@ -127,11 +127,11 @@ void DebugDraw::Point(vec3 position, float duration, float thickness, uint32_t c
 
     for (auto& vertex : cubeVertexPositions)
     {
-		Line(position, position + vertex, duration, thickness, color);
+		Line(position, position + vertex * 0.5f, duration, thickness, color);
     }
     for (auto& vertex : unitDirections)
     {
-        Line(position, position + vertex, duration, thickness, color);
+        Line(position, position + vertex * 0.5f, duration, thickness, color);
     }
     
 
@@ -204,10 +204,18 @@ void DebugDraw::Finalize()
         });
     commands.erase(newEnd, commands.end());
 
+#ifndef DISTRIBUTION
+
     // Snapshot raw (non-owning) pointers for the render thread.
     finalizedCommands.reserve(commands.size());
     for (const auto& cmd : commands)
-        finalizedCommands.push_back(cmd.get());
+        finalizedCommands.push_back(cmd.get());   
+
+#else
+    commands.clear();
+    finalizedCommands.clear();
+#endif
+
 }
 
 void DebugDraw::Draw()
