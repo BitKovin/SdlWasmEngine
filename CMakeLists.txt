@@ -1,15 +1,68 @@
 cmake_minimum_required(VERSION 3.16)
 
-set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+# ——————————————————————————————————————————————————————————
+# Toolchain / platform pairing (pass via -DCMAKE_TOOLCHAIN_FILE=…)
+#
+#  Platform        Toolchain file
+#  ──────────────  ─────────────────────────────────────
+#  Linux           cmake/toolchains/clang.cmake
+#  Emscripten      cmake/toolchains/clang.cmake  (or skip — emcmake sets the compiler itself)
+#  Windows         cmake/toolchains/msvc.cmake
+#  Xbox GDK        cmake/toolchains/msvc.cmake   (activate GDK env first)
+#
+# All targets build with Ninja:
+#   cmake -G Ninja -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/<clang|msvc>.cmake ..
+#
+# Windows / Xbox GDK: run from a VS Developer Command Prompt so cl.exe is on PATH.
+# ——————————————————————————————————————————————————————————
+
+# ——————————————————————————————————————————————————————————
+# Platform detection — includes the matching platform file which
+# defines the four hook functions used throughout this file.
+# PLATFORM_DIR and PLATFORM_HAS_OPENAL are also set here.
+# ——————————————————————————————————————————————————————————
+if(CMAKE_SYSTEM_NAME MATCHES "Emscripten" OR DEFINED EMSCRIPTEN)
+    include("${CMAKE_CURRENT_LIST_DIR}/cmake/platforms/emscripten.cmake")
+
+# 1. Check for EXPLICIT Windows GDK flag first
+elseif(DEFINED WINDOWS_GDK)
+    include("${CMAKE_CURRENT_LIST_DIR}/cmake/platforms/windows_gdk.cmake")
+# 2. Then check for Xbox GDK (Manual or Detected)
+elseif(DEFINED XBOX_GDK OR CMAKE_SYSTEM_NAME MATCHES "Durango|Scarlett|GXDKDesktop")
+    include("${CMAKE_CURRENT_LIST_DIR}/cmake/platforms/xbox_gdk.cmake")
+# 3. Fallback to standard Windows
+elseif(WIN32 OR MSVC)
+    include("${CMAKE_CURRENT_LIST_DIR}/cmake/platforms/windows.cmake")
+
+elseif(CMAKE_SYSTEM_NAME MATCHES "Linux")
+    include("${CMAKE_CURRENT_LIST_DIR}/cmake/platforms/linux.cmake")
+else()
+    message(WARNING "No platform file matched '${CMAKE_SYSTEM_NAME}'. Using no-op stubs.")
+    set(PLATFORM_DIR "unknown")
+    function(platform_early_config)
+    endfunction()
+    function(platform_pre_libraries)
+    endfunction()
+    function(platform_post_libraries t)
+    endfunction()
+    function(platform_configure_game_target t)
+    endfunction()
+endif()
 
 project(MyProject)
+
+message(STATUS "==================================================")
+message(STATUS "Platform : ${PLATFORM_DIR}")
+message(STATUS "==================================================")
 
 # ——————————————————————————————————————————————————————————
 # Game selection (user-visible, cached)
 # ——————————————————————————————————————————————————————————
-# You can pass -DGAME_NAME=MyGame or -DGAME_PATH=/absolute/or/relative/path
-set(GAME_NAME "Game" CACHE STRING "Name of the game project subdirectory under source/Games")
-set(GAME_PATH "" CACHE PATH "Optional path to the game project directory. If set, overrides GAME_NAME/GAME_DIR")
+# Pass -DGAME_NAME=MyGame  or  -DGAME_PATH=/absolute/path
+set(GAME_NAME "Game" CACHE STRING
+    "Name of the game project subdirectory under source/Games")
+set(GAME_PATH "" CACHE PATH
+    "Optional path to the game project directory. Overrides GAME_NAME.")
 
 # ——————————————————————————————————————————————————————————
 # Global settings
@@ -19,40 +72,25 @@ option(ENABLE_PTHREADS "Enable Emscripten pthread support (WASM threads)" OFF)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# We'll put final runtime / archive / library outputs under Build/<GAME_NAME>/<platform>
-# (these are set later after we detect platform and GAME_DIR)
-# Global compile options (applies to all targets)
-add_compile_options(-O2 -DNDEBUG -g) #
-
-if (EMSCRIPTEN AND ENABLE_PTHREADS)
-    message(STATUS "Emscripten pthreads: ENABLED")
-    add_compile_options(-pthread)   # compile with pthread support
-else()
-    if (EMSCRIPTEN)
-        message(STATUS "Emscripten pthreads: DISABLED")
-    endif()
-endif()
+# Force static builds for all vendored libraries on all platforms
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared libraries" FORCE)
 
 # ——————————————————————————————————————————————————————————
-# Platform detection
+# Compiler-agnostic optimisation / debug flags
+# Sets the equivalents of -O2 -DNDEBUG -g for every compiler
+# (Clang, GCC, MSVC).  Must come after project() so the compiler
+# is known, and before any target is created.
 # ——————————————————————————————————————————————————————————
-if (CMAKE_SYSTEM_NAME MATCHES "Emscripten")
-    set(EMSCRIPTEN TRUE)
-    message(STATUS "Building for Emscripten")
-    include_directories(SYSTEM ${EMSCRIPTEN_SYSROOT}/include)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse -msse2 -msimd128")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse -msse2 -msimd128 -msse4.2")
+include("${CMAKE_SOURCE_DIR}/cmake/compiler_flags.cmake")
 
-elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
-    set(LINUX TRUE)
-    message(STATUS "Building for Linux")
+# ——————————————————————————————————————————————————————————
+# Hook 1 — early platform compile config
+# (compiler flags, sysroot includes, pthread compile option …)
+# ——————————————————————————————————————————————————————————
+platform_early_config()
 
-endif()
-
-
-
-# ——————————————————————————————————————————————————————————————————————
-# Engine library
+# ——————————————————————————————————————————————————————————
+# Engine static library
 # ——————————————————————————————————————————————————————————
 file(GLOB_RECURSE ENGINE_SOURCES
     "${CMAKE_SOURCE_DIR}/source/Engine/*.cpp"
@@ -61,243 +99,148 @@ file(GLOB_RECURSE ENGINE_SOURCES
 
 add_library(engine STATIC ${ENGINE_SOURCES})
 
-# Engine must see itself as a root include folder
+# Standard C++ exception handling — applied to our targets only, not globally,
+# to avoid D9025 warnings from vendored libs that disable exceptions themselves.
+if(MSVC)
+    target_compile_options(engine PRIVATE /EHsc)
+endif()
+
 target_include_directories(engine
     PUBLIC
-        "${CMAKE_SOURCE_DIR}/source/Engine"   # <Renderer/...>
+        "${CMAKE_SOURCE_DIR}/source/Engine"   # <Renderer/…>
         "${CMAKE_SOURCE_DIR}/libraries"       # third-party headers
 )
 
 set(LIB_DIR "${CMAKE_SOURCE_DIR}/sourceLibraries")
 
+# ——————————————————————————————————————————————————————————
+# Hook 2 — platform-specific CMake cache vars for third-party libs
+# (must run before the first add_subdirectory below)
+# ——————————————————————————————————————————————————————————
+platform_pre_libraries()
 
-if(NOT EMSCRIPTEN)
-    
+# ——————————————————————————————————————————————————————————
+# Third-party libraries
+# ——————————————————————————————————————————————————————————
+
+# --- OpenAL-Soft ---
+# Skipped on platforms where PLATFORM_HAS_OPENAL is FALSE
+if(PLATFORM_HAS_OPENAL)
+
+    set(LIBTYPE STATIC CACHE STRING "" FORCE)
+    set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+    set(ALSOFT_EXAMPLES OFF CACHE BOOL "" FORCE)
+    set(ALSOFT_UTILS OFF CACHE BOOL "" FORCE)
+    set(ALSOFT_TESTS OFF CACHE BOOL "" FORCE)
+
     add_subdirectory(${LIB_DIR}/openAlSoft)
     target_link_libraries(engine PUBLIC OpenAL)
+endif()
+
+# --- RmlUi (vendored) ---
+set(RMLUI_BUILD_SAMPLES   OFF CACHE BOOL "" FORCE)
+set(RMLUI_BUILD_TESTS     OFF CACHE BOOL "" FORCE)
+set(RMLUI_BUILD_LUA       OFF CACHE BOOL "" FORCE)
+set(RMLUI_ENABLE_DEBUGGER ON  CACHE BOOL "" FORCE)
+
+add_subdirectory(${LIB_DIR}/RmlUi-6.1/Dependencies/freetype)
+add_library(Freetype::Freetype ALIAS freetype)
+target_link_libraries(engine PUBLIC Freetype::Freetype)
+
+add_subdirectory("${LIB_DIR}/RmlUi-6.1")
+target_link_libraries(engine PUBLIC RmlUi::RmlUi RmlUi::Debugger)
+
+if(PLATFORM_CUSTOM_SDL)
+
+    message("using custom SDL for this platform")
+
+else()
+
+    # --- SDL2 (vendored) ---
+    add_subdirectory("${LIB_DIR}/SDL")
+    target_link_libraries(engine PUBLIC SDL2::SDL2)
 
 endif()
 
-# --------------------------------------------------
-# RmlUi (vendored)
-# --------------------------------------------------
-set(RMLUI_BUILD_SAMPLES OFF CACHE BOOL "" FORCE)
-set(RMLUI_BUILD_TESTS   OFF CACHE BOOL "" FORCE)
-set(RMLUI_BUILD_LUA     OFF CACHE BOOL "" FORCE)
-set(RMLUI_ENABLE_DEBUGGER ON CACHE BOOL "" FORCE)
-
-# 1. Add Freetype
-add_subdirectory(${LIB_DIR}/RmlUi-6.1/Dependencies/freetype)
-
-# 2. Create the ALIAS that RmlUi is looking for
-add_library(Freetype::Freetype ALIAS freetype)
-
-# 3. Link Freetype to your engine
-target_link_libraries(engine PUBLIC Freetype::Freetype)
-
-# 4. Add RmlUi (it will now successfully find Freetype::Freetype)
-add_subdirectory("${LIB_DIR}/RmlUi-6.1")
-
-target_link_libraries(engine PUBLIC
-    RmlUi::RmlUi
-    RmlUi::Debugger
-)
-# ——————————————————————————————————————————————————————————
-
-# Force static builds for all vendored libs on all platforms
-set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared libraries" FORCE)
-
-# --------------------------------------------------
-# SDL2 (vendored)
-# --------------------------------------------------
-add_subdirectory("${LIB_DIR}/SDL")
-
-target_link_libraries(engine PUBLIC SDL2::SDL2)
 
 
+# --- FMOD ---
 add_subdirectory(${LIB_DIR}/fmod)
 target_link_libraries(engine PUBLIC fmod)
 
-
-
-# Jolt shipping configuration
-set(ENABLE_ASSERTS              OFF CACHE BOOL "" FORCE)
-set(ENABLE_ALL_WARNINGS         OFF CACHE BOOL "" FORCE)
+# --- JoltPhysics ---
+# Shared Jolt shipping configuration (platform file may have set USE_WASM_SIMD)
+set(ENABLE_ASSERTS               OFF CACHE BOOL "" FORCE)
+set(ENABLE_ALL_WARNINGS          OFF CACHE BOOL "" FORCE)
 set(INTERPROCEDURAL_OPTIMIZATION ON  CACHE BOOL "" FORCE)
-
-# Disable debug features...
 set(DEBUG_RENDERER_IN_DEBUG_AND_RELEASE OFF CACHE BOOL "" FORCE)
 set(PROFILER_IN_DEBUG_AND_RELEASE       OFF CACHE BOOL "" FORCE)
-
-
-if(EMSCRIPTEN)
-    set(USE_WASM_SIMD ON CACHE BOOL "Enable SIMD on Emscripten WASM build" FORCE)
-endif()
 
 add_subdirectory(${LIB_DIR}/JoltPhysics-5.3.0/Build/)
 target_link_libraries(engine PUBLIC Jolt::Jolt)
 
-# assimp
-set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
-set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(ASSIMP_BUILD_ASSIMP_TOOLS OFF CACHE BOOL "" FORCE)
-set(ASSIMP_BUILD_SAMPLES OFF CACHE BOOL "" FORCE)
-set(ASSIMP_NO_EXPORT ON CACHE BOOL "" FORCE)
-set(ASSIMP_BUILD_DLL_EXPORT OFF)
-set(ASSIMP_INSTALL OFF)
-
-
+# --- Assimp ---
+set(ASSIMP_BUILD_TESTS            OFF CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_ASSIMP_TOOLS     OFF CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_SAMPLES          OFF CACHE BOOL "" FORCE)
+set(ASSIMP_NO_EXPORT              ON  CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_DLL_EXPORT       OFF)
+set(ASSIMP_INSTALL                OFF)
 set(ASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT OFF CACHE BOOL "" FORCE)
-set(ASSIMP_BUILD_OBJ_IMPORTER ON CACHE BOOL "" FORCE)   # .obj
-set(ASSIMP_BUILD_GLTF_IMPORTER ON CACHE BOOL "" FORCE)  # .glb / .gltf
-
-set(ASSIMP_BUILD_ZLIB ON CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_OBJ_IMPORTER     ON  CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_GLTF_IMPORTER    ON  CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_ZLIB             ON  CACHE BOOL "" FORCE)
 
 add_subdirectory(${LIB_DIR}/assimp)
 target_link_libraries(engine PUBLIC assimp)
 
-
-# BGFX
-
+# --- BGFX ---
+# Shared BGFX knobs (platform file sets BGFX_BUILD_TOOLS and threading flags)
 set(BGFX_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-
-if(WIN32)
-    set(BGFX_BUILD_TOOLS    ON CACHE BOOL "" FORCE)
-else()
-    set(BGFX_BUILD_TOOLS    OFF CACHE BOOL "" FORCE)
-endif()
-
-if(EMSCRIPTEN)
-    set(BGFX_CONFIG_MULTITHREADED OFF CACHE BOOL "" FORCE)
-    set(BX_CONFIG_SUPPORTS_THREADING OFF CACHE BOOL "" FORCE)
-    set(BGFX_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
-endif()
-
 set(BGFX_INSTALL        OFF CACHE BOOL "" FORCE)
 
 add_subdirectory(${LIB_DIR}/bgfx/bgfx.cmake)
-target_link_libraries(engine PUBLIC bgfx)
-target_link_libraries(engine PUBLIC bx)
-if(EMSCRIPTEN)
-    if(TARGET bimg_encode)
-        # Undefine the macros only for this target so it skips the broken #include <x86intrin.h>
-        # Jolt and everything else still get the full SSE4.2 intrinsics.
-        target_compile_options(bimg_encode PRIVATE -U__SSE4_1__ -U__SSE4_2__)
-        message(STATUS "bimg_encode: disabled SSE4.1/4.2 intrinsics to avoid x86intrin.h errors on Emscripten")
-    endif()
-endif()
+target_link_libraries(engine PUBLIC bgfx bx)
 
-#7zip
+# --- bit7z ---
 set(BIT7Z_AUTO_FORMAT ON CACHE BOOL "enable auto format support" FORCE)
 add_subdirectory(${LIB_DIR}/bit7z)
 target_link_libraries(engine PUBLIC bit7z)
 
 # ——————————————————————————————————————————————————————————
-# Resolve GAME_DIR, create source/game folder if missing, save selection
+# Hook 3 — post-library platform fixups
+# (e.g. bimg_encode SSE workaround on Emscripten)
+# ——————————————————————————————————————————————————————————
+platform_post_libraries(engine)
+
+# ——————————————————————————————————————————————————————————
+# Resolve GAME_DIR
 # ——————————————————————————————————————————————————————————
 if(GAME_PATH)
-    # explicit path override (absolute or relative)
     set(GAME_DIR "${GAME_PATH}")
 else()
-    # default layout: source/Games/<GAME_NAME>
     set(GAME_DIR "${CMAKE_SOURCE_DIR}/source/Games/${GAME_NAME}")
 
-    # backward compatibility: if that path doesn't exist but old `source/Game` does, fall back
     if(NOT IS_DIRECTORY "${GAME_DIR}" AND IS_DIRECTORY "${CMAKE_SOURCE_DIR}/source/Game")
-        message(WARNING "Game directory '${GAME_DIR}' not found. Falling back to legacy 'source/Game'. Consider passing -DGAME_NAME or -DGAME_PATH to specify the game project.")
+        message(WARNING
+            "Game directory '${GAME_DIR}' not found. "
+            "Falling back to legacy 'source/Game'. "
+            "Consider passing -DGAME_NAME or -DGAME_PATH.")
         set(GAME_DIR "${CMAKE_SOURCE_DIR}/source/Game")
     endif()
 endif()
 
-message(STATUS "Using game source directory: ${GAME_DIR}")
+message(STATUS "Game source directory: ${GAME_DIR}")
 
+# ——————————————————————————————————————————————————————————
+# Output directory layout:  Build/<GAME_NAME>/<PLATFORM_DIR>/
+# PLATFORM_DIR is set by the platform include file, so it is
+# always valid here (the original file set it after using it).
+# ——————————————————————————————————————————————————————————
 set(OUTPUT_BASE_DIR "${CMAKE_SOURCE_DIR}/Build/${GAME_NAME}/${PLATFORM_DIR}")
 file(MAKE_DIRECTORY "${OUTPUT_BASE_DIR}")
 file(MAKE_DIRECTORY "${OUTPUT_BASE_DIR}/bin" "${OUTPUT_BASE_DIR}/lib" "${OUTPUT_BASE_DIR}/assets")
 
-# ——————————————————————————————————————————————————————————
-# Common WASM linker flags (for the final module)
-# ——————————————————————————————————————————————————————————
-set(WASM_COMMON_LINK_OPTIONS
-    "SHELL:-s USE_SDL=2"
-    "SHELL:-s USE_SDL_IMAGE=2"
-    "SHELL:-s SDL2_IMAGE_FORMATS=[\"png\",\"jpg\",\"tga\"]"
-    "SHELL:-s USE_WEBGL2=1"
-    "SHELL:-s MIN_WEBGL_VERSION=2"
-    "SHELL:-s MAX_WEBGL_VERSION=2"
-
-
-    #"SHELL:-s GL_PREINITIALIZED_CONTEXT=1"
-    "SHELL:-s STACK_SIZE=500000"
-    #"SHELL:-fsanitize=address,undefined"
-    "SHELL:-sFETCH"
-    #"SHELL:-sASYNCIFY"
-    
-
-    "SHELL:-s NO_DISABLE_EXCEPTION_CATCHING"
-    "SHELL:-s WASM=1"
-    "SHELL:-s ASSERTIONS=1"
-    "SHELL:--preload-file ${OUTPUT_BASE_DIR}/GameData@/GameData"
-    "SHELL:-s GL_SUPPORT_AUTOMATIC_ENABLE_EXTENSIONS=1"
-    "SHELL:-lidbfs.js"
-    "SHELL:-msimd128"
-    "SHELL:-s EXPORTED_RUNTIME_METHODS=['cwrap','setValue','getValue']" # for fmod
-
-    "SHELL:-s AGGRESSIVE_VARIABLE_ELIMINATION=1"
-    "SHELL:-s ELIMINATE_DUPLICATE_FUNCTIONS=1"
-
-    "SHELL:-gsource-map"
-    "SHELL:--source-map-base http://localhost:8779/Build/ShooterGame/emscripten/bin/"
-
-    #"SHELL:--profiling-funcs"
-)
-
-message(STATUS "--------------------------------------------------")
-message(STATUS "GAME_NAME:       ${GAME_NAME}")
-message(STATUS "OUTPUT_BASE_DIR: ${OUTPUT_BASE_DIR}")
-message(STATUS "Linker Flag:     ${OUTPUT_BASE_DIR}/GameData@/GameData")
-message(STATUS "--------------------------------------------------")
-
-if (EMSCRIPTEN AND ENABLE_PTHREADS)
-    # PTHREADS: threads require fixed TOTAL_MEMORY and thread flags. Remove memory-growth usage.
-    list(APPEND WASM_COMMON_LINK_OPTIONS
-        "SHELL:-pthread"                      # pass -pthread to linker
-        "SHELL:-s USE_PTHREADS=1"             # enable wasm threads in emscripten
-        "SHELL:-s PTHREAD_POOL_SIZE=16"       # adjust pool size as needed
-        #"SHELL:-s PROXY_TO_PTHREAD=1"        # optional: proxy main to a worker
-        "SHELL:-s TOTAL_MEMORY=999948288"   
-    )
-else()
-    # When not using pthreads you can allow memory growth (useful for dev)
-    list(APPEND WASM_COMMON_LINK_OPTIONS
-        "SHELL:-s ALLOW_MEMORY_GROWTH=1"
-        "SHELL:-s INITIAL_HEAP=83886080"
-    )
-endif()
-
-
-
-# Persist last selected game to build dir so it's easy to query later
-file(WRITE "${CMAKE_BINARY_DIR}/last_game.txt" "${GAME_NAME}\n")
-message(STATUS "Saved last selected game into: ${CMAKE_BINARY_DIR}/last_game.txt")
-# Note: GAME_NAME is also a cached variable and is stored in CMakeCache.txt automatically.
-
-# ——————————————————————————————————————————————————————————
-# Create platform-specific build subfolder structure under source-level Build/
-# (Build/<GameName>/<platform>), and set global output directories
-# ——————————————————————————————————————————————————————————
-if(EMSCRIPTEN)
-    set(PLATFORM_DIR "emscripten")
-elseif(LINUX)
-    set(PLATFORM_DIR "linux")
-elseif(WIN32)
-    set(PLATFORM_DIR "windows")
-else()
-    # fallback: lower-case system name
-    string(TOLOWER "${CMAKE_SYSTEM_NAME}" PLATFORM_DIR)
-endif()
-
-# set global output dirs (single-config and multi-config)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${OUTPUT_BASE_DIR}/bin")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${OUTPUT_BASE_DIR}/lib")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${OUTPUT_BASE_DIR}/lib")
@@ -309,78 +252,64 @@ foreach(cfg IN ITEMS Debug Release RelWithDebInfo MinSizeRel)
     set("CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFGU}" "${OUTPUT_BASE_DIR}/lib")
 endforeach()
 
-message(STATUS "Build output base: ${OUTPUT_BASE_DIR}")
+# Redirect the already-created engine target to the new output dirs
+set_target_properties(engine PROPERTIES
+    ARCHIVE_OUTPUT_DIRECTORY "${OUTPUT_BASE_DIR}/lib"
+    LIBRARY_OUTPUT_DIRECTORY "${OUTPUT_BASE_DIR}/lib"
+    RUNTIME_OUTPUT_DIRECTORY "${OUTPUT_BASE_DIR}/bin"
+)
 
-# Ensure targets created earlier (engine) will emit to the new dirs as well
-if(TARGET engine)
-    set_target_properties(engine PROPERTIES
-        ARCHIVE_OUTPUT_DIRECTORY "${OUTPUT_BASE_DIR}/lib"
-        LIBRARY_OUTPUT_DIRECTORY "${OUTPUT_BASE_DIR}/lib"
-        RUNTIME_OUTPUT_DIRECTORY "${OUTPUT_BASE_DIR}/bin"
-    )
-endif()
+message(STATUS "GAME_NAME      : ${GAME_NAME}")
+message(STATUS "OUTPUT_BASE_DIR: ${OUTPUT_BASE_DIR}")
 
 # ——————————————————————————————————————————————————————————
 # Collect game sources
 # ——————————————————————————————————————————————————————————
 file(GLOB_RECURSE GAME_SOURCES "${GAME_DIR}/*.cpp")
 
-# Include legacy sources if the old directory exists (transitional support)
 set(LEGACY_GAME_DIR "${CMAKE_SOURCE_DIR}/source/Game")
 if(IS_DIRECTORY "${LEGACY_GAME_DIR}")
-    message(STATUS "Legacy game directory found: Including sources from ${LEGACY_GAME_DIR}")
+    message(STATUS "Legacy game directory found: ${LEGACY_GAME_DIR}")
     file(GLOB_RECURSE LEGACY_GAME_SOURCES "${LEGACY_GAME_DIR}/*.cpp")
     list(APPEND GAME_SOURCES ${LEGACY_GAME_SOURCES})
     list(REMOVE_DUPLICATES GAME_SOURCES)
 endif()
 
-# ——————————————————————————————————————————————————————————
-# Game executable target (target name follows GAME_NAME)
-# ——————————————————————————————————————————————————————————
-# sanitize GAME_NAME to create a valid CMake target name (replace non-alnum with '_')
-string(REGEX REPLACE "[^A-Za-z0-9_]" "_" GAME_TARGET_NAME "${GAME_NAME}")
-
-# If no sources found, we still create the target so the user can populate the folder.
-if (NOT GAME_SOURCES)
+if(NOT GAME_SOURCES)
     message(FATAL_ERROR "No C++ sources found in ${GAME_DIR}. Cannot build ${GAME_NAME}.")
 endif()
 
+# ——————————————————————————————————————————————————————————
+# Game executable target
+# ——————————————————————————————————————————————————————————
+string(REGEX REPLACE "[^A-Za-z0-9_]" "_" GAME_TARGET_NAME "${GAME_NAME}")
+
 add_executable(${GAME_TARGET_NAME} ${GAME_SOURCES})
+
+if(MSVC)
+    target_compile_options(${GAME_TARGET_NAME} PRIVATE /EHsc)
+endif()
 
 include(${CMAKE_SOURCE_DIR}/BuildScripts/PrepareGameData.cmake)
 
-# include directories for the game
 target_include_directories(${GAME_TARGET_NAME}
-    PUBLIC
-        "${GAME_DIR}"
+    PUBLIC "${GAME_DIR}"
 )
 
-
-# link engine
 target_link_libraries(${GAME_TARGET_NAME} PRIVATE engine)
 
-# Set executable output name: keep 'main' for emscripten builds (compat), otherwise use GAME_NAME
-if(EMSCRIPTEN)
-    set_target_properties(${GAME_TARGET_NAME} PROPERTIES OUTPUT_NAME "main")
-    set_target_properties(${GAME_TARGET_NAME} PROPERTIES SUFFIX ".html")
-    message(STATUS "Emscripten build: final module OUTPUT_NAME set to 'main' for web compatibility, with SUFFIX '.html' to generate HTML output")
-else()
-    set_target_properties(${GAME_TARGET_NAME} PROPERTIES OUTPUT_NAME "${GAME_NAME}")
-endif()
-
-# Ensure this game target also emits binaries/libs to our platform-specific output directories
 set_target_properties(${GAME_TARGET_NAME} PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${OUTPUT_BASE_DIR}/bin"
     ARCHIVE_OUTPUT_DIRECTORY "${OUTPUT_BASE_DIR}/lib"
     LIBRARY_OUTPUT_DIRECTORY "${OUTPUT_BASE_DIR}/lib"
 )
 
-if (EMSCRIPTEN)
-    message(STATUS "Applying WASM linker flags to final '${GAME_TARGET_NAME}' target")
-    target_link_options(${GAME_TARGET_NAME} PRIVATE ${WASM_COMMON_LINK_OPTIONS})
+# ——————————————————————————————————————————————————————————
+# Hook 4 — platform-specific game target finalisation
+# (output name / suffix, linker flags, install rules …)
+# ——————————————————————————————————————————————————————————
+platform_configure_game_target(${GAME_TARGET_NAME})
 
-else()
-
-    target_link_options(${GAME_TARGET_NAME} PRIVATE -pthread -ldl)
-    install(TARGETS ${GAME_TARGET_NAME} DESTINATION bin)
-endif()
+# Persist last selected game for tooling convenience
+file(WRITE "${CMAKE_BINARY_DIR}/last_game.txt" "${GAME_NAME}\n")
+message(STATUS "Last game written to: ${CMAKE_BINARY_DIR}/last_game.txt")

@@ -7,5 +7,17 @@ cmake .. -DCMAKE_BUILD_TYPE=Release
 make
 
 # Windows if using cmake for some reason
+
+x64 Native Tools Command Prompt for VS 2022
+
 cmake .. -DGAME_NAME=ShooterGame -GNinja -DCMAKE_BUILD_TYPE=Release
+ninja
+
+#didn't tested because I don't have xbox sdk
+# Xbox GDK (from GDK-extended x64 Native Tools Command Prompt for VS 2022)
+cmake .. -DGAME_NAME=ShooterGame -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../cmake/toolchains/msvc.cmake -DXBOX_GDK=ON -DGDK_SCARLETT=ON
+ninja
+
+# Windows PC GDK (from GDK-extended x64 Native Tools Command Prompt for VS 2022)
+cmake .. -DGAME_NAME=ShooterGame -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../cmake/toolchains/msvc.cmake -DWINDOWS_GDK=ON
 ninja

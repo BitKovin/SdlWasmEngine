@@ -8,6 +8,9 @@ uniform mat4 view;
 uniform vec4 brightness;
 uniform vec4 is_decal; // .x > 0.5 = true
 
+uniform vec4 viewmodelScaleFactor;
+uniform vec4 isViewmodel;   // .x > 0.5 = true  (was bool)
+
 void main()
 {
     // Reconstruct model matrix from per-instance registers
@@ -16,7 +19,12 @@ void main()
     vec4 worldPosition = mul(model, vec4(a_position, 1.0));
     v_world = worldPosition;
 
-    gl_Position = mul(projection, mul(view, worldPosition));
+
+
+    vec4 clipPos = mul(projection, mul(view, worldPosition));
+    if (isViewmodel.x > 0.5)
+        clipPos.z *= 0.2 * viewmodelScaleFactor.x;
+    gl_Position = clipPos;
 
     v_texcoord0 = a_texcoord0;
     v_texcoord1 = a_texcoord0;

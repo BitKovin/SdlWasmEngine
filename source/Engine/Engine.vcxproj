@@ -598,6 +598,7 @@
     <ClInclude Include="PhysicsConverter.h" />
     <ClInclude Include="PhysicsHelper.h" />
     <ClInclude Include="PlatformMains\emscripten_main.hpp" />
+    <ClInclude Include="PlatformMains\gdk_main.hpp" />
     <ClInclude Include="PlatformMains\linux_main.hpp" />
     <ClInclude Include="PlatformMains\PlatformWindowData.h" />
     <ClInclude Include="PlatformMains\windows_main.hpp" />

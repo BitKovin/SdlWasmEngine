@@ -25,23 +25,68 @@ std::optional<std::string> NativeFileSystem::ReadFile(const std::string& path) {
     catch (...) { return std::nullopt; }
 }
 
-std::optional<std::vector<uint8_t>> NativeFileSystem::ReadFileBinary(const std::string& path) {
-    try {
-        if (!fs::exists(path) || !fs::is_regular_file(path)) return std::nullopt;
-        std::ifstream file(path, std::ios::binary);
-        if (!file) return std::nullopt;
+std::optional<std::vector<uint8_t>> NativeFileSystem::ReadFileBinary(const std::string& path)
+{
+    try
+    {
+        fs::path fullPath = fs::absolute(path);
+
+        if (!fs::exists(fullPath))
+        {
+            printf("[FileSystem] FILE NOT FOUND: %s\n", fullPath.string().c_str());
+            return std::nullopt;
+        }
+
+        if (!fs::is_regular_file(fullPath))
+        {
+            printf("[FileSystem] NOT A REGULAR FILE: %s\n", fullPath.string().c_str());
+            return std::nullopt;
+        }
+
+        std::ifstream file(fullPath, std::ios::binary);
+        if (!file.is_open())
+        {
+            printf("[FileSystem] FAILED TO OPEN FILE: %s\n", fullPath.string().c_str());
+            return std::nullopt;
+        }
 
         file.seekg(0, std::ios::end);
-        size_t size = static_cast<size_t>(file.tellg());
-        file.seekg(0);
+        std::streamsize size = file.tellg();
 
-        std::vector<uint8_t> data(size);
-        file.read(reinterpret_cast<char*>(data.data()), size);
+        if (size <= 0)
+        {
+            printf("[FileSystem] INVALID FILE SIZE (%lld): %s\n",
+                (long long)size,
+                fullPath.string().c_str());
+            return std::nullopt;
+        }
+
+        file.seekg(0, std::ios::beg);
+
+        std::vector<uint8_t> data(static_cast<size_t>(size));
+
+        if (!file.read(reinterpret_cast<char*>(data.data()), size))
+        {
+            printf("[FileSystem] FAILED TO READ FILE: %s\n", fullPath.string().c_str());
+            return std::nullopt;
+        }
+
         return data;
     }
-    catch (...) { return std::nullopt; }
+    catch (const std::exception& e)
+    {
+        printf("[FileSystem] EXCEPTION reading %s: %s\n",
+            fs::absolute(path).string().c_str(),
+            e.what());
+        return std::nullopt;
+    }
+    catch (...)
+    {
+        printf("[FileSystem] UNKNOWN EXCEPTION reading: %s\n",
+            fs::absolute(path).string().c_str());
+        return std::nullopt;
+    }
 }
-
 std::vector<std::string> NativeFileSystem::GetFilesInPath(const std::string& path) {
     std::vector<std::string> result;
     try {

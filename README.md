@@ -35,3 +35,7 @@ Behavior Tree Editor:
 
 Multiple NPCs affected by active ragdoll stun and recovery from ragdoll
 <img width="1745" height="962" alt="image" src="https://github.com/user-attachments/assets/ea21fcb6-b8ea-4e3a-bfc1-e72d0e4c6cfd" />
+
+Building SDL for GDK requires this version
+
+https://github.com/microsoft/GDK/releases/tag/October-2024-Update-5-v2410.5.1966

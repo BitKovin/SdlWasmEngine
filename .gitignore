@@ -459,3 +459,14 @@ Build/ShooterGame/lib/engine.lib
 Build/ShooterGame/lib/libengine.a
 Build/ShooterGame/lib/ShooterGame.exp
 Build/ShooterGame/lib/ShooterGame.lib
+
+BuildGDK/*
+#BuildWindows/*
+Build/ShooterGame/xbox_gdk/*
+Build/ShooterGame/windows_gdk/*
+Build/ShooterGame/windows/*
+
+*engine.a
+*.libengine.a
+BuildWindows/sourceLibraries/openAlSoft/OpenAL32.lib
+BuildWindows/sourceLibraries/openAlSoft/OpenAL32.lib

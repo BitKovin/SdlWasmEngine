@@ -1,0 +1,918 @@
+[00:23:12] [INFO] _
+[00:23:12] [INFO] arg: F:\Git\SdlWasmEngine\source\Debug\ShooterGame.exe
+[00:23:13] [INFO] init
+[00:23:13] [INFO] Vendor:   OpenAL Community
+[00:23:13] [INFO] Renderer: OpenAL Soft
+[00:23:13] [INFO] Vendor:   OpenAL Community
+[00:23:13] [INFO] Renderer: OpenAL Soft
+[00:23:13] [INFO] initPhys
+[00:23:13] [INFO] initPhys
+[00:23:13] [INFO] Creating ShaderProgram: vs_fullscreen|fs_postprocessing
+[00:23:13] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_fullscreen.bin
+[00:23:13] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/fs_postprocessing.bin
+[00:23:13] [INFO] Sampler: screenTexture → slot 0
+[00:23:13] [INFO] Sampler: depthTexture → slot 1
+[00:23:13] [INFO] Sampler: noiseTexture → slot 2
+[00:23:13] [INFO] Sampler: LutTexture → slot 3
+[00:23:13] [INFO] Creating ShaderProgram: vs_fullscreen|fs_motionBlur
+[00:23:13] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_fullscreen.bin
+[00:23:13] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/fs_motionBlur.bin
+[00:23:13] [INFO] Sampler: screenTexture → slot 0
+[00:23:13] [INFO] Sampler: uAccumulated → slot 1
+[00:23:13] [INFO] Sampler: uCustomIdTex → slot 2
+[00:23:13] [INFO] Creating ShaderProgram: vs_fullscreen|fs_motionBlur_apply
+[00:23:13] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_fullscreen.bin
+[00:23:13] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/fs_motionBlur_apply.bin
+[00:23:13] [INFO] Sampler: screenTexture → slot 0
+[00:23:13] [INFO] Sampler: blurTexture → slot 1
+[00:23:13] [INFO] Creating ShaderProgram: vs_fullscreen|fs_copy
+[00:23:13] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_fullscreen.bin
+[00:23:13] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/fs_copy.bin
+[00:23:13] [INFO] Sampler: screenTexture → slot 0
+[00:23:13] [INFO] Creating ShaderProgram: vs_fullscreen|fs_copy_depth
+[00:23:13] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_fullscreen.bin
+[00:23:13] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/fs_copy_depth.bin
+[00:23:13] [INFO] Sampler: depthTexture → slot 0
+[00:23:13] [INFO] Creating ShaderProgram: vs_fullscreen|fs_resolve_depth_msaa
+[00:23:13] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_fullscreen.bin
+[00:23:13] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/fs_resolve_depth_msaa.bin
+[00:23:13] [INFO] Max framebuffers supported by GPU: 128
+[00:23:13] [INFO] Creating ShaderProgram: vs_ui|fs_ui_textured
+[00:23:13] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_ui.bin
+[00:23:13] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/fs_ui_textured.bin
+[00:23:13] [INFO] Sampler: u_Texture → slot 0
+[00:23:13] [INFO] Creating ShaderProgram: vs_ui|fs_ui_flatcolor
+[00:23:13] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_ui.bin
+[00:23:13] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/fs_ui_flatcolor.bin
+[00:23:13] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/vs_rmlui.bin
+[00:23:13] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/fs_rmlui_color.bin
+[00:23:13] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/vs_rmlui.bin
+[00:23:13] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/fs_rmlui_texture.bin
+[00:23:13] [INFO] Sampler: s_texture0 → slot 0
+[00:23:13] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/vs_rmlui_passthrough.bin
+[00:23:13] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/fs_rmlui_passthrough.bin
+[00:23:13] [INFO] Sampler: s_texture0 → slot 0
+[00:23:13] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/vs_rmlui_passthrough.bin
+[00:23:13] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/fs_rmlui_blendmask.bin
+[00:23:13] [INFO] Sampler: s_texture0 → slot 0
+[00:23:13] [INFO] Sampler: s_texture1 → slot 1
+[00:23:13] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/vs_rmlui_passthrough.bin
+[00:23:13] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/fs_rmlui_blur.bin
+[00:23:13] [INFO] Sampler: s_texture0 → slot 0
+[00:23:13] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/vs_rmlui_passthrough.bin
+[00:23:13] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/fs_rmlui_dropshadow.bin
+[00:23:13] [INFO] Sampler: s_texture0 → slot 0
+[00:23:13] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/vs_rmlui_passthrough.bin
+[00:23:13] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/fs_rmlui_colormatrix.bin
+[00:23:13] [INFO] Sampler: s_texture0 → slot 0
+[00:23:13] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/vs_rmlui.bin
+[00:23:13] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/fs_rmlui_creation.bin
+[00:23:13] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/vs_rmlui.bin
+[00:23:13] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/fs_rmlui_gradient.bin
+[00:23:13] [INFO] Sampler: s_texture0 → slot 0
+[00:23:13] [INFO] unlocking cursor
+[00:23:13] [INFO] Creating ShaderProgram: debugDraw/vs_debugdraw|debugDraw/fs_debugdraw
+[00:23:13] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/debugDraw/vs_debugdraw.bin
+[00:23:13] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/debugDraw/fs_debugdraw.bin
+[00:23:13] [INFO] Registered new PSO: vs_fullscreen | fs_motionBlur | 72057868915835023
+[00:23:13] [INFO] Registered new PSO: vs_fullscreen | fs_copy | 72057868915835023
+[00:23:13] [INFO] Registered new PSO: vs_fullscreen | fs_motionBlur_apply | 72057868915835023
+[00:23:13] [INFO] Registered new PSO: vs_fullscreen | fs_postprocessing | 72057868915835023
+[00:23:13] [INFO] Creating ShaderProgram: vs_fullscreen|fs_fxaa_simple
+[00:23:13] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_fullscreen.bin
+[00:23:13] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/fs_fxaa_simple.bin
+[00:23:13] [INFO] Sampler: screenTexture → slot 0
+[00:23:13] [INFO] Registered new PSO: vs_fullscreen | fs_fxaa_simple | 72057869018996879
+[00:23:13] [INFO] 
+[00:23:13] [ERROR] Texture: file empty or not found: GameData/models/player/arms_p.glb/arms_em.psd_em.png
+[00:23:13] [INFO] 
+[00:23:13] [ERROR] Texture: file empty or not found: GameData/models/player/body/player_body.glb/gloves_em.png
+[00:23:13] [ERROR] Texture: file empty or not found: GameData/models/player/body/player_body.glb/shirt_em.png
+[00:23:13] [ERROR] Texture: file empty or not found: GameData/models/player/body/player_body.glb/pants_em.png
+[00:23:13] [ERROR] Texture: file empty or not found: GameData/models/player/body/player_body.glb/shoes_em.png
+[00:23:13] [ERROR] Texture: file empty or not found: GameData/models/player/body/player_body.glb/jacket_ch-jacket_em.png_em.png
+[00:23:13] [INFO] 
+[00:23:13] [INFO] [FMOD] Bank loaded from disk: GameData/sounds/banks/Desktop/SFX.bank
+[00:23:13] [INFO] [FMOD] Sample data loaded for: GameData/sounds/banks/Desktop/SFX.bank
+[00:23:13] [INFO] 
+[00:23:13] [ERROR] Texture: file empty or not found: GameData/models/enemies/zombie/zombie.glb/cat_em.png
+[00:23:13] [INFO] 
+[00:23:13] [ERROR] Texture: file empty or not found: GameData/models/enemies/humanAxe/humanAxe.glb/cultist_realistic_em.png
+[00:23:14] [INFO] 
+[00:23:14] [ERROR] Texture: file empty or not found: GameData/models/enemies/humanGun/humanGun.glb/human_gun_em.png
+[00:23:14] [ERROR] Texture: file empty or not found: GameData/models/enemies/humanGun/humanGun.glb/cultist_realistic_em.png
+[00:23:14] [INFO] [FMOD] Bank loaded from disk: GameData/sounds/banks/Desktop/Weapons.bank
+[00:23:14] [INFO] [FMOD] Sample data loaded for: GameData/sounds/banks/Desktop/Weapons.bank
+[00:23:14] [INFO] 
+[00:23:14] [ERROR] Texture: file empty or not found: GameData/models/player/weapons/cane/cane.glb/cane_em.png
+[00:23:14] [INFO] 
+[00:23:14] [INFO] 
+[00:23:14] [INFO] 
+[00:23:14] [ERROR] Texture: file empty or not found: GameData/models/player/weapons/cannon/cannon.glb/Army Green_2D_View_em.png
+[00:23:14] [ERROR] Texture: file empty or not found: GameData/models/player/weapons/cannon/cannon.glb/Metal Grey_2D_View_em.png
+[00:23:14] [ERROR] Texture: file empty or not found: GameData/models/player/weapons/cannon/cannon.glb/Rubber_2D_View_em.png
+[00:23:14] [ERROR] Texture: file empty or not found: GameData/models/player/weapons/cannon/cannon.glb/Pearl white_2D_View_em.png
+[00:23:14] [ERROR] Texture: file empty or not found: GameData/models/player/weapons/cannon/cannon.glb/Dull Copper_2D_View_em.png
+[00:23:14] [INFO] Warning: Texture already registered for path: GameData/models/player/weapons/pistol/pistol_tp.glb/pistol.png
+[00:23:14] [INFO] 
+[00:23:14] [INFO] 
+[00:23:14] [ERROR] Texture: file empty or not found: GameData/models/player/weapons/leftHand/empty.glb/
+[00:23:15] [INFO] 
+[00:23:15] [ERROR] Texture: file empty or not found: GameData/models/player/weapons/stg44/stg44.glb/Image_0_em.png
+[00:23:15] [INFO] Warning: Texture already registered for path: GameData/models/player/weapons/mpsd/mpsd_tp.glb/mp5_texture_red_BaseColor copy.png
+[00:23:15] [INFO] Warning: Texture already registered for path: GameData/models/player/weapons/mpsd/mpsd_tp.glb/mp5_texture_blue_BaseColor copy.png
+[00:23:15] [INFO] 
+[00:23:15] [INFO] 
+[00:23:15] [ERROR] Texture: file empty or not found: GameData/models/player/weapons/pistol/pistol.glb/pistol_em.png
+[00:23:15] [INFO] 
+[00:23:15] [ERROR] Texture: file empty or not found: GameData/models/player/weapons/pistol_silent/pistol_silent.glb/Welrod_FinalAlbedo_SRGB_em.png
+[00:23:15] [INFO] 
+[00:23:15] [ERROR] Texture: file empty or not found: GameData/models/player/weapons/pistol/revolver.glb/revolver_em.png
+[00:23:15] [INFO] 
+[00:23:15] [ERROR] Texture: file empty or not found: GameData/models/player/weapons/shotgun/shotgun.glb/shotgun_fix_em.png
+[00:23:16] [INFO] 
+[00:23:16] [ERROR] Texture: file empty or not found: GameData/models/player/weapons/sniper/sniper.glb/Kar_LP_phong1_BaseColor_em.png
+[00:23:16] [ERROR] Texture: file empty or not found: GameData/models/player/weapons/sniper/sniper.glb/scope_glass_t_em.png
+[00:23:16] [INFO] Failed to read: GameData/models/player/weapons/sniper/sniper_tp.glb
+
+[00:23:16] [INFO] 
+[00:23:16] [ERROR] Texture: file empty or not found: GameData/models/player/weapons/sword/sword.glb/shirt_em.png
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [ERROR] Texture: file empty or not found: GameData/models/player/weapons/tommy/tommy.glb/main_em.png
+[00:23:16] [ERROR] Texture: file empty or not found: GameData/models/player/weapons/tommy/tommy.glb/mag_em.png
+[00:23:16] [INFO] Failed to read: GameData/models/arms.glb
+
+[00:23:16] [INFO] Loaded PSOs from file: 40
+[00:23:16] [INFO] Registered new PSO: vs_fullscreen | fs_motionBlur | 72057869018996879
+[00:23:16] [INFO] Registered new PSO: vs_fullscreen | fs_copy | 72057869018996879
+[00:23:16] [INFO] Registered new PSO: vs_fullscreen | fs_motionBlur_apply | 72057869018996879
+[00:23:16] [INFO] Registered new PSO: vs_fullscreen | fs_postprocessing | 72057869018996879
+[00:23:16] [INFO] Registered new PSO: vs_ui | fs_ui_textured | 72057869018996879
+[00:23:16] [INFO] Creating ShaderProgram: vs_ui|ui/fs_progressBar
+[00:23:16] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_ui.bin
+[00:23:16] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/ui/fs_progressBar.bin
+[00:23:16] [INFO] Sampler: u_Texture → slot 0
+[00:23:16] [INFO] Sampler: bgTexture → slot 1
+[00:23:16] [INFO] Registered new PSO: vs_ui | ui/fs_progressBar | 72057869018996879
+[00:23:16] [INFO] Creating ShaderProgram: vs_default|fs_empty
+[00:23:16] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_default.bin
+[00:23:16] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/fs_empty.bin
+[00:23:16] [INFO] Registered new PSO: vs_default | fs_empty | 72057869018996879
+[00:23:16] [INFO] Creating ShaderProgram: bsp/vs_bsp|bsp/fs_bsp_empty
+[00:23:16] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/bsp/vs_bsp.bin
+[00:23:16] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/bsp/fs_bsp_empty.bin
+[00:23:16] [INFO] Registered new PSO: bsp/vs_bsp | bsp/fs_bsp_empty | 72057869018996879
+[00:23:16] [INFO] Creating ShaderProgram: vs_default|fs_mask
+[00:23:16] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_default.bin
+[00:23:16] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/fs_mask.bin
+[00:23:16] [INFO] Sampler: u_texture → slot 0
+[00:23:16] [INFO] Registered new PSO: vs_default | fs_mask | 72057869018996879
+[00:23:16] [INFO] Creating ShaderProgram: vs_default|fs_default
+[00:23:16] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_default.bin
+[00:23:16] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/fs_default.bin
+[00:23:16] [INFO] Sampler: u_texture → slot 0
+[00:23:16] [INFO] Sampler: u_textureEmissive → slot 1
+[00:23:16] [INFO] Registered new PSO: vs_default | fs_default | 72057869018996879
+[00:23:16] [INFO] Creating ShaderProgram: vs_bsp|bsp/fs_bsp
+[00:23:16] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_bsp.bin
+[00:23:16] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/bsp/fs_bsp.bin
+[00:23:16] [INFO] Sampler: s_bspTexture → slot 0
+[00:23:16] [INFO] Sampler: s_bspLightmap → slot 1
+[00:23:16] [INFO] Sampler: s_bspLightmap1 → slot 2
+[00:23:16] [INFO] Sampler: s_bspLightmap2 → slot 3
+[00:23:16] [INFO] Sampler: s_bspLightmap3 → slot 4
+[00:23:16] [INFO] Registered new PSO: vs_bsp | bsp/fs_bsp | 72057869018996879
+[00:23:16] [INFO] Creating ShaderProgram: vs_bsp|bsp/fs_bsp_cube
+[00:23:16] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_bsp.bin
+[00:23:16] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/bsp/fs_bsp_cube.bin
+[00:23:16] [INFO] Sampler: s_bspTexture → slot 0
+[00:23:16] [INFO] Registered new PSO: vs_bsp | bsp/fs_bsp_cube | 72057869018996879
+[00:23:16] [INFO] Creating ShaderProgram: vs_default|fs_unlit_rect
+[00:23:16] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_default.bin
+[00:23:16] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/fs_unlit_rect.bin
+[00:23:16] [INFO] Sampler: u_texture → slot 0
+[00:23:16] [INFO] Registered new PSO: vs_default | fs_unlit_rect | 72057869018996879
+[00:23:16] [INFO] Creating ShaderProgram: vs_default|fs_customId
+[00:23:16] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_default.bin
+[00:23:16] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/fs_customId.bin
+[00:23:16] [INFO] Sampler: u_texture → slot 0
+[00:23:16] [INFO] Registered new PSO: vs_default | fs_customId | 72057869018996879
+[00:23:16] [INFO] Creating ShaderProgram: vs_default|fs_unlit
+[00:23:16] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_default.bin
+[00:23:16] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/fs_unlit.bin
+[00:23:16] [INFO] Sampler: u_texture → slot 0
+[00:23:16] [INFO] Registered new PSO: vs_default | fs_unlit | 72057869018996879
+[00:23:16] [INFO] Creating ShaderProgram: vs_instanced_billboard|fs_unlit
+[00:23:16] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_instanced_billboard.bin
+[00:23:16] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/fs_unlit.bin
+[00:23:16] [INFO] Sampler: u_texture → slot 0
+[00:23:16] [INFO] Registered new PSO: vs_instanced_billboard | fs_unlit | 72057869018996879
+[00:23:16] [INFO] Creating ShaderProgram: vs_ui|game/fs_debuff
+[00:23:16] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_ui.bin
+[00:23:16] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/game/fs_debuff.bin
+[00:23:16] [INFO] Sampler: u_Texture → slot 0
+[00:23:16] [INFO] Sampler: circleTexture → slot 1
+[00:23:16] [INFO] Registered new PSO: vs_ui | game/fs_debuff | 72057869018996879
+[00:23:16] [INFO] Creating ShaderProgram: vs_default|fs_default_simple
+[00:23:16] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_default.bin
+[00:23:16] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/fs_default_simple.bin
+[00:23:16] [INFO] Sampler: u_texture → slot 0
+[00:23:16] [INFO] Sampler: u_textureEmissive → slot 1
+[00:23:16] [INFO] Registered new PSO: vs_default | fs_default_simple | 72057869018996879
+[00:23:16] [INFO] Registered new PSO: vs_ui | fs_ui_textured | 72057869022154895
+[00:23:16] [INFO] Registered new PSO: vs_ui | ui/fs_progressBar | 72057869022154895
+[00:23:16] [INFO] Registered new PSO: vs_default | fs_empty | 72057937635311648
+[00:23:16] [INFO] Registered new PSO: vs_default | fs_empty | 72057868915834912
+[00:23:16] [INFO] Registered new PSO: bsp/vs_bsp | bsp/fs_bsp_empty | 72057937635311648
+[00:23:16] [INFO] Registered new PSO: vs_default | fs_mask | 72057868915834912
+[00:23:16] [INFO] Registered new PSO: vs_default | fs_mask | 72057937635311648
+[00:23:16] [INFO] Registered new PSO: vs_default | fs_default | 72057937741631535
+[00:23:16] [INFO] Registered new PSO: vs_default | fs_default | 72057869022154799
+[00:23:16] [INFO] Registered new PSO: vs_bsp | bsp/fs_bsp | 72057937635311663
+[00:23:16] [INFO] Registered new PSO: vs_bsp | bsp/fs_bsp_cube | 72057937635311663
+[00:23:16] [INFO] Registered new PSO: vs_bsp | bsp/fs_bsp | 72057662863724591
+[00:23:16] [INFO] Registered new PSO: vs_default | fs_default | 72057594144247855
+[00:23:16] [INFO] Registered new PSO: vs_default | fs_default | 72057662863724591
+[00:23:16] [INFO] Registered new PSO: vs_default | fs_unlit_rect | 72057869022154799
+[00:23:16] [INFO] Registered new PSO: vs_default | fs_customId | 72057662863724687
+[00:23:16] [INFO] Registered new PSO: vs_default | fs_unlit | 72057594144247855
+[00:23:16] [INFO] PSO warmup completed for 40 shaders x 9 framebuffer variants
+[00:23:16] [INFO] player destructor
+[00:23:16] [INFO] RBSP LightGrid: palette=17448 cells=1455590
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] 
+[00:23:16] [INFO] Loading WAV: channels=1, format=32784, freq=48000
+[00:23:16] [INFO] [SourcePool] Device hints: maxMono=192, maxStereo=64
+[00:23:16] [INFO] max mono: 192
+[00:23:16] [INFO] max stereo: 64
+[00:23:16] [INFO] [FMOD] Bank loaded from disk: GameData/sounds/banks/Desktop/Weapons.bank
+[00:23:16] [INFO] [FMOD] Sample data loaded for: GameData/sounds/banks/Desktop/Weapons.bank
+[00:23:16] [INFO] [FMOD] Bank loaded from disk: GameData/sounds/banks/Desktop/SFX.bank
+[00:23:16] [INFO] [FMOD] Sample data loaded for: GameData/sounds/banks/Desktop/SFX.bank
+[00:23:16] [ERROR] Texture: file empty or not found: GameData/models/enviroment/sewers/debris_01.png
+[00:23:17] [ERROR] Texture: file empty or not found: GameData/textures/common/caulk.png
+[00:23:17] [ERROR] Texture: file empty or not found: GameData/textures/common/caulk.jpg
+[00:23:17] [ERROR] Texture: file empty or not found: GameData/textures/common/caulk.jpeg
+[00:23:17] [ERROR] Texture: file empty or not found: GameData/textures/lq_liquidsky/plus_4blood_f1.png
+[00:23:17] [ERROR] Texture: file empty or not found: GameData/models/enviroment/sewers/brick_modern_01.png
+[00:23:17] [INFO] [FMOD] Bank loaded from disk: GameData/sounds/banks/Desktop/Master.bank
+[00:23:17] [INFO] [FMOD] Sample data loaded for: GameData/sounds/banks/Desktop/Master.bank
+[00:23:17] [INFO] [FMOD] Bank loaded from disk: GameData/sounds/banks/Desktop/Master.strings.bank
+[00:23:17] [INFO] [FMOD] Sample data loaded for: GameData/sounds/banks/Desktop/Master.strings.bank
+[00:23:17] [INFO] 
+[00:23:17] [INFO] 
+[00:23:17] [INFO] 
+[00:23:17] [INFO] 
+[00:23:17] [INFO] 
+[00:23:17] [INFO] generating nav mesh
+[00:23:17] [INFO] generated nav mesh
+[00:23:17] [ERROR] Texture: file empty or not found: GameData/texture/ui/white.png
+[00:23:17] [INFO] locking cursor
+[00:23:17] [ERROR] Texture: file empty or not found: GameData/models/pickups/38Cal_em.png
+[00:23:17] [ERROR] Texture: file empty or not found: GameData/models/pickups/12Cal_em.png
+[00:23:17] [ERROR] Texture: file empty or not found: GameData/models/pickups/762Cal_em.png
+[00:23:17] [ERROR] Texture: file empty or not found: GameData/models/pickups/DefaultMaterial.png
+[00:23:17] [ERROR] Texture: file empty or not found: GameData/models/pickups/DefaultMaterial_em.png
+[00:23:22] [INFO] player destructor
+[00:23:42] [INFO] _
+[00:23:42] [INFO] arg: F:\Git\SdlWasmEngine\source\Debug\ShooterGame.exe
+[00:23:42] [INFO] init
+[00:23:42] [INFO] Vendor:   OpenAL Community
+[00:23:42] [INFO] Renderer: OpenAL Soft
+[00:23:43] [INFO] Vendor:   OpenAL Community
+[00:23:43] [INFO] Renderer: OpenAL Soft
+[00:23:43] [INFO] initPhys
+[00:23:43] [INFO] initPhys
+[00:23:43] [INFO] Creating ShaderProgram: vs_fullscreen|fs_postprocessing
+[00:23:43] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_fullscreen.bin
+[00:23:43] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/fs_postprocessing.bin
+[00:23:43] [INFO] Sampler: screenTexture → slot 0
+[00:23:43] [INFO] Sampler: depthTexture → slot 1
+[00:23:43] [INFO] Sampler: noiseTexture → slot 2
+[00:23:43] [INFO] Sampler: LutTexture → slot 3
+[00:23:43] [INFO] Creating ShaderProgram: vs_fullscreen|fs_motionBlur
+[00:23:43] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_fullscreen.bin
+[00:23:43] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/fs_motionBlur.bin
+[00:23:43] [INFO] Sampler: screenTexture → slot 0
+[00:23:43] [INFO] Sampler: uAccumulated → slot 1
+[00:23:43] [INFO] Sampler: uCustomIdTex → slot 2
+[00:23:43] [INFO] Creating ShaderProgram: vs_fullscreen|fs_motionBlur_apply
+[00:23:43] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_fullscreen.bin
+[00:23:43] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/fs_motionBlur_apply.bin
+[00:23:43] [INFO] Sampler: screenTexture → slot 0
+[00:23:43] [INFO] Sampler: blurTexture → slot 1
+[00:23:43] [INFO] Creating ShaderProgram: vs_fullscreen|fs_copy
+[00:23:43] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_fullscreen.bin
+[00:23:43] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/fs_copy.bin
+[00:23:43] [INFO] Sampler: screenTexture → slot 0
+[00:23:43] [INFO] Creating ShaderProgram: vs_fullscreen|fs_copy_depth
+[00:23:43] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_fullscreen.bin
+[00:23:43] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/fs_copy_depth.bin
+[00:23:43] [INFO] Sampler: depthTexture → slot 0
+[00:23:43] [INFO] Creating ShaderProgram: vs_fullscreen|fs_resolve_depth_msaa
+[00:23:43] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_fullscreen.bin
+[00:23:43] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/fs_resolve_depth_msaa.bin
+[00:23:43] [INFO] Max framebuffers supported by GPU: 128
+[00:23:43] [INFO] Creating ShaderProgram: vs_ui|fs_ui_textured
+[00:23:43] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_ui.bin
+[00:23:43] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/fs_ui_textured.bin
+[00:23:43] [INFO] Sampler: u_Texture → slot 0
+[00:23:43] [INFO] Creating ShaderProgram: vs_ui|fs_ui_flatcolor
+[00:23:43] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_ui.bin
+[00:23:43] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/fs_ui_flatcolor.bin
+[00:23:43] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/vs_rmlui.bin
+[00:23:43] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/fs_rmlui_color.bin
+[00:23:43] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/vs_rmlui.bin
+[00:23:43] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/fs_rmlui_texture.bin
+[00:23:43] [INFO] Sampler: s_texture0 → slot 0
+[00:23:43] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/vs_rmlui_passthrough.bin
+[00:23:43] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/fs_rmlui_passthrough.bin
+[00:23:43] [INFO] Sampler: s_texture0 → slot 0
+[00:23:43] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/vs_rmlui_passthrough.bin
+[00:23:43] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/fs_rmlui_blendmask.bin
+[00:23:43] [INFO] Sampler: s_texture0 → slot 0
+[00:23:43] [INFO] Sampler: s_texture1 → slot 1
+[00:23:43] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/vs_rmlui_passthrough.bin
+[00:23:43] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/fs_rmlui_blur.bin
+[00:23:43] [INFO] Sampler: s_texture0 → slot 0
+[00:23:43] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/vs_rmlui_passthrough.bin
+[00:23:43] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/fs_rmlui_dropshadow.bin
+[00:23:43] [INFO] Sampler: s_texture0 → slot 0
+[00:23:43] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/vs_rmlui_passthrough.bin
+[00:23:43] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/fs_rmlui_colormatrix.bin
+[00:23:43] [INFO] Sampler: s_texture0 → slot 0
+[00:23:43] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/vs_rmlui.bin
+[00:23:43] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/fs_rmlui_creation.bin
+[00:23:43] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/vs_rmlui.bin
+[00:23:43] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/fs_rmlui_gradient.bin
+[00:23:43] [INFO] Sampler: s_texture0 → slot 0
+[00:23:43] [INFO] unlocking cursor
+[00:23:43] [INFO] Creating ShaderProgram: debugDraw/vs_debugdraw|debugDraw/fs_debugdraw
+[00:23:43] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/debugDraw/vs_debugdraw.bin
+[00:23:43] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/debugDraw/fs_debugdraw.bin
+[00:23:43] [INFO] Registered new PSO: vs_fullscreen | fs_motionBlur | 72057868915835023
+[00:23:43] [INFO] Registered new PSO: vs_fullscreen | fs_copy | 72057868915835023
+[00:23:43] [INFO] Registered new PSO: vs_fullscreen | fs_motionBlur_apply | 72057868915835023
+[00:23:43] [INFO] Registered new PSO: vs_fullscreen | fs_postprocessing | 72057868915835023
+[00:23:43] [INFO] Creating ShaderProgram: vs_fullscreen|fs_fxaa_simple
+[00:23:43] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_fullscreen.bin
+[00:23:43] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/fs_fxaa_simple.bin
+[00:23:43] [INFO] Sampler: screenTexture → slot 0
+[00:23:43] [INFO] Registered new PSO: vs_fullscreen | fs_fxaa_simple | 72057869018996879
+[00:23:43] [INFO] 
+[00:23:43] [ERROR] Texture: file empty or not found: GameData/models/player/arms_p.glb/arms_em.psd_em.png
+[00:23:43] [INFO] 
+[00:23:43] [ERROR] Texture: file empty or not found: GameData/models/player/body/player_body.glb/gloves_em.png
+[00:23:43] [ERROR] Texture: file empty or not found: GameData/models/player/body/player_body.glb/shirt_em.png
+[00:23:43] [ERROR] Texture: file empty or not found: GameData/models/player/body/player_body.glb/pants_em.png
+[00:23:43] [ERROR] Texture: file empty or not found: GameData/models/player/body/player_body.glb/shoes_em.png
+[00:23:43] [ERROR] Texture: file empty or not found: GameData/models/player/body/player_body.glb/jacket_ch-jacket_em.png_em.png
+[00:23:43] [INFO] 
+[00:23:43] [INFO] [FMOD] Bank loaded from disk: GameData/sounds/banks/Desktop/SFX.bank
+[00:23:43] [INFO] [FMOD] Sample data loaded for: GameData/sounds/banks/Desktop/SFX.bank
+[00:23:43] [INFO] 
+[00:23:43] [ERROR] Texture: file empty or not found: GameData/models/enemies/zombie/zombie.glb/cat_em.png
+[00:23:43] [INFO] 
+[00:23:43] [ERROR] Texture: file empty or not found: GameData/models/enemies/humanAxe/humanAxe.glb/cultist_realistic_em.png
+[00:23:44] [INFO] 
+[00:23:44] [ERROR] Texture: file empty or not found: GameData/models/enemies/humanGun/humanGun.glb/human_gun_em.png
+[00:23:44] [ERROR] Texture: file empty or not found: GameData/models/enemies/humanGun/humanGun.glb/cultist_realistic_em.png
+[00:23:44] [INFO] [FMOD] Bank loaded from disk: GameData/sounds/banks/Desktop/Weapons.bank
+[00:23:44] [INFO] [FMOD] Sample data loaded for: GameData/sounds/banks/Desktop/Weapons.bank
+[00:23:44] [INFO] 
+[00:23:44] [ERROR] Texture: file empty or not found: GameData/models/player/weapons/cane/cane.glb/cane_em.png
+[00:23:44] [INFO] 
+[00:23:44] [INFO] 
+[00:23:44] [INFO] 
+[00:23:44] [ERROR] Texture: file empty or not found: GameData/models/player/weapons/cannon/cannon.glb/Army Green_2D_View_em.png
+[00:23:44] [ERROR] Texture: file empty or not found: GameData/models/player/weapons/cannon/cannon.glb/Metal Grey_2D_View_em.png
+[00:23:44] [ERROR] Texture: file empty or not found: GameData/models/player/weapons/cannon/cannon.glb/Rubber_2D_View_em.png
+[00:23:44] [ERROR] Texture: file empty or not found: GameData/models/player/weapons/cannon/cannon.glb/Pearl white_2D_View_em.png
+[00:23:44] [ERROR] Texture: file empty or not found: GameData/models/player/weapons/cannon/cannon.glb/Dull Copper_2D_View_em.png
+[00:23:44] [INFO] Warning: Texture already registered for path: GameData/models/player/weapons/pistol/pistol_tp.glb/pistol.png
+[00:23:44] [INFO] 
+[00:23:44] [INFO] 
+[00:23:44] [ERROR] Texture: file empty or not found: GameData/models/player/weapons/leftHand/empty.glb/
+[00:23:45] [INFO] 
+[00:23:45] [ERROR] Texture: file empty or not found: GameData/models/player/weapons/stg44/stg44.glb/Image_0_em.png
+[00:23:45] [INFO] Warning: Texture already registered for path: GameData/models/player/weapons/mpsd/mpsd_tp.glb/mp5_texture_red_BaseColor copy.png
+[00:23:45] [INFO] Warning: Texture already registered for path: GameData/models/player/weapons/mpsd/mpsd_tp.glb/mp5_texture_blue_BaseColor copy.png
+[00:23:45] [INFO] 
+[00:23:45] [INFO] 
+[00:23:45] [ERROR] Texture: file empty or not found: GameData/models/player/weapons/pistol/pistol.glb/pistol_em.png
+[00:23:45] [INFO] 
+[00:23:45] [ERROR] Texture: file empty or not found: GameData/models/player/weapons/pistol_silent/pistol_silent.glb/Welrod_FinalAlbedo_SRGB_em.png
+[00:23:45] [INFO] 
+[00:23:45] [ERROR] Texture: file empty or not found: GameData/models/player/weapons/pistol/revolver.glb/revolver_em.png
+[00:23:45] [INFO] 
+[00:23:45] [ERROR] Texture: file empty or not found: GameData/models/player/weapons/shotgun/shotgun.glb/shotgun_fix_em.png
+[00:23:45] [INFO] 
+[00:23:45] [ERROR] Texture: file empty or not found: GameData/models/player/weapons/sniper/sniper.glb/Kar_LP_phong1_BaseColor_em.png
+[00:23:45] [ERROR] Texture: file empty or not found: GameData/models/player/weapons/sniper/sniper.glb/scope_glass_t_em.png
+[00:23:45] [INFO] Failed to read: GameData/models/player/weapons/sniper/sniper_tp.glb
+
+[00:23:45] [INFO] 
+[00:23:45] [ERROR] Texture: file empty or not found: GameData/models/player/weapons/sword/sword.glb/shirt_em.png
+[00:23:45] [INFO] 
+[00:23:45] [INFO] 
+[00:23:45] [ERROR] Texture: file empty or not found: GameData/models/player/weapons/tommy/tommy.glb/main_em.png
+[00:23:45] [ERROR] Texture: file empty or not found: GameData/models/player/weapons/tommy/tommy.glb/mag_em.png
+[00:23:46] [INFO] Failed to read: GameData/models/arms.glb
+
+[00:23:46] [INFO] Loaded PSOs from file: 40
+[00:23:46] [INFO] Registered new PSO: vs_fullscreen | fs_motionBlur | 72057869018996879
+[00:23:46] [INFO] Registered new PSO: vs_fullscreen | fs_copy | 72057869018996879
+[00:23:46] [INFO] Registered new PSO: vs_fullscreen | fs_motionBlur_apply | 72057869018996879
+[00:23:46] [INFO] Registered new PSO: vs_fullscreen | fs_postprocessing | 72057869018996879
+[00:23:46] [INFO] Registered new PSO: vs_ui | fs_ui_textured | 72057869018996879
+[00:23:46] [INFO] Creating ShaderProgram: vs_ui|ui/fs_progressBar
+[00:23:46] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_ui.bin
+[00:23:46] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/ui/fs_progressBar.bin
+[00:23:46] [INFO] Sampler: u_Texture → slot 0
+[00:23:46] [INFO] Sampler: bgTexture → slot 1
+[00:23:46] [INFO] Registered new PSO: vs_ui | ui/fs_progressBar | 72057869018996879
+[00:23:46] [INFO] Creating ShaderProgram: vs_default|fs_empty
+[00:23:46] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_default.bin
+[00:23:46] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/fs_empty.bin
+[00:23:46] [INFO] Registered new PSO: vs_default | fs_empty | 72057869018996879
+[00:23:46] [INFO] Creating ShaderProgram: bsp/vs_bsp|bsp/fs_bsp_empty
+[00:23:46] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/bsp/vs_bsp.bin
+[00:23:46] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/bsp/fs_bsp_empty.bin
+[00:23:46] [INFO] Registered new PSO: bsp/vs_bsp | bsp/fs_bsp_empty | 72057869018996879
+[00:23:46] [INFO] Creating ShaderProgram: vs_default|fs_mask
+[00:23:46] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_default.bin
+[00:23:46] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/fs_mask.bin
+[00:23:46] [INFO] Sampler: u_texture → slot 0
+[00:23:46] [INFO] Registered new PSO: vs_default | fs_mask | 72057869018996879
+[00:23:46] [INFO] Creating ShaderProgram: vs_default|fs_default
+[00:23:46] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_default.bin
+[00:23:46] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/fs_default.bin
+[00:23:46] [INFO] Sampler: u_texture → slot 0
+[00:23:46] [INFO] Sampler: u_textureEmissive → slot 1
+[00:23:46] [INFO] Registered new PSO: vs_default | fs_default | 72057869018996879
+[00:23:46] [INFO] Creating ShaderProgram: vs_bsp|bsp/fs_bsp
+[00:23:46] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_bsp.bin
+[00:23:46] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/bsp/fs_bsp.bin
+[00:23:46] [INFO] Sampler: s_bspTexture → slot 0
+[00:23:46] [INFO] Sampler: s_bspLightmap → slot 1
+[00:23:46] [INFO] Sampler: s_bspLightmap1 → slot 2
+[00:23:46] [INFO] Sampler: s_bspLightmap2 → slot 3
+[00:23:46] [INFO] Sampler: s_bspLightmap3 → slot 4
+[00:23:46] [INFO] Registered new PSO: vs_bsp | bsp/fs_bsp | 72057869018996879
+[00:23:46] [INFO] Creating ShaderProgram: vs_bsp|bsp/fs_bsp_cube
+[00:23:46] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_bsp.bin
+[00:23:46] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/bsp/fs_bsp_cube.bin
+[00:23:46] [INFO] Sampler: s_bspTexture → slot 0
+[00:23:46] [INFO] Registered new PSO: vs_bsp | bsp/fs_bsp_cube | 72057869018996879
+[00:23:46] [INFO] Creating ShaderProgram: vs_default|fs_unlit_rect
+[00:23:46] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_default.bin
+[00:23:46] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/fs_unlit_rect.bin
+[00:23:46] [INFO] Sampler: u_texture → slot 0
+[00:23:46] [INFO] Registered new PSO: vs_default | fs_unlit_rect | 72057869018996879
+[00:23:46] [INFO] Creating ShaderProgram: vs_default|fs_customId
+[00:23:46] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_default.bin
+[00:23:46] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/fs_customId.bin
+[00:23:46] [INFO] Sampler: u_texture → slot 0
+[00:23:46] [INFO] Registered new PSO: vs_default | fs_customId | 72057869018996879
+[00:23:46] [INFO] Creating ShaderProgram: vs_default|fs_unlit
+[00:23:46] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_default.bin
+[00:23:46] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/fs_unlit.bin
+[00:23:46] [INFO] Sampler: u_texture → slot 0
+[00:23:46] [INFO] Registered new PSO: vs_default | fs_unlit | 72057869018996879
+[00:23:46] [INFO] Creating ShaderProgram: vs_instanced_billboard|fs_unlit
+[00:23:46] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_instanced_billboard.bin
+[00:23:46] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/fs_unlit.bin
+[00:23:46] [INFO] Sampler: u_texture → slot 0
+[00:23:46] [INFO] Registered new PSO: vs_instanced_billboard | fs_unlit | 72057869018996879
+[00:23:46] [INFO] Creating ShaderProgram: vs_ui|game/fs_debuff
+[00:23:46] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_ui.bin
+[00:23:46] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/game/fs_debuff.bin
+[00:23:46] [INFO] Sampler: u_Texture → slot 0
+[00:23:46] [INFO] Sampler: circleTexture → slot 1
+[00:23:46] [INFO] Registered new PSO: vs_ui | game/fs_debuff | 72057869018996879
+[00:23:46] [INFO] Creating ShaderProgram: vs_default|fs_default_simple
+[00:23:46] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_default.bin
+[00:23:46] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/fs_default_simple.bin
+[00:23:46] [INFO] Sampler: u_texture → slot 0
+[00:23:46] [INFO] Sampler: u_textureEmissive → slot 1
+[00:23:46] [INFO] Registered new PSO: vs_default | fs_default_simple | 72057869018996879
+[00:23:46] [INFO] Registered new PSO: vs_ui | fs_ui_textured | 72057869022154895
+[00:23:46] [INFO] Registered new PSO: vs_ui | ui/fs_progressBar | 72057869022154895
+[00:23:46] [INFO] Registered new PSO: vs_default | fs_empty | 72057937635311648
+[00:23:46] [INFO] Registered new PSO: vs_default | fs_empty | 72057868915834912
+[00:23:46] [INFO] Registered new PSO: bsp/vs_bsp | bsp/fs_bsp_empty | 72057937635311648
+[00:23:46] [INFO] Registered new PSO: vs_default | fs_mask | 72057868915834912
+[00:23:46] [INFO] Registered new PSO: vs_default | fs_mask | 72057937635311648
+[00:23:46] [INFO] Registered new PSO: vs_default | fs_default | 72057937741631535
+[00:23:46] [INFO] Registered new PSO: vs_default | fs_default | 72057869022154799
+[00:23:46] [INFO] Registered new PSO: vs_bsp | bsp/fs_bsp | 72057937635311663
+[00:23:46] [INFO] Registered new PSO: vs_bsp | bsp/fs_bsp_cube | 72057937635311663
+[00:23:46] [INFO] Registered new PSO: vs_bsp | bsp/fs_bsp | 72057662863724591
+[00:23:46] [INFO] Registered new PSO: vs_default | fs_default | 72057594144247855
+[00:23:46] [INFO] Registered new PSO: vs_default | fs_default | 72057662863724591
+[00:23:46] [INFO] Registered new PSO: vs_default | fs_unlit_rect | 72057869022154799
+[00:23:46] [INFO] Registered new PSO: vs_default | fs_customId | 72057662863724687
+[00:23:46] [INFO] Registered new PSO: vs_default | fs_unlit | 72057594144247855
+[00:23:46] [INFO] PSO warmup completed for 40 shaders x 9 framebuffer variants
+[00:23:46] [INFO] player destructor
+[00:23:46] [INFO] RBSP LightGrid: palette=17448 cells=1455590
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] 
+[00:23:46] [INFO] Loading WAV: channels=1, format=32784, freq=48000
+[00:23:46] [INFO] [SourcePool] Device hints: maxMono=192, maxStereo=64
+[00:23:46] [INFO] max mono: 192
+[00:23:46] [INFO] max stereo: 64
+[00:23:46] [INFO] [FMOD] Bank loaded from disk: GameData/sounds/banks/Desktop/Weapons.bank
+[00:23:46] [INFO] [FMOD] Sample data loaded for: GameData/sounds/banks/Desktop/Weapons.bank
+[00:23:46] [INFO] [FMOD] Bank loaded from disk: GameData/sounds/banks/Desktop/SFX.bank
+[00:23:46] [INFO] [FMOD] Sample data loaded for: GameData/sounds/banks/Desktop/SFX.bank
+[00:23:46] [ERROR] Texture: file empty or not found: GameData/models/enviroment/sewers/debris_01.png
+[00:23:46] [ERROR] Texture: file empty or not found: GameData/textures/common/caulk.png
+[00:23:46] [ERROR] Texture: file empty or not found: GameData/textures/common/caulk.jpg
+[00:23:46] [ERROR] Texture: file empty or not found: GameData/textures/common/caulk.jpeg
+[00:23:46] [ERROR] Texture: file empty or not found: GameData/textures/lq_liquidsky/plus_4blood_f1.png
+[00:23:46] [ERROR] Texture: file empty or not found: GameData/models/enviroment/sewers/brick_modern_01.png
+[00:23:47] [INFO] [FMOD] Bank loaded from disk: GameData/sounds/banks/Desktop/Master.bank
+[00:23:47] [INFO] [FMOD] Sample data loaded for: GameData/sounds/banks/Desktop/Master.bank
+[00:23:47] [INFO] [FMOD] Bank loaded from disk: GameData/sounds/banks/Desktop/Master.strings.bank
+[00:23:47] [INFO] [FMOD] Sample data loaded for: GameData/sounds/banks/Desktop/Master.strings.bank
+[00:23:47] [INFO] 
+[00:23:47] [INFO] 
+[00:23:47] [INFO] 
+[00:23:47] [INFO] 
+[00:23:47] [INFO] 
+[00:23:47] [INFO] generating nav mesh
+[00:23:47] [INFO] generated nav mesh
+[00:23:47] [ERROR] Texture: file empty or not found: GameData/texture/ui/white.png
+[00:23:47] [INFO] locking cursor
+[00:23:47] [ERROR] Texture: file empty or not found: GameData/models/pickups/38Cal_em.png
+[00:23:47] [ERROR] Texture: file empty or not found: GameData/models/pickups/12Cal_em.png
+[00:23:47] [ERROR] Texture: file empty or not found: GameData/models/pickups/762Cal_em.png
+[00:23:47] [ERROR] Texture: file empty or not found: GameData/models/pickups/DefaultMaterial.png
+[00:23:47] [ERROR] Texture: file empty or not found: GameData/models/pickups/DefaultMaterial_em.png
+[00:24:13] [INFO] player destructor
+[00:25:43] [INFO] _
+[00:25:43] [INFO] arg: F:\Git\SdlWasmEngine\source\Debug\ShooterGame.exe
+[00:25:44] [INFO] init
+[00:25:44] [INFO] Vendor:   OpenAL Community
+[00:25:44] [INFO] Renderer: OpenAL Soft
+[00:25:44] [INFO] Vendor:   OpenAL Community
+[00:25:44] [INFO] Renderer: OpenAL Soft
+[00:25:44] [INFO] initPhys
+[00:25:44] [INFO] initPhys
+[00:25:44] [INFO] Creating ShaderProgram: vs_fullscreen|fs_postprocessing
+[00:25:44] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_fullscreen.bin
+[00:25:44] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/fs_postprocessing.bin
+[00:25:44] [INFO] Sampler: screenTexture → slot 0
+[00:25:44] [INFO] Sampler: depthTexture → slot 1
+[00:25:44] [INFO] Sampler: noiseTexture → slot 2
+[00:25:44] [INFO] Sampler: LutTexture → slot 3
+[00:25:44] [INFO] Creating ShaderProgram: vs_fullscreen|fs_motionBlur
+[00:25:44] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_fullscreen.bin
+[00:25:44] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/fs_motionBlur.bin
+[00:25:44] [INFO] Sampler: screenTexture → slot 0
+[00:25:44] [INFO] Sampler: uAccumulated → slot 1
+[00:25:44] [INFO] Sampler: uCustomIdTex → slot 2
+[00:25:44] [INFO] Creating ShaderProgram: vs_fullscreen|fs_motionBlur_apply
+[00:25:44] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_fullscreen.bin
+[00:25:44] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/fs_motionBlur_apply.bin
+[00:25:44] [INFO] Sampler: screenTexture → slot 0
+[00:25:44] [INFO] Sampler: blurTexture → slot 1
+[00:25:44] [INFO] Creating ShaderProgram: vs_fullscreen|fs_copy
+[00:25:44] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_fullscreen.bin
+[00:25:44] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/fs_copy.bin
+[00:25:44] [INFO] Sampler: screenTexture → slot 0
+[00:25:44] [INFO] Creating ShaderProgram: vs_fullscreen|fs_copy_depth
+[00:25:44] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_fullscreen.bin
+[00:25:44] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/fs_copy_depth.bin
+[00:25:44] [INFO] Sampler: depthTexture → slot 0
+[00:25:44] [INFO] Creating ShaderProgram: vs_fullscreen|fs_resolve_depth_msaa
+[00:25:44] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_fullscreen.bin
+[00:25:44] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/fs_resolve_depth_msaa.bin
+[00:25:44] [INFO] Max framebuffers supported by GPU: 128
+[00:25:44] [INFO] Creating ShaderProgram: vs_ui|fs_ui_textured
+[00:25:44] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_ui.bin
+[00:25:44] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/fs_ui_textured.bin
+[00:25:44] [INFO] Sampler: u_Texture → slot 0
+[00:25:44] [INFO] Creating ShaderProgram: vs_ui|fs_ui_flatcolor
+[00:25:44] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_ui.bin
+[00:25:44] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/fs_ui_flatcolor.bin
+[00:25:44] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/vs_rmlui.bin
+[00:25:44] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/fs_rmlui_color.bin
+[00:25:44] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/vs_rmlui.bin
+[00:25:44] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/fs_rmlui_texture.bin
+[00:25:44] [INFO] Sampler: s_texture0 → slot 0
+[00:25:44] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/vs_rmlui_passthrough.bin
+[00:25:44] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/fs_rmlui_passthrough.bin
+[00:25:44] [INFO] Sampler: s_texture0 → slot 0
+[00:25:44] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/vs_rmlui_passthrough.bin
+[00:25:44] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/fs_rmlui_blendmask.bin
+[00:25:44] [INFO] Sampler: s_texture0 → slot 0
+[00:25:44] [INFO] Sampler: s_texture1 → slot 1
+[00:25:44] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/vs_rmlui_passthrough.bin
+[00:25:44] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/fs_rmlui_blur.bin
+[00:25:44] [INFO] Sampler: s_texture0 → slot 0
+[00:25:44] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/vs_rmlui_passthrough.bin
+[00:25:44] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/fs_rmlui_dropshadow.bin
+[00:25:44] [INFO] Sampler: s_texture0 → slot 0
+[00:25:44] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/vs_rmlui_passthrough.bin
+[00:25:44] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/fs_rmlui_colormatrix.bin
+[00:25:44] [INFO] Sampler: s_texture0 → slot 0
+[00:25:44] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/vs_rmlui.bin
+[00:25:44] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/fs_rmlui_creation.bin
+[00:25:44] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/vs_rmlui.bin
+[00:25:44] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/rmlui/fs_rmlui_gradient.bin
+[00:25:44] [INFO] Sampler: s_texture0 → slot 0
+[00:25:44] [INFO] unlocking cursor
+[00:25:44] [INFO] Creating ShaderProgram: debugDraw/vs_debugdraw|debugDraw/fs_debugdraw
+[00:25:44] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/debugDraw/vs_debugdraw.bin
+[00:25:44] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/debugDraw/fs_debugdraw.bin
+[00:25:44] [INFO] Registered new PSO: vs_fullscreen | fs_motionBlur | 72057868915835023
+[00:25:44] [INFO] Registered new PSO: vs_fullscreen | fs_copy | 72057868915835023
+[00:25:44] [INFO] Registered new PSO: vs_fullscreen | fs_motionBlur_apply | 72057868915835023
+[00:25:44] [INFO] Registered new PSO: vs_fullscreen | fs_postprocessing | 72057868915835023
+[00:25:44] [INFO] Creating ShaderProgram: vs_fullscreen|fs_fxaa_simple
+[00:25:44] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/vs_fullscreen.bin
+[00:25:44] [INFO] Loading shader binary: GameData/shaders/compiled/windows/dx11/fs_fxaa_simple.bin
+[00:25:44] [INFO] Sampler: screenTexture → slot 0
+[00:25:44] [INFO] Registered new PSO: vs_fullscreen | fs_fxaa_simple | 72057869018996879
+[00:25:44] [INFO] 
+[00:25:44] [ERROR] Texture: file empty or not found: GameData/models/player/arms_p.glb/arms_em.psd_em.png
+[00:25:44] [INFO] 
+[00:25:44] [ERROR] Texture: file empty or not found: GameData/models/player/body/player_body.glb/gloves_em.png
+[00:25:44] [ERROR] Texture: file empty or not found: GameData/models/player/body/player_body.glb/shirt_em.png
+[00:25:44] [ERROR] Texture: file empty or not found: GameData/models/player/body/player_body.glb/pants_em.png
+[00:25:44] [ERROR] Texture: file empty or not found: GameData/models/player/body/player_body.glb/shoes_em.png
+[00:25:44] [ERROR] Texture: file empty or not found: GameData/models/player/body/player_body.glb/jacket_ch-jacket_em.png_em.png
+[00:25:44] [INFO] 
+[00:25:45] [INFO] [FMOD] Bank loaded from disk: GameData/sounds/banks/Desktop/SFX.bank
+[00:25:45] [INFO] [FMOD] Sample data loaded for: GameData/sounds/banks/Desktop/SFX.bank
+[00:25:45] [INFO] 
+[00:25:45] [ERROR] Texture: file empty or not found: GameData/models/enemies/zombie/zombie.glb/cat_em.png
+[00:25:45] [INFO] 
+[00:25:45] [ERROR] Texture: file empty or not found: GameData/models/enemies/humanAxe/humanAxe.glb/cultist_realistic_em.png
+[00:39:11] [INFO] _
+[00:39:11] [INFO] arg: F:\Git\SdlWasmEngine\source\Debug\ShooterGame.exe
+[00:40:13] [INFO] _
+[00:40:13] [INFO] arg: F:\Git\SdlWasmEngine\source\Debug\ShooterGame.exe

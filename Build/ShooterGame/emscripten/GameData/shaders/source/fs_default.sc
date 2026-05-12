@@ -18,7 +18,7 @@ uniform vec4 fog_end;
 uniform vec4 fog_opacity;
 uniform vec4 fog_color;
 
-uniform vec4 rim_pow; // @ (4.0, 0.0, 0.0, 0.0) - Controls rim thickness
+uniform vec4 rim_pow; // @ (5.0, 0.0, 0.0, 0.0) - Controls rim thickness
 uniform vec4 rim_color; // @ (1.0, 1.0, 0.2, 1.0) - Rim color
 uniform vec4 specular_pow; // @ (5.0, 0.0, 0.0, 0.0) - Controls specular sharpness
 uniform vec4 specular_scale; // @ (0.05, 0.0, 0.0, 0.0) - Scales specular intensity
@@ -118,7 +118,7 @@ vec3 CalculateContourRim(vec3 normal, vec3 viewDir)
     // This transitions from 1.0 at NdotV=0.2 (grazing) down to 0.0 at NdotV=0.4 (facing).
     float frontMask = smoothstep(0.4, 0.2, NdotV); 
     
-    return rimEdge * frontMask * rim_color.rgb * 0.1; 
+    return rimEdge * frontMask * rim_color.rgb * 0.07; 
 }
 
 // ==========================================
@@ -174,10 +174,10 @@ vec3 CalculateDirectionalDiffuse(vec3 normal, vec3 lightDir)
     
     // Deadlock anchors exposure to a target value. We do this by setting a strong ambient floor
     // combined with the heavily weighted directional light.
-    vec3 ambient = light_color.rgb * 0.4; // Base ambient
-    vec3 diffuse = direct_light_color.rgb * diffuse_factor;
+    vec3 ambient = light_color.rgb * 0.9f; // Base ambient
+    vec3 diffuse = direct_light_color.rgb;
 
-    return ambient + diffuse;
+    return mix(ambient, diffuse, diffuse_factor) * 1.0;
 }
 
 vec3 CalculateDirectionalSpecular(vec3 normal, vec3 lightDir, vec3 viewDir)
@@ -249,7 +249,8 @@ void main()
     vec3 emissive = texture2D(u_textureEmissive, v_texcoord0).rgb;
 
     // View-dependent rim light
-    vec3 rim = CalculateContourRim(normal, viewDir);
+    vec3 rim = vec3(0,0,0);
+    rim = CalculateContourRim(normal, viewDir);
 
     // Composition (Light Weight Mixing)
     vec3 finalColor =
