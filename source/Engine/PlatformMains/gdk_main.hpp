@@ -2,6 +2,9 @@
 
 #pragma message ("Compiling GDK/Xbox main.")
 
+#include <OnlineSubsystems/GDKAuth.h>
+#include <FileSystem/GDKFileSystem.h>
+
 #define _HAS_STD_BYTE 0
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,6 +20,12 @@
 #include <algorithm>
 #include <array>
 #include <direct.h>
+
+
+
+#include <Logger.hpp>
+
+
 
 #include "../EngineMain.h"
 #include "PlatformWindowData.h"
@@ -86,6 +95,8 @@ void FixWorkingDirectory()
     _chdir(exeDir.string().c_str());
 }
 
+static constexpr const char* SCID = "00000000-0000-0000-0000-000071c4344d";
+
 int main(int argc, char* args[]) 
 {
 
@@ -102,7 +113,7 @@ int main(int argc, char* args[])
 
     // GDK defaults usually target standard TV/Monitor resolutions natively
     window = SDL_CreateWindow("Engine GDK", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-        1920, 1080, flags);
+        800, 600, flags);
     if (!window) {
         fprintf(stderr, "Window could not be created! SDL_Error: %s\n", SDL_GetError());
         return 1;
@@ -158,12 +169,25 @@ int main(int argc, char* args[])
     SDL_SetHintWithPriority(SDL_HINT_MOUSE_RELATIVE_MODE_CENTER, "1", SDL_HINT_OVERRIDE);
     SDL_SetRelativeMouseMode(SDL_TRUE);
 
-    printf("bgfx initialized successfully on GDK.\n");
+    Logger::Log("bgfx initialized successfully on GDK.\n");
 
     Input::AddAction("fullscreen")->AddKeyboardKey(SDL_GetScancodeFromKey(SDLK_F11));
 
+    GDKSession session = GDKAuth_Init(SCID);
+
+    if (!session.user)
+    {
+        Logger::Error("[Main] GDK Authentication failed");
+        //return 1;
+    }
+
     engine = new EngineMain(window);
     EngineMain::MainInstance = engine;
+
+    //engine->FileSystem = std::make_shared<GDKFileSystem>(SCID);
+
+    //engine->FileSystem->Init();
+
     engine->Init();
 
     desktop_render_loop();

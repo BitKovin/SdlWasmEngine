@@ -31,6 +31,7 @@ void main()
 
     v_color0 = i_data4 * vec4(brightness.x, brightness.x, brightness.x, 1.0);
 
+
     if (is_decal.x > 0.5)
         v_normal = normalize(model[2].xyz);
     else

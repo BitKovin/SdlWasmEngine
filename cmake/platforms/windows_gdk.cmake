@@ -24,9 +24,37 @@ endif()
 
 file(TO_CMAKE_PATH "${_GDK_GAMEKIT}" _GDK_GAMEKIT)
 set(_GDK_INCLUDE "${_GDK_GAMEKIT}/Include")
-set(_GDK_LIB "${_GDK_GAMEKIT}/Lib/amd64")
+set(_GDK_LIB     "${_GDK_GAMEKIT}/Lib/amd64")
 
-message(STATUS "GDK GameKit: ${_GDK_GAMEKIT}")
+# GRDK root = parent of GameKit
+get_filename_component(_GDK_GRDK "${_GDK_GAMEKIT}" DIRECTORY)
+
+# XSAPI Extension Library (provides XblInitialize, XblInitArgs, XblCleanup, etc.)
+set(_GDK_XSAPI_ROOT    "${_GDK_GRDK}/ExtensionLibraries/Xbox.Services.API.C")
+set(_GDK_XSAPI_INCLUDE "${_GDK_XSAPI_ROOT}/Include")
+set(_GDK_XSAPI_LIB     "${_GDK_XSAPI_ROOT}/Lib/x64/Release")
+
+if(NOT EXISTS "${_GDK_XSAPI_INCLUDE}/xsapi-c/services_c.h")
+    message(FATAL_ERROR
+        "XSAPI headers not found at: ${_GDK_XSAPI_INCLUDE}\n"
+        "Re-run the GDK installer and ensure 'Xbox Services API (XSAPI)' is checked.")
+endif()
+
+# libHttpClient — required transitively by services_c.h
+set(_GDK_HTTPCLIENT_ROOT    "${_GDK_GRDK}/ExtensionLibraries/Xbox.LibHttpClient")
+set(_GDK_HTTPCLIENT_INCLUDE "${_GDK_HTTPCLIENT_ROOT}/Include")
+set(_GDK_HTTPCLIENT_LIB     "${_GDK_HTTPCLIENT_ROOT}/Lib/x64")
+
+if(NOT EXISTS "${_GDK_HTTPCLIENT_INCLUDE}/httpClient/httpClient.h")
+    message(FATAL_ERROR
+        "libHttpClient headers not found at: ${_GDK_HTTPCLIENT_INCLUDE}\n"
+        "Re-run the GDK installer and ensure 'Xbox HTTP Client' is checked.\n"
+        "Expected: ${_GDK_HTTPCLIENT_INCLUDE}/httpClient/httpClient.h")
+endif()
+
+message(STATUS "GDK GameKit    : ${_GDK_GAMEKIT}")
+message(STATUS "GDK XSAPI      : ${_GDK_XSAPI_ROOT}")
+message(STATUS "GDK HttpClient : ${_GDK_HTTPCLIENT_ROOT}")
 
 # === PLATFORM CUSTOM SDL FLAG ===
 set(PLATFORM_CUSTOM_SDL ON CACHE BOOL "Use custom prebuilt SDL2 for this platform" FORCE)
@@ -41,48 +69,73 @@ function(platform_early_config)
         _CRT_SECURE_NO_WARNINGS
         __GDK__
         __WINGDK__
+        PLATFORM_GDK
         SDL_PLATFORM_GDK
         SDL_PLATFORM_WINGDK
     )
 
+    # Base GDK headers (XGameRuntime, XUser, XTaskQueue, XGameSave …)
     include_directories(SYSTEM
         "${_GDK_INCLUDE}/um"
         "${_GDK_INCLUDE}/shared"
         "${_GDK_INCLUDE}/winrt"
     )
 
-    include_directories("${CMAKE_SOURCE_DIR}/sourceLibraries/SDL/include")
+    # XSAPI extension headers (XblInitArgs, XblInitialize, XblCleanup …)
+    include_directories(SYSTEM
+        "${_GDK_XSAPI_INCLUDE}"
+    )
 
+    # libHttpClient headers (required transitively by services_c.h)
+    include_directories(SYSTEM
+        "${_GDK_HTTPCLIENT_INCLUDE}"
+    )
+
+    include_directories("${CMAKE_SOURCE_DIR}/sourceLibraries/SDL/include")
 endfunction()
 
 # Hook 2: Pre libraries
 function(platform_pre_libraries)
     set(BGFX_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
-    
-    # Force GDK defines during SDL build
+
     if(PLATFORM_CUSTOM_SDL)
-        set(SDL_GDK ON CACHE BOOL "" FORCE)
+        set(SDL_GDK          ON CACHE BOOL "" FORCE)
         set(SDL_PLATFORM_GDK ON CACHE BOOL "" FORCE)
         set(SDL_PLATFORM_WINGDK ON CACHE BOOL "" FORCE)
     endif()
 endfunction()
 
-# Hook 3: Post libraries - Custom SDL handling
+# Hook 3: Post libraries
 function(platform_post_libraries engine_target)
-    target_link_directories(${engine_target} PUBLIC "${_GDK_LIB}")
+    # Base GDK lib dir
+    target_link_directories(${engine_target} PUBLIC
+        "${_GDK_LIB}"
+    )
 
+    # XSAPI lib dir
+    target_link_directories(${engine_target} PUBLIC
+        "${_GDK_XSAPI_LIB}"
+    )
 
-target_link_libraries(${engine_target} PUBLIC
+    # libHttpClient lib dir
+    target_link_directories(${engine_target} PUBLIC
+        "${_GDK_HTTPCLIENT_LIB}"
+    )
+
+    target_link_libraries(${engine_target} PUBLIC
         "${CMAKE_SOURCE_DIR}/Lib/GDK/SDL2main.lib"
         "${CMAKE_SOURCE_DIR}/Lib/GDK/SDL2.lib"
         xgameruntime
+        # XSAPI thunks lib — required for XblInitialize / XblCleanup on GDK Desktop (PC)
+        Microsoft.Xbox.Services.GDK.C.Thunks
+        # libHttpClient — required transitively by XSAPI
+        libHttpClient.GDK
     )
-
 endfunction()
 
 # Hook 4: Game target
 function(platform_configure_game_target game_target)
-    set_target_properties(${game_target} PROPERTIES 
+    set_target_properties(${game_target} PROPERTIES
         OUTPUT_NAME "${GAME_NAME}"
         WIN32_EXECUTABLE TRUE
     )

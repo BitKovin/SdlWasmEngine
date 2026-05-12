@@ -1,5 +1,6 @@
 #pragma once
 
+
 #include <chrono>
 #include <format>
 #include <string>
@@ -88,27 +89,6 @@ private:
 
     static inline std::mutex g_LogMutex;
 
-    static void LogInternal(Level level, const char* format, va_list args)
-    {
-#ifndef DISTRIBUTION
-        char messageBuffer[1024];
-        vsnprintf(messageBuffer, sizeof(messageBuffer), format, args);
-
-        const char* timestamp = GetTimestamp().c_str();
-        const char* levelStr = GetLevelString(level);
-
-        {
-            std::lock_guard<std::mutex> lock(g_LogMutex);
-
-            // console output
-            printf("[%s] [%s] %s\n", timestamp, levelStr, messageBuffer);
-
-            // file output
-            static std::ofstream file("log.txt", std::ios::app);
-            file << "[" << timestamp << "] [" << levelStr << "] "
-                << messageBuffer << "\n";
-            file.flush(); // optional (safer for crashes, slower)
-        }
-#endif
-    }
+    static void LogInternal(Level level, const char* format, va_list args);
 };
+

@@ -117,8 +117,8 @@ private:
 
 	vec3 velocity = vec3(0);
 
-	bool canRun = true;
-	bool canDash = false;
+	bool canRun = false;
+	bool canDash = true;
 
 	vec3 oldPos = vec3();
 
@@ -171,7 +171,7 @@ private:
 	int CurrentClearance = 0;
 
 	// Inventory system
-	WeaponSystemMode weaponSystemMode = WeaponSystemMode::Inventory; // Default to inventory mode
+	WeaponSystemMode weaponSystemMode = WeaponSystemMode::Slots; // Default to inventory mode
 	std::vector<InventoryItem> inventory;
 
 	std::string lastInventoryUUID = "";      // Previously equipped inventory item UUID (for quick switch)

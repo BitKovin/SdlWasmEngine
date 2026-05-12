@@ -21,6 +21,14 @@
       <Configuration>emscripten</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
+    <ProjectConfiguration Include="GDK|Win32">
+      <Configuration>GDK</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="GDK|x64">
+      <Configuration>GDK</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="Release|Win32">
       <Configuration>Release</Configuration>
       <Platform>Win32</Platform>
@@ -97,6 +105,12 @@
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='GDK|Win32'">
+    <PlatformToolset>v145</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='GDK|x64'">
+    <PlatformToolset>v145</PlatformToolset>
+  </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
@@ -170,6 +184,9 @@
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir>..\Intermediage\$(ShortProjectName)\$(Configuration)\</IntDir>
     <AllProjectIncludesArePublic>true</AllProjectIncludesArePublic>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='GDK|x64'">
+    <IncludePath>$(SolutionDir)../libraries/;$(SolutionDir)../emscriptenLibraries/;$(ProjectDir);$(SolutionDir)../librariesMSVC/;C:\Program Files %28x86%29\Microsoft GDK\241005\GRDK\GameKit\Include;C:\Program Files (x86)\Microsoft GDK\241005\GRDK\ExtensionLibraries\Xbox.Services.API.C\Include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -325,6 +342,13 @@
       <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_image.lib;SDL2_ttf.lib;OpenAL32.lib;glew32.lib;glew32s.lib;opengl32.lib;assimp-vc143-mt.lib;Jolt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='GDK|x64'">
+    <ClCompile>
+      <PreprocessorDefinitions>JPH_DEBUG_RENDERER;DESKTOP;WINDOWS;TRACY_ENABLE;TRACY_ON_DEMAND;DEBUG;%(PreprocessorDefinitions);WIN32;_WINDOWS;_HAS_EXCEPTIONS=0;NDEBUG;JPH_OBJECT_STREAM;JPH_USE_AVX2;JPH_USE_AVX;JPH_USE_SSE4_1;JPH_USE_SSE4_2;JPH_USE_LZCNT;JPH_USE_TZCNT;JPH_USE_F16C;JPH_USE_FMADD;_CRT_SECURE_NO_WARNINGS;BX_CONFIG_DEBUG=1;__GDK__;PLATFORM_GDK;SDL_PLATFORM_GDK;SDL_PLATFORM_WINGDK</PreprocessorDefinitions>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
+    </ClCompile>
+  </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AiPerception\AiPerceptionSystem.cpp" />
     <ClCompile Include="AiPerception\Observer.cpp" />
@@ -352,6 +376,7 @@
     <ClCompile Include="Entities\transformPoint.cpp" />
     <ClCompile Include="FileSystem\EmscriptenFileSystem.cpp" />
     <ClCompile Include="FileSystem\FileSystem.cpp" />
+    <ClCompile Include="FileSystem\GDKFileSystem.cpp" />
     <ClCompile Include="FileSystem\NativeFileSystem.cpp" />
     <ClCompile Include="FileSystem\ZipVFS.cpp" />
     <ClCompile Include="Helpers\ByteCompressor.cpp" />
@@ -369,6 +394,7 @@
     <ClCompile Include="includedLibraries\stb_implementation.cpp" />
     <ClCompile Include="LevelTraversalSystem.cpp" />
     <ClCompile Include="LoadingScreen\LoadingScreenSystem.cpp" />
+    <ClCompile Include="Logger.cpp" />
     <ClCompile Include="model_animator.cpp" />
     <ClCompile Include="AssetRegistry.cpp" />
     <ClCompile Include="BSP\Quake3Bsp.cpp" />
@@ -419,6 +445,7 @@
     <ClCompile Include="Navigation\Recast\RecastMeshDetail.cpp" />
     <ClCompile Include="Navigation\Recast\RecastRasterization.cpp" />
     <ClCompile Include="Navigation\Recast\RecastRegion.cpp" />
+    <ClCompile Include="OnlineSubsystems\GDKAuth.cpp" />
     <ClCompile Include="Particle\GlobalParticleSystem.cpp" />
     <ClCompile Include="Particle\ParticleEmitter.cpp" />
     <ClCompile Include="Particle\RibbonEmitter.cpp" />
@@ -504,6 +531,7 @@
     <ClInclude Include="Entities\WorldSpawn.h" />
     <ClInclude Include="FileSystem\EmscriptenFileSystem.h" />
     <ClInclude Include="FileSystem\FileSystem.h" />
+    <ClInclude Include="FileSystem\GDKFileSystem.h" />
     <ClInclude Include="FileSystem\IFileSystem.h" />
     <ClInclude Include="FileSystem\NativeFileSystem.h" />
     <ClInclude Include="FileSystem\ZipVFS.h" />
@@ -590,6 +618,7 @@
     <ClInclude Include="Navigation\Recast\Recast.h" />
     <ClInclude Include="Navigation\Recast\RecastAlloc.h" />
     <ClInclude Include="Navigation\Recast\RecastAssert.h" />
+    <ClInclude Include="OnlineSubsystems\GDKAuth.h" />
     <ClInclude Include="Particle\GlobalParticleSystem.hpp" />
     <ClInclude Include="Particle\ParticleEmitter.h" />
     <ClInclude Include="Particle\ParticleSystem.hpp" />
