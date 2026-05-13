@@ -319,6 +319,38 @@ int main(int argc, char* args[])
         _chdir(workingDirOverride->second[0].c_str());
     }
 
+	bgfx::RendererType::Enum renderApi = bgfx::RendererType::Direct3D11;   // default to Direct3D11 on Windows
+
+	auto renderApiOverride = args_m.find("renderapi");
+    if (renderApiOverride != args_m.end())
+    {
+        const std::string& renderApiStr = renderApiOverride->second[0];
+        if (renderApiStr == "dx11")
+        {
+            renderApi = bgfx::RendererType::Direct3D11;
+			Logger::Log("Using Direct3D11 renderer");
+        }
+        else if (renderApiStr == "dx12")
+        {
+            renderApi = bgfx::RendererType::Direct3D12;
+			Logger::Log("Using Direct3D12 renderer");
+        }
+		else if (renderApiStr == "vk")
+		{
+			renderApi = bgfx::RendererType::Vulkan;
+			Logger::Log("Using Vulkan renderer");
+		}
+		else if (renderApiStr == "gl")
+		{
+			renderApi = bgfx::RendererType::OpenGL;
+			Logger::Log("Using OpenGL renderer");
+		}
+		else
+		{
+			Logger::Log("Unknown render API specified: " + renderApiStr + ", using default");
+		}
+    }
+
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_JOYSTICK) < 0) {
         fprintf(stderr, "SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
         return 1;
@@ -336,9 +368,10 @@ int main(int argc, char* args[])
 
     // ====================== BGFX INITIALIZATION (replaces all OpenGL) ======================
     bgfx::Init init;
-    init.type = bgfx::RendererType::Direct3D11;   // auto-select best renderer (D3D11/Vulkan/etc.)
+    init.type = renderApi;   // auto-select best renderer (D3D11/Vulkan/etc.)
     init.debug = false;
     init.profile = false;
+	//init.resolution.numBackBuffers = 3;
 
 
     SDL_SysWMinfo wmInfo;
@@ -358,6 +391,9 @@ int main(int argc, char* args[])
         fprintf(stderr, "bgfx::init failed!\n");
         return 1;
     }
+
+    //bgfx::setDebug(BGFX_DEBUG_TEXT | BGFX_DEBUG_STATS);
+
     //bgfx::setDebug(BGFX_DEBUG_STATS);
     // Default clear + views
     bgfx::setViewClear(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x000000ff, 1.0f, 0);

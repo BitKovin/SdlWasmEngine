@@ -14,6 +14,12 @@
 #include <algorithm>
 #include <array>
 
+#ifdef __linux__
+
+#include <unistd.h>
+
+#endif
+
 #include "../EngineMain.h"
 #include "PlatformWindowData.h"
 using namespace PlatformWindowData;
@@ -84,6 +90,65 @@ int main(int argc, char* args[]) {
     if (!window) {
         fprintf(stderr, "Window could not be created! SDL_Error: %s\n", SDL_GetError());
         return 1;
+    }
+
+    std::vector<std::string> args_s(args, args + argc);
+    auto args_m = EngineMain::ParseCommands(args_s);
+    for (auto a : args_m)
+    {
+        Logger::Log(a.first);
+        for (auto o : a.second)
+        {
+            Logger::Log("arg: " + o);
+        }
+    }
+
+
+    auto workingDirOverride = args_m.find("working_dir");
+    if (workingDirOverride != args_m.end())
+    {
+        Logger::Log("switching working directory to " + workingDirOverride->second[0]);
+
+
+#ifdef __linux__
+
+        chdir(workingDirOverride->second[0].c_str());
+
+#endif
+
+
+    }
+
+    bgfx::RendererType::Enum renderApi = bgfx::RendererType::Vulkan;
+
+    auto renderApiOverride = args_m.find("renderapi");
+    if (renderApiOverride != args_m.end())
+    {
+        const std::string& renderApiStr = renderApiOverride->second[0];
+        if (renderApiStr == "dx11")
+        {
+            renderApi = bgfx::RendererType::Direct3D11;
+            Logger::Log("Using Direct3D11 renderer");
+        }
+        else if (renderApiStr == "dx12")
+        {
+            renderApi = bgfx::RendererType::Direct3D12;
+            Logger::Log("Using Direct3D12 renderer");
+        }
+        else if (renderApiStr == "vk")
+        {
+            renderApi = bgfx::RendererType::Vulkan;
+            Logger::Log("Using Vulkan renderer");
+        }
+        else if (renderApiStr == "gl")
+        {
+            renderApi = bgfx::RendererType::OpenGL;
+            Logger::Log("Using OpenGL renderer");
+        }
+        else
+        {
+            Logger::Log("Unknown render API specified: " + renderApiStr + ", using default");
+        }
     }
 
     // ====================== BGFX INITIALIZATION ======================

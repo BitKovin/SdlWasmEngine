@@ -342,6 +342,7 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
 
 		bgfx::setViewName(vid, "ForwardOpaquePass");
 
+
         for (auto* mesh : VissibleRenderList)
         {
             
