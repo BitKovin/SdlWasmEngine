@@ -13,14 +13,12 @@
 // Static member definitions
 // ---------------------------------------------------------------------------
 bgfx::TextureHandle Shader::s_missingTexture = BGFX_INVALID_HANDLE;
-bgfx::TextureHandle Shader::s_blackTexture = BGFX_INVALID_HANDLE;
+bgfx::TextureHandle Shader::s_blackTexture   = BGFX_INVALID_HANDLE;
 
 // ---------------------------------------------------------------------------
 // Path resolution helpers
 // ---------------------------------------------------------------------------
 
-// Returns the platform + renderer subfolder for compiled shader binaries.
-// e.g. "windows/dx11/"
 static std::string GetPlatformRendererFolder()
 {
     std::string platform;
@@ -50,23 +48,19 @@ static std::string GetPlatformRendererFolder()
     case bgfx::RendererType::WebGPU:     renderer = "wgpu/";   break;
     default:                             renderer = "unknown/"; break;
     }
-
     return platform + renderer;
 }
 
-// Compiled binary: GameData/shaders/compiled/<platform>/<renderer>/<n>.bin
 std::string Shader::ResolveCompiledPath(const std::string& shaderName)
 {
     return "GameData/shaders/compiled/" + GetPlatformRendererFolder() + shaderName + ".bin";
 }
 
-// Source .sc file: GameData/shaders/source/<n>.sc
 std::string Shader::ResolveSourcePath(const std::string& shaderName)
 {
     return "GameData/shaders/source/" + shaderName + ".sc";
 }
 
-// Load a compiled binary and create a bgfx ShaderHandle.
 bgfx::ShaderHandle Shader::LoadShaderBinary(const std::string& shaderName)
 {
     const std::string path = ResolveCompiledPath(shaderName);
@@ -79,7 +73,6 @@ bgfx::ShaderHandle Shader::LoadShaderBinary(const std::string& shaderName)
         return BGFX_INVALID_HANDLE;
     }
 
-    // bgfx requires a null-terminated block
     const bgfx::Memory* mem = bgfx::alloc(uint32_t(data.size() + 1));
     memcpy(mem->data, data.data(), data.size());
     mem->data[data.size()] = '\0';
@@ -109,12 +102,15 @@ bool Shader::IsBgfxBuiltin(const std::string& uname)
 
 // ---------------------------------------------------------------------------
 // Uniform reflection
+// Populates m_uniformIndex, m_uniformList, m_samplerIndices, and sizes the
+// two flat buffers to match.
 // ---------------------------------------------------------------------------
 void Shader::ReflectUniforms(bgfx::ShaderHandle vsh, bgfx::ShaderHandle fsh)
 {
-    m_uniforms.clear();
+    m_uniformIndex.clear();
+    m_uniformList.clear();
+    m_samplerIndices.clear();
 
-    //  NEW: get real sampler slots from shader source
     auto samplerSlots = ParseAllSamplerSlots();
 
     bgfx::ShaderHandle stages[2] = { vsh, fsh };
@@ -136,12 +132,13 @@ void Shader::ReflectUniforms(bgfx::ShaderHandle vsh, bgfx::ShaderHandle fsh)
 
             const std::string uname(info.name);
 
-            if (IsBgfxBuiltin(uname))   continue;
-            if (m_uniforms.count(uname)) continue;
+            if (IsBgfxBuiltin(uname))        continue;
+            if (m_uniformIndex.count(uname)) continue; // already added from VS stage
 
             UniformMeta u;
             u.handle = bgfx::createUniform(info.name, info.type, info.num);
-            u.num = info.num;
+            u.num    = info.num;
+            u.index  = static_cast<uint16_t>(m_uniformList.size());
 
             switch (info.type)
             {
@@ -161,46 +158,77 @@ void Shader::ReflectUniforms(bgfx::ShaderHandle vsh, bgfx::ShaderHandle fsh)
                     u.samplerSlot = 0;
                 }
 
-                // Optional safety check
                 if (u.samplerSlot > 15)
-                {
-                    Logger::Log("Shader error: sampler \"" + uname +
-                        "\" uses invalid slot > 15");
-                }
+                    Logger::Log("Shader error: sampler \"" + uname + "\" uses invalid slot > 15");
 
+                m_samplerIndices.push_back(u.index);
+                Logger::Log("Sampler: " + uname + " → slot " + std::to_string(u.samplerSlot));
                 break;
             }
-
-            case bgfx::UniformType::Vec4:
-                u.kind = UniformMeta::Kind::Vec4;
-                break;
-
-            case bgfx::UniformType::Mat3:
-                u.kind = UniformMeta::Kind::Mat3;
-                break;
-
-            case bgfx::UniformType::Mat4:
-                u.kind = UniformMeta::Kind::Mat4;
-                break;
-
+            case bgfx::UniformType::Vec4: u.kind = UniformMeta::Kind::Vec4; break;
+            case bgfx::UniformType::Mat3: u.kind = UniformMeta::Kind::Mat3; break;
+            case bgfx::UniformType::Mat4: u.kind = UniformMeta::Kind::Mat4; break;
             default:
                 bgfx::destroy(u.handle);
                 continue;
             }
 
-            m_uniforms.emplace(uname, u);
-
-            // Debug (optional, very useful)
-            if (u.kind == UniformMeta::Kind::Sampler)
-            {
-                Logger::Log("Sampler: " + uname +
-                    " → slot " + std::to_string(u.samplerSlot));
-            }
+            m_uniformIndex.emplace(uname, u.index);
+            m_uniformList.push_back(u);
         }
-
     }
 
+    // Size flat buffers to match the reflected uniform list.
+    // Both are indexed 1:1 with m_uniformList — no string key needed at flush time.
+    m_uniformBuffer.assign(m_uniformList.size(), UniformEntry{});
+    m_textureBuffer.assign(m_uniformList.size(), TextureEntry{});
+}
 
+// ---------------------------------------------------------------------------
+// BuildResolvedData
+// Must be called after ReflectUniforms + ParseAllTextureBindings.
+// Converts string-keyed textureBindings and m_defaultUniforms into pre-indexed
+// structures so UseProgram / ApplyTextureBindings have zero per-frame string work.
+// ---------------------------------------------------------------------------
+void Shader::BuildResolvedData()
+{
+    // --- @texture bindings ---
+    m_resolvedBindings.clear();
+    m_resolvedBindings.reserve(textureBindings.size());
+
+    for (const auto& [hs, path] : textureBindings)
+    {
+        auto it = m_uniformIndex.find(hs.str());
+        if (it == m_uniformIndex.end()) continue;
+
+        ResolvedBinding rb;
+        rb.samplerIdx = it->second;
+        rb.path       = path;
+
+        // Pre-resolve the optional <sampler>_size companion uniform.
+        const std::string sizeName = hs.str() + "_size";
+        auto sIt = m_uniformIndex.find(sizeName);
+        rb.sizeIdx = (sIt != m_uniformIndex.end()) ? sIt->second : kInvalidIndex;
+
+        m_resolvedBindings.push_back(std::move(rb));
+    }
+
+    // --- default uniforms ---
+    m_resolvedDefaults.clear();
+    m_resolvedDefaults.reserve(m_defaultUniforms.size());
+
+    for (const auto& [name, def] : m_defaultUniforms)
+    {
+        auto it = m_uniformIndex.find(name);
+        if (it == m_uniformIndex.end()) continue;
+
+        ResolvedDefault d;
+        d.idx = it->second;
+        const size_t count = std::min(def.data.size(), size_t(4));
+        std::memcpy(d.data, def.data.data(), count * sizeof(float));
+        std::memset(d.data + count, 0, (4 - count) * sizeof(float));
+        m_resolvedDefaults.push_back(d);
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -220,20 +248,16 @@ Shader* Shader::FromFiles(const char* vsName, const char* fsName)
     }
 
     Shader* s = new Shader();
-    s->m_vsName = vsName;
-    s->m_fsName = fsName;
-
-    // Source paths for @texture annotation parsing
+    s->m_vsName       = vsName;
+    s->m_fsName       = fsName;
     s->m_vsSourcePath = ResolveSourcePath(vsName);
     s->m_fsSourcePath = ResolveSourcePath(fsName);
 
-    // createProgram(vsh, fsh, destroyShaders=true)
-    // bgfx takes ownership of shader handles when destroyShaders is true.
-    // We must reflect BEFORE handing them to createProgram.
+    // Must reflect before createProgram consumes (destroys) the shader handles.
     s->ReflectUniforms(vsh, fsh);
 
+    // createProgram takes ownership of vsh / fsh (destroyShaders = true).
     s->m_program = bgfx::createProgram(vsh, fsh, /*destroyShaders=*/true);
-
     if (!bgfx::isValid(s->m_program))
     {
         Logger::Log(std::string("Shader::FromFiles — bgfx::createProgram failed for: ") + vsName + " / " + fsName);
@@ -241,11 +265,11 @@ Shader* Shader::FromFiles(const char* vsName, const char* fsName)
         return nullptr;
     }
 
-    // Parse @texture annotations from source files
+    // Parse @texture annotations and build pre-resolved lookup tables.
     s->textureBindings = s->ParseAllTextureBindings();
+    s->BuildResolvedData();
 
     EnsureMissingTexture();
-
     return s;
 }
 
@@ -254,12 +278,8 @@ Shader* Shader::FromFiles(const char* vsName, const char* fsName)
 // ---------------------------------------------------------------------------
 Shader::~Shader()
 {
-    // Destroy all created uniform handles
-    for (auto& [n, u] : m_uniforms)
-    {
-        if (bgfx::isValid(u.handle))
-            bgfx::destroy(u.handle);
-    }
+    for (auto& u : m_uniformList)
+        if (bgfx::isValid(u.handle)) bgfx::destroy(u.handle);
 
     if (bgfx::isValid(m_program))
         bgfx::destroy(m_program);
@@ -288,16 +308,14 @@ bool Shader::Reload()
         return false;
     }
 
-    // Destroy old resources
-    for (auto& [n, u] : m_uniforms)
+    // Destroy old uniform handles.
+    for (auto& u : m_uniformList)
         if (bgfx::isValid(u.handle)) bgfx::destroy(u.handle);
 
     if (bgfx::isValid(m_program))
         bgfx::destroy(m_program);
 
-    // Re-reflect (handles may have changed, array sizes may differ)
-    // We need fresh handles for reflection before destroyShaders consumed them,
-    // so load again just for reflection then destroy those copies.
+    // Re-reflect: load fresh copies just for reflection, then discard them.
     {
         bgfx::ShaderHandle vsRef = LoadShaderBinary(m_vsName);
         bgfx::ShaderHandle fsRef = LoadShaderBinary(m_fsName);
@@ -307,11 +325,14 @@ bool Shader::Reload()
     }
 
     m_program = newProgram;
-    textureBindings = ParseAllTextureBindings();
 
-    // Note: m_uniformBuffer and m_textureBuffer are intentionally preserved.
-    // The new uniform handles have the same names, so buffered values will be
-    // re-applied correctly on the next Submit() call.
+    // Re-parse annotations and rebuild pre-resolved tables.
+    textureBindings = ParseAllTextureBindings();
+    BuildResolvedData();
+
+    // Note: m_uniformBuffer and m_textureBuffer were resized by ReflectUniforms.
+    // Any previously-set values that still exist in the new reflection are
+    // re-applied correctly because the index layout is rebuilt from scratch.
 
     Logger::Log("Shader::Reload succeeded for: " + m_vsName + " / " + m_fsName);
     return true;
@@ -319,35 +340,34 @@ bool Shader::Reload()
 
 // ---------------------------------------------------------------------------
 // Uniform lookup
+// Returns the index into m_uniformList, or kInvalidIndex if not found / invalid.
 // ---------------------------------------------------------------------------
-const UniformMeta* Shader::FindUniform(const std::string& uname) const
+uint16_t Shader::FindUniformIndex(const std::string& uname) const
 {
-    auto it = m_uniforms.find(uname);
-    if (it != m_uniforms.end())
+    auto it = m_uniformIndex.find(uname);
+    if (it == m_uniformIndex.end())
     {
-        // Guard against a handle that was destroyed externally or never created
-        if (!bgfx::isValid(it->second.handle))
-        {
-            Logger::Log("Shader error: uniform \"" + uname + "\" has invalid handle in " + m_vsName);
-            return nullptr;
-        }
-        return &it->second;
+        if (!AllowMissingUniforms)
+            Logger::Log("Shader warning: uniform \"" + uname + "\" not found in " + m_vsName);
+        return kInvalidIndex;
     }
 
-    if (!AllowMissingUniforms)
-        Logger::Log("Shader warning: uniform \"" + uname + "\" not found in " + m_vsName);
+    if (!bgfx::isValid(m_uniformList[it->second].handle))
+    {
+        Logger::Log("Shader error: uniform \"" + uname + "\" has invalid handle in " + m_vsName);
+        return kInvalidIndex;
+    }
 
-    return nullptr;
+    return it->second;
 }
 
 // ---------------------------------------------------------------------------
 // Internal helper: safe num clamped against declared capacity
 // ---------------------------------------------------------------------------
-static uint16_t SafeUniformNum(const UniformMeta* u, size_t requested, const std::string& uname)
+static uint16_t SafeUniformNum(const UniformMeta& u, size_t requested, const std::string& uname)
 {
     if (requested == 0) return 0;
 
-    // uint16_t overflow guard
     constexpr size_t kMax = std::numeric_limits<uint16_t>::max();
     if (requested > kMax)
     {
@@ -356,20 +376,21 @@ static uint16_t SafeUniformNum(const UniformMeta* u, size_t requested, const std
         requested = kMax;
     }
 
-    // Clamp to declared capacity — exceeding this corrupts the uniform cache
-    if (u->num > 0 && requested > static_cast<size_t>(u->num))
+    if (u.num > 0 && requested > static_cast<size_t>(u.num))
     {
         Logger::Log("Shader error: uniform \"" + uname + "\" requested " +
             std::to_string(requested) + " slots but was created with " +
-            std::to_string(u->num) + ", clamping");
-        requested = u->num;
+            std::to_string(u.num) + ", clamping");
+        requested = u.num;
     }
 
     return static_cast<uint16_t>(requested);
 }
 
 // ---------------------------------------------------------------------------
-// Scalar / small-type setters  (all map to Vec4 with padding)
+// Scalar / small-type setters
+// Each resolves the name to an index once, then writes directly into the flat
+// buffer — no second map lookup, no heap allocation for the common case.
 // ---------------------------------------------------------------------------
 void Shader::SetUniform(const std::string& uname, int value)
 {
@@ -383,286 +404,379 @@ void Shader::SetUniform(const std::string& uname, bool value)
 
 void Shader::SetUniform(const std::string& uname, float value)
 {
-    if (!FindUniform(uname)) return;
+    const uint16_t idx = FindUniformIndex(uname);
+    if (idx == kInvalidIndex) return;
 
-    auto& entry = m_uniformBuffer[uname];
-    entry.data = { value, 0.0f, 0.0f, 0.0f };
-    entry.num = 1;
+    auto& e = m_uniformBuffer[idx];
+    e.inlineData[0] = value;
+    e.inlineData[1] = e.inlineData[2] = e.inlineData[3] = 0.0f;
+    e.heapData.clear();
+    e.num = 1;
+    e.set = true;
 }
 
 void Shader::SetUniform(const std::string& uname, const glm::vec2& value)
 {
-    if (!FindUniform(uname)) return;
+    const uint16_t idx = FindUniformIndex(uname);
+    if (idx == kInvalidIndex) return;
 
-    auto& entry = m_uniformBuffer[uname];
-    entry.data = { value.x, value.y, 0.0f, 0.0f };
-    entry.num = 1;
+    auto& e = m_uniformBuffer[idx];
+    e.inlineData[0] = value.x;
+    e.inlineData[1] = value.y;
+    e.inlineData[2] = e.inlineData[3] = 0.0f;
+    e.heapData.clear();
+    e.num = 1;
+    e.set = true;
 }
 
 void Shader::SetUniform(const std::string& uname, const glm::vec3& value)
 {
-    if (!FindUniform(uname)) return;
+    const uint16_t idx = FindUniformIndex(uname);
+    if (idx == kInvalidIndex) return;
 
-    auto& entry = m_uniformBuffer[uname];
-    entry.data = { value.x, value.y, value.z, 0.0f };
-    entry.num = 1;
+    auto& e = m_uniformBuffer[idx];
+    e.inlineData[0] = value.x;
+    e.inlineData[1] = value.y;
+    e.inlineData[2] = value.z;
+    e.inlineData[3] = 0.0f;
+    e.heapData.clear();
+    e.num = 1;
+    e.set = true;
 }
 
 void Shader::SetUniform(const std::string& uname, const glm::vec4& value)
 {
-    if (!FindUniform(uname)) return;
+    const uint16_t idx = FindUniformIndex(uname);
+    if (idx == kInvalidIndex) return;
 
-    auto& entry = m_uniformBuffer[uname];
-    entry.data.assign(glm::value_ptr(value), glm::value_ptr(value) + 4);
-    entry.num = 1;
+    auto& e = m_uniformBuffer[idx];
+    std::memcpy(e.inlineData, glm::value_ptr(value), 4 * sizeof(float));
+    e.heapData.clear();
+    e.num = 1;
+    e.set = true;
 }
 
 // mat2 → pack column-major into one Vec4: [m00, m10, m01, m11]
 void Shader::SetUniform(const std::string& uname, const glm::mat2& value)
 {
-    if (!FindUniform(uname)) return;
+    const uint16_t idx = FindUniformIndex(uname);
+    if (idx == kInvalidIndex) return;
 
-    auto& entry = m_uniformBuffer[uname];
-    entry.data = {
-        value[0][0], value[0][1],
-        value[1][0], value[1][1]
-    };
-    entry.num = 1;
+    auto& e = m_uniformBuffer[idx];
+    e.inlineData[0] = value[0][0]; e.inlineData[1] = value[0][1];
+    e.inlineData[2] = value[1][0]; e.inlineData[3] = value[1][1];
+    e.heapData.clear();
+    e.num = 1;
+    e.set = true;
 }
 
+// mat3 → bgfx Mat3 layout: 3 row-major Vec4 rows, last component padded to 0.
 void Shader::SetUniform(const std::string& uname, const glm::mat3& value)
 {
-    if (!FindUniform(uname)) return;
+    const uint16_t idx = FindUniformIndex(uname);
+    if (idx == kInvalidIndex) return;
 
-    // bgfx Mat3 layout: 3 Vec4 rows, column-major source, last component of each row is padding.
+    auto& e = m_uniformBuffer[idx];
     const float* src = glm::value_ptr(value); // column-major: col0[3], col1[3], col2[3]
 
-    auto& entry = m_uniformBuffer[uname];
-    entry.data.resize(12);
-    float* d = entry.data.data();
-    d[0] = src[0]; d[1] = src[3]; d[2] = src[6]; d[3] = 0.0f; // row 0
-    d[4] = src[1]; d[5] = src[4]; d[6] = src[7]; d[7] = 0.0f; // row 1
-    d[8] = src[2]; d[9] = src[5]; d[10] = src[8]; d[11] = 0.0f; // row 2
-    entry.num = 1;
+    // row 0
+    e.inlineData[0]  = src[0]; e.inlineData[1]  = src[3]; e.inlineData[2]  = src[6]; e.inlineData[3]  = 0.0f;
+    // row 1
+    e.inlineData[4]  = src[1]; e.inlineData[5]  = src[4]; e.inlineData[6]  = src[7]; e.inlineData[7]  = 0.0f;
+    // row 2
+    e.inlineData[8]  = src[2]; e.inlineData[9]  = src[5]; e.inlineData[10] = src[8]; e.inlineData[11] = 0.0f;
+
+    e.heapData.clear();
+    e.num = 1;
+    e.set = true;
 }
 
 void Shader::SetUniform(const std::string& uname, const glm::mat4& value)
 {
-    if (!FindUniform(uname)) return;
+    const uint16_t idx = FindUniformIndex(uname);
+    if (idx == kInvalidIndex) return;
 
-    auto& entry = m_uniformBuffer[uname];
-    entry.data.assign(glm::value_ptr(value), glm::value_ptr(value) + 16);
-    entry.num = 1;
+    auto& e = m_uniformBuffer[idx];
+    std::memcpy(e.inlineData, glm::value_ptr(value), 16 * sizeof(float));
+    e.heapData.clear();
+    e.num = 1;
+    e.set = true;
 }
 
 // ---------------------------------------------------------------------------
-// Array setters — each element is padded to a Vec4 slot
+// Array setters — each element padded to a Vec4 slot (or Mat4 slot for mat4).
+// Fits in inline storage for up to 4 elements (vec4) / 1 element (mat4, mat3).
+// Falls back to heap for larger arrays.
 // ---------------------------------------------------------------------------
 void Shader::SetUniform(const std::string& uname, const std::vector<float>& values)
 {
-    const UniformMeta* u = FindUniform(uname);
-    if (!u || values.empty()) return;
+    const uint16_t idx = FindUniformIndex(uname);
+    if (idx == kInvalidIndex || values.empty()) return;
 
-    const uint16_t num = SafeUniformNum(u, values.size(), uname);
+    const uint16_t num = SafeUniformNum(m_uniformList[idx], values.size(), uname);
     if (num == 0) return;
 
-    auto& entry = m_uniformBuffer[uname];
-    entry.data.assign(num * 4, 0.0f);
-    for (uint16_t i = 0; i < num; ++i)
-        entry.data[i * 4] = values[i];
-    entry.num = num;
+    const size_t total = static_cast<size_t>(num) * 4;
+    auto& e = m_uniformBuffer[idx];
+
+    if (total <= UniformEntry::kInline)
+    {
+        e.heapData.clear();
+        for (uint16_t i = 0; i < num; ++i)
+        {
+            e.inlineData[i * 4 + 0] = values[i];
+            e.inlineData[i * 4 + 1] = e.inlineData[i * 4 + 2] = e.inlineData[i * 4 + 3] = 0.0f;
+        }
+    }
+    else
+    {
+        e.heapData.assign(total, 0.0f);
+        for (uint16_t i = 0; i < num; ++i)
+            e.heapData[i * 4] = values[i];
+    }
+    e.num = num;
+    e.set = true;
 }
 
 void Shader::SetUniform(const std::string& uname, const std::vector<glm::vec2>& values)
 {
-    const UniformMeta* u = FindUniform(uname);
-    if (!u || values.empty()) return;
+    const uint16_t idx = FindUniformIndex(uname);
+    if (idx == kInvalidIndex || values.empty()) return;
 
-    const uint16_t num = SafeUniformNum(u, values.size(), uname);
+    const uint16_t num = SafeUniformNum(m_uniformList[idx], values.size(), uname);
     if (num == 0) return;
 
-    auto& entry = m_uniformBuffer[uname];
-    entry.data.assign(num * 4, 0.0f);
-    for (uint16_t i = 0; i < num; ++i)
+    const size_t total = static_cast<size_t>(num) * 4;
+    auto& e = m_uniformBuffer[idx];
+
+    if (total <= UniformEntry::kInline)
     {
-        entry.data[i * 4 + 0] = values[i].x;
-        entry.data[i * 4 + 1] = values[i].y;
+        e.heapData.clear();
+        for (uint16_t i = 0; i < num; ++i)
+        {
+            e.inlineData[i * 4 + 0] = values[i].x;
+            e.inlineData[i * 4 + 1] = values[i].y;
+            e.inlineData[i * 4 + 2] = e.inlineData[i * 4 + 3] = 0.0f;
+        }
     }
-    entry.num = num;
+    else
+    {
+        e.heapData.assign(total, 0.0f);
+        for (uint16_t i = 0; i < num; ++i)
+        {
+            e.heapData[i * 4 + 0] = values[i].x;
+            e.heapData[i * 4 + 1] = values[i].y;
+        }
+    }
+    e.num = num;
+    e.set = true;
 }
 
 void Shader::SetUniform(const std::string& uname, const std::vector<glm::vec3>& values)
 {
-    const UniformMeta* u = FindUniform(uname);
-    if (!u || values.empty()) return;
+    const uint16_t idx = FindUniformIndex(uname);
+    if (idx == kInvalidIndex || values.empty()) return;
 
-    const uint16_t num = SafeUniformNum(u, values.size(), uname);
+    const uint16_t num = SafeUniformNum(m_uniformList[idx], values.size(), uname);
     if (num == 0) return;
 
-    auto& entry = m_uniformBuffer[uname];
-    entry.data.assign(num * 4, 0.0f);
-    for (uint16_t i = 0; i < num; ++i)
+    const size_t total = static_cast<size_t>(num) * 4;
+    auto& e = m_uniformBuffer[idx];
+
+    if (total <= UniformEntry::kInline)
     {
-        entry.data[i * 4 + 0] = values[i].x;
-        entry.data[i * 4 + 1] = values[i].y;
-        entry.data[i * 4 + 2] = values[i].z;
+        e.heapData.clear();
+        for (uint16_t i = 0; i < num; ++i)
+        {
+            e.inlineData[i * 4 + 0] = values[i].x;
+            e.inlineData[i * 4 + 1] = values[i].y;
+            e.inlineData[i * 4 + 2] = values[i].z;
+            e.inlineData[i * 4 + 3] = 0.0f;
+        }
     }
-    entry.num = num;
+    else
+    {
+        e.heapData.assign(total, 0.0f);
+        for (uint16_t i = 0; i < num; ++i)
+        {
+            e.heapData[i * 4 + 0] = values[i].x;
+            e.heapData[i * 4 + 1] = values[i].y;
+            e.heapData[i * 4 + 2] = values[i].z;
+        }
+    }
+    e.num = num;
+    e.set = true;
 }
 
 void Shader::SetUniform(const std::string& uname, const std::vector<glm::vec4>& values)
 {
-    const UniformMeta* u = FindUniform(uname);
-    if (!u || values.empty()) return;
+    const uint16_t idx = FindUniformIndex(uname);
+    if (idx == kInvalidIndex || values.empty()) return;
 
-    const uint16_t num = SafeUniformNum(u, values.size(), uname);
+    const uint16_t num = SafeUniformNum(m_uniformList[idx], values.size(), uname);
     if (num == 0) return;
 
     static_assert(sizeof(glm::vec4) == 4 * sizeof(float), "glm::vec4 layout assumption broken");
 
-    auto& entry = m_uniformBuffer[uname];
-    entry.data.assign(glm::value_ptr(values[0]), glm::value_ptr(values[0]) + num * 4);
-    entry.num = num;
+    m_uniformBuffer[idx].assign(glm::value_ptr(values[0]), static_cast<size_t>(num) * 4, num);
 }
 
 // mat2 array: each mat2 → one Vec4 slot
 void Shader::SetUniform(const std::string& uname, const std::vector<glm::mat2>& values)
 {
-    const UniformMeta* u = FindUniform(uname);
-    if (!u || values.empty()) return;
+    const uint16_t idx = FindUniformIndex(uname);
+    if (idx == kInvalidIndex || values.empty()) return;
 
-    const uint16_t num = SafeUniformNum(u, values.size(), uname);
+    const uint16_t num = SafeUniformNum(m_uniformList[idx], values.size(), uname);
     if (num == 0) return;
 
-    auto& entry = m_uniformBuffer[uname];
-    entry.data.resize(num * 4);
-    for (uint16_t i = 0; i < num; ++i)
+    const size_t total = static_cast<size_t>(num) * 4;
+    auto& e = m_uniformBuffer[idx];
+
+    if (total <= UniformEntry::kInline)
     {
-        entry.data[i * 4 + 0] = values[i][0][0];
-        entry.data[i * 4 + 1] = values[i][0][1];
-        entry.data[i * 4 + 2] = values[i][1][0];
-        entry.data[i * 4 + 3] = values[i][1][1];
+        e.heapData.clear();
+        for (uint16_t i = 0; i < num; ++i)
+        {
+            e.inlineData[i * 4 + 0] = values[i][0][0];
+            e.inlineData[i * 4 + 1] = values[i][0][1];
+            e.inlineData[i * 4 + 2] = values[i][1][0];
+            e.inlineData[i * 4 + 3] = values[i][1][1];
+        }
     }
-    entry.num = num;
+    else
+    {
+        e.heapData.resize(total);
+        for (uint16_t i = 0; i < num; ++i)
+        {
+            e.heapData[i * 4 + 0] = values[i][0][0];
+            e.heapData[i * 4 + 1] = values[i][0][1];
+            e.heapData[i * 4 + 2] = values[i][1][0];
+            e.heapData[i * 4 + 3] = values[i][1][1];
+        }
+    }
+    e.num = num;
+    e.set = true;
 }
 
 // mat3 array: each mat3 → 3 Vec4 rows (12 floats)
 void Shader::SetUniform(const std::string& uname, const std::vector<glm::mat3>& values)
 {
-    const UniformMeta* u = FindUniform(uname);
-    if (!u || values.empty()) return;
+    const uint16_t idx = FindUniformIndex(uname);
+    if (idx == kInvalidIndex || values.empty()) return;
 
-    const uint16_t num = SafeUniformNum(u, values.size(), uname);
+    const uint16_t num = SafeUniformNum(m_uniformList[idx], values.size(), uname);
     if (num == 0) return;
 
-    auto& entry = m_uniformBuffer[uname];
-    entry.data.assign(num * 12, 0.0f);
+    const size_t total = static_cast<size_t>(num) * 12;
+    auto& e = m_uniformBuffer[idx];
+
+    // mat3 arrays rarely fit inline (>1 matrix = >12 floats → exactly 12 for 1),
+    // so branch once and write to whichever buffer we end up in.
+    float* dst;
+    if (total <= UniformEntry::kInline)
+    {
+        e.heapData.clear();
+        dst = e.inlineData;
+    }
+    else
+    {
+        e.heapData.assign(total, 0.0f);
+        dst = e.heapData.data();
+    }
+
     for (uint16_t i = 0; i < num; ++i)
     {
         const float* src = glm::value_ptr(values[i]);
-        float* dst = entry.data.data() + i * 12;
-        // row 0
-        dst[0] = src[0]; dst[1] = src[3]; dst[2] = src[6]; dst[3] = 0.0f;
-        // row 1
-        dst[4] = src[1]; dst[5] = src[4]; dst[6] = src[7]; dst[7] = 0.0f;
-        // row 2
-        dst[8] = src[2]; dst[9] = src[5]; dst[10] = src[8]; dst[11] = 0.0f;
+        float* d = dst + i * 12;
+        d[0]  = src[0]; d[1]  = src[3]; d[2]  = src[6]; d[3]  = 0.0f;
+        d[4]  = src[1]; d[5]  = src[4]; d[6]  = src[7]; d[7]  = 0.0f;
+        d[8]  = src[2]; d[9]  = src[5]; d[10] = src[8]; d[11] = 0.0f;
     }
-    entry.num = num;
+    e.num = num;
+    e.set = true;
 }
 
 void Shader::SetUniform(const std::string& uname, const std::vector<glm::mat4>& values)
 {
-    const UniformMeta* u = FindUniform(uname);
-    if (!u || values.empty()) return;
+    const uint16_t idx = FindUniformIndex(uname);
+    if (idx == kInvalidIndex || values.empty()) return;
 
-    const uint16_t num = SafeUniformNum(u, values.size(), uname);
+    const uint16_t num = SafeUniformNum(m_uniformList[idx], values.size(), uname);
     if (num == 0) return;
 
     static_assert(sizeof(glm::mat4) == 16 * sizeof(float), "glm::mat4 layout assumption broken");
 
-    auto& entry = m_uniformBuffer[uname];
-    entry.data.assign(glm::value_ptr(values[0]), glm::value_ptr(values[0]) + num * 16);
-    entry.num = num;
+    m_uniformBuffer[idx].assign(glm::value_ptr(values[0]), static_cast<size_t>(num) * 16, num);
 }
 
 // ---------------------------------------------------------------------------
-// Texture setters — buffer the binding; applied in FlushBuffers()
+// Texture setters — write directly into the indexed flat buffer.
 // ---------------------------------------------------------------------------
 void Shader::SetTexture(const std::string& uname, bgfx::TextureHandle texture)
 {
-    const UniformMeta* u = FindUniform(uname);
-    if (!u) return;
+    const uint16_t idx = FindUniformIndex(uname);
+    if (idx == kInvalidIndex) return;
 
-	if (bgfx::isValid(texture))
+    if (!bgfx::isValid(texture))
     {
-        // Texture handle is valid — use it directly.
-    }
-    else
-    {
-
-        Logger::Log("Shader warning: invalid texture handle for \"" + uname + "\" in " + m_vsName +
-			", using missing texture fallback");
-
-        // Invalid handle (including 0) — bind black texture as a safe default.
+        Logger::Log("Shader warning: invalid texture handle for \"" + uname +
+            "\" in " + m_vsName + ", using missing texture fallback");
         texture = s_missingTexture;
     }
 
-    auto& entry = m_textureBuffer[uname];
-    entry.slot = u->samplerSlot;
-    entry.samplerHandle = u->handle;
-    entry.texture = texture;
+    const UniformMeta& u = m_uniformList[idx];
+    auto& entry          = m_textureBuffer[idx];
+    entry.slot           = u.samplerSlot;
+    entry.samplerHandle  = u.handle;
+    entry.texture        = texture;
+    entry.set            = true;
 }
 
 void Shader::SetTexture(const std::string& uname, int texture)
 {
-    const UniformMeta* u = FindUniform(uname);
-    if (!u) return;
+    const uint16_t idx = FindUniformIndex(uname);
+    if (idx == kInvalidIndex) return;
 
-    bgfx::TextureHandle handle = (texture == 0)
+    const bgfx::TextureHandle handle = (texture == 0)
         ? s_blackTexture
         : bgfx::TextureHandle{ static_cast<uint16_t>(texture) };
 
-    auto& entry = m_textureBuffer[uname];
-    entry.slot = u->samplerSlot;
-    entry.samplerHandle = u->handle;
-    entry.texture = handle;
+    const UniformMeta& u = m_uniformList[idx];
+    auto& entry          = m_textureBuffer[idx];
+    entry.slot           = u.samplerSlot;
+    entry.samplerHandle  = u.handle;
+    entry.texture        = handle;
+    entry.set            = true;
 }
 
 void Shader::SetTexture(const hashed_string& uname, Texture* texture)
 {
-    const UniformMeta* u = FindUniform(uname.str());
-    if (!u) return;
+    const uint16_t idx = FindUniformIndex(uname.str());
+    if (idx == kInvalidIndex) return;
 
-    bgfx::TextureHandle handle = BGFX_INVALID_HANDLE;
+    const UniformMeta& u = m_uniformList[idx];
+    auto& entry          = m_textureBuffer[idx];
+    entry.slot           = u.samplerSlot;
+    entry.samplerHandle  = u.handle;
+    entry.set            = true;
 
     if (texture && texture->valid)
     {
-        handle = texture->getHandle();
+        bgfx::TextureHandle handle = texture->getHandle();
         if (!bgfx::isValid(handle))
         {
             Logger::Log("Shader warning: Texture object reports valid but handle is invalid for \"" +
                 uname.str() + "\" in " + m_vsName + ", using missing texture");
-            handle = BGFX_INVALID_HANDLE;
+            EnsureMissingTexture();
+            handle = s_missingTexture;
         }
+        entry.texture = handle;
     }
     else
     {
-        SetTexture(uname.str(), 0); // bind black texture for null/invalid Texture objects
-        return;
+        entry.texture = s_blackTexture; // null or invalid → black fallback
     }
-
-    if (!bgfx::isValid(handle))
-    {
-        EnsureMissingTexture();
-        handle = s_missingTexture;
-        if (!bgfx::isValid(handle)) return; // EnsureMissingTexture failed somehow
-    }
-
-    auto& entry = m_textureBuffer[uname.str()];
-    entry.slot = u->samplerSlot;
-    entry.samplerHandle = u->handle;
-    entry.texture = handle;
 }
 
 void Shader::SetCubemapTexture(const std::string& uname, bgfx::TextureHandle texture)
@@ -672,51 +786,229 @@ void Shader::SetCubemapTexture(const std::string& uname, bgfx::TextureHandle tex
 
 // ---------------------------------------------------------------------------
 // FlushBuffers — push all buffered state to bgfx (called by Submit)
+//
+// Hot-path design:
+//   - Iterates two flat vectors with cache-friendly sequential access.
+//   - No string keys, no map lookups, no indirection through UniformEntry::data
+//     for the common case (inlineData is in-struct).
+//   - Only sampler indices are visited for texture binding (m_samplerIndices).
 // ---------------------------------------------------------------------------
 void Shader::FlushBuffers() const
 {
     // Flush uniform values
-    for (const auto& [uname, entry] : m_uniformBuffer)
+    for (size_t i = 0; i < m_uniformBuffer.size(); ++i)
     {
-        auto it = m_uniforms.find(uname);
-        if (it == m_uniforms.end()) continue;
+        const auto& entry = m_uniformBuffer[i];
+        if (!entry.set) continue;
 
-        const UniformMeta& u = it->second;
+        const UniformMeta& u = m_uniformList[i];
         if (!bgfx::isValid(u.handle)) continue;
-        if (entry.data.empty())       continue;
 
-        bgfx::setUniform(u.handle, entry.data.data(), entry.num);
+        bgfx::setUniform(u.handle, entry.data(), entry.num);
     }
 
-    // Flush texture bindings.
-    // For every reflected sampler uniform, either use the buffered binding or
-    // fall back to the default black texture so the slot is never left unbound.
-    for (const auto& [uname, u] : m_uniforms)
+    // Flush texture bindings — iterate only sampler-kind indices.
+    for (const uint16_t idx : m_samplerIndices)
     {
-        if (u.kind != UniformMeta::Kind::Sampler) continue;
-        if (!bgfx::isValid(u.handle))             continue;
+        const auto& entry = m_textureBuffer[idx];
+        if (!entry.set) continue;
 
-        auto it = m_textureBuffer.find(uname);
-        if (it != m_textureBuffer.end())
+        bgfx::setTexture(entry.slot, entry.samplerHandle, entry.texture);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// UseProgram / Submit
+// ---------------------------------------------------------------------------
+void Shader::UseProgram()
+{
+    EnsureMissingTexture();
+
+    // Reset buffered state — flip flags only, no allocation or deallocation.
+    // This is the key change from the original clear() approach: the vectors
+    // retain their capacity and all UniformEntry inline storage is reused as-is.
+    for (auto& e : m_uniformBuffer) e.set = false;
+    for (auto& e : m_textureBuffer) e.set = false;
+
+    // Apply pre-resolved defaults (no map lookups, no string hashing).
+    for (const auto& def : m_resolvedDefaults)
+    {
+        auto& e = m_uniformBuffer[def.idx];
+        std::memcpy(e.inlineData, def.data, 4 * sizeof(float));
+        e.heapData.clear();
+        e.num = 1;
+        e.set = true;
+    }
+
+    ApplyTextureBindings();
+}
+
+void Shader::Submit(uint16_t viewId) const
+{
+
+#ifndef DISTRIBUTION
+
+    ShaderManager::RegisterPSO(BgfxStateManager::GetState(), m_vsSourcePath, m_fsSourcePath);
+
+#endif
+
+    FlushBuffers();
+    bgfx::submit(viewId, m_program);
+}
+
+// ---------------------------------------------------------------------------
+// @texture annotation parsing
+// ---------------------------------------------------------------------------
+std::unordered_map<hashed_string, std::string>
+Shader::ParseTextureBindings(const std::string& sourceCode)
+{
+    std::unordered_map<hashed_string, std::string> result;
+
+    std::regex reUniform(R"(uniform\s+(?:sampler2D|samplerCube)\s+(\w+)\s*;[^\n]*@texture\s+([^\s]+))");
+    std::regex reMacro  (R"(SAMPLER(?:2D|CUBE)\s*\(\s*(\w+)\s*,[^)]*\)\s*;[^\n]*@texture\s+([^\s]+))");
+
+    auto scan = [&](const std::regex& re)
+    {
+        std::smatch match;
+        auto it = sourceCode.cbegin();
+        while (std::regex_search(it, sourceCode.cend(), match, re))
         {
-            bgfx::setTexture(it->second.slot, it->second.samplerHandle, it->second.texture);
+            result[match[1].str()] = match[2].str();
+            it = match.suffix().first;
+        }
+    };
+
+    scan(reUniform);
+    scan(reMacro);
+    return result;
+}
+
+std::unordered_map<std::string, uint8_t>
+Shader::ParseSamplerSlots(const std::string& source)
+{
+    std::unordered_map<std::string, uint8_t> result;
+
+    std::regex re(R"(SAMPLER(?:2D|CUBE)\s*\(\s*(\w+)\s*,\s*(\d+)\s*\))");
+    std::smatch match;
+    auto it = source.cbegin();
+
+    while (std::regex_search(it, source.cend(), match, re))
+    {
+        result[match[1].str()] = static_cast<uint8_t>(std::stoi(match[2].str()));
+        it = match.suffix().first;
+    }
+    return result;
+}
+
+std::unordered_map<std::string, uint8_t>
+Shader::ParseAllSamplerSlots()
+{
+    std::unordered_map<std::string, uint8_t> result;
+
+    for (const std::string& path : { m_vsSourcePath, m_fsSourcePath })
+    {
+        if (path.empty()) continue;
+        const std::string source = FileSystemEngine::ReadFile(path);
+        if (source.empty()) continue;
+
+        for (auto& [k, v] : ParseSamplerSlots(source))
+            result[k] = v;
+    }
+    return result;
+}
+
+void Shader::ParseDefaultUniforms(const std::string& source)
+{
+    std::regex reDefault(R"(uniform\s+\w+\s+(\w+)\s*;[^\n]*\/\/\s*@\s*\(\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^)]+)\s*\))");
+
+    std::smatch match;
+    auto it = source.cbegin();
+    while (std::regex_search(it, source.cend(), match, reDefault))
+    {
+        std::string name = match[1].str();
+        DefaultUniformValue val;
+        try {
+            val.data = {
+                std::stof(match[2].str()),
+                std::stof(match[3].str()),
+                std::stof(match[4].str()),
+                std::stof(match[5].str())
+            };
+            m_defaultUniforms[name] = val;
+        }
+        catch (const std::exception& e) {
+            Logger::Log("Shader error: Failed to parse default value for " + name + " - " + e.what());
+        }
+        it = match.suffix().first;
+    }
+}
+
+std::unordered_map<hashed_string, std::string>
+Shader::ParseAllTextureBindings()
+{
+    std::unordered_map<hashed_string, std::string> result;
+
+    for (const std::string& path : { m_vsSourcePath, m_fsSourcePath })
+    {
+        if (path.empty()) continue;
+        const std::string source = FileSystemEngine::ReadFile(path);
+        if (source.empty()) continue;
+
+        ParseDefaultUniforms(source);
+
+        for (auto& [k, v] : ParseTextureBindings(source))
+            result[k] = v;
+    }
+    return result;
+}
+
+// Apply auto-bindings from pre-resolved m_resolvedBindings.
+// No string operations occur here — all uniform indices were pre-computed in
+// BuildResolvedData() at load / reload time.
+void Shader::ApplyTextureBindings()
+{
+    for (const auto& rb : m_resolvedBindings)
+    {
+        Texture* tex = AssetRegistry::GetTextureFromFile(rb.path);
+
+        const UniformMeta& u = m_uniformList[rb.samplerIdx];
+        auto& entry          = m_textureBuffer[rb.samplerIdx];
+        entry.slot           = u.samplerSlot;
+        entry.samplerHandle  = u.handle;
+        entry.set            = true;
+
+        if (tex && tex->valid)
+        {
+            const bgfx::TextureHandle handle = tex->getHandle();
+            entry.texture = bgfx::isValid(handle) ? handle : s_missingTexture;
+
+            // Auto-set <sampler>_size if the shader declared it.
+            if (rb.sizeIdx != kInvalidIndex)
+            {
+                auto& sizeE = m_uniformBuffer[rb.sizeIdx];
+                sizeE.inlineData[0] = static_cast<float>(tex->width);
+                sizeE.inlineData[1] = static_cast<float>(tex->height);
+                sizeE.inlineData[2] = 0.0f;
+                sizeE.inlineData[3] = 0.0f;
+                sizeE.heapData.clear();
+                sizeE.num = 1;
+                sizeE.set = true;
+            }
         }
         else
         {
-            // No texture was set for this sampler — bind black as a safe default.
-            //bgfx::setTexture(u.samplerSlot, u.handle, s_blackTexture);
+            entry.texture = s_blackTexture;
         }
     }
 }
 
 // ---------------------------------------------------------------------------
-// Missing texture fallback
+// Missing / default texture fallbacks
 // ---------------------------------------------------------------------------
 void Shader::EnsureMissingTexture()
 {
     if (!bgfx::isValid(s_missingTexture))
     {
-        // 2×2 magenta checkerboard — used when a texture is set but invalid
         const uint32_t M = 0xFFFF00FF;
         const uint32_t B = 0xFF000000;
         uint32_t pixels[4] = { M, B, B, M };
@@ -737,7 +1029,6 @@ void Shader::EnsureMissingTexture()
 
     if (!bgfx::isValid(s_blackTexture))
     {
-        // 1×1 opaque black — bound to any sampler that has no explicit texture set
         uint32_t pixel = 0xFF000000;
 
         const bgfx::Memory* mem = bgfx::copy(&pixel, sizeof(pixel));
@@ -752,203 +1043,5 @@ void Shader::EnsureMissingTexture()
             Logger::Log("Shader error: failed to create black texture fallback");
         else
             bgfx::setName(s_blackTexture, "default_black_texture");
-    }
-}
-
-// ---------------------------------------------------------------------------
-// UseProgram / Submit
-// ---------------------------------------------------------------------------
-void Shader::UseProgram()
-{
-    EnsureMissingTexture();
-
-    // Clear all buffered state so stale values from the previous draw don't
-    // bleed into this one. ApplyTextureBindings() will repopulate the texture
-    // buffer from @texture annotations immediately after.
-    m_uniformBuffer.clear();
-    m_textureBuffer.clear();
-
-    for (auto& [name, def] : m_defaultUniforms)
-    {
-        // Only apply if the uniform actually exists in the reflected metadata
-        if (m_uniforms.count(name))
-        {
-            auto& entry = m_uniformBuffer[name];
-            entry.data = def.data;
-            entry.num = 1;
-        }
-    }
-
-    ApplyTextureBindings();  // writes into m_textureBuffer via SetTexture()
-}
-
-void Shader::Submit(uint16_t viewId) const
-{
-
-
-    ShaderManager::RegisterPSO(BgfxStateManager::GetState(), m_vsSourcePath, m_fsSourcePath);
-    
-    FlushBuffers();                    // setUniform + setTexture for everything buffered
-    bgfx::submit(viewId, m_program);
-}
-
-// ---------------------------------------------------------------------------
-// @texture annotation parsing
-// ---------------------------------------------------------------------------
-
-// Parse a single source string for @texture annotations in both forms:
-//   uniform sampler2D  u_name;        // @texture path/to/file.png
-//   uniform samplerCube u_env;        // @texture path/to/cubemap
-//   SAMPLER2D(u_name, slot);          // @texture path/to/file.png
-//   SAMPLERCUBE(u_env, slot);         // @texture path/to/cubemap
-std::unordered_map<hashed_string, std::string>
-Shader::ParseTextureBindings(const std::string& sourceCode)
-{
-    std::unordered_map<hashed_string, std::string> result;
-
-    // Branch 1: uniform sampler2D/samplerCube u_name;  // @texture <path>
-    std::regex reUniform(R"(uniform\s+(?:sampler2D|samplerCube)\s+(\w+)\s*;[^\n]*@texture\s+([^\s]+))");
-    // Branch 2: SAMPLER2D(u_name, slot);               // @texture <path>
-    std::regex reMacro(R"(SAMPLER(?:2D|CUBE)\s*\(\s*(\w+)\s*,[^)]*\)\s*;[^\n]*@texture\s+([^\s]+))");
-
-    auto scan = [&](const std::regex& re)
-        {
-            std::smatch match;
-            auto it = sourceCode.cbegin();
-            while (std::regex_search(it, sourceCode.cend(), match, re))
-            {
-                result[match[1].str()] = match[2].str();
-                it = match.suffix().first;
-            }
-        };
-
-    scan(reUniform);
-    scan(reMacro);
-
-    return result;
-}
-
-std::unordered_map<std::string, uint8_t>
-Shader::ParseSamplerSlots(const std::string& source)
-{
-    std::unordered_map<std::string, uint8_t> result;
-
-    // Matches: SAMPLER2D(name, slot) or SAMPLERCUBE(name, slot)
-    std::regex re(R"(SAMPLER(?:2D|CUBE)\s*\(\s*(\w+)\s*,\s*(\d+)\s*\))");
-
-    std::smatch match;
-    auto it = source.cbegin();
-
-    while (std::regex_search(it, source.cend(), match, re))
-    {
-        const std::string name = match[1].str();
-        const uint8_t slot = static_cast<uint8_t>(std::stoi(match[2].str()));
-
-        result[name] = slot;
-
-        it = match.suffix().first;
-    }
-
-    return result;
-}
-
-std::unordered_map<std::string, uint8_t>
-Shader::ParseAllSamplerSlots() 
-{
-    std::unordered_map<std::string, uint8_t> result;
-
-    for (const std::string& path : { m_vsSourcePath, m_fsSourcePath })
-    {
-        if (path.empty()) continue;
-
-        const std::string source = FileSystemEngine::ReadFile(path);
-        if (source.empty()) continue;
-
-        auto parsed = ParseSamplerSlots(source);
-
-        for (auto& [k, v] : parsed)
-        {
-            result[k] = v; // Fragment shader overrides vertex if duplicate
-        }
-    }
-
-    return result;
-}
-
-void Shader::ParseDefaultUniforms(const std::string& source)
-{
-    // Regex matches: uniform <type> <name>; // @ (<f>, <f>, <f>, <f>)
-    // Group 1: name, Group 2-5: float values
-    std::regex reDefault(R"(uniform\s+\w+\s+(\w+)\s*;[^\n]*\/\/\s*@\s*\(\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^)]+)\s*\))");
-
-    std::smatch match;
-    auto it = source.cbegin();
-    while (std::regex_search(it, source.cend(), match, reDefault))
-    {
-        std::string name = match[1].str();
-
-        DefaultUniformValue val;
-        try {
-            val.data = {
-                std::stof(match[2].str()),
-                std::stof(match[3].str()),
-                std::stof(match[4].str()),
-                std::stof(match[5].str())
-            };
-            m_defaultUniforms[name] = val;
-        }
-        catch (const std::exception& e) {
-            Logger::Log("Shader error: Failed to parse default value for " + name + " - " + e.what());
-        }
-
-        it = match.suffix().first;
-    }
-}
-
-// Read both .sh source files and merge their @texture annotations.
-std::unordered_map<hashed_string, std::string>
-Shader::ParseAllTextureBindings()
-{
-    std::unordered_map<hashed_string, std::string> result;
-
-    for (const std::string& path : { m_vsSourcePath, m_fsSourcePath })
-    {
-        if (path.empty()) continue;
-
-        const std::string source = FileSystemEngine::ReadFile(path);
-        if (source.empty()) continue;
-
-		ParseDefaultUniforms(source);
-
-        auto parsed = ParseTextureBindings(source);
-        for (auto& [k, v] : parsed)
-            result[k] = v;   // later stage wins on collision
-    }
-
-    return result;
-}
-
-// Apply all auto-bindings: resolve each path via AssetRegistry, call SetTexture.
-// For each binding, if a uniform named <samplerName>_size exists in the shader,
-// automatically set it to vec4(width, height, 0, 0) so shaders never need the
-// caller to manually push texture dimensions (e.g. noiseTexture_size, LutTexture_size).
-void Shader::ApplyTextureBindings()
-{
-    for (const auto& [uniformName, path] : textureBindings)
-    {
-        Texture* tex = AssetRegistry::GetTextureFromFile(path);
-        SetTexture(uniformName, tex);
-
-        // Auto-set <name>_size if the shader declared it and the texture is valid
-        const std::string sizeUniform = uniformName.str() + "_size";
-        if (tex && tex->valid && m_uniforms.count(sizeUniform))
-        {
-            const glm::vec4 size(
-                static_cast<float>(tex->width),
-                static_cast<float>(tex->height),
-                0.0f, 0.0f
-            );
-            SetUniform(sizeUniform, size);
-        }
     }
 }
