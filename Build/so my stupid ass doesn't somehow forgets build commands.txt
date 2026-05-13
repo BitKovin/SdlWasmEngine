@@ -1,17 +1,20 @@
 # Emscripten
-emcmake cmake .. -DCMAKE_BUILD_TYPE=Release
+emcmake cmake .. -DGAME_NAME=ShooterGame -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../cmake/toolchains/clang.cmake
 ninja
 
 # Linux
-cmake .. -DCMAKE_BUILD_TYPE=Release
+cmake .. -DGAME_NAME=ShooterGame -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../cmake/toolchains/clang.cmake
 make
 
 # Windows if using cmake for some reason
-
 x64 Native Tools Command Prompt for VS 2022
 
-cmake .. -DGAME_NAME=ShooterGame -GNinja -DCMAKE_BUILD_TYPE=Release
+cmake .. -DGAME_NAME=ShooterGame -GNinja -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../cmake/toolchains/msvc.cmake
 ninja
+
+
+
+
 
 #didn't tested because I don't have xbox sdk
 # Xbox GDK (from GDK-extended x64 Native Tools Command Prompt for VS 2022)
