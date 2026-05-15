@@ -612,6 +612,14 @@ void StaticMesh::DrawMeshShadow(mat4x4 view, mat4x4 projection)
 	vec3 d = vec3(1.0f) - shadowColor;
 	shadowColor = vec3(1.0f) - d * d;
 
+	shadowColor += 0.05f;
+	shadowColor = clamp(shadowColor, vec3(0.0f), vec3(1.0f));
+
+	shadowColor = 1.0f - shadowColor;
+	shadowColor *= 1.12f;
+	shadowColor = 1.0f - shadowColor;
+
+
 	shadowShader->SetUniform("u_color", vec4(shadowColor, 1.0f));
 
 	Renderer::Instance->RenderFullscreenQuad(shadowShader);

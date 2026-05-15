@@ -12,6 +12,7 @@
 NpcHumanBase::NpcHumanBase()
 {
     mesh = new SkeletalMesh(this);
+	mesh->CastDetailShadows = true;
     mesh->GravityAlignedRotation = true;
     mesh->MeshCustomShaderParams["rim_color"] = vec4(1.5f, 1.2f, 0.0f, 1.0f);
     mesh->MeshCustomShaderParams["rim_pow"] = vec4(1.3f, 0.0f, 0.0f, 0.0f);

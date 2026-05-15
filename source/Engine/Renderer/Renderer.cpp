@@ -380,6 +380,8 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
 
         for (auto* mesh : VissibleRenderList)
         {
+			if (mesh->IsDetailShadow() == false) continue;
+
             const mat4& P = mesh->IsViewmodel
                 ? Camera::finalizedProjectionViewmodel
                 : Camera::finalizedProjection;

@@ -62,6 +62,7 @@ public:
 	{
 		mesh = new SkeletalMesh(this);
 		Drawables.push_back(mesh);
+		mesh->CastDetailShadows = true;
 
 		ClassName = "testnpc";
 		SaveGame = true;

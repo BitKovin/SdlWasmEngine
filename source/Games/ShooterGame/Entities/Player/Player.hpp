@@ -454,6 +454,7 @@ public:
 
 		bodyMesh = new SkeletalMesh(this);
 		bodyMesh->TwoSided = true;
+		//bodyMesh->CastDetailShadows = false;
 		Drawables.push_back(bodyMesh);
 
 		ClassName = "info_player_start";
