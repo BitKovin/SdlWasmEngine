@@ -9,13 +9,17 @@
 #include "../ShaderManager.h"
 #include "../Shader.hpp"
 
+#include <bgfx/bgfx.h>
+
 class Renderer
 {
 public:
 	Renderer();
 	~Renderer();
 
-	void RenderLevel(Level* level);
+	static inline Renderer* Instance = nullptr;
+
+	void RenderLevel(Level* level, bgfx::FrameBufferHandle targetFrameBuffer);
 
 	void RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList);
 
@@ -32,6 +36,7 @@ public:
 	float ResolutionScale = 1.0f;
 
 	Shader* fullscreenShader = nullptr;
+	Shader* fullscreenTextureShader = nullptr;
 
 	Shader* copyShader = nullptr;
 	Shader* depthCopyShader = nullptr;

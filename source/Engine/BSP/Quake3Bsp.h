@@ -331,9 +331,9 @@ struct CachedFaceTextureData
 };
 
 struct LightVolPointData {
-    glm::vec3 directColor;
-    glm::vec3 ambientColor;
-    glm::vec3 direction;
+    glm::vec3 directColor = {};
+    glm::vec3 ambientColor = {};
+    glm::vec3 direction = {};
 
     friend LightVolPointData operator+(const LightVolPointData& a, const LightVolPointData& b) {
         return { a.directColor + b.directColor, a.ambientColor + b.ambientColor, a.direction + b.direction };

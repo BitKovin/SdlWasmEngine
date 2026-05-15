@@ -45,6 +45,8 @@ public:
 
 	virtual void DrawShadow(mat4x4 view, mat4x4 projection) {}
 
+	virtual void DrawMeshShadow(mat4x4 view, mat4x4 projection) {}
+
 	virtual void FinalizeFrameData(){}
 
 	virtual void PreDraw(){}

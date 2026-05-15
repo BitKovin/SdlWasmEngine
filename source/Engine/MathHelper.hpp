@@ -585,6 +585,38 @@ public:
 		return hash;
 	}
 
+	inline static glm::mat4 MakeShadowMatrix(
+		const glm::vec3& planePoint,
+		const glm::vec3& planeNormal,
+		const glm::vec3& lightDir)
+	{
+		glm::vec3 n = glm::normalize(planeNormal);
+		glm::vec3 l = glm::normalize(lightDir);
+
+		float d = -glm::dot(n, planePoint);
+
+		float nl = glm::dot(n, l);
+
+		glm::mat4 m(1.0f);
+
+		m[0][0] = 1.0f - l.x * n.x / nl;
+		m[1][0] = -l.x * n.y / nl;
+		m[2][0] = -l.x * n.z / nl;
+		m[3][0] = -l.x * d / nl;
+
+		m[0][1] = -l.y * n.x / nl;
+		m[1][1] = 1.0f - l.y * n.y / nl;
+		m[2][1] = -l.y * n.z / nl;
+		m[3][1] = -l.y * d / nl;
+
+		m[0][2] = -l.z * n.x / nl;
+		m[1][2] = -l.z * n.y / nl;
+		m[2][2] = 1.0f - l.z * n.z / nl;
+		m[3][2] = -l.z * d / nl;
+
+		return m;
+	}
+
 	inline static constexpr double constexpr_cos(double x) {
 		// Normalize x to [-PI, PI] for better accuracy if needed
 		double term = 1.0;

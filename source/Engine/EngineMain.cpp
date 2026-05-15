@@ -759,6 +759,16 @@ void EngineMain::Render()
         UiFrameBuffer->attachDepth(UiRenderTextureStencil);
     }
 
+	if (FinalFrameRenderTexture == nullptr || FinalFrameRenderTexture->height() != (uint32_t)ScreenSize.y || FinalFrameRenderTexture->width() != (uint32_t)ScreenSize.x)
+	{
+		if (FinalFrameRenderTexture)
+			delete FinalFrameRenderTexture;
+		FinalFrameRenderTexture = new RenderTexture(
+			ScreenSize.x,
+			ScreenSize.y,
+			TextureFormat::RGBA8);
+	}
+
     /* ============================================================
        UI PASS → render to transparent RT
        ============================================================ */
@@ -804,7 +814,27 @@ void EngineMain::Render()
 
     {
         ZoneScopedN("World Render");
-        MainRenderer->RenderLevel(Level::Current);
+        MainRenderer->RenderLevel(Level::Current, FinalFrameRenderTexture->frameBufferHandle());
+
+        bgfx::setViewRect(ViewIdManager::GetCurrentId(), 0, 0,
+            (uint16_t)ScreenSize.x,
+            (uint16_t)ScreenSize.y);
+        //bgfx::setViewFrameBuffer(ViewIdManager::GetCurrentId(), FinalFrameRenderTexture->frameBufferHandle());
+
+        ViewIdManager::GiveNextId();
+
+		bgfx::setViewFrameBuffer(ViewIdManager::GetCurrentId(), BGFX_INVALID_HANDLE);
+		bgfx::setViewRect(ViewIdManager::GetCurrentId(), 0, 0,
+			(uint16_t)ScreenSize.x,
+			(uint16_t)ScreenSize.y);
+
+        auto copyShader = MainRenderer->copyShader;
+
+		copyShader->SetTexture("screenTexture", FinalFrameRenderTexture->textureHandle());
+        BgfxStateManager::Reset();
+        BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Always);
+        BgfxStateManager::Apply();
+		MainRenderer->RenderFullscreenQuad(copyShader);
     }
 
     /* ============================================================
@@ -814,10 +844,6 @@ void EngineMain::Render()
 
         ZoneScopedN("Composite UI Pass");
 
-        bgfx::setViewRect(ViewIdManager::GetCurrentId(), 0, 0,
-            (uint16_t)ScreenSize.x,
-            (uint16_t)ScreenSize.y);
-        bgfx::setViewFrameBuffer(ViewIdManager::GetCurrentId(), BGFX_INVALID_HANDLE); // default backbuffer
 
 
         auto compositeShader = ShaderManager::GetShaderProgram(

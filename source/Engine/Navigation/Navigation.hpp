@@ -77,12 +77,6 @@ public:
 
     static dtObstacleRef CreateObstacleBox(const glm::vec3& min, const glm::vec3& max);
 
-    // =====================================================================
-// New function: FindSimplePath
-// Computes a simple path from a start to a target position. The path is
-// returned as an array of 3D points (world coordinates) in outPath.
-// Returns true if a valid path was found.
-// =====================================================================
     static std::vector<glm::vec3> FindSimplePath(glm::vec3 start, glm::vec3 target, float acceptanceRadius = 0.0f, bool* outReached = nullptr, bool allowPartialPath = false);
 
     static std::vector<glm::vec3> FindFleePath(

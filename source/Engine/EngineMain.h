@@ -63,6 +63,8 @@ public:
     RenderTexture* UiRenderTextureStencil = nullptr;
     Framebuffer* UiFrameBuffer = nullptr;
 
+	RenderTexture* FinalFrameRenderTexture = nullptr;
+
 	RmlUiContext* RmlContext = nullptr;
 
 	EngineMain(SDL_Window* window)

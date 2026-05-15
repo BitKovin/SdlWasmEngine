@@ -26,7 +26,9 @@ class StaticMesh : public IDrawMesh
 {
 private:
 
+	LightVolPointData lastLightVolData = LightVolPointData();
 
+	vec3 lastLightDir = vec3(0.0f, -1.0f, 0.0f); //so we don't recaclulate it twice per frame
 
 protected:
 
@@ -63,6 +65,8 @@ protected:
 	vec4 finalizedColor = vec4(1);
 	std::unordered_set<std::string> finalMeshHideList{};
 	std::map<std::string, vec4> finalizedMeshCustomShaderParams{};
+
+	BoundingBox finalizedBoundingBox;
 
 public:
 
@@ -217,6 +221,7 @@ public:
 	void DrawCustomId(mat4x4 view, mat4x4 projection);
 
 	void DrawShadow(mat4x4 view, mat4x4 projection);
+	void DrawMeshShadow(mat4x4 view, mat4x4 projection);
 
 	void PreloadAssets();
 

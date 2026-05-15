@@ -49,7 +49,7 @@ void StaticMesh::FinalizeFrameData()
 	finalMeshHideList = std::unordered_set<std::string>(MeshHideList);
 	finalizedColor = Color;
 	finalizedMeshCustomShaderParams = MeshCustomShaderParams;
-
+	finalizedBoundingBox = GetBoundingBox();
 }
 
 bool StaticMesh::IsInFrustrum(Frustum frustrum)
@@ -65,6 +65,8 @@ bool StaticMesh::IsInFrustrum(Frustum frustrum)
 
 BoundingBox StaticMesh::GetBoundingBox()
 {
+
+	if (model == nullptr) return BoundingBox();
 
 	return model->boundingBox.Transform(GetWorldMatrix());
 
@@ -152,6 +154,9 @@ void StaticMesh::DrawForward(mat4x4 view, mat4x4 projection)
 	mat4x4 world = finalizedWorld;
 
 	auto lightData = GetLightVolData();
+
+	lastLightDir = lightData.direction * -1.0f;
+	lastLightVolData = lightData;
 
 	forward_shader_program->SetUniform("modelColor", finalizedColor);
 
@@ -482,6 +487,149 @@ void StaticMesh::DrawShadow(mat4x4 view, mat4x4 projection)
 
 		shader->Submit(ViewIdManager::GetCurrentId());
 	}
+
+	BgfxStateManager::SetState(startState);
+}
+
+void StaticMesh::DrawMeshShadow(mat4x4 view, mat4x4 projection)
+{
+	if (model == nullptr) return;
+
+	auto startState = BgfxStateManager::GetState();
+
+	BgfxStateManager::SetCull(BgfxStateManager::Cull::CW);
+	BgfxStateManager::SetWriteDepth(false);
+
+	BgfxStateManager::SetWriteRGB(false);
+	BgfxStateManager::SetWriteAlpha(false);
+
+	Shader* shader = ShaderManager::GetShaderProgram("vs_default", "fs_meshShadow");
+
+	shader->UseProgram();
+
+	mat4x4 world = finalizedWorld;
+
+	vec3 rayStartPos = finalizedBoundingBox.Center();
+	//rayStartPos.y = mix(finalizedBoundingBox.Min.y, finalizedBoundingBox.Center().y, 0.2f);
+
+	auto hit = Physics::LineTrace(rayStartPos, rayStartPos + -lastLightVolData.direction * 100.0f, WorldOpaque);
+
+
+
+	if (hit.hasHit == false || dot(hit.normal, -lastLightVolData.direction) > -0.3f)
+	{
+		BgfxStateManager::SetState(startState);
+
+		bgfx::setStencil(
+			BGFX_STENCIL_DEFAULT
+		);
+
+		return;
+	}
+
+	mat4 shadowMatrix = MathHelper::MakeShadowMatrix(hit.position + hit.normal * 0.01f, hit.normal, -lastLightVolData.direction);
+
+
+	world = shadowMatrix * world;
+
+	shader->SetUniform("view", view);
+	shader->SetUniform("projection", projection);
+	shader->SetUniform("world", world);
+	shader->SetUniform("isViewmodel", false);
+
+	ApplyAdditionalShaderParams(shader);
+
+
+
+	for (roj::SkinnedMesh& mesh : model->meshes)
+	{
+		if (finalMeshHideList.contains(mesh.name)) continue;
+
+		bgfx::setStencil(
+			BGFX_STENCIL_TEST_ALWAYS |
+			BGFX_STENCIL_FUNC_REF(1) |
+			BGFX_STENCIL_FUNC_RMASK(0xFF) |
+			BGFX_STENCIL_OP_FAIL_S_KEEP |
+			BGFX_STENCIL_OP_FAIL_Z_KEEP |
+			BGFX_STENCIL_OP_PASS_Z_REPLACE
+		);
+
+		bgfx::setVertexBuffer(0, mesh.vbh);
+		bgfx::setIndexBuffer(mesh.ibh);
+
+		BgfxStateManager::Apply();
+
+		shader->Submit(ViewIdManager::GetCurrentId());
+	}
+	
+	BgfxStateManager::Reset();
+
+
+	BgfxStateManager::SetWriteRGB(true);
+	BgfxStateManager::SetWriteAlpha(true);
+	BgfxStateManager::SetBlend(BgfxStateManager::Blend::Multiply);
+	BgfxStateManager::SetWriteDepth(false);
+	BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::None);
+	BgfxStateManager::Apply();
+	bgfx::setStencil(
+		BGFX_STENCIL_TEST_EQUAL |
+		BGFX_STENCIL_FUNC_REF(1) |
+		BGFX_STENCIL_FUNC_RMASK(0xFF) |
+		BGFX_STENCIL_OP_FAIL_S_KEEP |
+		BGFX_STENCIL_OP_FAIL_Z_KEEP |
+		BGFX_STENCIL_OP_PASS_Z_KEEP
+	);
+
+	auto shadowShader = ShaderManager::GetShaderProgram("vs_fullscreen", "fs_fullscreen_color");
+	shadowShader->UseProgram();
+
+
+	vec3 ambientColor = lastLightVolData.ambientColor;
+	vec3 directionalColor = lastLightVolData.directColor;
+
+	constexpr float kEps = 0.001f;
+
+	// Per-channel ratio (preserves ambient hue tint for strong shadows)
+	vec3 shadowColor;
+	shadowColor.r = (directionalColor.r > kEps) ? (ambientColor.r / directionalColor.r) : 1.0f;
+	shadowColor.g = (directionalColor.g > kEps) ? (ambientColor.g / directionalColor.g) : 1.0f;
+	shadowColor.b = (directionalColor.b > kEps) ? (ambientColor.b / directionalColor.b) : 1.0f;
+	shadowColor = clamp(shadowColor, vec3(0.0f), vec3(1.0f));
+
+	// Luminance-based uniform ratio (hue-neutral, no warm/cool drift)
+	float ambientLum = dot(ambientColor, vec3(0.299f, 0.587f, 0.114f));
+	float directionalLum = dot(directionalColor, vec3(0.299f, 0.587f, 0.114f));
+	float uniformShadow = (directionalLum > kEps)
+		? glm::clamp(ambientLum / directionalLum, 0.0f, 1.0f)
+		: 1.0f;
+
+	// Blend: weak shadows → luminance (no hue), strong shadows → per-channel (cool tint)
+	// blendT=0 when close (use uniform), blendT=1 when dark (use per-channel)
+	float blendT = 1.0f - uniformShadow;
+	shadowColor = mix(vec3(uniformShadow), shadowColor, blendT);
+
+	// Ease-out: suppress near-1 values aggressively
+	vec3 d = vec3(1.0f) - shadowColor;
+	shadowColor = vec3(1.0f) - d * d;
+
+	shadowShader->SetUniform("u_color", vec4(shadowColor, 1.0f));
+
+	Renderer::Instance->RenderFullscreenQuad(shadowShader);
+
+	bgfx::setStencil(
+		BGFX_STENCIL_TEST_ALWAYS |
+		BGFX_STENCIL_FUNC_REF(0) |
+		BGFX_STENCIL_FUNC_RMASK(0xFF) |
+		BGFX_STENCIL_OP_FAIL_S_KEEP |
+		BGFX_STENCIL_OP_FAIL_Z_KEEP |
+		BGFX_STENCIL_OP_PASS_Z_REPLACE
+	);
+	BgfxStateManager::SetWriteRGB(false);
+	BgfxStateManager::SetWriteAlpha(false);
+	BgfxStateManager::SetWriteDepth(false);
+	BgfxStateManager::Apply();
+
+	Renderer::Instance->RenderFullscreenQuad(shadowShader);
 
 	BgfxStateManager::SetState(startState);
 }

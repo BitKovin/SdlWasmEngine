@@ -24,6 +24,9 @@ static constexpr uint32_t kClearAlpha1 = 0x000000ff;
 // -----------------------------------------------------------------------
 Renderer::Renderer()
 {
+
+    Instance = this;
+
     ivec2 screenResolution = GetScreenResolution();
 
     InitFrameBuffers();
@@ -36,6 +39,8 @@ Renderer::Renderer()
     copyShader = ShaderManager::GetShaderProgram("vs_fullscreen", "fs_copy");
     depthCopyShader = ShaderManager::GetShaderProgram("vs_fullscreen", "fs_copy_depth");
     depthMsaaResolveShader = ShaderManager::GetShaderProgram("vs_fullscreen", "fs_resolve_depth_msaa");
+
+
 
     BlurResultBuffer = new RenderTexture(screenResolution.x, screenResolution.y,
         TextureFormat::RGBA16F);
@@ -87,7 +92,7 @@ Renderer::~Renderer()
 // -----------------------------------------------------------------------
 // RenderLevel
 // -----------------------------------------------------------------------
-void Renderer::RenderLevel(Level* level)
+void Renderer::RenderLevel(Level* level, bgfx::FrameBufferHandle targetFrameBuffer)
 {
     if (LightManager::DirectionalShadowsEnabled)
     {
@@ -174,7 +179,7 @@ void Renderer::RenderLevel(Level* level)
     bgfx::setViewRect(ViewIdManager::GetCurrentId(), 0, 0,
         static_cast<uint16_t>(nativeRes.x),
         static_cast<uint16_t>(nativeRes.y));
-    bgfx::setViewFrameBuffer(ViewIdManager::GetCurrentId(), BGFX_INVALID_HANDLE);
+    bgfx::setViewFrameBuffer(ViewIdManager::GetCurrentId(), targetFrameBuffer);
 
 
     fullscreenShader->UseProgram();
@@ -372,6 +377,14 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
         BgfxStateManager::SetMSAA(MultiSampleCount > 0);
 
 		BgfxStateManager::SetWriteDepth(false);
+
+        for (auto* mesh : VissibleRenderList)
+        {
+            const mat4& P = mesh->IsViewmodel
+                ? Camera::finalizedProjectionViewmodel
+                : Camera::finalizedProjection;
+            mesh->DrawMeshShadow(Camera::finalizedView, P);
+        }
 
         Level::Current->BspData.RenderTransparentFaces();
 
