@@ -143,6 +143,7 @@ void TestNpc::OnPointDamage(float Damage, vec3 Point, vec3 Direction, string bon
 	}
 
 	GlobalParticleSystem::SpawnParticleAt("hit_flesh", Point, MathHelper::FindLookAtRotation(vec3(0), Direction), vec3(Damage/10.0f));
+	GlobalParticleSystem::SpawnParticleAt("hit_flesh", Point, MathHelper::FindLookAtRotation(Direction, vec3(0)), vec3(Damage / 10.0f));
 
 	SoundPlayer::PlayOneshot("event:/NPC/General/FleshHit", 1, Damage / 20.0f, false, Point);
 
@@ -302,9 +303,16 @@ void TestNpc::AsyncUpdate()
 		return;
 	}
 
-	vec3 lookAtDir = MathHelper::FastNormalize(target->Position - Position);
+	vec3 calculatedTargetPos = target->Position;
 
-	if (distance(target->Position, Position) < 5 
+	if (target->Position.y < Position.y - 0.1f && target->Position.y > Position.y - 1.5f)
+	{
+		calculatedTargetPos.y = Position.y;
+	}
+
+	vec3 lookAtDir = MathHelper::FastNormalize(calculatedTargetPos - Position);
+
+	if (distance(calculatedTargetPos, Position) < 5 
 		&& dot(MathHelper::GetForwardVector(mesh->Rotation), lookAtDir) > 0.975)
 	{
 		

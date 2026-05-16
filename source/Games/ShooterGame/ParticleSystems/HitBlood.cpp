@@ -222,8 +222,8 @@ public:
 
         glm::vec3 randomDir = RandomPosition(1.0f);
         glm::vec3 velocity = glm::normalize(randomDir) * 1.5f;
-        velocity.y += 1.8f * glm::mix(1.0f, 2.0f, RandomFloat());
-        velocity += GetForwardFromRotation(Rotation) * 2.5f;
+        velocity.y += 0.8f * glm::mix(1.0f, 2.0f, RandomFloat());
+        velocity += GetForwardFromRotation(Rotation) * 2.0f;
         velocity *= glm::mix(0.3f, 1.0f, RandomFloat());
 
         particle.position += velocity * 0.2f;

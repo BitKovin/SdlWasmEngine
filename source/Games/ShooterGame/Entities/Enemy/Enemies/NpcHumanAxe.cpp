@@ -172,9 +172,16 @@ void NpcHumanAxe::AsyncUpdate()
         return;
     }
 
-    vec3 lookAtDir = MathHelper::FastNormalize(target->Position - Position);
+	vec3 calculatedTargetPos = target->Position;
 
-    if (distance(target->Position, Position) < 1.5f
+	if (target->Position.y < Position.y - 0.1f && target->Position.y > Position.y - 1.5f)
+	{
+		calculatedTargetPos.y = Position.y;
+	}
+
+    vec3 lookAtDir = MathHelper::FastNormalize(calculatedTargetPos - Position);
+
+    if (distance(calculatedTargetPos, Position) < 1.5f
         && dot(MathHelper::GetForwardVector(mesh->Rotation), lookAtDir) > 0.93)
     {
         Attack();

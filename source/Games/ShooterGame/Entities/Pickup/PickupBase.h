@@ -10,6 +10,8 @@ public:
 	std::string target;
 	std::string pickupEvent;
 
+	std::string pickupSound = "event:/Character/Player/ItemPickup";
+
 	void Start();
 
 	Body* triggerBody = nullptr;

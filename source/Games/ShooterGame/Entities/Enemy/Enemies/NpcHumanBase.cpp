@@ -354,6 +354,10 @@ void NpcHumanBase::OnPointDamage(float Damage, vec3 Point, vec3 Direction, strin
 
     GlobalParticleSystem::SpawnParticleAt("hit_flesh", Point, MathHelper::FindLookAtRotation(vec3(0), Direction), vec3(Damage / 10.0f));
 
+
+    GlobalParticleSystem::SpawnParticleAt("hit_flesh", Point, MathHelper::FindLookAtRotation(Direction, vec3(0)), vec3(Damage / 10.0f));
+
+
     SoundPlayer::PlayOneshot("event:/NPC/General/FleshHit", 1, Damage / 20.0f, false, Point);
 }
 

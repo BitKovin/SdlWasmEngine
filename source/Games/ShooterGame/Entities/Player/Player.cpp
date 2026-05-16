@@ -54,6 +54,8 @@ void Player::Start()
 	controller.gravity = 24;
 	oldPos = controller.GetPosition();
 
+	controller.crouchHeight = 1.1f;
+
 	ParticleSystem::PreloadSystemAssets("decal_blood");
 	ParticleSystem::PreloadSystemAssets("hit_flesh");
 
@@ -2610,7 +2612,7 @@ void Player::OnPointDamage(float Damage, vec3 Point, vec3 Direction, string bone
 
 	Camera::AddCameraShake(damageShake);
 
-	//GlobalParticleSystem::SpawnParticleAt("hit_flesh", Point - vec3(0,0.5f,0), MathHelper::FindLookAtRotation(vec3(0), -Direction - vec3(0, 1, 0)), vec3(0.2f));
+	GlobalParticleSystem::SpawnParticleAt("hit_flesh", Point - vec3(0,0.5f,0), MathHelper::FindLookAtRotation(Direction, vec3(0)), vec3(Damage / 10.0f));
 
 }
 

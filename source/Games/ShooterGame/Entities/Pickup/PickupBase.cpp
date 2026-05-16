@@ -38,6 +38,8 @@ void PickupBase::FromData(EntityData data)
 void PickupBase::OnPickup(Player* player)
 {
 
+	SoundPlayer::PlayOneshot(pickupSound, 1);
+
 	CallActionOnEveryEntityWithName(target, pickupEvent);
 
 }
