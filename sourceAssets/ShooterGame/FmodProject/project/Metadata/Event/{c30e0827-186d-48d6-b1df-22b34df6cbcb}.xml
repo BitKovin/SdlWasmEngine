@@ -56,7 +56,11 @@
 			<destination>{d320eb98-3d4a-4cd9-a001-fdb4e071c58e}</destination>
 		</relationship>
 	</object>
-	<object class="EventAutomatableProperties" id="{7b8825a6-5909-4b1a-b286-faaebde9a0c4}" />
+	<object class="EventAutomatableProperties" id="{7b8825a6-5909-4b1a-b286-faaebde9a0c4}">
+		<property name="maxVoices">
+			<value>2</value>
+		</property>
+	</object>
 	<object class="MarkerTrack" id="{04050461-1bf1-49f5-9c88-e8eda7b47a31}" />
 	<object class="Timeline" id="{a188e924-f3e7-4a93-adfd-028134894f86}">
 		<relationship name="modules">
@@ -76,10 +80,10 @@
 	</object>
 	<object class="SingleSound" id="{9c207c8f-363e-44ba-ac4a-1f225f5bb5f2}">
 		<property name="length">
-			<value>0.4231065759637187</value>
+			<value>0.44310657596371872</value>
 		</property>
 		<property name="timelockedOffset">
-			<value>0.080000000000000002</value>
+			<value>0.059999999999999998</value>
 		</property>
 		<relationship name="fadeInCurve">
 			<destination>{2adb4578-b49e-44a2-a913-0fbfcf507eb6}</destination>

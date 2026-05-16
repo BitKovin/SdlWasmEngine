@@ -472,14 +472,12 @@ void EngineMain::MainLoop()
     {
         ZoneScopedN("GameUpdate (Sync)");
         GameUpdate();
+
+        FinishFrame();
+
     }
 
     Render();
-
-    if (asyncGameUpdate == false)
-    {
-        FinishFrame();
-    }
 
     FinishRender();
 
@@ -490,6 +488,7 @@ void EngineMain::MainLoop()
 
         FinishFrame();
     }
+
 
 	RmlContext->Update(Time::DeltaTimeFNoTimeScale);
 
@@ -723,7 +722,6 @@ void EngineMain::Render()
 
     ZoneScopedN("Render");
 
-	ViewIdManager::Reset();
 
     ivec2 uiResolution = ivec2(
         UiManager::GetScaledUiHeight() * Camera::AspectRatio,
@@ -907,6 +905,7 @@ void EngineMain::Render()
 		ZoneScopedN("Present");
 
         bgfx::frame();
+        ViewIdManager::Reset();
     }
 }
 
