@@ -7,7 +7,7 @@
 #include <unordered_map>
 #include <vector>
 #include <array>
-#include <span>       // C++20
+#include <span>
 #include "Texture.hpp"
 #include "BoundingSphere.hpp"
 #include "BoundingBox.hpp"

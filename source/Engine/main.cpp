@@ -1,4 +1,8 @@
-	#if defined(__EMSCRIPTEN__)
+#ifndef ENGINE_AS_LIBRARY 
+
+
+
+#if defined(__EMSCRIPTEN__)
 #include "PlatformMains/emscripten_main.hpp"
 #elif defined(PLATFORM_GDK)
 #include "PlatformMains/gdk_main.hpp"
@@ -9,3 +13,7 @@
 #else
 #error "Unknown platform: cannot include the proper main()"
 #endif
+
+
+
+#endif // ENGINE_AS_LIBRARY

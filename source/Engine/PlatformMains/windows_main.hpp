@@ -25,6 +25,8 @@
 #include <bgfx/platform.h>
 using namespace PlatformWindowData;
 
+#pragma message "using windows_main.hpp"
+
 // Global variables
 LPDIRECTINPUT8 g_pDI = nullptr;
 LPDIRECTINPUTDEVICE8 g_pMouse = nullptr;

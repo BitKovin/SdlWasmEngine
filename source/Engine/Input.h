@@ -1,8 +1,9 @@
-﻿#pragma once
+#pragma once
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_joystick.h>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 #include <string>
 #include <SDL2/SDL_scancode.h>
@@ -138,6 +139,27 @@ public:
     static SDL_Window* window;
     // SDL_Joystick pointer (if a joystick is connected)
     static SDL_Joystick* joystick;
+
+    // -------------------------------------------------------
+    // Event-driven input state (populated via ReceiveSdlEvent)
+    // -------------------------------------------------------
+
+    // Keys currently held down. Only updated on non-repeat KEYDOWN / KEYUP events.
+    static std::unordered_set<SDL_Scancode> activeKeys;
+
+    // Mouse button held state.
+    static bool lmbHeld;
+    static bool rmbHeld;
+    static bool mmbHeld;
+
+    // Joystick buttons currently held (by raw SDL button index).
+    static std::unordered_set<int> activeJoystickButtons;
+
+    // Normalised trigger axes [-1, 1]. Updated from SDL_JOYAXISMOTION.
+    static float leftTriggerAxis;
+    static float rightTriggerAxis;
+
+    // -------------------------------------------------------
 
     // Must be called every frame to update input state.
     static void Update();

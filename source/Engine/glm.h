@@ -26,7 +26,7 @@
 #include <glm/gtx/vector_angle.hpp>
 
 #ifdef GLM_ARCH_SSE2_BIT
-#pragma message("GLM: SSE2 instructions enabled")
+//#pragma message("GLM: SSE2 instructions enabled")
 #else
 #pragma error("GLM: SSE2 instructions not enabled or not supported on this platform")
 #endif

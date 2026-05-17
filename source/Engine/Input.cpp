@@ -31,6 +31,15 @@ MouseMoveCalculator* Input::mouseMoveCalculator = nullptr;
 SDL_Window* Input::window = nullptr;
 SDL_Joystick* Input::joystick = nullptr;
 
+// Event-driven state
+std::unordered_set<SDL_Scancode> Input::activeKeys;
+bool Input::lmbHeld        = false;
+bool Input::rmbHeld        = false;
+bool Input::mmbHeld        = false;
+std::unordered_set<int> Input::activeJoystickButtons;
+float Input::leftTriggerAxis  = 0.f;
+float Input::rightTriggerAxis = 0.f;
+
 InputAction InputAction::NullAction = InputAction();
 
 // Helper function to compute distance between two glm::vec2 points.
@@ -40,7 +49,6 @@ static float Distance(const glm::vec2& a, const glm::vec2& b) {
 }
 
 void Input::Update() {
-
 
     UpdateMousePosition();
 
@@ -71,14 +79,10 @@ void Input::UpdateMousePosition()
 
     SDL_GetWindowSize(EngineMain::MainInstance->Window, &w, &h);
 
-    glm::vec2 mousePos(static_cast<float>(x), static_cast<float>(y));
+
 
     MouseDelta = PendingMouseDelta / 5.0f * sensitivity * -1.0f;
 
-    mousePos /= vec2(w, h);
-    mousePos *= vec2(EngineMain::MainInstance->ScreenSize.x, EngineMain::MainInstance->ScreenSize.y);
-
-    MousePos = mousePos;
 }
 
 
@@ -101,6 +105,9 @@ void Input::JoystickCamera() {
             // Joystick was disconnected; close and reset
             SDL_JoystickClose(joystick);
             joystick = nullptr;
+            activeJoystickButtons.clear();
+            leftTriggerAxis  = 0.f;
+            rightTriggerAxis = 0.f;
             SDL_Log("Joystick disconnected. Closed and reset reference.");
             return;
         }
@@ -253,7 +260,106 @@ void Input::ReceiveSdlEvent(SDL_Event event)
 
     vec2 UiScreenSize = EngineMain::Viewport.GetSize();
 
-    if (event.type == SDL_FINGERDOWN) 
+    int w, h;
+    SDL_GetWindowSize(EngineMain::MainInstance->Window, &w, &h);
+
+    // ------------------------------------------------------------------
+    // Keyboard — event-driven, repeat events are intentionally ignored.
+    // SDL fires SDL_KEYDOWN repeatedly while a key is held (OS key-repeat).
+    // We only act on the first physical press (repeat == 0) and the release.
+    // ------------------------------------------------------------------
+    if (event.type == SDL_KEYDOWN)
+    {
+        if (event.key.repeat == 0)
+        {
+            // First physical press — mark as held.
+            activeKeys.insert(event.key.keysym.scancode);
+        }
+        // repeat != 0 → key-repeat spam, ignore entirely.
+    }
+    else if (event.type == SDL_KEYUP)
+    {
+        activeKeys.erase(event.key.keysym.scancode);
+    }
+    else if (event.type == SDL_MOUSEMOTION)
+    {
+        MousePos.x = static_cast<float>(event.motion.x);
+        MousePos.y = static_cast<float>(event.motion.y);
+
+        glm::vec2 mousePos = MousePos;
+        mousePos /= vec2(w, h);
+        mousePos *= vec2(EngineMain::MainInstance->ScreenSize.x, EngineMain::MainInstance->ScreenSize.y);
+
+        MousePos = mousePos;
+
+    }
+
+    // ------------------------------------------------------------------
+    // Mouse buttons — event-driven.
+    // Mouse *movement* is intentionally left to the external handler.
+    // ------------------------------------------------------------------
+    else if (event.type == SDL_MOUSEBUTTONDOWN)
+    {
+        if (event.button.button == SDL_BUTTON_LEFT)   lmbHeld = true;
+        if (event.button.button == SDL_BUTTON_RIGHT)  rmbHeld = true;
+        if (event.button.button == SDL_BUTTON_MIDDLE) mmbHeld = true;
+    }
+    else if (event.type == SDL_MOUSEBUTTONUP)
+    {
+        if (event.button.button == SDL_BUTTON_LEFT)   lmbHeld = false;
+        if (event.button.button == SDL_BUTTON_RIGHT)  rmbHeld = false;
+        if (event.button.button == SDL_BUTTON_MIDDLE) mmbHeld = false;
+    }
+
+    // ------------------------------------------------------------------
+    // Joystick buttons — event-driven.
+    // ------------------------------------------------------------------
+    else if (event.type == SDL_JOYBUTTONDOWN)
+    {
+        activeJoystickButtons.insert(static_cast<int>(event.jbutton.button));
+    }
+    else if (event.type == SDL_JOYBUTTONUP)
+    {
+        activeJoystickButtons.erase(static_cast<int>(event.jbutton.button));
+    }
+
+    // ------------------------------------------------------------------
+    // Joystick axes — track trigger axes for LeftTrigger / RightTrigger.
+    // On native SDL the triggers come through as axes; on Emscripten they
+    // are mapped to buttons 6/7, handled above via SDL_JOYBUTTONDOWN/UP.
+    // ------------------------------------------------------------------
+    else if (event.type == SDL_JOYAXISMOTION)
+    {
+#ifndef __EMSCRIPTEN__
+        if (event.jaxis.axis == SDL_CONTROLLER_AXIS_TRIGGERLEFT)
+            leftTriggerAxis = event.jaxis.value / 32767.0f;
+        else if (event.jaxis.axis == SDL_CONTROLLER_AXIS_TRIGGERRIGHT)
+            rightTriggerAxis = event.jaxis.value / 32767.0f;
+#endif
+    }
+
+    // ------------------------------------------------------------------
+    // Window focus lost — release all held keys / buttons so nothing
+    // gets stuck when the window regains focus.
+    // ------------------------------------------------------------------
+    else if (event.type == SDL_WINDOWEVENT)
+    {
+        if (event.window.event == SDL_WINDOWEVENT_FOCUS_LOST)
+        {
+            activeKeys.clear();
+            lmbHeld = false;
+            rmbHeld = false;
+            mmbHeld = false;
+            activeJoystickButtons.clear();
+            leftTriggerAxis  = 0.f;
+            rightTriggerAxis = 0.f;
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Touch
+    // ------------------------------------------------------------------
+    else if (event.type == SDL_FINGERDOWN) 
     {
 
         TouchEvent touchAction;
@@ -441,15 +547,21 @@ InputAction* Input::AddAction(const std::string& actionName) {
 
 void Input::ReleaseAllActions()
 {
-
     MouseDelta = vec2(0);
-    
+
+    // Clear all event-driven state so nothing stays stuck.
+    activeKeys.clear();
+    lmbHeld = false;
+    rmbHeld = false;
+    mmbHeld = false;
+    activeJoystickButtons.clear();
+    leftTriggerAxis  = 0.f;
+    rightTriggerAxis = 0.f;
 
     for (auto action : actions)
     {
         action.second->CleanInput();
     }
-
 }
 
 void Input::RemoveAction(const std::string& actionName)
@@ -548,17 +660,16 @@ float InputAction::GetHoldTime()
 
 void InputAction::Update() {
     bool oldPressing = pressing;
-    pressed = false;
+    pressed  = false;
     released = false;
     pressing = false;
 
-    // Check mouse buttons.
-    int mx, my;
-    Uint32 mouseState = SDL_GetMouseState(&mx, &my);
-    bool newLmb = mouseState & SDL_BUTTON(SDL_BUTTON_LEFT);
-    bool newRmb = mouseState & SDL_BUTTON(SDL_BUTTON_RIGHT);
-    bool newMmb = mouseState & SDL_BUTTON(SDL_BUTTON_MIDDLE);
-
+    // ------------------------------------------------------------------
+    // Mouse buttons — read from event-driven state, not SDL_GetMouseState.
+    // ------------------------------------------------------------------
+    bool newLmb = Input::lmbHeld;
+    bool newRmb = Input::rmbHeld;
+    bool newMmb = Input::mmbHeld;
 
     if (Input::IsScrenTouched)
     {
@@ -567,73 +678,60 @@ void InputAction::Update() {
         newMmb = false;
     }
 
-    if (LMB && newLmb)
-        pressing = true;
-    if (RMB && newRmb)
-        pressing = true;
-    if (MMB && newMmb)
-        pressing = true;
+    if (LMB && newLmb) pressing = true;
+    if (RMB && newRmb) pressing = true;
+    if (MMB && newMmb) pressing = true;
 
-    // Check keyboard keys.
-    const Uint8* keyboardState = SDL_GetKeyboardState(nullptr);
-    for (auto key : keys) {
-        if (keyboardState[key])
+    // ------------------------------------------------------------------
+    // Keyboard — read from event-driven activeKeys set.
+    // Key-repeat spam never reaches here: activeKeys is only updated on
+    // the first physical KEYDOWN (repeat == 0) and cleared on KEYUP.
+    // ------------------------------------------------------------------
+    for (auto key : keys)
+    {
+        if (Input::activeKeys.count(key))
             pressing = true;
     }
 
-    // Check joystick buttons.
-    if (Input::joystick) {
-
-        for (auto button : buttons) 
+    // ------------------------------------------------------------------
+    // Joystick buttons — read from event-driven activeJoystickButtons set.
+    // ------------------------------------------------------------------
+    if (Input::joystick)
+    {
+        for (auto button : buttons)
         {
-
             if (button == GamepadButton::LeftTrigger)
             {
-                auto trigger = SDL_JoystickGetAxis(Input::joystick, SDL_CONTROLLER_AXIS_TRIGGERLEFT);
-                float ltNorm = trigger / 32767.0f;
-
-                bool ltPressed = (ltNorm > 0.3f);
-
-                if(ltPressed)
+                // Native: track via axis value accumulated from SDL_JOYAXISMOTION.
+                if (Input::leftTriggerAxis > 0.3f)
                     pressing = true;
 
-#if __EMSCRIPTEN__
-
-                if (SDL_JoystickGetButton(Input::joystick, 6))
+#ifdef __EMSCRIPTEN__
+                // Emscripten: triggers are mapped to buttons 6/7.
+                if (Input::activeJoystickButtons.count(6))
                     pressing = true;
-
-#endif // __EMSCRIPTEN__
-
-
+#endif
                 continue;
             }
 
             if (button == GamepadButton::RightTrigger)
             {
-                auto trigger = SDL_JoystickGetAxis(Input::joystick, SDL_CONTROLLER_AXIS_TRIGGERRIGHT);
-                float rtNorm = trigger / 32767.0f;
-
-
-                bool ltPressed = (rtNorm > 0.3f);
-
-                if (ltPressed)
+                if (Input::rightTriggerAxis > 0.3f)
                     pressing = true;
 
-#if __EMSCRIPTEN__
-
-                if (SDL_JoystickGetButton(Input::joystick, 7))
+#ifdef __EMSCRIPTEN__
+                if (Input::activeJoystickButtons.count(7))
                     pressing = true;
-
-#endif // __EMSCRIPTEN__
-
+#endif
                 continue;
             }
 
-            if (SDL_JoystickGetButton(Input::joystick, (int)button))
+            if (Input::activeJoystickButtons.count(static_cast<int>(button)))
                 pressing = true;
         }
     }
 
+    // Derive pressed / released from the transition.
     if (pressing && !oldPressing) {
         pressed = true;
         pressedTime = Time::GameTimeNoPause;
@@ -645,9 +743,9 @@ void InputAction::Update() {
 
 void InputAction::CleanInput()
 {
-    pressed = false;
-    pressing = false;
-    released = false;
+    pressed   = false;
+    pressing  = false;
+    released  = false;
     pressedTime = -100000;
 }
 
