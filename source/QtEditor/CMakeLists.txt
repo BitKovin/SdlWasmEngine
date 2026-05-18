@@ -46,7 +46,10 @@ qt_add_executable(QtEditor
     EngineViewportWidget.h
     EngineInstance.h
     EngineInstance.cpp
-    ${GAME_SOURCES}
+    Entities/GameStart.cpp
+    Entities/FreeCamera.cpp
+    Entities/EditorCore.cpp
+    #${GAME_SOURCES}
 )
 target_include_directories(QtEditor
     PUBLIC "${GAME_DIR}"

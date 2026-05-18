@@ -399,7 +399,15 @@ void Input::ReceiveSdlEvent(SDL_Event event)
     else if (event.type == SDL_MOUSEWHEEL) 
     {
 
-        MouseScrollDelta += event.wheel.preciseY;
+        if(event.wheel.preciseY == 0 && event.wheel.y != 0)
+        {
+                    MouseScrollDelta += event.wheel.y;
+        }
+        else
+        {
+            MouseScrollDelta += event.wheel.preciseY;
+        }
+
     }
 }
 

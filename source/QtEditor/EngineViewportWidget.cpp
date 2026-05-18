@@ -331,22 +331,25 @@ void EngineViewportWidget::wheelEvent(QWheelEvent* event)
 {
     QWidget::wheelEvent(event);
 
-    // Qt reports scroll in eighths of a degree; 120 units == one "notch".
-    // Map to SDL's integer notch count (positive = away from user).
-    const QPoint angleDelta = event->angleDelta();
-    const int sdlX =  angleDelta.x() / 120;
-    const int sdlY =  angleDelta.y() / 120; // positive = up = away from user
+    const QPoint angle = event->angleDelta();
 
-    if (sdlX == 0 && sdlY == 0)
+    if (angle.isNull())
         return;
 
     SDL_Event sdlEvent{};
-    sdlEvent.type               = SDL_MOUSEWHEEL;
-    sdlEvent.wheel.timestamp    = SDL_GetTicks();
-    sdlEvent.wheel.windowID     = EngineInstance::get().sdlWindowId();
-    sdlEvent.wheel.which        = 0;
-    sdlEvent.wheel.x            = sdlX;
-    sdlEvent.wheel.y            = sdlY;
-    sdlEvent.wheel.direction    = SDL_MOUSEWHEEL_NORMAL;
+    sdlEvent.type = SDL_MOUSEWHEEL;
+    sdlEvent.wheel.timestamp = SDL_GetTicks();
+    sdlEvent.wheel.windowID = EngineInstance::get().sdlWindowId();
+    sdlEvent.wheel.which = 0;
+    sdlEvent.wheel.direction = SDL_MOUSEWHEEL_NORMAL;
+
+    // Integer "notches"
+    sdlEvent.wheel.x = angle.x() / 120;
+    sdlEvent.wheel.y = angle.y() / 120;
+
+    // Precise continuous values (this is the important part)
+    sdlEvent.wheel.preciseX = static_cast<float>(angle.x()) / 120.0f;
+    sdlEvent.wheel.preciseY = static_cast<float>(angle.y()) / 120.0f;
+
     SDL_PushEvent(&sdlEvent);
 }
