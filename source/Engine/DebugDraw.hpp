@@ -101,7 +101,7 @@ public:
 
 	static void Point(vec3     position,
 		float    duration = 0.1f,
-		float    thickness = 0.02f,
+        float    radius = 0.3f,
 		uint32_t color = DebugColor::Red);
 
     static void Bounds(vec3     min,

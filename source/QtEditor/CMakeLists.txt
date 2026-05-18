@@ -36,20 +36,24 @@ file(GLOB_RECURSE GAME_SOURCES "${GAME_DIR}/*.cpp")
 find_package(Qt6 6.5 REQUIRED COMPONENTS Core Widgets)
 qt_standard_project_setup()
 
+# Recursively collect sources, headers, and UI files
+file(GLOB_RECURSE QTEDITOR_SOURCES
+    CONFIGURE_DEPENDS
+    "*.cpp"
+    "*.h"
+    "*.ui"
+)
+
+# Filter out:
+# - anything inside a build directory
+# - hidden directories/files starting with '.'
+list(FILTER QTEDITOR_SOURCES EXCLUDE REGEX [[(^|/)\.]])
+list(FILTER QTEDITOR_SOURCES EXCLUDE REGEX [[(^|/)build(/|$)]])
+
 qt_add_executable(QtEditor
-    WIN32 MACOSX_BUNDLE
-    main.cpp
-    mainwindow.cpp
-    mainwindow.h
-    mainwindow.ui
-    EngineViewportWidget.cpp
-    EngineViewportWidget.h
-    EngineInstance.h
-    EngineInstance.cpp
-    Entities/GameStart.cpp
-    Entities/FreeCamera.cpp
-    Entities/EditorCore.cpp
-    #${GAME_SOURCES}
+    WIN32
+    MACOSX_BUNDLE
+    ${QTEDITOR_SOURCES}
 )
 target_include_directories(QtEditor
     PUBLIC "${GAME_DIR}"

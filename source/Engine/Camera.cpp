@@ -4,7 +4,7 @@
 #include <limits>
 #include "MathHelper.hpp"
 #include <SDL2/SDL_video.h>
-#include <UI/UiManager.h>
+#include <EngineMain.h>
 
 #include <World/WorldOrientationManager.h>
 
@@ -136,8 +136,8 @@
     vec3 Camera::GetRayDirectionFromScreenPosition(vec2 cursorPosition)
     {
         // Screen size
-        float width = UiManager::GetScaledUiHeight() * Camera::AspectRatio;
-        float height = UiManager::GetScaledUiHeight();
+        float width = EngineMain::MainInstance->ScreenSize.x;
+        float height = EngineMain::MainInstance->ScreenSize.y;
 
         // Convert to Normalized Device Coordinates (-1 -> 1)
         float x = (2.0f * cursorPosition.x) / width - 1.0f;

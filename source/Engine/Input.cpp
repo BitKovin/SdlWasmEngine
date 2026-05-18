@@ -286,12 +286,6 @@ void Input::ReceiveSdlEvent(SDL_Event event)
         MousePos.x = static_cast<float>(event.motion.x);
         MousePos.y = static_cast<float>(event.motion.y);
 
-        glm::vec2 mousePos = MousePos;
-        mousePos /= vec2(w, h);
-        mousePos *= vec2(EngineMain::MainInstance->ScreenSize.x, EngineMain::MainInstance->ScreenSize.y);
-
-        MousePos = mousePos;
-
     }
 
     // ------------------------------------------------------------------
