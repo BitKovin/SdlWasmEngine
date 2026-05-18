@@ -607,6 +607,7 @@ void EngineInstance::onWidgetResized(int w, int h)
 // tick
 // ─────────────────────────────────────────────────────────────────────────────
 
+bool wasCursorLocked = false;
 
 void EngineInstance::tick()
 {
@@ -633,12 +634,11 @@ void EngineInstance::tick()
         {
             QCursor::setPos(globalCenter);
 
-            // Subtract the snap from the accumulated delta so the
-            // warp itself doesn't register as camera motion next tick.
-            Input::PendingMouseDelta = vec2(delta.x(), delta.y());
+            if(wasCursorLocked)
+                Input::PendingMouseDelta = vec2(delta.x(), delta.y());
         }
     }
-
+    wasCursorLocked = Input::LockCursor;
     m_engine->MainLoop();
 }
 

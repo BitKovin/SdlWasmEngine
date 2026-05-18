@@ -48,7 +48,10 @@ public:
 
         Camera::position += movement * Time::DeltaTimeF * speed;
 
-        speed += Input::MouseScrollDelta;
+        float scrollDelta = Input::MouseScrollDelta;
+
+        speed *= std::pow(1.1f, scrollDelta);
+
     }
 
 private:

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1019</width>
-    <height>593</height>
+    <width>1077</width>
+    <height>658</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -58,7 +58,7 @@ QMainWindow::separator {
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1019</width>
+     <width>1077</width>
      <height>21</height>
     </rect>
    </property>
@@ -109,6 +109,18 @@ QMainWindow::separator {
      </item>
     </layout>
    </widget>
+  </widget>
+  <widget class="QDockWidget" name="dockWidget_3">
+   <attribute name="dockWidgetArea">
+    <number>2</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_3"/>
+  </widget>
+  <widget class="QDockWidget" name="dockWidget_4">
+   <attribute name="dockWidgetArea">
+    <number>8</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_4"/>
   </widget>
   <action name="actionNew">
    <property name="text">
