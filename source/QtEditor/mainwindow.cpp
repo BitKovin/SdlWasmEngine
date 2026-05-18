@@ -1,5 +1,8 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include <QDebug>
+
+#include "Entities/EditorExternalData.h"
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
@@ -15,3 +18,33 @@ MainWindow::~MainWindow()
 {
     delete ui;
 }
+
+void MainWindow::onSnapToGridChanged(bool value)
+{
+
+}
+
+void MainWindow::on_snapToGrid_toggle_toggled(bool checked)
+{
+    EditorExternalData::SnapToGrid = checked;
+}
+
+
+void MainWindow::on_snapToGrid_select_currentIndexChanged(int index)
+{
+    float values[] = {
+        0.1f,
+        0.25f,
+        0.5f,
+        1.0f,
+        2.0f,
+        5.0f,
+        10.0f,
+        25.0f,
+        50.0f
+    };
+
+    EditorExternalData::GridSpacing = values[index];
+
+}
+

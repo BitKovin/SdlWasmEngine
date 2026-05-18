@@ -130,6 +130,32 @@ else()
 endif()
 
 # ——————————————————————————————————————————————————————————
+# Dynamic CRT override — /MD instead of /MT.
+# Must be set by the consumer BEFORE add_subdirectory() on
+# the engine.  The Qt editor sets this ON because Qt is
+# always built against the dynamic CRT.
+# Has no effect on non-MSVC toolchains or standalone builds.
+# ——————————————————————————————————————————————————————————
+option(ENGINE_USE_DYNAMIC_RUNTIME
+    "Use /MD (dynamic CRT) for MSVC. Required when linking with Qt." OFF)
+
+if(MSVC AND ENGINE_USE_DYNAMIC_RUNTIME)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL"
+        CACHE STRING "MSVC runtime library" FORCE)
+    foreach(_lang C CXX)
+        foreach(_cfg "" _DEBUG _RELEASE _MINSIZEREL _RELWITHDEBINFO)
+            set(_var "CMAKE_${_lang}_FLAGS${_cfg}")
+            string(REPLACE "/MTd" "/MDd" ${_var} "${${_var}}")
+            string(REPLACE "/MT"  "/MD"  ${_var} "${${_var}}")
+            set(${_var} "${${_var}}" CACHE STRING "" FORCE)
+        endforeach()
+    endforeach()
+    # Jolt explicitly controls its own CRT via this option — must override it too.
+    set(USE_STATIC_MSVC_RUNTIME_LIBRARY OFF CACHE BOOL "" FORCE)
+    message(STATUS "ENGINE_USE_DYNAMIC_RUNTIME ON — using /MD (dynamic CRT)")
+endif()
+
+# ——————————————————————————————————————————————————————————
 # Hook 1 — early platform compile config
 # (compiler flags, sysroot includes, pthread compile option …)
 # ——————————————————————————————————————————————————————————

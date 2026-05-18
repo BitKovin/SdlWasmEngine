@@ -8,12 +8,14 @@
 #include <array>
 #include <algorithm>
 #include <cmath>
+#include "EditorExternalData.h"
 
 class EditorCore : public Entity
 {
 public:
     EditorCore();
     ~EditorCore();
+
 
     StaticMesh* mesh = nullptr;
 
@@ -116,18 +118,33 @@ public:
         return c;
     }
 
+
+    void adjustToCamera(vec3& point)
+    {
+
+        vec3 toCamera = normalize(point - Camera::position);
+
+        point -= toCamera*0.2f;
+
+    }
+
     // ─── Debug drawing ─────────────────────────────────────────────────────────
 
     void DrawBox(vec3 min, vec3 max)
     {
+        adjustToCamera(min);
+        adjustToCamera(max);
         DebugDraw::Bounds(min, max, 0.01f, 0.1f, DebugColor::Green);
     }
     void DrawPoint(vec3 p)
     {
+        adjustToCamera(p);
         DebugDraw::Point(p, 0.01f, 0.05f, DebugColor::Green);
     }
     void DrawLine(vec3 s, vec3 e)
     {
+        adjustToCamera(s);
+        adjustToCamera(e);
         DebugDraw::Line(s, e, 0.01f, 0.1f, DebugColor::Green);
     }
 
@@ -182,12 +199,13 @@ public:
     void LateUpdate()
     {
         mesh->Position = Camera::position;
-        DrawGroundGrid(Camera::position);
     }
 
     void Update()
     {
         Entity::Update();
+
+        DrawGroundGrid(Camera::position);
 
         const bool lmbPressed  = Input::GetAction("click")->Pressed();
         const bool lmbHolding  = Input::GetAction("click")->Holding();
@@ -210,8 +228,8 @@ public:
             {
                 planeOrigin  = hit.hitPosition;
                 planeNormal  = hit.hitNormal;
-                dragStart    = hit.hitPosition;
-                dragCurrent  = hit.hitPosition;
+                dragStart    = SnapToGridPoint(hit.hitPosition); // ← snapped
+                dragCurrent  = dragStart;                        // ← keep in sync
                 extrudeDepth = 0.0f;
                 hasDragged   = false;
                 brushState   = BrushState::BuildingBrush;
@@ -227,7 +245,7 @@ public:
             {
                 SimpleHit ph = RayCastPlane(rayOrigin, rayDir, planeOrigin, planeNormal);
                 if (ph.hasHit)
-                    dragCurrent = ph.hitPosition;
+                    dragCurrent = SnapToGridPoint(ph.hitPosition); // ← snapped
 
                 if (glm::length(dragCurrent - dragStart) > 0.05f)
                     hasDragged = true;
@@ -271,9 +289,8 @@ public:
             SimpleHit hit = SimpleRayCast(rayOrigin, rayDir);
 
             if (lmbPressed && hit.hasHit)
-                hullPoints.push_back(hit.hitPosition);
+                hullPoints.push_back(SnapToGridPoint(hit.hitPosition)); // ← snapped
 
-            // "submit" action finalises the convex mesh
             if (Input::GetAction("submit")->Released())
             {
                 Submit();
@@ -306,7 +323,7 @@ public:
     void DrawGroundGrid(const vec3& cameraPos)
     {
         const float gridSize = 50.0f;
-        const float spacing  = 1.0f;
+        const float spacing  = EditorExternalData::GridSpacing;
         const float y        = 0.0f;
 
         float cx = std::floor(cameraPos.x / spacing) * spacing;
@@ -322,6 +339,18 @@ public:
     }
 
 private:
+
+    vec3 SnapToGridPoint(vec3 p) const
+    {
+        if (!EditorExternalData::SnapToGrid) return p;
+        float s = EditorExternalData::GridSpacing;
+        return vec3(
+            std::round(p.x / s) * s,
+            p.y,                        // keep raw Y — extrusion handles height
+            std::round(p.z / s) * s
+            );
+    }
+
 };
 
 REGISTER_ENTITY(EditorCore, "editorCore")

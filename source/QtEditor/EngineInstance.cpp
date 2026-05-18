@@ -622,7 +622,7 @@ void EngineInstance::tick()
     }
 
     QWidget* widget = m_activeWidget;
-    if (Input::LockCursor && widget && widget->hasFocus())
+    if (Input::LockCursor && widget)
     {
         QPoint center      = widget->rect().center();
         QPoint globalCenter = widget->mapToGlobal(center);
