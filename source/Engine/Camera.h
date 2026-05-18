@@ -60,6 +60,8 @@ public:
 	static void ViewportUpdate(int clientWidth, int clientHeight, float uiViewportHeight);
 	static void Follow(const vec3& targetPosition);
 
+	static vec3 GetRayDirectionFromScreenPosition(vec2 cursorPosition);
+
 private:
 	static void StupidCameraFix();
 };

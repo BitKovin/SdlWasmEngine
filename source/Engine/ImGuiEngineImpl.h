@@ -4,6 +4,7 @@
 #include "imgui/imgui_impl_sdl2.h"
 #include "imgui/imgui_impl_bgfx.h"
 #include "Input.h"
+#include <imgui/ImGuizmo.h>
 #include "gl.h"
 
 inline void ImStartFrame()
@@ -25,11 +26,13 @@ inline void ImStartFrame()
     ImGui_ImplSDL2_NewFrame();      // ← stays the same
     ImGui_Implbgfx_NewFrame();      // ← was ImGui_ImplOpenGL3_NewFrame()
 
+
     ImGui::NewFrame();
+    ImGuizmo::BeginFrame();
 
     ImGui::PushStyleColor(ImGuiCol_DockingEmptyBg, ImVec4(0, 0, 0, 0));
     ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0, 0, 0, 0));
-    ImGui::DockSpaceOverViewport();
+    ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
     ImGui::PopStyleColor(2);
 }
 

@@ -4,6 +4,7 @@
 #include <limits>
 #include "MathHelper.hpp"
 #include <SDL2/SDL_video.h>
+#include <UI/UiManager.h>
 
 #include <World/WorldOrientationManager.h>
 
@@ -130,6 +131,29 @@
 
     void Camera::Follow(const vec3& targetPosition) {
         position = targetPosition;
+    }
+
+    vec3 Camera::GetRayDirectionFromScreenPosition(vec2 cursorPosition)
+    {
+        // Screen size
+        float width = UiManager::GetScaledUiHeight() * Camera::AspectRatio;
+        float height = UiManager::GetScaledUiHeight();
+
+        // Convert to Normalized Device Coordinates (-1 -> 1)
+        float x = (2.0f * cursorPosition.x) / width - 1.0f;
+        float y = 1.0f - (2.0f * cursorPosition.y) / height;
+
+        // Clip space ray
+        vec4 rayClip = vec4(x, y, -1.0f, 1.0f);
+
+        // Eye space
+        vec4 rayEye = inverse(projection) * rayClip;
+        rayEye = vec4(rayEye.x, rayEye.y, -1.0f, 0.0f);
+
+        // World space
+        vec3 rayWorld = normalize(vec3(inverse(CalculateView()) * rayEye));
+
+        return rayWorld;
     }
 
     // --- CameraShake Implementation ---

@@ -2,6 +2,7 @@
 #include <Camera.h>
 #include <Input.h>
 #include <imgui.h>
+#include <imgui/imgui_internal.h>
 
 class FreeCamera : public Entity
 {
@@ -16,7 +17,8 @@ public:
 
 		if (Input::GetAction("rmb")->Holding() == false) return;
 
-		ImGui::SetKeyboardFocusHere(-1);
+		if(ImGui::GetCurrentContext()->CurrentWindow)
+			ImGui::SetKeyboardFocusHere(-1);
 
 		vec2 input = Input::GetLeftStickPosition();
 

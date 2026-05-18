@@ -83,6 +83,7 @@ void EngineInstance::initialize()
     m_engine = new EngineMain(m_sdlWindow);
     EngineMain::MainInstance = m_engine;
     m_engine->asyncGameUpdate = false;
+    m_engine->DebugUiEnabled = true;
     m_engine->Init();
 
     m_timer = new QTimer(this);
@@ -614,6 +615,8 @@ void EngineInstance::tick()
     SDL_Event event;
     while (SDL_PollEvent(&event))
     {
+        if (EngineMain::MainInstance->DebugUiEnabled)
+            ImGui_ImplSDL2_ProcessEvent(&event);
         Input::ReceiveSdlEvent(event);
     }
 
@@ -693,6 +696,8 @@ void EngineInstance::initBgfx(int w, int h)
 
     if (!bgfx::init(init))
         qFatal("bgfx::init failed");
+
+    bgfx::setDebug(BGFX_DEBUG_NONE);
 
     bgfx::setViewClear(0,   BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x000000ff, 1.0f, 0);
     bgfx::setViewRect (0,   0, 0, (uint16_t)w, (uint16_t)h);
