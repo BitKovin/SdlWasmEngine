@@ -78,6 +78,26 @@ public:
 
     std::vector<vec3> hullPoints;
 
+    // ─── Select Drag State ─────────────────────────────────────────────────────
+    struct SelectDragState {
+        bool active = false;
+        bool isGrowing = false;
+
+        vec3 hitNormal{};
+
+        // For moving brushes
+        vec3 planeOrigin{};
+        vec3 planeNormal{};
+        vec3 lastDragPosOnPlane{};
+        vec3 lastDragPosXZ{};
+        float lastDragPosY = 0.0f;
+
+        // For growing faces / vertical movement projection
+        vec3 extrudePlaneNormal{};
+        vec3 extrudeAnchor{};
+        float totalPushed = 0.0f;
+    } selectDrag;
+
     // ─── Geometry helpers ──────────────────────────────────────────────────────
 
     void GetPlaneBasis(vec3& t1, vec3& t2) const
@@ -295,30 +315,156 @@ public:
     // ─── Mode handlers ─────────────────────────────────────────────────────────
 
     // ── Select mode ───────────────────────────────────────────────────────────
-    //
-    // LMB click (no shift) → select the clicked brush.
-    // LMB click (shift)    → select the specific face that was clicked.
-    //
-    // Selection is performed against the raw brush renderData geometry (which
-    // lives in world space and is always current after rebuild()).  The CSG
-    // output is visual-only; the underlying brush faces are the source of truth
-    // for picking purposes.
-    void UpdateSelectMode(bool lmbPressed, bool faceSelectHeld)
+    void UpdateSelectMode(bool lmbPressed, bool lmbReleased, bool lmbHolding,
+                          bool altHolding, bool faceSelectHeld,
+                          vec3 rayOrigin, vec3 rayDir)
     {
-
-        if(Input::GetAction("delete")->Released())
+        if (Input::GetAction("delete")->Released())
         {
-
             auto selected = level_.selection();
-
             for (auto& id : selected.brushIds)
             {
                 level_.removeBrush(id);
             }
-
+            for (auto const& pair : selected.faceIndices)
+            {
+                level_.removeBrush(pair.first);
+            }
+            level_.deselectAll();
         }
 
+        if (lmbReleased && selectDrag.active)
+        {
+            selectDrag.active = false;
+            return;
+        }
 
+        if (selectDrag.active && lmbHolding)
+        {
+            if (selectDrag.isGrowing)
+            {
+                // Face Operation: Grow (extrude) along face normal
+                float denom = glm::dot(selectDrag.extrudePlaneNormal, rayDir);
+                if (std::abs(denom) > 0.0001f)
+                {
+                    float t = glm::dot(selectDrag.extrudePlaneNormal, selectDrag.extrudeAnchor - rayOrigin) / denom;
+                    if (t >= 0.0f)
+                    {
+                        vec3 worldHit = rayOrigin + rayDir * t;
+                        float raw = glm::dot(worldHit - selectDrag.extrudeAnchor, selectDrag.hitNormal);
+                        float snappedDepth = SnapToGridScalar(raw);
+                        float delta = snappedDepth - selectDrag.totalPushed;
+
+                        if (std::abs(delta) > 0.001f)
+                        {
+                            auto selected = level_.selection();
+                            for (auto const& pair : selected.faceIndices) {
+                                for (uint32_t faceIdx : pair.second) {
+                                    level_.pushFace(pair.first, faceIdx, delta);
+                                }
+                            }
+                            selectDrag.totalPushed = snappedDepth;
+                            level_.rebuild();
+                            level_.rebuildCSG();
+                        }
+                    }
+                }
+            }
+            else
+            {
+                // Brush Operation: Translate whole brush/face hierarchies
+                if (altHolding)
+                {
+                    // Move vertically only (along Y axis)
+                    float denom = glm::dot(selectDrag.extrudePlaneNormal, rayDir);
+                    if (std::abs(denom) > 0.0001f)
+                    {
+                        float t = glm::dot(selectDrag.extrudePlaneNormal, selectDrag.extrudeAnchor - rayOrigin) / denom;
+                        if (t >= 0.0f)
+                        {
+                            vec3 worldHit = rayOrigin + rayDir * t;
+                            vec3 snappedHit = SnapToGridPoint(worldHit);
+                            float deltaY = snappedHit.y - selectDrag.lastDragPosY;
+
+                            if (std::abs(deltaY) > 0.001f)
+                            {
+                                vec3 delta = vec3(0.0f, deltaY, 0.0f);
+                                auto selected = level_.selection();
+                                std::vector<uint32_t> brushesToMove;
+
+                                for (auto id : selected.brushIds) brushesToMove.push_back(id);
+                                for (auto const& pair : selected.faceIndices) {
+                                    if (std::find(brushesToMove.begin(), brushesToMove.end(), pair.first) == brushesToMove.end()) {
+                                        brushesToMove.push_back(pair.first);
+                                    }
+                                }
+
+                                for (auto id : brushesToMove) {
+                                    if (auto* b = level_.findBrush(id)) {
+                                        b->translateBy(delta);
+                                    }
+                                }
+
+                                selectDrag.lastDragPosY = snappedHit.y;
+
+                                // Sync horizontal anchor plane to avoid jumps when Alt is released
+                                SimpleHit xzHit = RayCastPlane(rayOrigin, rayDir, selectDrag.planeOrigin, vec3(0, 1, 0));
+                                if (xzHit.hasHit) {
+                                    selectDrag.lastDragPosXZ = SnapToGridPoint(xzHit.hitPosition);
+                                }
+
+                                level_.rebuild();
+                                level_.rebuildCSG();
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    // Move horizontally only (along XZ plane)
+                    SimpleHit hit = RayCastPlane(rayOrigin, rayDir, selectDrag.planeOrigin, vec3(0, 1, 0));
+                    if (hit.hasHit)
+                    {
+                        vec3 currentPos = SnapToGridPoint(hit.hitPosition);
+                        vec3 delta = vec3(currentPos.x - selectDrag.lastDragPosXZ.x, 0.0f, currentPos.z - selectDrag.lastDragPosXZ.z);
+                        if (glm::length(delta) > 0.001f)
+                        {
+                            auto selected = level_.selection();
+                            std::vector<uint32_t> brushesToMove;
+
+                            for (auto id : selected.brushIds) brushesToMove.push_back(id);
+                            for (auto const& pair : selected.faceIndices) {
+                                if (std::find(brushesToMove.begin(), brushesToMove.end(), pair.first) == brushesToMove.end()) {
+                                    brushesToMove.push_back(pair.first);
+                                }
+                            }
+
+                            for (auto id : brushesToMove) {
+                                if (auto* b = level_.findBrush(id)) {
+                                    b->translateBy(delta);
+                                }
+                            }
+
+                            selectDrag.lastDragPosXZ = currentPos;
+
+                            // Sync vertical tracking depth anchor to avoid jumps when Alt is pressed
+                            float denom = glm::dot(selectDrag.extrudePlaneNormal, rayDir);
+                            if (std::abs(denom) > 0.0001f) {
+                                float t = glm::dot(selectDrag.extrudePlaneNormal, selectDrag.extrudeAnchor - rayOrigin) / denom;
+                                if (t >= 0.0f) {
+                                    vec3 worldHit = rayOrigin + rayDir * t;
+                                    selectDrag.lastDragPosY = SnapToGridPoint(worldHit).y;
+                                }
+                            }
+
+                            level_.rebuild();
+                            level_.rebuildCSG();
+                        }
+                    }
+                }
+            }
+            return;
+        }
 
         if (!lmbPressed) return;
 
@@ -327,7 +473,6 @@ public:
 
         if (!hit)
         {
-            // Clicked empty space → clear selection.
             level_.deselectAll();
             lastHit_.reset();
             return;
@@ -335,46 +480,113 @@ public:
 
         lastHit_ = hit;
 
-        if (faceSelectHeld)
+        auto selected = level_.selection();
+        // Disambiguate Face operations from Brush operations to prevent input mapping conflicts
+        bool isFaceOp = faceSelectHeld || (!selected.faceIndices.empty() && selected.brushIds.empty());
+
+        if (isFaceOp)
         {
-            // ── Face selection ────────────────────────────────────────────────
-            // selectFace deselects everything else (additive=false) then marks
-            // both the face and its parent brush as selected so the UI knows
-            // which brush owns the selection.
-            level_.selectFace(hit->brushId, hit->faceIndex, /*additive=*/false);
+            if (altHolding)
+            {
+                // Face operation path: setup face extrusion selection
+                bool alreadySelected = false;
+                auto it = selected.faceIndices.find(hit->brushId);
+                if (it != selected.faceIndices.end() && it->second.count(hit->faceIndex)) {
+                    alreadySelected = true;
+                }
+
+                if (!alreadySelected) {
+                    level_.selectFace(hit->brushId, hit->faceIndex, /*additive=*/false);
+                }
+
+                selectDrag.active = true;
+                selectDrag.isGrowing = true;
+                selectDrag.hitNormal = hit->normal;
+                selectDrag.totalPushed = 0.0f;
+                selectDrag.extrudeAnchor = hit->position;
+
+                vec3 toCamera = glm::normalize(Camera::position - selectDrag.extrudeAnchor);
+                vec3 helperNormal = toCamera - selectDrag.hitNormal * glm::dot(toCamera, selectDrag.hitNormal);
+                float len = glm::length(helperNormal);
+
+                if (len < 0.001f) {
+                    vec3 up = (std::abs(selectDrag.hitNormal.y) < 0.9f) ? vec3(0,1,0) : vec3(1,0,0);
+                    helperNormal = glm::normalize(glm::cross(selectDrag.hitNormal, up));
+                } else {
+                    helperNormal /= len;
+                }
+                selectDrag.extrudePlaneNormal = helperNormal;
+            }
+            else
+            {
+                // Normal face selection selection logic
+                bool alreadySelected = false;
+                auto it = selected.faceIndices.find(hit->brushId);
+                if (it != selected.faceIndices.end() && it->second.count(hit->faceIndex)) {
+                    alreadySelected = true;
+                }
+
+                if (!alreadySelected) {
+                    level_.selectFace(hit->brushId, hit->faceIndex, /*additive=*/false);
+                }
+
+                // Setup baseline anchors for dragging its parent brush structures
+                selectDrag.active = true;
+                selectDrag.isGrowing = false;
+                selectDrag.planeOrigin = hit->position;
+                selectDrag.planeNormal = vec3(0, 1, 0);
+                selectDrag.lastDragPosXZ = SnapToGridPoint(hit->position);
+                selectDrag.lastDragPosY = SnapToGridPoint(hit->position).y;
+
+                vec3 toCamera = glm::normalize(Camera::position - hit->position);
+                vec3 vHelper = toCamera - vec3(0, 1, 0) * glm::dot(toCamera, vec3(0, 1, 0));
+                float vLen = glm::length(vHelper);
+                selectDrag.extrudePlaneNormal = (vLen < 0.001f) ? vec3(1,0,0) : vHelper / vLen;
+                selectDrag.extrudeAnchor = hit->position;
+            }
         }
         else
         {
-            // ── Brush selection ───────────────────────────────────────────────
-            level_.selectBrush(hit->brushId, /*additive=*/false);
+            // Brush operation path: setup standard moving constraints
+            bool alreadySelected = selected.brushIds.count(hit->brushId) > 0;
+            if (!alreadySelected) {
+                level_.selectBrush(hit->brushId, /*additive=*/false);
+            }
+
+            selectDrag.active = true;
+            selectDrag.isGrowing = false;
+            selectDrag.planeOrigin = hit->position;
+            selectDrag.planeNormal = vec3(0, 1, 0); // Enforce XZ plane alignment for normal drag operations
+            selectDrag.lastDragPosXZ = SnapToGridPoint(hit->position);
+            selectDrag.lastDragPosY = SnapToGridPoint(hit->position).y;
+
+            // Generate camera-aligned vertical helper plane reference
+            vec3 toCamera = glm::normalize(Camera::position - hit->position);
+            vec3 vHelper = toCamera - vec3(0, 1, 0) * glm::dot(toCamera, vec3(0, 1, 0));
+            float vLen = glm::length(vHelper);
+            selectDrag.extrudePlaneNormal = (vLen < 0.001f) ? vec3(1,0,0) : vHelper / vLen;
+            selectDrag.extrudeAnchor = hit->position;
         }
     }
 
     // ── BrushDraw mode ────────────────────────────────────────────────────────
-    //
-    // Same logic as before; extracted into its own method so Update() stays
-    // readable when switching between modes.
     void UpdateBrushDrawMode(bool lmbPressed, bool lmbReleased,
                              bool altHolding, bool altPressed,
                              bool escPressed,
                              vec3 rayOrigin, vec3 rayDir)
     {
-        // Escape cancels whatever is in progress.
         if (escPressed && brushState != BrushState::Idle)
         {
             CancelDraw();
             return;
         }
 
-        // ── Alt extrusion (shared by BuildingBrush and PlacingPoints) ─────────
         const bool canExtrude =
             (brushState == BrushState::BuildingBrush && hasDragged) ||
             (brushState == BrushState::PlacingPoints && hullPoints.size() >= 3);
 
         if (altPressed && canExtrude)
         {
-            // Compute the base anchor as the centroid of the current footprint
-            // so the helper plane is centred on the face being extruded.
             vec3 anchor(0);
             if (brushState == BrushState::BuildingBrush)
             {
@@ -390,15 +602,10 @@ public:
         if (altHolding && canExtrude)
             UpdateExtrude(rayOrigin, rayDir);
 
-        // ── State machine ──────────────────────────────────────────────────────
         switch (brushState)
         {
         case BrushState::Idle:
         {
-            // Raycast against the floor plane to find the drag start point.
-            // If the level already has brushes, we could also raycast against
-            // them here (level_.raycast) to support building on top of existing
-            // geometry — use the floor fallback when nothing is hit.
             editor::Ray ray = MakeMouseRay();
             auto levelHit   = level_.raycast(ray);
 
@@ -450,8 +657,7 @@ public:
                     hullPoints.push_back(dragStart);
                     extrudeDepth = 0.0f;
                     brushState   = BrushState::PlacingPoints;
-
-                    brushState = BrushState::Idle;//temp disable draw using points
+                    brushState = BrushState::Idle;
                 }
                 else
                 {
@@ -489,9 +695,9 @@ public:
 
         DrawLevel();
 
-        // ── Gather input ───────────────────────────────────────────────────────
         const bool lmbPressed      = Input::GetAction("click")->Pressed();
         const bool lmbReleased     = Input::GetAction("click")->Released();
+        const bool lmbHolding      = Input::GetAction("click")->Holding();
         const bool altHolding      = Input::GetAction("growth")->Holding();
         const bool altPressed      = !altWasHeld && altHolding;
         const bool escPressed      = Input::GetAction("esc")->Pressed();
@@ -500,24 +706,18 @@ public:
         vec3 rayOrigin = Camera::position;
         vec3 rayDir    = Camera::GetRayDirectionFromScreenPosition(Input::MousePos);
 
-        // ── Dispatch by external edit mode ─────────────────────────────────────
         switch (EditorExternalData::editMode)
         {
         case EditorExternalData::EditMode::None:
-            // No interaction; still allow deselect on Escape.
             if (escPressed) level_.deselectAll();
             break;
 
         case EditorExternalData::EditMode::Select:
-            // Switching into Select mode from BrushDraw cancels any in-progress draw.
             if (brushState != BrushState::Idle) CancelDraw();
-            UpdateSelectMode(lmbPressed, faceSelectHeld);
+            UpdateSelectMode(lmbPressed, lmbReleased, lmbHolding, altHolding, faceSelectHeld, rayOrigin, rayDir);
             break;
 
         case EditorExternalData::EditMode::BrushDraw:
-            // Switching into BrushDraw mode from Select clears selection.
-            // (Only do this on first entry; track with a flag via brushState==Idle
-            // being the stable resting state for BrushDraw.)
             UpdateBrushDrawMode(lmbPressed, lmbReleased,
                                 altHolding, altPressed,
                                 escPressed, rayOrigin, rayDir);
@@ -527,7 +727,6 @@ public:
 
         altWasHeld = altHolding;
 
-        // ── Rebuild committed geometry ──────────────────────────────────────────
         level_.rebuild();
         level_.rebuildCSG();
 
@@ -556,12 +755,11 @@ private:
     {
         if (!EditorExternalData::SnapToGrid) return p;
         float s = EditorExternalData::GridSpacing;
-        return vec3(std::round(p.x/s)*s, p.y, std::round(p.z/s)*s);
+        return vec3(std::round(p.x/s)*s, std::round(p.y/s)*s, std::round(p.z/s)*s);
     }
 
     void DrawLevel()
     {
-
         auto selected = level_.selection();
 
         for (const editor::Group& g : level_.groups()) {
@@ -569,15 +767,11 @@ private:
             for (const editor::Entity& e : g.entities) {
                 for (const editor::Brush& b : e.brushes) {
 
-
                     auto csgBrush = level_.csgData().find(b.id);
-
                     if(csgBrush == nullptr) continue;
 
                     for(const editor::CSGFace& face : csgBrush->faces)
                     {
-
-
                         auto color = DebugColor::Orange;
 
                         if(b.mode == editor::BrushMode::Subtractive && face.isCap == false)
@@ -591,22 +785,17 @@ private:
                         }
 
                         std::vector<vec3> vertexPositions;
-
                         for (auto& vertex : face.vertices)
                         {
                             vertexPositions.push_back(vertex.position);
                         }
 
                         DebugDraw::IndexedMesh(vertexPositions,face.indices, 0.01f,0.1, color);
-
                     }
-
                 }
             }
         }
-
     }
-
 };
 
 REGISTER_ENTITY(EditorCore, "editorCore")

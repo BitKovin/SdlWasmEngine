@@ -180,9 +180,12 @@ LevelCSGData buildLevelCSG(
 
         std::vector<csg::plane_t> planes;
         planes.reserve(brush->faces.size());
-        for (const Face& face : brush->faces) {
+        for (Face face : brush->faces) {
+            face.plane = face.plane.transformed(brush->transform);
             planes.push_back(tiny_csg_backend::toTinyPlane(face));
         }
+
+
 
         solidBrush->set_planes(planes);
         solidBrush->set_volume_operation(

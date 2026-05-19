@@ -48,7 +48,8 @@ struct Plane {
 
     // Build from a known unit normal and one point on the plane.
     static Plane fromNormalPoint(glm::vec3 normal, glm::vec3 point) noexcept {
-        return { glm::normalize(normal), glm::dot(glm::normalize(normal), point) };
+        normal = glm::normalize(normal);
+        return { normal, glm::dot(normal, point) };
     }
 
     // ── Queries ───────────────────────────────────────────────────────────
@@ -65,6 +66,34 @@ struct Plane {
         return PlaneSide::On;
     }
 
+    // ── Transform ─────────────────────────────────────────────────────────
+    // Transforms the plane by a matrix.
+    //
+    // Uses the inverse-transpose to correctly transform the plane equation:
+    //     n·x = d
+    //
+    // Works with translation, rotation, non-uniform scale, etc.
+    Plane transformed(const glm::mat4& m) const noexcept {
+        // Plane equation as vec4: ax + by + cz + d = 0
+        // Our representation is n·x - dist = 0
+        glm::vec4 plane4(normal, -dist);
+
+        glm::mat4 invTrans = glm::transpose(glm::inverse(m));
+        glm::vec4 transformedPlane = invTrans * plane4;
+
+        glm::vec3 newNormal(transformedPlane);
+        float len = glm::length(newNormal);
+
+        if (len < kEpsilon) {
+            return *this; // degenerate transform
+        }
+
+        newNormal /= len;
+        float newDist = -transformedPlane.w / len;
+
+        return { newNormal, newDist };
+    }
+
     // ── Three-plane intersection ──────────────────────────────────────────
     // Solves the 3×3 linear system via Cramer's rule.
     // Returns nullopt when the determinant is (near-)zero (parallel planes).
@@ -72,9 +101,10 @@ struct Plane {
         glm::vec3 n1 = normal, n2 = b.normal, n3 = c.normal;
         float det = glm::dot(n1, glm::cross(n2, n3));
         if (std::fabs(det) < kEpsilon) return std::nullopt;
+
         return (  dist * glm::cross(n2, n3)
-               + b.dist * glm::cross(n3, n1)
-               + c.dist * glm::cross(n1, n2)) / det;
+                + b.dist * glm::cross(n3, n1)
+                + c.dist * glm::cross(n1, n2)) / det;
     }
 
     // Return the plane with reversed orientation.
