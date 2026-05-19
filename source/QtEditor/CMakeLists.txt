@@ -56,6 +56,9 @@ qt_add_executable(QtEditor
     MACOSX_BUNDLE
     ${QTEDITOR_SOURCES}
 )
+
+message(STATUS "Sources: ${QTEDITOR_SOURCES}")
+
 target_include_directories(QtEditor
     PUBLIC "${GAME_DIR}"
 )

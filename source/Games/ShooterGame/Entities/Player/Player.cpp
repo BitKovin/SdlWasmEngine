@@ -1626,7 +1626,7 @@ void Player::UpdateStamina()
 
 	if (disableStaminaRegenUntilGrounded) return;
 
-	stamina = std::min(stamina + Time::DeltaTimeF * 1.0f, 3.0f);
+	stamina = std::min(stamina + Time::DeltaTimeF * 0.5f, 3.0f);
 
 }
 

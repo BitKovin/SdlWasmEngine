@@ -24,6 +24,9 @@ UiBilboardAtlas::UiBilboardAtlas(ivec2 size)
 
     // initial free space = whole atlas
     freeRects.push_back({ 0, 0, size.x, size.y });
+
+    
+
 }
 
 UiBilboardAtlas::~UiBilboardAtlas()
@@ -147,6 +150,10 @@ void UiBilboard::DrawForward(mat4x4 view, mat4x4 projection)
     if (!allocation.IsValid())
         return;
 
+    auto startState = BgfxStateManager::GetState();
+
+    BgfxStateManager::SetWriteDepth(false);
+
     // Point StaticMesh to the shared atlas texture
     ColorTextureId = (int)allocation.atlas->GetTexture()->textureHandle().idx;
 
@@ -165,6 +172,8 @@ void UiBilboard::DrawForward(mat4x4 view, mat4x4 projection)
     // Let the normal StaticMesh pipeline do the rest (it already knows how to
     // bind the texture we just set and will use the new fs_unlit_rect shader)
     StaticMesh::DrawForward(view, projection);
+
+    BgfxStateManager::SetState(startState);
 }
 
 void UiBilboard::FinalizeFrameData()

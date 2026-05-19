@@ -20,6 +20,7 @@ public:
         Input::AddAction("rmb")->RMB = true;
         Input::AddAction("growth")->AddKeyboardKey(SDL_KeyCode::SDLK_LALT);
         Input::AddAction("submit")->AddKeyboardKey(SDL_KeyCode::SDLK_RETURN);
+        Input::AddAction("faceSelect")->AddKeyboardKey(SDL_KeyCode::SDLK_LSHIFT);
 
         //Level::OpenLevel("GameData/maps/blank.bsp");
 

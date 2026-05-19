@@ -44,7 +44,26 @@ void MainWindow::on_snapToGrid_select_currentIndexChanged(int index)
         50.0f
     };
 
+
     EditorExternalData::GridSpacing = values[index];
 
+}
+
+
+void MainWindow::on_comboBox_currentIndexChanged(int index)
+{
+    EditorExternalData::editMode = (EditorExternalData::EditMode)(index+1);
+}
+
+
+void MainWindow::on_brushMode_currentIndexChanged(int index)
+{
+    EditorExternalData::SubtractiveBrush = index>0;
+}
+
+
+void MainWindow::on_editorMode_currentIndexChanged(int index)
+{
+    EditorExternalData::editMode = (EditorExternalData::EditMode)(index+1);
 }
 

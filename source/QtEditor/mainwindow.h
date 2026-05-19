@@ -21,6 +21,12 @@ private slots:
 
     void on_snapToGrid_select_currentIndexChanged(int index);
 
+    void on_comboBox_currentIndexChanged(int index);
+
+    void on_brushMode_currentIndexChanged(int index);
+
+    void on_editorMode_currentIndexChanged(int index);
+
 private:
     Ui::MainWindow* ui;
 };

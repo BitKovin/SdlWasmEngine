@@ -176,16 +176,22 @@ void DebugDraw::Path(vector<vec3> path,
         Line(path[i - 1], path[i], duration, thickness, color);
 }
 
-void DebugDraw::IndexedMesh(vector<vec3>     vertices,
-                            vector<uint32_t> indices,
-                            float duration, float thickness, uint32_t color)
+void DebugDraw::IndexedMesh(std::vector<vec3> vertices,
+    std::vector<uint32_t> indices,
+    float duration, float thickness, uint32_t color)
 {
-    if (indices.size() < 2) return;
+    if (indices.size() < 3) return;
 
-    // Fixed: original iterated from index 0, producing a zero-length first segment.
-    for (size_t i = 1; i < indices.size(); ++i)
-        Line(vertices[indices[i - 1]], vertices[indices[i]],
-             duration, thickness, color);
+    for (size_t i = 0; i + 2 < indices.size(); i += 3)
+    {
+        const vec3& a = vertices[indices[i + 0]];
+        const vec3& b = vertices[indices[i + 1]];
+        const vec3& c = vertices[indices[i + 2]];
+
+        Line(a, b, duration, thickness, color);
+        Line(b, c, duration, thickness, color);
+        Line(c, a, duration, thickness, color);
+    }
 }
 
 // ─── Frame lifecycle ──────────────────────────────────────────────────────────

@@ -126,6 +126,45 @@ QMainWindow::separator {
          </widget>
         </item>
         <item>
+         <widget class="QComboBox" name="editorMode">
+          <item>
+           <property name="text">
+            <string>Select</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Draw</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Transform</string>
+           </property>
+          </item>
+         </widget>
+        </item>
+        <item>
+         <widget class="QComboBox" name="brushMode">
+          <property name="maximumSize">
+           <size>
+            <width>50</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <item>
+           <property name="text">
+            <string>add</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>sub</string>
+           </property>
+          </item>
+         </widget>
+        </item>
+        <item>
          <spacer name="horizontalSpacer">
           <property name="orientation">
            <enum>Qt::Orientation::Horizontal</enum>
@@ -240,7 +279,7 @@ QMainWindow::separator {
    <property name="minimumSize">
     <size>
      <width>51</width>
-     <height>15</height>
+     <height>34</height>
     </size>
    </property>
    <attribute name="dockWidgetArea">
@@ -252,7 +291,7 @@ QMainWindow::separator {
    <property name="minimumSize">
     <size>
      <width>51</width>
-     <height>15</height>
+     <height>34</height>
     </size>
    </property>
    <attribute name="dockWidgetArea">
