@@ -305,6 +305,21 @@ public:
     // for picking purposes.
     void UpdateSelectMode(bool lmbPressed, bool faceSelectHeld)
     {
+
+        if(Input::GetAction("delete")->Released())
+        {
+
+            auto selected = level_.selection();
+
+            for (auto& id : selected.brushIds)
+            {
+                level_.removeBrush(id);
+            }
+
+        }
+
+
+
         if (!lmbPressed) return;
 
         editor::Ray ray = MakeMouseRay();
@@ -479,7 +494,7 @@ public:
         const bool lmbReleased     = Input::GetAction("click")->Released();
         const bool altHolding      = Input::GetAction("growth")->Holding();
         const bool altPressed      = !altWasHeld && altHolding;
-        const bool escPressed      = Input::GetAction("cancel")->Pressed();
+        const bool escPressed      = Input::GetAction("esc")->Pressed();
         const bool faceSelectHeld  = Input::GetAction("faceSelect")->Holding();
 
         vec3 rayOrigin = Camera::position;
@@ -564,6 +579,11 @@ private:
 
 
                         auto color = DebugColor::Orange;
+
+                        if(b.mode == editor::BrushMode::Subtractive && face.isCap == false)
+                        {
+                            color = DebugColor::Yellow;
+                        }
 
                         if(selected.hasFace(face.sourceBrushId,face.sourceFaceIdx) || selected.hasBrush(face.sourceBrushId))
                         {

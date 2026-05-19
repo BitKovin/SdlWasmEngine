@@ -50,10 +50,13 @@ uint32_t Level::addGroup(Group g) {
 }
 
 void Level::removeGroup(uint32_t groupId) {
+    auto oldSize = groups_.size();
     groups_.erase(
         std::remove_if(groups_.begin(), groups_.end(),
                        [groupId](const Group& g){ return g.id == groupId; }),
         groups_.end());
+    if (groups_.size() != oldSize)
+        csgDirty_ = true;
 }
 
 Group* Level::findGroup(uint32_t groupId) {
@@ -85,8 +88,12 @@ uint32_t Level::addEntity(uint32_t groupId, Entity e) {
 bool Level::removeEntity(uint32_t entityId) {
     for (Group& g : groups_) {
         auto it = std::find_if(g.entities.begin(), g.entities.end(),
-                               [entityId](const Entity& e){ return e.id == entityId; });
-        if (it != g.entities.end()) { g.entities.erase(it); return true; }
+            [entityId](const Entity& e){ return e.id == entityId; });
+        if (it != g.entities.end()) {
+            g.entities.erase(it);
+            csgDirty_ = true;
+            return true;
+        }
     }
     return false;
 }
@@ -119,9 +126,14 @@ uint32_t Level::addBrush(uint32_t entityId, Brush b) {
 }
 
 bool Level::removeBrush(uint32_t brushId) {
-    for (Group& g : groups_)
-        for (Entity& e : g.entities)
-            if (e.removeBrush(brushId)) return true;
+    for (Group& g : groups_) {
+        for (Entity& e : g.entities) {
+            if (e.removeBrush(brushId)) {
+                csgDirty_ = true;
+                return true;
+            }
+        }
+    }
     return false;
 }
 

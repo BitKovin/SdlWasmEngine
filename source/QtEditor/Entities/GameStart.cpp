@@ -16,6 +16,8 @@ public:
         Input::AddAction("backward")->AddKeyboardKey(SDL_KeyCode::SDLK_s);
         Input::AddAction("left")->AddKeyboardKey(SDL_KeyCode::SDLK_a);
         Input::AddAction("right")->AddKeyboardKey(SDL_KeyCode::SDLK_d);
+        Input::AddAction("esc")->AddKeyboardKey(SDL_KeyCode::SDLK_ESCAPE);
+        Input::AddAction("delete")->AddKeyboardKey(SDL_KeyCode::SDLK_DELETE);
 
         Input::AddAction("rmb")->RMB = true;
         Input::AddAction("growth")->AddKeyboardKey(SDL_KeyCode::SDLK_LALT);

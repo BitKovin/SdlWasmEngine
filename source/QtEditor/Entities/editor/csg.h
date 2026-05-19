@@ -36,6 +36,12 @@ namespace editor {
 // ─── CSGFace — one renderable face produced by CSG ───────────────────────────
 // Mirrors FaceMesh but carries the source brush/face indices for picking.
 
+enum class FaceRole {
+    SolidSurface,     // normal visible surface
+    CapSurface,       // cap created by subtraction
+    EditorOnlySurface // subtractive brush mesh itself
+};
+
 struct CSGFace {
     std::vector<BrushVertex> vertices;
     std::vector<uint32_t>    indices;
