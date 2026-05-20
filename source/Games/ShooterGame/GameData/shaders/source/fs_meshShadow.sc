@@ -2,10 +2,10 @@ $input v_texcoord0, v_color0, v_normal, v_world, v_texcoord1, v_tangent, v_bitan
 
 #include <bgfx_shader.sh>
 
-void main() {
+uniform vec4 u_color;
 
-    vec3 finalColor = vec3(0.0, 0.0, 0.0);
-    float alpha = 0.2;
+void main() 
+{
 
-    gl_FragColor = vec4(finalColor, alpha);
+    gl_FragColor = u_color;
 }

@@ -372,6 +372,158 @@ SkinnedModel::~SkinnedModel()
     for (auto& [_, clip] : clips) delete clip;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// PrecomputeBoneBounds
+//
+// Expands a per-bone AABB (in bind-pose MODEL space) over every vertex whose
+// weight for that bone exceeds weightThreshold.
+//
+// Storing the full AABB — not just the single farthest point — is essential:
+// a spine bone influences vertices in front AND behind the torso; discarding
+// all but the farthest in one direction silently drops the opposite extreme.
+//
+// No glm::inverse() needed here; we no longer need the bone's world origin.
+// BlendWeights is glm::vec4; glm::value_ptr gives float* for uniform k-indexing.
+// ─────────────────────────────────────────────────────────────────────────────
+
+void SkinnedModel::PrecomputeBoneBounds(float weightThreshold)
+{
+    // ── Mark which skinIdx slots have a live skin bone ────────────────────────
+    std::vector<bool> isSkinBone(MAX_SKINNED_BONES, false);
+    for (uint16_t i = 0; i < skeleton.boneCount; ++i)
+    {
+        const SkeletonBone& sb = skeleton.bones[i];
+        if (sb.skinIdx >= 0 && sb.skinIdx < MAX_SKINNED_BONES)
+            isSkinBone[sb.skinIdx] = true;
+    }
+
+    boneBounds.assign(MAX_SKINNED_BONES, BoneBound{});   // reset to sentinel min/max
+
+    // ── Expand each bone's AABB with every vertex it influences ──────────────
+    for (const auto& mesh : meshes)
+    {
+        for (const auto& v : mesh.vertices)
+        {
+            const float* w = glm::value_ptr(v.BlendWeights);   // x,y,z,w → [0..3]
+
+            for (int k = 0; k < MAX_BONE_INFLUENCE; ++k)
+            {
+                if (w[k] < weightThreshold) continue;
+
+                const int s = v.BlendIndices[k];
+                if (s < 0 || s >= MAX_SKINNED_BONES) continue;
+                if (!isSkinBone[s]) continue;
+
+                BoneBound& bb = boneBounds[s];
+                bb.bbMin   = glm::min(bb.bbMin, v.Position);
+                bb.bbMax   = glm::max(bb.bbMax, v.Position);
+                bb.hasData = true;
+            }
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// expandAABBWithBoneBound  —  file-local helper
+//
+// Transforms all 8 corners of bone b's bind-pose AABB by M = worldMatrix *
+// skinMatrix[s] and expands (bmin, bmax) with each result.
+//
+// Why 8 corners?  After an arbitrary rotation+scale the axis-aligned extremes
+// of the transformed box are not just the two transformed corner points — any
+// of the 8 corners can be extreme along any world axis.
+// ─────────────────────────────────────────────────────────────────────────────
+
+static inline void expandAABBWithBoneBound(
+    glm::vec3&        bmin,
+    glm::vec3&        bmax,
+    const glm::mat4&  M,
+    const BoneBound&  b)
+{
+    const glm::vec3& lo = b.bbMin;
+    const glm::vec3& hi = b.bbMax;
+
+    for (int corner = 0; corner < 8; ++corner)
+    {
+        const glm::vec3 c{
+            (corner & 1) ? hi.x : lo.x,
+            (corner & 2) ? hi.y : lo.y,
+            (corner & 4) ? hi.z : lo.z
+        };
+        const glm::vec3 wp = glm::vec3(M * glm::vec4(c, 1.f));
+        bmin = glm::min(bmin, wp);
+        bmax = glm::max(bmax, wp);
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ComputeAnimatedBounds  —  O(B * 8) per frame
+//
+//   worldPos = worldMatrix * skinMatrix[s] * vec4(corner, 1)
+//
+// skinMatrix[s]: model-space skin matrix (bind-pose → model space).
+// worldMatrix  : model → world.
+// Falls back to the static boundingBox if no bone data is available.
+// ─────────────────────────────────────────────────────────────────────────────
+
+BoundingBox SkinnedModel::ComputeAnimatedBounds(
+    const glm::mat4&            worldMatrix,
+    std::span<const glm::mat4>  skinMatrices) const
+{
+    if (boneBounds.empty()) return boundingBox;
+
+    glm::vec3 bmin( std::numeric_limits<float>::max());
+    glm::vec3 bmax(-std::numeric_limits<float>::max());
+    bool      any = false;
+
+    const int count = static_cast<int>(
+        std::min(skinMatrices.size(), boneBounds.size()));
+
+    for (int s = 0; s < count; ++s)
+    {
+        if (!boneBounds[s].hasData) continue;
+        expandAABBWithBoneBound(bmin, bmax, worldMatrix * skinMatrices[s], boneBounds[s]);
+        any = true;
+    }
+
+    if (!any) return boundingBox;
+
+    const std::vector<glm::vec3> corners{ bmin, bmax };
+    return BoundingBox::FromPoints(corners);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ComputeAnimatedSphere  —  derived from the animated AABB (same pass)
+// Center = AABB midpoint; radius = half-diagonal (sphere contains the AABB).
+// ─────────────────────────────────────────────────────────────────────────────
+
+BoundingSphere SkinnedModel::ComputeAnimatedSphere(
+    const glm::mat4&            worldMatrix,
+    std::span<const glm::mat4>  skinMatrices) const
+{
+    if (boneBounds.empty()) return boundingSphere;
+
+    glm::vec3 bmin( std::numeric_limits<float>::max());
+    glm::vec3 bmax(-std::numeric_limits<float>::max());
+    bool      any = false;
+
+    const int count = static_cast<int>(
+        std::min(skinMatrices.size(), boneBounds.size()));
+
+    for (int s = 0; s < count; ++s)
+    {
+        if (!boneBounds[s].hasData) continue;
+        expandAABBWithBoneBound(bmin, bmax, worldMatrix * skinMatrices[s], boneBounds[s]);
+        any = true;
+    }
+
+    if (!any) return boundingSphere;
+
+    const glm::vec3 center = (bmin + bmax) * 0.5f;
+    return BoundingSphere{ center, glm::length(bmax - center) };
+}
+
+
 void SkinnedModel::clear()
 {
     for (auto& mesh : meshes) mesh.DestroyBuffers();
@@ -568,6 +720,12 @@ bool ModelLoader<SkinnedMesh>::load(const std::string& path)
 
     // Step 4: build FlatSkeleton — after boneInfoMap is fully populated
     buildFlatSkeleton(m_model.skeleton, m_scene->mRootNode, m_model.boneInfoMap);
+
+    // Step 4.5: pre-bake per-bone reach data for animated bounds queries.
+    // Must run after the skeleton (needs skinIdx + invBind) and while
+    // mesh.vertices are still populated (before any DestroyBuffers call).
+    if (m_model.boneCount > 0)
+        m_model.PrecomputeBoneBounds();
 
     // Step 5: build EvaluatableClips — one per animation, per model instance
     // Cross-model: each model gets its own clips built from its own skeleton,

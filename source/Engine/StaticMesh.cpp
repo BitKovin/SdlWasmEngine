@@ -21,7 +21,7 @@ mat4 StaticMesh::GetWorldMatrix()
 
 	quat worldOrientation = glm::identity<quat>();
 
-	if(GravityAlignedRotation)
+	if (GravityAlignedRotation)
 	{
 		worldOrientation = WorldOrientationManager::GetWorldRotationQuat();
 	}
@@ -32,7 +32,7 @@ mat4 StaticMesh::GetWorldMatrix()
 LightVolPointData StaticMesh::GetLightVolData()
 {
 
-	if (OwnerEntity == nullptr || 
+	if (OwnerEntity == nullptr ||
 		model == nullptr) return LightVolPointData{ vec3(0),vec3(1),vec3(0) };
 
 	return OwnerEntity->GetLightVolData(IsViewmodel);
@@ -49,6 +49,8 @@ void StaticMesh::FinalizeFrameData()
 	finalMeshHideList = std::unordered_set<std::string>(MeshHideList);
 	finalizedColor = Color;
 	finalizedMeshCustomShaderParams = MeshCustomShaderParams;
+
+
 	finalizedBoundingBox = GetBoundingBox();
 }
 
@@ -125,7 +127,7 @@ bool StaticMesh::IsCameraVisible()
 
 void StaticMesh::DrawForward(mat4x4 view, mat4x4 projection)
 {
-	
+
 	if (model == nullptr) return;
 
 	auto startState = BgfxStateManager::GetState();
@@ -133,8 +135,8 @@ void StaticMesh::DrawForward(mat4x4 view, mat4x4 projection)
 
 	BgfxStateManager::SetWriteDepth(DepthWrite);
 
-	
-	
+
+
 	BgfxStateManager::SetBlend(blendMode);
 
 	BgfxStateManager::SetCull(TwoSided ? BgfxStateManager::Cull::None : BgfxStateManager::Cull::CW);
@@ -281,7 +283,7 @@ void StaticMesh::DrawForward(mat4x4 view, mat4x4 projection)
 	}
 
 	BgfxStateManager::SetState(startState);
-	
+
 }
 
 void StaticMesh::DrawDepth(mat4x4 view, mat4x4 projection)
@@ -529,6 +531,7 @@ void StaticMesh::DrawMeshShadow(mat4x4 view, mat4x4 projection)
 
 	mat4 shadowMatrix = MathHelper::MakeShadowMatrix(hit.position + hit.normal * 0.01f, hit.normal, -lastLightVolData.direction);
 
+	DebugDraw::Bounds(finalizedBoundingBox.Min, finalizedBoundingBox.Max, 0.01f);
 
 	world = shadowMatrix * world;
 
@@ -561,27 +564,17 @@ void StaticMesh::DrawMeshShadow(mat4x4 view, mat4x4 projection)
 
 		shader->Submit(ViewIdManager::GetCurrentId());
 	}
-	
+
 	BgfxStateManager::Reset();
 
-
+	BgfxStateManager::SetCull(BgfxStateManager::Cull::CW);
 	BgfxStateManager::SetWriteRGB(true);
 	BgfxStateManager::SetWriteAlpha(true);
 	BgfxStateManager::SetBlend(BgfxStateManager::Blend::Multiply);
 	BgfxStateManager::SetWriteDepth(false);
 	BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::None);
 	BgfxStateManager::Apply();
-	bgfx::setStencil(
-		BGFX_STENCIL_TEST_EQUAL |
-		BGFX_STENCIL_FUNC_REF(1) |
-		BGFX_STENCIL_FUNC_RMASK(0xFF) |
-		BGFX_STENCIL_OP_FAIL_S_KEEP |
-		BGFX_STENCIL_OP_FAIL_Z_KEEP |
-		BGFX_STENCIL_OP_PASS_Z_KEEP
-	);
 
-	auto shadowShader = ShaderManager::GetShaderProgram("vs_fullscreen", "fs_fullscreen_color");
-	shadowShader->UseProgram();
 
 
 	vec3 ambientColor = lastLightVolData.ambientColor;
@@ -620,9 +613,38 @@ void StaticMesh::DrawMeshShadow(mat4x4 view, mat4x4 projection)
 	shadowColor = 1.0f - shadowColor;
 
 
-	shadowShader->SetUniform("u_color", vec4(shadowColor, 1.0f));
+	shader->SetUniform("u_color", vec4(shadowColor, 1.0f));
 
-	Renderer::Instance->RenderFullscreenQuad(shadowShader);
+	auto cubeModel = AssetRegistry::GetSkinnedModelFromFile("GameData/models/cube.obj");
+
+	shader->SetUniform("view", view);
+	shader->SetUniform("projection", projection);
+
+	vec3 originalSize = finalizedBoundingBox.Extents();
+
+	float boundsMaxSize = std::max(std::max(originalSize.x, originalSize.y), originalSize.z);
+
+	mat4 shadowWorld = glm::translate(finalizedBoundingBox.Center()) * glm::scale(vec3(boundsMaxSize * 1.5f));
+
+	//DebugDraw::Point(finalizedBoundingBox.Center());
+
+	shader->SetUniform("world", shadowMatrix * shadowWorld);
+	shader->SetUniform("isViewmodel", false);
+
+
+	bgfx::setStencil(
+		BGFX_STENCIL_TEST_EQUAL |
+		BGFX_STENCIL_FUNC_REF(1) |
+		BGFX_STENCIL_FUNC_RMASK(0xFF) |
+		BGFX_STENCIL_OP_FAIL_S_KEEP |
+		BGFX_STENCIL_OP_FAIL_Z_KEEP |
+		BGFX_STENCIL_OP_PASS_Z_KEEP
+	);
+
+
+	bgfx::setVertexBuffer(0, cubeModel->meshes[0].vbh);
+	bgfx::setIndexBuffer(cubeModel->meshes[0].ibh);
+	shader->Submit(ViewIdManager::GetCurrentId());
 
 	bgfx::setStencil(
 		BGFX_STENCIL_TEST_ALWAYS |
@@ -637,7 +659,9 @@ void StaticMesh::DrawMeshShadow(mat4x4 view, mat4x4 projection)
 	BgfxStateManager::SetWriteDepth(false);
 	BgfxStateManager::Apply();
 
-	Renderer::Instance->RenderFullscreenQuad(shadowShader);
+	bgfx::setVertexBuffer(0, cubeModel->meshes[0].vbh);
+	bgfx::setIndexBuffer(cubeModel->meshes[0].ibh);
+	shader->Submit(ViewIdManager::GetCurrentId());
 
 	BgfxStateManager::SetState(startState);
 }

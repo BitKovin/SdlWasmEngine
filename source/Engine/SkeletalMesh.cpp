@@ -1070,12 +1070,16 @@ bool SkeletalMesh::IsCameraVisible()
 
 BoundingBox SkeletalMesh::GetBoundingBox()
 {
-	if (InRagdoll == false)
-	{
-		return StaticMesh::GetBoundingBox();
-	}
+
+	if (model == nullptr) return BoundingBox();
 
 	mat4 world = GetWorldMatrix();
+
+	if (InRagdoll == false)
+	{
+		return model->ComputeAnimatedBounds(world, boneTransforms);
+	}
+
 
 	vector<vec3> bonePositions;
 	bonePositions.reserve(hitboxBodies.size());

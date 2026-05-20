@@ -8,6 +8,7 @@
 #include <vector>
 #include <array>
 #include <span>
+#include <limits>
 #include "Texture.hpp"
 #include "BoundingSphere.hpp"
 #include "BoundingBox.hpp"
@@ -256,6 +257,38 @@ struct EvaluatableClip
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// BoneBound
+//
+// Precomputed once at load time.  Stores the bind-pose model-space position of
+// the vertex farthest from each skin bone's origin, weighted above a threshold.
+//
+// Why model-space position and not a local offset?
+//   Skin matrices already encode  worldBoneTransform * invBind, so they map
+//   any bind-pose model-space position directly to world space:
+//
+//     worldPos = worldMatrix * skinMatrix[s] * vec4(corner_of_bbMin_bbMax, 1)
+//
+//   Storing in model space means zero extra math at query time — just one
+//   mat4 * vec4 per bone.
+//
+// Indexed by skinIdx (= BoneInfo::id = BlendIndices value).
+// ─────────────────────────────────────────────────────────────────────────────
+
+struct BoneBound
+{
+    // Bind-pose model-space AABB of all vertices influenced by this bone
+    // above the weight threshold.  Both corners are needed: a single
+    // "farthest" point drops all vertices that extend far in other directions
+    // (e.g. a spine bone covers front AND back of the torso).
+    //
+    // At query time all 8 corners are transformed by the skin matrix so the
+    // world AABB is always tight regardless of bone orientation or scale.
+    glm::vec3 bbMin{ std::numeric_limits<float>::max()};
+    glm::vec3 bbMax{-std::numeric_limits<float>::max()};
+    bool      hasData = false;   // false → no skinned vertices above threshold
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // SkinnedModel
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -281,6 +314,28 @@ struct SkinnedModel
 
     BoundingSphere boundingSphere;
     BoundingBox    boundingBox;
+
+    // ── Per-bone reach data for animated bounds queries ───────────────────────
+    // Populated by PrecomputeBoneBounds() at load time.
+    // Indexed by skinIdx (= BoneInfo::id).  Size == MAX_SKINNED_BONES.
+    std::vector<BoneBound> boneBounds;
+
+    // Call once after load, while mesh.vertices are still alive.
+    // weightThreshold: influences below this value are ignored to avoid
+    // near-zero weights pulling the bound to distant auxiliary bones.
+    void PrecomputeBoneBounds(float weightThreshold = 0.05f);
+
+    // O(B) animated bounding box.
+    // skinMatrices: model-space skin matrix palette (bind-pose → model space),
+    //               indexed by skinIdx.  Accepts span so callers can pass
+    //               BakedFrame::skinMatrices or a runtime-evaluated array.
+    // worldMatrix:  model → world transform of this instance.
+    BoundingBox    ComputeAnimatedBounds(const glm::mat4&           worldMatrix,
+                                        std::span<const glm::mat4> skinMatrices) const;
+
+    // Derived sphere from the animated AABB — cheap second pass.
+    BoundingSphere ComputeAnimatedSphere(const glm::mat4&           worldMatrix,
+                                        std::span<const glm::mat4> skinMatrices) const;
 
     std::vector<SkinnedMesh>::iterator begin() { return meshes.begin(); }
     std::vector<SkinnedMesh>::iterator end()   { return meshes.end();   }
