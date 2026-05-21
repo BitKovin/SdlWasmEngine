@@ -1,6 +1,8 @@
 #pragma once
 #include "../Physics.h"
 #include "../Entity.h"
+#include <vector>
+#include <algorithm>
 
 enum class CharacterControllerMovementQuality
 {
@@ -83,6 +85,9 @@ public:
 
 	bool isCrouched = false;
 
+	// Registry of all live CharacterControllers. Populated in Init(), removed in destructor.
+	static std::vector<CharacterController*> s_allControllers;
+
 private:
 
 	Entity* owner = nullptr;
@@ -99,12 +104,18 @@ private:
 	glm::vec3 lastPlatformVelocity = glm::vec3(0.0f);
 	bool wasOnPlatform = false;
 
+	// BodyIDs of character bodies we have an active AddIgnorePair with.
+	// This controller is always the "top" character in the pair.
+	std::vector<BodyID> activeIgnorePairs;
+
 	bool CanStandUp();
 
 	void UpdateGroundCheck(bool& hitsGround, float& calculatedCharacterHeight, bool& canStand, vec3& walkableNormal, vec3& notWalkableNormal);
 
 	bool CheckGroundAt(vec3 location, float radius, float& height, bool& canStand, vec3& normal, const Body** hitBody);
 
-	//vec3 velocity = vec3(0);
+	// Detects characters we are standing on, manages AddIgnorePair/RemoveIgnorePair,
+	// and applies horizontal separation impulses to both bodies.
+	void UpdateCharacterStacking(float deltaTime);
 
 };

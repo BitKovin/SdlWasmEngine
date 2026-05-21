@@ -2,6 +2,14 @@
 
 #include <cassert>
 
+// ---------------------------------------------------------------------------
+// Static registry
+// ---------------------------------------------------------------------------
+
+std::vector<CharacterController*> CharacterController::s_allControllers;
+
+// ---------------------------------------------------------------------------
+
 CharacterController::CharacterController()
 {
 	currentCameraHeight = cameraHeightStanding;
@@ -10,6 +18,10 @@ CharacterController::CharacterController()
 
 CharacterController::~CharacterController()
 {
+	s_allControllers.erase(
+		std::remove(s_allControllers.begin(), s_allControllers.end(), this),
+		s_allControllers.end());
+
 	if (body)
 		Physics::DestroyBody(body);
 	if (sensorBody)
@@ -40,10 +52,23 @@ void CharacterController::Init(Entity* owner, vec3 position, float radius, float
 	this->radius = radius;
 
 	Physics::SetGravityFactor(body, 0);
+
+	// Register in the global controller list (guard against double-add on re-init)
+	if (std::find(s_allControllers.begin(), s_allControllers.end(), this) == s_allControllers.end())
+		s_allControllers.push_back(this);
 }
 
 void CharacterController::Destroy()
 {
+	// Clean up ignore pairs before the bodies are destroyed — BodyIDs become
+	// invalid after DestroyBody so this must happen first.
+	if (body)
+	{
+		for (const BodyID& id : activeIgnorePairs)
+			Physics::RemoveIgnorePair(body->GetID(), id);
+	}
+	activeIgnorePairs.clear();
+
 	if (body)
 	{
 		Physics::DestroyBody(body);
@@ -262,6 +287,7 @@ void CharacterController::Update(float deltaTime)
 		{
 			vec3 slopeTangent = velocity - slopeNormal * velocityTowardSlope;
 			float originalSpeed = length(velocity);
+
 			applyVelocity = slopeTangent;
 			applyVelocity.y = velocity.y;
 
@@ -303,6 +329,11 @@ void CharacterController::Update(float deltaTime)
 		vec3 worldOffset = baseRot * baseLocalAttachPoint;
 		lastPlatformVelocity = linearVel + glm::cross(angularVel, worldOffset);
 	}
+
+	// -------------------------------
+	// 7) Character-on-character stacking: ignore pairs + horizontal push
+	// -------------------------------
+	UpdateCharacterStacking(deltaTime);
 
 	if (sensorBody && body)
 	{
@@ -404,7 +435,7 @@ void CharacterController::Crouch()
 
 	vec3 newBodyPos = currentBodyPos + deltaPos;
 
-	Destroy(); // destroys both body and sensorBody
+	Destroy(); // destroys both body and sensorBody, cleans up ignore pairs
 
 	stepHeight = 0.25f;
 
@@ -454,7 +485,7 @@ void CharacterController::UnCrouch()
 
 	vec3 newBodyPos = currentBodyPos + deltaPos;
 
-	Destroy();
+	Destroy(); // cleans up ignore pairs before destroying bodies
 
 	stepHeight = 0.4f;
 
@@ -556,11 +587,6 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 		if (centerHit && outNormal.y >= flatThreshold)
 		{
 			// Perfectly flat ground - no need to sample around ring
-			if (hitBody && Physics::GetBodyData(hitBody)->group == BodyType::CharacterCapsule)
-			{
-				Physics::AddImpulse(body, vec3(0, 1.1f, 0));
-			}
-
 			avgNormal = outNormal;
 			float heightComp = GetPosition().y - height / 2.0f - 0.001f;
 			hitsGround = (outheight > heightComp);
@@ -589,11 +615,6 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 		if (centerHit && outNormal.y >= flatThreshold)
 		{
 			// Perfectly flat ground - no need to sample around ring
-			if (hitBody && Physics::GetBodyData(hitBody)->group == BodyType::CharacterCapsule)
-			{
-				Physics::AddImpulse(body, vec3(0, 1.1f, 0));
-			}
-
 			avgNormal = outNormal;
 			float heightComp = GetPosition().y - height / 2.0f - 0.001f;
 			hitsGround = (outheight > heightComp);
@@ -731,9 +752,6 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 			FromPhysics(body->GetPosition()) - heightOffset,
 			radius - 0.01f, outheight, outCanStand, outNormal, &hitBody);
 
-		if (hit && hitBody && Physics::GetBodyData(hitBody)->group == BodyType::CharacterCapsule)
-			Physics::AddImpulse(body, vec3(0, 1.1f, 0));
-
 		AccumulateHit(hit, 3.0f, hitBody);
 	}
 
@@ -773,8 +791,6 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 
 bool CharacterController::CheckGroundAt(vec3 location, float checkRadius, float& outheight, bool& canStand, vec3& normal, const Body** hitBody)
 {
-
-
 	Physics::HitResult result;
 
 	vec3 start = location + vec3(0, 0.2f, 0);
@@ -782,14 +798,12 @@ bool CharacterController::CheckGroundAt(vec3 location, float checkRadius, float&
 
 	if (checkRadius > 0)
 	{
-		result = Physics::CylinderTrace(start, end - vec3(0, 0.05f, 0), checkRadius, 0.05f, BodyType::GroupCollisionTest, { body, sensorBody }, {owner});
-
+		result = Physics::CylinderTrace(start, end - vec3(0, 0.05f, 0), checkRadius, 0.05f, BodyType::GroupCollisionTest, { body, sensorBody }, { owner });
 		result.position = result.shapePosition - vec3(0, 0.02f, 0);
-
 	}
 	else
 	{
-		result = Physics::LineTrace(start, end, BodyType::GroupCollisionTest, { body, sensorBody }, {owner});
+		result = Physics::LineTrace(start, end, BodyType::GroupCollisionTest, { body, sensorBody }, { owner });
 	}
 
 	*hitBody = result.hitbody;
@@ -797,24 +811,129 @@ bool CharacterController::CheckGroundAt(vec3 location, float checkRadius, float&
 	if (result.normal.y < 0.1)
 		return false;
 
-	outheight = result.position.y;
-
-	canStand = result.hasHit && (GroundAngleDeg(result.normal) <= groundMaxAngle) && Physics::GetBodyData(result.hitbody)->group != BodyType::CharacterCapsule;
-
-	if (Physics::GetBodyData(result.hitbody)->group == BodyType::CharacterCapsule)
+	// Discard hits against any other character's bodies entirely.
+	// Returning false means the hit goes into no bucket — standsOnGround
+	// stays false and the slope-clip code in Update() never strips vertical
+	// velocity, which was what was holding the character up.
+	for (const CharacterController* other : s_allControllers)
 	{
-
-		if (body->GetLinearVelocity().GetY() < 1)
-		{
-			Physics::AddImpulse(body, result.normal);
-		}
-
+		if (other == this) continue;
+		if (result.hitbody == other->body || result.hitbody == other->sensorBody)
+			return false;
 	}
 
-	//DebugDraw::Line(result.position, result.position + result.normal, 0.01f);
+	outheight = result.position.y;
 
+	canStand = result.hasHit && (GroundAngleDeg(result.normal) <= groundMaxAngle);
 
 	normal = result.normal;
 
 	return result.hasHit;
+}
+
+// ---------------------------------------------------------------------------
+// UpdateCharacterStacking
+//
+// Called once per Update().  This controller is the "top" character.
+//
+// 1. Scan s_allControllers to find characters that are currently below us
+//    (our feet near their top, XZ overlap).
+// 2. Add ignore pairs for newly detected bodies so we pass through them
+//    vertically while still being able to push horizontally.
+// 3. Remove ignore pairs for bodies that are no longer below us.
+// 4. Apply a symmetric horizontal separation impulse to both bodies for
+//    every active stacking pair so they push apart over time.
+// ---------------------------------------------------------------------------
+void CharacterController::UpdateCharacterStacking(float deltaTime)
+{
+	if (!body) return;
+
+	const BodyID myID    = body->GetID();
+	const vec3   myPos   = GetPosition();
+	const float  myFeetY = myPos.y - height * 0.5f;
+
+	// ── 1. Detect which characters are currently below us ───────────────────
+	std::vector<BodyID> detectedThisFrame;
+
+	for (CharacterController* other : s_allControllers)
+	{
+		if (other == this || !other->body) continue;
+
+		const vec3  otherPos      = other->GetPosition();
+		const float otherTopY     = otherPos.y + other->height * 0.5f;
+		const float combinedRadii = radius + other->radius;
+
+		// Horizontal distance (XZ only)
+		const vec3  diff3   = myPos - otherPos;
+		const float xzDist  = glm::length(vec2(diff3.x, diff3.z));
+
+		// yDiff ~= 0 when our feet sit exactly on their top.
+		// Accept a window above (+height*0.5) so that the pair is detected
+		// slightly before contact, and below (-stepHeight - 0.3) to keep
+		// the pair alive while we are passing through.
+		const float yDiff             = myFeetY - otherTopY;
+		const bool  verticallyStacked = (yDiff > -(stepHeight + 0.3f)) && (yDiff < height * 0.5f);
+
+		// Small extra margin so the pair is established just before the
+		// bodies visually overlap.
+		const bool  horizontallyClose = xzDist < combinedRadii + 0.15f;
+
+		if (verticallyStacked && horizontallyClose)
+			detectedThisFrame.push_back(other->body->GetID());
+	}
+
+	// ── 2. Add ignore pairs for newly detected bodies ────────────────────────
+	for (const BodyID& id : detectedThisFrame)
+	{
+		const bool alreadyIgnored = std::find(activeIgnorePairs.begin(), activeIgnorePairs.end(), id) != activeIgnorePairs.end();
+		if (!alreadyIgnored)
+		{
+			Physics::AddIgnorePair(myID, id);
+			activeIgnorePairs.push_back(id);
+		}
+	}
+
+	// ── 3. Remove ignore pairs for bodies no longer below us ─────────────────
+	for (auto it = activeIgnorePairs.begin(); it != activeIgnorePairs.end(); )
+	{
+		const bool stillDetected = std::find(detectedThisFrame.begin(), detectedThisFrame.end(), *it) != detectedThisFrame.end();
+		if (!stillDetected)
+		{
+			Physics::RemoveIgnorePair(myID, *it);
+			it = activeIgnorePairs.erase(it);
+		}
+		else
+			++it;
+	}
+
+	// ── 4. Horizontal separation push ────────────────────────────────────────
+	// Only the top character (this) drives the push so there is no
+	// double-counting between two controllers that are stacked.
+	for (CharacterController* other : s_allControllers)
+	{
+		if (other == this || !other->body) continue;
+
+		const bool isPaired = std::find(activeIgnorePairs.begin(), activeIgnorePairs.end(), other->body->GetID()) != activeIgnorePairs.end();
+		if (!isPaired) continue;
+
+		vec3 diff = GetPosition() - other->GetPosition();
+		diff.y = 0.0f; // horizontal only
+
+		const float dist          = glm::length(diff);
+		const float combinedRadii = radius + other->radius;
+		const float overlap       = combinedRadii - dist;
+
+		if (overlap <= 0.0f) continue;
+
+		// Degenerate case: characters at the exact same XZ position.
+		// Pick an arbitrary direction so they always separate.
+		const vec3 pushDir = (dist > 0.001f)
+			? glm::normalize(diff)
+			: vec3(1.0f, 0.0f, 0.0f);
+
+		// Frame-rate-independent continuous push, scaled by overlap depth.
+		const float magnitude = overlap * 8.0f;
+		Physics::AddImpulse(body,        pushDir * ( magnitude * deltaTime));
+		Physics::AddImpulse(other->body, pushDir * (-magnitude * deltaTime));
+	}
 }

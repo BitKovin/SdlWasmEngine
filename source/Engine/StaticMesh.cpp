@@ -58,11 +58,11 @@ bool StaticMesh::IsInFrustrum(Frustum frustrum)
 {
 	if (model == nullptr) return false;
 
-	auto sphere = model->boundingSphere.Transform(Position, Rotation, Scale);
-
 	//DebugDraw::Bounds(sphere.offset - vec3(sphere.Radius), sphere.offset + vec3(sphere.Radius), 0.01f);
 
-	return frustrum.IsSphereVisible(sphere.offset, sphere.Radius);
+	auto bounds = GetBoundingBox();
+
+	return frustrum.IsBoxVisible(bounds.Min, bounds.Max);
 }
 
 BoundingBox StaticMesh::GetBoundingBox()
@@ -531,7 +531,7 @@ void StaticMesh::DrawMeshShadow(mat4x4 view, mat4x4 projection)
 
 	mat4 shadowMatrix = MathHelper::MakeShadowMatrix(hit.position + hit.normal * 0.01f, hit.normal, -lastLightVolData.direction);
 
-	DebugDraw::Bounds(finalizedBoundingBox.Min, finalizedBoundingBox.Max, 0.01f);
+	//DebugDraw::Bounds(finalizedBoundingBox.Min, finalizedBoundingBox.Max, 0.01f);
 
 	world = shadowMatrix * world;
 

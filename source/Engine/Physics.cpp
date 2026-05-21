@@ -1654,6 +1654,9 @@ bool TraceBodyFilter::ShouldCollideLocked(const Body& inBody) const
 	if (properties)
 	{
 
+		if (properties->sensorCollisionMode == SensorCollisionMode::CollideOnlyWithSensors)
+			return false;
+
 		for (auto ignored : entityIgnoreList)
 		{
 			if (ignored == properties->OwnerEntity)
@@ -1812,6 +1815,11 @@ bool TraceBodyFilterIncludeOnly::ShouldCollideLocked(const Body& inBody) const
 	auto* properties = reinterpret_cast<BodyData*>(inBody.GetUserData());
 	if (properties)
 	{
+
+
+		if (properties->sensorCollisionMode == SensorCollisionMode::CollideOnlyWithSensors)
+			return false;
+
 		if (properties->OwnerEntity)
 		{
 			if (properties->OwnerEntity->Destroyed)
