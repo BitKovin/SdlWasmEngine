@@ -1553,7 +1553,7 @@
 {
 "classname" "light"
 "origin" "-80 -640 176"
-"light" "30"
+"light" "10"
 "target" "sun_target"
 "_sun" "1"
 "_color" "0.34902 0.34902 1"
@@ -4934,7 +4934,7 @@
 "classname" "trigger_ladder"
 // brush 0
 {
-( -286 252 190 ) ( -286 180 190 ) ( -288 252 190 ) common/trigger 0 0 0 1 1 0 0 0
+( -286 252 192 ) ( -286 180 192 ) ( -288 252 192 ) common/trigger 0 0 0 1 1 0 0 0
 ( -286 254 22 ) ( -288 254 22 ) ( -286 254 20 ) common/trigger 0 0 0 1 1 0 0 0
 ( -282 252 22 ) ( -282 252 20 ) ( -282 180 22 ) common/trigger 0 0 0 1 1 0 0 0
 ( -288 180 20 ) ( -286 180 20 ) ( -288 252 20 ) common/trigger 0 0 0 1 1 0 0 0

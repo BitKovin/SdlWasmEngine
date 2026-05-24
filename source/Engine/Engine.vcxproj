@@ -381,6 +381,7 @@
     <ClCompile Include="FileSystem\ZipVFS.cpp" />
     <ClCompile Include="Helpers\ByteCompressor.cpp" />
     <ClCompile Include="Helpers\CSVParser.cpp" />
+    <ClCompile Include="Helpers\Mesh\shadow_volume.cpp" />
     <ClCompile Include="http\http_client_emscripten.cpp" />
     <ClCompile Include="http\http_client_httplib.cpp" />
     <ClCompile Include="imgui\GraphEditor.cpp" />
@@ -545,6 +546,7 @@
     <ClInclude Include="Helpers\ByteCompressor.h" />
     <ClInclude Include="Helpers\CSVParser.h" />
     <ClInclude Include="Helpers\CubicBezierEasing.hpp" />
+    <ClInclude Include="Helpers\Mesh\shadow_volume.hpp" />
     <ClInclude Include="http\http_client.h" />
     <ClInclude Include="imgui\FA6FreeSolidFontData.h" />
     <ClInclude Include="imgui\fs_ocornut_imgui.bin.h" />

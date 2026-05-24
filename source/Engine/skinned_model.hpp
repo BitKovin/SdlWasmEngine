@@ -14,6 +14,8 @@
 #include "BoundingBox.hpp"
 #include "utility/hashed_string.hpp"
 
+#include <Helpers/Mesh/shadow_volume.hpp>
+
 #define MAX_BONE_INFLUENCE  4
 #define MAX_SKINNED_BONES   128
 
@@ -32,6 +34,7 @@ namespace roj
         bgfx::VertexBufferHandle vbh = BGFX_INVALID_HANDLE;
         bgfx::IndexBufferHandle  ibh = BGFX_INVALID_HANDLE;
 
+        struct roj::ShadowVolumePrecomp shadowVolumePrecomp;
 
         bgfx::VertexLayout layout;
 
@@ -63,6 +66,13 @@ namespace roj
             {
                 bgfx::destroy(ibh);
                 ibh = BGFX_INVALID_HANDLE;
+            }
+            if (bgfx::isValid(shadowVolumePrecomp.capVbh))
+            {
+                bgfx::destroy(shadowVolumePrecomp.capVbh);
+                bgfx::destroy(shadowVolumePrecomp.edgeIbh);
+                bgfx::destroy(shadowVolumePrecomp.edgeVbh);
+                shadowVolumePrecomp = ShadowVolumePrecomp();
             }
 
             // Clear CPU-side vectors

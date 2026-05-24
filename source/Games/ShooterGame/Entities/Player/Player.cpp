@@ -42,7 +42,7 @@ void Player::Start()
 	Level::Current->AddEntity(playerLight);
 	playerLight->Start();
 	playerLight->intensity = 0.1f;
-	playerLight->radius = 10;
+	playerLight->radius = 0;// 10;
 
 	started = true;
 

@@ -5,6 +5,8 @@
 #include "Helpers/StringHelper.h"
 #include "model_animator.hpp"
 
+#include <Helpers/Mesh/shadow_volume.hpp>
+
 #include <unordered_set>
 #include <cassert>
 #include <span>         // C++20
@@ -619,6 +621,7 @@ SkinnedMesh ModelLoader<SkinnedMesh>::processMesh(aiMesh* mesh, const aiScene* s
     const bgfx::Memory* ibMem = bgfx::copy(skinMesh.indices.data(), sizeof(uint32_t) * skinMesh.indices.size());
     skinMesh.ibh = bgfx::createIndexBuffer(ibMem, BGFX_BUFFER_INDEX32);
 
+    skinMesh.shadowVolumePrecomp = BuildShadowVolumePrecomp(skinMesh);
 
     return skinMesh;
 }

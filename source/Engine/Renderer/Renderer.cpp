@@ -333,7 +333,7 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
             static_cast<uint16_t>(res.y));
 
         bgfx::ViewId vid = ViewIdManager::GetCurrentId();
-        bgfx::setViewMode(vid, bgfx::ViewMode::Default);
+        bgfx::setViewMode(vid, bgfx::ViewMode::Sequential);
         bgfx::setViewClear(vid, BGFX_CLEAR_NONE);
 
         // Clear color only — depth was already written by Pass A.
@@ -352,6 +352,25 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
         {
             
             if (mesh->Transparent) continue;
+            if (mesh->IsDetailShadow()) continue;
+            const mat4& P = mesh->IsViewmodel
+                ? Camera::finalizedProjectionViewmodel
+                : Camera::finalizedProjection;
+            mesh->DrawForward(Camera::finalizedView, P);
+        }
+
+        for (auto* mesh : VissibleRenderList)
+        {
+            if (mesh->IsDetailShadow() == false) continue;
+            if (mesh->IsViewmodel) continue;
+
+            mesh->DrawMeshShadow(Camera::finalizedView, Camera::finalizedProjection);
+        }
+
+        for (auto* mesh : VissibleRenderList)
+        {
+            if (mesh->Transparent) continue;
+            if (mesh->IsDetailShadow() == false) continue;
             const mat4& P = mesh->IsViewmodel
                 ? Camera::finalizedProjectionViewmodel
                 : Camera::finalizedProjection;
@@ -377,16 +396,6 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
         BgfxStateManager::SetMSAA(MultiSampleCount > 0);
 
 		BgfxStateManager::SetWriteDepth(false);
-
-        for (auto* mesh : VissibleRenderList)
-        {
-			if (mesh->IsDetailShadow() == false) continue;
-
-            const mat4& P = mesh->IsViewmodel
-                ? Camera::finalizedProjectionViewmodel
-                : Camera::finalizedProjection;
-            mesh->DrawMeshShadow(Camera::finalizedView, P);
-        }
 
         Level::Current->BspData.RenderTransparentFaces();
 

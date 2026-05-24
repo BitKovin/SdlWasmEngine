@@ -52,7 +52,7 @@ textures/skies/skybox2_overcast_night_cube
 
     // --- SKY LIGHT CONTROL ---
     // Weak ambient skylight (brightness 20, iterations 3)
-    q3map_skylight 0 3
+    q3map_skylight 50 3
 
     // Optional: dim sun to match overcast feel
     q3map_sun 0.6 0.6 0.7 0 -15 70

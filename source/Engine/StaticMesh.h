@@ -144,7 +144,7 @@ public:
 
 		mat3 world = GetWorldMatrix();
 
-		for (auto mesh : model->meshes)
+		for (auto& mesh : model->meshes)
 		{
 
 			MeshUtils::PositionVerticesIndices meshData;

@@ -1605,714 +1605,714 @@ default
 230 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 76
+	entity 67
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 231 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 76
+	entity 67
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
 232 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 76
+	entity 67
 	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
 
 233 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 76
+	entity 67
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 234 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 76
+	entity 67
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 235 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 76
+	entity 67
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 236 // ESurfaceType::Meta V: 8 I: 12 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 76
+	entity 67
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
 237 // ESurfaceType::Meta V: 8 I: 12 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 76
+	entity 67
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 238 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 76
+	entity 67
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 239 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 76
+	entity 67
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 240 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 76
+	entity 67
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 241 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 76
+	entity 67
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 242 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 76
+	entity 67
 	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
 
 243 // ESurfaceType::Meta V: 8 I: 18 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 76
+	entity 67
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 244 // ESurfaceType::Meta V: 8 I: 18 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 76
+	entity 67
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 245 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 76
+	entity 67
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
 246 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 76
+	entity 67
 	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
 
 247 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 76
+	entity 67
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 248 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 76
+	entity 67
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 249 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 78
+	entity 69
 	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
 
 250 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 78
+	entity 69
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 251 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 78
+	entity 69
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
 252 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 78
+	entity 69
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 253 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 78
+	entity 69
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 254 // ESurfaceType::Meta V: 8 I: 12 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 78
+	entity 69
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
 255 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 78
+	entity 69
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 256 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 78
+	entity 69
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 257 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 78
+	entity 69
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 258 // ESurfaceType::Meta V: 8 I: 12 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 78
+	entity 69
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 259 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 78
+	entity 69
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 260 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 78
+	entity 69
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 261 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 78
+	entity 69
 	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
 
 262 // ESurfaceType::Meta V: 10 I: 18 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 78
+	entity 69
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 263 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 78
+	entity 69
 	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
 
 264 // ESurfaceType::Meta V: 8 I: 18 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 78
+	entity 69
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 265 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 78
+	entity 69
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
 266 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 78
+	entity 69
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 267 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 78
+	entity 69
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 268 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 80
+	entity 71
 	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
 
 269 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 80
+	entity 71
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 270 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 80
+	entity 71
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
 271 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 80
+	entity 71
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 272 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 80
+	entity 71
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 273 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 80
+	entity 71
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 274 // ESurfaceType::Meta V: 8 I: 12 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 80
+	entity 71
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
 275 // ESurfaceType::Meta V: 8 I: 12 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 80
+	entity 71
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 276 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 80
+	entity 71
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 277 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 80
+	entity 71
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 278 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 80
+	entity 71
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 279 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 80
+	entity 71
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 280 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 80
+	entity 71
 	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
 
 281 // ESurfaceType::Meta V: 10 I: 18 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 80
+	entity 71
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 282 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 80
+	entity 71
 	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
 
 283 // ESurfaceType::Meta V: 8 I: 18 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 80
+	entity 71
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 284 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 80
+	entity 71
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
 285 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 80
+	entity 71
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 286 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 80
+	entity 71
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 287 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 82
+	entity 73
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
 288 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 82
+	entity 73
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 289 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 82
+	entity 73
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 290 // ESurfaceType::Meta V: 8 I: 12 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 82
+	entity 73
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
 291 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 82
+	entity 73
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 292 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 82
+	entity 73
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 293 // ESurfaceType::Meta V: 8 I: 12 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 82
+	entity 73
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 294 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 82
+	entity 73
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 295 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 82
+	entity 73
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 296 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 82
+	entity 73
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 297 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 82
+	entity 73
 	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
 
 298 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 82
+	entity 73
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 299 // ESurfaceType::Meta V: 9 I: 18 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 82
+	entity 73
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 300 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 82
+	entity 73
 	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
 
 301 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 82
+	entity 73
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
 302 // ESurfaceType::Meta V: 8 I: 18 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 82
+	entity 73
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 303 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 82
+	entity 73
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 304 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 82
+	entity 73
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 305 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 84
+	entity 75
 	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
 
 306 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 84
+	entity 75
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 307 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 84
+	entity 75
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
 308 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 84
+	entity 75
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 309 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 84
+	entity 75
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 310 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 84
+	entity 75
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 311 // ESurfaceType::Meta V: 8 I: 12 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 84
+	entity 75
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
 312 // ESurfaceType::Meta V: 8 I: 12 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 84
+	entity 75
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 313 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 84
+	entity 75
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 314 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 84
+	entity 75
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 315 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 84
+	entity 75
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 316 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 84
+	entity 75
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 317 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 84
+	entity 75
 	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
 
 318 // ESurfaceType::Meta V: 10 I: 18 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 84
+	entity 75
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 319 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 84
+	entity 75
 	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
 
 320 // ESurfaceType::Meta V: 8 I: 18 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 84
+	entity 75
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 321 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 84
+	entity 75
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
 322 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 84
+	entity 75
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 323 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 84
+	entity 75
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 324 // ESurfaceType::Meta V: 12 I: 33 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 97
+	entity 88
 	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
 
 325 // ESurfaceType::Meta V: 13 I: 36 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 97
+	entity 88
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 326 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 97
+	entity 88
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 327 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 97
+	entity 88
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 328 // ESurfaceType::Meta V: 8 I: 18 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 97
+	entity 88
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
 329 // ESurfaceType::Meta V: 9 I: 21 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 97
+	entity 88
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 330 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 97
+	entity 88
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 331 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_conc/conc1_1
-	entity 97
+	entity 88
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
@@ -4790,924 +4790,924 @@ default
 685 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 61
+	entity 52
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 686 // ESurfaceType::Meta V: 14 I: 42 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 61
+	entity 52
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
 687 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 61
+	entity 52
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 688 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 61
+	entity 52
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 689 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 61
+	entity 52
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 690 // ESurfaceType::Meta V: 14 I: 42 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 61
+	entity 52
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 691 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 61
+	entity 52
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 692 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 61
+	entity 52
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 693 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 61
+	entity 52
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 694 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 61
+	entity 52
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 695 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 61
+	entity 52
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 696 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 62
+	entity 53
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 697 // ESurfaceType::Meta V: 14 I: 42 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 62
+	entity 53
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
 698 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 62
+	entity 53
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 699 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 62
+	entity 53
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 700 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 62
+	entity 53
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 701 // ESurfaceType::Meta V: 14 I: 42 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 62
+	entity 53
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 702 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 62
+	entity 53
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 703 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 62
+	entity 53
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 704 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 62
+	entity 53
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 705 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 62
+	entity 53
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 706 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 62
+	entity 53
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 707 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 63
+	entity 54
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 708 // ESurfaceType::Meta V: 14 I: 42 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 63
+	entity 54
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
 709 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 63
+	entity 54
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 710 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 63
+	entity 54
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 711 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 63
+	entity 54
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 712 // ESurfaceType::Meta V: 14 I: 42 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 63
+	entity 54
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 713 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 63
+	entity 54
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 714 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 63
+	entity 54
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 715 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 63
+	entity 54
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 716 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 63
+	entity 54
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 717 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 63
+	entity 54
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 718 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 64
+	entity 55
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 719 // ESurfaceType::Meta V: 14 I: 42 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 64
+	entity 55
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
 720 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 64
+	entity 55
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 721 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 64
+	entity 55
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 722 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 64
+	entity 55
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 723 // ESurfaceType::Meta V: 14 I: 42 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 64
+	entity 55
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 724 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 64
+	entity 55
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 725 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 64
+	entity 55
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 726 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 64
+	entity 55
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 727 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 64
+	entity 55
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 728 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 64
+	entity 55
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 729 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 65
+	entity 56
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 730 // ESurfaceType::Meta V: 14 I: 42 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 65
+	entity 56
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
 731 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 65
+	entity 56
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 732 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 65
+	entity 56
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 733 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 65
+	entity 56
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 734 // ESurfaceType::Meta V: 14 I: 42 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 65
+	entity 56
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 735 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 65
+	entity 56
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 736 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 65
+	entity 56
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 737 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 65
+	entity 56
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 738 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 65
+	entity 56
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 739 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 65
+	entity 56
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 740 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 66
+	entity 57
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 741 // ESurfaceType::Meta V: 14 I: 42 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 66
+	entity 57
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
 742 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 66
+	entity 57
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 743 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 66
+	entity 57
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 744 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 66
+	entity 57
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 745 // ESurfaceType::Meta V: 14 I: 42 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 66
+	entity 57
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 746 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 66
+	entity 57
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 747 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 66
+	entity 57
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 748 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 66
+	entity 57
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 749 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 66
+	entity 57
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 750 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 66
+	entity 57
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 751 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 67
+	entity 58
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 752 // ESurfaceType::Meta V: 14 I: 42 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 67
+	entity 58
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
 753 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 67
+	entity 58
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 754 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 67
+	entity 58
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 755 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 67
+	entity 58
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 756 // ESurfaceType::Meta V: 14 I: 42 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 67
+	entity 58
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 757 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 67
+	entity 58
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 758 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 67
+	entity 58
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 759 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 67
+	entity 58
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 760 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 67
+	entity 58
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 761 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 67
+	entity 58
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 762 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 68
+	entity 59
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 763 // ESurfaceType::Meta V: 14 I: 42 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 68
+	entity 59
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
 764 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 68
+	entity 59
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 765 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 68
+	entity 59
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 766 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 68
+	entity 59
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 767 // ESurfaceType::Meta V: 14 I: 42 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 68
+	entity 59
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 768 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 68
+	entity 59
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 769 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 68
+	entity 59
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 770 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 68
+	entity 59
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 771 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 68
+	entity 59
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 772 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 68
+	entity 59
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 773 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 69
+	entity 60
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 774 // ESurfaceType::Meta V: 14 I: 42 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 69
+	entity 60
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
 775 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 69
+	entity 60
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 776 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 69
+	entity 60
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 777 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 69
+	entity 60
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 778 // ESurfaceType::Meta V: 14 I: 42 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 69
+	entity 60
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 779 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 69
+	entity 60
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 780 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 69
+	entity 60
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 781 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 69
+	entity 60
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 782 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 69
+	entity 60
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 783 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 69
+	entity 60
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 784 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 70
+	entity 61
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 785 // ESurfaceType::Meta V: 14 I: 42 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 70
+	entity 61
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
 786 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 70
+	entity 61
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 787 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 70
+	entity 61
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 788 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 70
+	entity 61
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 789 // ESurfaceType::Meta V: 14 I: 42 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 70
+	entity 61
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 790 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 70
+	entity 61
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 791 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 70
+	entity 61
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 792 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 70
+	entity 61
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 793 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 70
+	entity 61
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 794 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 70
+	entity 61
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 795 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 71
+	entity 62
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 796 // ESurfaceType::Meta V: 14 I: 42 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 71
+	entity 62
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
 797 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 71
+	entity 62
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 798 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 71
+	entity 62
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 799 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 71
+	entity 62
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 800 // ESurfaceType::Meta V: 14 I: 42 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 71
+	entity 62
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 801 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 71
+	entity 62
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 802 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 71
+	entity 62
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 803 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 71
+	entity 62
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 804 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 71
+	entity 62
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 805 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 71
+	entity 62
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 806 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 72
+	entity 63
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 807 // ESurfaceType::Meta V: 14 I: 42 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 72
+	entity 63
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
 808 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 72
+	entity 63
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 809 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 72
+	entity 63
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 810 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 72
+	entity 63
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 811 // ESurfaceType::Meta V: 14 I: 42 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 72
+	entity 63
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 812 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 72
+	entity 63
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 813 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 72
+	entity 63
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 814 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 72
+	entity 63
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 815 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 72
+	entity 63
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 816 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 72
+	entity 63
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
@@ -6921,7 +6921,7 @@ default
 980 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_props/med_book_red
-	entity 57
+	entity 48
 	castShadows 0
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
@@ -6929,7 +6929,7 @@ default
 981 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_props/med_book_red
-	entity 57
+	entity 48
 	castShadows 0
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
@@ -6937,7 +6937,7 @@ default
 982 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_props/med_book_red
-	entity 57
+	entity 48
 	castShadows 0
 	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
@@ -6945,7 +6945,7 @@ default
 983 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_props/med_book_red
-	entity 57
+	entity 48
 	castShadows 0
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
@@ -6953,7 +6953,7 @@ default
 984 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_props/med_book_red
-	entity 57
+	entity 48
 	castShadows 0
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
@@ -6961,7 +6961,7 @@ default
 985 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_props/med_book_red
-	entity 57
+	entity 48
 	castShadows 0
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
@@ -6969,7 +6969,7 @@ default
 986 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_utility/trigger
-	entity 58
+	entity 49
 	castShadows 0
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
@@ -6977,7 +6977,7 @@ default
 987 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_utility/trigger
-	entity 58
+	entity 49
 	castShadows 0
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
@@ -6985,7 +6985,7 @@ default
 988 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_utility/trigger
-	entity 58
+	entity 49
 	castShadows 0
 	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
@@ -6993,7 +6993,7 @@ default
 989 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_utility/trigger
-	entity 58
+	entity 49
 	castShadows 0
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
@@ -7001,7 +7001,7 @@ default
 990 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_utility/trigger
-	entity 58
+	entity 49
 	castShadows 0
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
@@ -7009,7 +7009,7 @@ default
 991 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_utility/trigger
-	entity 58
+	entity 49
 	castShadows 0
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
@@ -7017,7 +7017,7 @@ default
 992 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/FPSTextures/Wall_23
-	entity 60
+	entity 51
 	castShadows 0
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
@@ -7025,7 +7025,7 @@ default
 993 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/FPSTextures/Wall_23
-	entity 60
+	entity 51
 	castShadows 0
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
@@ -7033,7 +7033,7 @@ default
 994 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/FPSTextures/Wall_23
-	entity 60
+	entity 51
 	castShadows 0
 	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
@@ -7041,7 +7041,7 @@ default
 995 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/FPSTextures/Wall_23
-	entity 60
+	entity 51
 	castShadows 0
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
@@ -7049,7 +7049,7 @@ default
 996 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/FPSTextures/Wall_23
-	entity 60
+	entity 51
 	castShadows 0
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
@@ -7057,7 +7057,7 @@ default
 997 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/FPSTextures/Wall_23
-	entity 60
+	entity 51
 	castShadows 0
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
@@ -7065,7 +7065,7 @@ default
 998 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/common/caulk
-	entity 73
+	entity 64
 	castShadows 0
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
@@ -7073,7 +7073,7 @@ default
 999 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/common/caulk
-	entity 73
+	entity 64
 	castShadows 0
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
@@ -7081,7 +7081,7 @@ default
 1000 // ESurfaceType::Meta V: 8 I: 12 planar
 {
 	shader textures/FPSTextures/Wall_79
-	entity 73
+	entity 64
 	castShadows 0
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
@@ -7089,7 +7089,7 @@ default
 1001 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/FPSTextures/Wall_79
-	entity 73
+	entity 64
 	castShadows 0
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
@@ -7097,7 +7097,7 @@ default
 1002 // ESurfaceType::Meta V: 30 I: 66 planar
 {
 	shader textures/FPSTextures/Wall_79
-	entity 73
+	entity 64
 	castShadows 0
 	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
@@ -7105,7 +7105,7 @@ default
 1003 // ESurfaceType::Meta V: 30 I: 66 planar
 {
 	shader textures/FPSTextures/Wall_79
-	entity 73
+	entity 64
 	castShadows 0
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
@@ -7113,7 +7113,7 @@ default
 1004 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/FPSTextures/Wall_79
-	entity 73
+	entity 64
 	castShadows 0
 	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
@@ -7121,7 +7121,7 @@ default
 1005 // ESurfaceType::Meta V: 14 I: 36 planar
 {
 	shader textures/FPSTextures/Wall_79
-	entity 73
+	entity 64
 	castShadows 0
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
@@ -7129,7 +7129,7 @@ default
 1006 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/FPSTextures/Wall_79
-	entity 73
+	entity 64
 	castShadows 0
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
@@ -7137,7 +7137,7 @@ default
 1007 // ESurfaceType::Meta V: 8 I: 12 planar
 {
 	shader textures/FPSTextures/Wall_79
-	entity 73
+	entity 64
 	castShadows 0
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
@@ -7145,7 +7145,7 @@ default
 1008 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/FPSTextures/Wall_79
-	entity 73
+	entity 64
 	castShadows 0
 	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
@@ -7153,7 +7153,7 @@ default
 1009 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/FPSTextures/Wall_79
-	entity 73
+	entity 64
 	castShadows 0
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
@@ -7161,7 +7161,7 @@ default
 1010 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/FPSTextures/Wall_79
-	entity 73
+	entity 64
 	castShadows 0
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
@@ -7169,7 +7169,7 @@ default
 1011 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/FPSTextures/Wall_79
-	entity 73
+	entity 64
 	castShadows 0
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
@@ -7177,7 +7177,7 @@ default
 1012 // ESurfaceType::Meta V: 14 I: 36 planar
 {
 	shader textures/FPSTextures/Wall_79
-	entity 73
+	entity 64
 	castShadows 0
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
@@ -7185,7 +7185,7 @@ default
 1013 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/FPSTextures/Wall_79
-	entity 73
+	entity 64
 	castShadows 0
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
@@ -7193,7 +7193,7 @@ default
 1014 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/FPSTextures/Wall_79
-	entity 73
+	entity 64
 	castShadows 0
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
@@ -7201,7 +7201,7 @@ default
 1015 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/FPSTextures/Wall_79
-	entity 73
+	entity 64
 	castShadows 0
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
@@ -7209,7 +7209,7 @@ default
 1016 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/FPSTextures/Wall_79
-	entity 73
+	entity 64
 	castShadows 0
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
@@ -7217,7 +7217,7 @@ default
 1017 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/FPSTextures/Wall_79
-	entity 73
+	entity 64
 	castShadows 0
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
@@ -7225,7 +7225,7 @@ default
 1018 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/FPSTextures/Wall_79
-	entity 73
+	entity 64
 	castShadows 0
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
@@ -7233,7 +7233,7 @@ default
 1019 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/FPSTextures/Wall_79
-	entity 73
+	entity 64
 	castShadows 0
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
@@ -7241,7 +7241,7 @@ default
 1020 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/common/caulk
-	entity 75
+	entity 66
 	castShadows 0
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
@@ -7249,7 +7249,7 @@ default
 1021 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/common/caulk
-	entity 75
+	entity 66
 	castShadows 0
 	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
@@ -7257,7 +7257,7 @@ default
 1022 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/common/caulk
-	entity 75
+	entity 66
 	castShadows 0
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
@@ -7265,7 +7265,7 @@ default
 1023 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/common/caulk
-	entity 75
+	entity 66
 	castShadows 0
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
@@ -7273,7 +7273,7 @@ default
 1024 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/common/caulk
-	entity 75
+	entity 66
 	castShadows 0
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
@@ -7281,7 +7281,7 @@ default
 1025 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/common/caulk
-	entity 75
+	entity 66
 	castShadows 0
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
@@ -7289,7 +7289,7 @@ default
 1026 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/common/caulk
-	entity 75
+	entity 66
 	castShadows 0
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
@@ -7297,7 +7297,7 @@ default
 1027 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/common/caulk
-	entity 75
+	entity 66
 	castShadows 0
 	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
@@ -7305,7 +7305,7 @@ default
 1028 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/common/caulk
-	entity 75
+	entity 66
 	castShadows 0
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
@@ -7313,7 +7313,7 @@ default
 1029 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/common/caulk
-	entity 75
+	entity 66
 	castShadows 0
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
@@ -7321,7 +7321,7 @@ default
 1030 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/common/caulk
-	entity 75
+	entity 66
 	castShadows 0
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
@@ -7329,7 +7329,7 @@ default
 1031 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/common/caulk
-	entity 75
+	entity 66
 	castShadows 0
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
@@ -7337,7 +7337,7 @@ default
 1032 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_dev/trigger
-	entity 92
+	entity 83
 	castShadows 0
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
@@ -7345,7 +7345,7 @@ default
 1033 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_dev/trigger
-	entity 92
+	entity 83
 	castShadows 0
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
@@ -7353,7 +7353,7 @@ default
 1034 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_dev/trigger
-	entity 92
+	entity 83
 	castShadows 0
 	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
@@ -7361,7 +7361,7 @@ default
 1035 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_dev/trigger
-	entity 92
+	entity 83
 	castShadows 0
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
@@ -7369,7 +7369,7 @@ default
 1036 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_dev/trigger
-	entity 92
+	entity 83
 	castShadows 0
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
@@ -7377,7 +7377,7 @@ default
 1037 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_dev/trigger
-	entity 92
+	entity 83
 	castShadows 0
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
@@ -7385,7 +7385,7 @@ default
 1038 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/common/trigger
-	entity 99
+	entity 90
 	castShadows 0
 	sampleSize 0
 }
@@ -7393,7 +7393,7 @@ default
 1039 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/common/trigger
-	entity 99
+	entity 90
 	castShadows 0
 	sampleSize 0
 }
@@ -7401,7 +7401,7 @@ default
 1040 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/common/trigger
-	entity 99
+	entity 90
 	castShadows 0
 	sampleSize 0
 }
@@ -7409,7 +7409,7 @@ default
 1041 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/common/trigger
-	entity 99
+	entity 90
 	castShadows 0
 	sampleSize 0
 }
@@ -7417,7 +7417,7 @@ default
 1042 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/common/trigger
-	entity 99
+	entity 90
 	castShadows 0
 	sampleSize 0
 }
@@ -7425,7 +7425,7 @@ default
 1043 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/common/trigger
-	entity 99
+	entity 90
 	castShadows 0
 	sampleSize 0
 }
@@ -7433,7 +7433,7 @@ default
 1044 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_props/radiowood
-	entity 111
+	entity 102
 	castShadows 0
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
@@ -7441,7 +7441,7 @@ default
 1045 // ESurfaceType::Meta V: 12 I: 30 planar
 {
 	shader textures/lq_props/radiowood
-	entity 111
+	entity 102
 	castShadows 0
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
@@ -7449,7 +7449,7 @@ default
 1046 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_props/radiowood
-	entity 111
+	entity 102
 	castShadows 0
 	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
@@ -7457,7 +7457,7 @@ default
 1047 // ESurfaceType::Meta V: 12 I: 30 planar
 {
 	shader textures/lq_props/radiowood
-	entity 111
+	entity 102
 	castShadows 0
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
@@ -7465,7 +7465,7 @@ default
 1048 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_props/radiowood
-	entity 111
+	entity 102
 	castShadows 0
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
@@ -7473,7 +7473,7 @@ default
 1049 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_props/radiowood
-	entity 111
+	entity 102
 	castShadows 0
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
@@ -7481,7 +7481,7 @@ default
 1050 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_props/radiowood
-	entity 111
+	entity 102
 	castShadows 0
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
@@ -7489,7 +7489,7 @@ default
 1051 // ESurfaceType::Meta V: 8 I: 18 planar
 {
 	shader textures/lq_props/radiowood
-	entity 111
+	entity 102
 	castShadows 0
 	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
@@ -7497,7 +7497,7 @@ default
 1052 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_props/radiowood
-	entity 111
+	entity 102
 	castShadows 0
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
@@ -7505,7 +7505,7 @@ default
 1053 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_props/radiowood
-	entity 111
+	entity 102
 	castShadows 0
 	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
@@ -7513,7 +7513,7 @@ default
 1054 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_props/radiowood
-	entity 111
+	entity 102
 	castShadows 0
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
@@ -7521,7 +7521,7 @@ default
 1055 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_props/radiowood
-	entity 111
+	entity 102
 	castShadows 0
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
@@ -7529,7 +7529,7 @@ default
 1056 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_props/radiowood
-	entity 111
+	entity 102
 	castShadows 0
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
@@ -7537,7 +7537,7 @@ default
 1057 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_props/radiowood
-	entity 111
+	entity 102
 	castShadows 0
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
@@ -7545,7 +7545,7 @@ default
 1058 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/common/trigger
-	entity 112
+	entity 103
 	castShadows 0
 	sampleSize 0
 }
@@ -7553,7 +7553,7 @@ default
 1059 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/common/trigger
-	entity 112
+	entity 103
 	castShadows 0
 	sampleSize 0
 }
@@ -7561,7 +7561,7 @@ default
 1060 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/common/trigger
-	entity 112
+	entity 103
 	castShadows 0
 	sampleSize 0
 }
@@ -7569,7 +7569,7 @@ default
 1061 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/common/trigger
-	entity 112
+	entity 103
 	castShadows 0
 	sampleSize 0
 }
@@ -7577,7 +7577,7 @@ default
 1062 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/common/trigger
-	entity 112
+	entity 103
 	castShadows 0
 	sampleSize 0
 }
@@ -7585,7 +7585,7 @@ default
 1063 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/common/trigger
-	entity 112
+	entity 103
 	castShadows 0
 	sampleSize 0
 }

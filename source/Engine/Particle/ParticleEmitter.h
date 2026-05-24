@@ -144,6 +144,8 @@ public:
 
 	bool DepthSorting = true;
 
+	bool ParticleLighting = true;
+
 	bool ParticleCulling = true;
 
 	BgfxStateManager::Blend BlendMode = BgfxStateManager::Blend::Alpha;

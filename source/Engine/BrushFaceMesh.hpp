@@ -37,10 +37,7 @@ public:
 	~BrushFaceMesh()
 	{
 
-		for (auto mesh : model->meshes)
-		{
-
-		}
+	
 
 		delete(model);
 	}

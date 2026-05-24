@@ -18,8 +18,6 @@ public:
 
         isDecal = true;
         DepthSorting = false;
-
-
 	}
 	
     // Override UpdateParticle.

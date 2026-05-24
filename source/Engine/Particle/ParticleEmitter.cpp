@@ -255,7 +255,7 @@ void ParticleEmitter::FinalizeFrameData()
             data.model[1] = world[1];
             data.model[2] = world[2];
             data.model[3] = world[3];
-            data.Color = particle.Color * vec4(GetLightForParticle(particle), 1.0f);
+            data.Color = particle.Color * (ParticleLighting ? vec4(GetLightForParticle(particle), 1.0f) : vec4(1.0f));
             data.Color.a *= particle.Transparency;
 
             float depth = glm::dot(cameraForward, particle.position - cameraPosition);
