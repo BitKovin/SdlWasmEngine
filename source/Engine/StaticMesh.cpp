@@ -558,6 +558,7 @@ void StaticMesh::DrawMeshShadow(mat4x4 view, mat4x4 projection)
     BgfxStateManager::SetWriteAlpha(false);
     BgfxStateManager::SetWriteDepth(false);
     BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Less);
+	BgfxStateManager::SetMSAA(false);
     BgfxStateManager::Apply();
  
     const uint32_t frontStencil =
@@ -609,6 +610,7 @@ void StaticMesh::DrawMeshShadow(mat4x4 view, mat4x4 projection)
     BgfxStateManager::SetWriteAlpha(true);
     BgfxStateManager::SetBlend(BgfxStateManager::Blend::Multiply);
     BgfxStateManager::SetWriteDepth(false);
+	BgfxStateManager::SetMSAA(false);// no need to msaa fullscreen effect 
     BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::None);
     BgfxStateManager::Apply();
  
@@ -633,44 +635,13 @@ void StaticMesh::DrawMeshShadow(mat4x4 view, mat4x4 projection)
     BgfxStateManager::SetWriteDepth(false);
     BgfxStateManager::Apply();
  
-
+	bgfx::setStencil(
+		BGFX_STENCIL_TEST_NOTEQUAL | BGFX_STENCIL_FUNC_REF(0) |
+		BGFX_STENCIL_FUNC_RMASK(0xFF) | BGFX_STENCIL_OP_FAIL_S_KEEP |
+		BGFX_STENCIL_OP_FAIL_Z_KEEP | BGFX_STENCIL_OP_PASS_Z_REPLACE);
+	BgfxStateManager::Apply();
+	Renderer::Instance->RenderFullscreenQuad(colorShader);
     
-	for (size_t i = 0; i < model->meshes.size(); ++i)
-	{
-		const roj::SkinnedMesh& mesh = model->meshes[i];
-		const roj::ShadowVolumePrecomp& precomp = mesh.shadowVolumePrecomp;
-
-		if (finalMeshHideList.contains(mesh.name)) continue;
-
-		// A1. Caps (now uses index buffer)
-		if (bgfx::isValid(precomp.capVbh) && precomp.capIndexCount > 0)
-		{
-			setCommonUniforms(capShader);
-			bgfx::setStencil(
-				BGFX_STENCIL_TEST_NOTEQUAL | BGFX_STENCIL_FUNC_REF(0) |
-				BGFX_STENCIL_FUNC_RMASK(0xFF) | BGFX_STENCIL_OP_FAIL_S_KEEP |
-				BGFX_STENCIL_OP_FAIL_Z_KEEP | BGFX_STENCIL_OP_PASS_Z_REPLACE);
-			bgfx::setVertexBuffer(0, precomp.capVbh);
-			bgfx::setIndexBuffer(precomp.capIbh);
-			BgfxStateManager::Apply();
-			capShader->Submit(viewId);
-		}
-
-		// A2. Edges
-		if (bgfx::isValid(precomp.edgeVbh) && precomp.edgeIndexCount > 0)
-		{
-			setCommonUniforms(edgeShader);
-			bgfx::setStencil(
-				BGFX_STENCIL_TEST_NOTEQUAL | BGFX_STENCIL_FUNC_REF(0) |
-				BGFX_STENCIL_FUNC_RMASK(0xFF) | BGFX_STENCIL_OP_FAIL_S_KEEP |
-				BGFX_STENCIL_OP_FAIL_Z_KEEP | BGFX_STENCIL_OP_PASS_Z_REPLACE);
-			bgfx::setVertexBuffer(0, precomp.edgeVbh);
-			bgfx::setIndexBuffer(precomp.edgeIbh);
-			BgfxStateManager::Apply();
-			edgeShader->Submit(viewId);
-		}
-	}
-
  
     BgfxStateManager::SetState(savedState);
     bgfx::setStencil(BGFX_STENCIL_DEFAULT);

@@ -8,6 +8,9 @@
 #include <cstring>
 #include <cassert>
 #include <cmath>
+#include <algorithm>
+#include <limits>
+#include <utility>
 
 namespace roj
 {
@@ -15,15 +18,13 @@ namespace roj
 // ─────────────────────────────────────────────────────────────────────────────
 // VERTEX LAYOUTS
 //
-// The previous design stored the precomputed bind-pose face normal and rotated
-// it with v0's dominant bone for the lit test. This broke at joints: v1/v2
-// positions are moved by their own bones, so the actual deformed face normal
-// is completely different from the bind-pose normal rotated by just one bone.
+// The previous design used per-triangle skinning, which caused cracks when two
+// triangles meeting at a joint were emitted from different bones.
 //
-// New design: store ALL relevant positions in EVERY record. The VS skins each
-// position with its own dominant bone and computes the face normal from the
-// actual deformed positions. The dominant-bone approximation per vertex is far
-// better than a single shared bone for the whole triangle.
+// New design: every deduplicated mesh position is assigned one canonical
+// "stitch" bone during the build phase. All triangles that reference that
+// position emit the same skinned world-space point, so seams stay closed and
+// the stencil volume remains watertight.
 //
 // ── CAP vertex ───────────────────────────────────────────────────────────────
 //   a_position    (3f) — bind-pose position for THIS vertex output (p0/p1/p2)
@@ -67,60 +68,121 @@ namespace roj
 //
 //   Index buffer: [0,2,1,  1,2,3]
 //
-// WHY THIS WORKS AT MULTI-BONE JOINTS
-//   Every record in a primitive stores all positions of that primitive.
-//   The VS skins each position with its own dominant bone → approximates the
-//   actual deformed position. Face normal computed from deformed positions →
-//   correct lit/silhouette classification even at highly deformed joints.
-//   All records in a primitive store the SAME set of positions and dom bones
-//   → SAME face normal computation → SAME lit/silhouette result → consistent
-//   collapse/render decision for the whole primitive → no tearing. ✓
+// WHY THIS WORKS AT JOINTS
+//   Every deduplicated position gets one canonical stitch bone in the build
+//   phase. Any triangle that touches that position emits the same skinned
+//   output point, so neighboring triangles meet exactly and the shadow volume
+//   stays sealed. The lit/silhouette test still runs per primitive, using the
+//   same stitched positions for all records in that primitive. ✓
 // ─────────────────────────────────────────────────────────────────────────────
 
 namespace {
 
 // ── Position deduplication ────────────────────────────────────────────────────
-inline float roundP(float v) { return std::round(v * 1e7f) / 1e7f; }
-
 struct Vec3Key {
-    float x, y, z;
-    bool operator==(const Vec3Key& o) const { return x==o.x && y==o.y && z==o.z; }
+    int x, y, z;
+    bool operator==(const Vec3Key& o) const { return x == o.x && y == o.y && z == o.z; }
 };
 struct Vec3KeyHash {
     size_t operator()(const Vec3Key& k) const {
         size_t h = 2166136261u;
-        auto mix = [&](float f){ uint32_t u; memcpy(&u,&f,4); h=(h^u)*16777619u; };
+        auto mix = [&](int v) { h = (h ^ (size_t)v) * 16777619u; };
         mix(k.x); mix(k.y); mix(k.z); return h;
     }
 };
 
-struct CleanVert { glm::vec3 pos; const VertexData* src; };
+struct CleanVert
+{
+    glm::vec3 pos{};
+    uint32_t stitchBone = 0;
+};
+
+static std::pair<uint32_t, float> dominantBoneAndWeight(const VertexData& v)
+{
+    int best = 0;
+    float bestW = v.BlendWeights[0];
+    for (int k = 1; k < 4; ++k) {
+        if (v.BlendWeights[k] > bestW) {
+            bestW = v.BlendWeights[k];
+            best = k;
+        }
+    }
+    return { (uint32_t)v.BlendIndices[best], bestW };
+}
+
+static float computeWeldEpsilon(const std::vector<VertexData>& verts)
+{
+    if (verts.empty()) return 1e-5f;
+
+    glm::vec3 mn(std::numeric_limits<float>::max());
+    glm::vec3 mx(-std::numeric_limits<float>::max());
+    for (const VertexData& v : verts) {
+        mn.x = std::min(mn.x, v.Position.x);
+        mn.y = std::min(mn.y, v.Position.y);
+        mn.z = std::min(mn.z, v.Position.z);
+        mx.x = std::max(mx.x, v.Position.x);
+        mx.y = std::max(mx.y, v.Position.y);
+        mx.z = std::max(mx.z, v.Position.z);
+    }
+
+    const glm::vec3 ext = mx - mn;
+    float extent = std::max(ext.x, std::max(ext.y, ext.z));
+    if (!(extent > 0.0f) || !std::isfinite(extent)) extent = 1.0f;
+    return std::max(extent * 1e-6f, 1e-7f);
+}
+
+static Vec3Key quantizeKey(const glm::vec3& p, float eps)
+{
+    const float inv = 1.0f / eps;
+    return {
+        int(std::floor(p.x * inv + 0.5f)),
+        int(std::floor(p.y * inv + 0.5f)),
+        int(std::floor(p.z * inv + 0.5f))
+    };
+}
 
 static void deduplicateVerts(
     const std::vector<VertexData>& srcVerts,
     const std::vector<uint32_t>&   srcIndices,
     std::vector<CleanVert>&        cv,
-    std::vector<uint32_t>&         tri)
+    std::vector<uint32_t>&         tri,
+    float                          eps)
 {
     tri.resize(srcIndices.size());
+    cv.clear();
+    cv.reserve(srcIndices.size());
+
     std::unordered_map<Vec3Key, uint32_t, Vec3KeyHash> seen;
     seen.reserve(srcIndices.size());
+    std::vector<std::unordered_map<uint32_t, float>> boneVotes;
+
     for (size_t i = 0; i < srcIndices.size(); ++i) {
         const VertexData& sv = srcVerts[srcIndices[i]];
-        Vec3Key key{ roundP(sv.Position.x), roundP(sv.Position.y), roundP(sv.Position.z) };
-        auto [it, ins] = seen.emplace(key, (uint32_t)cv.size());
-        if (ins) cv.push_back({ sv.Position, &sv });
-        tri[i] = it->second;
-    }
-}
+        const Vec3Key key = quantizeKey(sv.Position, eps);
+        auto [it, inserted] = seen.emplace(key, (uint32_t)cv.size());
+        if (inserted) {
+            cv.push_back(CleanVert{});
+            cv.back().pos = sv.Position;
+            boneVotes.emplace_back();
+        }
+        const uint32_t group = it->second;
+        tri[i] = group;
 
-// Returns dominant bone index (highest weight) for a vertex
-static float domBone(const VertexData& v) {
-    int best = 0; float bestW = v.BlendWeights[0];
-    for (int k = 1; k < 4; ++k) {
-        if (v.BlendWeights[k] > bestW) { bestW = v.BlendWeights[k]; best = k; }
+        const auto [boneIdx, boneWeight] = dominantBoneAndWeight(sv);
+        boneVotes[group][boneIdx] += boneWeight;
     }
-    return (float)(int)v.BlendIndices[best];
+
+    for (uint32_t i = 0; i < (uint32_t)cv.size(); ++i) {
+        uint32_t bestBone = 0;
+        float bestScore = -1.0f;
+        for (const auto& [boneIdx, score] : boneVotes[i]) {
+            if (score > bestScore || (score == bestScore && boneIdx < bestBone)) {
+                bestScore = score;
+                bestBone = boneIdx;
+            }
+        }
+        cv[i].stitchBone = bestBone;
+    }
 }
 
 // ── Edge adjacency ────────────────────────────────────────────────────────────
@@ -155,9 +217,11 @@ static std::vector<EdgeEntry> buildEdges(const std::vector<uint32_t>& tri)
     return out;
 }
 
-static void copyBones(VertexData* dst, const VertexData& src) {
-    for (int k = 0; k < 4; ++k) dst->BlendIndices[k] = src.BlendIndices[k];
-    dst->BlendWeights = src.BlendWeights;
+static void setSingleBone(VertexData* dst, uint32_t boneIdx)
+{
+    for (int k = 0; k < 4; ++k) dst->BlendIndices[k] = 0;
+    dst->BlendIndices[0] = boneIdx;
+    dst->BlendWeights = glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
 }
 
 // ── Cap vertex write ──────────────────────────────────────────────────────────
@@ -167,18 +231,18 @@ static void writeCapVert(
     const glm::vec3& p1,                // a_tangent:  same for all 6 records
     const glm::vec3& p2,                // a_bitangent:same for all 6 records
     float db0, float db1, float db2,    // dominant bones of p0,p1,p2 — same for all 6
-    const VertexData& ownBones,         // per-record: own bone data for correct output
+    uint32_t stitchBone,                // shared canonical bone for this deduped position
     float extrude,                      // 0=front, 1=back
     VertexData* dst)
 {
     std::memset(dst, 0, sizeof(VertexData));
     dst->Position  = thisPos;
-    dst->Normal    = p0;    
+    dst->Normal    = p0;
     dst->Tangent   = p1;
     dst->BiTangent = p2;
     // Color: [dom_bone_p0, dom_bone_p1, dom_bone_p2, extrude_flag]
     dst->Color = glm::vec4(db0, db1, db2, extrude);
-    copyBones(dst, ownBones);
+    setSingleBone(dst, stitchBone);
 }
 
 // ── Edge vertex write ─────────────────────────────────────────────────────────
@@ -190,7 +254,7 @@ static void writeEdgeVert(
     const glm::vec3& adj1,              // texcoord0.xy + texcoord1.x: same for all 4
     float db0, float db1,               // dom bones of p0, p1
     float dbAdj0, float dbAdj1,         // dom bones of adj0, adj1
-    const VertexData& ownBones,         // per-record: own bone data for correct output
+    uint32_t stitchBone,                // shared canonical bone for this deduped position
     float extrude,                      // 0=base, 1=extruded
     VertexData* dst)
 {
@@ -204,7 +268,7 @@ static void writeEdgeVert(
     // adj1.xyz split across texcoord0 and texcoord1
     dst->TextureCoordinate  = glm::vec2(adj1.x, adj1.y);       // a_texcoord0
     dst->TextureCoordinate2 = glm::vec2(adj1.z, dbAdj1);       // a_texcoord1
-    copyBones(dst, ownBones);
+    setSingleBone(dst, stitchBone);
 }
 
 } // anonymous namespace
@@ -213,7 +277,7 @@ static void writeEdgeVert(
 ShadowVolumePrecomp BuildShadowVolumePrecomp(const SkinnedMesh& mesh)
 {
     ShadowVolumePrecomp result;
-    if (mesh.indices.size() < 3) return result;
+    if (mesh.indices.size() < 3 || mesh.vertices.empty()) return result;
 
     const bgfx::VertexLayout layout = VertexData::Declaration();
     const uint32_t stride = layout.getStride();
@@ -221,15 +285,18 @@ ShadowVolumePrecomp BuildShadowVolumePrecomp(const SkinnedMesh& mesh)
     // ── 1. Positional deduplication ───────────────────────────────────────────
     std::vector<CleanVert> cv;
     std::vector<uint32_t>  tri;
-    deduplicateVerts(mesh.vertices, mesh.indices, cv, tri);
+    const float weldEps = computeWeldEpsilon(mesh.vertices);
+    deduplicateVerts(mesh.vertices, mesh.indices, cv, tri, weldEps);
 
-    // Remove degenerate triangles
+    // Remove only truly degenerate triangles after welding.
     {
         std::vector<uint32_t> f; f.reserve(tri.size());
+        const float areaEps2 = weldEps * weldEps * weldEps * weldEps;
         for (size_t t = 0; t < tri.size()/3; ++t) {
             const glm::vec3& p0=cv[tri[t*3+0]].pos, &p1=cv[tri[t*3+1]].pos, &p2=cv[tri[t*3+2]].pos;
-            glm::vec3 c=glm::cross(p1-p0,p2-p0);
-            if (std::sqrt(glm::dot(c,c))*0.5f >= 1e-5f)
+            const glm::vec3 c=glm::cross(p1-p0,p2-p0);
+            const float n2 = glm::dot(c,c);
+            if (n2 > areaEps2 && std::isfinite(n2))
                 { f.push_back(tri[t*3+0]); f.push_back(tri[t*3+1]); f.push_back(tri[t*3+2]); }
         }
         tri=std::move(f);
@@ -253,18 +320,18 @@ ShadowVolumePrecomp BuildShadowVolumePrecomp(const SkinnedMesh& mesh)
         for (uint32_t t=0;t<triCount;++t) {
             const uint32_t i0=tri[t*3+0], i1=tri[t*3+1], i2=tri[t*3+2];
             const glm::vec3& p0=cv[i0].pos, &p1=cv[i1].pos, &p2=cv[i2].pos;
-            float db0=domBone(*cv[i0].src), db1=domBone(*cv[i1].src), db2=domBone(*cv[i2].src);
+            float db0=(float)cv[i0].stitchBone, db1=(float)cv[i1].stitchBone, db2=(float)cv[i2].stitchBone;
             const uint32_t base=t*6;
 
             // 6 records: pairs for p0/p1/p2, each pair has front(extrude=0) and back(extrude=1)
             // All 6 store the SAME p0,p1,p2 and dom bones → consistent lit test
             // Each uses ITS OWN bone data for the output position
-            writeCapVert(p0,p0,p1,p2,db0,db1,db2,*cv[i0].src,0.f,vAt(base+0)); // front p0
-            writeCapVert(p0,p0,p1,p2,db0,db1,db2,*cv[i0].src,1.f,vAt(base+1)); // back  p0
-            writeCapVert(p1,p0,p1,p2,db0,db1,db2,*cv[i1].src,0.f,vAt(base+2)); // front p1
-            writeCapVert(p1,p0,p1,p2,db0,db1,db2,*cv[i1].src,1.f,vAt(base+3)); // back  p1
-            writeCapVert(p2,p0,p1,p2,db0,db1,db2,*cv[i2].src,0.f,vAt(base+4)); // front p2
-            writeCapVert(p2,p0,p1,p2,db0,db1,db2,*cv[i2].src,1.f,vAt(base+5)); // back  p2
+            writeCapVert(p0,p0,p1,p2,db0,db1,db2,(uint32_t)cv[i0].stitchBone,0.f,vAt(base+0)); // front p0
+            writeCapVert(p0,p0,p1,p2,db0,db1,db2,(uint32_t)cv[i0].stitchBone,1.f,vAt(base+1)); // back  p0
+            writeCapVert(p1,p0,p1,p2,db0,db1,db2,(uint32_t)cv[i1].stitchBone,0.f,vAt(base+2)); // front p1
+            writeCapVert(p1,p0,p1,p2,db0,db1,db2,(uint32_t)cv[i1].stitchBone,1.f,vAt(base+3)); // back  p1
+            writeCapVert(p2,p0,p1,p2,db0,db1,db2,(uint32_t)cv[i2].stitchBone,0.f,vAt(base+4)); // front p2
+            writeCapVert(p2,p0,p1,p2,db0,db1,db2,(uint32_t)cv[i2].stitchBone,1.f,vAt(base+5)); // back  p2
 
             // Front: original winding p0,p1,p2
             idx.push_back(base+0); idx.push_back(base+2); idx.push_back(base+4);
@@ -293,15 +360,15 @@ ShadowVolumePrecomp BuildShadowVolumePrecomp(const SkinnedMesh& mesh)
             const glm::vec3& p0  =cv[ee.v0].pos,  &p1  =cv[ee.v1].pos;
             const glm::vec3& adj0=cv[ee.adj0].pos, &adj1=cv[ee.adj1].pos;
 
-            float db0   =domBone(*cv[ee.v0].src),  db1   =domBone(*cv[ee.v1].src);
-            float dbAdj0=domBone(*cv[ee.adj0].src), dbAdj1=domBone(*cv[ee.adj1].src);
+            float db0   =(float)cv[ee.v0].stitchBone,  db1   =(float)cv[ee.v1].stitchBone;
+            float dbAdj0=(float)cv[ee.adj0].stitchBone, dbAdj1=(float)cv[ee.adj1].stitchBone;
 
             // All 4 records carry identical (p0,p1,adj0,adj1,dom bones) → consistent test
             // Each uses ITS OWN endpoint bone data for output
-            writeEdgeVert(p0,p0,p1,adj0,adj1,db0,db1,dbAdj0,dbAdj1,*cv[ee.v0].src,0.f,vAt(base+0)); // base    p0
-            writeEdgeVert(p1,p0,p1,adj0,adj1,db0,db1,dbAdj0,dbAdj1,*cv[ee.v1].src,0.f,vAt(base+1)); // base    p1
-            writeEdgeVert(p0,p0,p1,adj0,adj1,db0,db1,dbAdj0,dbAdj1,*cv[ee.v0].src,1.f,vAt(base+2)); // extruded p0
-            writeEdgeVert(p1,p0,p1,adj0,adj1,db0,db1,dbAdj0,dbAdj1,*cv[ee.v1].src,1.f,vAt(base+3)); // extruded p1
+            writeEdgeVert(p0,p0,p1,adj0,adj1,db0,db1,dbAdj0,dbAdj1,(uint32_t)cv[ee.v0].stitchBone,0.f,vAt(base+0)); // base    p0
+            writeEdgeVert(p1,p0,p1,adj0,adj1,db0,db1,dbAdj0,dbAdj1,(uint32_t)cv[ee.v1].stitchBone,0.f,vAt(base+1)); // base    p1
+            writeEdgeVert(p0,p0,p1,adj0,adj1,db0,db1,dbAdj0,dbAdj1,(uint32_t)cv[ee.v0].stitchBone,1.f,vAt(base+2)); // extruded p0
+            writeEdgeVert(p1,p0,p1,adj0,adj1,db0,db1,dbAdj0,dbAdj1,(uint32_t)cv[ee.v1].stitchBone,1.f,vAt(base+3)); // extruded p1
 
             idx.push_back(base+0); idx.push_back(base+2); idx.push_back(base+1);
             idx.push_back(base+1); idx.push_back(base+2); idx.push_back(base+3);
