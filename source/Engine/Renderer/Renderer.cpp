@@ -610,7 +610,7 @@ void Renderer::InitFrameBuffers()
 
     depthBuffer = new RenderTexture(
         screenResolution.x, screenResolution.y,
-        TextureFormat::Depth24, texType,
+        TextureFormat::Depth24Stencil8, texType,
         /*sampleDepth=*/false,
         kDepthSamplerFlags,
         MultiSampleCount > 0 ? MultiSampleCount : 0);

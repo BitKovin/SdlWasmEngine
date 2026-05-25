@@ -47,10 +47,24 @@ if(MSVC)
     add_link_options(/DEBUG)
 
 else()
-    # Clang and GCC (used by Linux, Emscripten)
-    add_compile_options(
-        -O2
-        -g
-        -DNDEBUG
-    )
+    # Clang and GCC (Linux, Emscripten)
+    # Provide a sensible default if the caller didn't set one.
+    if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+        message(STATUS "No build type specified — defaulting to Release")
+        set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
+    endif()
+
+    # Use CMake's config-specific flag variables instead of hardcoding.
+    # These are appended to the base CMAKE_CXX_FLAGS by CMake automatically.
+    set(CMAKE_C_FLAGS_DEBUG          "-O0 -g"             CACHE STRING "" FORCE)
+    set(CMAKE_CXX_FLAGS_DEBUG        "-O0 -g"             CACHE STRING "" FORCE)
+
+    set(CMAKE_C_FLAGS_RELEASE        "-O3 -DNDEBUG"       CACHE STRING "" FORCE)
+    set(CMAKE_CXX_FLAGS_RELEASE      "-O3 -DNDEBUG"       CACHE STRING "" FORCE)
+
+    set(CMAKE_C_FLAGS_RELWITHDEBINFO  "-O2 -g -DNDEBUG"   CACHE STRING "" FORCE)
+    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g -DNDEBUG"  CACHE STRING "" FORCE)
+
+    set(CMAKE_C_FLAGS_MINSIZEREL      "-Os -DNDEBUG"      CACHE STRING "" FORCE)
+    set(CMAKE_CXX_FLAGS_MINSIZEREL    "-Os -DNDEBUG"      CACHE STRING "" FORCE)
 endif()
