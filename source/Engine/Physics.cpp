@@ -1739,6 +1739,7 @@ Body* Physics::CreateCharacterBody(Entity* owner, vec3 Position, float Radius, f
 
 	// Allocate and attach collision properties to the body via the user data field:
 	BodyData* properties = new BodyData{ group, mask,false, owner };
+	properties->dynamicCollisionGroupOrMask = true;
 	body_settings.mUserData = reinterpret_cast<uintptr_t>(properties);
 
 	// Create and add body to world
@@ -1779,6 +1780,7 @@ Body* Physics::CreateCharacterCylinderBody(Entity* owner, vec3 Position, float R
 		JPH::Quat::sIdentity(),
 		JPH::EMotionType::Dynamic,  // Dynamic body type
 		Layers::MOVING              // Use moving layer
+		
 	);
 
 	body_settings.mMotionQuality = EMotionQuality::LinearCast;
@@ -1792,6 +1794,7 @@ Body* Physics::CreateCharacterCylinderBody(Entity* owner, vec3 Position, float R
 
 	// Attach collision properties
 	BodyData* properties = new BodyData{ group, mask, false, owner };
+	properties->dynamicCollisionGroupOrMask = true;
 	body_settings.mUserData = reinterpret_cast<uintptr_t>(properties);
 
 	// Create and add body to world
