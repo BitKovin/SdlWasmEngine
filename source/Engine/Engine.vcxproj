@@ -515,6 +515,7 @@
     <ClInclude Include="BehaviourTree\NodeFactory.h" />
     <ClInclude Include="BehaviourTree\TaskNodes.h" />
     <ClInclude Include="BehaviourTree\TreeNode.h" />
+    <ClInclude Include="BgfxResetManager.h" />
     <ClInclude Include="BgfxStateManager.h" />
     <ClInclude Include="Compression\miniz.h" />
     <ClInclude Include="Compression\zip\miniz.h" />

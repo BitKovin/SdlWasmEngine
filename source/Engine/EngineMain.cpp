@@ -18,6 +18,7 @@
 
 #include <BgfxStateManager.h>
 #include <Renderer/Abstractions/ViewIdManager.h>
+#include <BgfxResetManager.h>
 
 #include <FileSystem/NativeFileSystem.h>
 #include <FileSystem/ZipVFS.h>
@@ -89,10 +90,7 @@ void EngineMain::UpdateScreenSize()
         if (RmlContext)
             RmlContext->OnResize(ScreenSize.x, ScreenSize.y);
 
-        bgfx::reset(ScreenSize.x, ScreenSize.y, BGFX_RESET_MAXANISOTROPY);
-
-        bgfx::setViewRect(0, 0, 0, ScreenSize.x, ScreenSize.y);
-        bgfx::setViewRect(255, 0, 0, ScreenSize.x, ScreenSize.y);
+        BgfxResetManager::SetResolution(ScreenSize);
     }
 }
 
@@ -216,6 +214,8 @@ void EngineMain::Init(std::vector<std::string> args)
     ParticleEmitter::InitBilboardVaoIfNeeded();
 
     InitInputs();
+
+    BgfxResetManager::SetMaxAnisotropy(true);
 
     Level::Current = new Level();
 
@@ -369,6 +369,8 @@ void EngineMain::MainLoop()
     
     ZoneScopedN("Frame");
     FrameMark;
+
+    BgfxResetManager::ApplyIfNeeded();
 
     if (frame == 5) //some platforms require it
     {

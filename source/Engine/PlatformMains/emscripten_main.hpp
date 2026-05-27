@@ -16,6 +16,8 @@
 #include <bgfx/bgfx.h>
 #include <bgfx/platform.h>          // ← REQUIRED for PlatformData on Emscripten
 
+#include <BgfxResetManager.h>
+
 #include <deque>
 #include <algorithm>
 #include <array>
@@ -87,9 +89,7 @@ void emscripten_render_loop()
                 int w, h;
                 SDL_GetWindowSize(window, &w, &h);
 
-                bgfx::reset(w, h, BGFX_RESET_MAXANISOTROPY);
-                bgfx::setViewRect(0, 0, 0, w, h);
-                bgfx::setViewRect(255, 0, 0, w, h);
+                BgfxResetManager::SetResolution({ w,h });
 
                 update_screen_size(w, h);
             }
