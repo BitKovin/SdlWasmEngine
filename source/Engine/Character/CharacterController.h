@@ -107,6 +107,7 @@ private:
 	// BodyIDs of character bodies we have an active AddIgnorePair with.
 	// This controller is always the "top" character in the pair.
 	std::vector<BodyID> activeIgnorePairs;
+	std::unordered_map<BodyID, Delay> removeCollisionCooldown;
 
 	bool CanStandUp();
 

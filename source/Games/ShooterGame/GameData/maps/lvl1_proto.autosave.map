@@ -3224,11 +3224,11 @@
 {
 "classname" "light"
 "origin" "-2020 -5142 115"
-"light" "50"
+"light" "70"
 "_color" "1 0.964706 0.705882"
 "spawnflags" "1"
 "scale" "1"
-"fade" "0.15"
+"fade" "0.4"
 }
 // entity 36
 {
@@ -4784,6 +4784,7 @@
 "_color" "1 0.745098 0.431373"
 "fade" "1"
 "radius" "64"
+"style" "10"
 }
 // entity 88
 {

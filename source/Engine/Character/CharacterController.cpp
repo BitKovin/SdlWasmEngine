@@ -890,15 +890,22 @@ void CharacterController::UpdateCharacterStacking(float deltaTime)
 		{
 			Physics::AddIgnorePair(myID, id);
 			activeIgnorePairs.push_back(id);
+			removeCollisionCooldown[id].AddDelay(0.3);
 		}
 	}
 
 	// ── 3. Remove ignore pairs for bodies no longer below us ─────────────────
 	for (auto it = activeIgnorePairs.begin(); it != activeIgnorePairs.end(); )
 	{
-		const bool stillDetected = std::find(detectedThisFrame.begin(), detectedThisFrame.end(), *it) != detectedThisFrame.end();
+		bool stillDetected = std::find(detectedThisFrame.begin(), detectedThisFrame.end(), *it) != detectedThisFrame.end();
+		if (removeCollisionCooldown[*it].Wait())
+			stillDetected = true;
+
 		if (!stillDetected)
 		{
+
+
+
 			Physics::RemoveIgnorePair(myID, *it);
 			it = activeIgnorePairs.erase(it);
 		}
