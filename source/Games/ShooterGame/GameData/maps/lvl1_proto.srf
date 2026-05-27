@@ -3683,2494 +3683,2494 @@ default
 
 527 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/FPSTextures/Wall_23
+	shader textures/psx_textures_2/wallpaper_wall_pt_1
 	sampleSize 8
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
-528 // ESurfaceType::Meta V: 10 I: 24 planar
+528 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/FPSTextures/Wall_23
+	shader textures/psx_textures_2/wallpaper_wall_pt_1
 	sampleSize 8
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 529 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/FPSTextures/Wall_23
+	shader textures/psx_textures_2/wallpaper_wall_pt_1
 	sampleSize 8
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 530 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/FPSTextures/Wall_23
+	shader textures/psx_textures_2/wallpaper_wall_pt_1
 	sampleSize 8
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
 531 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/FPSTextures/Wall_23
-	sampleSize 8
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
-}
-
-532 // ESurfaceType::Meta V: 6 I: 12 planar
-{
-	shader textures/FPSTextures/Wall_23
-	sampleSize 8
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
-}
-
-533 // ESurfaceType::Meta V: 12 I: 30 planar
-{
-	shader textures/FPSTextures/Wall_23
-	sampleSize 8
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
-}
-
-534 // ESurfaceType::Meta V: 12 I: 30 planar
-{
-	shader textures/FPSTextures/Wall_23
+	shader textures/psx_textures_2/wallpaper_wall_pt_1
 	sampleSize 8
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
-535 // ESurfaceType::Meta V: 5 I: 9 planar
-{
-	shader textures/FPSTextures/Wall_23
-	sampleSize 8
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
-}
-
-536 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/FPSTextures/Wall_23
-	sampleSize 8
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
-}
-
-537 // ESurfaceType::Meta V: 12 I: 33 planar
-{
-	shader textures/FPSTextures/Wall_23
-	sampleSize 8
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
-}
-
-538 // ESurfaceType::Meta V: 12 I: 33 planar
-{
-	shader textures/FPSTextures/Wall_23
-	sampleSize 8
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
-}
-
-539 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/FPSTextures/Wall_23
-	sampleSize 8
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
-}
-
-540 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/FPSTextures/Wall_23
-	sampleSize 8
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
-}
-
-541 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/FPSTextures/Wall_23
-	sampleSize 8
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
-}
-
-542 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/FPSTextures/Wall_23
-	sampleSize 8
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
-}
-
-543 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/FPSTextures/Wall_23
-	sampleSize 8
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
-}
-
-544 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/FPSTextures/Wall_23
-	sampleSize 8
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
-}
-
-545 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/FPSTextures/Wall_23
-	sampleSize 8
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
-}
-
-546 // ESurfaceType::Meta V: 10 I: 24 planar
-{
-	shader textures/FPSTextures/Wall_23
-	sampleSize 8
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
-}
-
-547 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/FPSTextures/Wall_23
-	sampleSize 8
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
-}
-
-548 // ESurfaceType::Meta V: 5 I: 9 planar
-{
-	shader textures/FPSTextures/Wall_23
-	sampleSize 8
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
-}
-
-549 // ESurfaceType::Meta V: 6 I: 12 planar
-{
-	shader textures/FPSTextures/Wall_23
-	sampleSize 8
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-550 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/FPSTextures/Wall_23
-	sampleSize 8
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
-}
-
-551 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/psx_textures_2/building_ceiling_pt_1
-	sampleSize 8
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
-}
-
-552 // ESurfaceType::Meta V: 7 I: 15 planar
-{
-	shader textures/psx_textures_2/building_ceiling_pt_1
-	sampleSize 8
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
-}
-
-553 // ESurfaceType::Meta V: 6 I: 12 planar
-{
-	shader textures/psx_mega_pack/ceiling_1
-	sampleSize 8
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
-}
-
-554 // ESurfaceType::Meta V: 5 I: 9 planar
-{
-	shader textures/psx_mega_pack/ceiling_1
-	sampleSize 8
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
-}
-
-555 // ESurfaceType::Meta V: 5 I: 9 planar
-{
-	shader textures/psx_textures_2/painted_concrete_wall_pt_7_1
-	sampleSize 8
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
-}
-
-556 // ESurfaceType::Meta V: 5 I: 9 planar
-{
-	shader textures/psx_textures_2/painted_concrete_wall_pt_7_1
-	sampleSize 8
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
-}
-
-557 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_props/radiowood
-	sampleSize 8
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
-}
-
-558 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_props/radiowood
-	sampleSize 8
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
-}
-
-559 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_props/radiowood
-	sampleSize 8
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-560 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_props/radiowood
-	sampleSize 8
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
-}
-
-561 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_props/radio32
-	sampleSize 8
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
-}
-
-562 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_props/radio32
-	sampleSize 8
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
-}
-
-563 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_wood/may_wood1_2
-	sampleSize 8
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
-}
-
-564 // ESurfaceType::Meta V: 16 I: 36 planar
-{
-	shader textures/lq_wood/may_wood1_2
-	sampleSize 8
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
-}
-
-565 // ESurfaceType::Meta V: 6 I: 12 planar
-{
-	shader textures/lq_wood/may_wood1_2
-	sampleSize 8
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
-}
-
-566 // ESurfaceType::Meta V: 10 I: 24 planar
-{
-	shader textures/lq_wood/may_wood1_2
-	sampleSize 8
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
-}
-
-567 // ESurfaceType::Meta V: 8 I: 18 planar
-{
-	shader textures/lq_wood/may_wood1_2
-	sampleSize 8
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-568 // ESurfaceType::Meta V: 6 I: 12 planar
-{
-	shader textures/lq_wood/may_wood1_2
-	sampleSize 8
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
-}
-
-569 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_wood/may_wood1_2
-	sampleSize 8
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
-}
-
-570 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_wood/may_wood1_2
-	sampleSize 8
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
-}
-
-571 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_wood/may_wood1_2
-	sampleSize 8
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
-}
-
-572 // ESurfaceType::Meta V: 6 I: 12 planar
-{
-	shader textures/lq_wood/may_wood1_2
-	sampleSize 8
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
-}
-
-573 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_wood/may_wood1_2
-	sampleSize 8
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
-}
-
-574 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/FPSTextures/Flat15
-	sampleSize 8
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
-}
-
-575 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/FPSTextures/Flat15
-	sampleSize 8
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
-}
-
-576 // ESurfaceType::Meta V: 16 I: 30 planar
-{
-	shader textures/lq_wood/plank2
-	sampleSize 8
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
-}
-
-577 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_wood/plank2
-	sampleSize 8
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
-}
-
-578 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_wood/plank2
-	sampleSize 8
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
-}
-
-579 // ESurfaceType::Meta V: 16 I: 30 planar
-{
-	shader textures/lq_wood/plank2
-	sampleSize 8
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
-}
-
-580 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_wood/plank2
-	sampleSize 8
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
-}
-
-581 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_wood/plank2
-	sampleSize 8
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
-}
-
-582 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_wood/plank2
-	sampleSize 8
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
-}
-
-583 // ESurfaceType::Meta V: 12 I: 30 planar
-{
-	shader textures/lq_wood/plank2
-	sampleSize 8
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
-}
-
-584 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_wood/plank2
-	sampleSize 8
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-585 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_wood/plank2
-	sampleSize 8
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
-}
-
-586 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_wood/plank2
-	sampleSize 8
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
-}
-
-587 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_wood/plank2
-	sampleSize 8
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
-}
-
-588 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_wood/plank2
-	sampleSize 8
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
-}
-
-589 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_wood/plank2
-	sampleSize 8
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-590 // ESurfaceType::Meta V: 5 I: 6 planar
-{
-	shader textures/lq_conc/conc4_1
-	sampleSize 8
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
-}
-
-591 // ESurfaceType::Meta V: 3 I: 3 planar
-{
-	shader textures/lq_conc/conc4_1
-	sampleSize 8
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
-}
-
-592 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_conc/conc4_1
-	sampleSize 8
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
-}
-
-593 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_conc/conc4_1
-	sampleSize 8
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
-}
-
-594 // ESurfaceType::Meta V: 8 I: 15 planar
-{
-	shader textures/lq_conc/conc4_1
-	sampleSize 8
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
-}
-
-595 // ESurfaceType::Meta V: 3 I: 3 planar
-{
-	shader textures/lq_conc/conc4_1
-	sampleSize 8
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-596 // ESurfaceType::Meta V: 3 I: 3 planar
-{
-	shader textures/lq_conc/conc4_1
-	sampleSize 8
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
-}
-
-597 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_conc/conc4_1
-	sampleSize 8
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
-}
-
-598 // ESurfaceType::Meta V: 3 I: 3 planar
-{
-	shader textures/lq_conc/conc4_1
-	sampleSize 8
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-599 // ESurfaceType::Meta V: 10 I: 24 planar
-{
-	shader textures/lq_conc/conc4_1
-	sampleSize 8
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-600 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_conc/conc4_1
-	sampleSize 8
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
-}
-
-601 // ESurfaceType::Meta V: 6 I: 12 planar
-{
-	shader textures/lq_conc/conc4_1
-	sampleSize 8
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-602 // ESurfaceType::Meta V: 5 I: 9 planar
-{
-	shader textures/lq_conc/conc4_1
-	sampleSize 8
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
-}
-
-603 // ESurfaceType::Meta V: 5 I: 9 planar
-{
-	shader textures/lq_conc/conc4_1
-	sampleSize 8
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
-}
-
-604 // ESurfaceType::Meta V: 5 I: 9 planar
-{
-	shader textures/lq_conc/conc4_1
-	sampleSize 8
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-605 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_conc/conc4_1
-	sampleSize 8
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
-}
-
-606 // ESurfaceType::Meta V: 8 I: 18 planar
-{
-	shader textures/lq_conc/conc4_1
-	sampleSize 8
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
-}
-
-607 // ESurfaceType::Meta V: 8 I: 18 planar
-{
-	shader textures/lq_conc/conc4_1
-	sampleSize 8
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
-}
-
-608 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_conc/conc4_1
-	sampleSize 8
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
-}
-
-609 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_conc/conc4_1
-	sampleSize 8
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
-}
-
-610 // ESurfaceType::Meta V: 6 I: 12 planar
-{
-	shader textures/lq_conc/conc4_1
-	sampleSize 8
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
-}
-
-611 // ESurfaceType::Meta V: 6 I: 12 planar
-{
-	shader textures/lq_conc/conc4_1
-	sampleSize 8
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
-}
-
-612 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_conc/conc4_1
-	sampleSize 8
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
-}
-
-613 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_conc/conc4_1
-	sampleSize 8
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
-}
-
-614 // ESurfaceType::Meta V: 9 I: 21 planar
-{
-	shader textures/lq_conc/conc4_1
-	sampleSize 8
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-615 // ESurfaceType::Meta V: 10 I: 24 planar
-{
-	shader textures/lq_conc/conc4_1
-	sampleSize 8
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
-}
-
-616 // ESurfaceType::Meta V: 17 I: 33 planar
-{
-	shader textures/lq_conc/conc4_1
-	sampleSize 8
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
-}
-
-617 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_conc/conc4_1
-	sampleSize 8
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
-}
-
-618 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_conc/conc4_1
-	sampleSize 8
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
-}
-
-619 // ESurfaceType::Meta V: 18 I: 60 planar
-{
-	shader textures/lq_conc/conc4_1
-	sampleSize 8
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
-}
-
-620 // ESurfaceType::Meta V: 25 I: 63 planar
-{
-	shader textures/lq_conc/conc4_1
-	sampleSize 8
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
-}
-
-621 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_conc/conc4_1
-	sampleSize 8
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
-}
-
-622 // ESurfaceType::Meta V: 9 I: 21 planar
-{
-	shader textures/lq_conc/conc4_1
-	sampleSize 8
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
-}
-
-623 // ESurfaceType::Meta V: 3 I: 3 planar
-{
-	shader textures/lq_conc/conc4_1
-	sampleSize 8
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
-}
-
-624 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_conc/conc4_1
-	sampleSize 8
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
-}
-
-625 // ESurfaceType::Meta V: 5 I: 9 planar
-{
-	shader textures/lq_conc/conc4_1
-	sampleSize 8
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
-}
-
-626 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_conc/conc4_1
-	sampleSize 8
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
-}
-
-627 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_props/med_book_red
-	sampleSize 8
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
-}
-
-628 // ESurfaceType::Meta V: 6 I: 12 planar
-{
-	shader textures/lq_props/med_book_red
-	sampleSize 8
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
-}
-
-629 // ESurfaceType::Meta V: 6 I: 12 planar
-{
-	shader textures/lq_props/med_book_red
-	sampleSize 8
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
-}
-
-630 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_props/med_book_red
-	sampleSize 8
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-631 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_props/med_book_red
-	sampleSize 8
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
-}
-
-632 // ESurfaceType::Meta V: 12 I: 36 planar
-{
-	shader textures/lq_props/med_books_wood
-	sampleSize 8
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
-}
-
-633 // ESurfaceType::Meta V: 6 I: 12 planar
-{
-	shader textures/lq_props/med_books_wood
-	sampleSize 8
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
-}
-
-634 // ESurfaceType::Meta V: 6 I: 12 planar
-{
-	shader textures/lq_props/med_books_wood
-	sampleSize 8
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
-}
-
-635 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/FPSTextures/Wall_19
-	sampleSize 8
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
-}
-
-636 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/FPSTextures/Wall_19
-	sampleSize 8
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
-}
-
-637 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/FPSTextures/Wall_19
-	sampleSize 8
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
-}
-
-638 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/FPSTextures/Wall_19
-	sampleSize 8
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
-}
-
-639 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/FPSTextures/Wall_19
-	sampleSize 8
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
-}
-
-640 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/FPSTextures/Wall_19
-	sampleSize 8
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-641 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/FPSTextures/Wall_19
-	sampleSize 8
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-642 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/FPSTextures/Wall_19
-	sampleSize 8
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-643 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/FPSTextures/Wall_19
-	sampleSize 8
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-644 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/FPSTextures/Wall_19
-	sampleSize 8
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-645 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/FPSTextures/Wall_19
-	sampleSize 8
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
-}
-
-646 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/FPSTextures/Wall_19
-	sampleSize 8
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
-}
-
-647 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/FPSTextures/Wall_19
-	sampleSize 8
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
-}
-
-648 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/FPSTextures/Wall_19
-	sampleSize 8
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
-}
-
-649 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/FPSTextures/Wall_19
-	sampleSize 8
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
-}
-
-650 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/FPSTextures/Wall_19
-	sampleSize 8
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-651 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/FPSTextures/Wall_19
-	sampleSize 8
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-652 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/FPSTextures/Wall_19
-	sampleSize 8
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-653 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/FPSTextures/Wall_19
-	sampleSize 8
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-654 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/FPSTextures/Wall_19
-	sampleSize 8
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-655 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/FPSTextures/Wall_19
-	sampleSize 8
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-656 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_liquidsky/plus_3blood_f1
-	sampleSize 8
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
-}
-
-657 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_liquidsky/plus_3blood_f1
-	sampleSize 8
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
-}
-
-658 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_liquidsky/plus_3blood_f1
-	sampleSize 8
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-659 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_liquidsky/plus_3blood_f1
-	sampleSize 8
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
-}
-
-660 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_liquidsky/plus_3blood_f1
-	sampleSize 8
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
-}
-
-661 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/psx_mega_pack/door_3_double
-	sampleSize 8
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
-}
-
-662 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/psx_mega_pack/door_3_double
-	sampleSize 8
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
-}
-
-663 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/psx_mega_pack/door_3_double
-	sampleSize 8
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
-}
-
-664 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/psx_mega_pack/door_3_double
-	sampleSize 8
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-665 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/psx_mega_pack/door_3_double
-	sampleSize 8
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
-}
-
-666 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/psx_mega_pack/door_3_double
-	sampleSize 8
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
-}
-
-667 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/psx_mega_pack/door_3_double
-	sampleSize 8
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
-}
-
-668 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/psx_mega_pack/door_3_double
-	sampleSize 8
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
-}
-
-669 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/psx_mega_pack/door_3_double
-	sampleSize 8
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-670 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/psx_mega_pack/door_3_double
-	sampleSize 8
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
-}
-
-671 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/psx_mega_pack/door_1
-	sampleSize 8
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
-}
-
-672 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/psx_mega_pack/door_1
-	sampleSize 8
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
-}
-
-673 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/psx_mega_pack/door_1
-	sampleSize 8
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
-}
-
-674 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/psx_mega_pack/door_1
-	sampleSize 8
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
-}
-
-675 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/psx_mega_pack/door_1
-	sampleSize 8
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
-}
-
-676 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/psx_mega_pack/door_1
-	sampleSize 8
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
-}
-
-677 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/psx_mega_pack/door_1
-	sampleSize 8
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
-}
-
-678 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/psx_mega_pack/door_1
-	sampleSize 8
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
-}
-
-679 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/psx_mega_pack/door_1
-	sampleSize 8
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-680 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/psx_mega_pack/door_1
-	sampleSize 8
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-681 // ESurfaceType::Meta V: 4 I: 6 planar
+532 // ESurfaceType::Meta V: 3 I: 3 planar
 {
 	shader textures/psx_textures_2/wallpaper_wall_pt_1
 	sampleSize 8
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
-682 // ESurfaceType::Meta V: 5 I: 9 planar
+533 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/wallpaper_wall_pt_1
+	sampleSize 8
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+534 // ESurfaceType::Meta V: 7 I: 15 planar
+{
+	shader textures/psx_textures_2/wallpaper_wall_pt_1
+	sampleSize 8
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+535 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/wallpaper_wall_pt_1
+	sampleSize 8
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+536 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/wallpaper_wall_pt_1
+	sampleSize 8
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+537 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/wallpaper_wall_pt_1
+	sampleSize 8
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+538 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/wallpaper_wall_pt_1
+	sampleSize 8
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+539 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/wallpaper_wall_pt_1
+	sampleSize 8
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+540 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/wallpaper_wall_pt_1
+	sampleSize 8
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+541 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/wallpaper_wall_pt_1
+	sampleSize 8
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+542 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/wallpaper_wall_pt_1
+	sampleSize 8
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+543 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/wallpaper_wall_pt_1
+	sampleSize 8
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+544 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/wallpaper_wall_pt_1
+	sampleSize 8
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+545 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/wallpaper_wall_pt_1
+	sampleSize 8
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+546 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/wallpaper_wall_pt_1
+	sampleSize 8
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+547 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/wallpaper_wall_pt_1
+	sampleSize 8
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+548 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/wallpaper_wall_pt_1
+	sampleSize 8
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+549 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/wallpaper_wall_pt_1
+	sampleSize 8
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+550 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/wallpaper_wall_pt_1
+	sampleSize 8
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+551 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/wallpaper_wall_pt_1
+	sampleSize 8
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+552 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/wallpaper_wall_pt_1
+	sampleSize 8
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+553 // ESurfaceType::Meta V: 5 I: 9 planar
+{
+	shader textures/psx_textures_2/wallpaper_wall_pt_1
+	sampleSize 8
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+554 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/wallpaper_wall_pt_1
+	sampleSize 8
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+555 // ESurfaceType::Meta V: 6 I: 12 planar
+{
+	shader textures/psx_mega_pack/ceiling_1
+	sampleSize 8
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+556 // ESurfaceType::Meta V: 5 I: 9 planar
+{
+	shader textures/psx_mega_pack/ceiling_1
+	sampleSize 8
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+557 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_mega_pack/ceiling_1
+	sampleSize 8
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+558 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_mega_pack/ceiling_1
+	sampleSize 8
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+559 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_mega_pack/ceiling_1
+	sampleSize 8
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+560 // ESurfaceType::Meta V: 7 I: 15 planar
+{
+	shader textures/psx_mega_pack/ceiling_1
+	sampleSize 8
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+561 // ESurfaceType::Meta V: 5 I: 9 planar
 {
 	shader textures/psx_textures_2/wallpaper_wall_pt_1_1
 	sampleSize 8
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
-683 // ESurfaceType::Meta V: 4 I: 6 planar
+562 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/psx_textures_2/brick_wall_pt_5_door
+	shader textures/psx_textures_2/wallpaper_wall_pt_1_1
 	sampleSize 8
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
+563 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/wallpaper_wall_pt_1_1
+	sampleSize 8
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+564 // ESurfaceType::Meta V: 6 I: 12 planar
+{
+	shader textures/psx_textures_2/wallpaper_wall_pt_1_1
+	sampleSize 8
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+565 // ESurfaceType::Meta V: 5 I: 9 planar
+{
+	shader textures/psx_textures_2/wallpaper_wall_pt_1_1
+	sampleSize 8
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+566 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/wallpaper_wall_pt_1_1
+	sampleSize 8
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+567 // ESurfaceType::Meta V: 7 I: 15 planar
+{
+	shader textures/psx_textures_2/wallpaper_wall_pt_1_1
+	sampleSize 8
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+568 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/wallpaper_wall_pt_1_1
+	sampleSize 8
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+569 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/wallpaper_wall_pt_1_1
+	sampleSize 8
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+570 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/wallpaper_wall_pt_1_1
+	sampleSize 8
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+571 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/wallpaper_wall_pt_1_1
+	sampleSize 8
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+572 // ESurfaceType::Meta V: 5 I: 9 planar
+{
+	shader textures/psx_textures_2/wallpaper_wall_pt_1_1
+	sampleSize 8
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+573 // ESurfaceType::Meta V: 8 I: 18 planar
+{
+	shader textures/psx_textures_2/wallpaper_wall_pt_1_1
+	sampleSize 8
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+574 // ESurfaceType::Meta V: 8 I: 18 planar
+{
+	shader textures/psx_textures_2/wallpaper_wall_pt_1_1
+	sampleSize 8
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+575 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/wallpaper_wall_pt_1_1
+	sampleSize 8
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+576 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/wallpaper_wall_pt_1_1
+	sampleSize 8
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+577 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/wallpaper_wall_pt_1_1
+	sampleSize 8
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+578 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/wallpaper_wall_pt_1_1
+	sampleSize 8
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+579 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/wallpaper_wall_pt_1_1
+	sampleSize 8
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+580 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/wallpaper_wall_pt_1_1
+	sampleSize 8
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+581 // ESurfaceType::Meta V: 10 I: 24 planar
+{
+	shader textures/psx_textures_2/wallpaper_wall_pt_1_1
+	sampleSize 8
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+582 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/wallpaper_wall_pt_1_1
+	sampleSize 8
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+583 // ESurfaceType::Meta V: 6 I: 12 planar
+{
+	shader textures/psx_textures_2/wallpaper_wall_pt_1_1
+	sampleSize 8
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+584 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/wallpaper_wall_pt_1_1
+	sampleSize 8
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+585 // ESurfaceType::Meta V: 10 I: 24 planar
+{
+	shader textures/FPSTextures/Wall_23
+	sampleSize 8
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+586 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_props/radiowood
+	sampleSize 8
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+587 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_props/radiowood
+	sampleSize 8
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+588 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_props/radiowood
+	sampleSize 8
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+589 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_props/radiowood
+	sampleSize 8
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+590 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_props/radio32
+	sampleSize 8
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+591 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_props/radio32
+	sampleSize 8
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+592 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/wood_pt_2
+	sampleSize 8
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+593 // ESurfaceType::Meta V: 16 I: 36 planar
+{
+	shader textures/psx_textures_2/wood_pt_2
+	sampleSize 8
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+594 // ESurfaceType::Meta V: 6 I: 12 planar
+{
+	shader textures/psx_textures_2/wood_pt_2
+	sampleSize 8
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+595 // ESurfaceType::Meta V: 10 I: 24 planar
+{
+	shader textures/psx_textures_2/wood_pt_2
+	sampleSize 8
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+596 // ESurfaceType::Meta V: 8 I: 18 planar
+{
+	shader textures/psx_textures_2/wood_pt_2
+	sampleSize 8
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+597 // ESurfaceType::Meta V: 6 I: 12 planar
+{
+	shader textures/psx_textures_2/wood_pt_2
+	sampleSize 8
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+598 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/wood_pt_2
+	sampleSize 8
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+599 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/wood_pt_2
+	sampleSize 8
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+600 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/wood_pt_2
+	sampleSize 8
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+601 // ESurfaceType::Meta V: 6 I: 12 planar
+{
+	shader textures/psx_textures_2/wood_pt_2
+	sampleSize 8
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+602 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/wood_pt_2
+	sampleSize 8
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+603 // ESurfaceType::Meta V: 16 I: 30 planar
+{
+	shader textures/psx_textures_2/wood_pt_2_1
+	sampleSize 8
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+604 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/wood_pt_2_1
+	sampleSize 8
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+605 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/wood_pt_2_1
+	sampleSize 8
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+606 // ESurfaceType::Meta V: 16 I: 30 planar
+{
+	shader textures/psx_textures_2/wood_pt_2_1
+	sampleSize 8
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+607 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/wood_pt_2_1
+	sampleSize 8
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+608 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/wood_pt_2_1
+	sampleSize 8
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+609 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/wood_pt_2_1
+	sampleSize 8
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+610 // ESurfaceType::Meta V: 12 I: 30 planar
+{
+	shader textures/psx_textures_2/wood_pt_2_1
+	sampleSize 8
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+611 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/wood_pt_2_1
+	sampleSize 8
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+612 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/wood_pt_2_1
+	sampleSize 8
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+613 // ESurfaceType::Meta V: 5 I: 6 planar
+{
+	shader textures/lq_conc/conc4_1
+	sampleSize 8
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+614 // ESurfaceType::Meta V: 3 I: 3 planar
+{
+	shader textures/lq_conc/conc4_1
+	sampleSize 8
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+615 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_conc/conc4_1
+	sampleSize 8
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+616 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_conc/conc4_1
+	sampleSize 8
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+617 // ESurfaceType::Meta V: 8 I: 15 planar
+{
+	shader textures/lq_conc/conc4_1
+	sampleSize 8
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+618 // ESurfaceType::Meta V: 3 I: 3 planar
+{
+	shader textures/lq_conc/conc4_1
+	sampleSize 8
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+619 // ESurfaceType::Meta V: 3 I: 3 planar
+{
+	shader textures/lq_conc/conc4_1
+	sampleSize 8
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+620 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_conc/conc4_1
+	sampleSize 8
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+621 // ESurfaceType::Meta V: 3 I: 3 planar
+{
+	shader textures/lq_conc/conc4_1
+	sampleSize 8
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+622 // ESurfaceType::Meta V: 10 I: 24 planar
+{
+	shader textures/lq_conc/conc4_1
+	sampleSize 8
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+623 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_conc/conc4_1
+	sampleSize 8
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+624 // ESurfaceType::Meta V: 6 I: 12 planar
+{
+	shader textures/lq_conc/conc4_1
+	sampleSize 8
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+625 // ESurfaceType::Meta V: 5 I: 9 planar
+{
+	shader textures/lq_conc/conc4_1
+	sampleSize 8
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+626 // ESurfaceType::Meta V: 5 I: 9 planar
+{
+	shader textures/lq_conc/conc4_1
+	sampleSize 8
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+627 // ESurfaceType::Meta V: 5 I: 9 planar
+{
+	shader textures/lq_conc/conc4_1
+	sampleSize 8
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+628 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_conc/conc4_1
+	sampleSize 8
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+629 // ESurfaceType::Meta V: 8 I: 18 planar
+{
+	shader textures/lq_conc/conc4_1
+	sampleSize 8
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+630 // ESurfaceType::Meta V: 8 I: 18 planar
+{
+	shader textures/lq_conc/conc4_1
+	sampleSize 8
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+631 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_conc/conc4_1
+	sampleSize 8
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+632 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_conc/conc4_1
+	sampleSize 8
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+633 // ESurfaceType::Meta V: 6 I: 12 planar
+{
+	shader textures/lq_conc/conc4_1
+	sampleSize 8
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+634 // ESurfaceType::Meta V: 6 I: 12 planar
+{
+	shader textures/lq_conc/conc4_1
+	sampleSize 8
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+635 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_conc/conc4_1
+	sampleSize 8
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+636 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_conc/conc4_1
+	sampleSize 8
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+637 // ESurfaceType::Meta V: 9 I: 21 planar
+{
+	shader textures/lq_conc/conc4_1
+	sampleSize 8
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+638 // ESurfaceType::Meta V: 10 I: 24 planar
+{
+	shader textures/lq_conc/conc4_1
+	sampleSize 8
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+639 // ESurfaceType::Meta V: 17 I: 33 planar
+{
+	shader textures/lq_conc/conc4_1
+	sampleSize 8
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+640 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_conc/conc4_1
+	sampleSize 8
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+641 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_conc/conc4_1
+	sampleSize 8
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+642 // ESurfaceType::Meta V: 18 I: 60 planar
+{
+	shader textures/lq_conc/conc4_1
+	sampleSize 8
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+643 // ESurfaceType::Meta V: 20 I: 60 planar
+{
+	shader textures/lq_conc/conc4_1
+	sampleSize 8
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+644 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_conc/conc4_1
+	sampleSize 8
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+645 // ESurfaceType::Meta V: 9 I: 21 planar
+{
+	shader textures/lq_conc/conc4_1
+	sampleSize 8
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+646 // ESurfaceType::Meta V: 3 I: 3 planar
+{
+	shader textures/lq_conc/conc4_1
+	sampleSize 8
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+647 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_conc/conc4_1
+	sampleSize 8
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+648 // ESurfaceType::Meta V: 6 I: 12 planar
+{
+	shader textures/lq_conc/conc4_1
+	sampleSize 8
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+649 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_conc/conc4_1
+	sampleSize 8
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+650 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_props/med_book_red
+	sampleSize 8
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+651 // ESurfaceType::Meta V: 6 I: 12 planar
+{
+	shader textures/lq_props/med_book_red
+	sampleSize 8
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+652 // ESurfaceType::Meta V: 6 I: 12 planar
+{
+	shader textures/lq_props/med_book_red
+	sampleSize 8
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+653 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_props/med_book_red
+	sampleSize 8
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+654 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_props/med_book_red
+	sampleSize 8
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+655 // ESurfaceType::Meta V: 12 I: 36 planar
+{
+	shader textures/lq_props/med_books_wood
+	sampleSize 8
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+656 // ESurfaceType::Meta V: 6 I: 12 planar
+{
+	shader textures/lq_props/med_books_wood
+	sampleSize 8
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+657 // ESurfaceType::Meta V: 6 I: 12 planar
+{
+	shader textures/lq_props/med_books_wood
+	sampleSize 8
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+658 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/FPSTextures/Wall_19
+	sampleSize 8
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+659 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/FPSTextures/Wall_19
+	sampleSize 8
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+660 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/FPSTextures/Wall_19
+	sampleSize 8
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+661 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/FPSTextures/Wall_19
+	sampleSize 8
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+662 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/FPSTextures/Wall_19
+	sampleSize 8
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+663 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/FPSTextures/Wall_19
+	sampleSize 8
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+664 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/FPSTextures/Wall_19
+	sampleSize 8
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+665 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/FPSTextures/Wall_19
+	sampleSize 8
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+666 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/FPSTextures/Wall_19
+	sampleSize 8
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+667 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/FPSTextures/Wall_19
+	sampleSize 8
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+668 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/FPSTextures/Wall_19
+	sampleSize 8
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+669 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/FPSTextures/Wall_19
+	sampleSize 8
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+670 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/FPSTextures/Wall_19
+	sampleSize 8
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+671 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/FPSTextures/Wall_19
+	sampleSize 8
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+672 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/FPSTextures/Wall_19
+	sampleSize 8
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+673 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/FPSTextures/Wall_19
+	sampleSize 8
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+674 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/FPSTextures/Wall_19
+	sampleSize 8
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+675 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/FPSTextures/Wall_19
+	sampleSize 8
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+676 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/FPSTextures/Wall_19
+	sampleSize 8
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+677 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/FPSTextures/Wall_19
+	sampleSize 8
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+678 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/FPSTextures/Wall_19
+	sampleSize 8
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+679 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_liquidsky/plus_3blood_f1
+	sampleSize 8
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+680 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_liquidsky/plus_3blood_f1
+	sampleSize 8
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+681 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_liquidsky/plus_3blood_f1
+	sampleSize 8
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+682 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_liquidsky/plus_3blood_f1
+	sampleSize 8
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+683 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_liquidsky/plus_3blood_f1
+	sampleSize 8
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
 684 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/psx_textures_2/brick_wall_pt_5_door
+	shader textures/lq_wood/plank2
 	sampleSize 8
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
 685 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/psx_textures_2/brick_wall_pt_5_door
+	shader textures/lq_wood/plank2
 	sampleSize 8
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 686 // ESurfaceType::Meta V: 4 I: 6 planar
 {
+	shader textures/lq_wood/plank2
+	sampleSize 8
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+687 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank2
+	sampleSize 8
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+688 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_mega_pack/door_3_double
+	sampleSize 8
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+689 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_mega_pack/door_3_double
+	sampleSize 8
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+690 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_mega_pack/door_3_double
+	sampleSize 8
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+691 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_mega_pack/door_3_double
+	sampleSize 8
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+692 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_mega_pack/door_3_double
+	sampleSize 8
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+693 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_mega_pack/door_3_double
+	sampleSize 8
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+694 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_mega_pack/door_3_double
+	sampleSize 8
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+695 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_mega_pack/door_3_double
+	sampleSize 8
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+696 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_mega_pack/door_3_double
+	sampleSize 8
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+697 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_mega_pack/door_3_double
+	sampleSize 8
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+698 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/brick_wall_pt_5_door
+	sampleSize 8
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+699 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/brick_wall_pt_5_door
+	sampleSize 8
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+700 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/brick_wall_pt_5_door
+	sampleSize 8
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+701 // ESurfaceType::Meta V: 4 I: 6 planar
+{
 	shader textures/psx_textures_2/brick_wall_pt_5_door
 	sampleSize 8
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-687 // ESurfaceType::Meta V: 4 I: 6 planar
+702 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/psx_textures_2/brick_wall_pt_5_door
 	sampleSize 8
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
-688 // ESurfaceType::Meta V: 79 I: 306 planar
+703 // ESurfaceType::Meta V: 79 I: 306 planar
 {
 	shader textures/delvenPack/dlv_metalpip2a
 	entity 39
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
-689 // ESurfaceType::Meta V: 4 I: 6 planar
+704 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/delvenPack/dlv_metalpip2a
 	entity 39
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
-690 // ESurfaceType::Meta V: 22 I: 54 planar
+705 // ESurfaceType::Meta V: 22 I: 54 planar
 {
 	shader textures/delvenPack/dlv_metalpip2a
 	entity 39
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
-691 // ESurfaceType::Meta V: 4 I: 6 planar
+706 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/delvenPack/dlv_metalpip2a
 	entity 39
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
-692 // ESurfaceType::Meta V: 76 I: 297 planar
+707 // ESurfaceType::Meta V: 76 I: 297 planar
 {
 	shader textures/delvenPack/dlv_metalpip2a
 	entity 39
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
-693 // ESurfaceType::Meta V: 24 I: 66 planar
+708 // ESurfaceType::Meta V: 24 I: 66 planar
 {
 	shader textures/delvenPack/dlv_metalpip2a
 	entity 39
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
-694 // ESurfaceType::Meta V: 14 I: 30 planar
+709 // ESurfaceType::Meta V: 14 I: 30 planar
 {
 	shader textures/delvenPack/dlv_metalpip2a
 	entity 39
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
-695 // ESurfaceType::Meta V: 8 I: 12 planar
+710 // ESurfaceType::Meta V: 8 I: 12 planar
 {
 	shader textures/delvenPack/dlv_metalpip2a
 	entity 39
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-696 // ESurfaceType::Meta V: 14 I: 30 planar
+711 // ESurfaceType::Meta V: 14 I: 30 planar
 {
 	shader textures/delvenPack/dlv_metalpip2a
 	entity 39
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
-697 // ESurfaceType::Meta V: 24 I: 66 planar
+712 // ESurfaceType::Meta V: 24 I: 66 planar
 {
 	shader textures/delvenPack/dlv_metalpip2a
 	entity 39
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
-698 // ESurfaceType::Meta V: 8 I: 12 planar
+713 // ESurfaceType::Meta V: 8 I: 12 planar
 {
 	shader textures/delvenPack/dlv_metalpip2a
 	entity 39
 	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
 
-699 // ESurfaceType::Meta V: 22 I: 54 planar
+714 // ESurfaceType::Meta V: 22 I: 54 planar
 {
 	shader textures/delvenPack/dlv_metalpip2a
 	entity 39
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
-700 // ESurfaceType::Meta V: 8 I: 12 planar
+715 // ESurfaceType::Meta V: 8 I: 12 planar
 {
 	shader textures/delvenPack/dlv_metalpip2a
 	entity 39
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-701 // ESurfaceType::Meta V: 8 I: 12 planar
+716 // ESurfaceType::Meta V: 8 I: 12 planar
 {
 	shader textures/delvenPack/dlv_metalpip2a
 	entity 39
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
-702 // ESurfaceType::Meta V: 8 I: 12 planar
+717 // ESurfaceType::Meta V: 8 I: 12 planar
 {
 	shader textures/delvenPack/dlv_metalpip2a
 	entity 39
 	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
-}
-
-703 // ESurfaceType::Meta V: 8 I: 12 planar
-{
-	shader textures/delvenPack/dlv_metalpip2a
-	entity 39
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-704 // ESurfaceType::Meta V: 8 I: 12 planar
-{
-	shader textures/delvenPack/dlv_metalpip2a
-	entity 39
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-705 // ESurfaceType::Meta V: 8 I: 12 planar
-{
-	shader textures/delvenPack/dlv_metalpip2a
-	entity 39
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
-}
-
-706 // ESurfaceType::Meta V: 8 I: 12 planar
-{
-	shader textures/delvenPack/dlv_metalpip2a
-	entity 39
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
-}
-
-707 // ESurfaceType::Meta V: 8 I: 12 planar
-{
-	shader textures/delvenPack/dlv_metalpip2a
-	entity 39
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-708 // ESurfaceType::Meta V: 8 I: 12 planar
-{
-	shader textures/delvenPack/dlv_metalpip2a
-	entity 39
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-709 // ESurfaceType::Meta V: 35 I: 93 planar
-{
-	shader textures/delvenPack/dlv_metalpip2a
-	entity 39
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
-}
-
-710 // ESurfaceType::Meta V: 17 I: 39 planar
-{
-	shader textures/delvenPack/dlv_metalpip2a
-	entity 39
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-711 // ESurfaceType::Meta V: 8 I: 12 planar
-{
-	shader textures/delvenPack/dlv_metalpip2a
-	entity 39
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
-}
-
-712 // ESurfaceType::Meta V: 8 I: 12 planar
-{
-	shader textures/delvenPack/dlv_metalpip2a
-	entity 39
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-713 // ESurfaceType::Meta V: 10 I: 18 planar
-{
-	shader textures/delvenPack/dlv_metalpip2a
-	entity 39
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
-}
-
-714 // ESurfaceType::Meta V: 54 I: 150 planar
-{
-	shader textures/delvenPack/dlv_metalpip2a
-	entity 39
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-715 // ESurfaceType::Meta V: 10 I: 18 planar
-{
-	shader textures/delvenPack/dlv_metalpip2a
-	entity 39
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
-}
-
-716 // ESurfaceType::Meta V: 16 I: 36 planar
-{
-	shader textures/delvenPack/dlv_metalpip2a
-	entity 39
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-717 // ESurfaceType::Meta V: 9 I: 15 planar
-{
-	shader textures/delvenPack/dlv_metalpip2a
-	entity 39
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 718 // ESurfaceType::Meta V: 8 I: 12 planar
 {
 	shader textures/delvenPack/dlv_metalpip2a
 	entity 39
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 719 // ESurfaceType::Meta V: 8 I: 12 planar
 {
 	shader textures/delvenPack/dlv_metalpip2a
 	entity 39
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 720 // ESurfaceType::Meta V: 8 I: 12 planar
 {
 	shader textures/delvenPack/dlv_metalpip2a
 	entity 39
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+721 // ESurfaceType::Meta V: 8 I: 12 planar
+{
+	shader textures/delvenPack/dlv_metalpip2a
+	entity 39
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+722 // ESurfaceType::Meta V: 8 I: 12 planar
+{
+	shader textures/delvenPack/dlv_metalpip2a
+	entity 39
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-721 // ESurfaceType::Meta V: 9 I: 15 planar
+723 // ESurfaceType::Meta V: 8 I: 12 planar
+{
+	shader textures/delvenPack/dlv_metalpip2a
+	entity 39
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+724 // ESurfaceType::Meta V: 35 I: 93 planar
 {
 	shader textures/delvenPack/dlv_metalpip2a
 	entity 39
 	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
 
-722 // ESurfaceType::Meta V: 11 I: 21 planar
+725 // ESurfaceType::Meta V: 17 I: 39 planar
+{
+	shader textures/delvenPack/dlv_metalpip2a
+	entity 39
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+726 // ESurfaceType::Meta V: 8 I: 12 planar
 {
 	shader textures/delvenPack/dlv_metalpip2a
 	entity 39
 	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
 
-723 // ESurfaceType::Meta V: 4 I: 6 planar
+727 // ESurfaceType::Meta V: 8 I: 12 planar
 {
-	shader textures/lq_metal/met_teal_trim32r
-	entity 52
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+	shader textures/delvenPack/dlv_metalpip2a
+	entity 39
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-724 // ESurfaceType::Meta V: 14 I: 42 planar
+728 // ESurfaceType::Meta V: 10 I: 18 planar
 {
-	shader textures/lq_metal/met_teal_trim32r
-	entity 52
+	shader textures/delvenPack/dlv_metalpip2a
+	entity 39
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+729 // ESurfaceType::Meta V: 54 I: 150 planar
+{
+	shader textures/delvenPack/dlv_metalpip2a
+	entity 39
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+730 // ESurfaceType::Meta V: 10 I: 18 planar
+{
+	shader textures/delvenPack/dlv_metalpip2a
+	entity 39
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
-725 // ESurfaceType::Meta V: 4 I: 6 planar
+731 // ESurfaceType::Meta V: 16 I: 36 planar
 {
-	shader textures/lq_metal/met_teal_trim32r
-	entity 52
+	shader textures/delvenPack/dlv_metalpip2a
+	entity 39
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-726 // ESurfaceType::Meta V: 6 I: 12 planar
+732 // ESurfaceType::Meta V: 9 I: 15 planar
 {
-	shader textures/lq_metal/met_teal_trim32r
-	entity 52
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
-}
-
-727 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_metal/met_teal_trim32r
-	entity 52
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-728 // ESurfaceType::Meta V: 14 I: 42 planar
-{
-	shader textures/lq_metal/met_teal_trim32r
-	entity 52
+	shader textures/delvenPack/dlv_metalpip2a
+	entity 39
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
-729 // ESurfaceType::Meta V: 4 I: 6 planar
+733 // ESurfaceType::Meta V: 8 I: 12 planar
 {
-	shader textures/lq_metal/met_teal_trim32r
-	entity 52
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
+	shader textures/delvenPack/dlv_metalpip2a
+	entity 39
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
 
-730 // ESurfaceType::Meta V: 4 I: 6 planar
+734 // ESurfaceType::Meta V: 8 I: 12 planar
 {
-	shader textures/lq_metal/met_teal_trim32r
-	entity 52
+	shader textures/delvenPack/dlv_metalpip2a
+	entity 39
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+735 // ESurfaceType::Meta V: 8 I: 12 planar
+{
+	shader textures/delvenPack/dlv_metalpip2a
+	entity 39
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-731 // ESurfaceType::Meta V: 6 I: 12 planar
+736 // ESurfaceType::Meta V: 9 I: 15 planar
 {
-	shader textures/lq_metal/met_teal_trim32r
-	entity 52
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
+	shader textures/delvenPack/dlv_metalpip2a
+	entity 39
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
 
-732 // ESurfaceType::Meta V: 4 I: 6 planar
+737 // ESurfaceType::Meta V: 11 I: 21 planar
 {
-	shader textures/lq_metal/met_teal_trim32r
-	entity 52
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-733 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_metal/met_teal_trim32r
-	entity 52
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-734 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_metal/met_teal_trim32r
-	entity 53
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
-}
-
-735 // ESurfaceType::Meta V: 14 I: 42 planar
-{
-	shader textures/lq_metal/met_teal_trim32r
-	entity 53
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
-}
-
-736 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_metal/met_teal_trim32r
-	entity 53
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-737 // ESurfaceType::Meta V: 6 I: 12 planar
-{
-	shader textures/lq_metal/met_teal_trim32r
-	entity 53
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+	shader textures/delvenPack/dlv_metalpip2a
+	entity 39
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
 
 738 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 53
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
+	entity 52
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 739 // ESurfaceType::Meta V: 14 I: 42 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 53
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
+	entity 52
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
 740 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 53
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
-}
-
-741 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_metal/met_teal_trim32r
-	entity 53
+	entity 52
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-742 // ESurfaceType::Meta V: 6 I: 12 planar
+741 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 53
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
+	entity 52
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
-743 // ESurfaceType::Meta V: 4 I: 6 planar
+742 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 53
+	entity 52
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+743 // ESurfaceType::Meta V: 14 I: 42 planar
+{
+	shader textures/lq_metal/met_teal_trim32r
+	entity 52
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 744 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 53
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
+	entity 52
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 745 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 54
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+	entity 52
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-746 // ESurfaceType::Meta V: 14 I: 42 planar
+746 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 54
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+	entity 52
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 747 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 54
+	entity 52
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-748 // ESurfaceType::Meta V: 6 I: 12 planar
+748 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 54
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+	entity 52
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 749 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 54
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
+	entity 53
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 750 // ESurfaceType::Meta V: 14 I: 42 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 54
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
+	entity 53
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
 751 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 54
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
-}
-
-752 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_metal/met_teal_trim32r
-	entity 54
+	entity 53
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-753 // ESurfaceType::Meta V: 6 I: 12 planar
+752 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 54
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
+	entity 53
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
-754 // ESurfaceType::Meta V: 4 I: 6 planar
+753 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 54
+	entity 53
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+754 // ESurfaceType::Meta V: 14 I: 42 planar
+{
+	shader textures/lq_metal/met_teal_trim32r
+	entity 53
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 755 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 54
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
+	entity 53
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 756 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 55
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+	entity 53
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-757 // ESurfaceType::Meta V: 14 I: 42 planar
+757 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 55
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+	entity 53
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 758 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 55
+	entity 53
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-759 // ESurfaceType::Meta V: 6 I: 12 planar
+759 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 55
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+	entity 53
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 760 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 55
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
+	entity 54
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 761 // ESurfaceType::Meta V: 14 I: 42 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 55
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
+	entity 54
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
 762 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 55
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
-}
-
-763 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_metal/met_teal_trim32r
-	entity 55
+	entity 54
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-764 // ESurfaceType::Meta V: 6 I: 12 planar
+763 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 55
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
+	entity 54
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
-765 // ESurfaceType::Meta V: 4 I: 6 planar
+764 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 55
+	entity 54
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+765 // ESurfaceType::Meta V: 14 I: 42 planar
+{
+	shader textures/lq_metal/met_teal_trim32r
+	entity 54
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 766 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 55
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
+	entity 54
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 767 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 56
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+	entity 54
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-768 // ESurfaceType::Meta V: 14 I: 42 planar
+768 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 56
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+	entity 54
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 769 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 56
+	entity 54
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-770 // ESurfaceType::Meta V: 6 I: 12 planar
+770 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 56
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+	entity 54
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 771 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 56
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
+	entity 55
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 772 // ESurfaceType::Meta V: 14 I: 42 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 56
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
+	entity 55
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
 773 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 56
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
-}
-
-774 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_metal/met_teal_trim32r
-	entity 56
+	entity 55
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-775 // ESurfaceType::Meta V: 6 I: 12 planar
+774 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 56
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
+	entity 55
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
-776 // ESurfaceType::Meta V: 4 I: 6 planar
+775 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 56
+	entity 55
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+776 // ESurfaceType::Meta V: 14 I: 42 planar
+{
+	shader textures/lq_metal/met_teal_trim32r
+	entity 55
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 777 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 56
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
+	entity 55
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 778 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 57
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+	entity 55
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-779 // ESurfaceType::Meta V: 14 I: 42 planar
+779 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 57
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+	entity 55
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 780 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 57
+	entity 55
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-781 // ESurfaceType::Meta V: 6 I: 12 planar
+781 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 57
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+	entity 55
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 782 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 57
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
+	entity 56
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 783 // ESurfaceType::Meta V: 14 I: 42 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 57
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
+	entity 56
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
 784 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 57
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
-}
-
-785 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_metal/met_teal_trim32r
-	entity 57
+	entity 56
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-786 // ESurfaceType::Meta V: 6 I: 12 planar
+785 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 57
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
+	entity 56
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
-787 // ESurfaceType::Meta V: 4 I: 6 planar
+786 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 57
+	entity 56
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+787 // ESurfaceType::Meta V: 14 I: 42 planar
+{
+	shader textures/lq_metal/met_teal_trim32r
+	entity 56
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 788 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 57
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
+	entity 56
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 789 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 58
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+	entity 56
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-790 // ESurfaceType::Meta V: 14 I: 42 planar
+790 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 58
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+	entity 56
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 791 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 58
+	entity 56
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-792 // ESurfaceType::Meta V: 6 I: 12 planar
+792 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 58
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+	entity 56
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 793 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 58
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
+	entity 57
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 794 // ESurfaceType::Meta V: 14 I: 42 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 58
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
+	entity 57
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
 795 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 58
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
-}
-
-796 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_metal/met_teal_trim32r
-	entity 58
+	entity 57
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-797 // ESurfaceType::Meta V: 6 I: 12 planar
+796 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 58
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
+	entity 57
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
-798 // ESurfaceType::Meta V: 4 I: 6 planar
+797 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 58
+	entity 57
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+798 // ESurfaceType::Meta V: 14 I: 42 planar
+{
+	shader textures/lq_metal/met_teal_trim32r
+	entity 57
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 799 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 58
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
+	entity 57
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 800 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 59
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+	entity 57
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-801 // ESurfaceType::Meta V: 14 I: 42 planar
+801 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 59
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+	entity 57
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 802 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 59
+	entity 57
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-803 // ESurfaceType::Meta V: 6 I: 12 planar
+803 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 59
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+	entity 57
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 804 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 59
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
+	entity 58
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 805 // ESurfaceType::Meta V: 14 I: 42 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 59
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
+	entity 58
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
 806 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 59
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
-}
-
-807 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_metal/met_teal_trim32r
-	entity 59
+	entity 58
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-808 // ESurfaceType::Meta V: 6 I: 12 planar
+807 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 59
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
+	entity 58
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
-809 // ESurfaceType::Meta V: 4 I: 6 planar
+808 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 59
+	entity 58
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+809 // ESurfaceType::Meta V: 14 I: 42 planar
+{
+	shader textures/lq_metal/met_teal_trim32r
+	entity 58
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 810 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 59
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
+	entity 58
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 811 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 60
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+	entity 58
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-812 // ESurfaceType::Meta V: 14 I: 42 planar
+812 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 60
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+	entity 58
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 813 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 60
+	entity 58
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-814 // ESurfaceType::Meta V: 6 I: 12 planar
+814 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 60
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+	entity 58
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 815 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 60
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
+	entity 59
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 816 // ESurfaceType::Meta V: 14 I: 42 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 60
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
+	entity 59
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
 817 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 60
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
-}
-
-818 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_metal/met_teal_trim32r
-	entity 60
+	entity 59
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-819 // ESurfaceType::Meta V: 6 I: 12 planar
+818 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 60
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
+	entity 59
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
-820 // ESurfaceType::Meta V: 4 I: 6 planar
+819 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 60
+	entity 59
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+820 // ESurfaceType::Meta V: 14 I: 42 planar
+{
+	shader textures/lq_metal/met_teal_trim32r
+	entity 59
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 821 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 60
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
+	entity 59
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 822 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 61
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+	entity 59
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-823 // ESurfaceType::Meta V: 14 I: 42 planar
+823 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 61
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+	entity 59
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 824 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 61
+	entity 59
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-825 // ESurfaceType::Meta V: 6 I: 12 planar
+825 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 61
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+	entity 59
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 826 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 61
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
+	entity 60
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 827 // ESurfaceType::Meta V: 14 I: 42 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 61
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
+	entity 60
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
 828 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 61
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
-}
-
-829 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_metal/met_teal_trim32r
-	entity 61
+	entity 60
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-830 // ESurfaceType::Meta V: 6 I: 12 planar
+829 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 61
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
+	entity 60
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
-831 // ESurfaceType::Meta V: 4 I: 6 planar
+830 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 61
+	entity 60
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+831 // ESurfaceType::Meta V: 14 I: 42 planar
+{
+	shader textures/lq_metal/met_teal_trim32r
+	entity 60
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 832 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 61
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
+	entity 60
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 833 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 62
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+	entity 60
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-834 // ESurfaceType::Meta V: 14 I: 42 planar
+834 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 62
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+	entity 60
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 835 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 62
+	entity 60
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-836 // ESurfaceType::Meta V: 6 I: 12 planar
+836 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 62
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+	entity 60
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 837 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 62
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
+	entity 61
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 838 // ESurfaceType::Meta V: 14 I: 42 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 62
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
+	entity 61
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
 839 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 62
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
-}
-
-840 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_metal/met_teal_trim32r
-	entity 62
+	entity 61
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-841 // ESurfaceType::Meta V: 6 I: 12 planar
+840 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 62
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
+	entity 61
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
-842 // ESurfaceType::Meta V: 4 I: 6 planar
+841 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 62
+	entity 61
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+842 // ESurfaceType::Meta V: 14 I: 42 planar
+{
+	shader textures/lq_metal/met_teal_trim32r
+	entity 61
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 843 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 62
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
+	entity 61
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 844 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 63
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+	entity 61
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-845 // ESurfaceType::Meta V: 14 I: 42 planar
+845 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 63
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+	entity 61
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 846 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 63
+	entity 61
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-847 // ESurfaceType::Meta V: 6 I: 12 planar
+847 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 63
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+	entity 61
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 848 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 63
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
+	entity 62
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 849 // ESurfaceType::Meta V: 14 I: 42 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 63
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
+	entity 62
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
 850 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 63
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
-}
-
-851 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_metal/met_teal_trim32r
-	entity 63
+	entity 62
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-852 // ESurfaceType::Meta V: 6 I: 12 planar
+851 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 63
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
+	entity 62
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
-853 // ESurfaceType::Meta V: 4 I: 6 planar
+852 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
-	entity 63
+	entity 62
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+853 // ESurfaceType::Meta V: 14 I: 42 planar
+{
+	shader textures/lq_metal/met_teal_trim32r
+	entity 62
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 854 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/lq_metal/met_teal_trim32r
+	entity 62
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+855 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_metal/met_teal_trim32r
+	entity 62
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+856 // ESurfaceType::Meta V: 6 I: 12 planar
+{
+	shader textures/lq_metal/met_teal_trim32r
+	entity 62
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+857 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_metal/met_teal_trim32r
+	entity 62
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+858 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_metal/met_teal_trim32r
+	entity 62
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+859 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_metal/met_teal_trim32r
+	entity 63
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+860 // ESurfaceType::Meta V: 14 I: 42 planar
+{
+	shader textures/lq_metal/met_teal_trim32r
+	entity 63
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+861 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_metal/met_teal_trim32r
 	entity 63
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-855 // ESurfaceType::Meta V: 15 I: 39 
+862 // ESurfaceType::Meta V: 6 I: 12 planar
+{
+	shader textures/lq_metal/met_teal_trim32r
+	entity 63
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+863 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_metal/met_teal_trim32r
+	entity 63
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+864 // ESurfaceType::Meta V: 14 I: 42 planar
+{
+	shader textures/lq_metal/met_teal_trim32r
+	entity 63
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+865 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_metal/met_teal_trim32r
+	entity 63
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+866 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_metal/met_teal_trim32r
+	entity 63
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+867 // ESurfaceType::Meta V: 6 I: 12 planar
+{
+	shader textures/lq_metal/met_teal_trim32r
+	entity 63
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+868 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_metal/met_teal_trim32r
+	entity 63
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+869 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_metal/met_teal_trim32r
+	entity 63
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+870 // ESurfaceType::Meta V: 15 I: 39 
 {
 	shader models/enviroment/sewers/brick_modern_01
 	sampleSize 8
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
-856 // ESurfaceType::Meta V: 13 I: 21 
+871 // ESurfaceType::Meta V: 13 I: 21 
 {
 	shader models/enviroment/sewers/brick_modern_01
 	sampleSize 8
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
-857 // ESurfaceType::Meta V: 12 I: 18 
+872 // ESurfaceType::Meta V: 12 I: 18 
 {
 	shader models/enviroment/sewers/brick_modern_01
 	sampleSize 8
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
-}
-
-858 // ESurfaceType::Meta V: 12 I: 18 
-{
-	shader models/enviroment/sewers/brick_modern_01
-	sampleSize 8
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
-}
-
-859 // ESurfaceType::Meta V: 14 I: 24 
-{
-	shader models/enviroment/sewers/brick_modern_01
-	sampleSize 8
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
-}
-
-860 // ESurfaceType::Meta V: 27 I: 72 
-{
-	shader models/enviroment/sewers/brick_modern_01
-	sampleSize 8
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
-}
-
-861 // ESurfaceType::Meta V: 14 I: 24 
-{
-	shader models/enviroment/sewers/brick_modern_01
-	sampleSize 8
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
-}
-
-862 // ESurfaceType::Meta V: 12 I: 24 
-{
-	shader models/enviroment/sewers/brick_modern_01
-	sampleSize 8
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
-}
-
-863 // ESurfaceType::Meta V: 31 I: 87 
-{
-	shader models/enviroment/sewers/brick_modern_01
-	sampleSize 8
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
-}
-
-864 // ESurfaceType::Meta V: 12 I: 18 
-{
-	shader models/enviroment/sewers/brick_modern_01
-	sampleSize 8
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
-}
-
-865 // ESurfaceType::Meta V: 12 I: 18 
-{
-	shader models/enviroment/sewers/brick_modern_01
-	sampleSize 8
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
-}
-
-866 // ESurfaceType::Meta V: 13 I: 21 
-{
-	shader models/enviroment/sewers/brick_modern_01
-	sampleSize 8
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
-}
-
-867 // ESurfaceType::Meta V: 12 I: 36 
-{
-	shader models/enviroment/sewers/brick_modern_01
-	sampleSize 8
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
-}
-
-868 // ESurfaceType::Meta V: 12 I: 18 
-{
-	shader models/enviroment/sewers/brick_modern_01
-	sampleSize 8
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
-}
-
-869 // ESurfaceType::Meta V: 12 I: 18 
-{
-	shader models/enviroment/sewers/brick_modern_01
-	sampleSize 8
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
-}
-
-870 // ESurfaceType::Meta V: 12 I: 18 
-{
-	shader models/enviroment/sewers/brick_modern_01
-	sampleSize 8
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
-}
-
-871 // ESurfaceType::Meta V: 12 I: 18 
-{
-	shader models/enviroment/sewers/brick_modern_01
-	sampleSize 8
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
-}
-
-872 // ESurfaceType::Meta V: 12 I: 36 
-{
-	shader models/enviroment/sewers/brick_modern_01
-	sampleSize 8
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 873 // ESurfaceType::Meta V: 12 I: 18 
 {
 	shader models/enviroment/sewers/brick_modern_01
 	sampleSize 8
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
-874 // ESurfaceType::Meta V: 10 I: 24 
+874 // ESurfaceType::Meta V: 14 I: 24 
+{
+	shader models/enviroment/sewers/brick_modern_01
+	sampleSize 8
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+875 // ESurfaceType::Meta V: 27 I: 72 
 {
 	shader models/enviroment/sewers/brick_modern_01
 	sampleSize 8
 	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
 
-875 // ESurfaceType::Meta V: 12 I: 18 
-{
-	shader models/enviroment/sewers/brick_modern_01
-	sampleSize 8
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
-}
-
-876 // ESurfaceType::Meta V: 12 I: 24 
+876 // ESurfaceType::Meta V: 14 I: 24 
 {
 	shader models/enviroment/sewers/brick_modern_01
 	sampleSize 8
 	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
 
-877 // ESurfaceType::Meta V: 27 I: 72 
+877 // ESurfaceType::Meta V: 12 I: 24 
 {
 	shader models/enviroment/sewers/brick_modern_01
 	sampleSize 8
 	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
 
-878 // ESurfaceType::Meta V: 12 I: 36 
+878 // ESurfaceType::Meta V: 31 I: 87 
 {
 	shader models/enviroment/sewers/brick_modern_01
 	sampleSize 8
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
 
-879 // ESurfaceType::Meta V: 12 I: 36 
+879 // ESurfaceType::Meta V: 12 I: 18 
 {
 	shader models/enviroment/sewers/brick_modern_01
 	sampleSize 8
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 880 // ESurfaceType::Meta V: 12 I: 18 
 {
 	shader models/enviroment/sewers/brick_modern_01
 	sampleSize 8
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
-881 // ESurfaceType::Meta V: 12 I: 36 
+881 // ESurfaceType::Meta V: 13 I: 21 
 {
 	shader models/enviroment/sewers/brick_modern_01
 	sampleSize 8
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
-882 // ESurfaceType::Meta V: 12 I: 18 
+882 // ESurfaceType::Meta V: 12 I: 36 
 {
 	shader models/enviroment/sewers/brick_modern_01
 	sampleSize 8
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
 883 // ESurfaceType::Meta V: 12 I: 18 
@@ -6184,196 +6184,196 @@ default
 {
 	shader models/enviroment/sewers/brick_modern_01
 	sampleSize 8
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
-885 // ESurfaceType::Meta V: 15 I: 39 
+885 // ESurfaceType::Meta V: 12 I: 18 
+{
+	shader models/enviroment/sewers/brick_modern_01
+	sampleSize 8
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+886 // ESurfaceType::Meta V: 12 I: 18 
+{
+	shader models/enviroment/sewers/brick_modern_01
+	sampleSize 8
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+887 // ESurfaceType::Meta V: 12 I: 36 
+{
+	shader models/enviroment/sewers/brick_modern_01
+	sampleSize 8
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+888 // ESurfaceType::Meta V: 12 I: 18 
 {
 	shader models/enviroment/sewers/brick_modern_01
 	sampleSize 8
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
-886 // ESurfaceType::Meta V: 27 I: 72 
+889 // ESurfaceType::Meta V: 10 I: 24 
 {
 	shader models/enviroment/sewers/brick_modern_01
 	sampleSize 8
 	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
 
-887 // ESurfaceType::Meta V: 15 I: 39 
+890 // ESurfaceType::Meta V: 12 I: 18 
 {
 	shader models/enviroment/sewers/brick_modern_01
 	sampleSize 8
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
-888 // ESurfaceType::Meta V: 12 I: 24 
+891 // ESurfaceType::Meta V: 12 I: 24 
 {
 	shader models/enviroment/sewers/brick_modern_01
 	sampleSize 8
 	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
 
-889 // ESurfaceType::Meta V: 12 I: 18 
+892 // ESurfaceType::Meta V: 27 I: 72 
+{
+	shader models/enviroment/sewers/brick_modern_01
+	sampleSize 8
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+893 // ESurfaceType::Meta V: 12 I: 36 
+{
+	shader models/enviroment/sewers/brick_modern_01
+	sampleSize 8
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+894 // ESurfaceType::Meta V: 12 I: 36 
+{
+	shader models/enviroment/sewers/brick_modern_01
+	sampleSize 8
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+895 // ESurfaceType::Meta V: 12 I: 18 
 {
 	shader models/enviroment/sewers/brick_modern_01
 	sampleSize 8
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
-890 // ESurfaceType::Meta V: 13 I: 21 
+896 // ESurfaceType::Meta V: 12 I: 36 
+{
+	shader models/enviroment/sewers/brick_modern_01
+	sampleSize 8
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+897 // ESurfaceType::Meta V: 12 I: 18 
+{
+	shader models/enviroment/sewers/brick_modern_01
+	sampleSize 8
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+898 // ESurfaceType::Meta V: 12 I: 18 
 {
 	shader models/enviroment/sewers/brick_modern_01
 	sampleSize 8
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
-891 // ESurfaceType::Meta V: 28 I: 48 
+899 // ESurfaceType::Meta V: 12 I: 18 
+{
+	shader models/enviroment/sewers/brick_modern_01
+	sampleSize 8
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+900 // ESurfaceType::Meta V: 15 I: 39 
+{
+	shader models/enviroment/sewers/brick_modern_01
+	sampleSize 8
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+901 // ESurfaceType::Meta V: 27 I: 72 
+{
+	shader models/enviroment/sewers/brick_modern_01
+	sampleSize 8
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+902 // ESurfaceType::Meta V: 15 I: 39 
+{
+	shader models/enviroment/sewers/brick_modern_01
+	sampleSize 8
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+903 // ESurfaceType::Meta V: 12 I: 24 
+{
+	shader models/enviroment/sewers/brick_modern_01
+	sampleSize 8
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+904 // ESurfaceType::Meta V: 12 I: 18 
+{
+	shader models/enviroment/sewers/brick_modern_01
+	sampleSize 8
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+905 // ESurfaceType::Meta V: 13 I: 21 
+{
+	shader models/enviroment/sewers/brick_modern_01
+	sampleSize 8
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+906 // ESurfaceType::Meta V: 28 I: 48 
 {
 	shader models/enviroment/sewers/concrete_base
 	sampleSize 8
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-892 // ESurfaceType::Meta V: 32 I: 99 
+907 // ESurfaceType::Meta V: 32 I: 99 
 {
 	shader models/enviroment/sewers/concrete_base
 	sampleSize 8
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-893 // ESurfaceType::Meta V: 12 I: 24 
+908 // ESurfaceType::Meta V: 12 I: 24 
 {
 	shader models/enviroment/sewers/concrete_base
 	sampleSize 8
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
-894 // ESurfaceType::Meta V: 11 I: 21 planar
+909 // ESurfaceType::Meta V: 11 I: 21 planar
 {
 	shader models/enviroment/sewers/concrete_base
 	sampleSize 8
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
-}
-
-895 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader models/enviroment/sewers/concrete_base
-	sampleSize 8
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
-}
-
-896 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader models/enviroment/sewers/concrete_base
-	sampleSize 8
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-897 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader models/enviroment/sewers/concrete_base
-	sampleSize 8
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-898 // ESurfaceType::Meta V: 20 I: 30 planar
-{
-	shader models/enviroment/sewers/concrete_base
-	sampleSize 8
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-899 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader models/enviroment/sewers/concrete_base
-	sampleSize 8
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
-}
-
-900 // ESurfaceType::Meta V: 6 I: 12 planar
-{
-	shader models/enviroment/sewers/concrete_base
-	sampleSize 8
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-901 // ESurfaceType::Meta V: 6 I: 12 planar
-{
-	shader models/enviroment/sewers/concrete_base
-	sampleSize 8
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-902 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader models/enviroment/sewers/concrete_base
-	sampleSize 8
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
-}
-
-903 // ESurfaceType::Meta V: 37 I: 123 
-{
-	shader models/enviroment/sewers/concrete_base
-	sampleSize 8
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-904 // ESurfaceType::Meta V: 14 I: 24 planar
-{
-	shader models/enviroment/sewers/concrete_base
-	sampleSize 8
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
-}
-
-905 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader models/enviroment/sewers/concrete_base
-	sampleSize 8
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
-}
-
-906 // ESurfaceType::Meta V: 7 I: 15 
-{
-	shader models/enviroment/sewers/concrete_base
-	sampleSize 8
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
-}
-
-907 // ESurfaceType::Meta V: 5 I: 9 planar
-{
-	shader models/enviroment/sewers/concrete_base
-	sampleSize 8
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
-}
-
-908 // ESurfaceType::Meta V: 14 I: 24 
-{
-	shader models/enviroment/sewers/concrete_base
-	sampleSize 8
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-909 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader models/enviroment/sewers/concrete_base
-	sampleSize 8
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 910 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader models/enviroment/sewers/concrete_base
 	sampleSize 8
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
 
-911 // ESurfaceType::Meta V: 5 I: 9 planar
+911 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader models/enviroment/sewers/concrete_base
 	sampleSize 8
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 912 // ESurfaceType::Meta V: 4 I: 6 planar
@@ -6383,7 +6383,7 @@ default
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-913 // ESurfaceType::Meta V: 4 I: 6 planar
+913 // ESurfaceType::Meta V: 20 I: 30 planar
 {
 	shader models/enviroment/sewers/concrete_base
 	sampleSize 8
@@ -6394,105 +6394,105 @@ default
 {
 	shader models/enviroment/sewers/concrete_base
 	sampleSize 8
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
-915 // ESurfaceType::Meta V: 16 I: 24 
+915 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader models/enviroment/sewers/concrete_base
 	sampleSize 8
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-916 // ESurfaceType::Meta V: 4 I: 6 planar
+916 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader models/enviroment/sewers/concrete_base
 	sampleSize 8
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-917 // ESurfaceType::Meta V: 6 I: 12 planar
-{
-	shader models/enviroment/sewers/concrete_base
-	sampleSize 8
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-918 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader models/enviroment/sewers/concrete_base
-	sampleSize 8
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
-}
-
-919 // ESurfaceType::Meta V: 28 I: 48 
-{
-	shader models/enviroment/sewers/concrete_base
-	sampleSize 8
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-920 // ESurfaceType::Meta V: 32 I: 99 
-{
-	shader models/enviroment/sewers/concrete_base
-	sampleSize 8
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-921 // ESurfaceType::Meta V: 11 I: 21 planar
-{
-	shader models/enviroment/sewers/concrete_base
-	sampleSize 8
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
-}
-
-922 // ESurfaceType::Meta V: 7 I: 15 
-{
-	shader models/enviroment/sewers/concrete_base
-	sampleSize 8
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
-}
-
-923 // ESurfaceType::Meta V: 4 I: 6 planar
+917 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader models/enviroment/sewers/concrete_base
 	sampleSize 8
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
-924 // ESurfaceType::Meta V: 6 I: 12 planar
+918 // ESurfaceType::Meta V: 37 I: 123 
 {
 	shader models/enviroment/sewers/concrete_base
 	sampleSize 8
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-925 // ESurfaceType::Meta V: 4 I: 6 planar
+919 // ESurfaceType::Meta V: 14 I: 24 planar
+{
+	shader models/enviroment/sewers/concrete_base
+	sampleSize 8
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+920 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader models/enviroment/sewers/concrete_base
+	sampleSize 8
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+921 // ESurfaceType::Meta V: 7 I: 15 
 {
 	shader models/enviroment/sewers/concrete_base
 	sampleSize 8
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+922 // ESurfaceType::Meta V: 5 I: 9 planar
+{
+	shader models/enviroment/sewers/concrete_base
+	sampleSize 8
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+923 // ESurfaceType::Meta V: 14 I: 24 
+{
+	shader models/enviroment/sewers/concrete_base
+	sampleSize 8
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+924 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader models/enviroment/sewers/concrete_base
+	sampleSize 8
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+925 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader models/enviroment/sewers/concrete_base
+	sampleSize 8
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 926 // ESurfaceType::Meta V: 5 I: 9 planar
 {
 	shader models/enviroment/sewers/concrete_base
 	sampleSize 8
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
-}
-
-927 // ESurfaceType::Meta V: 7 I: 15 
-{
-	shader models/enviroment/sewers/concrete_base
-	sampleSize 8
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
-}
-
-928 // ESurfaceType::Meta V: 5 I: 9 planar
-{
-	shader models/enviroment/sewers/concrete_base
-	sampleSize 8
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+927 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader models/enviroment/sewers/concrete_base
+	sampleSize 8
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+928 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader models/enviroment/sewers/concrete_base
+	sampleSize 8
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 929 // ESurfaceType::Meta V: 4 I: 6 planar
@@ -6502,35 +6502,35 @@ default
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-930 // ESurfaceType::Meta V: 14 I: 24 
+930 // ESurfaceType::Meta V: 16 I: 24 
 {
 	shader models/enviroment/sewers/concrete_base
 	sampleSize 8
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-931 // ESurfaceType::Meta V: 14 I: 24 
+931 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader models/enviroment/sewers/concrete_base
 	sampleSize 8
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-932 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader models/enviroment/sewers/concrete_base
-	sampleSize 8
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
-}
-
-933 // ESurfaceType::Meta V: 14 I: 24 
+932 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader models/enviroment/sewers/concrete_base
 	sampleSize 8
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-934 // ESurfaceType::Meta V: 4 I: 6 planar
+933 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader models/enviroment/sewers/concrete_base
+	sampleSize 8
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+934 // ESurfaceType::Meta V: 28 I: 48 
 {
 	shader models/enviroment/sewers/concrete_base
 	sampleSize 8
@@ -6544,215 +6544,320 @@ default
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-936 // ESurfaceType::Meta V: 7 I: 15 
+936 // ESurfaceType::Meta V: 11 I: 21 planar
 {
 	shader models/enviroment/sewers/concrete_base
 	sampleSize 8
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
-937 // ESurfaceType::Meta V: 4 I: 6 planar
+937 // ESurfaceType::Meta V: 7 I: 15 
 {
 	shader models/enviroment/sewers/concrete_base
 	sampleSize 8
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
-938 // ESurfaceType::Meta V: 12 I: 24 
+938 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader models/enviroment/sewers/concrete_base
 	sampleSize 8
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
-939 // ESurfaceType::Meta V: 4 I: 6 planar
+939 // ESurfaceType::Meta V: 6 I: 12 planar
 {
 	shader models/enviroment/sewers/concrete_base
 	sampleSize 8
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 940 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader models/enviroment/sewers/concrete_base
 	sampleSize 8
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
-941 // ESurfaceType::Meta V: 7 I: 15 
+941 // ESurfaceType::Meta V: 5 I: 9 planar
 {
 	shader models/enviroment/sewers/concrete_base
 	sampleSize 8
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
-942 // ESurfaceType::Meta V: 28 I: 48 
+942 // ESurfaceType::Meta V: 7 I: 15 
 {
 	shader models/enviroment/sewers/concrete_base
 	sampleSize 8
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
-943 // ESurfaceType::Meta V: 6 I: 12 planar
+943 // ESurfaceType::Meta V: 5 I: 9 planar
 {
 	shader models/enviroment/sewers/concrete_base
 	sampleSize 8
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 944 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader models/enviroment/sewers/concrete_base
 	sampleSize 8
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-945 // ESurfaceType::Meta V: 12 I: 24 
+945 // ESurfaceType::Meta V: 14 I: 24 
 {
 	shader models/enviroment/sewers/concrete_base
 	sampleSize 8
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-946 // ESurfaceType::Meta V: 5 I: 9 planar
+946 // ESurfaceType::Meta V: 14 I: 24 
 {
 	shader models/enviroment/sewers/concrete_base
 	sampleSize 8
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 947 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader models/enviroment/sewers/concrete_base
 	sampleSize 8
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
-}
-
-948 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader models/enviroment/sewers/concrete_base
-	sampleSize 8
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
-949 // ESurfaceType::Meta V: 11 I: 21 planar
-{
-	shader models/enviroment/sewers/concrete_base
-	sampleSize 8
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
-}
-
-950 // ESurfaceType::Meta V: 4 I: 6 planar
+948 // ESurfaceType::Meta V: 14 I: 24 
 {
 	shader models/enviroment/sewers/concrete_base
 	sampleSize 8
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-951 // ESurfaceType::Meta V: 4 I: 6 planar
+949 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader models/enviroment/sewers/concrete_base
 	sampleSize 8
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+950 // ESurfaceType::Meta V: 32 I: 99 
+{
+	shader models/enviroment/sewers/concrete_base
+	sampleSize 8
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+951 // ESurfaceType::Meta V: 7 I: 15 
+{
+	shader models/enviroment/sewers/concrete_base
+	sampleSize 8
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 952 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/lq_dev/trigger
-	entity 12
-	castShadows 0
+	shader models/enviroment/sewers/concrete_base
+	sampleSize 8
 	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
 
-953 // ESurfaceType::Meta V: 4 I: 6 planar
+953 // ESurfaceType::Meta V: 12 I: 24 
 {
-	shader textures/lq_dev/trigger
-	entity 12
-	castShadows 0
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+	shader models/enviroment/sewers/concrete_base
+	sampleSize 8
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
 954 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/lq_dev/trigger
-	entity 12
-	castShadows 0
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+	shader models/enviroment/sewers/concrete_base
+	sampleSize 8
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
 
 955 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/lq_dev/trigger
-	entity 12
-	castShadows 0
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
-}
-
-956 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_dev/trigger
-	entity 12
-	castShadows 0
+	shader models/enviroment/sewers/concrete_base
+	sampleSize 8
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-957 // ESurfaceType::Meta V: 4 I: 6 planar
+956 // ESurfaceType::Meta V: 7 I: 15 
 {
-	shader textures/lq_dev/trigger
-	entity 12
-	castShadows 0
+	shader models/enviroment/sewers/concrete_base
+	sampleSize 8
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
-958 // ESurfaceType::Meta V: 4 I: 6 planar
+957 // ESurfaceType::Meta V: 28 I: 48 
 {
-	shader textures/lq_dev/trigger
-	entity 13
-	castShadows 0
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+	shader models/enviroment/sewers/concrete_base
+	sampleSize 8
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+958 // ESurfaceType::Meta V: 6 I: 12 planar
+{
+	shader models/enviroment/sewers/concrete_base
+	sampleSize 8
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 959 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/lq_dev/trigger
-	entity 13
-	castShadows 0
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+	shader models/enviroment/sewers/concrete_base
+	sampleSize 8
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
-960 // ESurfaceType::Meta V: 4 I: 6 planar
+960 // ESurfaceType::Meta V: 12 I: 24 
 {
-	shader textures/lq_dev/trigger
-	entity 13
-	castShadows 0
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+	shader models/enviroment/sewers/concrete_base
+	sampleSize 8
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
-961 // ESurfaceType::Meta V: 4 I: 6 planar
+961 // ESurfaceType::Meta V: 5 I: 9 planar
 {
-	shader textures/lq_dev/trigger
-	entity 13
-	castShadows 0
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
+	shader models/enviroment/sewers/concrete_base
+	sampleSize 8
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 962 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/lq_dev/trigger
-	entity 13
-	castShadows 0
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
+	shader models/enviroment/sewers/concrete_base
+	sampleSize 8
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
 
 963 // ESurfaceType::Meta V: 4 I: 6 planar
 {
+	shader models/enviroment/sewers/concrete_base
+	sampleSize 8
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+964 // ESurfaceType::Meta V: 11 I: 21 planar
+{
+	shader models/enviroment/sewers/concrete_base
+	sampleSize 8
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+965 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader models/enviroment/sewers/concrete_base
+	sampleSize 8
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+966 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader models/enviroment/sewers/concrete_base
+	sampleSize 8
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+967 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_dev/trigger
+	entity 12
+	castShadows 0
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+968 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_dev/trigger
+	entity 12
+	castShadows 0
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+969 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_dev/trigger
+	entity 12
+	castShadows 0
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+970 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_dev/trigger
+	entity 12
+	castShadows 0
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+971 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_dev/trigger
+	entity 12
+	castShadows 0
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+972 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_dev/trigger
+	entity 12
+	castShadows 0
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+973 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_dev/trigger
+	entity 13
+	castShadows 0
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+974 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_dev/trigger
+	entity 13
+	castShadows 0
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+975 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_dev/trigger
+	entity 13
+	castShadows 0
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+976 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_dev/trigger
+	entity 13
+	castShadows 0
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+977 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_dev/trigger
+	entity 13
+	castShadows 0
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+978 // ESurfaceType::Meta V: 4 I: 6 planar
+{
 	shader textures/lq_dev/trigger
 	entity 13
 	castShadows 0
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
-964 // ESurfaceType::Meta V: 28 I: 102 planar
+979 // ESurfaceType::Meta V: 28 I: 102 planar
 {
 	shader textures/building_1/b1_f1
 	entity 22
@@ -6760,7 +6865,7 @@ default
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
-965 // ESurfaceType::Meta V: 8 I: 12 planar
+980 // ESurfaceType::Meta V: 8 I: 12 planar
 {
 	shader textures/building_1/b1_f1
 	entity 22
@@ -6768,7 +6873,7 @@ default
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
-966 // ESurfaceType::Meta V: 32 I: 84 planar
+981 // ESurfaceType::Meta V: 32 I: 84 planar
 {
 	shader textures/building_1/b1_f1
 	entity 22
@@ -6776,7 +6881,7 @@ default
 	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
 
-967 // ESurfaceType::Meta V: 12 I: 30 planar
+982 // ESurfaceType::Meta V: 12 I: 30 planar
 {
 	shader textures/building_1/b1_f1
 	entity 22
@@ -6784,7 +6889,7 @@ default
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
-968 // ESurfaceType::Meta V: 58 I: 132 planar
+983 // ESurfaceType::Meta V: 58 I: 132 planar
 {
 	shader textures/building_1/b1_f1
 	entity 22
@@ -6792,7 +6897,7 @@ default
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
-969 // ESurfaceType::Meta V: 58 I: 132 planar
+984 // ESurfaceType::Meta V: 58 I: 132 planar
 {
 	shader textures/building_1/b1_f1
 	entity 22
@@ -6800,7 +6905,7 @@ default
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
-970 // ESurfaceType::Meta V: 12 I: 30 planar
+985 // ESurfaceType::Meta V: 12 I: 30 planar
 {
 	shader textures/building_1/b1_f1
 	entity 22
@@ -6808,7 +6913,7 @@ default
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
-971 // ESurfaceType::Meta V: 12 I: 30 planar
+986 // ESurfaceType::Meta V: 12 I: 30 planar
 {
 	shader textures/building_1/b1_f1
 	entity 22
@@ -6816,7 +6921,7 @@ default
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
-972 // ESurfaceType::Meta V: 28 I: 102 planar
+987 // ESurfaceType::Meta V: 28 I: 102 planar
 {
 	shader textures/building_1/b1_f1
 	entity 22
@@ -6824,7 +6929,7 @@ default
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
-973 // ESurfaceType::Meta V: 12 I: 30 planar
+988 // ESurfaceType::Meta V: 12 I: 30 planar
 {
 	shader textures/building_1/b1_f1
 	entity 22
@@ -6832,7 +6937,7 @@ default
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
-974 // ESurfaceType::Meta V: 12 I: 30 planar
+989 // ESurfaceType::Meta V: 12 I: 30 planar
 {
 	shader textures/building_1/b1_f1
 	entity 22
@@ -6840,143 +6945,111 @@ default
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
-975 // ESurfaceType::Meta V: 12 I: 30 planar
+990 // ESurfaceType::Meta V: 12 I: 30 planar
 {
 	shader textures/building_1/b1_f1
 	entity 22
 	castShadows 0
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
-}
-
-976 // ESurfaceType::Meta V: 12 I: 30 planar
-{
-	shader textures/building_1/b1_f1
-	entity 22
-	castShadows 0
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
-}
-
-977 // ESurfaceType::Meta V: 8 I: 12 planar
-{
-	shader textures/building_1/b1_f1
-	entity 22
-	castShadows 0
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
-}
-
-978 // ESurfaceType::Meta V: 12 I: 30 planar
-{
-	shader textures/building_1/b1_f1
-	entity 22
-	castShadows 0
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
-}
-
-979 // ESurfaceType::Meta V: 10 I: 18 planar
-{
-	shader textures/building_1/b1_f1
-	entity 22
-	castShadows 0
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-980 // ESurfaceType::Meta V: 10 I: 18 planar
-{
-	shader textures/building_1/b1_f1
-	entity 22
-	castShadows 0
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-981 // ESurfaceType::Meta V: 10 I: 18 planar
-{
-	shader textures/building_1/b1_f1
-	entity 22
-	castShadows 0
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
-}
-
-982 // ESurfaceType::Meta V: 10 I: 18 planar
-{
-	shader textures/building_1/b1_f1
-	entity 22
-	castShadows 0
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-983 // ESurfaceType::Meta V: 10 I: 18 planar
-{
-	shader textures/building_1/b1_f1
-	entity 22
-	castShadows 0
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
-}
-
-984 // ESurfaceType::Meta V: 10 I: 18 planar
-{
-	shader textures/building_1/b1_f1
-	entity 22
-	castShadows 0
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-985 // ESurfaceType::Meta V: 10 I: 18 planar
-{
-	shader textures/building_1/b1_f1
-	entity 22
-	castShadows 0
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
-}
-
-986 // ESurfaceType::Meta V: 48 I: 84 planar
-{
-	shader textures/building_1/b1_f1
-	entity 22
-	castShadows 0
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-987 // ESurfaceType::Meta V: 10 I: 18 planar
-{
-	shader textures/building_1/b1_f1
-	entity 22
-	castShadows 0
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
-}
-
-988 // ESurfaceType::Meta V: 28 I: 102 planar
-{
-	shader textures/building_1/b1_f1
-	entity 24
-	castShadows 0
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
-}
-
-989 // ESurfaceType::Meta V: 8 I: 12 planar
-{
-	shader textures/building_1/b1_f1
-	entity 24
-	castShadows 0
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
-}
-
-990 // ESurfaceType::Meta V: 32 I: 84 planar
-{
-	shader textures/building_1/b1_f1
-	entity 24
-	castShadows 0
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
 
 991 // ESurfaceType::Meta V: 12 I: 30 planar
 {
 	shader textures/building_1/b1_f1
-	entity 24
+	entity 22
+	castShadows 0
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+992 // ESurfaceType::Meta V: 8 I: 12 planar
+{
+	shader textures/building_1/b1_f1
+	entity 22
 	castShadows 0
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
-992 // ESurfaceType::Meta V: 58 I: 132 planar
+993 // ESurfaceType::Meta V: 12 I: 30 planar
+{
+	shader textures/building_1/b1_f1
+	entity 22
+	castShadows 0
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+994 // ESurfaceType::Meta V: 10 I: 18 planar
+{
+	shader textures/building_1/b1_f1
+	entity 22
+	castShadows 0
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+995 // ESurfaceType::Meta V: 10 I: 18 planar
+{
+	shader textures/building_1/b1_f1
+	entity 22
+	castShadows 0
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+996 // ESurfaceType::Meta V: 10 I: 18 planar
+{
+	shader textures/building_1/b1_f1
+	entity 22
+	castShadows 0
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+997 // ESurfaceType::Meta V: 10 I: 18 planar
+{
+	shader textures/building_1/b1_f1
+	entity 22
+	castShadows 0
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+998 // ESurfaceType::Meta V: 10 I: 18 planar
+{
+	shader textures/building_1/b1_f1
+	entity 22
+	castShadows 0
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+999 // ESurfaceType::Meta V: 10 I: 18 planar
+{
+	shader textures/building_1/b1_f1
+	entity 22
+	castShadows 0
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+1000 // ESurfaceType::Meta V: 10 I: 18 planar
+{
+	shader textures/building_1/b1_f1
+	entity 22
+	castShadows 0
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+1001 // ESurfaceType::Meta V: 48 I: 84 planar
+{
+	shader textures/building_1/b1_f1
+	entity 22
+	castShadows 0
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+1002 // ESurfaceType::Meta V: 10 I: 18 planar
+{
+	shader textures/building_1/b1_f1
+	entity 22
+	castShadows 0
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+1003 // ESurfaceType::Meta V: 28 I: 102 planar
 {
 	shader textures/building_1/b1_f1
 	entity 24
@@ -6984,23 +7057,7 @@ default
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
-993 // ESurfaceType::Meta V: 58 I: 132 planar
-{
-	shader textures/building_1/b1_f1
-	entity 24
-	castShadows 0
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
-}
-
-994 // ESurfaceType::Meta V: 12 I: 30 planar
-{
-	shader textures/building_1/b1_f1
-	entity 24
-	castShadows 0
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
-}
-
-995 // ESurfaceType::Meta V: 12 I: 30 planar
+1004 // ESurfaceType::Meta V: 8 I: 12 planar
 {
 	shader textures/building_1/b1_f1
 	entity 24
@@ -7008,15 +7065,15 @@ default
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
-996 // ESurfaceType::Meta V: 28 I: 102 planar
+1005 // ESurfaceType::Meta V: 32 I: 84 planar
 {
 	shader textures/building_1/b1_f1
 	entity 24
 	castShadows 0
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
 
-997 // ESurfaceType::Meta V: 12 I: 30 planar
+1006 // ESurfaceType::Meta V: 12 I: 30 planar
 {
 	shader textures/building_1/b1_f1
 	entity 24
@@ -7024,423 +7081,383 @@ default
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
-998 // ESurfaceType::Meta V: 12 I: 30 planar
+1007 // ESurfaceType::Meta V: 58 I: 132 planar
 {
 	shader textures/building_1/b1_f1
 	entity 24
-	castShadows 0
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
-}
-
-999 // ESurfaceType::Meta V: 12 I: 30 planar
-{
-	shader textures/building_1/b1_f1
-	entity 24
-	castShadows 0
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
-}
-
-1000 // ESurfaceType::Meta V: 12 I: 30 planar
-{
-	shader textures/building_1/b1_f1
-	entity 24
-	castShadows 0
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
-}
-
-1001 // ESurfaceType::Meta V: 8 I: 12 planar
-{
-	shader textures/building_1/b1_f1
-	entity 24
-	castShadows 0
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
-}
-
-1002 // ESurfaceType::Meta V: 12 I: 30 planar
-{
-	shader textures/building_1/b1_f1
-	entity 24
-	castShadows 0
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
-}
-
-1003 // ESurfaceType::Meta V: 10 I: 18 planar
-{
-	shader textures/building_1/b1_f1
-	entity 24
-	castShadows 0
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-1004 // ESurfaceType::Meta V: 10 I: 18 planar
-{
-	shader textures/building_1/b1_f1
-	entity 24
-	castShadows 0
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-1005 // ESurfaceType::Meta V: 10 I: 18 planar
-{
-	shader textures/building_1/b1_f1
-	entity 24
-	castShadows 0
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
-}
-
-1006 // ESurfaceType::Meta V: 10 I: 18 planar
-{
-	shader textures/building_1/b1_f1
-	entity 24
-	castShadows 0
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-1007 // ESurfaceType::Meta V: 10 I: 18 planar
-{
-	shader textures/building_1/b1_f1
-	entity 24
-	castShadows 0
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
-}
-
-1008 // ESurfaceType::Meta V: 10 I: 18 planar
-{
-	shader textures/building_1/b1_f1
-	entity 24
-	castShadows 0
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-1009 // ESurfaceType::Meta V: 10 I: 18 planar
-{
-	shader textures/building_1/b1_f1
-	entity 24
-	castShadows 0
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
-}
-
-1010 // ESurfaceType::Meta V: 48 I: 84 planar
-{
-	shader textures/building_1/b1_f1
-	entity 24
-	castShadows 0
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-1011 // ESurfaceType::Meta V: 10 I: 18 planar
-{
-	shader textures/building_1/b1_f1
-	entity 24
-	castShadows 0
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
-}
-
-1012 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_dev/trigger
-	entity 27
 	castShadows 0
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
-1013 // ESurfaceType::Meta V: 4 I: 6 planar
+1008 // ESurfaceType::Meta V: 58 I: 132 planar
 {
-	shader textures/lq_dev/trigger
-	entity 27
-	castShadows 0
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
-}
-
-1014 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_dev/trigger
-	entity 27
-	castShadows 0
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
-}
-
-1015 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_dev/trigger
-	entity 27
-	castShadows 0
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-1016 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_dev/trigger
-	entity 27
-	castShadows 0
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
-}
-
-1017 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_dev/trigger
-	entity 27
+	shader textures/building_1/b1_f1
+	entity 24
 	castShadows 0
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
-1018 // ESurfaceType::Meta V: 4 I: 6 planar
+1009 // ESurfaceType::Meta V: 12 I: 30 planar
 {
-	shader textures/lq_props/med_book_red
-	entity 48
-	castShadows 0
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
-}
-
-1019 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_props/med_book_red
-	entity 48
-	castShadows 0
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
-}
-
-1020 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_props/med_book_red
-	entity 48
-	castShadows 0
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
-}
-
-1021 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_props/med_book_red
-	entity 48
+	shader textures/building_1/b1_f1
+	entity 24
 	castShadows 0
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
-1022 // ESurfaceType::Meta V: 4 I: 6 planar
+1010 // ESurfaceType::Meta V: 12 I: 30 planar
 {
-	shader textures/lq_props/med_book_red
-	entity 48
-	castShadows 0
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-1023 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_props/med_book_red
-	entity 48
-	castShadows 0
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
-}
-
-1024 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_utility/trigger
-	entity 49
-	castShadows 0
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
-}
-
-1025 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_utility/trigger
-	entity 49
+	shader textures/building_1/b1_f1
+	entity 24
 	castShadows 0
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
-1026 // ESurfaceType::Meta V: 4 I: 6 planar
+1011 // ESurfaceType::Meta V: 28 I: 102 planar
 {
-	shader textures/lq_utility/trigger
-	entity 49
+	shader textures/building_1/b1_f1
+	entity 24
+	castShadows 0
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+1012 // ESurfaceType::Meta V: 12 I: 30 planar
+{
+	shader textures/building_1/b1_f1
+	entity 24
+	castShadows 0
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+1013 // ESurfaceType::Meta V: 12 I: 30 planar
+{
+	shader textures/building_1/b1_f1
+	entity 24
+	castShadows 0
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+1014 // ESurfaceType::Meta V: 12 I: 30 planar
+{
+	shader textures/building_1/b1_f1
+	entity 24
+	castShadows 0
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+1015 // ESurfaceType::Meta V: 12 I: 30 planar
+{
+	shader textures/building_1/b1_f1
+	entity 24
+	castShadows 0
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+1016 // ESurfaceType::Meta V: 8 I: 12 planar
+{
+	shader textures/building_1/b1_f1
+	entity 24
+	castShadows 0
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+1017 // ESurfaceType::Meta V: 12 I: 30 planar
+{
+	shader textures/building_1/b1_f1
+	entity 24
+	castShadows 0
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+1018 // ESurfaceType::Meta V: 10 I: 18 planar
+{
+	shader textures/building_1/b1_f1
+	entity 24
+	castShadows 0
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+1019 // ESurfaceType::Meta V: 10 I: 18 planar
+{
+	shader textures/building_1/b1_f1
+	entity 24
+	castShadows 0
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+1020 // ESurfaceType::Meta V: 10 I: 18 planar
+{
+	shader textures/building_1/b1_f1
+	entity 24
+	castShadows 0
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+1021 // ESurfaceType::Meta V: 10 I: 18 planar
+{
+	shader textures/building_1/b1_f1
+	entity 24
+	castShadows 0
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+1022 // ESurfaceType::Meta V: 10 I: 18 planar
+{
+	shader textures/building_1/b1_f1
+	entity 24
+	castShadows 0
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+1023 // ESurfaceType::Meta V: 10 I: 18 planar
+{
+	shader textures/building_1/b1_f1
+	entity 24
+	castShadows 0
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+1024 // ESurfaceType::Meta V: 10 I: 18 planar
+{
+	shader textures/building_1/b1_f1
+	entity 24
+	castShadows 0
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+1025 // ESurfaceType::Meta V: 48 I: 84 planar
+{
+	shader textures/building_1/b1_f1
+	entity 24
+	castShadows 0
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+1026 // ESurfaceType::Meta V: 10 I: 18 planar
+{
+	shader textures/building_1/b1_f1
+	entity 24
 	castShadows 0
 	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
 
 1027 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/lq_utility/trigger
-	entity 49
-	castShadows 0
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
-}
-
-1028 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_utility/trigger
-	entity 49
-	castShadows 0
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-1029 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_utility/trigger
-	entity 49
-	castShadows 0
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
-}
-
-1030 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/FPSTextures/Wall_23
-	entity 51
+	shader textures/lq_dev/trigger
+	entity 27
 	castShadows 0
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
-1031 // ESurfaceType::Meta V: 4 I: 6 planar
+1028 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/FPSTextures/Wall_23
-	entity 51
+	shader textures/lq_dev/trigger
+	entity 27
 	castShadows 0
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
-1032 // ESurfaceType::Meta V: 4 I: 6 planar
+1029 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/FPSTextures/Wall_23
-	entity 51
+	shader textures/lq_dev/trigger
+	entity 27
 	castShadows 0
 	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
 
-1033 // ESurfaceType::Meta V: 4 I: 6 planar
+1030 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/FPSTextures/Wall_23
-	entity 51
-	castShadows 0
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
-}
-
-1034 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/FPSTextures/Wall_23
-	entity 51
+	shader textures/lq_dev/trigger
+	entity 27
 	castShadows 0
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-1035 // ESurfaceType::Meta V: 4 I: 6 planar
+1031 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/FPSTextures/Wall_23
-	entity 51
+	shader textures/lq_dev/trigger
+	entity 27
+	castShadows 0
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+1032 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_dev/trigger
+	entity 27
 	castShadows 0
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
+1033 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_props/med_book_red
+	entity 48
+	castShadows 0
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+1034 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_props/med_book_red
+	entity 48
+	castShadows 0
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+1035 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_props/med_book_red
+	entity 48
+	castShadows 0
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
 1036 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/common/caulk
-	entity 64
+	shader textures/lq_props/med_book_red
+	entity 48
 	castShadows 0
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 1037 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/common/caulk
-	entity 64
+	shader textures/lq_props/med_book_red
+	entity 48
 	castShadows 0
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-1038 // ESurfaceType::Meta V: 8 I: 12 planar
+1038 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/FPSTextures/Wall_79
-	entity 64
+	shader textures/lq_props/med_book_red
+	entity 48
 	castShadows 0
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 1039 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/FPSTextures/Wall_79
-	entity 64
+	shader textures/lq_utility/trigger
+	entity 49
+	castShadows 0
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+1040 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_utility/trigger
+	entity 49
 	castShadows 0
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
-1040 // ESurfaceType::Meta V: 30 I: 66 planar
+1041 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/FPSTextures/Wall_79
-	entity 64
+	shader textures/lq_utility/trigger
+	entity 49
 	castShadows 0
 	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
-}
-
-1041 // ESurfaceType::Meta V: 30 I: 66 planar
-{
-	shader textures/FPSTextures/Wall_79
-	entity 64
-	castShadows 0
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 1042 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/FPSTextures/Wall_79
-	entity 64
-	castShadows 0
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
-}
-
-1043 // ESurfaceType::Meta V: 14 I: 36 planar
-{
-	shader textures/FPSTextures/Wall_79
-	entity 64
+	shader textures/lq_utility/trigger
+	entity 49
 	castShadows 0
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
-1044 // ESurfaceType::Meta V: 4 I: 6 planar
+1043 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/FPSTextures/Wall_79
-	entity 64
+	shader textures/lq_utility/trigger
+	entity 49
 	castShadows 0
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-1045 // ESurfaceType::Meta V: 8 I: 12 planar
+1044 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/FPSTextures/Wall_79
-	entity 64
+	shader textures/lq_utility/trigger
+	entity 49
+	castShadows 0
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+1045 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/wallpaper_wall_pt_1
+	entity 51
 	castShadows 0
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 1046 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/FPSTextures/Wall_79
-	entity 64
+	shader textures/psx_textures_2/wallpaper_wall_pt_1
+	entity 51
 	castShadows 0
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
 1047 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/FPSTextures/Wall_79
-	entity 64
+	shader textures/psx_textures_2/wallpaper_wall_pt_1
+	entity 51
 	castShadows 0
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
 
 1048 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/FPSTextures/Wall_79
-	entity 64
+	shader textures/psx_textures_2/wallpaper_wall_pt_1
+	entity 51
 	castShadows 0
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 1049 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/FPSTextures/Wall_79
-	entity 64
+	shader textures/psx_textures_2/wallpaper_wall_pt_1
+	entity 51
+	castShadows 0
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+1050 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/wallpaper_wall_pt_1
+	entity 51
 	castShadows 0
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
-1050 // ESurfaceType::Meta V: 14 I: 36 planar
+1051 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/caulk
+	entity 64
+	castShadows 0
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+1052 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/caulk
+	entity 64
+	castShadows 0
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+1053 // ESurfaceType::Meta V: 8 I: 12 planar
+{
+	shader textures/FPSTextures/Wall_79
+	entity 64
+	castShadows 0
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+1054 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/FPSTextures/Wall_79
 	entity 64
@@ -7448,52 +7465,20 @@ default
 	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
-1051 // ESurfaceType::Meta V: 4 I: 6 planar
+1055 // ESurfaceType::Meta V: 30 I: 66 planar
 {
 	shader textures/FPSTextures/Wall_79
 	entity 64
 	castShadows 0
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
 
-1052 // ESurfaceType::Meta V: 6 I: 12 planar
+1056 // ESurfaceType::Meta V: 30 I: 66 planar
 {
 	shader textures/FPSTextures/Wall_79
 	entity 64
 	castShadows 0
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
-}
-
-1053 // ESurfaceType::Meta V: 6 I: 12 planar
-{
-	shader textures/FPSTextures/Wall_79
-	entity 64
-	castShadows 0
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
-}
-
-1054 // ESurfaceType::Meta V: 6 I: 12 planar
-{
-	shader textures/FPSTextures/Wall_79
-	entity 64
-	castShadows 0
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
-}
-
-1055 // ESurfaceType::Meta V: 6 I: 12 planar
-{
-	shader textures/FPSTextures/Wall_79
-	entity 64
-	castShadows 0
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
-}
-
-1056 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/FPSTextures/Wall_79
-	entity 64
-	castShadows 0
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 1057 // ESurfaceType::Meta V: 4 I: 6 planar
@@ -7501,346 +7486,434 @@ default
 	shader textures/FPSTextures/Wall_79
 	entity 64
 	castShadows 0
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
-}
-
-1058 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/common/caulk
-	entity 66
-	castShadows 0
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
-}
-
-1059 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/common/caulk
-	entity 66
-	castShadows 0
 	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
 
-1060 // ESurfaceType::Meta V: 4 I: 6 planar
+1058 // ESurfaceType::Meta V: 14 I: 36 planar
 {
-	shader textures/common/caulk
-	entity 66
+	shader textures/FPSTextures/Wall_79
+	entity 64
 	castShadows 0
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
-1061 // ESurfaceType::Meta V: 4 I: 6 planar
+1059 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/common/caulk
-	entity 66
+	shader textures/FPSTextures/Wall_79
+	entity 64
 	castShadows 0
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
+1060 // ESurfaceType::Meta V: 8 I: 12 planar
+{
+	shader textures/FPSTextures/Wall_79
+	entity 64
+	castShadows 0
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+1061 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/FPSTextures/Wall_79
+	entity 64
+	castShadows 0
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
 1062 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/common/caulk
-	entity 66
+	shader textures/FPSTextures/Wall_79
+	entity 64
 	castShadows 0
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 1063 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/common/caulk
-	entity 66
+	shader textures/FPSTextures/Wall_79
+	entity 64
 	castShadows 0
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 1064 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/common/caulk
-	entity 66
+	shader textures/FPSTextures/Wall_79
+	entity 64
 	castShadows 0
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
-1065 // ESurfaceType::Meta V: 4 I: 6 planar
+1065 // ESurfaceType::Meta V: 14 I: 36 planar
 {
-	shader textures/common/caulk
-	entity 66
+	shader textures/FPSTextures/Wall_79
+	entity 64
 	castShadows 0
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
 1066 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/common/caulk
-	entity 66
-	castShadows 0
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
-}
-
-1067 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/common/caulk
-	entity 66
-	castShadows 0
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-1068 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/common/caulk
-	entity 66
+	shader textures/FPSTextures/Wall_79
+	entity 64
 	castShadows 0
 	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
-1069 // ESurfaceType::Meta V: 4 I: 6 planar
+1067 // ESurfaceType::Meta V: 6 I: 12 planar
 {
-	shader textures/common/caulk
-	entity 66
+	shader textures/FPSTextures/Wall_79
+	entity 64
+	castShadows 0
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+1068 // ESurfaceType::Meta V: 6 I: 12 planar
+{
+	shader textures/FPSTextures/Wall_79
+	entity 64
 	castShadows 0
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
-1070 // ESurfaceType::Meta V: 4 I: 6 planar
+1069 // ESurfaceType::Meta V: 6 I: 12 planar
 {
-	shader textures/lq_dev/trigger
-	entity 83
+	shader textures/FPSTextures/Wall_79
+	entity 64
 	castShadows 0
 	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+1070 // ESurfaceType::Meta V: 6 I: 12 planar
+{
+	shader textures/FPSTextures/Wall_79
+	entity 64
+	castShadows 0
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 1071 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/lq_dev/trigger
-	entity 83
+	shader textures/FPSTextures/Wall_79
+	entity 64
 	castShadows 0
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 1072 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/lq_dev/trigger
-	entity 83
+	shader textures/FPSTextures/Wall_79
+	entity 64
 	castShadows 0
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 1073 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/lq_dev/trigger
-	entity 83
+	shader textures/common/caulk
+	entity 66
 	castShadows 0
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 1074 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/lq_dev/trigger
-	entity 83
+	shader textures/common/caulk
+	entity 66
 	castShadows 0
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
 
 1075 // ESurfaceType::Meta V: 4 I: 6 planar
 {
+	shader textures/common/caulk
+	entity 66
+	castShadows 0
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+1076 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/caulk
+	entity 66
+	castShadows 0
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+1077 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/caulk
+	entity 66
+	castShadows 0
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+1078 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/caulk
+	entity 66
+	castShadows 0
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+1079 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/caulk
+	entity 66
+	castShadows 0
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+1080 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/caulk
+	entity 66
+	castShadows 0
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+1081 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/caulk
+	entity 66
+	castShadows 0
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+1082 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/caulk
+	entity 66
+	castShadows 0
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+1083 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/caulk
+	entity 66
+	castShadows 0
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+1084 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/caulk
+	entity 66
+	castShadows 0
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+1085 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_dev/trigger
+	entity 83
+	castShadows 0
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+1086 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_dev/trigger
+	entity 83
+	castShadows 0
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+1087 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_dev/trigger
+	entity 83
+	castShadows 0
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+1088 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_dev/trigger
+	entity 83
+	castShadows 0
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+1089 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_dev/trigger
+	entity 83
+	castShadows 0
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+1090 // ESurfaceType::Meta V: 4 I: 6 planar
+{
 	shader textures/lq_dev/trigger
 	entity 83
 	castShadows 0
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
-1076 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/common/trigger
-	entity 90
-	castShadows 0
-	sampleSize 0
-}
-
-1077 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/common/trigger
-	entity 90
-	castShadows 0
-	sampleSize 0
-}
-
-1078 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/common/trigger
-	entity 90
-	castShadows 0
-	sampleSize 0
-}
-
-1079 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/common/trigger
-	entity 90
-	castShadows 0
-	sampleSize 0
-}
-
-1080 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/common/trigger
-	entity 90
-	castShadows 0
-	sampleSize 0
-}
-
-1081 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/common/trigger
-	entity 90
-	castShadows 0
-	sampleSize 0
-}
-
-1082 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_props/radiowood
-	entity 102
-	castShadows 0
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
-}
-
-1083 // ESurfaceType::Meta V: 12 I: 30 planar
-{
-	shader textures/lq_props/radiowood
-	entity 102
-	castShadows 0
-	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
-}
-
-1084 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_props/radiowood
-	entity 102
-	castShadows 0
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
-}
-
-1085 // ESurfaceType::Meta V: 12 I: 30 planar
-{
-	shader textures/lq_props/radiowood
-	entity 102
-	castShadows 0
-	lightmapAxis ( 0.000000 1.000000 0.000000 )
-}
-
-1086 // ESurfaceType::Meta V: 6 I: 12 planar
-{
-	shader textures/lq_props/radiowood
-	entity 102
-	castShadows 0
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
-}
-
-1087 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_props/radiowood
-	entity 102
-	castShadows 0
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
-}
-
-1088 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_props/radiowood
-	entity 102
-	castShadows 0
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
-}
-
-1089 // ESurfaceType::Meta V: 8 I: 18 planar
-{
-	shader textures/lq_props/radiowood
-	entity 102
-	castShadows 0
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
-}
-
-1090 // ESurfaceType::Meta V: 4 I: 6 planar
-{
-	shader textures/lq_props/radiowood
-	entity 102
-	castShadows 0
-	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
-}
-
 1091 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/lq_props/radiowood
-	entity 102
+	shader textures/common/trigger
+	entity 90
 	castShadows 0
-	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+	sampleSize 0
 }
 
-1092 // ESurfaceType::Meta V: 6 I: 12 planar
+1092 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/lq_props/radiowood
-	entity 102
+	shader textures/common/trigger
+	entity 90
 	castShadows 0
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
+	sampleSize 0
 }
 
 1093 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/lq_props/radiowood
-	entity 102
+	shader textures/common/trigger
+	entity 90
 	castShadows 0
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
+	sampleSize 0
 }
 
 1094 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/lq_props/radiowood
-	entity 102
+	shader textures/common/trigger
+	entity 90
 	castShadows 0
-	lightmapAxis ( 1.000000 0.000000 0.000000 )
+	sampleSize 0
 }
 
 1095 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/lq_props/radiowood
-	entity 102
+	shader textures/common/trigger
+	entity 90
 	castShadows 0
-	lightmapAxis ( 0.000000 0.000000 1.000000 )
+	sampleSize 0
 }
 
 1096 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/common/trigger
-	entity 103
+	entity 90
 	castShadows 0
 	sampleSize 0
 }
 
 1097 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/common/trigger
-	entity 103
+	shader textures/lq_props/radiowood
+	entity 102
 	castShadows 0
-	sampleSize 0
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
-1098 // ESurfaceType::Meta V: 4 I: 6 planar
+1098 // ESurfaceType::Meta V: 12 I: 30 planar
 {
-	shader textures/common/trigger
-	entity 103
+	shader textures/lq_props/radiowood
+	entity 102
 	castShadows 0
-	sampleSize 0
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
 1099 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/common/trigger
-	entity 103
+	shader textures/lq_props/radiowood
+	entity 102
 	castShadows 0
-	sampleSize 0
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
 }
 
-1100 // ESurfaceType::Meta V: 4 I: 6 planar
+1100 // ESurfaceType::Meta V: 12 I: 30 planar
+{
+	shader textures/lq_props/radiowood
+	entity 102
+	castShadows 0
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+1101 // ESurfaceType::Meta V: 6 I: 12 planar
+{
+	shader textures/lq_props/radiowood
+	entity 102
+	castShadows 0
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+1102 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_props/radiowood
+	entity 102
+	castShadows 0
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+1103 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_props/radiowood
+	entity 102
+	castShadows 0
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+1104 // ESurfaceType::Meta V: 8 I: 18 planar
+{
+	shader textures/lq_props/radiowood
+	entity 102
+	castShadows 0
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+1105 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_props/radiowood
+	entity 102
+	castShadows 0
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+1106 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_props/radiowood
+	entity 102
+	castShadows 0
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+1107 // ESurfaceType::Meta V: 6 I: 12 planar
+{
+	shader textures/lq_props/radiowood
+	entity 102
+	castShadows 0
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+1108 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_props/radiowood
+	entity 102
+	castShadows 0
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+1109 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_props/radiowood
+	entity 102
+	castShadows 0
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+1110 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_props/radiowood
+	entity 102
+	castShadows 0
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+1111 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/common/trigger
 	entity 103
@@ -7848,10 +7921,138 @@ default
 	sampleSize 0
 }
 
-1101 // ESurfaceType::Meta V: 4 I: 6 planar
+1112 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/common/trigger
 	entity 103
+	castShadows 0
+	sampleSize 0
+}
+
+1113 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/trigger
+	entity 103
+	castShadows 0
+	sampleSize 0
+}
+
+1114 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/trigger
+	entity 103
+	castShadows 0
+	sampleSize 0
+}
+
+1115 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/trigger
+	entity 103
+	castShadows 0
+	sampleSize 0
+}
+
+1116 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/trigger
+	entity 103
+	castShadows 0
+	sampleSize 0
+}
+
+1117 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_mega_pack/door_1
+	entity 106
+	castShadows 0
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+1118 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_mega_pack/door_1
+	entity 106
+	castShadows 0
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+1119 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_mega_pack/door_1
+	entity 106
+	castShadows 0
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+1120 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_mega_pack/door_1
+	entity 106
+	castShadows 0
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+1121 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_mega_pack/door_1
+	entity 106
+	castShadows 0
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+1122 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_mega_pack/door_1
+	entity 106
+	castShadows 0
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+1123 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/trigger
+	entity 108
+	castShadows 0
+	sampleSize 0
+}
+
+1124 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/trigger
+	entity 108
+	castShadows 0
+	sampleSize 0
+}
+
+1125 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/trigger
+	entity 108
+	castShadows 0
+	sampleSize 0
+}
+
+1126 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/trigger
+	entity 108
+	castShadows 0
+	sampleSize 0
+}
+
+1127 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/trigger
+	entity 108
+	castShadows 0
+	sampleSize 0
+}
+
+1128 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/trigger
+	entity 108
 	castShadows 0
 	sampleSize 0
 }
