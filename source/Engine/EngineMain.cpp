@@ -89,7 +89,7 @@ void EngineMain::UpdateScreenSize()
         if (RmlContext)
             RmlContext->OnResize(ScreenSize.x, ScreenSize.y);
 
-        bgfx::reset(ScreenSize.x, ScreenSize.y, BGFX_RESET_NONE);
+        bgfx::reset(ScreenSize.x, ScreenSize.y, BGFX_RESET_MAXANISOTROPY);
 
         bgfx::setViewRect(0, 0, 0, ScreenSize.x, ScreenSize.y);
         bgfx::setViewRect(255, 0, 0, ScreenSize.x, ScreenSize.y);

@@ -87,7 +87,7 @@ void emscripten_render_loop()
                 int w, h;
                 SDL_GetWindowSize(window, &w, &h);
 
-                bgfx::reset(w, h, BGFX_RESET_NONE);
+                bgfx::reset(w, h, BGFX_RESET_MAXANISOTROPY);
                 bgfx::setViewRect(0, 0, 0, w, h);
                 bgfx::setViewRect(255, 0, 0, w, h);
 

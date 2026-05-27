@@ -74,7 +74,7 @@ void PlayerHud::Init(Player* playerRef)
 
     hudCanvas->AddChild(useIndicator);
 
-    hudCanvas->AddChild(std::make_shared<UiScoreIndicator>());
+    //hudCanvas->AddChild(std::make_shared<UiScoreIndicator>());
 
 }
 

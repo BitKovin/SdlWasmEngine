@@ -73,7 +73,7 @@ void desktop_render_loop() {
                 (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED ||
                     event.window.event == SDL_WINDOWEVENT_RESIZED)) {
                 SDL_GetWindowSize(window, &currentWidth, &currentHeight);
-                bgfx::reset(currentWidth, currentHeight, BGFX_RESET_NONE);
+                bgfx::reset(currentWidth, currentHeight, BGFX_RESET_MAXANISOTROPY);
                 bgfx::setViewRect(0, 0, 0, currentWidth, currentHeight);
                 bgfx::setViewRect(255, 0, 0, currentWidth, currentHeight);
             }
