@@ -48,170 +48,43 @@
 #include "os/path.h"
 #include "stream/stringstream.h"
 
-#include <cstdio>
-#include <cstring>
 #include <string>
-#include <map>
-#ifdef _WIN32
-#  define WIN32_LEAN_AND_MEAN
-#  include <windows.h>
-#else
-#  include <sys/stat.h>
-#endif
+
 
 // ---------------------------------------------------------------------------
-// Embedded texture support for GLB and other formats that store textures
-// inline in the model binary (assimp references them as "*0", "*1", etc.).
-//
-// Convention: the model's full VFS path (including extension) is treated as
-// a virtual folder, and each embedded texture becomes a file inside it:
-//
-//   models/weapons/glock.glb/texture0.png
-//   models/weapons/glock.glb/texture1.png
-//
-// To make these paths loadable in the editor, we create a real directory
-// named after the model file on disk and write the blobs into it.
-// The VFS then finds them as ordinary loose files.
-//
-// If the model is inside a pk3 (findFile returns ""), we cannot write to
-// disk — shader names are still assigned correctly so the game engine can
-// load them, but the editor will show geometry without textures.
+// AssScene — everything CopyPicoSurface needs about the loaded model
 // ---------------------------------------------------------------------------
 
-/// Maps assimp embedded-texture index → VFS-relative shader name (with ext).
-/// e.g.  0 → "models/weapons/glock.glb/texture0.png"
-typedef std::map<unsigned int, std::string> EmbeddedTexMap;
-
-/// Write a minimal 32-bit TGA from raw aiTexel (BGRA) data.
-static bool writeEmbeddedTGA( const std::string& diskPath,
-                               const aiTexel* pixels,
-                               unsigned int w, unsigned int h )
+struct AssScene
 {
-	FILE* f = fopen( diskPath.c_str(), "wb" );
-	if ( !f ) return false;
+	const aiScene* m_scene;
+	const char*    m_rootPath; // VFS directory of the model, e.g. "models/weapons/"
+	const char*    m_filePath; // full VFS path including ext, e.g. "models/weapons/glock.glb"
+	const char*    m_matName;  // forced material name (used for .mdl), or nullptr
+};
 
-	unsigned char hdr[18] = {};
-	hdr[2]  = 2;                             // uncompressed true-colour
-	hdr[12] = (unsigned char)( w        & 0xFF );
-	hdr[13] = (unsigned char)( (w >> 8) & 0xFF );
-	hdr[14] = (unsigned char)( h        & 0xFF );
-	hdr[15] = (unsigned char)( (h >> 8) & 0xFF );
-	hdr[16] = 32;                            // 32 bpp (BGRA)
-	hdr[17] = 8;                             // 8-bit alpha, lower-left origin
-	fwrite( hdr, 1, 18, f );
-	fwrite( pixels, 4, (size_t)w * h, f );   // aiTexel == BGRA == TGA native
-	fclose( f );
-	return true;
-}
 
-/// Check whether a file already exists on disk (skip re-extraction).
-static bool fileExistsOnDisk( const std::string& path )
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/// Given an assimp texture index, return the VFS path that GlbArchive serves.
+/// e.g. index=0, model="models/weapons/glock.glb" → "models/weapons/glock.glb/texture0.jpg"
+static std::string embeddedTexturePath( const aiScene* scene,
+                                         unsigned int idx,
+                                         const char* modelFilePath )
 {
-	FILE* f = fopen( path.c_str(), "rb" );
-	if ( f ) { fclose( f ); return true; }
-	return false;
-}
+	if ( idx >= scene->mNumTextures )
+		return "";
 
-/// Create a directory; silently succeeds if it already exists.
-static void mkdirSafe( const std::string& path )
-{
-#ifdef _WIN32
-	CreateDirectoryA( path.c_str(), nullptr );
-#else
-	mkdir( path.c_str(), 0755 );
-#endif
-}
+	const aiTexture* tex = scene->mTextures[idx];
+	const bool isRaw     = ( tex->mHeight > 0 );
+	const char* ext      = isRaw ? "tga"
+	                              : ( tex->achFormatHint[0] != '\0'
+	                                  ? tex->achFormatHint : "png" );
 
-/// Extract all embedded textures from *scene* to disk and return the mapping.
-/// *modelVfsPath* — VFS-relative path of the model (e.g. "models/weapons/glock.glb").
-///
-/// Disk layout produced:
-///   <vfs_root>/models/weapons/glock.glb/   ← directory named after the model
-///   <vfs_root>/models/weapons/glock.glb/texture0.png
-///   <vfs_root>/models/weapons/glock.glb/texture1.png
-///
-/// VFS shader names stored in the map (with extension, matching engine convention):
-///   0 → "models/weapons/glock.glb/texture0.png"
-///   1 → "models/weapons/glock.glb/texture1.png"
-static EmbeddedTexMap extractEmbeddedTextures( const aiScene* scene,
-                                               const char* modelVfsPath )
-{
-	EmbeddedTexMap result;
-	if ( !scene || scene->mNumTextures == 0 )
-		return result;
-
-	// Build VFS-relative "folder" path: "models/weapons/glock.glb/"
-	// (the model's full filename, including extension, acts as a directory)
-	const std::string vfsFolder = std::string( modelVfsPath ) + "/";
-
-	// Try to resolve the model to an absolute on-disk path so we can write
-	// the texture blobs next to it.  This fails for models inside pk3s.
-	const char* absModel = GlobalFileSystem().findFile( modelVfsPath );
-	const bool canWrite  = ( absModel && absModel[0] != '\0' );
-
-	if ( canWrite ) {
-		// Absolute path of the virtual folder on disk:
-		// e.g. "/home/user/game/models/weapons/glock.glb/"
-		const std::string diskFolder = std::string( absModel ) + "/";
-		mkdirSafe( std::string( absModel ) );  // create "glock.glb" directory
-
-		for ( unsigned int i = 0; i < scene->mNumTextures; ++i ) {
-			const aiTexture* tex = scene->mTextures[i];
-
-			// Choose extension: raw pixels → TGA; compressed blob → use hint.
-			const bool isRaw = ( tex->mHeight > 0 );
-			const char* ext  = isRaw ? "tga"
-			                         : ( tex->achFormatHint[0] != '\0'
-			                             ? tex->achFormatHint : "png" );
-
-			// e.g. "texture0.png"
-			const std::string texFilename = "texture" + std::to_string( i ) + "." + ext;
-			const std::string diskPath    = diskFolder + texFilename;
-
-			if ( !fileExistsOnDisk( diskPath ) ) {
-				bool ok = false;
-				if ( isRaw ) {
-					ok = writeEmbeddedTGA( diskPath,
-					                       reinterpret_cast<const aiTexel*>( tex->pcData ),
-					                       tex->mWidth, tex->mHeight );
-				}
-				else {
-					FILE* f = fopen( diskPath.c_str(), "wb" );
-					if ( f ) {
-						fwrite( tex->pcData, 1, tex->mWidth, f );
-						fclose( f );
-						ok = true;
-					}
-				}
-
-				if ( ok )
-					globalOutputStream() << "assmodel: extracted " << diskPath.c_str() << '\n';
-				else
-					globalWarningStream() << "assmodel: failed to write " << diskPath.c_str() << '\n';
-			}
-
-			// VFS shader name: "models/weapons/glock.glb/texture0.png"
-			result[i] = vfsFolder + texFilename;
-		}
-	}
-	else {
-		// Model is in a pk3 — can't write to disk, but still populate the map
-		// so the engine receives the correct shader names.
-		globalWarningStream()
-		    << "assmodel: '" << modelVfsPath
-		    << "' is not a loose file; embedded textures named but not extracted.\n";
-
-		for ( unsigned int i = 0; i < scene->mNumTextures; ++i ) {
-			const aiTexture* tex = scene->mTextures[i];
-			const bool isRaw = ( tex->mHeight > 0 );
-			const char* ext  = isRaw ? "tga"
-			                         : ( tex->achFormatHint[0] != '\0'
-			                             ? tex->achFormatHint : "png" );
-			result[i] = vfsFolder + "texture" + std::to_string( i ) + "." + ext;
-		}
-	}
-
-	return result;
+	// "models/weapons/glock.glb/texture0.jpg"
+	return std::string( modelFilePath ) + "/texture" + std::to_string( idx ) + "." + ext;
 }
 
 
@@ -240,13 +113,6 @@ public:
 	}
 };
 
-struct AssScene
-{
-	const aiScene* m_scene;
-	const char* m_rootPath;
-	const char* m_matName;  // forced global mat name if not null (e.g. for .mdl)
-	EmbeddedTexMap m_embeddedTextures; // index → "models/weapons/glock.glb/texture0.png"
-};
 
 class PicoSurface final :
 	public OpenGLRenderable
@@ -264,7 +130,7 @@ public:
 		constructNull();
 		CaptureShader();
 	}
-	PicoSurface( const AssScene scene, const aiMesh* mesh ){
+	PicoSurface( const AssScene& scene, const aiMesh* mesh ){
 		CopyPicoSurface( scene, mesh );
 		CaptureShader();
 	}
@@ -289,7 +155,7 @@ public:
 
 #if defined( _DEBUG ) && !defined( _DEBUG_QUICKER )
 		GLfloat modelview[16];
-		gl().glGetFloatv( GL_MODELVIEW_MATRIX, modelview ); // I know this is slow as hell, but hey - we're in _DEBUG
+		gl().glGetFloatv( GL_MODELVIEW_MATRIX, modelview );
 		Matrix4 modelview_inv(
 		    modelview[0], modelview[1], modelview[2], modelview[3],
 		    modelview[4], modelview[5], modelview[6], modelview[7],
@@ -303,7 +169,7 @@ public:
 		for ( Array<ArbitraryMeshVertex>::const_iterator i = m_vertices.begin(); i != m_vertices.end(); ++i )
 		{
 			Vector3 normal = normal3f_to_vector3( ( *i ).normal );
-			normal = matrix4_transformed_direction( modelview_inv, vector3_normalised( matrix4_transformed_direction( modelview_inv_transposed, normal ) ) ); // do some magic
+			normal = matrix4_transformed_direction( modelview_inv, vector3_normalised( matrix4_transformed_direction( modelview_inv_transposed, normal ) ) );
 			Vector3 normalTransformed = vector3_added( vertex3f_to_vector3( ( *i ).vertex ), vector3_scaled( normal, 8 ) );
 			gl().glVertex3fv( vertex3f_to_array( ( *i ).vertex ) );
 			gl().glVertex3fv( vector3_to_array( normalTransformed ) );
@@ -360,7 +226,6 @@ private:
 		for ( std::size_t i = 0; i < m_vertices.size(); ++i )
 			aabb_extend_by_point_safe( m_aabb_local, reinterpret_cast<const Vector3&>( m_vertices[i].vertex ) );
 
-
 		for ( Array<RenderIndex>::iterator i = m_indices.begin(); i != m_indices.end(); i += 3 )
 		{
 			ArbitraryMeshVertex& a = m_vertices[*( i + 0 )];
@@ -385,78 +250,79 @@ private:
 		);
 	}
 
-	void CopyPicoSurface( const AssScene scene, const aiMesh* mesh ){
-		if( scene.m_matName != nullptr ){
+	void CopyPicoSurface( const AssScene& scene, const aiMesh* mesh ){
+		if ( scene.m_matName != nullptr ) {
 			m_shader = scene.m_matName;
 		}
-		else{
-			aiMaterial *material = scene.m_scene->mMaterials[mesh->mMaterialIndex];
+		else {
+			aiMaterial* material = scene.m_scene->mMaterials[mesh->mMaterialIndex];
 
 			aiString matname = material->GetName();
 #ifdef _DEBUG
-						globalOutputStream() << "matname: " << matname.C_Str() << '\n';
+			globalOutputStream() << "matname: " << matname.C_Str() << '\n';
 #endif
-			if( aiString texname;
-			    aiReturn_SUCCESS == material->Get( AI_MATKEY_TEXTURE_DIFFUSE( 0 ), texname )
-			 && texname.length != 0
-			 && !string_equal_prefix_nocase( matname.C_Str(), "textures/" ) /* matname looks intentionally named as ingame shader */
-			 && !string_equal_prefix_nocase( matname.C_Str(), "textures\\" )
-			 && !string_equal_prefix_nocase( matname.C_Str(), "models/" )
-			 && !string_equal_prefix_nocase( matname.C_Str(), "models\\" ) ){
+			if ( aiString texname;
+			     aiReturn_SUCCESS == material->Get( AI_MATKEY_TEXTURE_DIFFUSE( 0 ), texname )
+			  && texname.length != 0
+			  && !string_equal_prefix_nocase( matname.C_Str(), "textures/" )
+			  && !string_equal_prefix_nocase( matname.C_Str(), "textures\\" )
+			  && !string_equal_prefix_nocase( matname.C_Str(), "models/" )
+			  && !string_equal_prefix_nocase( matname.C_Str(), "models\\" ) ) {
 #ifdef _DEBUG
-								globalOutputStream() << "texname: " << texname.C_Str() << '\n';
+				globalOutputStream() << "texname: " << texname.C_Str() << '\n';
 #endif
 				// ------------------------------------------------------------------
-				// Embedded texture: assimp encodes the index as "*N" (e.g. "*0").
-				// Resolve it via the pre-built map that was populated in loadPicoModel.
+				// Embedded texture: assimp uses "*N" (e.g. "*0") to reference
+				// scene->mTextures[N].  GlbArchive mounts these as VFS files:
+				//   "models/weapons/glock.glb/texture0.jpg"
+				// We just build that path here — no extraction to disk needed.
 				// ------------------------------------------------------------------
 				if ( texname.data[0] == '*' ) {
 					char* endptr = nullptr;
 					const int idx = (int)strtol( texname.data + 1, &endptr, 10 );
 					if ( endptr && endptr != texname.data + 1 && idx >= 0 ) {
-						const auto it = scene.m_embeddedTextures.find( (unsigned int)idx );
-						if ( it != scene.m_embeddedTextures.end() ) {
-							m_shader = it->second.c_str();
-							globalOutputStream() << "assmodel: embedded texture *" << idx
+						std::string vfsPath = embeddedTexturePath(
+						    scene.m_scene, (unsigned int)idx, scene.m_filePath );
+						if ( !vfsPath.empty() ) {
+							m_shader = vfsPath.c_str();
+#ifdef _DEBUG
+							globalOutputStream() << "assmodel: embedded *" << idx
 							                     << " -> shader '" << m_shader.c_str() << "'\n";
-							// Shader name is already a clean VFS-relative path — skip
-							// the path-fixup block below by jumping to vertex copy.
+#endif
 							goto copy_vertices;
 						}
 					}
-					// Embedded texture referenced but not in map (e.g. model in pk3).
-					// Fall through to use material name as best-effort fallback.
+					// Fallback: use material name if index parse failed
 					m_shader = StringStream<64>( PathCleaned( PathExtensionless( matname.C_Str() ) ) );
 				}
 				else {
 					m_shader = StringStream<64>( PathCleaned( PathExtensionless( texname.C_Str() ) ) );
 				}
-
 			}
-			else{
+			else {
 				m_shader = StringStream<64>( PathCleaned( PathExtensionless( matname.C_Str() ) ) );
 			}
 
 			{
 				const CopiedString oldShader( m_shader );
-				if( strchr( m_shader.c_str(), '/' ) == nullptr ){ /* texture is likely in the folder, where model is */
+				if ( strchr( m_shader.c_str(), '/' ) == nullptr ) {
 					m_shader = StringStream<64>( scene.m_rootPath, m_shader );
 				}
-				else{
-					const char *name = m_shader.c_str();
-					if( name[0] == '/' || ( name[0] != '\0' && name[1] == ':' ) || strstr( name, ".." ) ){ /* absolute path or with .. */
+				else {
+					const char* name = m_shader.c_str();
+					if ( name[0] == '/' || ( name[0] != '\0' && name[1] == ':' ) || strstr( name, ".." ) ) {
 						const char* p;
-						if( ( p = string_in_string_nocase( name, "/models/" ) )
-						 || ( p = string_in_string_nocase( name, "/textures/" ) ) ){
+						if ( ( p = string_in_string_nocase( name, "/models/" ) )
+						  || ( p = string_in_string_nocase( name, "/textures/" ) ) ) {
 							m_shader = p + 1;
 						}
-						else{
+						else {
 							m_shader = StringStream<64>( scene.m_rootPath, path_get_filename_start( name ) );
 						}
 					}
 				}
 
-				if( oldShader != m_shader )
+				if ( oldShader != m_shader )
 					globalOutputStream() << "substituting: " << oldShader << " -> " << m_shader << '\n';
 			}
 		}
@@ -469,30 +335,18 @@ private:
 		{
 			m_vertices[i].vertex = { mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z };
 
-			if( mesh->HasNormals() )
+			if ( mesh->HasNormals() )
 				m_vertices[i].normal = { mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z };
 
-			if( mesh->HasTextureCoords( 0 ) )
+			if ( mesh->HasTextureCoords( 0 ) )
 				m_vertices[i].texcoord = { mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y };
-#if 0
-			if( mesh->HasTangentsAndBitangents() ){
-				m_vertices[i].tangent = { mesh->mTangents[i].x, mesh->mTangents[i].y, mesh->mTangents[i].z };
-				m_vertices[i].bitangent = { mesh->mBitangents[i].x, mesh->mBitangents[i].y, mesh->mBitangents[i].z };
-			}
-#endif
-#if 0
-			picoVec_t* color = PicoGetSurfaceColor( surface, 0, int( i ) );
-			m_vertices[i].colour = Colour4b( color[0], color[1], color[2], color[3] );
-#endif
 		}
 
 		size_t idCopied = 0;
-		for ( size_t t = 0; t < mesh->mNumFaces; ++t ){
+		for ( size_t t = 0; t < mesh->mNumFaces; ++t ) {
 			const aiFace& face = mesh->mFaces[t];
-			// if( face.mNumIndices == 3 )
-			for ( size_t i = 0; i < 3; i++ ){
+			for ( size_t i = 0; i < 3; i++ )
 				m_indices[idCopied++] = face.mIndices[i];
-			}
 		}
 
 		UpdateAABB();
@@ -546,7 +400,6 @@ private:
 			20, 21, 22, 20, 22, 23,
 		};
 
-
 		Array<RenderIndex>::iterator j = m_indices.begin();
 		for ( RenderIndex* i = indices; i != indices + ( sizeof( indices ) / sizeof( RenderIndex ) ); ++i )
 		{
@@ -575,7 +428,7 @@ public:
 	PicoModel(){
 		constructNull();
 	}
-	PicoModel( const AssScene scene ){
+	PicoModel( const AssScene& scene ){
 		m_aabb_local = AABB();
 		CopyPicoModel( scene, scene.m_scene->mRootNode );
 	}
@@ -623,20 +476,18 @@ public:
 	}
 
 private:
-	void CopyPicoModel( const AssScene scene, const aiNode* node ){
-		for( size_t n = 0; n < node->mNumMeshes; ++n ){
-			const aiMesh *mesh = scene.m_scene->mMeshes[node->mMeshes[n]];
-			if( mesh->mPrimitiveTypes & aiPrimitiveType_TRIANGLE ){
+	void CopyPicoModel( const AssScene& scene, const aiNode* node ){
+		for ( size_t n = 0; n < node->mNumMeshes; ++n ) {
+			const aiMesh* mesh = scene.m_scene->mMeshes[node->mMeshes[n]];
+			if ( mesh->mPrimitiveTypes & aiPrimitiveType_TRIANGLE ) {
 				PicoSurface* picosurface = new PicoSurface( scene, mesh );
 				aabb_extend_by_aabb_safe( m_aabb_local, picosurface->localAABB() );
 				m_surfaces.push_back( picosurface );
 			}
 		}
 
-		// traverse all children
-		for ( size_t n = 0; n < node->mNumChildren; ++n ){
+		for ( size_t n = 0; n < node->mNumChildren; ++n )
 			CopyPicoModel( scene, node->mChildren[n] );
-		}
 	}
 	void constructNull(){
 		PicoSurface* picosurface = new PicoSurface();
@@ -742,8 +593,8 @@ public:
 		constructRemaps();
 	}
 
-	PicoModelInstance( const PicoModelInstance& ) = delete; // not copyable
-	PicoModelInstance operator=( const PicoModelInstance& ) = delete; // not assignable
+	PicoModelInstance( const PicoModelInstance& ) = delete;
+	PicoModelInstance operator=( const PicoModelInstance& ) = delete;
 
 	PicoModelInstance( const scene::Path& path, scene::Instance* parent, PicoModel& picomodel ) :
 		Instance( path, parent, this, StaticTypeCasts::instance().get() ),
@@ -780,7 +631,6 @@ public:
 
 	void renderSolid( Renderer& renderer, const VolumeTest& volume ) const {
 		m_lightList->evaluateLights();
-
 		render( renderer, volume, Instance::localToWorld() );
 	}
 	void renderWireframe( Renderer& renderer, const VolumeTest& volume ) const {
@@ -834,7 +684,7 @@ public:
 
 	PicoModelNode() : m_node( this, this, StaticTypeCasts::instance().get() ){
 	}
-	PicoModelNode( const AssScene scene ) : m_node( this, this, StaticTypeCasts::instance().get() ), m_picomodel( scene ){
+	PicoModelNode( const AssScene& scene ) : m_node( this, this, StaticTypeCasts::instance().get() ), m_picomodel( scene ){
 	}
 
 	void release(){
@@ -861,8 +711,7 @@ public:
 
 
 scene::Node& loadPicoModel( Assimp::Importer& importer, ArchiveFile& file ){
-	unsigned flags = //aiProcessPreset_TargetRealtime_Fast
-	            //    | aiProcess_FixInfacingNormals
+	unsigned flags =
 	                 aiProcess_GenNormals
 	               | aiProcess_JoinIdenticalVertices
 	               | aiProcess_Triangulate
@@ -874,32 +723,30 @@ scene::Node& loadPicoModel( Assimp::Importer& importer, ArchiveFile& file ){
 	               | aiProcess_FlipUVs
 	               | aiProcess_FlipWindingOrder
 	               | aiProcess_PreTransformVertices;
-	// rotate the whole scene 90 degrees around the x axis to convert assimp's Y = UP to Quakes's Z = UP
-	importer.SetPropertyMatrix( AI_CONFIG_PP_PTV_ROOT_TRANSFORMATION, aiMatrix4x4( 1, 0, 0, 0,
-	                                                                               0, 0, -1, 0,
-	                                                                               0, 1, 0, 0,
-	                                                                               0, 0, 0, 1 ) ); // aiMatrix4x4::RotationX( c_half_pi )
 
-	const aiScene *scene = importer.ReadFile( file.getName(), flags );
+	importer.SetPropertyMatrix( AI_CONFIG_PP_PTV_ROOT_TRANSFORMATION,
+	    aiMatrix4x4( 1, 0, 0, 0,
+	                 0, 0, -1, 0,
+	                 0, 1, 0, 0,
+	                 0, 0, 0, 1 ) );
 
-	if( scene != nullptr ){
-		if( scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE )
+	const aiScene* scene = importer.ReadFile( file.getName(), flags );
+
+	if ( scene != nullptr ) {
+		if ( scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE )
 			globalWarningStream() << "AI_SCENE_FLAGS_INCOMPLETE\n";
-
-		// Extract embedded textures (GLB etc.) to disk so the shader system
-		// can find them via the normal VFS lookup.
-		EmbeddedTexMap embTex = extractEmbeddedTextures( scene, file.getName() );
 
 		const auto rootPath = StringStream<64>( PathFilenameless( file.getName() ) );
 		const auto matName  = StringStream<64>( PathExtensionless( file.getName() ) );
+
 		return ( new PicoModelNode( AssScene{
 		    scene,
 		    rootPath,
-		    path_extension_is( file.getName(), "mdl" ) ? matName.c_str() : nullptr,
-		    std::move( embTex )
+		    file.getName(),
+		    path_extension_is( file.getName(), "mdl" ) ? matName.c_str() : nullptr
 		} ) )->node();
 	}
-	else{
+	else {
 		return ( new PicoModelNode() )->node();
 	}
 }

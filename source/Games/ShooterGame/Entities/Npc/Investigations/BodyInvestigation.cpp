@@ -10,7 +10,7 @@ void BodyInvestigation::Finish()
 {
 	// Guards always react to a found body.
 	// Civilians only react when there is no guard to report to.
-	if (owner->isGuard || !owner->found_guard)
+	if (owner->npcType == NpcType::Guard || !owner->found_guard)
 		InvestigateCauserBody();
 
 	AlertedInvestigationBase::Finish();

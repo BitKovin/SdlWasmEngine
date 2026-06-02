@@ -566,7 +566,7 @@ void NpcBase::AsyncUpdate()
 	vec3 curMove = MathHelper::XZ(controller->GetVelocity());
 
 	bool lockAtTarget =
-		((target_attack && target_sees && target_attackInRange && isGuard)
+		((target_attack && target_sees && target_attackInRange && npcType == NpcType::Guard)
 			|| (target_follow && target_sees && length(curMove) < 1))
 		&& DoingTask == false;
 
@@ -914,7 +914,7 @@ void NpcBase::UpdateBT()
 
 	behaviorTree.GetBlackboard().SetValue("stunned", isStunned());
 
-	behaviorTree.GetBlackboard().SetValue("isGuard", isGuard);
+	behaviorTree.GetBlackboard().SetValue("isGuard", npcType == NpcType::Guard);
 
 	behaviorTree.GetBlackboard().SetValue("target_follow", target_follow);
 	behaviorTree.GetBlackboard().SetValue("target_id", target_id);
@@ -965,7 +965,7 @@ void NpcBase::UpdateObserver()
 
 	if (!observer) return;
 	std::unique_lock lock(targetsMutex);
-	observer->searchForTriggeredNpc = !target_follow && !target_attack && isGuard;
+	observer->searchForTriggeredNpc = !target_follow && !target_attack && npcType == NpcType::Guard;
 
 	if (distance(Camera::finalizedPosition, Position) < 40)
 	{
@@ -1441,7 +1441,7 @@ void NpcBase::UpdateObservationTarget()
 
 	else
 	{
-		if (isGuard)
+		if (npcType == NpcType::Guard)
 		{
 			observationTarget->tags = { "guard" };
 		}
@@ -1459,7 +1459,7 @@ void NpcBase::UpdateObservationTarget()
 		}
 		else
 		{
-			if (isGuard)
+			if (npcType == NpcType::Guard)
 			{
 				observationTarget->tags.emplace("guard_safe");
 			}
@@ -1500,7 +1500,7 @@ void NpcBase::UpdateTargetFollow()
 
 	speed = ((target_follow) || (currentInvestigation && currentInvestigation->Alerted())) ? 5 : 2;
 
-	if (isGuard && target_sees && target_attackInRange && target_attack)
+	if (npcType == NpcType::Guard && target_sees && target_attackInRange && target_attack)
 	{
 		speed = 2;
 	}
@@ -1518,7 +1518,7 @@ void NpcBase::UpdateTargetFollow()
 
 		if (observer->id % 7 == EngineMain::MainInstance->frame % 7)
 		{
-			auto observers = AiPerceptionSystem::GetObserversInRadius(observer->position, isGuard ? 13 : 6);
+			auto observers = AiPerceptionSystem::GetObserversInRadius(observer->position, npcType == NpcType::Guard ? 13 : 6);
 
 			for (auto ob : observers)
 			{
@@ -2050,7 +2050,7 @@ void NpcBase::UpdateAnimations(bool forceFullUpdate)
 	//if (dead) return;
 
 
-	if (isGuard)
+	if (npcType == NpcType::Guard)
 	{
 		animator->weapon_holds = target_underArrest;
 		animator->weapon_ready = target_follow && target_underArrest;
@@ -2258,7 +2258,7 @@ bool NpcBase::TryCommitCrime(Crime crime, std::string offender, vec3 pos)
 
 	if (crime >= info.currentCrime) return false;
 
-	if (isGuard == false)
+	if (npcType == NpcType::Guard == false)
 	{
 		if (crime < Crime::Group_Arrest)
 		{
@@ -2288,14 +2288,14 @@ bool NpcBase::TryCommitCrime(Crime crime, std::string offender, vec3 pos)
 		info.underArrest = true;
 		info.follow = true;
 
-		if (isGuard == false)
+		if (npcType == NpcType::Guard == false)
 		{
 			report_to_guard = true;
 		}
 
 	}
 
-	if (crime < Crime::Group_Follow && isGuard)
+	if (crime < Crime::Group_Follow && npcType == NpcType::Guard)
 	{
 
 		if (crime == Crime::Trespassing)
@@ -3044,7 +3044,7 @@ void NpcBase::UpdateDebugUI()
 void NpcBase::FindClosestGuard()
 {
 
-	if (isGuard) return;
+	if (npcType == NpcType::Guard) return;
 
 	if (findGuardCooldown.Wait()) return;
 
@@ -3136,7 +3136,7 @@ void NpcBase::TryStartInvestigation(InvestigationReason reason, vec3 target, str
 		return;
 	}
 
-	if (isGuard == false && reason == InvestigationReason::NpcInTrouble) return;
+	if (npcType == NpcType::Guard == false && reason == InvestigationReason::NpcInTrouble) return;
 
 	if (currentInvestigation && reason > currentInvestigation->reason)
 	{

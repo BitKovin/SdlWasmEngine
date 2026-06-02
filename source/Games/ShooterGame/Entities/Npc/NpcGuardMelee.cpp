@@ -534,7 +534,8 @@ public:
 
 	NpcGuardMelee()
 	{
-		isGuard = true;
+		npcType = NpcType::Guard;
+
 		modelPath = "GameData/models/npc/guard.glb";
 		hostileTags.insert("bandit");
 

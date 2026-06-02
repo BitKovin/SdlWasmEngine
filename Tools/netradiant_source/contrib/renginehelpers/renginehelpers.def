@@ -1,0 +1,6 @@
+; renginehelpers.def
+
+LIBRARY      "renginehelpers"
+
+EXPORTS
+	Radiant_RegisterModules @1

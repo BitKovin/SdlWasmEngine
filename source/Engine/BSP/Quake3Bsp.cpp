@@ -583,9 +583,229 @@ void CQuake3BSP::FillExtraLightmapUVs()
     }
 }
 
+// ── Bezier helpers (file-scope) ───────────────────────────────────────────
+
+static void BezierBasis(float t, float b[3])
+{
+    const float inv = 1.0f - t;
+    b[0] = inv * inv;
+    b[1] = 2.0f * t * inv;
+    b[2] = t * t;
+}
+
+// Evaluates one point on a biquadratic Bezier patch.
+//
+//  cp   – row-major 3×3 base vertices  (row=j/t-axis, col=i/s-axis → cp[j*3+i])
+//  rcp  – row-major 3×3 RBSP vertices, or nullptr if not an RBSP map
+//  s, t – surface parameters in [0, 1]
+static VertexData EvalBezierVertex(const tBSPVertex      cp[9],
+    const tBSPVertexRBSP* rcp,
+    float s, float t)
+{
+    // Two-pass biquadratic as id Software implements it in tr_curve.c.
+    // The outer pass (t) sweeps along rows of the control grid;
+    // the inner pass (s) sweeps along the interpolated column result.
+    // These are NOT interchangeable — swapping them produces warped UVs.
+
+    // ── Helper: linearly blend two BSP vertices ───────────────────────────
+    auto lerpVert = [](const tBSPVertex& a, const tBSPVertex& b, float f)
+        -> tBSPVertex
+        {
+            tBSPVertex r;
+            r.vPosition = glm::mix(a.vPosition, b.vPosition, f);
+            r.vNormal = glm::mix(a.vNormal, b.vNormal, f);
+            r.vTextureCoord = glm::mix(a.vTextureCoord, b.vTextureCoord, f);
+            r.vLightmapCoord = glm::mix(a.vLightmapCoord, b.vLightmapCoord, f);
+            for (int c = 0; c < 4; c++)
+                r.color[c] = static_cast<unsigned char>(
+                    glm::mix((float)a.color[c], (float)b.color[c], f));
+            return r;
+        };
+    auto lerpRBSP = [](const tBSPVertexRBSP& a, const tBSPVertexRBSP& b, float f)
+        -> tBSPVertexRBSP
+        {
+            tBSPVertexRBSP r;
+            for (int k = 0; k < 4; k++)
+                r.vLightmapCoord[k] = glm::mix(a.vLightmapCoord[k],
+                    b.vLightmapCoord[k], f);
+            return r;
+        };
+
+    // ── Pass 1: evaluate each control row at parameter t ──────────────────
+    // cp layout: cp[row*3 + col], row=0..2, col=0..2
+    // For each row, evaluate the 1D quadratic Bezier along t.
+    // This produces 3 intermediate points (one per control row).
+    tBSPVertex    mid[3];
+    tBSPVertexRBSP midR[3];
+
+    for (int row = 0; row < 3; row++) {
+        const tBSPVertex& c0 = cp[row * 3 + 0];
+        const tBSPVertex& c1 = cp[row * 3 + 1];
+        const tBSPVertex& c2 = cp[row * 3 + 2];
+
+        // Quadratic de Casteljau at t:  lerp(lerp(c0,c1,t), lerp(c1,c2,t), t)
+        tBSPVertex a = lerpVert(c0, c1, t);
+        tBSPVertex b = lerpVert(c1, c2, t);
+        mid[row] = lerpVert(a, b, t);
+
+        if (rcp) {
+            const tBSPVertexRBSP& r0 = rcp[row * 3 + 0];
+            const tBSPVertexRBSP& r1 = rcp[row * 3 + 1];
+            const tBSPVertexRBSP& r2 = rcp[row * 3 + 2];
+            tBSPVertexRBSP ra = lerpRBSP(r0, r1, t);
+            tBSPVertexRBSP rb = lerpRBSP(r1, r2, t);
+            midR[row] = lerpRBSP(ra, rb, t);
+        }
+    }
+
+    // ── Pass 2: evaluate the 3 intermediate points at parameter s ─────────
+    tBSPVertex a = lerpVert(mid[0], mid[1], s);
+    tBSPVertex b = lerpVert(mid[1], mid[2], s);
+    tBSPVertex final = lerpVert(a, b, s);
+
+    VertexData vd{};
+    vd.Position = final.vPosition;
+    vd.Normal = glm::length(final.vNormal) > 1e-6f
+        ? glm::normalize(final.vNormal)
+        : glm::vec3(0.f, 0.f, 1.f);
+    vd.TextureCoordinate = final.vTextureCoord;
+    vd.ShadowMapCoords = final.vLightmapCoord;
+    vd.Color = glm::vec4(final.color[0] / 255.f, final.color[1] / 255.f,
+        final.color[2] / 255.f, final.color[3] / 255.f);
+
+    if (rcp) {
+        tBSPVertexRBSP ra = lerpRBSP(midR[0], midR[1], s);
+        tBSPVertexRBSP rb = lerpRBSP(midR[1], midR[2], s);
+        tBSPVertexRBSP rf;
+        for (int k = 0; k < 4; k++)
+            rf.vLightmapCoord[k] = glm::mix(ra.vLightmapCoord[k],
+                rb.vLightmapCoord[k], s);
+
+        vd.Tangent = glm::vec3(rf.vLightmapCoord[1], 0.f);
+        vd.BiTangent = glm::vec3(rf.vLightmapCoord[2], 0.f);
+        vd.TextureCoordinate2 = rf.vLightmapCoord[3];
+    }
+    return vd;
+}
+
+// ── Type-2: Bezier patch ──────────────────────────────────────────────────
+//
+//  Writes both Rbuffers.v_faceVBOs and Rbuffers.v_faceIDXs for this face,
+//  so CreateIndices() must be a no-op when called afterward.
+//
+//  All uvSets slots are populated here because FillExtraLightmapUVs()
+//  maps 1-to-1 onto raw BSP vertex indices and cannot run post-tessellation.
+void CQuake3BSP::CreateVBO_Patch(int index)
+{
+    tBSPFace* pFace = &m_pFaces[index];
+    auto& vertices = Rbuffers.v_faceVBOs[index];
+    auto& indices = Rbuffers.v_faceIDXs[index];
+    auto& uvSets = Rbuffers.v_faceLightmapUVs[index];
+    for (auto& uv : uvSets) uv.clear();
+
+    const int gridW = pFace->size[0];
+    const int gridH = pFace->size[1];
+
+    // Sanity-check: grid dimensions must be odd and ≥ 3
+    if (gridW < 3 || gridH < 3 || (gridW & 1) == 0 || (gridH & 1) == 0) {
+        faceBounds.push_back(BoundingBox{});
+        return;
+    }
+
+    const int patchesX = (gridW - 1) / 2;
+    const int patchesY = (gridH - 1) / 2;
+    const int L = std::max(1, kBezierTessLevel);
+    const int stride = L + 1;   // vertex columns per tessellated row
+
+    for (int py = 0; py < patchesY; py++) {
+        for (int px = 0; px < patchesX; px++) {
+            // ── Collect 3×3 control points (row-major, j=row, i=col) ──────
+            tBSPVertex     cpBase[9];
+            tBSPVertexRBSP cpRBSP[9];
+
+            for (int cy = 0; cy < 3; cy++) {
+                for (int cx = 0; cx < 3; cx++) {
+                    const int src = pFace->startVertIndex
+                        + (py * 2 + cy) * gridW
+                        + (px * 2 + cx);
+                    cpBase[cy * 3 + cx] = m_pVerts[src];
+                    if (m_pVertsRBSP)
+                        cpRBSP[cy * 3 + cx] = m_pVertsRBSP[src];
+                }
+            }
+
+            const tBSPVertexRBSP* rbspPtr = m_pVertsRBSP ? cpRBSP : nullptr;
+            const uint32_t base = static_cast<uint32_t>(vertices.size());
+
+            // ── Tessellated vertex grid: (L+1) × (L+1) points ────────────
+            for (int j = 0; j <= L; j++) {
+                const float t = static_cast<float>(j) / static_cast<float>(L);
+                for (int i = 0; i <= L; i++) {
+                    const float s = static_cast<float>(i) / static_cast<float>(L);
+                    VertexData vd = EvalBezierVertex(cpBase, rbspPtr, s, t);
+                    vertices.push_back(vd);
+
+                    uvSets[0].push_back(vd.ShadowMapCoords);
+                    if (rbspPtr) {
+                        uvSets[1].push_back(glm::vec2(vd.Tangent));
+                        uvSets[2].push_back(glm::vec2(vd.BiTangent));
+                        uvSets[3].push_back(vd.TextureCoordinate2);
+                    }
+                }
+            }
+
+            // ── Indices: two triangles per quad, CCW → CW (swap i1/i2) ───
+            //
+            //  Grid layout (j = row, i = col):
+            //    v00 ── v10
+            //     │  ╲   │
+            //    v01 ── v11
+            //
+            //  CCW pair → flip last two indices → CW pair
+            for (int j = 0; j < L; j++) {
+                for (int i = 0; i < L; i++) {
+                    const uint32_t v00 = base + static_cast<uint32_t>(j * stride + i);
+                    const uint32_t v10 = base + static_cast<uint32_t>(j * stride + i + 1);
+                    const uint32_t v01 = base + static_cast<uint32_t>((j + 1) * stride + i);
+                    const uint32_t v11 = base + static_cast<uint32_t>((j + 1) * stride + i + 1);
+
+                    indices.push_back(v00); indices.push_back(v11); indices.push_back(v10);
+                    indices.push_back(v00); indices.push_back(v01); indices.push_back(v11);
+                }
+            }
+        }
+    }
+
+    auto bounds = BoundingBox::FromVertices(vertices);
+    bounds.Min -= vec3(0.1f);
+    bounds.Max += vec3(0.1f);
+    faceBounds.push_back(bounds);
+}
+
+// ── CreateVBO ─────────────────────────────────────────────────────────────
+
 void CQuake3BSP::CreateVBO(int index)
 {
     tBSPFace* pFace = &m_pFaces[index];
+
+    if (pFace->type == 2) {
+        // Patch: vertices, indices, UV sets, and bounds all handled here
+        CreateVBO_Patch(index);
+        return;
+    }
+    if (pFace->type == 4) {
+        // Billboard: no renderable geometry; push sentinel bounds to keep
+        // faceBounds index-aligned with m_pFaces
+        const glm::vec3 p = m_pVerts[pFace->startVertIndex].vPosition;
+        BoundingBox bb;
+        bb.Min = p - glm::vec3(1.f);
+        bb.Max = p + glm::vec3(1.f);
+        faceBounds.push_back(bb);
+        return;
+    }
+    // Types 1 (polygon) and 3 (mesh) both use vertex[] + meshvert[] indices
+    // and are handled identically below.
+
     auto& vertices = Rbuffers.v_faceVBOs[index];
     auto& uvSets = Rbuffers.v_faceLightmapUVs[index];
     for (auto& uv : uvSets) uv.clear();
@@ -605,7 +825,6 @@ void CQuake3BSP::CreateVBO(int index)
             bspVert.color[2] / 255.0f,
             bspVert.color[3] / 255.0f);
 
-        // Pack lightmap UVs for slots 1-3 into unused attributes
         if (m_pVertsRBSP) {
             const tBSPVertexRBSP& rv = m_pVertsRBSP[pFace->startVertIndex + v];
             vd.Tangent = glm::vec3(rv.vLightmapCoord[1], 0.0f); // slot 1
@@ -614,11 +833,8 @@ void CQuake3BSP::CreateVBO(int index)
         }
 
         vertices.push_back(vd);
-
-        // Always record slot 0 in the explicit UV array for uniform access.
         uvSets[0].push_back(bspVert.vLightmapCoord);
-        // Slots 1-3 are filled by FillExtraLightmapUVs() after all verts are loaded,
-        // because we need the raw tBSPVertexRBSP data which is held separately.
+        // Slots 1-3 filled by FillExtraLightmapUVs() (not applicable to patches)
     }
 
     auto bounds = BoundingBox::FromVertices(vertices);
@@ -627,9 +843,17 @@ void CQuake3BSP::CreateVBO(int index)
     faceBounds.push_back(bounds);
 }
 
+// ── CreateIndices ─────────────────────────────────────────────────────────
+
 void CQuake3BSP::CreateIndices(int index)
 {
     tBSPFace* pFace = &m_pFaces[index];
+
+    // Patch indices are already written by CreateVBO_Patch;
+    // billboards have no geometry.
+    if (pFace->type == 2 || pFace->type == 4) return;
+
+    // Types 1 and 3: meshverts are offsets from startVertIndex
     int  start = pFace->startIndex;
     int  count = pFace->numOfIndices;
     auto& out = Rbuffers.v_faceIDXs[index];
@@ -647,19 +871,22 @@ void CQuake3BSP::CreateIndices(int index)
     }
 }
 
+// ── CreateRenderBuffers ───────────────────────────────────────────────────
+
 void CQuake3BSP::CreateRenderBuffers(int index)
 {
     const auto& vertices = Rbuffers.v_faceVBOs[index];
     const auto& indices = Rbuffers.v_faceIDXs[index];
 
+    // Billboards and degenerate faces produce no geometry
+    if (vertices.empty() || indices.empty()) return;
+
     auto& fb = FB_array.FB_Idx[index];
 
-    // ── Vertex buffer ────────────────────────────────────────────────────────
     const bgfx::Memory* vMem = bgfx::copy(
         vertices.data(), static_cast<uint32_t>(vertices.size() * sizeof(VertexData)));
     fb.VBO = bgfx::createVertexBuffer(vMem, VertexData::Declaration());
 
-    // ── Index buffer (uint32) ────────────────────────────────────────────────
     const bgfx::Memory* iMem = bgfx::copy(
         indices.data(), static_cast<uint32_t>(indices.size() * sizeof(uint32_t)));
     fb.EBO = bgfx::createIndexBuffer(iMem, BGFX_BUFFER_INDEX32);

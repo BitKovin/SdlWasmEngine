@@ -47,6 +47,14 @@ enum class Crime
 	None
 };
 
+enum class NpcType
+{
+	None,
+	Civilian,
+	Guard,
+	VIP
+};
+
 // Per-target memory structure used to track multiple targets
 struct TargetInfo
 {
@@ -253,7 +261,8 @@ public:
 
 	std::unique_ptr<NpcAnimatorBase> animator = 0;
 
-	bool isGuard = true;
+	NpcType npcType = NpcType::Guard;
+
 
 	static inline Delay globalPhraceDelay;
 

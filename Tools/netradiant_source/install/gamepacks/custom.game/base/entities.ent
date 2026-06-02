@@ -337,4 +337,10 @@ dynamic object that is affected by physics
         <flag key="no_dificuly_normal" name="Don't spawn on Normal" bit="1" />
         <flag key="no_dificuly_hard" name="Don't spawn on Hard" bit="2" />
     </group>
+    <point name="info_train_spline_control" color="1 0.5 1" box="-8 -8 -8 8 8 8">
+Defines a control point for a spline curve.
+<string key="targetname" name="Targetname">The "control" key in a main splinepoint references to this.</string><string key="classname" name="Classname" value="info_train_spline_control">The classname of the entity.</string></point>
+    <point name="info_train_spline_main" color="0 1 0" box="-8 -8 -8 8 8 8">
+Defines a main point for a spline curve. The spline between this point and next point is named after this point, i.e. use this point's targetname. Create new key/value pairs named "controlX" (where X is a number greater than or equal to 2) if you need additional control points.
+<string key="targetname" name="Targetname">The name of this point.</string><target key="target" name="Target">Target spline point.</target><string key="control" name="Control">Sets a control point for this spline.</string><string key="classname" name="Classname" value="info_train_spline_main">The classname of the entity.</string></point>
 </classes>

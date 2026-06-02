@@ -471,6 +471,7 @@ public:
     void renderFaces();
 
     void BuildVBO();
+    void CreateVBO_Patch(int index);
     void CreateVBO(int m_numOfFaces);
     void FillExtraLightmapUVs();
     void BSPDebug(int index);
@@ -645,6 +646,8 @@ private:
 
     struct FaceAABB { glm::vec3 mn, mx; };
     std::vector<FaceAABB> m_faceAABBs;   // built once after BSP load
+    
+    static constexpr int kBezierTessLevel = 10;
 
 };
 

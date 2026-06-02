@@ -1,0 +1,2584 @@
+{
+  "version": "1.0",
+  "entities": [
+    {
+      "name": "info_player_start",
+      "entityType": "point",
+      "color": [
+        0,
+        1,
+        0
+      ],
+      "box": [
+        -16,
+        -16,
+        -24,
+        16,
+        16,
+        32
+      ],
+      "description": "",
+      "inherits": [],
+      "properties": [
+        {
+          "key": "targetname",
+          "displayName": "Name",
+          "type": "String",
+          "defaultValue": "",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "angle",
+          "displayName": "Yaw Angle",
+          "type": "Angle",
+          "defaultValue": "0",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        }
+      ]
+    },
+    {
+      "name": "func_group",
+      "entityType": "group",
+      "color": [
+        0,
+        0.4375,
+        0.7
+      ],
+      "box": [
+        -16,
+        -16,
+        -16,
+        16,
+        16,
+        16
+      ],
+      "description": "This is not an entity as such. It is strictly an editor utility to group world brushes and patches together for convenience (selecting, moving, copying, applying special compilation parameters etc). You cannot group entities with this. Func_group contents is merged into worldspawn entity during compilation process. -------- Q3MAP2 KEYS -------- -------- Q3MAP2 TERRAIN KEYS -------- -------- NOTES --------\nTo make a func_group into a terrain entity, refer to the Terrain Construction documentation.",
+      "inherits": [],
+      "properties": [
+        {
+          "key": "_lightmapscale",
+          "displayName": "Lightmap Scale",
+          "type": "Real",
+          "defaultValue": "1",
+          "description": "Floating point value, scaling the resolution of lightmaps on brushes/patches in this entity (default 1.0).",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "_castshadows",
+          "displayName": "Shadow Caster Level",
+          "type": "Integer",
+          "defaultValue": "1",
+          "description": "Allows per-entity control over shadow casting. Defaults to 0 on entities, 1 on world. 0 = no shadow casting. 1 = cast shadows on world. \u003E 1 = cast shadows on entities with _rs (or _receiveshadows) with the corresponding value, AND world. Negative values imply same, but DO NOT cast shadows on world.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "_receiveshadows",
+          "displayName": "Shadow Receiver Level",
+          "type": "Integer",
+          "defaultValue": "1",
+          "description": "Allows per-entity control over shadow reception. Defaults to 1 on everything (world shadows). 0 = receives NO shadows. \u003E 1 = receive shadows only from corresponding keyed entities (see above) and world. \u003C 1 = receive shadows ONLY from corresponding keyed entities.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "_celshader",
+          "displayName": "Cel Shader",
+          "type": "Texture",
+          "defaultValue": "",
+          "description": "Sets the cel shader used for this geometry. Note: Omit the \u0022textures/\u0022 prefix.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "_indexmap",
+          "displayName": "Terrain Blending Map",
+          "type": "Texture",
+          "defaultValue": "",
+          "description": "Path/name for the art file used to guide the mapping of textures on the terrain surface.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "_layers",
+          "displayName": "Terrain Layers",
+          "type": "Integer",
+          "defaultValue": "",
+          "description": "Number of unique root shaders that will be used on the terrain.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "_shader",
+          "displayName": "Terrain MetaShader",
+          "type": "Texture",
+          "defaultValue": "",
+          "description": "Path to the metashader used to assign textures to the terrain entity. Note: Omit the \u0022textures/\u0022 prefix.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        }
+      ]
+    },
+    {
+      "name": "env_door",
+      "entityType": "point",
+      "color": [
+        0.6,
+        0.4,
+        0.4
+      ],
+      "box": [
+        -12,
+        -12,
+        0,
+        12,
+        12,
+        32
+      ],
+      "description": "",
+      "inherits": [],
+      "properties": [
+        {
+          "key": "angle",
+          "displayName": "Yaw Angle",
+          "type": "Angle",
+          "defaultValue": "0",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "targetname",
+          "displayName": "Name",
+          "type": "String",
+          "defaultValue": "",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "model",
+          "displayName": "Model Path",
+          "type": "Model",
+          "defaultValue": "models/tools/door.obj",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        }
+      ]
+    },
+    {
+      "name": "nav_point",
+      "entityType": "point",
+      "color": [
+        0,
+        0.5,
+        0
+      ],
+      "box": [
+        -8,
+        -8,
+        0,
+        8,
+        8,
+        32
+      ],
+      "description": "",
+      "inherits": [],
+      "properties": [
+        {
+          "key": "angle",
+          "displayName": "Yaw Angle",
+          "type": "Angle",
+          "defaultValue": "0",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "targetname",
+          "displayName": "Name",
+          "type": "String",
+          "defaultValue": "",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "target",
+          "displayName": "Next nav point",
+          "type": "Target",
+          "defaultValue": "",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "waitTime",
+          "displayName": "Wait Time before moving to next point",
+          "type": "Real",
+          "defaultValue": "0",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "acceptanceRadius",
+          "displayName": "Acceptance Radius",
+          "type": "Real",
+          "defaultValue": "0.3",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        }
+      ]
+    },
+    {
+      "name": "task_smoke",
+      "entityType": "point",
+      "color": [
+        0.7,
+        0.3,
+        0.1
+      ],
+      "box": [
+        -8,
+        -8,
+        -16,
+        8,
+        8,
+        32
+      ],
+      "description": "",
+      "inherits": [
+        "entity"
+      ],
+      "properties": [
+        {
+          "key": "angle",
+          "displayName": "Yaw Angle",
+          "type": "Angle",
+          "defaultValue": "0",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "targetname",
+          "displayName": "Name",
+          "type": "String",
+          "defaultValue": "",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "target",
+          "displayName": "Next task after smoking",
+          "type": "Target",
+          "defaultValue": "",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "duration",
+          "displayName": "Smoking Duration (seconds)",
+          "type": "Real",
+          "defaultValue": "23.0",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "acceptanceRadius",
+          "displayName": "Acceptance Radius",
+          "type": "Real",
+          "defaultValue": "0.3",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        }
+      ]
+    },
+    {
+      "name": "task_chair",
+      "entityType": "point",
+      "color": [
+        0.6,
+        0.4,
+        0.8
+      ],
+      "box": [
+        -12,
+        -12,
+        0,
+        12,
+        12,
+        32
+      ],
+      "description": "",
+      "inherits": [
+        "entity"
+      ],
+      "properties": [
+        {
+          "key": "angle",
+          "displayName": "Yaw Angle",
+          "type": "Angle",
+          "defaultValue": "0",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "targetname",
+          "displayName": "Name",
+          "type": "String",
+          "defaultValue": "",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "target",
+          "displayName": "Next task after standing up",
+          "type": "Target",
+          "defaultValue": "",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "acceptanceRadius",
+          "displayName": "Acceptance Radius",
+          "type": "Real",
+          "defaultValue": "0.3",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "duration",
+          "displayName": "Duration",
+          "type": "Real",
+          "defaultValue": "8.0",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "model",
+          "displayName": "Model Path",
+          "type": "Model",
+          "defaultValue": "models/tools/sittingPos.obj",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        }
+      ]
+    },
+    {
+      "name": "task_chat",
+      "entityType": "point",
+      "color": [
+        0.2,
+        0.7,
+        0.8
+      ],
+      "box": [
+        -10,
+        -10,
+        -16,
+        10,
+        10,
+        32
+      ],
+      "description": "",
+      "inherits": [
+        "entity"
+      ],
+      "properties": [
+        {
+          "key": "angle",
+          "displayName": "Yaw Angle",
+          "type": "Angle",
+          "defaultValue": "0",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "targetname",
+          "displayName": "Name",
+          "type": "String",
+          "defaultValue": "",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "target",
+          "displayName": "Next task after chat ends",
+          "type": "Target",
+          "defaultValue": "",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "partner",
+          "displayName": "Partner chat point (must be another task_chat)",
+          "type": "String",
+          "defaultValue": "",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "duration",
+          "displayName": "Chat Duration (seconds)",
+          "type": "Real",
+          "defaultValue": "30.0",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "waitTimeout",
+          "displayName": "Max wait for partner (seconds)",
+          "type": "Real",
+          "defaultValue": "10.0",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "acceptanceRadius",
+          "displayName": "Acceptance Radius",
+          "type": "Real",
+          "defaultValue": "0.3",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        }
+      ]
+    },
+    {
+      "name": "npc_guard",
+      "entityType": "point",
+      "color": [
+        0.2,
+        0.3,
+        0.8
+      ],
+      "box": [
+        -16,
+        -16,
+        -32,
+        16,
+        16,
+        32
+      ],
+      "description": "",
+      "inherits": [
+        "entity"
+      ],
+      "properties": [
+        {
+          "key": "angle",
+          "displayName": "Yaw Angle",
+          "type": "Angle",
+          "defaultValue": "0",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "targetname",
+          "displayName": "Name",
+          "type": "String",
+          "defaultValue": "",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "target",
+          "displayName": "Start Task",
+          "type": "Target",
+          "defaultValue": "",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        }
+      ]
+    },
+    {
+      "name": "npc_civilian",
+      "entityType": "point",
+      "color": [
+        0.7,
+        0.7,
+        0.3
+      ],
+      "box": [
+        -16,
+        -16,
+        -32,
+        16,
+        16,
+        32
+      ],
+      "description": "",
+      "inherits": [
+        "entity"
+      ],
+      "properties": [
+        {
+          "key": "angle",
+          "displayName": "Yaw Angle",
+          "type": "Angle",
+          "defaultValue": "0",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "targetname",
+          "displayName": "Name",
+          "type": "String",
+          "defaultValue": "",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "target",
+          "displayName": "Start Task",
+          "type": "Target",
+          "defaultValue": "",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        }
+      ]
+    },
+    {
+      "name": "area_restricted",
+      "entityType": "group",
+      "color": [
+        0,
+        0.5,
+        1
+      ],
+      "box": [
+        -16,
+        -16,
+        -16,
+        16,
+        16,
+        16
+      ],
+      "description": "",
+      "inherits": [],
+      "properties": [
+        {
+          "key": "RestrictionLevel",
+          "displayName": "Restriction Level",
+          "type": "Integer",
+          "defaultValue": "1",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        }
+      ]
+    },
+    {
+      "name": "trigger",
+      "entityType": "group",
+      "color": [
+        0,
+        0.5,
+        1
+      ],
+      "box": [
+        -16,
+        -16,
+        -16,
+        16,
+        16,
+        16
+      ],
+      "description": "",
+      "inherits": [],
+      "properties": [
+        {
+          "key": "target",
+          "displayName": "Target",
+          "type": "Target",
+          "defaultValue": "",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "_cs",
+          "displayName": "Cast Shadows",
+          "type": "Boolean",
+          "defaultValue": "0",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "onEnterAction",
+          "displayName": "On Enter",
+          "type": "String",
+          "defaultValue": "trigger_enter",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "onExitAction",
+          "displayName": "On Exit",
+          "type": "String",
+          "defaultValue": "trigger_exit",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "targetname",
+          "displayName": "Name",
+          "type": "String",
+          "defaultValue": "",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        }
+      ]
+    },
+    {
+      "name": "triggerOnce",
+      "entityType": "group",
+      "color": [
+        0,
+        0.5,
+        1
+      ],
+      "box": [
+        -16,
+        -16,
+        -16,
+        16,
+        16,
+        16
+      ],
+      "description": "",
+      "inherits": [],
+      "properties": [
+        {
+          "key": "target",
+          "displayName": "Target",
+          "type": "Target",
+          "defaultValue": "",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "onEnterAction",
+          "displayName": "On Enter",
+          "type": "String",
+          "defaultValue": "trigger_enter",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "_cs",
+          "displayName": "Cast Shadows",
+          "type": "Boolean",
+          "defaultValue": "0",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "targetname",
+          "displayName": "Name",
+          "type": "String",
+          "defaultValue": "",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        }
+      ]
+    },
+    {
+      "name": "triggerTravel",
+      "entityType": "group",
+      "color": [
+        0.5,
+        0.5,
+        1
+      ],
+      "box": [
+        -16,
+        -16,
+        -16,
+        16,
+        16,
+        16
+      ],
+      "description": "",
+      "inherits": [],
+      "properties": [
+        {
+          "key": "targetLevel",
+          "displayName": "Target Level",
+          "type": "String",
+          "defaultValue": "GameData/maps/test.bsp",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "targetPlayerStart",
+          "displayName": "Target Player Start",
+          "type": "String",
+          "defaultValue": "ps_1",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        }
+      ]
+    },
+    {
+      "name": "weaponPickup",
+      "entityType": "point",
+      "color": [
+        1,
+        0,
+        0
+      ],
+      "box": [
+        -20,
+        -20,
+        -20,
+        20,
+        20,
+        20
+      ],
+      "description": "",
+      "inherits": [],
+      "properties": [
+        {
+          "key": "type",
+          "displayName": "Weapon Type",
+          "type": "String",
+          "defaultValue": "weapon_pistol_double",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "targetname",
+          "displayName": "Name",
+          "type": "String",
+          "defaultValue": "",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        }
+      ]
+    },
+    {
+      "name": "ent_cat_point",
+      "entityType": "point",
+      "color": [
+        1,
+        0.2,
+        0.8
+      ],
+      "box": [
+        -16,
+        -16,
+        -16,
+        16,
+        16,
+        16
+      ],
+      "description": "",
+      "inherits": [],
+      "properties": []
+    },
+    {
+      "name": "spawner",
+      "entityType": "point",
+      "color": [
+        1,
+        0.2,
+        0.8
+      ],
+      "box": [
+        -16,
+        -16,
+        -32,
+        16,
+        16,
+        16
+      ],
+      "description": "",
+      "inherits": [
+        "entity"
+      ],
+      "properties": [
+        {
+          "key": "className",
+          "displayName": "Class Name",
+          "type": "String",
+          "defaultValue": "npc_base",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "autoTrigger",
+          "displayName": "Auto Trigger",
+          "type": "Boolean",
+          "defaultValue": "npc_base",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "targetname",
+          "displayName": "Name",
+          "type": "String",
+          "defaultValue": "",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "target",
+          "displayName": "Target",
+          "type": "Target",
+          "defaultValue": "",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "angles",
+          "displayName": "Rotation",
+          "type": "Angles",
+          "defaultValue": "0 0 0",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "angle",
+          "displayName": "Rotation",
+          "type": "Angle",
+          "defaultValue": "0",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "onSpawned",
+          "displayName": "On Spawn",
+          "type": "String",
+          "defaultValue": "spawned",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "onDespawned",
+          "displayName": "On Despawn",
+          "type": "String",
+          "defaultValue": "despawned",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        }
+      ]
+    },
+    {
+      "name": "counter",
+      "entityType": "point",
+      "color": [
+        1,
+        1,
+        0.4
+      ],
+      "box": [
+        -16,
+        -16,
+        -32,
+        16,
+        16,
+        16
+      ],
+      "description": "",
+      "inherits": [
+        "entity"
+      ],
+      "properties": [
+        {
+          "key": "startNum",
+          "displayName": "Start Number",
+          "type": "Integer",
+          "defaultValue": "0",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "targetNum",
+          "displayName": "Target Number",
+          "type": "Integer",
+          "defaultValue": "0",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "target",
+          "displayName": "Target",
+          "type": "Target",
+          "defaultValue": "",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "onReached",
+          "displayName": "On Reached",
+          "type": "String",
+          "defaultValue": "reached",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "targetname",
+          "displayName": "Name",
+          "type": "String",
+          "defaultValue": "",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        }
+      ]
+    },
+    {
+      "name": "destructible",
+      "entityType": "group",
+      "color": [
+        0.8,
+        0.2,
+        0.2
+      ],
+      "box": [
+        -16,
+        -16,
+        -16,
+        16,
+        16,
+        16
+      ],
+      "description": "",
+      "inherits": [],
+      "properties": [
+        {
+          "key": "health",
+          "displayName": "Health",
+          "type": "Real",
+          "defaultValue": "30",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "particleSystem",
+          "displayName": "Particle System",
+          "type": "String",
+          "defaultValue": "destructionWood",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "targetname",
+          "displayName": "Name",
+          "type": "String",
+          "defaultValue": "",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        }
+      ]
+    },
+    {
+      "name": "vis_through",
+      "entityType": "group",
+      "color": [
+        0.8,
+        0.2,
+        0.2
+      ],
+      "box": [
+        -16,
+        -16,
+        -16,
+        16,
+        16,
+        16
+      ],
+      "description": "",
+      "inherits": [],
+      "properties": []
+    },
+    {
+      "name": "misc_model",
+      "entityType": "point",
+      "color": [
+        1,
+        0.5,
+        0.25
+      ],
+      "box": [
+        -16,
+        -16,
+        -16,
+        16,
+        16,
+        16
+      ],
+      "description": "Generic placeholder for inserting models to map. Model triangles are baked to BSP.\n        MD3, ASE, 3DS, OBJ, FM, LWO, MD2, MDC, MS3D model formats are supported.\n        -------- Q3MAP2 KEYS -------- -------- SPAWNFLAGS -------- other possible modes of clipping:\n        CLIPMODEL\u002BAXIAL_BACKPLANE\n        EXTRUDE_FACE_NORMALS\u002BPYRAMIDAL_CLIP - truncated pyramid with 45 degrees sides\n        EXTRUDE_TERRAIN\u002BMAX_EXTRUDE\n        EXTRUDE_TERRAIN\u002BAXIAL_BACKPLANE\n        EXTRUDE_VERTEX_NORMALS \u002B PYRAMIDAL_CLIP - vertex normals mode: don\u0027t check for sides, sticking outwards\n        PYRAMIDAL_CLIP\u002BAXIAL_BACKPLANE - pyramid with 3 of 4 sides axial (-\u003Esmall bsp)\n        EXTRUDE_DOWNWARDS\u002BEXTRUDE_UPWARDS\n        EXTRUDE_DOWNWARDS\u002BMAX_EXTRUDE\n        EXTRUDE_DOWNWARDS\u002BAXIAL_BACKPLANE\n        EXTRUDE_DOWNWARDS\u002BEXTRUDE_UPWARDS\u002BMAX_EXTRUDE\n        EXTRUDE_DOWNWARDS\u002BEXTRUDE_UPWARDS\u002BAXIAL_BACKPLANE\n        EXTRUDE_UPWARDS\u002BMAX_EXTRUDE\n        EXTRUDE_UPWARDS\u002BAXIAL_BACKPLANE",
+      "inherits": [],
+      "properties": [
+        {
+          "key": "model",
+          "displayName": "Model File",
+          "type": "Model",
+          "defaultValue": "",
+          "description": "Path/name of model to use (e.g. models/mapobjects/teleporter/teleporter.md3).",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "angle",
+          "displayName": "Yaw Angle",
+          "type": "Angle",
+          "defaultValue": "",
+          "description": "Direction in which model will be oriented.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "angles",
+          "displayName": "Pitch Yaw Roll",
+          "type": "Angles",
+          "defaultValue": "",
+          "description": "Individual control of PITCH, YAW, and ROLL (default 0 0 0).",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "modelscale",
+          "displayName": "Uniform Scale",
+          "type": "Real",
+          "defaultValue": "1",
+          "description": "Floating-point value used to scale a model up or down (default 1.0).",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "modelscale_vec",
+          "displayName": "Scale XYZ",
+          "type": "Real3",
+          "defaultValue": "1 1 1",
+          "description": "Floating-point vector used to scale a model\u0027s axes individually (default 1.0 1.0 1.0).",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "_remap",
+          "displayName": "Shader Remaps",
+          "type": "Array",
+          "defaultValue": "",
+          "description": "Used to remap textures/shaders in the model. To remap all shaders to a given shader, use \u0022*;models/mymodel/mytexture\u0022. To remap a specific shader, use \u0022models/mymodel/old;models/mymodel/new\u0022. Any key starting with _remap prefix will work, so if you need more remappings, create _remap2, _remap3 etc keys.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "target",
+          "displayName": "Target",
+          "type": "Target",
+          "defaultValue": "",
+          "description": "Used to attach the misc_model to a brush entity, where its \u0022targetname\u0022 key is the same value.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "_lightmapscale",
+          "displayName": "Lightmap Scale",
+          "type": "Real",
+          "defaultValue": "1",
+          "description": "Floating point value, scaling the resolution of lightmaps on this model (if model is using lightmapped shaders) (default 1.0).",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "_castshadows",
+          "displayName": "Shadow Caster Level",
+          "type": "Integer",
+          "defaultValue": "1",
+          "description": "Allows per-entity control over shadow casting. Defaults to 0 on entities, 1 on world. 0 = no shadow casting. 1 = cast shadows on world. \u003E 1 = cast shadows on entities with _rs (or _receiveshadows) with the corresponding value, AND world. Negative values imply same, but DO NOT cast shadows on world.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "_receiveshadows",
+          "displayName": "Shadow Receiver Level",
+          "type": "Integer",
+          "defaultValue": "1",
+          "description": "Allows per-entity control over shadow reception. Defaults to 1 on everything (world shadows). 0 = receives NO shadows. \u003E 1 = receive shadows only from corresponding keyed entities (see above) and world. \u003C 1 = receive shadows ONLY from corresponding keyed entities.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "_celshader",
+          "displayName": "Cel Shader",
+          "type": "Texture",
+          "defaultValue": "",
+          "description": "Sets the cel shader used for this geometry. Note: Omit the \u0022textures/\u0022 prefix.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "_clipdepth",
+          "displayName": "Autoclip thickness",
+          "type": "Real",
+          "defaultValue": "2",
+          "description": "Autoclip brushes thickness (default 2.0).",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "_RMG_BSP",
+          "displayName": "_RMG_BSP",
+          "type": "Flag",
+          "defaultValue": "",
+          "description": "in SoF2, append a _RMG_BSP suffix to shader names instead of _BSP",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "CLIPMODEL",
+          "displayName": "Clip Model",
+          "type": "Flag",
+          "defaultValue": "",
+          "description": "Clips the model for player/weapon collisions; extruding every face along most perpendicular axial direction. For use on large architectural or terrain models, not for small decorative models.",
+          "bitIndex": 1,
+          "isBuiltIn": false
+        },
+        {
+          "key": "FORCEMETA",
+          "displayName": "Force Meta",
+          "type": "Flag",
+          "defaultValue": "",
+          "description": "Toggles on q3map_forceMeta for lightmapped models. Converts model triangles to bsp metasurfaces.",
+          "bitIndex": 2,
+          "isBuiltIn": false
+        },
+        {
+          "key": "EXTRUDE_FACE",
+          "displayName": "EXTRUDE_FACE_NORMALS",
+          "type": "Flag",
+          "defaultValue": "",
+          "description": "extrude along the model face normals for clipping",
+          "bitIndex": 3,
+          "isBuiltIn": false
+        },
+        {
+          "key": "EXTRUDE_TERRAIN",
+          "displayName": "EXTRUDE_TERRAIN",
+          "type": "Flag",
+          "defaultValue": "",
+          "description": "extrude each surface of the model along its average axial direction ( up/down/west/east/north/south ); faces with not matching direction (or too steep) are clipped in default mode",
+          "bitIndex": 4,
+          "isBuiltIn": false
+        },
+        {
+          "key": "COLOR_TO_ALPHA",
+          "displayName": "COLOR_TO_ALPHA",
+          "type": "Flag",
+          "defaultValue": "",
+          "description": "use the color value as alpha (for terrain blending)",
+          "bitIndex": 5,
+          "isBuiltIn": false
+        },
+        {
+          "key": "EXTRUDE_VERTEX",
+          "displayName": "EXTRUDE_VERTEX_NORMALS",
+          "type": "Flag",
+          "defaultValue": "",
+          "description": "extrude along the model vertex normals for clipping; accurate collisions, if normals are fine; bad ones are replaced with 45 degrees to face",
+          "bitIndex": 7,
+          "isBuiltIn": false
+        },
+        {
+          "key": "PYRAMIDAL_CLIP",
+          "displayName": "PYRAMIDAL_CLIP",
+          "type": "Flag",
+          "defaultValue": "",
+          "description": "pyramidal clipping brushes (4-sided); accurate collisions",
+          "bitIndex": 8,
+          "isBuiltIn": false
+        },
+        {
+          "key": "EXTRUDE_DOWN",
+          "displayName": "EXTRUDE_DOWNWARDS",
+          "type": "Flag",
+          "defaultValue": "",
+          "description": "for horizontal terrain; when not possible, extrude in default mode",
+          "bitIndex": 9,
+          "isBuiltIn": false
+        },
+        {
+          "key": "EXTRUDE_UP",
+          "displayName": "EXTRUDE_UPWARDS",
+          "type": "Flag",
+          "defaultValue": "",
+          "description": "-//-",
+          "bitIndex": 10,
+          "isBuiltIn": false
+        },
+        {
+          "key": "MAX_EXTRUDE",
+          "displayName": "MAX_EXTRUDE",
+          "type": "Flag",
+          "defaultValue": "",
+          "description": "Extrude to the max/min point of every model surface to reduce bsp size (uses axial back plane)",
+          "bitIndex": 11,
+          "isBuiltIn": false
+        },
+        {
+          "key": "AXIAL_BACKPLANE",
+          "displayName": "AXIAL_BACKPLANE",
+          "type": "Flag",
+          "defaultValue": "",
+          "description": "use axial back plane for clipping brushes to effectively reduce bsp size; might cause unwanted collisions, make sure to -debugclip; negative _clipdepth / -clipdepth limits max thickness of resulting brushes (making non-axial backplane, if hit the limit)",
+          "bitIndex": 12,
+          "isBuiltIn": false
+        }
+      ]
+    },
+    {
+      "name": "logic_once",
+      "entityType": "point",
+      "color": [
+        0.6,
+        0.1,
+        0.7
+      ],
+      "box": [
+        -4,
+        -4,
+        -4,
+        4,
+        4,
+        4
+      ],
+      "description": "",
+      "inherits": [],
+      "properties": [
+        {
+          "key": "targetname",
+          "displayName": "Name",
+          "type": "String",
+          "defaultValue": "",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        }
+      ]
+    },
+    {
+      "name": "func_door",
+      "entityType": "group",
+      "color": [
+        0.8,
+        0.8,
+        0.2
+      ],
+      "box": [
+        -16,
+        -16,
+        -16,
+        16,
+        16,
+        16
+      ],
+      "description": "",
+      "inherits": [],
+      "properties": [
+        {
+          "key": "targetname",
+          "displayName": "Name",
+          "type": "String",
+          "defaultValue": "",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "targetLocation",
+          "displayName": "Target Location",
+          "type": "Real3",
+          "defaultValue": "0 0 0",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "rotationPointName",
+          "displayName": "rotationPointName",
+          "type": "String",
+          "defaultValue": "",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "time",
+          "displayName": "Time",
+          "type": "Real",
+          "defaultValue": "1",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        }
+      ]
+    },
+    {
+      "name": "transformPoint",
+      "entityType": "point",
+      "color": [
+        0,
+        0,
+        0
+      ],
+      "box": [
+        -3,
+        -3,
+        -3,
+        3,
+        3,
+        3
+      ],
+      "description": "",
+      "inherits": [
+        "entity"
+      ],
+      "properties": [
+        {
+          "key": "angles",
+          "displayName": "Rotation",
+          "type": "Angles",
+          "defaultValue": "0 0 0",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "targetname",
+          "displayName": "Name",
+          "type": "String",
+          "defaultValue": "",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        }
+      ]
+    },
+    {
+      "name": "static_mesh",
+      "entityType": "point",
+      "color": [
+        1,
+        0,
+        0
+      ],
+      "box": [
+        -5,
+        -5,
+        -5,
+        5,
+        5,
+        5
+      ],
+      "description": "",
+      "inherits": [
+        "entity"
+      ],
+      "properties": [
+        {
+          "key": "model",
+          "displayName": "Model Path",
+          "type": "Model",
+          "defaultValue": "models/test.obj",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "texture",
+          "displayName": "Texture",
+          "type": "String",
+          "defaultValue": "",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "modelscale",
+          "displayName": "Uniform Scale",
+          "type": "Real",
+          "defaultValue": "32",
+          "description": "Floating-point value used to scale a model up or down (default 32).",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "modelscale_vec",
+          "displayName": "Scale XYZ",
+          "type": "Real3",
+          "defaultValue": "1 1 1",
+          "description": "Floating-point vector used to scale a model\u0027s axes individually (default 1.0 1.0 1.0).",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "angles",
+          "displayName": "Rotation",
+          "type": "Angles",
+          "defaultValue": "0 0 0",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "targetname",
+          "displayName": "Name",
+          "type": "String",
+          "defaultValue": "",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        }
+      ]
+    },
+    {
+      "name": "music_player",
+      "entityType": "point",
+      "color": [
+        0.6,
+        0.12,
+        0.6
+      ],
+      "box": [
+        -15,
+        -15,
+        -15,
+        15,
+        15,
+        15
+      ],
+      "description": "",
+      "inherits": [],
+      "properties": [
+        {
+          "key": "bankName",
+          "displayName": "Sound Bank",
+          "type": "String",
+          "defaultValue": "Music.bank",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "eventName",
+          "displayName": "Event Name",
+          "type": "String",
+          "defaultValue": "",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "volume",
+          "displayName": "Volume",
+          "type": "Real",
+          "defaultValue": "0.5",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "fadeTime",
+          "displayName": "Fade Time",
+          "type": "Real",
+          "defaultValue": "1",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "targetname",
+          "displayName": "Name",
+          "type": "String",
+          "defaultValue": "",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        }
+      ]
+    },
+    {
+      "name": "navBlock",
+      "entityType": "group",
+      "color": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "box": [
+        -16,
+        -16,
+        -16,
+        16,
+        16,
+        16
+      ],
+      "description": "",
+      "inherits": [],
+      "properties": []
+    },
+    {
+      "name": "light",
+      "entityType": "point",
+      "color": [
+        0.65,
+        0.65,
+        1
+      ],
+      "box": [
+        -8,
+        -8,
+        -8,
+        8,
+        8,
+        8
+      ],
+      "description": "Non-displayed point light source. The -pointscale and -scale arguments to Q3Map2 affect the brightness of these lights. The -skyscale argument affects brightness of entity sun lights.\n\t\t-------- Q3MAP2 KEYS -------- -------- SPAWNFLAGS --------",
+      "inherits": [],
+      "properties": [
+        {
+          "key": "light",
+          "displayName": "Light Intensity",
+          "type": "Real",
+          "defaultValue": "300",
+          "description": "Overrides the default 300 intensity. Negative values may be used for negative lights.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "_color",
+          "displayName": "Light Color",
+          "type": "Color",
+          "defaultValue": "1 1 1",
+          "description": "Weighted RGB value of light color (default 1.0 1.0 1.0 = white).",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "target",
+          "displayName": "Target",
+          "type": "Target",
+          "defaultValue": "",
+          "description": "Lights pointed at a target (info_null / target_position) will be spotlights.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "radius",
+          "displayName": "Spotlight Radius",
+          "type": "Real",
+          "defaultValue": "64",
+          "description": "Overrides the default 64 unit radius of a spotlight at the target point.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "_sun",
+          "displayName": "Sun",
+          "type": "Boolean",
+          "defaultValue": "",
+          "description": "Set this key to 1 on a spotlight to make an infinite sun light.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "fade",
+          "displayName": "Linear Fade",
+          "type": "Real",
+          "defaultValue": "1",
+          "description": "Fades light attenuation. Only affects linear lights.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "scale",
+          "displayName": "Intensity Scale",
+          "type": "Real",
+          "defaultValue": "1",
+          "description": "Scales the \u0022light\u0022 value.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "_deviance",
+          "displayName": "Penumbra Deviance",
+          "type": "Real",
+          "defaultValue": "0",
+          "description": "Penumbra effect - distance measured in world units for point/spot lights, and degrees for suns (~0.5-3).",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "_samples",
+          "displayName": "Penumbra Samples",
+          "type": "Integer",
+          "defaultValue": "1",
+          "description": "Penumbra effect - the number of random jitters distributed over the solid arc (~16).",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "_filter",
+          "displayName": "Lightmap Filtering",
+          "type": "Boolean",
+          "defaultValue": "",
+          "description": "Set this key to 1 to toggle on lightmap filtering.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "_filterradius",
+          "displayName": "Filter Radius",
+          "type": "Real",
+          "defaultValue": "",
+          "description": "Filters lightmaps within set radius.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "_anglescale",
+          "displayName": "Light Attenuation Scale",
+          "type": "Real",
+          "defaultValue": "1",
+          "description": "Scales light attenuation. Smaller values lessens angle attenuation, larger values for sharper, more faceted lighting (default 1.0).",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "style",
+          "displayName": "Light Style Index",
+          "type": "Integer",
+          "defaultValue": "",
+          "description": "Light style index number associated with worldspawn light style. Values are between 1 and 31.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "LINEAR",
+          "displayName": "Linear Falloff",
+          "type": "Flag",
+          "defaultValue": "",
+          "description": "Use a linear falloff. Default is inverse distance squared (more realistic).",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "NOANGLE",
+          "displayName": "No Angle Attenuation",
+          "type": "Flag",
+          "defaultValue": "",
+          "description": "Ignore angle attenuation.",
+          "bitIndex": 1,
+          "isBuiltIn": false
+        },
+        {
+          "key": "NOGRIDLIGHT",
+          "displayName": "Not Dynamic",
+          "type": "Flag",
+          "defaultValue": "",
+          "description": "Do not affect the lightgrid (dynamic entity lighting).",
+          "bitIndex": 4,
+          "isBuiltIn": false
+        },
+        {
+          "key": "UNNORMALIZED",
+          "displayName": "Unnormalized",
+          "type": "Flag",
+          "defaultValue": "",
+          "description": "Do not normalize light color.",
+          "bitIndex": 5,
+          "isBuiltIn": false
+        },
+        {
+          "key": "ATTENDISTANCE",
+          "displayName": "Distance attenuation",
+          "type": "Flag",
+          "defaultValue": "",
+          "description": "Use distance attenuation used for sun and area lights.",
+          "bitIndex": 6,
+          "isBuiltIn": false
+        }
+      ]
+    },
+    {
+      "name": "worldspawn",
+      "entityType": "group",
+      "color": [
+        0,
+        0,
+        0
+      ],
+      "box": [
+        -16,
+        -16,
+        -16,
+        16,
+        16,
+        16
+      ],
+      "description": "Entity, which stores regular static map primitives (brushes and patches).\n\t\t-------- KEYS -------- -------- Q3MAP2 KEYS -------- Overridable in entities. -------- Q3MAP2 TERRAIN KEYS --------",
+      "inherits": [],
+      "properties": [
+        {
+          "key": "message",
+          "displayName": "Logon Message",
+          "type": "String",
+          "defaultValue": "",
+          "description": "Text to print at user logon. Used for name of level.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "music",
+          "displayName": "Music File",
+          "type": "Sound",
+          "defaultValue": "",
+          "description": "Path/name of looping .wav file used for level\u0027s music (e.g. music/sonic5.wav). Specifying two files, like \u0027music/fla22k_04_intro.wav music/fla22k_04_loop.wav\u0027 will make former to play once and latter looped then.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "gravity",
+          "displayName": "Gravity",
+          "type": "Real",
+          "defaultValue": "800",
+          "description": "Gravity of level (default normal gravity: 800).",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "gridsize",
+          "displayName": "Dynamic Light Granularity",
+          "type": "Integer",
+          "defaultValue": "64 64 128",
+          "description": "Granularity of the lightgrid, created by q3map, which is used to dynamically light certain game objects, like players and items. Value is three integers separated by spaces, representing number of units between grid points in X Y Z. Default gridsize value is 64 64 128. Use larger powers of 2 to reduce BSP size and compile time on very large maps.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "_blocksize",
+          "displayName": "BSP Block Size",
+          "type": "Integer",
+          "defaultValue": "1024 1024 1024",
+          "description": "Map compiler splits the BSP tree along axial planes (X, Y and Z) for optimization. It does it as often, as specified in _blocksize key for respective axis (in units) (default 1024 1024 1024, 0 = disable, setting single value \u0027N\u0027 equals to setting \u0027N N N\u0027). I.e. lower values result in more splits and vice versa. Increase the blocksize using larger powers of 2 to reduce compile times on very large maps with a low structural brush density. Maps, having flat architecture, might work better with horizontal splits disabled (\u0027N N 0\u0027).",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "_ambient",
+          "displayName": "Ambient Intensity",
+          "type": "Real",
+          "defaultValue": "0",
+          "description": "Adds a constant value to overall lighting (default 0, range 0 - 255). Only recommended use is small values for cosmetic purposes, as high values will have a tendency to flatten out variations in light and shade.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "_color",
+          "displayName": "Ambient Color",
+          "type": "Color",
+          "defaultValue": "1 1 1",
+          "description": "RGB color value for ambient and other global light parameters (default is 1 1 1).",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "_minlight",
+          "displayName": "Min Lightmap Intensity",
+          "type": "Real",
+          "defaultValue": "0",
+          "description": "Minimum light value, levelwide. Uses the _color key to set color. Since it does not add unlike ambient, but overrides existing light values, affected areas will get flat constant light. Therefore use is highly not recommended!",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "_minvertexlight",
+          "displayName": "Min Vertex Intensity",
+          "type": "Real",
+          "defaultValue": "0",
+          "description": "Minimum vertex lighting, levelwide.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "_mingridlight",
+          "displayName": "Min Dynamic Intensity",
+          "type": "Real",
+          "defaultValue": "0",
+          "description": "Minimum lightgrid (dynamic entity lighting) levelwide.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "_floodlight",
+          "displayName": "FloodLight",
+          "type": "String",
+          "defaultValue": "240 240 255 1024 128 1",
+          "description": "A sextet of values \u0022r g b dist intensity directional_power\u0022 to set global floodlight parameters (good defaults are 240 240 255 1024 128 1). Floodlight effect is sort of Ambient Occlusion.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "_keeplights",
+          "displayName": "Keep Light Entities",
+          "type": "Boolean",
+          "defaultValue": "",
+          "description": "Keep light entities in the BSP. Normally stripped out by the BSP process and read from the .map file by the lighting phase.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "_noshadersun",
+          "displayName": "Ignore Shader Sun",
+          "type": "Boolean",
+          "defaultValue": "",
+          "description": "Ignore q3map_sun/sun directives in sky shaders and ONLY use entity sun lights.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "_farplanedist",
+          "displayName": "Far Clip Distance",
+          "type": "Real",
+          "defaultValue": "",
+          "description": "Limit on how many units the vis phase of compilation can see. Used in combination with level-wide fog, it can help reduce r_speeds on large, open maps.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "_foghull",
+          "displayName": "Fog Hull Shader",
+          "type": "Texture",
+          "defaultValue": "",
+          "description": "Shader to use for \u0022fog hull\u0022. Foghull shader should be a sky shader. Omit the \u0022textures/\u0022 prefix.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "_lightmapscale",
+          "displayName": "Lightmap Scale",
+          "type": "Real",
+          "defaultValue": "1",
+          "description": "Floating point value, scaling the resolution of lightmaps on brushes/patches in the world. Can be overridden in func_group (or other entities) (default 1.0).",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "_castshadows",
+          "displayName": "Shadow Caster Level",
+          "type": "Integer",
+          "defaultValue": "1",
+          "description": "Allows per-entity control over shadow casting. Defaults to 0 on entities, 1 on world. 0 = no shadow casting. 1 = cast shadows on world. \u003E 1 = cast shadows on entities with _rs (or _receiveshadows) with the corresponding value, AND world. Negative values imply same, but DO NOT cast shadows on world.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "_receiveshadows",
+          "displayName": "Shadow Receiver Level",
+          "type": "Integer",
+          "defaultValue": "1",
+          "description": "Allows per-entity control over shadow reception. Defaults to 1 on everything (world shadows). 0 = receives NO shadows. \u003E 1 = receive shadows only from corresponding keyed entities (see above) and world. \u003C 1 = receive shadows ONLY from corresponding keyed entities.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "_celshader",
+          "displayName": "Cel Shader",
+          "type": "Texture",
+          "defaultValue": "",
+          "description": "Sets the cel shader used for this geometry. Note: Omit the \u0022textures/\u0022 prefix.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "_styleNalphaGen",
+          "displayName": "Style Light alphaGen",
+          "type": "String",
+          "defaultValue": "",
+          "description": "*IMPORTANT* Replace \u0022N\u0022 in the key \u0022_styleNalphaGen\u0022 with an integer between 1 and 31 as your style index. Values takes standard shader waveform functions (e.g. wave sin 0.5 0.3 0.25 1.5)",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "_styleNrgbGen",
+          "displayName": "Style Light rgbGen",
+          "type": "String",
+          "defaultValue": "",
+          "description": "*IMPORTANT* Replace \u0022N\u0022 in the key \u0022_styleNrgbGen\u0022 with an integer between 1 and 31 as your style index. Values take standard shader waveform functions (e.g. wave sin 0.5 0.3 0.25 1.5)",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "_indexmap",
+          "displayName": "Terrain Blending Map",
+          "type": "Texture",
+          "defaultValue": "",
+          "description": "Path/name for the art file used to guide the mapping of textures on the terrain surface.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "_layers",
+          "displayName": "Terrain Layers",
+          "type": "Integer",
+          "defaultValue": "",
+          "description": "Number of unique root shaders that will be used on the terrain.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "_shader",
+          "displayName": "Terrain MetaShader",
+          "type": "Texture",
+          "defaultValue": "",
+          "description": "Path to the metashader used to assign textures to the terrain entity. Note: Omit the \u0022textures/\u0022 prefix.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        }
+      ]
+    },
+    {
+      "name": "item_ammo_pistol",
+      "entityType": "point",
+      "color": [
+        1,
+        0,
+        0
+      ],
+      "box": [
+        -5,
+        -5,
+        -0,
+        5,
+        5,
+        5
+      ],
+      "description": "",
+      "inherits": [
+        "item_pickupBase"
+      ],
+      "properties": [
+        {
+          "key": "model",
+          "displayName": "Model Path",
+          "type": "Model",
+          "defaultValue": "models/pickups/pistolAmmo.obj",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "ammoAmount",
+          "displayName": "Ammo Amount",
+          "type": "Integer",
+          "defaultValue": "32",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        }
+      ]
+    },
+    {
+      "name": "item_ammo_shotgun",
+      "entityType": "point",
+      "color": [
+        1,
+        0,
+        0
+      ],
+      "box": [
+        -5,
+        -5,
+        -0,
+        5,
+        5,
+        5
+      ],
+      "description": "",
+      "inherits": [
+        "item_pickupBase"
+      ],
+      "properties": [
+        {
+          "key": "ammoAmount",
+          "displayName": "Ammo Amount",
+          "type": "Integer",
+          "defaultValue": "16",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "model",
+          "displayName": "Model Path",
+          "type": "Model",
+          "defaultValue": "models/pickups/shotgunAmmo.obj",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        }
+      ]
+    },
+    {
+      "name": "item_ammo_cannon",
+      "entityType": "point",
+      "color": [
+        1,
+        0,
+        0
+      ],
+      "box": [
+        -5,
+        -5,
+        -0,
+        5,
+        5,
+        5
+      ],
+      "description": "",
+      "inherits": [
+        "item_pickupBase"
+      ],
+      "properties": [
+        {
+          "key": "model",
+          "displayName": "Model Path",
+          "type": "Model",
+          "defaultValue": "models/pickups/cannonAmmo.obj",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "ammoAmount",
+          "displayName": "Ammo Amount",
+          "type": "Integer",
+          "defaultValue": "1",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        }
+      ]
+    },
+    {
+      "name": "item_pickupBase",
+      "entityType": "abstract",
+      "color": [
+        1,
+        0,
+        0
+      ],
+      "box": [
+        -5,
+        -5,
+        -0,
+        5,
+        5,
+        5
+      ],
+      "description": "",
+      "inherits": [
+        "entity"
+      ],
+      "properties": [
+        {
+          "key": "model",
+          "displayName": "Model Path",
+          "type": "Model",
+          "defaultValue": "models/pickups/shotgunAmmo.obj",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "modelscale",
+          "displayName": "Uniform Scale",
+          "type": "Real",
+          "defaultValue": "1",
+          "description": "Will by scaled by 32 in engine.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "targetname",
+          "displayName": "Name",
+          "type": "String",
+          "defaultValue": "",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "target",
+          "displayName": "Target",
+          "type": "Target",
+          "defaultValue": "",
+          "description": "Targetname of entity to activate/target.",
+          "bitIndex": 0,
+          "isBuiltIn": true
+        },
+        {
+          "key": "onPickupEvent",
+          "displayName": "On Pickup",
+          "type": "String",
+          "defaultValue": "",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        }
+      ]
+    },
+    {
+      "name": "entity",
+      "entityType": "abstract",
+      "color": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "box": [
+        -16,
+        -16,
+        -16,
+        16,
+        16,
+        16
+      ],
+      "description": "",
+      "inherits": [],
+      "properties": [
+        {
+          "key": "targetname",
+          "displayName": "Name",
+          "type": "String",
+          "defaultValue": "",
+          "description": "Logical name of this entity. Used by other entities to target it.",
+          "bitIndex": 0,
+          "isBuiltIn": true
+        },
+        {
+          "key": "angle",
+          "displayName": "Yaw Angle",
+          "type": "Angle",
+          "defaultValue": "0",
+          "description": "Yaw rotation in degrees. 0 = East, 90 = South, etc.",
+          "bitIndex": 0,
+          "isBuiltIn": true
+        },
+        {
+          "key": "angles",
+          "displayName": "Pitch Yaw Roll",
+          "type": "Angles",
+          "defaultValue": "0 0 0",
+          "description": "Full rotation: Pitch Yaw Roll in degrees.",
+          "bitIndex": 0,
+          "isBuiltIn": true
+        },
+        {
+          "key": "spawnflags",
+          "displayName": "Spawnflags",
+          "type": "Integer",
+          "defaultValue": "0",
+          "description": "Bitmask of spawning flags.",
+          "bitIndex": 0,
+          "isBuiltIn": true
+        },
+        {
+          "key": "no_dificuly_easy",
+          "displayName": "Don\u0027t spawn on Easy",
+          "type": "Flag",
+          "defaultValue": "",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "no_dificuly_normal",
+          "displayName": "Don\u0027t spawn on Normal",
+          "type": "Flag",
+          "defaultValue": "",
+          "description": "",
+          "bitIndex": 1,
+          "isBuiltIn": false
+        },
+        {
+          "key": "no_dificuly_hard",
+          "displayName": "Don\u0027t spawn on Hard",
+          "type": "Flag",
+          "defaultValue": "",
+          "description": "",
+          "bitIndex": 2,
+          "isBuiltIn": false
+        }
+      ]
+    },
+    {
+      "name": "logic_level_end",
+      "entityType": "point",
+      "color": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "box": [
+        -16,
+        -16,
+        -16,
+        16,
+        16,
+        16
+      ],
+      "description": "",
+      "inherits": [
+        "entity"
+      ],
+      "properties": [
+        {
+          "key": "nextLevel",
+          "displayName": "Next Level",
+          "type": "String",
+          "defaultValue": "",
+          "description": "name of next level relative to maps/ folder",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        }
+      ]
+    },
+    {
+      "name": "item_key_red",
+      "entityType": "point",
+      "color": [
+        1,
+        0,
+        0.023529411764705882
+      ],
+      "box": [
+        -16,
+        -16,
+        -16,
+        16,
+        16,
+        16
+      ],
+      "description": "red key",
+      "inherits": [
+        "item_pickupBase"
+      ],
+      "properties": []
+    },
+    {
+      "name": "item_key_blue",
+      "entityType": "point",
+      "color": [
+        0,
+        0,
+        1
+      ],
+      "box": [
+        -16,
+        -16,
+        -16,
+        16,
+        16,
+        16
+      ],
+      "description": "red key",
+      "inherits": [
+        "item_pickupBase"
+      ],
+      "properties": []
+    },
+    {
+      "name": "item_key_secret",
+      "entityType": "point",
+      "color": [
+        0.8901960784313725,
+        0.06666666666666667,
+        0.9333333333333333
+      ],
+      "box": [
+        -16,
+        -16,
+        -16,
+        16,
+        16,
+        16
+      ],
+      "description": "red key",
+      "inherits": [
+        "item_pickupBase"
+      ],
+      "properties": []
+    },
+    {
+      "name": "item_key_special",
+      "entityType": "point",
+      "color": [
+        0.9921568627450981,
+        0.9411764705882353,
+        0.00784313725490196
+      ],
+      "box": [
+        -16,
+        -16,
+        -16,
+        16,
+        16,
+        16
+      ],
+      "description": "red key",
+      "inherits": [
+        "item_pickupBase"
+      ],
+      "properties": []
+    },
+    {
+      "name": "item_key_green",
+      "entityType": "point",
+      "color": [
+        0,
+        1,
+        0.25098039215686274
+      ],
+      "box": [
+        -16,
+        -16,
+        -16,
+        16,
+        16,
+        16
+      ],
+      "description": "red key",
+      "inherits": [
+        "item_pickupBase"
+      ],
+      "properties": []
+    },
+    {
+      "name": "trigger_key_once",
+      "entityType": "group",
+      "color": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "box": [
+        -16,
+        -16,
+        -16,
+        16,
+        16,
+        16
+      ],
+      "description": "",
+      "inherits": [
+        "triggerOnce"
+      ],
+      "properties": [
+        {
+          "key": "requiredKeys",
+          "displayName": "Required Key",
+          "type": "Array",
+          "defaultValue": "",
+          "description": "for example:\r\nred\r\nred green\r\nred green blue",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        }
+      ]
+    },
+    {
+      "name": "trigger_key_multi",
+      "entityType": "group",
+      "color": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "box": [
+        -16,
+        -16,
+        -16,
+        16,
+        16,
+        16
+      ],
+      "description": "",
+      "inherits": [
+        "trigger"
+      ],
+      "properties": [
+        {
+          "key": "requiredKeys",
+          "displayName": "Required Keys",
+          "type": "Array",
+          "defaultValue": "",
+          "description": "for example:\r\nred\r\nred green\r\nred green blue",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        }
+      ]
+    },
+    {
+      "name": "func_physics_dynamic",
+      "entityType": "group",
+      "color": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "box": [
+        -16,
+        -16,
+        -16,
+        16,
+        16,
+        16
+      ],
+      "description": "dynamic object that is affected by physics\r\n",
+      "inherits": [
+        "entity"
+      ],
+      "properties": []
+    },
+    {
+      "name": "trigger_ladder",
+      "entityType": "group",
+      "color": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "box": [
+        -16,
+        -16,
+        -16,
+        16,
+        16,
+        16
+      ],
+      "description": "",
+      "inherits": [
+        "entity"
+      ],
+      "properties": []
+    },
+    {
+  "name": "info_train_spline_control",
+  "entityType": "point",
+  "color": [1, 0.5, 1],
+  "box": [-8, -8, -8, 8, 8, 8],
+  "description": "Defines a control point for a spline curve.",
+  "inherits": [],
+  "properties": [
+    {
+      "key": "targetname",
+      "displayName": "Targetname",
+      "type": "String",
+      "defaultValue": "",
+      "description": "The \"control\" key in a main splinepoint references to this.",
+      "bitIndex": 0,
+      "isBuiltIn": false
+    }
+  ]
+},
+{
+  "name": "info_train_spline_main",
+  "entityType": "point",
+  "color": [0, 1, 0],
+  "box": [-8, -8, -8, 8, 8, 8],
+  "description": "Defines a main point for a spline curve. The spline between this point and next point is named after this point, i.e. use this point's targetname. Create new key/value pairs named \"controlX\" (where X is a number greater than or equal to 2) if you need additional control points.",
+  "inherits": [],
+  "properties": [
+    {
+      "key": "targetname",
+      "displayName": "Targetname",
+      "type": "String",
+      "defaultValue": "",
+      "description": "The name of this point.",
+      "bitIndex": 0,
+      "isBuiltIn": false
+    },
+    {
+      "key": "target",
+      "displayName": "Target",
+      "type": "Target",
+      "defaultValue": "",
+      "description": "Target spline point.",
+      "bitIndex": 0,
+      "isBuiltIn": false
+    },
+    {
+      "key": "control",
+      "displayName": "Control",
+      "type": "String",
+      "defaultValue": "",
+      "description": "Sets a control point for this spline.",
+      "bitIndex": 0,
+      "isBuiltIn": false
+    }
+  ]
+}
+  ]
+}

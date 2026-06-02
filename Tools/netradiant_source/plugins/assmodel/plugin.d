@@ -13,4 +13,5 @@ plugins/assmodel/plugin.o: plugins/assmodel/plugin.cpp \
  libs/modulesystem/moduleregistry.h libs/generic/reference.h \
  libs/string/string.h libs/memory/allocator.h libs/generic/object.h \
  libs/stream/stringstream.h libs/typesystem.h plugins/assmodel/model.h \
- include/iarchive.h include/idatastream.h plugins/assmodel/mdlimage.h
+ plugins/assmodel/glbarchive.h include/iarchive.h include/idatastream.h \
+ plugins/assmodel/mdlimage.h

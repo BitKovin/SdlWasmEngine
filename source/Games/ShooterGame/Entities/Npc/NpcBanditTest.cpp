@@ -12,7 +12,7 @@ private:
 
 NpcBanditBase::NpcBanditBase()
 {
-	isGuard = true;
+	npcType = NpcType::Guard;
 	fractionTag = "bandit";
 	hostileTags.insert("citizen");
 

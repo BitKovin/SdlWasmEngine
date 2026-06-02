@@ -430,6 +430,7 @@ int GetFileCount( const char *filename, int flag ){
 
 ArchiveFile* OpenFile( const char* filename ){
 	ASSERT_MESSAGE( strchr( filename, '\\' ) == 0, "path contains invalid separator '\\': " << makeQuoted( filename ) );
+	{ static bool s_once = false; if ( !s_once ) { s_once = true; globalOutputStream() << "vfs: new OpenFile() running\n"; } }
 	for ( archive_entry_t& arch : g_archives )
 	{
 		ArchiveFile* file = arch.archive->openFile( filename );
@@ -438,9 +439,53 @@ ArchiveFile* OpenFile( const char* filename ){
 		}
 	}
 
+	// Lazy-mount GLB archives for paths like "models/foo/bar.glb/texture0.jpg".
+	const char* glbSep = strstr( filename, ".glb/" );
+	if ( glbSep == 0 ) glbSep = strstr( filename, ".GLB/" );
+	if ( glbSep != 0 ) {
+		char glbVfsPath[PATH_MAX + 1];
+		std::size_t glbLen = (std::size_t)( ( glbSep + 4 ) - filename );
+		globalOutputStream() << "vfs: GLB path: \"" << filename << "\" len=" << (int)glbLen << '\n';
+		if ( glbLen <= PATH_MAX ) {
+			strncpy( glbVfsPath, filename, glbLen );
+			glbVfsPath[glbLen] = '\0';
+			globalOutputStream() << "vfs: glbVfsPath=\"" << glbVfsPath << "\"\n";
+			bool already = false;
+			for ( const archive_entry_t& arch : g_archives ) {
+				if ( path_equal( arch.name.c_str(), glbVfsPath ) ) {
+					already = true;
+					break;
+				}
+			}
+			globalOutputStream() << "vfs: already=" << already << '\n';
+			const _QERArchiveTable* glbTable = GetArchiveTable( FileSystemQ3API_getArchiveModules(), "glb" );
+			globalOutputStream() << "vfs: glbTable=" << ( glbTable ? "found" : "NULL" ) << '\n';
+			if ( !already && glbTable != 0 ) {
+				for ( const archive_entry_t& arch : g_archives ) {
+					if ( arch.is_pakfile ) continue;
+					char absGlbPath[PATH_MAX + 1];
+					if ( string_length( arch.name.c_str() ) + glbLen <= PATH_MAX ) {
+						strcpy( absGlbPath, arch.name.c_str() );
+						strcat( absGlbPath, glbVfsPath );
+						globalOutputStream() << "vfs: probing \"" << absGlbPath << "\"\n";
+						FILE* f = fopen( absGlbPath, "rb" );
+						if ( f != 0 ) {
+							fclose( f );
+							globalOutputStream() << "vfs: mounting \"" << absGlbPath << "\"\n";
+							g_archives.push_back( archive_entry_t{ glbVfsPath, glbTable->m_pfnOpenArchive( absGlbPath ), true } );
+							ArchiveFile* file = g_archives.back().archive->openFile( filename );
+							globalOutputStream() << "vfs: post-mount: " << ( file ? "FOUND" : "not found" ) << '\n';
+							if ( file != 0 ) return file;
+							break;
+						}
+					}
+				}
+			}
+		}
+	}
+
 	return 0;
 }
-
 ArchiveTextFile* OpenTextFile( const char* filename ){
 	ASSERT_MESSAGE( strchr( filename, '\\' ) == 0, "path contains invalid separator '\\': " << makeQuoted( filename ) );
 	for ( archive_entry_t& arch : g_archives )

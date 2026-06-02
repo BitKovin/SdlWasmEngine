@@ -206,7 +206,7 @@ void NpcZombie::AsyncUpdate()
 
     vec3 lookAtDir = MathHelper::FastNormalize(target->Position - Position);
 
-    if (distance(target->Position, Position) < 1.5f
+    if (distance(target->Position, Position) < 1.1f
         && dot(MathHelper::GetForwardVector(mesh->Rotation), lookAtDir) > 0.93f)
     {
         Attack();

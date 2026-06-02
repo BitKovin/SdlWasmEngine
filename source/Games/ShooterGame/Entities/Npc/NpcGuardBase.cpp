@@ -13,7 +13,7 @@ private:
 NpcGuardBase::NpcGuardBase() : NpcBase()
 {
 
-	isGuard = true;
+	npcType = NpcType::Guard;
 
 	modelPath = "GameData/models/npc/guard.glb";
 

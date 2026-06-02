@@ -12,7 +12,7 @@ private:
 
 NpcCivilianBase::NpcCivilianBase() : NpcBase()
 {
-	isGuard = false;
+	npcType = NpcType::Civilian;
 }
 
 REGISTER_ENTITY(NpcCivilianBase,"npc_civilian")

@@ -3,7 +3,7 @@
 
 void AlertedInvestigationBase::OnStart()
 {
-	if (owner->isGuard == false)
+	if (owner->npcType != NpcType::Guard)
 	{
 		owner->report_to_guard = true;
 		owner->FindClosestGuard();
@@ -17,7 +17,7 @@ void AlertedInvestigationBase::OnStart()
 
 void AlertedInvestigationBase::Finish()
 {
-	if (!owner->isGuard && owner->found_guard)
+	if (owner->npcType != NpcType::Guard && owner->found_guard)
 	{
 		auto guardRef = dynamic_cast<NpcBase*>(Level::Current->FindEntityWithId(owner->closestGuard));
 
