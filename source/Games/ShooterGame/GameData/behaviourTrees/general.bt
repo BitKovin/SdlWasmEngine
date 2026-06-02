@@ -1,9 +1,9 @@
 {
     "blackboard": {
         "attackPosition": [
-            18.961074829101563,
-            2.6795461177825928,
-            16.56519317626953
+            -0.9602737426757813,
+            1.4305051565170288,
+            10.480264663696289
         ],
         "closestGuard": "",
         "flee_target": [
@@ -13,11 +13,11 @@
         ],
         "found_guard": false,
         "has_navpoint": true,
-        "investigation": true,
+        "investigation": false,
         "investigation_target": [
-            20.484708786010742,
-            1.3962899446487427,
-            16.12297248840332
+            -4.491583824157715,
+            2.132084608078003,
+            29.176246643066406
         ],
         "investigation_wait_time": 1.0,
         "isGuard": true,
@@ -29,16 +29,16 @@
         "stunned": false,
         "target": "$player_0",
         "target_attack": true,
-        "target_attackInRange": false,
-        "target_follow": false,
+        "target_attackInRange": true,
+        "target_follow": true,
         "target_id": "$player_0",
-        "target_knowsLocation": false,
+        "target_knowsLocation": true,
         "target_lastSeenPosition": [
-            0.0,
-            0.0,
-            0.0
+            -0.9602737426757813,
+            1.4305051565170288,
+            10.480264663696289
         ],
-        "target_sees": false,
+        "target_sees": true,
         "target_underArrest": true,
         "task_acceptanceRadius": 0.30000001192092896,
         "task_acceptance_radius": 0.30000001192092896,
@@ -46,11 +46,11 @@
         "task_doingJob": false,
         "task_move": true,
         "task_moveLocation": [
-            -0.25,
+            -2.5,
             0.5,
-            -4.34375
+            32.0
         ],
-        "task_setOrientation": true
+        "task_setOrientation": false
     },
     "isRunning": true,
     "root": {
@@ -621,7 +621,7 @@
                                                                                     {
                                                                                         "acceptance radius": {
                                                                                             "sourceType": 0,
-                                                                                            "value": 0.5
+                                                                                            "value": 1.0
                                                                                         },
                                                                                         "children": [],
                                                                                         "id": "node_2bb45f24562df117",
@@ -653,7 +653,7 @@
                                                                                                             "value": 1.0
                                                                                                         },
                                                                                                         "children": [],
-                                                                                                        "id": "node_40b19d2730040466",
+                                                                                                        "id": "node_4e4d5b152a4d640b",
                                                                                                         "name": "Move To Position",
                                                                                                         "pretty path": {
                                                                                                             "sourceType": 0,
