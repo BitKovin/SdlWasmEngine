@@ -31,8 +31,15 @@ set(ENGINE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}")
 # PLATFORM_DIR and PLATFORM_HAS_OPENAL are also set here.
 # ——————————————————————————————————————————————————————————
 
+option(ENABLE_PTHREADS "Enable Emscripten pthread support (WASM threads)" ON)
+
+project(MyProject)  
+
 if(NOT ENGINE_DISABLE_PLATFORM_DETECTION)
 
+
+    message(STATUS "CMAKE_SYSTEM_NAME='${CMAKE_SYSTEM_NAME}'")
+    message(STATUS "EMSCRIPTEN='${EMSCRIPTEN}'")
 
     if(CMAKE_SYSTEM_NAME MATCHES "Emscripten" OR DEFINED EMSCRIPTEN)
         include("${ENGINE_ROOT}/cmake/platforms/emscripten.cmake")
@@ -79,7 +86,7 @@ else()
 endif()
 
 
-project(MyProject)
+
 
 message(STATUS "==================================================")
 message(STATUS "Platform : ${PLATFORM_DIR}")
@@ -104,7 +111,7 @@ set(GAME_PATH "" CACHE PATH
 # ——————————————————————————————————————————————————————————
 # Global settings
 # ——————————————————————————————————————————————————————————
-option(ENABLE_PTHREADS "Enable Emscripten pthread support (WASM threads)" OFF)
+
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -204,6 +211,31 @@ if(PLATFORM_HAS_OPENAL)
     set(ALSOFT_EXAMPLES OFF CACHE BOOL "" FORCE)
     set(ALSOFT_UTILS OFF CACHE BOOL "" FORCE)
     set(ALSOFT_TESTS OFF CACHE BOOL "" FORCE)
+
+    if(EMSCRIPTEN)
+        # Emscripten's clang reports -msse2 as a valid flag but then rejects it
+        # for wasm32 targets at actual compile time. Pre-cache all the results
+        # that OpenAL-soft's CMake uses to gate SSE so none of them ever open.
+
+        # Block the compiler-flag probe at line 521
+        set(HAVE_MSSE2_SWITCH FALSE CACHE BOOL "" FORCE)
+
+        set(HAVE_SSE  1)
+        set(HAVE_SSE2 1)
+
+        # Block the header probes at lines 534-537
+        set(HAVE_XMMINTRIN_H FALSE CACHE INTERNAL "" FORCE)
+        set(HAVE_EMMINTRIN_H FALSE CACHE INTERNAL "" FORCE)
+        set(HAVE_PMMINTRIN_H FALSE CACHE INTERNAL "" FORCE)
+        set(HAVE_SMMINTRIN_H FALSE CACHE INTERNAL "" FORCE)
+
+        # Belt-and-suspenders: disable the option switches too
+        set(ALSOFT_CPUEXT_SSE    OFF CACHE BOOL "" FORCE)
+        set(ALSOFT_CPUEXT_SSE2   OFF CACHE BOOL "" FORCE)
+        set(ALSOFT_CPUEXT_SSE3   OFF CACHE BOOL "" FORCE)
+        set(ALSOFT_CPUEXT_SSE4_1 OFF CACHE BOOL "" FORCE)
+        set(ALSOFT_CPUEXT_NEON   OFF CACHE BOOL "" FORCE)
+    endif()
 
     add_subdirectory(${LIB_DIR}/openAlSoft)
     target_link_libraries(engine PUBLIC OpenAL)

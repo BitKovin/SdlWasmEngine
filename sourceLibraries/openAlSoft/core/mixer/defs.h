@@ -69,37 +69,40 @@ struct CubicState {
 using InterpState = std::variant<std::monostate, CubicState, BsincState>;
 
 using ResamplerFunc = void(*)(InterpState const *state, std::span<float const> src, unsigned frac,
-    unsigned increment, std::span<float> dst);
+    unsigned increment, std::span<float> dst) noexcept NONBLOCKING;
 
 [[nodiscard]]
-auto PrepareResampler(Resampler resampler, unsigned increment, InterpState *state)
-    -> ResamplerFunc;
+auto PrepareResampler(Resampler resampler, unsigned increment, InterpState *state) noexcept
+    NONBLOCKING -> ResamplerFunc;
 
 #define DECL_RESAMPLER(T, I)                                                  \
 void Resample_##T##_##I(InterpState const *state, std::span<float const> src, \
-    unsigned frac, unsigned increment, std::span<float> dst);
+    unsigned frac, unsigned increment, std::span<float> dst) noexcept         \
+    NONBLOCKING;
 
 #define DECL_MIXER(I)                                                         \
 void Mix_##I(std::span<float const> InSamples,                                \
     std::span<FloatBufferLine> OutBuffer, std::span<float> CurrentGains,      \
     std::span<float const> TargetGains, std::size_t Counter,                  \
-    std::size_t OutPos);                                                      \
+    std::size_t OutPos) noexcept NONBLOCKING;                                 \
 void Mix_##I(std::span<float const> InSamples, std::span<float> OutBuffer,    \
-    float &CurrentGain, float TargetGain, std::size_t Counter);
+    float &CurrentGain, float TargetGain, std::size_t Counter) noexcept       \
+    NONBLOCKING;
 
 #define DECL_HRTF_MIXER(I)                                                    \
 void MixHrtf_##I(std::span<float const> InSamples,                            \
     std::span<f32x2> AccumSamples, unsigned IrSize,                           \
-    MixHrtfFilter const *hrtfparams, std::size_t SamplesToDo);                \
+    MixHrtfFilter const *hrtfparams, std::size_t SamplesToDo) noexcept        \
+    NONBLOCKING;                                                              \
 void MixHrtfBlend_##I(std::span<float const> InSamples,                       \
     std::span<f32x2> AccumSamples, unsigned IrSize,                           \
     HrtfFilter const *oldparams, MixHrtfFilter const *newparams,              \
-    std::size_t SamplesToDo);                                                 \
+    std::size_t SamplesToDo) noexcept NONBLOCKING;                            \
 void MixDirectHrtf_##I(FloatBufferSpan LeftOut, FloatBufferSpan RightOut,     \
     std::span<FloatBufferLine const> InSamples, std::span<f32x2> AccumSamples,\
     std::span<float, BufferLineSize> TempBuf,                                 \
     std::span<HrtfChannelState> ChanState, std::size_t IrSize,                \
-    std::size_t SamplesToDo);
+    std::size_t SamplesToDo) noexcept NONBLOCKING;
 
 
 DECL_RESAMPLER(Point, C)
@@ -144,7 +147,8 @@ DECL_RESAMPLER(Cubic, SSE4)
 /* Vectorized resampler helpers */
 template<std::size_t N> constexpr
 void InitPosArrays(unsigned const pos, unsigned const frac, unsigned const increment,
-    std::span<unsigned, N> const frac_arr, std::span<unsigned, N> const pos_arr)
+    std::span<unsigned, N> const frac_arr, std::span<unsigned, N> const pos_arr) noexcept
+    NONBLOCKING
 {
     static_assert(pos_arr.size() == frac_arr.size());
     pos_arr[0] = pos;

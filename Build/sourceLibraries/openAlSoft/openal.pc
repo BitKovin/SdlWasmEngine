@@ -1,0 +1,12 @@
+prefix=F:/Tools/emsdk/upstream/emscripten/cache/sysroot
+exec_prefix=${prefix}
+libdir=F:/Tools/emsdk/upstream/emscripten/cache/sysroot/lib
+includedir=F:/Tools/emsdk/upstream/emscripten/cache/sysroot/include
+
+Name: OpenAL
+Description: OpenAL is a cross-platform 3D audio API
+Requires: 
+Version: 1.25.2
+Libs: -L${libdir} -lopenal 
+Libs.private: -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now -ldl -lm
+Cflags: -I${includedir} -I${includedir}/AL -DAL_LIBTYPE_STATIC

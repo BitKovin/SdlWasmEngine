@@ -227,6 +227,7 @@ std::shared_ptr<FmodEventInstance> FmodEventInstance::CreateFromId(const std::st
 
 bool FmodEventInstance::IsGamePaused() const
 {
+    if (IsUISound) return false;
     return EngineMain::MainInstance->Paused;
 }
 
@@ -240,5 +241,5 @@ float FmodEventInstance::GetPitchScale() const
 
 float FmodEventInstance::GetFinalVolume() const
 {
-    return Volume * SoundManager::GlobalVolume;
+    return Volume * SoundManager::GlobalVolume * SoundManager::GetVolumeForSoundType(Type);
 }

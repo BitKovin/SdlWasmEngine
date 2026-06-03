@@ -56,11 +56,11 @@ set_target_properties(Jolt::Jolt PROPERTIES
   INTERFACE_LINK_OPTIONS "-Wno-limited-postlink-optimizations"
 )
 
-# Import target "Jolt::Jolt" for configuration "RelWithDebInfo"
-set_property(TARGET Jolt::Jolt APPEND PROPERTY IMPORTED_CONFIGURATIONS RELWITHDEBINFO)
+# Import target "Jolt::Jolt" for configuration "Release"
+set_property(TARGET Jolt::Jolt APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
 set_target_properties(Jolt::Jolt PROPERTIES
-  IMPORTED_LINK_INTERFACE_LANGUAGES_RELWITHDEBINFO "CXX"
-  IMPORTED_LOCATION_RELWITHDEBINFO "F:/Git/SdlWasmEngine/Build/sourceLibraries/JoltPhysics-5.3.0/Build/libJolt.a"
+  IMPORTED_LINK_INTERFACE_LANGUAGES_RELEASE "CXX"
+  IMPORTED_LOCATION_RELEASE "F:/Git/SdlWasmEngine/Build/sourceLibraries/JoltPhysics-5.3.0/Build/libJolt.a"
   )
 
 # This file does not depend on other imported targets which have

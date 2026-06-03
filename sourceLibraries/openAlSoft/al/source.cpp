@@ -53,7 +53,6 @@
 #include "AL/efx.h"
 
 #include "alc/backends/base.h"
-#include "alc/context.h"
 #include "alc/device.h"
 #include "alc/inprogext.h"
 #include "almalloc.h"
@@ -68,7 +67,6 @@
 #include "direct_defs.h"
 #include "filter.h"
 #include "flexarray.h"
-#include "gsl/gsl"
 #include "intrusive_ptr.h"
 #include "opthelpers.h"
 
@@ -80,11 +78,15 @@
 #endif
 
 #if HAVE_CXXMODULES
+import alc.context;
 import format.types;
+import gsl;
 import logging;
 #else
+#include "alc/context.hpp"
 #include "alformattypes.hpp"
 #include "core/logging.h"
+#include "gsl/gsl"
 #endif
 
 
@@ -3995,8 +3997,8 @@ void al::Source::eax4_translate(const Eax4Props& src, Eax5Props& dst) noexcept
     //
     const auto src_slots = std::span{src.active_fx_slots.guidActiveFXSlots};
     const auto dst_slots = std::span{dst.active_fx_slots.guidActiveFXSlots};
-    auto dstiter = std::ranges::transform(src_slots, dst_slots.begin(), [](const GUID &src_id)
-        -> GUID
+    auto dstiter = std::ranges::transform(src_slots, dst_slots.begin(), [](AL_GUID const& src_id)
+        -> AL_GUID
     {
         if(src_id == EAX_NULL_GUID)
             return EAX_NULL_GUID;
@@ -4563,10 +4565,11 @@ void al::Source::eax_set(const EaxCall& call)
     mEaxVersion = eax_version;
 }
 
-void al::Source::eax_get_active_fx_slot_id(const EaxCall& call, const std::span<const GUID> srcids)
+void al::Source::eax_get_active_fx_slot_id(EaxCall const& call,
+    std::span<AL_GUID const> const srcids)
 {
     Expects(srcids.size()==EAX40_MAX_ACTIVE_FXSLOTS || srcids.size()==EAX50_MAX_ACTIVE_FXSLOTS);
-    const auto dst_ids = call.as_span<GUID>(srcids.size());
+    const auto dst_ids = call.as_span<AL_GUID>(srcids.size());
     std::uninitialized_copy_n(srcids.begin(), dst_ids.size(), dst_ids.begin());
 }
 

@@ -32,8 +32,8 @@ function(platform_early_config)
 
     # WASM SIMD flags — Emscripten-specific, not covered by compiler_flags.cmake.
     # Propagate to parent scope so they affect every target in the build.
-    set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -msse -msse2 -msimd128"           PARENT_SCOPE)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse -msse2 -msimd128 -msse4.2"  PARENT_SCOPE)
+    set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -msimd128"           PARENT_SCOPE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msimd128"  PARENT_SCOPE)
 
     # pthread compile flag (link-side flag is added in platform_configure_game_target)
     if(ENABLE_PTHREADS)
@@ -52,10 +52,18 @@ endfunction()
 # Hook 2: set cache variables before third-party add_subdirectory calls
 # ——————————————————————————————————————————————————————————
 function(platform_pre_libraries)
+    # Prevent FreeType from finding & linking the Emscripten sysroot libpng/zlib.
+    # Those cached .a files lack atomics/bulk-memory and are incompatible with -pthread.
+    # FreeType falls back to its built-in stubs — PNG emoji glyphs won't render,
+    # which is acceptable for a game engine.
+    set(FT_DISABLE_PNG   TRUE CACHE BOOL "Disable sysroot libpng in FreeType"  FORCE)
+    set(FT_DISABLE_ZLIB  TRUE CACHE BOOL "Disable sysroot zlib in FreeType"    FORCE)
+    set(FT_DISABLE_BZIP2 TRUE CACHE BOOL "" FORCE)
+
     # JoltPhysics — enable WASM SIMD path
     set(USE_WASM_SIMD ON CACHE BOOL "Enable SIMD on Emscripten WASM build" FORCE)
 
-    # BGFX — Emscripten is single-threaded and doesn't need the shader tools
+    # BGFX — Emscripten doesn't need shader tools
     set(BGFX_CONFIG_MULTITHREADED    OFF CACHE BOOL "" FORCE)
     set(BX_CONFIG_SUPPORTS_THREADING OFF CACHE BOOL "" FORCE)
     set(BGFX_BUILD_TOOLS             OFF CACHE BOOL "" FORCE)
@@ -91,8 +99,6 @@ function(platform_configure_game_target game_target)
     # inherit parent-scope variables for reading).
     set(_link_opts
         "SHELL:-s USE_SDL=2"
-        "SHELL:-s USE_SDL_IMAGE=2"
-        "SHELL:-s SDL2_IMAGE_FORMATS=[\"png\",\"jpg\",\"tga\"]"
         "SHELL:-s USE_WEBGL2=1"
         "SHELL:-s MIN_WEBGL_VERSION=2"
         "SHELL:-s MAX_WEBGL_VERSION=2"

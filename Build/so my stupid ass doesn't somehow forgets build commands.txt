@@ -1,5 +1,5 @@
 # Emscripten
-emcmake cmake .. -DGAME_NAME=ShooterGame -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../cmake/toolchains/clang.cmake
+emcmake cmake .. -DGAME_NAME=ShooterGame -DCMAKE_BUILD_TYPE=Release -DENABLE_PTHREADS=ON
 ninja
 
 # Linux

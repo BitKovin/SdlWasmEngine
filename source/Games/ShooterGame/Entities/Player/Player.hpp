@@ -131,7 +131,6 @@ private:
 	float bobProgress = 0;
 	float bobSpeed = 1.1f;
 
-	SoundPlayer* soundPlayer;
 
 	int lastSlot = -1;
 	WeaponSlotData meleeWeapon;

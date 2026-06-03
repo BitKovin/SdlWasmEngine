@@ -47,7 +47,6 @@ void SoundPlayer::Play()
 		LateUpdate();
 		Sound->Stop();
 		Sound->Play();
-		Sound->Play(); //diry fix for emscripten not playing sound every time
 	}
 }
 

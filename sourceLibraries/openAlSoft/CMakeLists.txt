@@ -41,7 +41,7 @@ else()
 endif()
 
 project(OpenAL
-    VERSION 1.25.1
+    VERSION 1.25.2
     LANGUAGES C CXX)
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -516,12 +516,7 @@ set(SSE2_SWITCH "")
 
 if(NOT MSVC)
     set(OLD_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS})
-    # Yes GCC, really don't accept command line options you don't support
-    list(APPEND CMAKE_REQUIRED_FLAGS -Werror)
-    check_c_compiler_flag(-msse2 HAVE_MSSE2_SWITCH)
-    if(HAVE_MSSE2_SWITCH)
-        set(SSE2_SWITCH "-msse2")
-    endif()
+
     set(CMAKE_REQUIRED_FLAGS ${OLD_REQUIRED_FLAGS})
     unset(OLD_REQUIRED_FLAGS)
     # Allow detection of the OpenPOWER<-->SSE translation layer
@@ -981,12 +976,15 @@ set(ALC_SRCS
 set(ALC_HDRS
     alc/alu.h
     alc/alconfig.h
-    alc/context.h
+    alc/context.hpp
     alc/device.h
     alc/effects/base.h
     alc/events.h
     alc/export_list.h
     alc/inprogext.h)
+if(HAVE_CXXMODULES)
+    list(APPEND CORE_MODS alc/context.cppm)
+endif()
 
 if(ALSOFT_EAX)
     list(APPEND OPENAL_SRCS
@@ -1651,10 +1649,13 @@ set_target_properties(alsoft.common PROPERTIES ${ALSOFT_STD_VERSION_PROPS}
     POSITION_INDEPENDENT_CODE TRUE)
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin" AND DEFINED CMAKE_OSX_DEPLOYMENT_TARGET
     AND CMAKE_OSX_DEPLOYMENT_TARGET VERSION_LESS "10.13")
-    # Targeting versions prior to macOS 10.13 requires specifying custom
-    # alignment-aware operators, which we do. This lets the compiler know they
-    # exist and it can use them.
-    target_compile_options(alsoft.common PUBLIC "-faligned-allocation")
+    check_cxx_compiler_flag("-faligned-allocation" HAVE_FALIGNED_ALLOCATION)
+    if(HAVE_FALIGNED_ALLOCATION)
+        # Targeting versions prior to macOS 10.13 requires specifying custom
+        # alignment-aware operators, which we do. This lets the compiler know
+        # they exist and it can use them.
+        target_compile_options(alsoft.common PUBLIC "-faligned-allocation")
+    endif()
 endif()
 add_library(alsoft::common ALIAS alsoft.common)
 
@@ -1662,7 +1663,8 @@ if(HAVE_CXXMODULES)
     add_library(alsoft.core-modules OBJECT EXCLUDE_FROM_ALL)
     target_sources(alsoft.core-modules PUBLIC FILE_SET CXX_MODULES FILES ${CORE_MODS})
     target_include_directories(alsoft.core-modules PRIVATE
-        ${INC_PATHS} ${OpenAL_BINARY_DIR} ${OpenAL_SOURCE_DIR} ${OpenAL_SOURCE_DIR}/common
+        ${INC_PATHS} ${OpenAL_BINARY_DIR} ${OpenAL_SOURCE_DIR} ${OpenAL_SOURCE_DIR}/include
+        ${OpenAL_SOURCE_DIR}/common
     )
     target_link_libraries(alsoft.core-modules PRIVATE alsoft::common ${EXTRA_LIBS} ${MATH_LIB})
     set_target_properties(alsoft.core-modules PROPERTIES ${ALSOFT_STD_VERSION_PROPS}
