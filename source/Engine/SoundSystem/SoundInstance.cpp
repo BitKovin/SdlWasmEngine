@@ -275,7 +275,7 @@ float SoundInstance::GetDistanceFade(float distance) const
     float volume = 1.0f - fade;
 
     // Square the result for FMOD's non-linear concave curve
-    return volume * volume;
+    return volume;
 }
 
 float SoundInstance::CurrentDistanceToListener() const

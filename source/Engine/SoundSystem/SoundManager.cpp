@@ -129,7 +129,7 @@ void SoundManager::InitContext(ALCcontext* context, const char* label, bool expe
 
     // Disable OpenAL's built-in distance attenuation. SoundInstance::ComputeDistanceGain()
     // handles falloff manually, so setting AL_NONE once here prevents double-attenuation.
-    alDistanceModel(AL_NONE);
+    alDistanceModel(AL_LINEAR_DISTANCE_CLAMPED);
 }
 
 // =============================================================================
