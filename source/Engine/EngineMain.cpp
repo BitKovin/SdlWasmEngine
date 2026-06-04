@@ -30,9 +30,12 @@
 
 #include <Profiling/ResourceStatistics.hpp>
 
+#include <Analytics/AnalyticsSystem.h>
+
 #include <Logger.hpp>
 
 #include <tracy/tracy/Tracy.hpp>
+
 
 EngineMain* EngineMain::MainInstance = nullptr;
 
@@ -227,6 +230,9 @@ void EngineMain::Init(std::vector<std::string> args)
 	RenderImGui();
     bgfx::touch(0);
     bgfx::frame();
+
+    AnalyticsSystem::Set(new AnalyticsSystem());
+
 }
 
 #include <map>
@@ -710,6 +716,11 @@ void EngineMain::GameUpdate()
     {
         ZoneScopedN("Late Update");
         Level::Current->LateUpdate(Paused);
+    }
+
+    {
+        ZoneScopedN("AnalyticsSystem Update");
+		AnalyticsSystem::Get().Tick(Time::GameTime);
     }
 
     if (!SimulatingGameTicks)

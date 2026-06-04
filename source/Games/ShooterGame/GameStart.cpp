@@ -19,7 +19,11 @@
 #include <UI/Pause/UiPauseMenu.h>
 
 #include "Entities/Enemy/DebuffFactory.h"
- 
+
+
+#include <Analytics/RGameStats/RGameStatsAnalyticsProvider.h>
+#include <Analytics/RGameStats/EngineHttpClient.h> 
+
 class GameStart : public Entity
 {
 public:
@@ -31,6 +35,13 @@ public:
 
 	void Start()
 	{
+
+        auto analyticsProvider = new RGameStatsAnalyticsProvider();
+        analyticsProvider->HtmlClient = new EngineHttpClient();
+        AnalyticsSystem::Set(analyticsProvider);
+
+		ANALYTICS_SEND_EVENT("reserved_game_started", "");
+
         LoadConstantAssets();
         LoadingScreenSystem::SetLoadingCanvas(std::make_shared<UiDefaultLoadingScreen>());
 

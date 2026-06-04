@@ -533,6 +533,11 @@ void Player::Death()
 	dead = true;
 	deathAnimDelay.AddDelay(0.35f);
 
+	ANALYTICS_SEND_EVENT("player_death", std::unordered_map<std::string, std::string>{
+		{"position", to_string(Position)},
+		{"gameTime", to_string(Time::GameTime)}
+	});
+
 }
 
 void Player::UpdateBikeMovement(vec2 input)
