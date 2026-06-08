@@ -592,7 +592,7 @@ std::vector<glm::vec3> NavigationSystem::FindSimplePath(glm::vec3 start, glm::ve
 
 	vec3 targetInitial = target;
 
-    hit = Physics::SphereTrace(target, target - vec3(0, 5, 0),0.4, BodyType::World);
+    hit = Physics::SphereTrace(target, target - vec3(0, 5, 0),0.2, BodyType::World);
     if (hit.hasHit)
         target = hit.position + vec3(0, 0.3f, 0);
 

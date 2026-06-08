@@ -9,7 +9,10 @@ public:
 
 	void OnStart() override
 	{
-		if (!sharedByNpc)
+		if (!sharedByNpc && !restarted)
 			owner->PlayPhrace("heard_sound");
 	}
+
+	bool StopWhenSeeCauser() const override { return true; }
+
 };

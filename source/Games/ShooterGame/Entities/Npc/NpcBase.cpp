@@ -34,6 +34,7 @@
 #include "Investigations/NpcInTroubleInvestigation.h"
 #include "Investigations/TargetSeenInvestigation.h"
 #include "Investigations/WeaponFireInvestigation.h"
+#include "Investigations/LookAtInvestigation.h"
 
 #include <tracy/tracy/Tracy.hpp>
 
@@ -65,6 +66,8 @@ std::shared_ptr<InvestigationBase> NpcBase::CreateInvestigationFromReason(Invest
 		return make_shared<NpcInTroubleInvestigation>(this);
 	case InvestigationReason::WeaponFire:
 		return make_shared<WeaponFireInvestigation>(this);
+	case InvestigationReason::LookAt:
+		return make_shared<LookAtInvestigation>(this);
 	case InvestigationReason::Body:
 		return make_shared<BodyInvestigation>(this);
 	case InvestigationReason::Explosion:
@@ -107,6 +110,8 @@ NpcBase::NpcBase()
 
 NpcBase::~NpcBase()
 {
+	if(controller)
+		delete controller;
 }
 
 void NpcBase::DoInterpolatedAnimationUpdate()
@@ -170,7 +175,7 @@ void NpcBase::Start()
 
 	controller = new CharacterController();
 	controller->movementQuality = CharacterControllerMovementQuality::NpcLowQuality;
-	controller->Init(this, Position, 0.45f);
+	controller->Init(this, Position, 0.45f,1.8f, 90);
 
 	mesh->Position = Position - vec3(0, controller->height / 2.0f, 0);
 	mesh->Rotation = Rotation;
@@ -234,6 +239,14 @@ void NpcBase::OnPointDamage(float Damage, vec3 Point, vec3 Direction, string bon
 	if (bone == "calf_l" || bone == "calf_r" || Damage > 50)
 	{
 		StartStunnedRagdoll();
+	}
+
+	if (target_follow == false)
+	{
+
+		std::string causerId = DamageCauser ? DamageCauser->Id : "";
+
+		TryStartInvestigation(InvestigationReason::WeaponFire, DamageCauser ? DamageCauser->Position : Point + Direction * 1.0f, causerId);
 	}
 
 	GlobalParticleSystem::SpawnParticleAt("hit_flesh", Point, MathHelper::FindLookAtRotation(vec3(0), Direction), vec3(Damage / 20.0f));
@@ -457,6 +470,8 @@ void NpcBase::PlayPhrace(std::string name)
 
 	if (globalPhraceDelay.Wait()) return;
 
+	if (name.empty()) return;
+
 	const string eventPath = vo_base_event_path + name;
 
 	VoiceSoundPlayer->Stop();
@@ -522,7 +537,7 @@ void NpcBase::AsyncUpdate()
 			UpdateScheduledTask();
 		}
 
-		if (currentInvestigation)
+		if (currentInvestigation && isStunned() == false)
 		{
 			ZoneScopedN("Investigation Update");
 			currentInvestigation->Update(Time::DeltaTimeF);
@@ -1078,7 +1093,7 @@ void NpcBase::UpdateObserver()
 		}
 
 		//if weapon fire investigation, check for player proximity
-		if (currentInvestigation && currentInvestigation->reason == InvestigationReason::WeaponFire && target->ownerId == currentInvestigation->causer && distance(target->position, currentInvestigation->target) < 10)
+		if (currentInvestigation && currentInvestigation->reason == InvestigationReason::WeaponFire && target->ownerId == currentInvestigation->causer && distance(target->position, currentInvestigation->TargetLocation) < 6)
 		{
 			if (min_crime > Crime::WeaponFireSound)
 			{
@@ -1253,6 +1268,7 @@ void NpcBase::UpdateObserver()
 		if (info.sees && info.detection_progress >= 1.0f)
 		{
 			info.stopUpdateLastSeenPositionDelay.AddDelay(1.0f);
+			info.seesAndDetected = true;
 		}
 
 		// Forget unseen entries
@@ -2054,7 +2070,14 @@ void NpcBase::UpdateAnimations(bool forceFullUpdate)
 	{
 		animator->weapon_holds = target_underArrest;
 		animator->weapon_ready = target_follow && target_underArrest;
-		animator->weapon_aims = target_attack && animator->weapon_ready && target_attackInRange && target_sees && !isStunned();
+		animator->weapon_aims = target_attack && animator->weapon_ready && target_attackInRange && target_sees;
+
+		if (isStunned())
+		{
+			animator->weapon_holds = false;
+			animator->weapon_ready = false;
+			animator->weapon_aims = false;
+		}
 
 		animator->spineRotation = spineRotation;
 
@@ -3112,6 +3135,40 @@ void NpcBase::FindClosestGuard()
 
 }
 
+bool NpcBase::InvestigationCanBeReTriggered(InvestigationReason reason, string causer)
+{
+	switch (reason)
+	{
+	case InvestigationReason::TargetSeen:
+		return true;
+		break;
+
+	case InvestigationReason::NpcInTrouble:
+	case InvestigationReason::WeaponFire:
+	case InvestigationReason::Body:
+		if (currentInvestigation && currentInvestigation->causer == causer)
+			return true;
+		break;
+
+	case InvestigationReason::Explosion:
+	case InvestigationReason::LoudNoise:
+	case InvestigationReason::Noise:
+		return false;
+		break;
+
+	case InvestigationReason::LookAt:
+		if (currentInvestigation && currentInvestigation->causer == causer)
+			return true;
+		break;
+	case InvestigationReason::None:
+		break;
+	default:
+		break;
+	}
+
+	return false;
+}
+
 void NpcBase::TryStartInvestigation(InvestigationReason reason, vec3 target, string causer, bool sharedByNpc)
 {
 
@@ -3143,11 +3200,30 @@ void NpcBase::TryStartInvestigation(InvestigationReason reason, vec3 target, str
 		return;
 	}
 
+
+	bool restart = currentInvestigation && currentInvestigation->reason == reason;
+
+	float oldRotationTime = 0.0f;
+
+	if (restart)
+	{
+		oldRotationTime = currentInvestigation->orientTimer;
+	}
+
+	if (restart)
+	{
+		if (InvestigationCanBeReTriggered(reason, causer) == false)
+			return;
+	}
+
 	investigation_changed = 3;
 
 	currentInvestigation = CreateInvestigationFromReason(reason);
-	currentInvestigation->Start(reason, target, causer, sharedByNpc);
-
+	currentInvestigation->Start(reason, target, causer, sharedByNpc, restart);
+	if (restart)
+	{
+		currentInvestigation->orientTimer = oldRotationTime;
+	}
 	
 }
 

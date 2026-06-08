@@ -367,7 +367,7 @@ void WeaponFirearm::NotifyNpcs()
 		auto ownerNpc = dynamic_cast<NpcBase*>(Level::Current->FindEntityWithId(observer->owner));
 		if (ownerNpc)
 		{
-			ownerNpc->TryStartInvestigation(InvestigationReason::WeaponFire, Position, Player::Instance->Id);
+			ownerNpc->TryStartInvestigation(InvestigationReason::Noise, Position, Player::Instance->Id);
 		}
 	}
 }

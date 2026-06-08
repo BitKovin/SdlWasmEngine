@@ -40,6 +40,10 @@ void SearchInvestigationBase::Deserialize(nlohmann::json& data)
 
 void SearchInvestigationBase::Update(float deltaTime)
 {
+    // Run the base orient phase first — it must execute even while
+    // searchPhase == Inactive so the NPC turns before it starts walking.
+    InvestigationBase::Update(deltaTime);
+
     if (searchPhase == SearchPhase::Inactive)
         return;
 

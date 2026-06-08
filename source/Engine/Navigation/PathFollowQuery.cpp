@@ -80,6 +80,8 @@ void PathFollowQuery::CalculatePathOnThread()
 
     auto path = NavigationSystem::FindSimplePath(s, t, acceptanceRadius, &reachedTarget, allowPartialPath);
 
+    //DebugDraw::Line(t, s);
+
     if (path.empty())
     {
         FoundTarget = false;

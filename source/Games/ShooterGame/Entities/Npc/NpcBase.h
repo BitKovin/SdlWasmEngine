@@ -124,9 +124,6 @@ protected:
 
 	CharacterController* controller = nullptr;
 
-	vec3 desiredDirection = vec3();
-	vec3 movingDirection = vec3();
-
 	SoundPlayer* VoiceSoundPlayer = nullptr;
 
 	struct TargetLostSpreadData
@@ -164,8 +161,6 @@ protected:
 
 	float attackRange = 20; //enemy will perform attack in this range
 	float attackDesiredRange = 10; //enemy will try to keep this distance
-
-	std::shared_ptr<Observer> observer;
 
 	// Primary-target copies (kept for compatibility with existing code)
 	bool target_follow = false;
@@ -232,6 +227,7 @@ protected:
 
 private:
 
+
 	bool has_observed_crime = false;
 
 	float GetDetectionSpeed(Crime crime) const;
@@ -246,6 +242,12 @@ private:
 	float pelvisBlendTimer = 0.0f;
 
 public:
+
+
+	std::shared_ptr<Observer> observer;
+
+	vec3 desiredDirection = vec3();
+	vec3 movingDirection = vec3();
 
 	bool needHelpStunned = false;
 	bool found_guard = false;
@@ -351,6 +353,8 @@ public:
 	void UpdateDebugUI();
 
 	void FindClosestGuard();
+
+	bool InvestigationCanBeReTriggered(InvestigationReason reason, string causer);
 
 	void TryStartInvestigation(InvestigationReason reason, vec3 target, string causer, bool sharedByNpc = false);
 

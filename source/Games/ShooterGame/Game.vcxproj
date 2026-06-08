@@ -502,6 +502,7 @@
     <ClInclude Include="Entities\Npc\Investigations\BodyInvestigation.h" />
     <ClInclude Include="Entities\Npc\Investigations\ExplosionInvestigation.h" />
     <ClInclude Include="Entities\Npc\Investigations\InvestigationBase.h" />
+    <ClInclude Include="Entities\Npc\Investigations\LookAtInvestigation.h" />
     <ClInclude Include="Entities\Npc\Investigations\LoudNoiseInvestigation.h" />
     <ClInclude Include="Entities\Npc\Investigations\NoiseInvestigation.h" />
     <ClInclude Include="Entities\Npc\Investigations\NpcInTroubleInvestigation.h" />

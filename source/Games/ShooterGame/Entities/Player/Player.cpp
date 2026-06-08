@@ -1936,17 +1936,6 @@ void Player::TryStep(vec3 dir)
 
 void Player::Update()
 {
-	
-	if (Input::GetAction("attack")->Pressed())
-	{
-		SoundPlayer* sp = new SoundPlayer();
-		sp->SetSound(SoundManager::GetSoundFromPath("GameData/sounds/mew.wav"));
-		sp->Position = Camera::position + Camera::Forward() * 2.5f;
-		sp->Sound->Loop = true;
-		sp->Play();
-		Level::Current->AddEntity(sp);
-		DebugDraw::Point(sp->Position, 10, 0.3f);
-	}
 
 	/*
 	vec3 lightmapColor = Level::Current->BspData.LinetraceLightmapColor(Camera::position * MAP_SCALE, (Camera::position + Camera::Forward() * 10.0f) * MAP_SCALE);

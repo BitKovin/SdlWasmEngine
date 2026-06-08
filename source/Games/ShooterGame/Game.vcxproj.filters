@@ -536,5 +536,8 @@
     <ClInclude Include="Entities\Npc\Investigations\WeaponFireInvestigation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Entities\Npc\Investigations\LookAtInvestigation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
