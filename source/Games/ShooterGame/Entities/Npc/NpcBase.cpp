@@ -35,6 +35,7 @@
 #include "Investigations/TargetSeenInvestigation.h"
 #include "Investigations/WeaponFireInvestigation.h"
 #include "Investigations/LookAtInvestigation.h"
+#include "Investigations/AttackedInvestigation.h"
 
 #include <tracy/tracy/Tracy.hpp>
 
@@ -43,7 +44,9 @@ float NpcBase::GetDetectionSpeed(Crime crime) const
 	switch (crime) {
 	case Crime::WeaponFire:
 	case Crime::NearBody:
-		return 10000.0f; // immediate
+		return 5.0f;
+	case Crime::WeaponFireSuspect:
+		return 3.0f; 
 	case Crime::WeaponFireSound:
 		return 1.5f;
 	case Crime::WeaponHolding:
@@ -62,6 +65,8 @@ std::shared_ptr<InvestigationBase> NpcBase::CreateInvestigationFromReason(Invest
 	{
 	case InvestigationReason::TargetSeen:
 		return make_shared<TargetSeenInvestigation>(this);
+	case InvestigationReason::Attacked:
+		return make_shared<AttackedInvestigation>(this);
 	case InvestigationReason::NpcInTrouble:
 		return make_shared<NpcInTroubleInvestigation>(this);
 	case InvestigationReason::WeaponFire:
@@ -246,7 +251,7 @@ void NpcBase::OnPointDamage(float Damage, vec3 Point, vec3 Direction, string bon
 
 		std::string causerId = DamageCauser ? DamageCauser->Id : "";
 
-		TryStartInvestigation(InvestigationReason::WeaponFire, DamageCauser ? DamageCauser->Position : Point + Direction * 1.0f, causerId);
+		TryStartInvestigation(InvestigationReason::Attacked, DamageCauser ? DamageCauser->Position : Point + Direction * 1.0f, causerId);
 	}
 
 	GlobalParticleSystem::SpawnParticleAt("hit_flesh", Point, MathHelper::FindLookAtRotation(vec3(0), Direction), vec3(Damage / 20.0f));
@@ -1098,6 +1103,15 @@ void NpcBase::UpdateObserver()
 			if (min_crime > Crime::WeaponFireSound)
 			{
 				min_crime = Crime::WeaponFireSound;
+			}
+		}
+
+		//if attacked investigation, check for player proximity
+		if (currentInvestigation && currentInvestigation->reason == InvestigationReason::Attacked && target->ownerId == currentInvestigation->causer && distance(target->position, currentInvestigation->TargetLocation) < 10)
+		{
+			if (min_crime > Crime::WeaponFireSuspect)
+			{
+				min_crime = Crime::WeaponFireSuspect;
 			}
 		}
 

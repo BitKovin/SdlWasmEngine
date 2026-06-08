@@ -7,6 +7,7 @@
 enum class InvestigationReason
 {
 	TargetSeen,
+	Attacked,
 	NpcInTrouble,
 	WeaponFire,
 	Body,

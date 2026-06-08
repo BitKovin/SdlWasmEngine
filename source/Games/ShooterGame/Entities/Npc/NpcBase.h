@@ -37,6 +37,7 @@ enum class Crime
 {
 
 	WeaponFire, //aka violentCrime tag
+	WeaponFireSuspect,
 	Group_Attack,
 	WeaponFireSound,
 	NearBody,
