@@ -246,12 +246,22 @@ void NpcBase::OnPointDamage(float Damage, vec3 Point, vec3 Direction, string bon
 		StartStunnedRagdoll();
 	}
 
-	if (target_follow == false)
+	std::string causerId = DamageCauser ? DamageCauser->Id : "";
+	
+	TryStartInvestigation(InvestigationReason::Attacked, DamageCauser ? DamageCauser->Position : Point + Direction * 1.0f, causerId);
+	
+
+	auto otherObservers = AiPerceptionSystem::GetObserversInRadius(Point, 6);
+
+	for (auto observer : otherObservers)
 	{
+		if (observer->owner == Id) continue; // skip self
 
-		std::string causerId = DamageCauser ? DamageCauser->Id : "";
-
-		TryStartInvestigation(InvestigationReason::Attacked, DamageCauser ? DamageCauser->Position : Point + Direction * 1.0f, causerId);
+		auto ownerNpc = dynamic_cast<NpcBase*>(Level::Current->FindEntityWithId(observer->owner));
+		if (ownerNpc)
+		{
+			ownerNpc->TryStartInvestigation(InvestigationReason::Attacked, DamageCauser ? DamageCauser->Position : Point + Direction * 1.0f, causerId);
+		}
 	}
 
 	GlobalParticleSystem::SpawnParticleAt("hit_flesh", Point, MathHelper::FindLookAtRotation(vec3(0), Direction), vec3(Damage / 20.0f));
@@ -1483,7 +1493,8 @@ void NpcBase::UpdateObservationTarget()
 		if (target_underArrest && target_follow || needHelpStunned)
 		{
 
-			//observationTarget->tags.insert("in_trouble");
+			observationTarget->tags.insert("in_trouble");
+
 			//observationTarget->active = true;
 			//observationTarget->isTriggeredNpc = true;
 		}
