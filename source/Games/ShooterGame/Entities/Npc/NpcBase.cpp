@@ -251,16 +251,29 @@ void NpcBase::OnPointDamage(float Damage, vec3 Point, vec3 Direction, string bon
 	TryStartInvestigation(InvestigationReason::Attacked, DamageCauser ? DamageCauser->Position : Point + Direction * 1.0f, causerId);
 	
 
-	auto otherObservers = AiPerceptionSystem::GetObserversInRadius(Point, 6);
 
-	for (auto observer : otherObservers)
+	auto causerObserver = AiPerceptionSystem::GetObserverFromEntityId(causerId);
+
+	if (IsHostile(causerObserver) || IsNeutral(causerObserver))
 	{
-		if (observer->owner == Id) continue; // skip self
+		auto otherObservers = AiPerceptionSystem::GetObserversInRadius(Point, 6);
 
-		auto ownerNpc = dynamic_cast<NpcBase*>(Level::Current->FindEntityWithId(observer->owner));
-		if (ownerNpc)
+		for (auto observer : otherObservers)
 		{
-			ownerNpc->TryStartInvestigation(InvestigationReason::Attacked, DamageCauser ? DamageCauser->Position : Point + Direction * 1.0f, causerId);
+			if (observer->owner == Id) continue; // skip self
+
+			auto ownerNpc = dynamic_cast<NpcBase*>(Level::Current->FindEntityWithId(observer->owner));
+			if (ownerNpc)
+			{
+
+
+
+
+				ownerNpc->TryStartInvestigation(InvestigationReason::Attacked, DamageCauser ? DamageCauser->Position : Point + Direction * 1.0f, causerId);
+
+
+
+			}
 		}
 	}
 

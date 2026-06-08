@@ -360,14 +360,14 @@ void WeaponFirearm::FireSingleBullet(const vec3& startLoc, const vec4& gridOffse
 void WeaponFirearm::NotifyNpcs() 
 {
 
-	AiPerceptionSystem::EmitSoundAt(Position, params.npcNotifyRadius, (int)InvestigationReason::WeaponFire, Player::Instance->Id);
+	AiPerceptionSystem::EmitSoundAt(owner->Position, params.npcNotifyRadius, (int)InvestigationReason::WeaponFire, Player::Instance->Id);
 
-	auto observers = AiPerceptionSystem::GetObserversInRadius(Position, params.npcNotifyRadius);
+	auto observers = AiPerceptionSystem::GetObserversInRadius(owner->Position, params.npcNotifyRadius);
 	for (auto observer : observers) {
 		auto ownerNpc = dynamic_cast<NpcBase*>(Level::Current->FindEntityWithId(observer->owner));
 		if (ownerNpc)
 		{
-			ownerNpc->TryStartInvestigation(InvestigationReason::Noise, Position, Player::Instance->Id);
+			ownerNpc->TryStartInvestigation(InvestigationReason::Noise, owner->Position, Player::Instance->Id);
 		}
 	}
 }

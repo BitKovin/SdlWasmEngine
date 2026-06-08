@@ -164,3 +164,15 @@ AiPerceptionSystem::GetTargetsInRadiusWithTagOrdered(const glm::vec3& position, 
 
     return result;
 }
+
+std::shared_ptr<ObservationTarget> AiPerceptionSystem::GetObserverFromEntityId(std::string entityId)
+{
+    for (const auto& target : targets)
+    {
+        if (target && target->ownerId == entityId)
+        {
+            return target;
+        }
+    }
+    return nullptr;
+}
