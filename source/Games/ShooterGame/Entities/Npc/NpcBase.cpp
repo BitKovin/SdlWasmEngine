@@ -3273,4 +3273,22 @@ void NpcBase::InvestigationReachedDestination()
 	
 }
 
+void NpcBase::PlayActionAnimation(const std::string& name, bool loop,
+	float blendIn, float blendOut)
+{
+	if (animator)
+		animator->PlayActionAnimation(name, loop, blendIn, blendOut);
+}
+
+bool NpcBase::IsPlayingActionAnimation() const
+{
+	return animator && animator->IsPlayingActionAnimation();
+}
+
+float NpcBase::GetActionAnimationRemainingTime() const
+{
+	return animator ? animator->GetActionAnimationRemainingTime() : 0.0f;
+}
+
+
 REGISTER_ENTITY(NpcBase, "npc_base")

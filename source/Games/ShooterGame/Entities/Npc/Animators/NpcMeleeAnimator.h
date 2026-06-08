@@ -2,32 +2,23 @@
 
 #include "NpcAnimatorBase.h"
 
+// Melee animator: swaps the upper-body weapon layer for a sword/block layer.
+// Action animations (stun, special moves) are handled by the sealed
+// ProcessResultPose in NpcAnimatorBase — no duplication needed here.
 class NpcMeleeAnimator : public NpcAnimatorBase
 {
 public:
 
 	NpcMeleeAnimator(Entity* ownerEntity) : NpcAnimatorBase(ownerEntity) {}
 
-	void Update();
-
-	Animation* actionAnimation = nullptr;
+	void Update() override;
 
 	bool blocking = false;
 
-	bool IsPlayingActionAnimation();
-
-	void PlayActionAnimation(std::string animationName, bool loop, float blendIn = 0.3f, float blendOut = 0.3f);
-
-	void StopActionAnimation();
-
-	float actionBlendOut = 0.3f;
-
 protected:
 
-	void LoadAssets();
-
-	AnimationPose ProcessResultPose();
+	void LoadAssets() override;
+	AnimationPose BuildCombatPose() override;
 
 	Animation* blockAnimation = nullptr;
-
 };

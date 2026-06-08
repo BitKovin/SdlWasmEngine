@@ -392,6 +392,15 @@ public:
 
 	virtual void WarnAboutAttack(Entity* from){}
 
+	// ── Action animation ──────────────────────────────────────────────────────
+	// Thin wrappers over NpcAnimatorBase so any NPC subclass (guard, civilian,
+	// melee, hybrid…) can trigger stun / special-move animations without casting
+	// the animator directly.  Implemented in NpcBase.cpp.
+	void  PlayActionAnimation(const std::string& name, bool loop = false,
+	                          float blendIn = 0.3f, float blendOut = 0.3f);
+	bool  IsPlayingActionAnimation() const;
+	float GetActionAnimationRemainingTime() const;
+
 	void ShareTargetKnowlageWith(NpcBase* anotherNpc);
 
 	void UpdateTargetLocation(std::string target, vec3 location);
