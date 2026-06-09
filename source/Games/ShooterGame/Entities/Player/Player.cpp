@@ -70,6 +70,7 @@ void Player::Start()
 	//Physics::ExcludedDrawBodies.insert(hitbox);
 
 	PreloadEntityType("weapon_sword");
+	PreloadEntityType("weapon_twinsword");
 	PreloadEntityType("weapon_pistol");
 	PreloadEntityType("weapon_revolver");
 	PreloadEntityType("weapon_pistol_silent");
@@ -151,7 +152,7 @@ void Player::Start()
 	else
 	{
 		// Slots mode - use original system
-		AddWeaponByName("weapon_pistol");
+		AddWeaponByName("weapon_twinsword");
 		AddWeaponByName("weapon_shotgun");
 		AddWeaponByName("weapon_mpsd");
 		AddWeaponByName("weapon_cannon");

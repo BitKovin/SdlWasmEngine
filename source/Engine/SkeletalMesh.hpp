@@ -27,7 +27,7 @@
 
 #include "Physics.h"
 
-
+#include <shared_mutex>
 
 using namespace std;
 
@@ -203,6 +203,8 @@ private:
 	std::recursive_mutex hitboxMutex;
 
 	std::vector<AnimationEvent> pendingAnimationEvents;
+
+	std::recursive_mutex animationsMutex;
 
 protected:
 

@@ -925,6 +925,8 @@ AnimationPose SkeletalMesh::GetAnimationPose()
 	if (dirtyPose == false)
 		return lastPose;
 
+	std::lock_guard<std::recursive_mutex> lock(animationsMutex);
+
 	AnimationPose pose;
 	pose.boneTreeRoot = &model->defaultRoot;
 	pose.boneTransforms = animator.GetBonePoseArray();
@@ -936,7 +938,7 @@ AnimationPose SkeletalMesh::GetAnimationPose()
 
 void SkeletalMesh::ApplyWorldSpaceBoneTransforms(std::unordered_map<hashed_string, mat4>& pose)
 {
-
+	std::lock_guard<std::recursive_mutex> lock(animationsMutex);
 	mat4 world = GetWorldMatrix();
 
 	for (auto& bonePose : pose)
@@ -954,6 +956,8 @@ void SkeletalMesh::ApplyWorldSpaceBoneTransforms(std::unordered_map<hashed_strin
 void SkeletalMesh::PlayAnimation(std::string name, bool Loop, float interpIn)
 {
 	if (model == nullptr) return;
+
+	std::lock_guard<std::recursive_mutex> lock(animationsMutex);
 
 	SetLooped(Loop);
 	animator.set(name);
@@ -1166,6 +1170,8 @@ LightVolPointData SkeletalMesh::GetLightVolData()
 MathHelper::Transform SkeletalMesh::PullRootMotion()
 {
 
+	std::lock_guard<std::recursive_mutex> lock(animationsMutex);
+
 	// 1) grab the raw deltas from the animator
 	glm::vec3 deltaPos = animator.totalRootMotionPosition - oldRootMotionPos;
 	glm::vec3 deltaRot = animator.totalRootMotionRotation - oldRootMotionRot;
@@ -1209,6 +1215,8 @@ void SkeletalMesh::Update(float timeScale)
 {
 
 	if (model == nullptr) return;
+
+	std::lock_guard<std::recursive_mutex> lock(animationsMutex);
 
 	animator.UpdatePose = UpdatePose;
 
@@ -1565,7 +1573,7 @@ void SkeletalMesh::UpdateHitboxes()
 	if (InRagdoll)
 	{
 
-		
+		std::lock_guard<std::recursive_mutex> lock(animationsMutex);
 
 		if (hitboxConstraints.size() > 0)
 		{
