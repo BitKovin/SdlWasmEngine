@@ -37,7 +37,7 @@ enum class Crime
 {
 
 	WeaponFire, //aka violentCrime tag
-	WeaponFireSuspect,
+	WeaponFireAttack,
 	Group_Attack,
 	WeaponFireSound,
 	NearBody,
@@ -321,7 +321,7 @@ public:
 	void Update();
 
 	void AsyncUpdate();
-	void UpdateWeaponMesh();
+	virtual void UpdateWeaponMesh();
 
 	void LateUpdate();
 

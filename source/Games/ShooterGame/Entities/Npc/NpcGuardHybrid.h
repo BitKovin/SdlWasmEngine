@@ -50,6 +50,8 @@ public:
 	vec3 FindAttackLocation()                          override;
 	void UpdateAnimations(bool forceFullUpdate = false) override;
 
+	void UpdateWeaponMesh() override;
+
 protected:
 
 	StaticMesh* meleeWeaponMesh = nullptr; // melee weapon (sword, etc.)
@@ -62,6 +64,8 @@ protected:
 	void UpdateCombatMode();
 	void SwitchToMode(CombatMode mode);
 	void UpdateWeaponMeshVisibility();
+
+	void LoadAssets() override;
 
 	// ── Typed animator accessor ───────────────────────────────────────────────
 	inline NpcHybridAnimator* GetHybridAnimator() const

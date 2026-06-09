@@ -45,7 +45,7 @@ float NpcBase::GetDetectionSpeed(Crime crime) const
 	case Crime::WeaponFire:
 	case Crime::NearBody:
 		return 5.0f;
-	case Crime::WeaponFireSuspect:
+	case Crime::WeaponFireAttack:
 		return 3.0f; 
 	case Crime::WeaponFireSound:
 		return 1.5f;
@@ -246,8 +246,16 @@ void NpcBase::OnPointDamage(float Damage, vec3 Point, vec3 Direction, string bon
 		StartStunnedRagdoll();
 	}
 
+	GlobalParticleSystem::SpawnParticleAt("hit_flesh", Point, MathHelper::FindLookAtRotation(vec3(0), Direction), vec3(Damage / 20.0f));
+
 	std::string causerId = DamageCauser ? DamageCauser->Id : "";
 	
+
+	if (target_follow && target_id == causerId)
+	{
+		TryCommitCrime(Crime::WeaponFireAttack, causerId, Point);
+	}
+
 	TryStartInvestigation(InvestigationReason::Attacked, DamageCauser ? DamageCauser->Position : Point + Direction * 1.0f, causerId);
 	
 
@@ -265,19 +273,12 @@ void NpcBase::OnPointDamage(float Damage, vec3 Point, vec3 Direction, string bon
 			auto ownerNpc = dynamic_cast<NpcBase*>(Level::Current->FindEntityWithId(observer->owner));
 			if (ownerNpc)
 			{
-
-
-
-
 				ownerNpc->TryStartInvestigation(InvestigationReason::Attacked, DamageCauser ? DamageCauser->Position : Point + Direction * 1.0f, causerId);
-
-
-
 			}
 		}
 	}
 
-	GlobalParticleSystem::SpawnParticleAt("hit_flesh", Point, MathHelper::FindLookAtRotation(vec3(0), Direction), vec3(Damage / 20.0f));
+	
 
 }
 
@@ -593,6 +594,11 @@ void NpcBase::AsyncUpdate()
 		}
 
 		weaponMesh->Visible = false;
+
+		{
+			ZoneScopedN("Dead UpdateWeaponMesh");
+			UpdateWeaponMesh();
+		}
 
 		return;
 	}
@@ -1132,9 +1138,9 @@ void NpcBase::UpdateObserver()
 		//if attacked investigation, check for player proximity
 		if (currentInvestigation && currentInvestigation->reason == InvestigationReason::Attacked && target->ownerId == currentInvestigation->causer && distance(target->position, currentInvestigation->TargetLocation) < 10)
 		{
-			if (min_crime > Crime::WeaponFireSuspect)
+			if (min_crime > Crime::WeaponFireAttack)
 			{
-				min_crime = Crime::WeaponFireSuspect;
+				min_crime = Crime::WeaponFireAttack;
 			}
 		}
 
@@ -1172,7 +1178,7 @@ void NpcBase::UpdateObserver()
 			}
 		}
 
-		if (target->HasTag("in_trouble"))
+		if (target->HasTag("in_trouble") && IsHostile(target) == false && knownTargets.count(target->ownerId) == 0)
 		{
 			TryStartInvestigation(InvestigationReason::NpcInTrouble, target->position, target->ownerId);
 		}
@@ -2110,7 +2116,7 @@ void NpcBase::UpdateAnimations(bool forceFullUpdate)
 		animator->weapon_ready = target_follow && target_underArrest;
 		animator->weapon_aims = target_attack && animator->weapon_ready && target_attackInRange && target_sees;
 
-		if (isStunned())
+		if (mesh->InRagdoll || returningFromRagdoll || stunnedRagdoll)
 		{
 			animator->weapon_holds = false;
 			animator->weapon_ready = false;

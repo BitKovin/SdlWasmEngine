@@ -16,17 +16,6 @@ void NpcGuardHybrid::Start()
 {
 	NpcGuardMelee::Start();
 
-	// ── Melee weapon mesh ─────────────────────────────────────────────────────
-	// Create and attach the melee weapon to the dominant hand bone.
-	// Configure the model path to match your project's asset layout.
-	//
-	//   meleeWeaponMesh = SpawnChildEntity<StaticMesh>();
-	//   meleeWeaponMesh->SetModel("GameData/models/weapons/sword.glb");
-	//   meleeWeaponMesh->AttachToBone(mesh, "hand_r");
-	//
-	// The ranged weapon (weaponMesh) is created by NpcBase::Start() or
-	// LoadAssets() — no extra work needed here for that one.
-
 	// Start in the correct visual state for the initial mode
 	SwitchToMode(currentMode);
 }
@@ -37,13 +26,11 @@ void NpcGuardHybrid::DisableRangedWeapon()
 {
 	rangedDisabled = true;
 	SwitchToMode(CombatMode::Melee);   // SwitchToMode is a no-op if already melee
-	UpdateWeaponMeshVisibility();
 }
 
 void NpcGuardHybrid::EnableRangedWeapon()
 {
 	rangedDisabled = false;
-	UpdateWeaponMeshVisibility();
 	// UpdateCombatMode() will pick up the correct mode on the next frame
 }
 
@@ -101,18 +88,33 @@ void NpcGuardHybrid::SwitchToMode(CombatMode mode)
 	// Sync animator blend target
 	GetHybridAnimator()->targetCombatMode = mode;
 
-	UpdateWeaponMeshVisibility();
 }
 
 void NpcGuardHybrid::UpdateWeaponMeshVisibility()
 {
+
+	bool shouldBeVisible = weaponMesh->Visible;
+
 	// Show the ranged weapon only in ranged mode and when not disarmed
 	if (weaponMesh)
-		weaponMesh->Visible = (currentMode == CombatMode::Ranged && !rangedDisabled);
+		weaponMesh->Visible = (currentMode == CombatMode::Ranged && !rangedDisabled) && shouldBeVisible;
 
 	// Show the melee weapon only in melee mode
 	if (meleeWeaponMesh)
-		meleeWeaponMesh->Visible = (currentMode == CombatMode::Melee);
+		meleeWeaponMesh->Visible = (currentMode == CombatMode::Melee) && shouldBeVisible;
+}
+
+void NpcGuardHybrid::LoadAssets()
+{
+	NpcBase::LoadAssets();
+
+	meleeWeaponMesh = new StaticMesh(this);
+	meleeWeaponMesh->LoadFromFile("GameData/models/pickups/key.obj");
+	meleeWeaponMesh->TexturesLocation = "GameData/models/pickups/";
+	meleeWeaponMesh->Scale = vec3(1.f/32.f);
+	Drawables.push_back(meleeWeaponMesh);
+
+
 }
 
 // ── Entity overrides ──────────────────────────────────────────────────────────
@@ -153,6 +155,17 @@ void NpcGuardHybrid::UpdateAnimations(bool forceFullUpdate)
 	// Push the current mode so the animator can smoothly blend between
 	// the two weapon poses.
 	GetHybridAnimator()->targetCombatMode = currentMode;
+}
+
+void NpcGuardHybrid::UpdateWeaponMesh()
+{
+
+	NpcBase::UpdateWeaponMesh();
+	meleeWeaponMesh->Position = weaponMesh->Position;
+	meleeWeaponMesh->Rotation = weaponMesh->Rotation;
+
+	UpdateWeaponMeshVisibility();
+
 }
 
 REGISTER_ENTITY(NpcGuardHybrid, "npc_guard_hybrid")
