@@ -202,7 +202,7 @@ public:
 
 			Camera::AddCameraShake(CameraShake(
 				1.0f, 1.0f, vec3(0), vec3(0),
-				isRight ? vec3(-5, -5, 0) : vec3(-5, 5, 0),
+				isRight ? vec3(-5, 5, 0) : vec3(-5, -5, 0),
 				vec3(7, 7, 0),
 				1.0f, CameraShake::ShakeType::SingleWave
 			));
@@ -238,8 +238,14 @@ public:
 
 		if (hit.entity != nullptr)
 		{
+
+			float damangeToDeal = Damage;
+
+			if (counterAvailable)
+				damangeToDeal *= 1.5f;
+
 			hit.entity->OnPointDamage(
-				Damage,
+				damangeToDeal,
 				hit.position,
 				MathHelper::GetForwardVector(Camera::rotation),
 				"spine_03",

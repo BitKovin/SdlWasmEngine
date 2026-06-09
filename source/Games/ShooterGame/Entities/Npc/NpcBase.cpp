@@ -248,6 +248,8 @@ void NpcBase::OnPointDamage(float Damage, vec3 Point, vec3 Direction, string bon
 
 	GlobalParticleSystem::SpawnParticleAt("hit_flesh", Point, MathHelper::FindLookAtRotation(vec3(0), Direction), vec3(Damage / 20.0f));
 
+	if (dead || isStunned()) return;
+
 	std::string causerId = DamageCauser ? DamageCauser->Id : "";
 	
 
@@ -264,7 +266,7 @@ void NpcBase::OnPointDamage(float Damage, vec3 Point, vec3 Direction, string bon
 
 	if (IsHostile(causerObserver) || IsNeutral(causerObserver))
 	{
-		auto otherObservers = AiPerceptionSystem::GetObserversInRadius(Point, 6);
+		auto otherObservers = AiPerceptionSystem::GetObserversInRadius(Point, 5);
 
 		for (auto observer : otherObservers)
 		{
@@ -3216,7 +3218,8 @@ bool NpcBase::InvestigationCanBeReTriggered(InvestigationReason reason, string c
 void NpcBase::TryStartInvestigation(InvestigationReason reason, vec3 target, string causer, bool sharedByNpc)
 {
 
-	DebugDraw::Line(Position, target, 3.0f);
+	if (dead) return;
+	if (target_attack) return;
 
 	if (target_follow && reason == InvestigationReason::WeaponFire && causer == target_id)
 	{
