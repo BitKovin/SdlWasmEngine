@@ -318,13 +318,13 @@ vec3 ParticleEmitter::GetLightForParticle(const Particle& particle)
 {
     if (particle.UseWorldRotation == false)
     {
-        auto light = Level::Current->BspData.GetLightvolColorPoint(particle.position * MAP_SCALE);
+        auto light = Level::Current->BspData.GetLightvolColorPoint(MathHelper::TransformVector(particle.position, RelativeTransform) * MAP_SCALE);
         return (light.ambientColor + light.directColor) * 1.0f;
     }
 
     vec3 normal = MathHelper::GetForwardVector(particle.globalRotation);
 
-    auto light = Level::Current->BspData.GetLightvolColorPoint((particle.position + normal) * MAP_SCALE) * 1.0f;
+    auto light = Level::Current->BspData.GetLightvolColorPoint((MathHelper::TransformVector(particle.position, RelativeTransform) + normal) * MAP_SCALE) * 1.0f;
 
     float dirFactor = 1.0f;
 

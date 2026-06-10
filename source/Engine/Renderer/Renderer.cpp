@@ -260,7 +260,8 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
         bgfx::setViewMode(vid, bgfx::ViewMode::Default);
 
         // Clear depth only — no color attachment on this FBO.
-        bgfx::setViewClear(vid, BGFX_CLEAR_DEPTH, kClearBlack, 1.0f, 0);
+        bgfx::setViewClear(vid, BGFX_CLEAR_DEPTH | BGFX_CLEAR_STENCIL, kClearBlack, 1.0f, 0);
+
 
         // Depth write only, less-than test, back-face cull.
         BgfxStateManager::Reset();
@@ -297,7 +298,7 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
         bgfx::setViewMode(vid, bgfx::ViewMode::Sequential);
 
         // Clear depth only — no color attachment on this FBO.
-        bgfx::setViewClear(vid, BGFX_CLEAR_DEPTH, kClearBlack, 1.0f, 0);
+        bgfx::setViewClear(vid, BGFX_CLEAR_DEPTH | BGFX_CLEAR_STENCIL, kClearBlack, 1.0f, 0);
 
         // Depth write only, less-than test, back-face cull.
         BgfxStateManager::Reset();

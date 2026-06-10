@@ -341,8 +341,6 @@ void NpcGuardMelee::WarnAboutAttack(Entity* from)
 	vec3 forward = MathHelper::GetForwardVector(mesh->Rotation);
 	vec3 attackerForward = MathHelper::GetForwardVector(from->Rotation);
 
-	DebugDraw::Line(Position + vec3(0, 0.0f, 0), Position + vec3(0, 0.0f, 0) + forward * 2.0f, 1.1f, 0.1f, DebugColor::Red);
-	DebugDraw::Line(from->Position + vec3(0, 0.0f, 0), from->Position + vec3(0, 0.0f, 0) + attackerForward * 2.0f, 1.1f, 0.1f, DebugColor::Green);
 
 	float dotOF = glm::dot(forward, attackerForward);
 

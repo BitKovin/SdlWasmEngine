@@ -87,7 +87,11 @@ bool TrailEmitter::RenderRibbon(const std::vector<Particle>& inParticles)
         p2 = MathHelper::TransformVector(p2, RelativeTransform);
 
         const float u = arcLen[i] * invLen;
-        const vec3  light = GetLightForParticle(p);
+        vec3  light = GetLightForParticle(p);
+
+        if (ParticleLighting == false)
+            light = vec3(1.0f);
+
         const vec4  color = p.Color * vec4(light, 1.0f) * vec4(1.0f, 1.0f, 1.0f, p.Transparency);
         const vec3  nrm = vec3(0.0f, 1.0f, 0.0f);
 
@@ -133,49 +137,59 @@ void TrailEmitter::FinalizeFrameData()
 // ---------------------------------------------------------------------------
 // DrawForward
 // ---------------------------------------------------------------------------
-void TrailEmitter::DrawForward(mat4x4 view, mat4x4 projection)
-{
+void TrailEmitter::DrawForward(mat4x4 view, mat4x4 projection) {
     if (finalizedParticles.size() < 2) return;
-
     if (savedTextureName != texture)
     {
         savedTexture = AssetRegistry::GetTextureFromFile(texture);
         savedTextureName = texture;
     }
-
     auto startState = BgfxStateManager::GetState();
+
+    // --- Stencil: clear trail's stencil region before drawing ---
+    // You need a separate pre-pass to clear stencil to 0 for this trail,
+    // OR rely on a global stencil clear at the start of the frame.
+    // Then draw with stencil: pass if == 0, increment on pass.
 
     BgfxStateManager::SetWriteDepth(true);
     BgfxStateManager::SetCull(BgfxStateManager::Cull::None);
     BgfxStateManager::SetBlend(BlendMode);
 
+    // Enable stencil: PASS only if stencil == 0, then increment to 1
+    // This prevents any pixel from being touched more than once
+    uint32_t stencilState =
+        BGFX_STENCIL_TEST_EQUAL                          // pass if stencil == ref
+        | BGFX_STENCIL_FUNC_REF(0)                       // ref value = 0
+        | BGFX_STENCIL_FUNC_RMASK(0xFF)
+        | BGFX_STENCIL_OP_FAIL_S_KEEP                    // stencil fail: keep
+        | BGFX_STENCIL_OP_FAIL_Z_KEEP                    // depth fail: keep
+        | BGFX_STENCIL_OP_PASS_Z_INCR;                   // depth+stencil pass: increment
+
+    bgfx::setStencil(stencilState, stencilState);   // back face = no stencil (culled anyway)
+
     Shader* shader = ShaderManager::GetShaderProgram("vs_default", PixelShader);
     if (shader == nullptr) return;
-
     shader->UseProgram();
-
     shader->SetUniform("view", view);
     shader->SetUniform("projection", projection);
     shader->SetUniform("world", glm::identity<mat4>());
     shader->SetUniform("isViewmodel", IsViewmodel);
     shader->SetUniform("is_particle", true);
     shader->SetUniform("is_decal", false);
-
     shader->SetUniform("viewmodelScaleFactor", 1);
     shader->SetUniform("isViewmodel", IsViewmodel);
-
     Renderer::SetSurfaceShaderUniforms(shader);
-
     shader->SetTexture("u_texture", savedTexture);
-
     if (!RenderRibbon(finalizedParticles))
     {
+        bgfx::setStencil(BGFX_STENCIL_NONE, BGFX_STENCIL_NONE); // restore before early out
         BgfxStateManager::SetState(startState);
         return;
     }
-
     BgfxStateManager::Apply();
     shader->Submit(ViewIdManager::GetCurrentId());
 
+    // Restore stencil to no-op for subsequent draws
+    bgfx::setStencil(BGFX_STENCIL_NONE, BGFX_STENCIL_NONE);
     BgfxStateManager::SetState(startState);
 }

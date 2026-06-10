@@ -17,9 +17,10 @@ public:
     {
         texture             = "GameData/textures/particles/trail.png";
         InitialSpawnCount   = 2;
-        SpawnRate           = 70;
+        SpawnRate           = 90;
         Emitting            = true;
         IsViewmodel           = false;
+        ParticleLighting = false;
     }
 
 
@@ -46,7 +47,10 @@ public:
         particle.deathTime    = 0.1f;
 
         // C#: new Vector4(1, 0.2f, 0.2f, 0.4f) / 1.5f
-        particle.Color = glm::vec4(1.0f, 0.2f, 0.2f, 0.4f) / 1.5f;
+
+        float brightness = 0.11f;
+
+        particle.Color = glm::vec4(1.0f * brightness, 0.2f * brightness, 0.2f * brightness, 0.3f);
 
         return particle;
     }

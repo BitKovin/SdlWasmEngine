@@ -58,6 +58,7 @@ public:
 		Position(0.0f), Rotation(0.0f)
 	{
 		Transparent = true;
+		PixelShader = "fs_unlit";
 	}
 
 	mat4 RelativeTransform = glm::identity<mat4>();
@@ -164,7 +165,7 @@ protected:
 	Texture* savedTexture = nullptr;
 	string savedTextureName = "";
 
-	static vec3 GetLightForParticle(const Particle& particle);
+	vec3 GetLightForParticle(const Particle& particle);
 
 private:
 

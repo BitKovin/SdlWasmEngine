@@ -32,8 +32,8 @@ public:
 	Delay blockStartDelay;
 	Delay counterWindow; // how long the counter-attack opportunity stays open
 
-	particle_system_meleeTrail* trail = nullptr;
-	SkeletalMesh* trailViewmodel = nullptr; // which viewmodel the active trail tracks
+	particle_system_meleeTrail* trail_r = nullptr;
+	particle_system_meleeTrail* trail_l = nullptr;
 
 	// Attack state
 	int  attackSide = 0;     // 0 = right next, 1 = left next
@@ -98,7 +98,8 @@ public:
 			Drawables.push_back(a);
 		}
 
-		trailViewmodel = viewmodel_r;
+		attackDelay.AddDelay(0.7f);
+		SwitchDelay.AddDelay(0.4f);
 	}
 
 	// -----------------------------------------------------------------------
@@ -116,52 +117,114 @@ public:
 	// Trail
 	// -----------------------------------------------------------------------
 
-	void StopTrail()
+	void StopTrails()
 	{
-		if (trail == nullptr) return;
-		trail->DestroyWithDelay(2.0f);
-		trail = nullptr;
+		auto stopOne = [](particle_system_meleeTrail*& t)
+			{
+				if (t == nullptr) return;
+				t->DestroyWithDelay(2.0f);
+				t = nullptr;
+			};
+		stopOne(trail_r);
+		stopOne(trail_l);
 	}
 
-	void StartNewTrail()
+	// spawnRight / spawnLeft let the caller choose which swords get a trail.
+	// Normal attacks pass one true flag; counter-attacks pass both.
+	void StartNewTrails(bool spawnRight, bool spawnLeft)
 	{
-		if (trailViewmodel == nullptr) return;
 
-		trail = new particle_system_meleeTrail();
-		vec3 trailStart = trailViewmodel->GetBoneMatrixWorld("trail_start")[3];
-		vec3 trailEnd = trailViewmodel->GetBoneMatrixWorld("trail_end")[3];
 
-		trail->SetTrailTransform(trailStart, trailEnd);
-		trail->Start();
-		Level::Current->AddEntity(trail);
-		trail->LoadAssetsIfNeeded();
+		MathHelper::Transform weaponTransform = MathHelper::Transform();
+		weaponTransform.Position = Position;
+		weaponTransform.Rotation = Rotation;
+		mat4 weaponMatrix = weaponTransform.ToMatrixEuler();
+		mat4 inverseWeaponMatrix = glm::inverse(weaponMatrix);
+
+		if (spawnRight)
+		{
+
+			trail_r = new particle_system_meleeTrail();
+			vec3 trailStart = viewmodel_r->GetBoneMatrixWorld("trailR_start")[3];
+			vec3 trailEnd = viewmodel_r->GetBoneMatrixWorld("trailR_end")[3];
+
+			trailStart = vec3(inverseWeaponMatrix * vec4(trailStart, 1.0f));
+			trailEnd = vec3(inverseWeaponMatrix * vec4(trailEnd, 1.0f));
+
+			trail_r->SetTrailTransform(trailStart, trailEnd);
+			trail_r->Start();
+			Level::Current->AddEntity(trail_r);
+			trail_r->LoadAssetsIfNeeded();
+		}
+
+		if (spawnLeft)
+		{
+			trail_l = new particle_system_meleeTrail();
+			vec3 trailStart = viewmodel_l->GetBoneMatrixWorld("trailL_start")[3];
+			vec3 trailEnd = viewmodel_l->GetBoneMatrixWorld("trailL_end")[3];
+
+			trailStart = vec3(inverseWeaponMatrix * vec4(trailStart, 1.0f));
+			trailEnd = vec3(inverseWeaponMatrix * vec4(trailEnd, 1.0f));
+
+			trail_l->SetTrailTransform(trailStart, trailEnd);
+			trail_l->Start();
+			Level::Current->AddEntity(trail_l);
+			trail_l->LoadAssetsIfNeeded();
+		}
 	}
 
 	void UpdateTrail()
 	{
-		// Spawn the trail once the start delay has elapsed
+		// Spawn trails once the start delay has elapsed.
+		// pendingTrailRight/Left were set by StartAttack before arming the delay.
 		if (!startTrailDelay.Wait())
 		{
-			StartNewTrail();
+			StartNewTrails(pendingTrailRight, pendingTrailLeft);
 			startTrailDelay.AddDelay(100000000.0f); // re-arm as inert
 		}
 
-		// Tell the trail to stop emitting once the hit window is over
-		if (!pendingAttackEndDelay.Wait() && trail != nullptr)
-			trail->StopAll();
+		// Tell active trails to stop emitting once the hit window is over
+		if (!pendingAttackEndDelay.Wait())
+		{
+			if (trail_r != nullptr) trail_r->StopAll();
+			if (trail_l != nullptr) trail_l->StopAll();
+		}
 
-		if (trail == nullptr || trailViewmodel == nullptr) return;
+		MathHelper::Transform weaponTransform = MathHelper::Transform();
+		weaponTransform.Position = Position;
+		weaponTransform.Rotation = Rotation;
+		mat4 weaponMatrix = weaponTransform.ToMatrixEuler();
+		mat4 inverseWeaponMatrix = glm::inverse(weaponMatrix);
 
-		// Feed the two blade endpoints from the active sword's animated skeleton
-		vec3 trailStart = trailViewmodel->GetBoneMatrixWorld("trail_start")[3];
-		vec3 trailEnd = trailViewmodel->GetBoneMatrixWorld("trail_end")[3];
+		// Feed bone endpoints every frame — null checks mean only active trails update
+		if (trail_r != nullptr)
+		{
+			vec3 trailStart = viewmodel_r->GetBoneMatrixWorld("trailR_start")[3];
+			vec3 trailEnd = viewmodel_r->GetBoneMatrixWorld("trailR_end")[3];
 
-		trail->SetTrailTransform(trailStart, trailEnd);
+			trailStart = vec3(inverseWeaponMatrix * vec4(trailStart, 1.0f));
+			trailEnd = vec3(inverseWeaponMatrix * vec4(trailEnd, 1.0f));
+
+			trail_r->SetTrailTransform(trailStart, trailEnd);
+			trail_r->RelativeTransform = weaponMatrix; // anchor to camera space so it follows the viewmodel
+		}
+
+		if (trail_l != nullptr)
+		{
+			vec3 trailStart = viewmodel_l->GetBoneMatrixWorld("trailL_start")[3];
+			vec3 trailEnd = viewmodel_l->GetBoneMatrixWorld("trailL_end")[3];
+
+			trailStart = vec3(inverseWeaponMatrix * vec4(trailStart, 1.0f));
+			trailEnd = vec3(inverseWeaponMatrix * vec4(trailEnd, 1.0f));
+
+
+			trail_l->SetTrailTransform(trailStart, trailEnd);
+			trail_l->RelativeTransform = weaponMatrix; // anchor to camera space so it follows the viewmodel
+		}
 	}
 
 	void WarnAboutAttack()
 	{
-
 		auto hit = Physics::SphereTrace(
 			Camera::position,
 			Camera::position + MathHelper::GetForwardVector(Camera::rotation) * 1.5f,
@@ -178,12 +241,15 @@ public:
 				enemy->WarnAboutAttack(owner);
 			}
 		}
-
 	}
 
 	// -----------------------------------------------------------------------
 	// Attack
 	// -----------------------------------------------------------------------
+
+	// Remembered between StartAttack and the delayed StartNewTrails call
+	bool pendingTrailRight = false;
+	bool pendingTrailLeft = false;
 
 	void StartAttack()
 	{
@@ -191,7 +257,7 @@ public:
 
 		if (counterAvailable)
 		{
-			// Counter-attack immediately following a successful parry
+			// Counter-attack: both swords swing — spawn a trail on each
 			counterAvailable = false;
 
 			Time::AddTimeScaleEffect(0.3, 0.1, true, "weapon", 0.3f, 0.1f);
@@ -200,7 +266,8 @@ public:
 			viewmodel_l->SetAnimationTime(0.1f);
 			viewmodel_r->SetAnimationTime(0.1f);
 
-			trailViewmodel = viewmodel_r; // anchor trail to right sword for counter
+			pendingTrailRight = true;
+			pendingTrailLeft = true;
 
 			attackDelay.AddDelay(0.5f);
 			pendingAttackStartDelay.AddDelay(0.15f);
@@ -214,20 +281,17 @@ public:
 		}
 		else
 		{
-			// Reset to right if the re-attack window has expired
-
-
-			const bool  isRight = (attackSide == 0);
-			auto* const activeVm = isRight ? viewmodel_r : viewmodel_l;
+			// Normal attack: only the active sword swings — one trail
+			const bool isRight = (attackSide == 0);
 
 			PlayBoth(isRight ? "attack2_r" : "attack2_l", false, 0.1f);
 
-			//activeVm->PlayAnimation(isRight ? "attack2_r" : "attack2_l", false, 0.1f);
-			trailViewmodel = activeVm;
+			pendingTrailRight = isRight;
+			pendingTrailLeft = !isRight;
 
 			attackDelay.AddDelay(0.5f);
 			pendingAttackStartDelay.AddDelay(0.15f);
-			pendingAttackEndDelay.AddDelay(0.3f);
+			pendingAttackEndDelay.AddDelay(0.5f);
 
 			Camera::AddCameraShake(CameraShake(
 				1.0f, 1.0f, vec3(0), vec3(0),
@@ -239,8 +303,8 @@ public:
 			attackSide = isRight ? 1 : 0; // alternate for next hit
 		}
 
-		// Kill the previous trail and queue a new one
-		StopTrail();
+		// Kill the previous trails and queue new ones
+		StopTrails();
 		startTrailDelay.AddDelay(0.15f);
 
 		soundToggle ? fireSoundPlayer->Play() : fireSoundPlayer2->Play();
@@ -269,15 +333,12 @@ public:
 
 		if (hit.entity != nullptr)
 		{
-
 			float damangeToDeal = Damage;
 
 			if (viewmodel_r->GetAnimationName() == "attack2_counter")
 			{
 				damangeToDeal *= 2.5f;
 			}
-				
-			
 
 			hit.entity->OnPointDamage(
 				damangeToDeal,
@@ -340,7 +401,7 @@ public:
 
 		// Open the counter-attack opportunity
 		counterAvailable = true;
-		counterWindow.AddDelay(0.5f);
+		counterWindow.AddDelay(0.8f);
 	}
 
 	// -----------------------------------------------------------------------
