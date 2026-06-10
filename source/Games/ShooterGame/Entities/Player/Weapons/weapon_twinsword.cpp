@@ -170,11 +170,16 @@ public:
 			// Counter-attack immediately following a successful parry
 			counterAvailable = false;
 
-			PlayBoth("attack_counter", false, 0.1f);
+			Time::AddTimeScaleEffect(0.3, 0.1, true, "weapon", 0.25f, 0.1f);
+
+			PlayBoth("attack_counter", false, 0.0f);
+			viewmodel_l->SetAnimationTime(0.13f);
+			viewmodel_r->SetAnimationTime(0.13f);
+
 			trailViewmodel = viewmodel_r; // anchor trail to right sword for counter
 
 			attackDelay.AddDelay(0.5f);
-			pendingAttackStartDelay.AddDelay(0.1f);
+			pendingAttackStartDelay.AddDelay(0.2f);
 			pendingAttackEndDelay.AddDelay(0.45f);
 
 			Camera::AddCameraShake(CameraShake(
@@ -197,7 +202,7 @@ public:
 			trailViewmodel = activeVm;
 
 			attackDelay.AddDelay(0.5f);
-			pendingAttackStartDelay.AddDelay(0.1f);
+			pendingAttackStartDelay.AddDelay(0.15f);
 			pendingAttackEndDelay.AddDelay(0.3f);
 
 			Camera::AddCameraShake(CameraShake(
@@ -241,8 +246,11 @@ public:
 
 			float damangeToDeal = Damage;
 
-			if (counterAvailable)
+			if (viewmodel_r->GetAnimationName() == "attack_counter")
+			{
 				damangeToDeal *= 1.5f;
+			}
+				
 
 			hit.entity->OnPointDamage(
 				damangeToDeal,
@@ -295,7 +303,7 @@ public:
 	void OnParried() override
 	{
 		SoundPlayer::PlayOneshot("event:/Weapons/knife/knife_attack", 2.0f, 1.0f, false);
-
+		Time::AddTimeScaleEffect(0.3, 0.1, true, "parry", 0.24f, 0.1f);
 		EndBlock();
 
 		PlayBoth("parry", false, 0.05f);
