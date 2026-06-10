@@ -616,9 +616,11 @@ void NpcBase::AsyncUpdate()
 
 	vec3 curMove = MathHelper::XZ(controller->GetVelocity());
 
+	float distanceToTarget = length(target_lastSeenPosition - Position);
+
 	bool lockAtTarget =
 		((target_attack && target_sees && target_attackInRange && npcType == NpcType::Guard)
-			|| (target_follow && target_sees && length(curMove) < 1))
+			|| (target_follow && target_sees && length(curMove) < 1) || (target_follow && distanceToTarget < 2.5f))
 		&& DoingTask == false;
 
 	if (isStunned() || mesh->InRagdoll)

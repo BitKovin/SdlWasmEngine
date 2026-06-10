@@ -215,7 +215,7 @@ public:
 
         particle.position2 = Position;
 
-        glm::vec3 randPos = RandomPosition(0.03f);
+        glm::vec3 randPos = RandomPosition(0.15f);
         particle.position += randPos;
 
         glm::vec3 randomDir = RandomPosition(1.0f);

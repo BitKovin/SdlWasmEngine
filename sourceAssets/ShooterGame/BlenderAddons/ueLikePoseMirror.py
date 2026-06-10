@@ -280,34 +280,47 @@ def mirror_animation(context, obj, pairs, do_flip, axis):
     if not frames:
         return len(pairs), 0
 
-    # ── Phase 1: pre-sample the full pose at every relevant frame ─────────────
+    # Disable auto-keying for the entire operation.
+    # frame_set() + view_layer.update() trigger Blender's auto-key system,
+    # which would insert keyframes on ALL selected bones — not just the mirrored
+    # ones. We do our own targeted keyframe_insert calls, so auto-key must be
+    # suppressed. It is restored unconditionally in the finally block.
+    tool_settings = context.scene.tool_settings
+    prev_auto_key = tool_settings.use_keyframe_insert_auto
+    tool_settings.use_keyframe_insert_auto = False
+
     saved_frame = context.scene.frame_current
-    snapshots = {}
-    for f in frames:
-        context.scene.frame_set(int(f))
-        snapshots[f] = {b.name: b.matrix.copy() for b in pose.bones}
+    try:
+        # ── Phase 1: pre-sample the full pose at every relevant frame ─────────
+        snapshots = {}
+        for f in frames:
+            context.scene.frame_set(int(f))
+            snapshots[f] = {b.name: b.matrix.copy() for b in pose.bones}
 
-    # ── Phase 2: clear destination (+ source for Flip) fcurves ────────────────
-    bones_to_clear = dst_names | (src_names if do_flip else set())
-    clear_keyframes_for_bones(action, bones_to_clear)
+        # ── Phase 2: clear destination (+ source for Flip) fcurves ───────────
+        bones_to_clear = dst_names | (src_names if do_flip else set())
+        clear_keyframes_for_bones(action, bones_to_clear)
 
-    # ── Phase 3: write mirrored keyframes at every collected frame ─────────────
-    for f in frames:
-        context.scene.frame_set(int(f))
-        snap = snapshots[f]
+        # ── Phase 3: write mirrored keyframes at every collected frame ────────
+        for f in frames:
+            context.scene.frame_set(int(f))
+            snap = snapshots[f]
 
-        final_globals = {}
-        for src, dst in pairs:
-            final_globals[dst] = get_mirrored_global_matrix(src, dst, snap, pose, axis)
-        if do_flip:
+            final_globals = {}
             for src, dst in pairs:
-                final_globals[src] = get_mirrored_global_matrix(dst, src, snap, pose, axis)
+                final_globals[dst] = get_mirrored_global_matrix(src, dst, snap, pose, axis)
+            if do_flip:
+                for src, dst in pairs:
+                    final_globals[src] = get_mirrored_global_matrix(dst, src, snap, pose, axis)
 
-        apply_globals_hierarchically(pose, final_globals, snap)
-        insert_keyframes_for_bones(pose, set(final_globals.keys()), f)
+            apply_globals_hierarchically(pose, final_globals, snap)
+            insert_keyframes_for_bones(pose, set(final_globals.keys()), f)
 
-    # ── Restore original frame ────────────────────────────────────────────────
-    context.scene.frame_set(int(saved_frame))
+    finally:
+        # ── Restore original frame and auto-key state ─────────────────────────
+        context.scene.frame_set(int(saved_frame))
+        tool_settings.use_keyframe_insert_auto = prev_auto_key
+
     return len(pairs), len(frames)
 
 
@@ -482,7 +495,7 @@ class UE_OT_SmartMirrorAnim(bpy.types.Operator):
             if mirror_name:
                 if is_left == from_left:
                     pairs.append((n, mirror_name))
-                processed |= {n, mirror_name}
+                    processed |= {n, mirror_name}
             elif self.mirror_center and n not in processed:
                 pairs.append((n, n))
                 processed.add(n)
@@ -549,7 +562,7 @@ class UE_OT_MirrorPoseAnim(bpy.types.Operator):
                 if mirror_name:
                     if is_left == want_left:
                         pairs.append((n, mirror_name))
-                    processed |= {n, mirror_name}
+                        processed |= {n, mirror_name}
                 elif self.mirror_center and n not in processed:
                     pairs.append((n, n))
                     processed.add(n)

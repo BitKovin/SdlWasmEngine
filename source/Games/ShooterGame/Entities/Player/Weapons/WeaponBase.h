@@ -63,6 +63,7 @@ public:
 	bool SupportsOffhandWeapon = true;
 
 	virtual void OnParried(){}
+	virtual void OnBlocked() {}
 
 	virtual bool IsMelee()
 	{

@@ -6,6 +6,8 @@
 #include "../../Enemy/IEnemy.h"
 #include <ParticleSystems/particle_system_meleeTrail.hpp>
 
+#include <Entities/Npc/NpcGuardMelee.h>
+
 class weapon_twinsword : public Weapon
 {
 public:
@@ -42,7 +44,7 @@ public:
 	// Block state
 	bool isBlocking = false;
 
-	const float Damage = 15.0f;
+	const float Damage = 20.0f;
 
 	SoundPlayer* fireSoundPlayer = nullptr;
 	SoundPlayer* fireSoundPlayer2 = nullptr;
@@ -157,6 +159,28 @@ public:
 		trail->SetTrailTransform(trailStart, trailEnd);
 	}
 
+	void WarnAboutAttack()
+	{
+
+		auto hit = Physics::SphereTrace(
+			Camera::position,
+			Camera::position + MathHelper::GetForwardVector(Camera::rotation) * 1.5f,
+			0.5f,
+			BodyType::GroupHitTest,
+			{ Player::Instance->LeadBody },
+			{ Player::Instance }
+		);
+
+		if (hit.hasHit && hit.entity != nullptr)
+		{
+			if (auto* enemy = dynamic_cast<NpcGuardMelee*>(hit.entity))
+			{
+				enemy->WarnAboutAttack(owner);
+			}
+		}
+
+	}
+
 	// -----------------------------------------------------------------------
 	// Attack
 	// -----------------------------------------------------------------------
@@ -170,16 +194,16 @@ public:
 			// Counter-attack immediately following a successful parry
 			counterAvailable = false;
 
-			Time::AddTimeScaleEffect(0.3, 0.1, true, "weapon", 0.25f, 0.1f);
+			Time::AddTimeScaleEffect(0.3, 0.1, true, "weapon", 0.3f, 0.1f);
 
-			PlayBoth("attack_counter", false, 0.0f);
-			viewmodel_l->SetAnimationTime(0.13f);
-			viewmodel_r->SetAnimationTime(0.13f);
+			PlayBoth("attack2_counter", false, 0.1f);
+			viewmodel_l->SetAnimationTime(0.1f);
+			viewmodel_r->SetAnimationTime(0.1f);
 
 			trailViewmodel = viewmodel_r; // anchor trail to right sword for counter
 
 			attackDelay.AddDelay(0.5f);
-			pendingAttackStartDelay.AddDelay(0.2f);
+			pendingAttackStartDelay.AddDelay(0.15f);
 			pendingAttackEndDelay.AddDelay(0.45f);
 
 			Camera::AddCameraShake(CameraShake(
@@ -224,6 +248,8 @@ public:
 
 		pendingAttack = true;
 		reAttackDelay.AddDelay(0.55f);
+
+		WarnAboutAttack();
 	}
 
 	// Called every frame while the hit window is open.
@@ -246,11 +272,12 @@ public:
 
 			float damangeToDeal = Damage;
 
-			if (viewmodel_r->GetAnimationName() == "attack_counter")
+			if (viewmodel_r->GetAnimationName() == "attack2_counter")
 			{
-				damangeToDeal *= 1.5f;
+				damangeToDeal *= 2.5f;
 			}
 				
+			
 
 			hit.entity->OnPointDamage(
 				damangeToDeal,
@@ -260,6 +287,9 @@ public:
 				owner,
 				this
 			);
+
+			Physics::AddImpulseAtLocation(hit.hitbody, MathHelper::GetForwardVector(Camera::rotation) * (Damage + 2) * 14.0f, hit.position);
+
 			pendingAttack = false; // stop re-tracing once an entity is hit
 		}
 

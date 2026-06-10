@@ -9,6 +9,7 @@ class NpcHelper
 public:
 
 	static bool CheckParry(vec3 npcForward, Entity* entity);
+	static bool CheckBlock(vec3 npcForward, Entity* entity);
 
 private:
 

@@ -2404,6 +2404,8 @@ void Player::AsyncUpdate()
 		//DebugDraw::Path(portal.vertices, 0.01f, 0.1f);
 	}
 
+	Rotation = vec3(0,cameraRotation.y,0);
+
 }
 
 void Player::LateUpdate()

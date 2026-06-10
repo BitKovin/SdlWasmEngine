@@ -39,11 +39,15 @@ void NpcGuardMelee::CommitAttack()
 {
 	if (!CanAttackOrBlock()) return;
 
+	if (isCurrentlyBlocking) return;
+
 	// Priority 1: punish passive blocking
-	if (nextAttackIsBreak)
+	if (nextAttackIsBreak || (RandomHelper::RandomFloat() < (timesParriedThisFight * 0.2f)))
 	{
+		timesParriedThisFight -= 4;
+		timesParriedThisFight = std::max(timesParriedThisFight, 0);
 		nextAttackIsBreak = false;
-		if (RandomHelper::RandomFloat() < 0.45f)
+		if (RandomHelper::RandomFloat() < 0.3f)
 			PerformBaitingMeleeAttack();
 		else
 			PerformBreakingAttack();
@@ -234,7 +238,14 @@ void NpcGuardMelee::PerformBreakingAttack()
 	attackDelay.AddDelay(GetActionAnimationRemainingTime());
 }
 
-void NpcGuardMelee::StartBlock() { Logger::Log("StartBlock"); }
+void NpcGuardMelee::StartBlock() 
+{ 
+
+	isCurrentlyBlocking = true;
+	pendingCounterAttack = true;
+	EnterState(MeleeState::BLOCKING, 0.50f + RandomHelper::RandomFloat() * 0.18f);
+
+}
 void NpcGuardMelee::StopBlock() { Logger::Log("StopBlock"); }
 
 void NpcGuardMelee::OnParried()
@@ -263,6 +274,10 @@ void NpcGuardMelee::DoNormalAttackDamage()
 		{
 			OnParried();
 			Stun();
+		}
+		else if(NpcHelper::CheckBlock(MathHelper::GetForwardVector(mesh->Rotation), hit.entity))
+		{
+			playerBlockCount++;
 		}
 		else
 		{
@@ -325,9 +340,21 @@ void NpcGuardMelee::WarnAboutAttack(Entity* from)
 
 	vec3 forward = MathHelper::GetForwardVector(mesh->Rotation);
 	vec3 attackerForward = MathHelper::GetForwardVector(from->Rotation);
+
+	DebugDraw::Line(Position + vec3(0, 0.0f, 0), Position + vec3(0, 0.0f, 0) + forward * 2.0f, 1.1f, 0.1f, DebugColor::Red);
+	DebugDraw::Line(from->Position + vec3(0, 0.0f, 0), from->Position + vec3(0, 0.0f, 0) + attackerForward * 2.0f, 1.1f, 0.1f, DebugColor::Green);
+
+	float dotOF = glm::dot(forward, attackerForward);
+
 	if (glm::dot(forward, attackerForward) > -0.6f) return;
 
-	float blockChance;
+	if (meleeState == MeleeState::BLOCKING)
+	{
+		stateTimer.AddDelay(0.5f);
+	}
+
+
+	float blockChance = 1.0f;
 	switch (meleeState)
 	{
 	case MeleeState::BAITING:    blockChance = 0.92f; break;
@@ -343,9 +370,7 @@ void NpcGuardMelee::WarnAboutAttack(Entity* from)
 	if (RandomHelper::RandomFloat() > blockChance) return;
 
 	StartBlock();
-	isCurrentlyBlocking = true;
-	pendingCounterAttack = true;
-	EnterState(MeleeState::BLOCKING, 0.20f + RandomHelper::RandomFloat() * 0.18f);
+
 }
 
 // ── UpdateTargetAttack ────────────────────────────────────────────────────────
