@@ -659,8 +659,6 @@ Entity* Level::FindEntityWithId(const hashed_string& id)
 void Level::FinalizeFrame()
 {
 	AddPendingLevelObjects();
-	RemovePendingEntities();
-	MemoryCleanPendingEntities();
 
 	VissibleRenderList.clear();
 
