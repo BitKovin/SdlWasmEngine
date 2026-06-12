@@ -5220,3 +5220,35 @@ delvenPack/dlv_wood1b
 "classname" "networkTestCube"
 "origin" "-80 -48 64"
 }
+// entity 133
+{
+"classname" "func_door"
+"targetname" "test_move_1"
+"time" "2"
+"targetLocation" "0 0 200"
+// brush 0
+{
+( -304 80 32 ) ( -304 -16 32 ) ( -352 80 32 ) delvenPack/dlv_metalpip2a 112 0 0 1 1 0 0 0
+( -304 80 32 ) ( -352 80 32 ) ( -304 80 16 ) delvenPack/dlv_metalpip2a 112 0 -0 1 1 0 0 0
+( -288 80 32 ) ( -288 80 16 ) ( -288 -16 32 ) delvenPack/dlv_metalpip2a -0 0 0 1 1 0 0 0
+( -352 -16 16 ) ( -304 -16 16 ) ( -352 80 16 ) delvenPack/dlv_metalpip2a 112 0 0 1 1 0 0 0
+( -352 -16 16 ) ( -352 -16 32 ) ( -304 -16 16 ) delvenPack/dlv_metalpip2a 112 0 -0 1 1 0 0 0
+( -384 -16 16 ) ( -384 80 16 ) ( -384 -16 32 ) delvenPack/dlv_metalpip2a -0 0 0 1 1 0 0 0
+}
+}
+// entity 134
+{
+"classname" "trigger"
+"onEnterAction" "open"
+"onExitAction" "close"
+"target" "test_move_1"
+// brush 0
+{
+( -288 80 304 ) ( -288 -16 304 ) ( -384 80 304 ) common/trigger 0 0 0 1 1 0 0 0
+( -288 80 48 ) ( -384 80 48 ) ( -288 80 32 ) common/trigger 0 16 -0 1 1 0 0 0
+( -288 80 48 ) ( -288 80 32 ) ( -288 -16 48 ) common/trigger 0 16 0 1 1 0 0 0
+( -384 -16 32 ) ( -288 -16 32 ) ( -384 80 32 ) common/trigger 0 0 0 1 1 0 0 0
+( -384 -16 32 ) ( -384 -16 48 ) ( -288 -16 32 ) common/trigger 0 16 -0 1 1 0 0 0
+( -384 -16 32 ) ( -384 80 32 ) ( -384 -16 48 ) common/trigger 0 16 0 1 1 0 0 0
+}
+}

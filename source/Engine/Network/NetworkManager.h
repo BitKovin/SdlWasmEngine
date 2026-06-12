@@ -165,6 +165,8 @@ public:
     static void OnPeerConnected   (uint8_t peerId);
     static void OnPeerDisconnected(uint8_t peerId);
 
+    static float GetTickRate() { return s_networkTickRate; }
+
 private:
     // -----------------------------------------------------------------------
     // Static state

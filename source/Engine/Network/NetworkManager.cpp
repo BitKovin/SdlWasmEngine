@@ -21,10 +21,10 @@ uint8_t      NetworkManager::s_localPeerId = 0;
 uint32_t     NetworkManager::s_localRuntimeSeq = 0;
 uint16_t     NetworkManager::s_outboundSeq = 0;
 
-float        NetworkManager::s_networkTickRate = 20.0f;
+float        NetworkManager::s_networkTickRate = 30.0f;
 float        NetworkManager::s_networkTickAccum = 0.0f;
 float        NetworkManager::s_validationTickAccum = 0.0f;
-float        NetworkManager::kValidationInterval = 1.0f/20.0f;
+float        NetworkManager::kValidationInterval = 1.0f/10.0f;
 
 Level* NetworkManager::s_level = nullptr;
 INetworkTransport* NetworkManager::s_transport = nullptr;
