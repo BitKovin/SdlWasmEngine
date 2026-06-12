@@ -1,10 +1,10 @@
 #pragma once
 
-#include "../../Entity.h"
 #include "../transformPoint.h"
 #include <Logger.hpp>
+#include <Network/NetworkedEntity.h>
 
-class MovebleBrush : public Entity
+class MovebleBrush : public NetworkedEntity
 {
 public:
 	
@@ -27,7 +27,7 @@ public:
 
 	bool useLightmap = false;
 
-	MovebleBrush() : Entity()
+	MovebleBrush() : NetworkedEntity()
 	{
 		SaveGame = true;
 
@@ -165,9 +165,7 @@ public:
 
 		if (action == "open")
 		{
-			open = true;
-
-			
+			open = true;		
 
 		}
 		else if (action == "close")
@@ -175,6 +173,27 @@ public:
 
 			open = false;
 
+		}
+
+	}
+
+	void NetSerialize(NetPacket& packet) override 
+	{
+
+		packet.WriteBool(open);
+		packet.WriteFloat(progress);
+
+	}
+	void NetDeserialize(NetPacket& packet) override 
+	{
+
+		open = packet.ReadBool();
+
+		float newProgress = packet.ReadFloat();
+
+		if (newProgress > progress + 0.05f || newProgress < progress - 0.05f)
+		{
+			progress = newProgress;
 		}
 
 	}

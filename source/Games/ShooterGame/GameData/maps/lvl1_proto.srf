@@ -8016,3 +8016,99 @@ default
 	sampleSize 0
 }
 
+1125 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/delvenPack/dlv_metalpip2a
+	entity 133
+	castShadows 0
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+1126 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/delvenPack/dlv_metalpip2a
+	entity 133
+	castShadows 0
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+1127 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/delvenPack/dlv_metalpip2a
+	entity 133
+	castShadows 0
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+1128 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/delvenPack/dlv_metalpip2a
+	entity 133
+	castShadows 0
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+1129 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/delvenPack/dlv_metalpip2a
+	entity 133
+	castShadows 0
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+1130 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/delvenPack/dlv_metalpip2a
+	entity 133
+	castShadows 0
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+1131 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/trigger
+	entity 134
+	castShadows 0
+	sampleSize 0
+}
+
+1132 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/trigger
+	entity 134
+	castShadows 0
+	sampleSize 0
+}
+
+1133 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/trigger
+	entity 134
+	castShadows 0
+	sampleSize 0
+}
+
+1134 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/trigger
+	entity 134
+	castShadows 0
+	sampleSize 0
+}
+
+1135 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/trigger
+	entity 134
+	castShadows 0
+	sampleSize 0
+}
+
+1136 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/trigger
+	entity 134
+	castShadows 0
+	sampleSize 0
+}
+
