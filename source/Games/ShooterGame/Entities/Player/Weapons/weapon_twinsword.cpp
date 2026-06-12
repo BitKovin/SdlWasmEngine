@@ -28,6 +28,10 @@ public:
 	Delay reAttackDelay;
 	Delay startTrailDelay;
 
+	Delay blockingWindow;
+
+	Delay forceBlockInput;
+
 	Delay parrySpamWindow;
 	Delay blockStartDelay;
 	Delay counterWindow; // how long the counter-attack opportunity stays open
@@ -41,10 +45,12 @@ public:
 	bool soundToggle = false;
 	bool counterAvailable = false; // set true after a successful parry
 
+	bool pendingCounterAttack = false;
+
 	// Block state
 	bool isBlocking = false;
 
-	const float Damage = 20.0f;
+	const float Damage = 30.0f;
 
 	SoundPlayer* fireSoundPlayer = nullptr;
 	SoundPlayer* fireSoundPlayer2 = nullptr;
@@ -65,7 +71,7 @@ public:
 	{
 		fireSoundPlayer = SoundPlayer::Create("event:/Weapons/knife/knife_attack");
 		fireSoundPlayer2 = SoundPlayer::Create("event:/Weapons/knife/knife_attack");
-		hitSoundPlayer = SoundPlayer::Create("event:/Weapons/knife/knife_hit");
+		hitSoundPlayer = SoundPlayer::Create("");// ("event:/Weapons/knife/knife_hit");
 
 		SwitchDelay.AddDelay(0.35f);
 	}
@@ -253,10 +259,19 @@ public:
 
 	void StartAttack()
 	{
+
+		if (counterAvailable)
+		{
+			pendingCounterAttack = true;
+		}
+
 		if (attackDelay.Wait() || isBlocking) return;
 
 		if (counterAvailable)
 		{
+
+			pendingCounterAttack = false;
+
 			// Counter-attack: both swords swing — spawn a trail on each
 			counterAvailable = false;
 
@@ -323,7 +338,7 @@ public:
 		auto hit = Physics::SphereTrace(
 			Camera::position,
 			Camera::position + MathHelper::GetForwardVector(Camera::rotation) * 1.3f,
-			0.3f,
+			0.4f,
 			BodyType::GroupHitTest,
 			{ Player::Instance->LeadBody },
 			{ Player::Instance }
@@ -338,6 +353,13 @@ public:
 			if (viewmodel_r->GetAnimationName() == "attack2_counter")
 			{
 				damangeToDeal *= 2.5f;
+			}
+
+			bool isEnemy = dynamic_cast<IEnemy*>(hit.entity) && hit.entity->Health > 0;
+
+			if (isEnemy)
+			{
+				Player::Instance->Heal(damangeToDeal * 0.15f);
 			}
 
 			hit.entity->OnPointDamage(
@@ -380,28 +402,41 @@ public:
 
 	void EndBlock()
 	{
+
+		if (viewmodel_r->GetAnimationName() == "block_start" && viewmodel_r->GetAnimationTime() < 0.2f) return;
+
 		// Arm the spam window so the next block press can't instantly parry
-		parrySpamWindow.AddDelay(0.4f);
+		parrySpamWindow.AddDelay(0.3f);
 
 		isBlocking = false;
 
-		PlayBoth("block_stop", false, 0.1f);
+		if (viewmodel_r->GetAnimationName() == "block_start")
+		{
+			PlayBoth("block_stop", false, 0.1f);
 
-		attackDelay.AddDelay(0.3f);
+			attackDelay.AddDelay(0.3f);
+		}
+
 	}
 
 	// Called by the engine when an enemy attack lands during the parry window
 	void OnParried() override
 	{
-		SoundPlayer::PlayOneshot("event:/Weapons/knife/knife_attack", 2.0f, 1.0f, false);
+		SoundPlayer::PlayOneshot("event:/Weapons/cane/cane_parry", 1.0f, 1.0f, false);
 		Time::AddTimeScaleEffect(0.3, 0.1, true, "parry", 0.24f, 0.1f);
 		EndBlock();
 
+		isBlocking = false;
+
+		forceBlockInput.AddDelay(0.5f);
+
 		PlayBoth("parry", false, 0.05f);
+
+		attackDelay.AddDelay(0.2f);
 
 		// Open the counter-attack opportunity
 		counterAvailable = true;
-		counterWindow.AddDelay(0.8f);
+		counterWindow.AddDelay(1.1f);
 	}
 
 	// -----------------------------------------------------------------------
@@ -410,8 +445,14 @@ public:
 
 	void Update() override
 	{
+
+		if (counterWindow.Wait() == false)
+			pendingCounterAttack = false;
+
+			
+
 		// Primary attack / counter
-		if (Input::GetAction("attack")->PressedBuffered() && !isBlocking)
+		if ((Input::GetAction("attack")->PressedBuffered(0.3f) || pendingCounterAttack))
 			StartAttack();
 
 		// Block: hold to block, release to lower guard
@@ -438,7 +479,10 @@ public:
 			isBlocking &&
 			viewmodel_r->GetAnimationTime() < viewmodel_r->GetAnimationDuration();
 
-		Parrying = blockAnimPlaying && !parrySpamWindow.Wait();
+		if(blockAnimPlaying)
+			blockingWindow.AddDelay(0.1f);
+
+		Parrying = blockAnimPlaying && !parrySpamWindow.Wait() || blockingWindow.Wait();
 		Blocking = (isBlocking && !blockStartDelay.Wait()) || parrySpamWindow.Wait();
 	}
 

@@ -497,6 +497,8 @@ public:
 	}
 
 	void Start();
+	
+	void Heal(float healthToAdd);
 
 	// UpdateWalkMovement is now a thin dispatcher to per-state functions.
 	// Add new locomotion modes by adding a MoveState value and an Update* method.

@@ -170,6 +170,17 @@ void Player::Start()
 
 }
 
+void Player::Heal(float healthToAdd)
+{
+
+	if (dead)return;
+
+	Health += healthToAdd;
+
+	Health = glm::clamp(Health, 0.0f, MaxHealth);
+
+}
+
 void Player::UpdateWalkMovement(vec2 input)
 {
 

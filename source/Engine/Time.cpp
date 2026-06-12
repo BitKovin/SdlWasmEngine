@@ -11,8 +11,19 @@ double Time::GameTimeNoPause = 0.0;
 float Time::TimeScale = 1.0f;
 double Time::frequency = 0.0;
 std::vector<TimeScaleEffect> Time::timeScaleEffects;
+
+#ifdef DISTRIBUTION
+
+double Time::TargetFrameRate = 300.0;
+double Time::TargetFrameTime = 1.0 / 400.0;
+
+#else
+
 double Time::TargetFrameRate = 16000.0;
 double Time::TargetFrameTime = 1.0 / 16000.0;
+
+#endif
+
 double Time::frameError = 0.0;
 double Time::desiredTime = 0.0;
 double Time::frameStartTime = 0.0;
