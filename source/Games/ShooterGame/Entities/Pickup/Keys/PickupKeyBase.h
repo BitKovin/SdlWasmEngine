@@ -17,10 +17,8 @@ protected:
 		if(player->keysInventory.count(keyType) == 0)
 			player->keysInventory.insert(keyType);
 
-
-		Destroy();
 		PickupBase::OnPickup(player);
-
+		Destroy();
 	}
 
 

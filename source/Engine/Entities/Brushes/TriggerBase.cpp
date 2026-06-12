@@ -21,12 +21,51 @@ void TriggerBase::FromData(EntityData data)
 
 }
 
+void TriggerBase::DoEnterAction()
+{
+
+	CallActionOnEveryEntityWithName(targetName, onEnterAction);
+
+}
+
+void TriggerBase::DoExitAction()
+{
+
+	CallActionOnEveryEntityWithName(targetName, onExitAction);
+
+}
+
+void TriggerBase::OnRPC(uint8_t rpcId, NetPacket& args)
+{
+
+	RPCIndex i = (RPCIndex)rpcId;
+
+	switch (i)
+	{
+	case TriggerBase::RPCIndex::None:
+		break;
+	case TriggerBase::RPCIndex::Enter:
+		DoEnterAction();
+		break;
+	case TriggerBase::RPCIndex::Exit:
+		DoExitAction();
+		break;
+	default:
+		break;
+	}
+
+
+}
+
 void TriggerBase::OnBodyEntered(Body* body, Entity* entity)
 {
 	if (CanBeTriggered(entity) == false)return;
 	if (entity->HasTag("player"))
 	{
-		CallActionOnEveryEntityWithName(targetName, onEnterAction);
+
+		NetPacket args;
+
+		SendRPC((uint8_t)RPCIndex::Enter, args);
 	}
 
 }
@@ -36,7 +75,8 @@ void TriggerBase::OnBodyExited(Body* body, Entity* entity)
 	if (CanBeTriggered(entity) == false)return;
 	if (entity->HasTag("player"))
 	{
-		CallActionOnEveryEntityWithName(targetName, onExitAction);
+		NetPacket args;
+		SendRPC((uint8_t)RPCIndex::Exit, args);
 	}
 
 }

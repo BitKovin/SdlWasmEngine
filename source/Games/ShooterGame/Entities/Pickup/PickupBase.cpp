@@ -1,6 +1,7 @@
 #include "PickupBase.h"
 
 #include <Entities/Player/Player.hpp>
+#include <Network/NetworkManager.h>
 
 void PickupBase::Start()
 {
@@ -38,8 +39,37 @@ void PickupBase::FromData(EntityData data)
 void PickupBase::OnPickup(Player* player)
 {
 
-	SoundPlayer::PlayOneshot(pickupSound, 1);
+	NetPacket args;
 
-	CallActionOnEveryEntityWithName(target, pickupEvent);
+	SendRPC(RPC_PICKED_UP, args, RPCTarget::All);
 
+}
+
+void PickupBase::OnRPC(uint8_t rpcId, NetPacket& args)
+{
+
+	if (rpcId == RPC_PICKED_UP)
+	{
+		Destroy();
+
+		SoundPlayer::PlayOneshot(pickupSound, 1);
+
+		if (NetworkManager::IsServer())
+		{
+			CallActionOnEveryEntityWithName(target, pickupEvent);
+		}
+
+	}
+
+}
+
+void PickupBase::NetSerialize(NetPacket& packet)
+{
+
+
+
+}
+
+void PickupBase::NetDeserialize(NetPacket & packet)
+{
 }

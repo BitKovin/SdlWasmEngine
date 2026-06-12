@@ -2,11 +2,14 @@
 
 #include <Physics.h>
 #include <Entity.h>
+#include <NetworkedEntity.h>
 
-class PickupBase : public Entity
+class PickupBase : public NetworkedEntity
 {
 public:
 	
+	static inline uint8_t RPC_PICKED_UP = 0;
+
 	std::string target;
 	std::string pickupEvent;
 
@@ -21,6 +24,11 @@ public:
 	void FromData(EntityData data) override;
 
 	virtual void OnPickup(class Player* player);
+
+	void OnRPC(uint8_t rpcId, NetPacket& args);
+
+	void NetSerialize(NetPacket& packet) override;
+	void NetDeserialize(NetPacket& packet) override;
 
 private:
 

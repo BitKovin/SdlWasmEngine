@@ -38,8 +38,8 @@ public:
 
     // ── Serialization contract ───────────────────────────────────────────
     // Both overrides must read/write the same fields in the same order.
-    virtual void NetSerialize  (NetPacket& packet) = 0;
-    virtual void NetDeserialize(NetPacket& packet) = 0;
+    virtual void NetSerialize(NetPacket& packet) {};
+    virtual void NetDeserialize(NetPacket& packet) {};
 
     // ── Class name ───────────────────────────────────────────────────────
     // Return the exact name this type is registered under in LevelObjectFactory.
@@ -50,6 +50,8 @@ public:
     // ── Lifecycle hooks ──────────────────────────────────────────────────
     virtual void OnNetworkSpawn()   {}
     virtual void OnNetworkDespawn() {}
+
+    void Destroy() override;
 
     // ── RPC ──────────────────────────────────────────────────────────────
     // Send a one-shot reliable event.  See RPC_HOWTO.md for full docs.

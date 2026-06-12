@@ -419,7 +419,6 @@ void Level::RemoveEntity(LevelObject* obj)
 
 	if (NetworkManager::IsActive()) {
 		if (auto* ne = dynamic_cast<NetworkedEntity*>(entity)) {
-			if (ne->isOwned == false) return;
 			ne->OnNetworkDespawn();
 			if (ne->isOwned) {
 				NetworkManager::BroadcastDespawn(ne->networkId);

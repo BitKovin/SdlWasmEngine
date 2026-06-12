@@ -11,16 +11,10 @@ public:
 		ClassName = "triggerOnce";
 	}
 	
-	void OnBodyEntered(Body* body, Entity* entity)
+	void DoEnterAction() override
 	{
-		if (CanBeTriggered(entity) == false)return;
-		TriggerBase::OnBodyEntered(body, entity);
-
-		if (entity->HasTag("player"))
-		{
-			Destroy();
-		}
-
+		TriggerBase::DoEnterAction();
+		Destroy();
 	}
 
 private:
