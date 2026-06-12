@@ -407,11 +407,14 @@ NetworkedEntity* NetworkManager::Find(uint32_t networkId) {
 // ---------------------------------------------------------------------------
 
 uint32_t NetworkManager::AllocateRuntimeId(uint8_t ownerId) {
-    assert(ownerId == s_localPeerId &&
-        "AllocateRuntimeId: only allocate IDs for the local peer");
+    assert(ownerId == s_localPeerId);
 
-    const uint32_t id = (static_cast<uint32_t>(ownerId) << 20) | s_localRuntimeSeq++;
-    assert(id >= RUNTIME_ID_THRESHOLD && "Runtime ID collided with load-phase range");
+    const uint32_t id =
+        RUNTIME_ID_THRESHOLD +
+        (static_cast<uint32_t>(ownerId) << 20) +
+        s_localRuntimeSeq++;
+
+    assert(id != 0);
     return id;
 }
 

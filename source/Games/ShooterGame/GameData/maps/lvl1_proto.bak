@@ -5137,11 +5137,81 @@ delvenPack/dlv_wood1b
 "classname" "nav_point"
 "origin" "32 -704 16"
 "targetname" "test_walk_11"
-"target" "test_walk_1"
+"target" "test_walk_12"
 }
 // entity 121
 {
 "classname" "npc_guard"
 "origin" "-80 -576 128"
+"target" "test_walk_1"
+}
+// entity 122
+{
+"classname" "nav_point"
+"origin" "32 -672 16"
+"targetname" "test_walk_12"
+"target" "test_walk_13"
+}
+// entity 123
+{
+"classname" "nav_point"
+"origin" "32 -608 16"
+"targetname" "test_walk_13"
+"target" "test_walk_14"
+}
+// entity 124
+{
+"classname" "nav_point"
+"origin" "0 -576 16"
+"targetname" "test_walk_14"
+"target" "test_walk_15"
+}
+// entity 125
+{
+"classname" "nav_point"
+"origin" "-144 -592 16"
+"targetname" "test_walk_15"
+"target" "test_walk_16"
+}
+// entity 126
+{
+"classname" "nav_point"
+"origin" "-144 -656 16"
+"targetname" "test_walk_16"
+"target" "test_walk_17"
+}
+// entity 127
+{
+"classname" "nav_point"
+"origin" "-128 -688 16"
+"targetname" "test_walk_17"
+"target" "test_walk_18"
+}
+// entity 128
+{
+"classname" "nav_point"
+"origin" "-112 -704 16"
+"targetname" "test_walk_18"
+"target" "test_walk_19"
+}
+// entity 129
+{
+"classname" "nav_point"
+"origin" "-80 -752 16"
+"targetname" "test_walk_19"
+"target" "test_walk_20"
+}
+// entity 130
+{
+"classname" "nav_point"
+"origin" "-48 -784 16"
+"targetname" "test_walk_20"
+"target" "test_walk_21"
+}
+// entity 131
+{
+"classname" "nav_point"
+"origin" "-16 -752 16"
+"targetname" "test_walk_21"
 "target" "test_walk_1"
 }

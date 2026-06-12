@@ -271,6 +271,21 @@ Level* Level::OpenLevel(string filePath)
 
 	NetworkManager::OnLevelLoaded();
 
+	//time for client to get server packets
+	if (NetworkManager::IsServer() == false)
+	{
+		NetworkManager::Tick(0.5);
+		this_thread::sleep_for(300ms);
+		NetworkManager::Tick(0.5);
+		this_thread::sleep_for(300ms);
+		NetworkManager::Tick(0.5);
+	}
+
+	for (auto o : Level::Current->LevelObjects)
+	{
+		o->PostLoadStart();
+	}
+
 	return newLevel;
 }
 
@@ -669,7 +684,7 @@ void Level::FinalizeFrame()
 			for (IDrawMesh* mesh : var->GetDrawMeshes())
 			{		
 
-				if (mesh->IsCameraVisible() || renderAll)
+				if ((mesh->IsCameraVisible() && var->Visible) || renderAll)
 				{			
 
 					if (mesh->Transparent)

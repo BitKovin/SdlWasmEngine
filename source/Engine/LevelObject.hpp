@@ -23,6 +23,8 @@ public:
 
 	bool wantsAsyncUpdate = true;
 
+	bool Visible = true;
+
 	LevelObject(){}
 	virtual ~LevelObject() = default;
 
@@ -34,6 +36,9 @@ public:
 	virtual void AsyncUpdate() { wantsAsyncUpdate = false; }
 
 	virtual void Start() {}
+
+	//called after level and save is loaded. If you want to spawn something on start and keep ownership - use this one
+	virtual void PostLoadStart() {}
 
 	virtual void UpdateDebugUI() {}
 

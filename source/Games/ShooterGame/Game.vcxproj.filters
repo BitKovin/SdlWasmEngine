@@ -351,6 +351,9 @@
     <ClCompile Include="Entities\Test\NetworkTestCube.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Entities\Player\RemotePlayer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Entities\Player\Player.hpp">
@@ -564,6 +567,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Entities\Npc\Animators\NpcHybridAnimator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Entities\Player\RemotePlayer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

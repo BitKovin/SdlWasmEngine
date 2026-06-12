@@ -1694,7 +1694,7 @@ delvenPack/dlv_wood1b
 // entity 1
 {
 "classname" "info_player_start"
-"origin" "-48 256 88"
+"origin" "-48 256 40"
 "angle" "270"
 }
 // entity 2
@@ -5214,4 +5214,9 @@ delvenPack/dlv_wood1b
 "origin" "-16 -752 16"
 "targetname" "test_walk_21"
 "target" "test_walk_1"
+}
+// entity 132
+{
+"classname" "networkTestCube"
+"origin" "-80 -48 64"
 }

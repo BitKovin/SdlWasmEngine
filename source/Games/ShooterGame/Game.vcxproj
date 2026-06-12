@@ -436,6 +436,7 @@
     <ClCompile Include="Entities\Player\Player.cpp" />
     <ClCompile Include="Entities\Player\Player_Mantle.cpp" />
     <ClCompile Include="Entities\Player\player_start.cpp" />
+    <ClCompile Include="Entities\Player\RemotePlayer.cpp" />
     <ClCompile Include="Entities\Player\RestrictedArea.cpp" />
     <ClCompile Include="Entities\Player\Weapons\Animators\Animator_Akimbo.cpp" />
     <ClCompile Include="Entities\Player\Weapons\Animators\Animator_OneHand.cpp" />
@@ -527,6 +528,7 @@
     <ClInclude Include="Entities\Player\InventoryMenu.h" />
     <ClInclude Include="Entities\Player\Player.hpp" />
     <ClInclude Include="Entities\Player\PlayerBodyAnimator.h" />
+    <ClInclude Include="Entities\Player\RemotePlayer.h" />
     <ClInclude Include="Entities\Player\RestrictedArea.h" />
     <ClInclude Include="Entities\Player\Weapons\Animators\Animator_Akimbo.h" />
     <ClInclude Include="Entities\Player\Weapons\Animators\Animator_OneHand.h" />

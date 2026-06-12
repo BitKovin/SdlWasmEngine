@@ -498,6 +498,8 @@ public:
 
 	void Start();
 	
+	void PostLoadStart() override;
+
 	void Heal(float healthToAdd);
 
 	// UpdateWalkMovement is now a thin dispatcher to per-state functions.

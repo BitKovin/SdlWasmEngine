@@ -24,6 +24,7 @@
 #include <Systems/ScoreSystem/ScoreSystem.h>
 
 #include <World/WorldOrientationManager.h>
+#include "RemotePlayer.h"
 
 REGISTER_ENTITY(Player, "player")
 
@@ -167,6 +168,18 @@ void Player::Start()
 	//Spawn("testGravityController");
 
 	//Spawn("TestSpatialSoundPlayer")->Start();
+
+}
+
+void Player::PostLoadStart()
+{
+
+	RemotePlayer* remotePlayer = new RemotePlayer();
+	remotePlayer->Position = Position;
+	remotePlayer->Rotation = Rotation;
+	remotePlayer->referencePlayer = this;
+
+	Level::Current->AddEntity(remotePlayer, true);
 
 }
 
