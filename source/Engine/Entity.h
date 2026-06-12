@@ -182,7 +182,7 @@ public:
 
 	virtual void OnAction(string action) {}
 
-	static Entity* Spawn(std::string technicalName);
+	static Entity* Spawn(std::string technicalName, bool imOwner = true);
 
 	static void CallActionOnEveryEntityWithName(std::string name, std::string action)
 	{

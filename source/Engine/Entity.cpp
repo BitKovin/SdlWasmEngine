@@ -25,13 +25,13 @@ void Entity::FromData(EntityData data)
 
 }
 
-Entity* Entity::Spawn(std::string technicalName)
+Entity* Entity::Spawn(std::string technicalName, bool imOwner)
 {
 	auto entity = LevelObjectFactory::instance().create(technicalName);
 
 	if (entity)
 	{
-		Level::Current->AddEntity(entity);
+		Level::Current->AddEntity(entity, imOwner);
 	}
 
 

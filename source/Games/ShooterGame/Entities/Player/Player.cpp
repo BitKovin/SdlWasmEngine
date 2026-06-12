@@ -1949,6 +1949,17 @@ void Player::TryStep(vec3 dir)
 void Player::Update()
 {
 
+
+	if (Input::GetAction("block")->Pressed())
+	{
+
+		Entity* test = Spawn("networkTestCube");
+
+		test->Position = Camera::position + Camera::Forward() * 2.0f;
+		test->Start();
+
+	}
+
 	/*
 	vec3 lightmapColor = Level::Current->BspData.LinetraceLightmapColor(Camera::position * MAP_SCALE, (Camera::position + Camera::Forward() * 10.0f) * MAP_SCALE);
 

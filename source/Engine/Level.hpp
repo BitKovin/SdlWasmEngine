@@ -190,6 +190,8 @@ public:
 		AddPendingLevelObjects();
 	}
 
+	void LoadAssetsIfNeeded();
+
 	void Update(bool paused);
 
 	void LateUpdate(bool paused);

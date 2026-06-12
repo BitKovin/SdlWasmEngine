@@ -648,7 +648,6 @@
     <ClInclude Include="Network\ENetTransport.h" />
     <ClInclude Include="Network\INetworkTransport.h" />
     <ClInclude Include="Network\NetPacket.h" />
-    <ClInclude Include="Network\NetworkClassIds.h" />
     <ClInclude Include="Network\NetworkedEntity.h" />
     <ClInclude Include="Network\NetworkManager.h" />
     <ClInclude Include="OnlineSubsystems\GDKAuth.h" />

@@ -177,9 +177,12 @@ private:
     static uint32_t     s_localRuntimeSeq;
     static uint16_t     s_outboundSeq;
 
+
     // Network tick accumulator
     static float        s_networkTickRate;   // Hz, set in Init
     static float        s_networkTickAccum;  // seconds accumulated since last flush
+    static float        s_validationTickAccum;
+    static float        kValidationInterval;
 
     static Level*                s_level;
     static INetworkTransport*    s_transport;
@@ -245,7 +248,7 @@ private:
     // Resolve a class name to a wire index.  Asserts if not found.
     static uint16_t NameToIndex(const std::string& name);
 
-    static void OnFullSnapshotReceived(uint8_t senderId, NetPacket& packet);
+    static void OnEntityListReceived(uint8_t senderId, NetPacket& packet);
     static void FlushPreLiveQueue();
     static void DispatchPacket(uint8_t senderId, NetPacket& packet);
     static void FlushUpdateQueue();

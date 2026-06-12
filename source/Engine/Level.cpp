@@ -511,6 +511,18 @@ void Level::MemoryCleanPendingEntities()
 
 }
 
+void Level::LoadAssetsIfNeeded()
+{
+
+	std::lock_guard<std::recursive_mutex> lock(entityArrayLock);
+
+	for (auto var : LevelObjects)
+	{
+		var->LoadAssetsIfNeeded();
+	}
+
+}
+
 void Level::Update(bool paused)
 {
 	AddPendingLevelObjects();
@@ -632,6 +644,8 @@ Entity* Level::FindEntityWithId(const hashed_string& id)
 void Level::FinalizeFrame()
 {
 	AddPendingLevelObjects();
+	RemovePendingEntities();
+	MemoryCleanPendingEntities();
 
 	VissibleRenderList.clear();
 

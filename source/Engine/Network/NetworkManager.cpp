@@ -14,18 +14,20 @@
 // Static member definitions
 // ---------------------------------------------------------------------------
 
-bool         NetworkManager::s_isActive        = false;
-bool         NetworkManager::s_isLoadingLevel  = false;
-bool         NetworkManager::s_isServer        = false;
-uint8_t      NetworkManager::s_localPeerId     = 0;
+bool         NetworkManager::s_isActive = false;
+bool         NetworkManager::s_isLoadingLevel = false;
+bool         NetworkManager::s_isServer = false;
+uint8_t      NetworkManager::s_localPeerId = 0;
 uint32_t     NetworkManager::s_localRuntimeSeq = 0;
-uint16_t     NetworkManager::s_outboundSeq     = 0;
+uint16_t     NetworkManager::s_outboundSeq = 0;
 
-float        NetworkManager::s_networkTickRate  = 20.0f;
+float        NetworkManager::s_networkTickRate = 20.0f;
 float        NetworkManager::s_networkTickAccum = 0.0f;
+float        NetworkManager::s_validationTickAccum = 0.0f;
+float        NetworkManager::kValidationInterval = 1.0f/20.0f;
 
-Level*                NetworkManager::s_level     = nullptr;
-INetworkTransport*    NetworkManager::s_transport = nullptr;
+Level* NetworkManager::s_level = nullptr;
+INetworkTransport* NetworkManager::s_transport = nullptr;
 
 std::unordered_map<std::string, uint16_t>  NetworkManager::s_nameToIndex;
 std::vector<std::string>                   NetworkManager::s_indexToName;
@@ -41,10 +43,10 @@ std::vector<NetworkManager::PendingUpdate>       NetworkManager::s_updateQueue;
 
 namespace {
 
-constexpr uint32_t RUNTIME_ID_THRESHOLD = 1u << 20;
-constexpr uint8_t  BROADCAST_PEER_ID    = 255;
+    constexpr uint32_t RUNTIME_ID_THRESHOLD = 1u << 20;
+    constexpr uint8_t  BROADCAST_PEER_ID = 255;
 
-const std::string EMPTY_STRING;
+    const std::string EMPTY_STRING;
 
 } // namespace
 
@@ -69,13 +71,13 @@ void NetworkManager::BuildClassRegistry() {
     // std::map iterates in ascending key order — guaranteed by the standard.
     uint16_t index = 0;
     for (const auto& [name, factory] : registry) {
-        s_nameToIndex[name]  = index;
+        s_nameToIndex[name] = index;
         s_indexToName.push_back(name);
         ++index;
     }
 
     std::fprintf(stdout, "[NetworkManager] Built class registry: %zu types\n",
-                 s_indexToName.size());
+        s_indexToName.size());
 
 #ifndef NDEBUG
     for (uint16_t i = 0; i < static_cast<uint16_t>(s_indexToName.size()); ++i) {
@@ -104,14 +106,14 @@ uint16_t NetworkManager::NameToIndex(const std::string& name) {
 
 bool NetworkManager::IsHandshakePacket(PacketType type) {
     switch (type) {
-        case PacketType::PeerIdAssign:
-        case PacketType::LevelLoadComplete:
-        case PacketType::ClientReady:
-        case PacketType::LevelReady:
-        case PacketType::FullSnapshot:
-            return true;
-        default:
-            return false;
+    case PacketType::PeerIdAssign:
+    case PacketType::LevelLoadComplete:
+    case PacketType::ClientReady:
+    case PacketType::LevelReady:
+    case PacketType::FullSnapshot:
+        return true;
+    default:
+        return false;
     }
 }
 
@@ -126,7 +128,7 @@ std::vector<uint8_t> NetworkManager::FinalizeOutbound(NetPacket& pkt) {
 // ---------------------------------------------------------------------------
 
 void NetworkManager::CompressAndSend(const uint8_t* data, size_t length,
-                                      uint8_t targetPeerId, bool reliable) {
+    uint8_t targetPeerId, bool reliable) {
     if (!s_transport) return;
 
     const std::vector<uint8_t> input(data, data + length);
@@ -134,9 +136,11 @@ void NetworkManager::CompressAndSend(const uint8_t* data, size_t length,
 
     if (targetPeerId == BROADCAST_PEER_ID) {
         s_transport->Broadcast(compressed.data(), compressed.size(), reliable);
-    } else if (s_isServer) {
+    }
+    else if (s_isServer) {
         s_transport->Send(targetPeerId, compressed.data(), compressed.size(), reliable);
-    } else {
+    }
+    else {
         // Clients always route through the server
         s_transport->Send(0, compressed.data(), compressed.size(), reliable);
     }
@@ -147,16 +151,16 @@ void NetworkManager::CompressAndSend(const uint8_t* data, size_t length,
 // ---------------------------------------------------------------------------
 
 void NetworkManager::SendReliableNow(const std::vector<uint8_t>& bytes,
-                                      uint8_t targetPeerId) {
+    uint8_t targetPeerId) {
     CompressAndSend(bytes.data(), bytes.size(), targetPeerId, /*reliable=*/true);
 }
 
 void NetworkManager::RelayReliableExcept(uint8_t excludePeerId,
-                                          const std::vector<uint8_t>& bytes) {
+    const std::vector<uint8_t>& bytes) {
     assert(s_isServer);
     const std::vector<uint8_t> compressed = ByteCompressor::CompressData(bytes);
     s_transport->BroadcastExcept(excludePeerId,
-                                  compressed.data(), compressed.size(), /*reliable=*/true);
+        compressed.data(), compressed.size(), /*reliable=*/true);
 }
 
 void NetworkManager::RelayReliableAll(const std::vector<uint8_t>& bytes) {
@@ -187,7 +191,7 @@ void NetworkManager::FlushUpdateQueue() {
 
     for (auto& [targetPeerId, rawBytes] : groups) {
         CompressAndSend(rawBytes.data(), rawBytes.size(),
-                        targetPeerId, /*reliable=*/false);
+            targetPeerId, /*reliable=*/false);
     }
 }
 
@@ -196,19 +200,20 @@ void NetworkManager::FlushUpdateQueue() {
 // ---------------------------------------------------------------------------
 
 void NetworkManager::Init(INetworkTransport* transport, bool asServer,
-                           float networkTickRate) {
-    assert(transport      && "NetworkManager::Init: transport must not be null");
-    assert(!s_isActive    && "NetworkManager::Init called while already active");
+    float networkTickRate) {
+    assert(transport && "NetworkManager::Init: transport must not be null");
+    assert(!s_isActive && "NetworkManager::Init called while already active");
     assert(networkTickRate > 0.0f && "networkTickRate must be positive");
 
-    s_transport        = transport;
-    s_isServer         = asServer;
-    s_localPeerId      = asServer ? 0 : 255; // 255 = unassigned; set by PT_PeerIdAssign
-    s_isActive         = true;
-    s_isLoadingLevel   = false;
-    s_outboundSeq      = 0;
-    s_networkTickRate  = networkTickRate;
+    s_transport = transport;
+    s_isServer = asServer;
+    s_localPeerId = asServer ? 0 : 255; // 255 = unassigned; set by PT_PeerIdAssign
+    s_isActive = true;
+    s_isLoadingLevel = false;
+    s_outboundSeq = 0;
+    s_networkTickRate = networkTickRate;
     s_networkTickAccum = 0.0f;
+    s_validationTickAccum = 0.0f;
 
     // Build wire-index table from LevelObjectFactory before any packets fly.
     BuildClassRegistry();
@@ -216,17 +221,17 @@ void NetworkManager::Init(INetworkTransport* transport, bool asServer,
     // Wire transport callbacks.
     transport->onPeerConnected = [](uint8_t peerId) {
         NetworkManager::OnPeerConnected(peerId);
-    };
+        };
     transport->onPeerDisconnected = [](uint8_t peerId) {
         NetworkManager::OnPeerDisconnected(peerId);
-    };
+        };
     transport->onPacketReceived = [](uint8_t senderId,
-                                     const uint8_t* data, size_t length) {
-        NetworkManager::OnPacketReceived(senderId, data, length);
-    };
+        const uint8_t* data, size_t length) {
+            NetworkManager::OnPacketReceived(senderId, data, length);
+        };
 
     std::fprintf(stdout, "[NetworkManager] Initialized as %s, tick %.1f Hz\n",
-                 asServer ? "server" : "client", networkTickRate);
+        asServer ? "server" : "client", networkTickRate);
 }
 
 void NetworkManager::Shutdown() {
@@ -238,11 +243,12 @@ void NetworkManager::Shutdown() {
     s_pendingReadyClients.clear();
     s_preLiveQueue.clear();
     s_updateQueue.clear();
-    s_level            = nullptr;
-    s_isActive         = false;
-    s_isLoadingLevel   = false;
-    s_localRuntimeSeq  = 0;
+    s_level = nullptr;
+    s_isActive = false;
+    s_isLoadingLevel = false;
+    s_localRuntimeSeq = 0;
     s_networkTickAccum = 0.0f;
+    s_validationTickAccum = 0.0f;
 
     if (s_transport) {
         s_transport->Disconnect();
@@ -283,14 +289,28 @@ void NetworkManager::Tick(float dt) {
         }
         FlushUpdateQueue();
     }
+
+    // Phase 4: periodic entity-list validation (server only).
+    // Broadcasts the full entity list so every client can reconcile any
+    // spawns/despawns it missed (late join, dropped reliable, etc).
+    if (s_isServer) {
+        s_validationTickAccum += dt;
+        if (s_validationTickAccum >= kValidationInterval) {
+            s_validationTickAccum -= kValidationInterval;
+            if (s_validationTickAccum > kValidationInterval) {
+                s_validationTickAccum = 0.0f;
+            }
+            SendFullSnapshotTo(BROADCAST_PEER_ID);
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------
 // State queries
 // ---------------------------------------------------------------------------
 
-bool    NetworkManager::IsActive()       { return s_isActive; }
-bool    NetworkManager::IsServer()       { return s_isServer; }
+bool    NetworkManager::IsActive() { return s_isActive; }
+bool    NetworkManager::IsServer() { return s_isServer; }
 bool    NetworkManager::IsLoadingLevel() { return s_isLoadingLevel; }
 uint8_t NetworkManager::GetLocalPeerId() { return s_localPeerId; }
 
@@ -301,9 +321,9 @@ uint8_t NetworkManager::GetLocalPeerId() { return s_localPeerId; }
 void NetworkManager::BeginLevelLoad(Level* level) {
     assert(level && "BeginLevelLoad: level must not be null");
 
-    s_level            = level;
-    s_isLoadingLevel   = true;
-    s_localRuntimeSeq  = 0;
+    s_level = level;
+    s_isLoadingLevel = true;
+    s_localRuntimeSeq = 0;
     s_networkTickAccum = 0.0f;
     s_preLiveQueue.clear();
     s_updateQueue.clear();
@@ -321,12 +341,13 @@ void NetworkManager::OnLevelLoaded() {
         s_transport->Broadcast(compressed.data(), compressed.size(), /*reliable=*/true);
 
         std::fprintf(stdout, "[NetworkManager] Sent PT_LevelLoadComplete, "
-                     "awaiting %zu client(s)\n", s_pendingReadyClients.size());
+            "awaiting %zu client(s)\n", s_pendingReadyClients.size());
 
         if (s_pendingReadyClients.empty()) {
             OnLevelReady();
         }
-    } else {
+    }
+    else {
         NetPacket pkt(PacketType::ClientReady);
         SendReliableNow(FinalizeOutbound(pkt), /*targetPeerId=*/0);
         std::fprintf(stdout, "[NetworkManager] Sent PT_ClientReady\n");
@@ -334,11 +355,11 @@ void NetworkManager::OnLevelLoaded() {
 }
 
 void NetworkManager::OnLevelReady() {
-    s_isLoadingLevel   = false;
+    s_isLoadingLevel = false;
     s_networkTickAccum = 0.0f;
 
     std::fprintf(stdout, "[NetworkManager] Level ready — OnNetworkSpawn on "
-                 "%zu entities\n", s_entities.size());
+        "%zu entities\n", s_entities.size());
 
     for (auto& [id, entity] : s_entities) {
         entity->OnNetworkSpawn();
@@ -352,7 +373,7 @@ void NetworkManager::FlushPreLiveQueue() {
     s_preLiveQueue.clear();
 
     std::fprintf(stdout, "[NetworkManager] Flushing %zu pre-live packets\n",
-                 queue.size());
+        queue.size());
 
     for (auto& qp : queue) {
         OnPacketReceived(qp.senderId, qp.buffer.data(), qp.buffer.size());
@@ -367,7 +388,7 @@ void NetworkManager::Register(NetworkedEntity* entity) {
     assert(entity);
     assert(entity->networkId != 0 && "Register: networkId must be non-zero");
     assert(s_entities.find(entity->networkId) == s_entities.end() &&
-           "Register: duplicate networkId");
+        "Register: duplicate networkId");
 
     s_entities[entity->networkId] = entity;
 }
@@ -387,7 +408,7 @@ NetworkedEntity* NetworkManager::Find(uint32_t networkId) {
 
 uint32_t NetworkManager::AllocateRuntimeId(uint8_t ownerId) {
     assert(ownerId == s_localPeerId &&
-           "AllocateRuntimeId: only allocate IDs for the local peer");
+        "AllocateRuntimeId: only allocate IDs for the local peer");
 
     const uint32_t id = (static_cast<uint32_t>(ownerId) << 20) | s_localRuntimeSeq++;
     assert(id >= RUNTIME_ID_THRESHOLD && "Runtime ID collided with load-phase range");
@@ -421,14 +442,15 @@ void NetworkManager::BroadcastSpawn(NetworkedEntity* entity) {
     NetPacket pkt(PacketType::SpawnEntity);
     pkt.WriteUInt32(entity->networkId);
     pkt.WriteUInt16(wireIndex);           // class identified by wire index
-    pkt.WriteUInt8 (entity->networkOwner);
+    pkt.WriteUInt8(entity->networkOwner);
     entity->NetSerialize(pkt);
 
     auto bytes = FinalizeOutbound(pkt);
 
     if (s_isServer) {
         SendReliableNow(bytes, BROADCAST_PEER_ID);
-    } else {
+    }
+    else {
         SendReliableNow(bytes, /*server=*/0);
     }
 }
@@ -441,7 +463,8 @@ void NetworkManager::BroadcastDespawn(uint32_t networkId) {
 
     if (s_isServer) {
         SendReliableNow(bytes, BROADCAST_PEER_ID);
-    } else {
+    }
+    else {
         SendReliableNow(bytes, /*server=*/0);
     }
 }
@@ -466,11 +489,11 @@ void NetworkManager::EnqueueEntityUpdate(NetworkedEntity* entity) {
 // ---------------------------------------------------------------------------
 
 void NetworkManager::SendRPC(uint32_t networkId, uint8_t rpcId,
-                              NetPacket& args, RPCTarget target) {
+    NetPacket& args, RPCTarget target) {
     NetPacket pkt(PacketType::RPC);
     pkt.WriteUInt32(networkId);
-    pkt.WriteUInt8 (rpcId);
-    pkt.WriteUInt8 (static_cast<uint8_t>(target));
+    pkt.WriteUInt8(rpcId);
+    pkt.WriteUInt8(static_cast<uint8_t>(target));
 
     // Append the caller-built argument payload
     for (uint8_t b : args.GetPayloadBytes()) {
@@ -487,18 +510,19 @@ void NetworkManager::SendRPC(uint32_t networkId, uint8_t rpcId,
             entity->OnRPC(rpcId, argsCopy);
         }
         switch (target) {
-            case RPCTarget::All:
-                RelayReliableAll(bytes);
-                break;
-            case RPCTarget::Others:
-                // Server has no "sender" to exclude when it calls SendRPC
-                // directly; treat Others as All.
-                RelayReliableAll(bytes);
-                break;
-            case RPCTarget::Server:
-                break; // server-only, already applied above
+        case RPCTarget::All:
+            RelayReliableAll(bytes);
+            break;
+        case RPCTarget::Others:
+            // Server has no "sender" to exclude when it calls SendRPC
+            // directly; treat Others as All.
+            RelayReliableAll(bytes);
+            break;
+        case RPCTarget::Server:
+            break; // server-only, already applied above
         }
-    } else {
+    }
+    else {
         // Client always sends to server; server applies and relays per target
         SendReliableNow(bytes, /*server=*/0);
     }
@@ -542,14 +566,14 @@ void NetworkManager::SendFullSnapshotTo(uint8_t targetPeerId) {
     for (const auto& [id, entity] : s_entities) {
         pkt.WriteUInt32(entity->networkId);
         pkt.WriteUInt16(NameToIndex(entity->GetClassName())); // wire index, not name
-        pkt.WriteUInt8 (entity->networkOwner);
+        pkt.WriteUInt8(entity->networkOwner);
         entity->NetSerialize(pkt);
     }
 
     SendReliableNow(FinalizeOutbound(pkt), targetPeerId);
 
-    std::fprintf(stdout, "[NetworkManager] Sent full snapshot (%zu entities) to peer %u\n",
-                 s_entities.size(), targetPeerId);
+    //std::fprintf(stdout, "[NetworkManager] Sent full snapshot (%zu entities) to peer %u\n",
+       // s_entities.size(), targetPeerId);
 }
 
 // ---------------------------------------------------------------------------
@@ -570,7 +594,8 @@ void NetworkManager::OnPeerConnected(uint8_t peerId) {
 
     if (s_isLoadingLevel) {
         s_pendingReadyClients.insert(peerId);
-    } else {
+    }
+    else {
         // Late joiner: send level name, then wait for ClientReady before snapshot
         {
             NetPacket pkt(PacketType::LevelInfo);
@@ -613,26 +638,27 @@ void NetworkManager::OnPeerDisconnected(uint8_t peerId) {
 // ---------------------------------------------------------------------------
 
 void NetworkManager::OnPacketReceived(uint8_t senderId,
-                                       const uint8_t* buffer, size_t length) {
+    const uint8_t* buffer, size_t length) {
     const std::vector<uint8_t> compressed(buffer, buffer + length);
     std::vector<uint8_t> decompressed;
 
     try {
         decompressed = ByteCompressor::DecompressData(compressed);
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception& e) {
         std::fprintf(stderr, "[NetworkManager] Decompression failed from peer %u: %s\n",
-                     senderId, e.what());
+            senderId, e.what());
         return;
     }
 
     size_t offset = 0;
     while (offset < decompressed.size()) {
-        const uint8_t* ptr       = decompressed.data() + offset;
+        const uint8_t* ptr = decompressed.data() + offset;
         const size_t   remaining = decompressed.size() - offset;
 
         if (remaining < NetPacket::HEADER_SIZE) {
             std::fprintf(stderr, "[NetworkManager] Truncated header from peer %u "
-                         "(offset=%zu remaining=%zu)\n", senderId, offset, remaining);
+                "(offset=%zu remaining=%zu)\n", senderId, offset, remaining);
             break;
         }
 
@@ -643,14 +669,14 @@ void NetworkManager::OnPacketReceived(uint8_t senderId,
 
         if (remaining < packetSize) {
             std::fprintf(stderr, "[NetworkManager] Truncated packet from peer %u "
-                         "(need=%zu have=%zu)\n", senderId, packetSize, remaining);
+                "(need=%zu have=%zu)\n", senderId, packetSize, remaining);
             break;
         }
 
         NetPacket packet;
         if (!NetPacket::Parse(ptr, packetSize, packet)) {
             std::fprintf(stderr, "[NetworkManager] Bad checksum from peer %u "
-                         "at offset %zu — dropping rest of bundle\n", senderId, offset);
+                "at offset %zu — dropping rest of bundle\n", senderId, offset);
             break;
         }
 
@@ -664,7 +690,7 @@ void NetworkManager::OnPacketReceived(uint8_t senderId,
             const std::vector<uint8_t> slice(ptr, ptr + packetSize);
             QueuedPacket qp;
             qp.senderId = senderId;
-            qp.buffer   = ByteCompressor::CompressData(slice);
+            qp.buffer = ByteCompressor::CompressData(slice);
             s_preLiveQueue.push_back(std::move(qp));
             continue;
         }
@@ -684,203 +710,205 @@ void NetworkManager::DispatchPacket(uint8_t senderId, NetPacket& packet) {
 
         // ── Handshake ────────────────────────────────────────────────────
 
-        case PacketType::PeerIdAssign: {
-            s_localPeerId = packet.ReadUInt8();
-            std::fprintf(stdout, "[NetworkManager] Assigned peerId=%u\n", s_localPeerId);
-            break;
-        }
+    case PacketType::PeerIdAssign: {
+        s_localPeerId = packet.ReadUInt8();
+        std::fprintf(stdout, "[NetworkManager] Assigned peerId=%u\n", s_localPeerId);
+        break;
+    }
 
-        case PacketType::LevelInfo: {
-            const std::string levelName = packet.ReadString();
-            std::fprintf(stdout, "[NetworkManager] Level info: '%s'\n", levelName.c_str());
-            // Game code triggers the load; NetworkManager just logs here.
-            // Extend by setting an onLevelInfoReceived callback if needed.
-            break;
-        }
+    case PacketType::LevelInfo: {
+        const std::string levelName = packet.ReadString();
+        std::fprintf(stdout, "[NetworkManager] Level info: '%s'\n", levelName.c_str());
+        // Game code triggers the load; NetworkManager just logs here.
+        // Extend by setting an onLevelInfoReceived callback if needed.
+        break;
+    }
 
-        case PacketType::LevelLoadComplete: {
-            NetPacket reply(PacketType::ClientReady);
-            SendReliableNow(FinalizeOutbound(reply), /*server=*/0);
-            std::fprintf(stdout, "[NetworkManager] Sent PT_ClientReady\n");
-            break;
-        }
+    case PacketType::LevelLoadComplete: {
+        NetPacket reply(PacketType::ClientReady);
+        SendReliableNow(FinalizeOutbound(reply), /*server=*/0);
+        std::fprintf(stdout, "[NetworkManager] Sent PT_ClientReady\n");
+        break;
+    }
 
-        case PacketType::ClientReady: {
-            assert(s_isServer);
-            s_pendingReadyClients.erase(senderId);
-            std::fprintf(stdout, "[NetworkManager] PT_ClientReady from peer %u "
-                         "(%zu remaining)\n", senderId, s_pendingReadyClients.size());
+    case PacketType::ClientReady: {
+        assert(s_isServer);
+        s_pendingReadyClients.erase(senderId);
+        std::fprintf(stdout, "[NetworkManager] PT_ClientReady from peer %u "
+            "(%zu remaining)\n", senderId, s_pendingReadyClients.size());
 
-            if (s_pendingReadyClients.empty()) {
-                NetPacket ready(PacketType::LevelReady);
-                auto bytes = FinalizeOutbound(ready);
-                const auto compressed = ByteCompressor::CompressData(bytes);
-                s_transport->Broadcast(compressed.data(), compressed.size(), /*reliable=*/true);
-                OnLevelReady();
-            }
-            break;
-        }
-
-        case PacketType::LevelReady: {
-            std::fprintf(stdout, "[NetworkManager] Received PT_LevelReady\n");
+        if (s_pendingReadyClients.empty()) {
+            NetPacket ready(PacketType::LevelReady);
+            auto bytes = FinalizeOutbound(ready);
+            const auto compressed = ByteCompressor::CompressData(bytes);
+            s_transport->Broadcast(compressed.data(), compressed.size(), /*reliable=*/true);
             OnLevelReady();
+        }
+        break;
+    }
+
+    case PacketType::LevelReady: {
+        std::fprintf(stdout, "[NetworkManager] Received PT_LevelReady\n");
+        OnLevelReady();
+        break;
+    }
+
+    case PacketType::FullSnapshot: {
+        OnEntityListReceived(senderId, packet);
+        break;
+    }
+
+                                 // ── Entity lifecycle ─────────────────────────────────────────────
+
+    case PacketType::SpawnEntity: {
+        const uint32_t networkId = packet.ReadUInt32();
+        const uint16_t wireIndex = packet.ReadUInt16(); // was classId
+        const uint8_t  networkOwner = packet.ReadUInt8();
+
+        if (s_isServer) {
+            NetPacket relay(PacketType::SpawnEntity);
+            relay.WriteUInt32(networkId);
+            relay.WriteUInt16(wireIndex);
+            relay.WriteUInt8(networkOwner);
+            packet.CopyRemainingTo(relay);
+            RelayReliableExcept(senderId, FinalizeOutbound(relay));
+        }
+
+        if (Find(networkId)) break; // already known (e.g. our own spawn echoed back)
+
+        const std::string& className = IndexToName(wireIndex);
+        if (className.empty()) {
+            std::fprintf(stderr, "[NetworkManager] SpawnEntity: unknown wire index %u\n",
+                wireIndex);
             break;
         }
 
-        case PacketType::FullSnapshot: {
-            OnFullSnapshotReceived(senderId, packet);
+        // LevelObjectFactory constructs the entity by class name.
+        // The factory returns Entity*; we downcast after verifying IsNetworked().
+        Entity* raw = LevelObjectFactory::instance().create(className);
+        if (!raw) {
+            std::fprintf(stderr, "[NetworkManager] SpawnEntity: factory returned null "
+                "for '%s'\n", className.c_str());
             break;
         }
 
-        // ── Entity lifecycle ─────────────────────────────────────────────
+        auto* entity = dynamic_cast<NetworkedEntity*>(raw);
+        if (!entity) {
+            std::fprintf(stderr, "[NetworkManager] SpawnEntity: '%s' is not a "
+                "NetworkedEntity\n", className.c_str());
+            delete raw;
+            break;
+        }
 
-        case PacketType::SpawnEntity: {
-            const uint32_t networkId    = packet.ReadUInt32();
-            const uint16_t wireIndex    = packet.ReadUInt16(); // was classId
-            const uint8_t  networkOwner = packet.ReadUInt8();
+        entity->networkId = networkId;
+        entity->networkOwner = networkOwner;
+        entity->LoadAssetsIfNeeded();
+        entity->Start();
+        entity->NetDeserialize(packet);
 
-            if (s_isServer) {
-                NetPacket relay(PacketType::SpawnEntity);
-                relay.WriteUInt32(networkId);
-                relay.WriteUInt16(wireIndex);
-                relay.WriteUInt8(networkOwner);
-                packet.CopyRemainingTo(relay);
-                RelayReliableExcept(senderId, FinalizeOutbound(relay));
-            }
+        if (s_level) {
+            s_level->AddEntity(entity);
+        }
+        break;
+    }
 
-            if (Find(networkId)) break; // already known (e.g. our own spawn echoed back)
+    case PacketType::DespawnEntity: {
+        const uint32_t networkId = packet.ReadUInt32();
 
-            const std::string& className = IndexToName(wireIndex);
-            if (className.empty()) {
-                std::fprintf(stderr, "[NetworkManager] SpawnEntity: unknown wire index %u\n",
-                             wireIndex);
-                break;
-            }
+        if (s_isServer) {
+            NetPacket relay(PacketType::DespawnEntity);
+            relay.WriteUInt32(networkId);
+            RelayReliableExcept(senderId, FinalizeOutbound(relay));
+        }
 
-            // LevelObjectFactory constructs the entity by class name.
-            // The factory returns Entity*; we downcast after verifying IsNetworked().
-            Entity* raw = LevelObjectFactory::instance().create(className);
-            if (!raw) {
-                std::fprintf(stderr, "[NetworkManager] SpawnEntity: factory returned null "
-                             "for '%s'\n", className.c_str());
-                break;
-            }
+        NetworkedEntity* entity = Find(networkId);
+        if (entity && s_level) {
+            s_level->RemoveEntity(entity);
+        }
+        break;
+    }
 
-            auto* entity = dynamic_cast<NetworkedEntity*>(raw);
-            if (!entity) {
-                std::fprintf(stderr, "[NetworkManager] SpawnEntity: '%s' is not a "
-                             "NetworkedEntity\n", className.c_str());
-                delete raw;
-                break;
-            }
+    case PacketType::EntityUpdate: {
+        const uint32_t networkId = packet.ReadUInt32();
 
-            entity->networkId    = networkId;
-            entity->networkOwner = networkOwner;
+        if (s_isServer) {
+            // Relay unreliably to all except sender, compressed, immediate.
+            NetPacket relay(PacketType::EntityUpdate);
+            relay.WriteUInt32(networkId);
+            packet.CopyRemainingTo(relay);
+            auto relayBytes = FinalizeOutbound(relay);
+            const auto compressed = ByteCompressor::CompressData(relayBytes);
+            s_transport->BroadcastExcept(senderId,
+                compressed.data(), compressed.size(),
+                /*reliable=*/false);
+        }
+
+        NetworkedEntity* entity = Find(networkId);
+        if (entity && !entity->isOwned) {
             entity->NetDeserialize(packet);
+        }
+        break;
+    }
 
-            if (s_level) {
-                s_level->AddEntity(entity);
+                                 // ── RPC ──────────────────────────────────────────────────────────
+
+    case PacketType::RPC: {
+        const uint32_t  networkId = packet.ReadUInt32();
+        const uint8_t   rpcId = packet.ReadUInt8();
+        const RPCTarget target = static_cast<RPCTarget>(packet.ReadUInt8());
+
+        if (s_isServer) {
+            // Relay before applying so clients receive it even if OnRPC
+            // removes the entity
+            NetPacket relay(PacketType::RPC);
+            relay.WriteUInt32(networkId);
+            relay.WriteUInt8(rpcId);
+            relay.WriteUInt8(static_cast<uint8_t>(target));
+            packet.CopyRemainingTo(relay);
+            auto relayBytes = FinalizeOutbound(relay);
+
+            switch (target) {
+            case RPCTarget::All:
+                RelayReliableAll(relayBytes);
+                break;
+            case RPCTarget::Others:
+                RelayReliableExcept(senderId, relayBytes);
+                break;
+            case RPCTarget::Server:
+                break; // no relay
             }
-            break;
         }
 
-        case PacketType::DespawnEntity: {
-            const uint32_t networkId = packet.ReadUInt32();
-
-            if (s_isServer) {
-                NetPacket relay(PacketType::DespawnEntity);
-                relay.WriteUInt32(networkId);
-                RelayReliableExcept(senderId, FinalizeOutbound(relay));
-            }
-
-            NetworkedEntity* entity = Find(networkId);
-            if (entity && s_level) {
-                s_level->RemoveEntity(entity);
-            }
-            break;
+        NetworkedEntity* entity = Find(networkId);
+        if (entity) {
+            entity->OnRPC(rpcId, packet);
         }
+        break;
+    }
 
-        case PacketType::EntityUpdate: {
-            const uint32_t networkId = packet.ReadUInt32();
-
-            if (s_isServer) {
-                // Relay unreliably to all except sender, compressed, immediate.
-                NetPacket relay(PacketType::EntityUpdate);
-                relay.WriteUInt32(networkId);
-                packet.CopyRemainingTo(relay);
-                auto relayBytes = FinalizeOutbound(relay);
-                const auto compressed = ByteCompressor::CompressData(relayBytes);
-                s_transport->BroadcastExcept(senderId,
-                                              compressed.data(), compressed.size(),
-                                              /*reliable=*/false);
-            }
-
-            NetworkedEntity* entity = Find(networkId);
-            if (entity && !entity->isOwned) {
-                entity->NetDeserialize(packet);
-            }
-            break;
-        }
-
-        // ── RPC ──────────────────────────────────────────────────────────
-
-        case PacketType::RPC: {
-            const uint32_t  networkId = packet.ReadUInt32();
-            const uint8_t   rpcId     = packet.ReadUInt8();
-            const RPCTarget target    = static_cast<RPCTarget>(packet.ReadUInt8());
-
-            if (s_isServer) {
-                // Relay before applying so clients receive it even if OnRPC
-                // removes the entity
-                NetPacket relay(PacketType::RPC);
-                relay.WriteUInt32(networkId);
-                relay.WriteUInt8(rpcId);
-                relay.WriteUInt8(static_cast<uint8_t>(target));
-                packet.CopyRemainingTo(relay);
-                auto relayBytes = FinalizeOutbound(relay);
-
-                switch (target) {
-                    case RPCTarget::All:
-                        RelayReliableAll(relayBytes);
-                        break;
-                    case RPCTarget::Others:
-                        RelayReliableExcept(senderId, relayBytes);
-                        break;
-                    case RPCTarget::Server:
-                        break; // no relay
-                }
-            }
-
-            NetworkedEntity* entity = Find(networkId);
-            if (entity) {
-                entity->OnRPC(rpcId, packet);
-            }
-            break;
-        }
-
-        default:
-            std::fprintf(stderr, "[NetworkManager] Unknown packet type %u from peer %u\n",
-                         static_cast<unsigned>(type), senderId);
-            break;
+    default:
+        std::fprintf(stderr, "[NetworkManager] Unknown packet type %u from peer %u\n",
+            static_cast<unsigned>(type), senderId);
+        break;
     }
 }
 
 // ---------------------------------------------------------------------------
-// Full snapshot reconciliation (client-side, late joiner)
+// Entity-list reconciliation (client-side, runs on every PT_FullSnapshot —
+// both the initial late-join snapshot and every periodic validation tick)
 // ---------------------------------------------------------------------------
 
-void NetworkManager::OnFullSnapshotReceived(uint8_t /*senderId*/, NetPacket& packet) {
+void NetworkManager::OnEntityListReceived(uint8_t /*senderId*/, NetPacket& packet) {
     assert(!s_isServer);
 
     const uint16_t entityCount = packet.ReadUInt16();
-    std::fprintf(stdout, "[NetworkManager] Processing snapshot (%u entities)\n",
-                 entityCount);
 
     std::set<uint32_t> snapshotIds;
+    std::vector<NetworkedEntity*> newlySpawned;
 
     for (uint16_t i = 0; i < entityCount; ++i) {
-        const uint32_t networkId    = packet.ReadUInt32();
-        const uint16_t wireIndex    = packet.ReadUInt16();
+        const uint32_t networkId = packet.ReadUInt32();
+        const uint16_t wireIndex = packet.ReadUInt16();
         const uint8_t  networkOwner = packet.ReadUInt8();
 
         snapshotIds.insert(networkId);
@@ -888,14 +916,16 @@ void NetworkManager::OnFullSnapshotReceived(uint8_t /*senderId*/, NetPacket& pac
         NetworkedEntity* existing = Find(networkId);
         if (existing) {
             existing->networkOwner = networkOwner;
-            existing->isOwned      = (networkOwner == s_localPeerId);
+            existing->isOwned = (networkOwner == s_localPeerId);
             existing->NetDeserialize(packet);
-            // OnNetworkSpawn fires later in OnLevelReady()
-        } else {
+            // If existing && load phase, OnNetworkSpawn fires later in
+            // OnLevelReady(); otherwise it has already fired.
+        }
+        else {
             const std::string& className = IndexToName(wireIndex);
             if (className.empty()) {
                 std::fprintf(stderr,
-                    "[NetworkManager] Snapshot: unknown wire index %u, aborting\n",
+                    "[NetworkManager] EntityList: unknown wire index %u, aborting\n",
                     wireIndex);
                 break;
             }
@@ -906,29 +936,62 @@ void NetworkManager::OnFullSnapshotReceived(uint8_t /*senderId*/, NetPacket& pac
             auto* entity = dynamic_cast<NetworkedEntity*>(raw);
             if (!entity) { delete raw; break; }
 
-            entity->networkId    = networkId;
+            entity->networkId = networkId;
             entity->networkOwner = networkOwner;
+            entity->isOwned = (networkOwner == s_localPeerId);
+
+            if (!s_isLoadingLevel) {
+                // Mid-game catch-up: this entity is brand new to us, so it
+                // needs the full Start()/asset-load treatment that
+                // SpawnEntity normally gives it.
+                entity->LoadAssetsIfNeeded();
+                entity->Start();
+            }
+
             entity->NetDeserialize(packet);
 
             if (s_level) {
                 s_level->AddEntity(entity);
             }
+
+            std::fprintf(stdout,
+                "[NetworkManager] EntityList: spawning missed entity %u (%s)\n",
+                networkId, className.c_str());
+
+            if (!s_isLoadingLevel) {
+                // During load, OnNetworkSpawn fires for everyone in
+                // OnLevelReady(). Outside load, fire it now.
+                newlySpawned.push_back(entity);
+            }
         }
     }
 
-    // Remove load-phase entities absent from the snapshot (they were despawned
-    // before this client joined)
+    // Remove local entities absent from the authoritative list — they were
+    // despawned while we weren't listening (or we missed the despawn).
+    // Skip entities we own but the server hasn't acknowledged yet: those are
+    // pending local spawns, not stale entities.
     std::vector<NetworkedEntity*> toRemove;
     for (const auto& [id, entity] : s_entities) {
-        if (id < RUNTIME_ID_THRESHOLD && snapshotIds.find(id) == snapshotIds.end()) {
-            toRemove.push_back(entity);
-        }
+        if (snapshotIds.find(id) != snapshotIds.end()) continue;
+        if (entity->isOwned) continue;
+        toRemove.push_back(entity);
     }
     for (NetworkedEntity* entity : toRemove) {
-        std::fprintf(stdout, "[NetworkManager] Snapshot: removing stale entity %u\n",
-                     entity->networkId);
+        std::fprintf(stdout, "[NetworkManager] EntityList: removing stale entity %u\n",
+            entity->networkId);
         if (s_level) {
-            s_level->RemoveEntitySilent(entity);
+            if (s_isLoadingLevel) {
+                s_level->RemoveEntitySilent(entity);
+            }
+            else {
+                s_level->RemoveEntity(entity);
+            }
         }
+    }
+
+    // Entities spawned outside the load phase need their spawn callback now;
+    // load-phase spawns get it later from OnLevelReady().
+    for (NetworkedEntity* entity : newlySpawned) {
+        entity->OnNetworkSpawn();
     }
 }
