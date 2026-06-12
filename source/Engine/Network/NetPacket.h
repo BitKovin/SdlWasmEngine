@@ -138,7 +138,7 @@ private:
     static uint16_t ComputeChecksum(PacketType    type,
                                      uint8_t       senderId,
                                      uint16_t      seq,
-                                     uint16_t      payloadLen,
+                                     uint32_t      payloadLen,
                                      const uint8_t* payload,
                                      size_t         payloadSize);
 

@@ -68,6 +68,8 @@ void NpcHumanBase::UpdateFleeTarget()
 
 void NpcHumanBase::UpdatePerception()
 {
+    // Perception is only meaningful on the owning/server peer.
+    if (!isOwned) return;
 
     if (observer == nullptr) return;
 
@@ -132,14 +134,15 @@ void NpcHumanBase::Start()
     desiredDirection = MathHelper::XZ(MathHelper::GetForwardVector(Rotation));
     movingDirection = desiredDirection;
 
-    //pathFollow.CalculatePathOnThread();
-
     soundPlayer = SoundPlayer::Create();
 
     SetupSoundPlayer(soundPlayer);
 
-    observer = AiPerceptionSystem::CreateObserver(Position, MathHelper::GetForwardVector(mesh->Rotation), 150);
-
+    // Perception and pathfinding are owner-only.
+    if (isOwned)
+    {
+        observer = AiPerceptionSystem::CreateObserver(Position, MathHelper::GetForwardVector(mesh->Rotation), 150);
+    }
 }
 
 void NpcHumanBase::Stun()
@@ -335,6 +338,11 @@ void NpcHumanBase::Death()
 
 void NpcHumanBase::OnPointDamage(float Damage, vec3 Point, vec3 Direction, string bone, Entity* DamageCauser, Entity* Weapon)
 {
+    // Hit registration lives on the hitting peer (player side).
+    // We receive the authoritative damage via the TakeDamage RPC, so
+    // non-owning peers must not apply duplicate damage here.
+    if (!isOwned) return;
+
     Damage *= mesh->GetHitboxDamageMultiplier(bone);
     Entity::OnPointDamage(Damage, Point, Direction, bone, DamageCauser, Weapon);
 
@@ -346,23 +354,30 @@ void NpcHumanBase::OnPointDamage(float Damage, vec3 Point, vec3 Direction, strin
         }
     }
 
-
     if (mesh->GetHitboxDamageMultiplier(bone) > 1.1f && dead)
     {
         //Time::AddTimeScaleEffect(0.3f, 0.15f, true, "hit_slow");
     }
 
     GlobalParticleSystem::SpawnParticleAt("hit_flesh", Point, MathHelper::FindLookAtRotation(vec3(0), Direction), vec3(Damage / 10.0f));
-
-
     GlobalParticleSystem::SpawnParticleAt("hit_flesh", Point, MathHelper::FindLookAtRotation(Direction, vec3(0)), vec3(Damage / 10.0f));
-
 
     SoundPlayer::PlayOneshot("event:/NPC/General/FleshHit", 1, Damage / 20.0f, false, Point);
 }
 
 void NpcHumanBase::OnDamage(float Damage, Entity* DamageCauser, Entity* Weapon)
 {
+    // ---------------------------------------------------------------------------
+    // Hit registration is player-side.  The player calls OnPointDamage /
+    // OnDamage on their local copy, computes the final damage, then sends a
+    // TakeDamage RPC to the server.  The server applies it authoritatively and
+    // the snapshot propagates the new Health to all peers via NetSerialize.
+    //
+    // On non-owning peers this function is intentionally a no-op so we don't
+    // double-apply damage that will arrive through the network snapshot anyway.
+    // ---------------------------------------------------------------------------
+    if (!isOwned) return;
+
     Damage = ModifyIncomingDamage(Damage);
 
     ScoreSystem::Instance().addScore(std::min(Damage, Health));
@@ -371,6 +386,9 @@ void NpcHumanBase::OnDamage(float Damage, Entity* DamageCauser, Entity* Weapon)
 
     if (Health <= 0)
     {
+        // Send death RPC to all peers so they enter the dead state together.
+        NetPacket deathArgs(PacketType::RPC);
+        SendRPC(NpcRPC::Death, deathArgs, RPCTarget::All);
         Death();
     }
 
@@ -380,13 +398,139 @@ void NpcHumanBase::OnDamage(float Damage, Entity* DamageCauser, Entity* Weapon)
         speed /= 2.0f;
         PlaySoundEffect("event:/NPC/Enemy1/Enemy1Damage");
     }
+}
 
-    if (Health < 30)
+// ---------------------------------------------------------------------------
+// Replication – snapshot
+// ---------------------------------------------------------------------------
+
+void NpcHumanBase::NetSerialize(NetPacket& packet)
+{
+    // Called on the owning peer every network tick.
+    packet.WriteVector3(Position);
+    packet.WriteVector3(mesh->Rotation);
+    packet.WriteVector3(movingDirection);
+    packet.WriteFloat(speed);
+    packet.WriteFloat(Health);
+    packet.WriteBool(dead);
+    packet.WriteBool(stuned);
+    packet.WriteBool(stunnedRagdoll);
+    packet.WriteBool(returningFromRagdoll);
+    packet.WriteBool(fleeing);
+}
+
+void NpcHumanBase::NetDeserialize(NetPacket& packet)
+{
+    // Called on every non-owning peer when a snapshot arrives.
+    vec3 remotePos      = packet.ReadVector3();
+    vec3 remoteRot      = packet.ReadVector3();
+    vec3 remoteMoveDir  = packet.ReadVector3();
+    float remoteSpeed   = packet.ReadFloat();
+    float remoteHealth  = packet.ReadFloat();
+    bool  remoteDead    = packet.ReadBool();
+    bool  remoteStuned  = packet.ReadBool();
+    bool  remoteStunRag = packet.ReadBool();
+    bool  remoteReturn  = packet.ReadBool();
+    bool  remoteFlee    = packet.ReadFloat();
+
+    // Smoothly interpolate position; snap rotation & movement directly.
+    Position = mix(Position, remotePos, 0.3f);
+    controller.SetPosition(Position);
+
+    mesh->Rotation   = remoteRot;
+    movingDirection  = remoteMoveDir;
+    speed            = remoteSpeed;
+    Health           = remoteHealth;
+    fleeing          = remoteFlee;
+
+    // State transitions: only enter states, never exit them here –
+    // exits are driven by animation events / timers running locally.
+    if (remoteDead && !dead)
     {
-        //fleeing = true;
-        //UpdateFleeTarget();
+        Death();
+    }
+    if (remoteStuned && !stuned)
+    {
+        Stun();
+    }
+    if (remoteStunRag && !stunnedRagdoll)
+    {
+        StartStunnedRagdoll();
+    }
+    if (remoteReturn && !returningFromRagdoll)
+    {
+        StartReturnFromRagdoll();
     }
 }
+
+// ---------------------------------------------------------------------------
+// Replication – RPCs
+// ---------------------------------------------------------------------------
+
+void NpcHumanBase::OnRPC(uint8_t rpcId, NetPacket& args)
+{
+    switch (rpcId)
+    {
+        case NpcRPC::TakeDamage:
+            Net_ApplyDamage(args.ReadFloat());
+            break;
+        case NpcRPC::Death:
+            Net_ApplyDeath();
+            break;
+        case NpcRPC::Attack:
+            Net_ApplyAttack();
+            break;
+        case NpcRPC::Stun:
+            Net_ApplyStun();
+            break;
+        default:
+            break;
+    }
+}
+
+void NpcHumanBase::Net_ApplyDamage(float damage)
+{
+    // Only the server/owner actually modifies health; the snapshot
+    // carries the resulting value to everyone else.
+    if (!isOwned) return;
+
+    Health -= damage;
+
+    if (Health <= 0)
+    {
+        NetPacket deathArgs(PacketType::RPC);
+        SendRPC(NpcRPC::Death, deathArgs, RPCTarget::All);
+        Death();
+    }
+}
+
+void NpcHumanBase::Net_ApplyDeath()
+{
+    // Safe to call on all peers; Death() guards against double-execution.
+    Death();
+}
+
+void NpcHumanBase::Net_ApplyAttack()
+{
+    // Subclasses override Attack(); calling it here makes non-owning peers
+    // play the attack animation in sync.
+    if (!isOwned)
+    {
+        Attack();
+    }
+}
+
+void NpcHumanBase::Net_ApplyStun()
+{
+    if (!isOwned)
+    {
+        Stun();
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Serialization (save-game, unchanged)
+// ---------------------------------------------------------------------------
 
 void NpcHumanBase::Serialize(json& target)
 {
@@ -529,10 +673,8 @@ void NpcHumanBase::SetTarget(Entity* newTarget)
 
 void NpcHumanBase::OnAction(std::string action)
 {
-
     if (action == "triggerOnPlayer")
     {
         SetTarget(Player::Instance);
     }
-
 }

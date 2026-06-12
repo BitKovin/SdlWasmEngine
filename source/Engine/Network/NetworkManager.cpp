@@ -180,15 +180,37 @@ void NetworkManager::EnqueueUpdate(std::vector<uint8_t> bytes, uint8_t targetPee
 void NetworkManager::FlushUpdateQueue() {
     if (s_updateQueue.empty()) return;
 
-    // Group by routing target so each destination gets one compressed blob.
-    // This gives zlib more bytes and therefore better compression ratio.
-    std::unordered_map<uint8_t, std::vector<uint8_t>> groups;
-    for (auto& entry : s_updateQueue) {
-        auto& group = groups[entry.targetPeerId];
-        group.insert(group.end(), entry.bytes.begin(), entry.bytes.end());
-    }
+    // 1. Take local ownership of the queue immediately. 
+    // This perfectly protects against iterator invalidation if s_updateQueue 
+    // is modified concurrently or via re-entrancy during the flush.
+    std::vector<PendingUpdate> localQueue = std::move(s_updateQueue);
     s_updateQueue.clear();
 
+    std::unordered_map<uint8_t, std::vector<uint8_t>> groups;
+
+    // 2. Pre-calculate sizes and reserve capacity. 
+    // This stops std::vector from repeatedly reallocating memory and copying 
+    // itself as it grows, which prevents heap fragmentation and OOM crashes.
+    std::unordered_map<uint8_t, size_t> groupSizes;
+    for (const auto& entry : localQueue) {
+        groupSizes[entry.targetPeerId] += entry.bytes.size();
+    }
+    for (const auto& [peerId, size] : groupSizes) {
+        groups[peerId].reserve(size);
+    }
+
+    // 3. Move the data into the grouped buffers.
+    for (auto& entry : localQueue) {
+        auto& group = groups[entry.targetPeerId];
+        // Using make_move_iterator to transfer ownership of the bytes safely
+        group.insert(
+            group.end(),
+            std::make_move_iterator(entry.bytes.begin()),
+            std::make_move_iterator(entry.bytes.end())
+        );
+    }
+
+    // 4. Send the compressed blobs.
     for (auto& [targetPeerId, rawBytes] : groups) {
         CompressAndSend(rawBytes.data(), rawBytes.size(),
             targetPeerId, /*reliable=*/false);
@@ -539,19 +561,12 @@ void NetworkManager::SpawnForPlayer(NetworkedEntity* entity, uint8_t targetPeerI
     assert(s_isServer && "SpawnForPlayer must only be called on the server");
     assert(entity);
 
+    // Set the owner to the target client
     entity->networkOwner = targetPeerId;
 
-    // Allocate an ID in the target client's namespace without touching the
-    // local peer sequence.  Scan existing IDs to find the next available slot.
-    {
-        uint32_t maxSeq = 0;
-        for (const auto& [id, ent] : s_entities) {
-            if ((id >> 20) == targetPeerId) {
-                maxSeq = std::max(maxSeq, id & 0xFFFFF);
-            }
-        }
-        entity->networkId = (static_cast<uint32_t>(targetPeerId) << 20) | (maxSeq + 1);
-    }
+    // FIX: Let the Server allocate the ID using its OWN namespace and sequence.
+    // This guarantees no collisions with client-generated local spawns.
+    entity->networkId = AllocateRuntimeId(s_localPeerId);
 
     entity->isOwned = false;
 
@@ -564,19 +579,27 @@ void NetworkManager::SendFullSnapshotTo(uint8_t targetPeerId) {
     assert(s_isServer && "SendFullSnapshotTo must only be called on the server");
 
     NetPacket pkt(PacketType::FullSnapshot);
-    pkt.WriteUInt16(static_cast<uint16_t>(s_entities.size()));
+    pkt.WriteUInt32(static_cast<uint32_t>(s_entities.size()));
 
     for (const auto& [id, entity] : s_entities) {
         pkt.WriteUInt32(entity->networkId);
-        pkt.WriteUInt16(NameToIndex(entity->GetClassName())); // wire index, not name
+        pkt.WriteUInt16(NameToIndex(entity->GetClassName())); // wire index
         pkt.WriteUInt8(entity->networkOwner);
-        entity->NetSerialize(pkt);
+
+        // [FIX]: Serialize to a temp packet to get the exact payload size
+        NetPacket entityData(PacketType::EntityUpdate);
+        entity->NetSerialize(entityData);
+
+        const auto& bytes = entityData.GetPayloadBytes();
+
+        // Write the payload size, followed by the raw bytes
+        pkt.WriteUInt16(static_cast<uint16_t>(bytes.size()));
+        for (uint8_t b : bytes) {
+            pkt.WriteUInt8(b);
+        }
     }
 
     SendReliableNow(FinalizeOutbound(pkt), targetPeerId);
-
-    //std::fprintf(stdout, "[NetworkManager] Sent full snapshot (%zu entities) to peer %u\n",
-       // s_entities.size(), targetPeerId);
 }
 
 // ---------------------------------------------------------------------------
@@ -665,9 +688,12 @@ void NetworkManager::OnPacketReceived(uint8_t senderId,
             break;
         }
 
-        // payloadLength lives at bytes 4–5 of the header (big-endian)
-        const uint16_t payloadLen =
-            static_cast<uint16_t>((ptr[4] << 8) | ptr[5]);
+        // FIX: Read 32-bit payloadLength at bytes 4-7
+        const uint32_t payloadLen =
+            (static_cast<uint32_t>(ptr[4]) << 24) |
+            (static_cast<uint32_t>(ptr[5]) << 16) |
+            (static_cast<uint32_t>(ptr[6]) << 8) |
+            static_cast<uint32_t>(ptr[7]);
         const size_t packetSize = NetPacket::HEADER_SIZE + payloadLen;
 
         if (remaining < packetSize) {
@@ -904,15 +930,28 @@ void NetworkManager::DispatchPacket(uint8_t senderId, NetPacket& packet) {
 void NetworkManager::OnEntityListReceived(uint8_t /*senderId*/, NetPacket& packet) {
     assert(!s_isServer);
 
-    const uint16_t entityCount = packet.ReadUInt16();
+    // Ensure loop counter matches the 32-bit type we fixed previously
+    const uint32_t entityCount = packet.ReadUInt32();
 
     std::set<uint32_t> snapshotIds;
     std::vector<NetworkedEntity*> newlySpawned;
 
-    for (uint16_t i = 0; i < entityCount; ++i) {
+    for (uint32_t i = 0; i < entityCount; ++i) {
         const uint32_t networkId = packet.ReadUInt32();
         const uint16_t wireIndex = packet.ReadUInt16();
         const uint8_t  networkOwner = packet.ReadUInt8();
+
+        // [FIX]: Read the exact size of this entity's payload
+        const uint16_t payloadSize = packet.ReadUInt16();
+
+        // [FIX]: Buffer the exact bytes so the main packet cursor advances safely
+        NetPacket entityBuffer(PacketType::EntityUpdate);
+        for (uint16_t p = 0; p < payloadSize; ++p) {
+            entityBuffer.WriteUInt8(packet.ReadUInt8());
+        }
+
+        // Prepare the isolated buffer for reading
+        NetPacket readPkt = entityBuffer.RewindedCopy();
 
         snapshotIds.insert(networkId);
 
@@ -920,38 +959,38 @@ void NetworkManager::OnEntityListReceived(uint8_t /*senderId*/, NetPacket& packe
         if (existing) {
             existing->networkOwner = networkOwner;
             existing->isOwned = (networkOwner == s_localPeerId);
-            existing->NetDeserialize(packet);
-            // If existing && load phase, OnNetworkSpawn fires later in
-            // OnLevelReady(); otherwise it has already fired.
+            // Feed it the isolated packet
+
+            if (!existing->isOwned) {
+                existing->NetDeserialize(readPkt);
+            }
         }
         else {
             const std::string& className = IndexToName(wireIndex);
             if (className.empty()) {
                 std::fprintf(stderr,
-                    "[NetworkManager] EntityList: unknown wire index %u, aborting\n",
+                    "[NetworkManager] EntityList: unknown wire index %u, skipping\n",
                     wireIndex);
-                break;
+                continue; // [FIX]: Changed from break to continue
             }
 
             Entity* raw = LevelObjectFactory::instance().create(className);
-            if (!raw) break;
+            if (!raw) continue; // [FIX]: Changed from break to continue
 
             auto* entity = dynamic_cast<NetworkedEntity*>(raw);
-            if (!entity) { delete raw; break; }
+            if (!entity) { delete raw; continue; } // [FIX]: Changed from break to continue
 
             entity->networkId = networkId;
             entity->networkOwner = networkOwner;
             entity->isOwned = (networkOwner == s_localPeerId);
 
             if (!s_isLoadingLevel) {
-                // Mid-game catch-up: this entity is brand new to us, so it
-                // needs the full Start()/asset-load treatment that
-                // SpawnEntity normally gives it.
                 entity->LoadAssetsIfNeeded();
                 entity->Start();
             }
 
-            entity->NetDeserialize(packet);
+            // Feed it the isolated packet
+            entity->NetDeserialize(readPkt);
 
             if (s_level) {
                 s_level->AddEntity(entity);
@@ -962,8 +1001,6 @@ void NetworkManager::OnEntityListReceived(uint8_t /*senderId*/, NetPacket& packe
                 networkId, className.c_str());
 
             if (!s_isLoadingLevel) {
-                // During load, OnNetworkSpawn fires for everyone in
-                // OnLevelReady(). Outside load, fire it now.
                 newlySpawned.push_back(entity);
             }
         }
@@ -973,15 +1010,18 @@ void NetworkManager::OnEntityListReceived(uint8_t /*senderId*/, NetPacket& packe
     // despawned while we weren't listening (or we missed the despawn).
     // Skip entities we own but the server hasn't acknowledged yet: those are
     // pending local spawns, not stale entities.
+
     std::vector<NetworkedEntity*> toRemove;
     for (const auto& [id, entity] : s_entities) {
         if (snapshotIds.find(id) != snapshotIds.end()) continue;
         if (entity->isOwned) continue;
         toRemove.push_back(entity);
     }
+
     for (NetworkedEntity* entity : toRemove) {
         std::fprintf(stdout, "[NetworkManager] EntityList: removing stale entity %u\n",
             entity->networkId);
+        Logger::Log(entity->Id);
         if (s_level) {
             if (s_isLoadingLevel) {
                 s_level->RemoveEntitySilent(entity);

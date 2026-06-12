@@ -345,7 +345,7 @@ void Level::AddEntity(LevelObject* obj, bool imOwner)
 	if (!NetworkManager::IsActive()) return;
 
 	auto* ne = dynamic_cast<NetworkedEntity*>(entity);
-	if (!ne) return;  // server-only entity — Trigger, SpawnPoint, etc.
+	if (!ne) return; 
 
 	if (NetworkManager::IsLoadingLevel()) {
 		// Load phase: silent registration, identical on all peers
@@ -403,7 +403,7 @@ void Level::RemoveEntitySilent(LevelObject* obj)
 
 		entityIdMap.erase(entity->Id);
 		entityNameMap.erase(entity->Name);
-
+		entity->DestroyPhysics();
 	}
 
 	PendingRemoveLevelObjects.push_back(obj);
@@ -417,10 +417,12 @@ void Level::RemoveEntity(LevelObject* obj)
 
 	Entity* entity = (Entity*)obj;
 
+
+
 	if (NetworkManager::IsActive()) {
 		if (auto* ne = dynamic_cast<NetworkedEntity*>(entity)) {
 			ne->OnNetworkDespawn();
-			if (ne->isOwned) {
+			if (ne->isOwned || NetworkManager::IsServer()) {
 				NetworkManager::BroadcastDespawn(ne->networkId);
 			}
 			NetworkManager::Unregister(ne->networkId);

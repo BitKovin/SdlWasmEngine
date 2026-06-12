@@ -35,7 +35,7 @@ public:
 
 	void PerformSpawn()
 	{
-		Entity* entity = Spawn(spawnClassName);
+		Entity* entity = LevelObjectFactory::instance().create(spawnClassName);
 		if (entity == nullptr)
 		{
 			Logger::Log("failed to spawn entity of type :" + spawnClassName);
@@ -44,6 +44,9 @@ public:
 		entity->Position = Position;
 		entity->Rotation = Rotation;
 		entity->OwnerId = Id;
+
+		Level::Current->AddEntity(entity);
+
 		entity->Start();
 
 		if (autoTriggerOnPlayer)

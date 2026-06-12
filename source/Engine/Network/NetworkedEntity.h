@@ -60,8 +60,5 @@ public:
 
     virtual void OnRPC(uint8_t rpcId, NetPacket& args) {}
 
-    // ── Per-frame update helper ───────────────────────────────────────────
-    // Call from Update() when isOwned is true.  Enqueues current state into
-    // the NetworkManager outbound queue; flushed once per network tick.
     void PushNetworkUpdate(float dt);
 };

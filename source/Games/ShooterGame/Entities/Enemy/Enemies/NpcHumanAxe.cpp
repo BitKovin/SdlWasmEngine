@@ -44,11 +44,20 @@ void NpcHumanAxe::Stun()
 
 void NpcHumanAxe::Attack()
 {
-    if (inAttackDelay.Wait()) return;
+    // On non-owning peers Attack() is called by Net_ApplyAttack() to play the
+    // animation in sync.  The cooldown and actual AI logic only run on the owner.
+    if (isOwned)
+    {
+        if (inAttackDelay.Wait()) return;
+        inAttackDelay.AddDelay(1.5f);
+
+        // Broadcast so every peer plays the animation.
+        NetPacket attackArgs(PacketType::RPC);
+        SendRPC(NpcRPC::Attack, attackArgs, RPCTarget::All);
+    }
 
     PlaySoundEffect("event:/NPC/Enemy1/Enemy1AttackStart");
 
-    inAttackDelay.AddDelay(1.5f);
     mesh->PlayAnimation("attack");
     mesh->PullRootMotion();
     attacking = true;
@@ -66,6 +75,8 @@ void NpcHumanAxe::OnDamage(float Damage, Entity* DamageCauser, Entity* Weapon)
 
 void NpcHumanAxe::UpdateAttackDamage()
 {
+    // Hit detection only runs on the owner (server/host).
+    if (!isOwned) return;
     if (attackingDamage == false) return;
 
     auto hit = Physics::SphereTrace(Position, MathHelper::GetForwardVector(mesh->Rotation) * 1.2f + Position, 0.45f, BodyType::World | BodyType::CharacterCapsule, {}, {this});
@@ -105,7 +116,12 @@ void NpcHumanAxe::AsyncUpdate()
     controller.Update(Time::DeltaTimeF);
     Position = controller.GetPosition();
 
-    UpdatePerception();
+    // Non-owners skip AI/perception; they just run the visual/animation side
+    // below driven by the replicated position/rotation from NetDeserialize.
+    if (isOwned)
+    {
+        UpdatePerception();
+    }
 
     UpdateStatusWidgets();
 
@@ -126,15 +142,20 @@ void NpcHumanAxe::AsyncUpdate()
 
     auto rootMotion = mesh->PullRootMotion();
 
-    Position += rootMotion.Position;
-    controller.SetPosition(Position);
-    if (rootMotion.Position != vec3())
-        controller.SetVelocity(vec3(0, controller.GetVelocity().y, 0));
-
-    if (rootMotion.Rotation != vec3())
+    // Only apply root-motion movement on the owning peer to avoid fighting
+    // with the interpolated position coming from the snapshot.
+    if (isOwned)
     {
-        mesh->Rotation += rootMotion.Rotation;
-        movingDirection = MathHelper::GetForwardVector(mesh->Rotation);
+        Position += rootMotion.Position;
+        controller.SetPosition(Position);
+        if (rootMotion.Position != vec3())
+            controller.SetVelocity(vec3(0, controller.GetVelocity().y, 0));
+
+        if (rootMotion.Rotation != vec3())
+        {
+            mesh->Rotation += rootMotion.Rotation;
+            movingDirection = MathHelper::GetForwardVector(mesh->Rotation);
+        }
     }
 
     UpdateStunnedReturn();
@@ -148,73 +169,110 @@ void NpcHumanAxe::AsyncUpdate()
 
     if (dead || stuned || stunnedRagdoll || returningFromRagdoll) return;
 
-    UpdateAttackDamage();
-    if (dead) return;
-
-    // No target: idle in place
-    if (target == nullptr)
+    // Attack damage sweep and AI movement are owner-only.
+    if (isOwned)
     {
-        if (mesh->GetAnimationName() != "idle")
-            mesh->PlayAnimation("idle", true, 0.5f);
+        UpdateAttackDamage();
+        if (dead) return;
+
+        // No target: idle in place
+        if (target == nullptr)
+        {
+            if (mesh->GetAnimationName() != "idle")
+                mesh->PlayAnimation("idle", true, 0.5f);
+
+            vec3 vel = controller.GetVelocity();
+            controller.SetVelocity(vec3(0, vel.y, 0));
+
+
+            return;
+        }
+        else if(mesh->GetAnimationName() == "idle")
+        {
+            mesh->PlayAnimation("run", true, 0.5f);
+        }
+
+        if (attacking)
+        {
+            speed = 2;
+            return;
+        }
+
+        vec3 calculatedTargetPos = target->Position;
+
+        if (target->Position.y < Position.y - 0.1f && target->Position.y > Position.y - 1.5f)
+        {
+            calculatedTargetPos.y = Position.y;
+        }
+
+        vec3 lookAtDir = MathHelper::FastNormalize(calculatedTargetPos - Position);
+
+        if (distance(calculatedTargetPos, Position) < 1.5f
+            && dot(MathHelper::GetForwardVector(mesh->Rotation), lookAtDir) > 0.93)
+        {
+            Attack();
+        }
+
+        if (fleeing)
+        {
+            UpdateFleeTarget();
+        }
+        else
+        {
+            pathFollow.UpdateStartAndTarget(Position, target->Position);
+            pathFollow.TryPerform();
+        }
+
+        if (pathFollow.FoundTarget)
+        {
+            desiredDirection = normalize(MathHelper::XZ(pathFollow.CalculatedTargetLocation - Position));
+        }
+
+        speed += Time::DeltaTimeF * 6.5;
+
+        speed = glm::clamp(speed, 0.0f, ModifyMovementSpeed(maxSpeed));
+
+        movingDirection = mix(movingDirection, desiredDirection, Time::DeltaTime * 10);
+
+        movingDirection = MathHelper::FastNormalize(movingDirection);
 
         vec3 vel = controller.GetVelocity();
-        controller.SetVelocity(vec3(0, vel.y, 0));
-        return;
-    }
-    else if(mesh->GetAnimationName() == "idle")
-    {      
-        mesh->PlayAnimation("run", true, 0.5f);
-    }
+        controller.SetVelocity(vec3(movingDirection.x * speed, vel.y, movingDirection.z * speed));
 
-    if (attacking)
-    {
-        speed = 2;
-        return;
-    }
+        mesh->Rotation = vec3(0, MathHelper::FindLookAtRotation(vec3(), movingDirection).y, 0);
 
-	vec3 calculatedTargetPos = target->Position;
-
-	if (target->Position.y < Position.y - 0.1f && target->Position.y > Position.y - 1.5f)
-	{
-		calculatedTargetPos.y = Position.y;
-	}
-
-    vec3 lookAtDir = MathHelper::FastNormalize(calculatedTargetPos - Position);
-
-    if (distance(calculatedTargetPos, Position) < 1.5f
-        && dot(MathHelper::GetForwardVector(mesh->Rotation), lookAtDir) > 0.93)
-    {
-        Attack();
-    }
-
-    if (fleeing)
-    {
-        UpdateFleeTarget();
     }
     else
     {
-        pathFollow.UpdateStartAndTarget(Position, target->Position);
-        pathFollow.TryPerform();
+        // Non-owner: drive the character controller with the replicated velocity
+        // so the capsule stays aligned with the interpolated position.
+        vec3 vel = controller.GetVelocity();
+        controller.SetVelocity(vec3(movingDirection.x * speed, vel.y, movingDirection.z * speed));
+        mesh->Rotation = vec3(0, MathHelper::FindLookAtRotation(vec3(), movingDirection).y, 0);
     }
-
-    if (pathFollow.FoundTarget)
-    {
-        desiredDirection = normalize(MathHelper::XZ(pathFollow.CalculatedTargetLocation - Position));
-    }
-
-    speed += Time::DeltaTimeF * 6.5;
-
-    speed = glm::clamp(speed, 0.0f, ModifyMovementSpeed(maxSpeed));
-
-    movingDirection = mix(movingDirection, desiredDirection, Time::DeltaTime * 10);
-
-    movingDirection = MathHelper::FastNormalize(movingDirection);
-
-    vec3 vel = controller.GetVelocity();
-    controller.SetVelocity(vec3(movingDirection.x * speed, vel.y, movingDirection.z * speed));
-
-    mesh->Rotation = vec3(0, MathHelper::FindLookAtRotation(vec3(), movingDirection).y, 0);
 }
+
+// ---------------------------------------------------------------------------
+// Replication – axe-specific fields appended after the base snapshot
+// ---------------------------------------------------------------------------
+
+void NpcHumanAxe::NetSerialize(NetPacket& packet)
+{
+    NpcHumanBase::NetSerialize(packet);
+    packet.WriteBool(attacking);
+    packet.WriteBool(attackingDamage);
+}
+
+void NpcHumanAxe::NetDeserialize(NetPacket& packet)
+{
+    NpcHumanBase::NetDeserialize(packet);
+    attacking      = packet.ReadBool();
+    attackingDamage = packet.ReadBool();
+}
+
+// ---------------------------------------------------------------------------
+// Serialization (save-game, unchanged)
+// ---------------------------------------------------------------------------
 
 void NpcHumanAxe::Serialize(json& target)
 {

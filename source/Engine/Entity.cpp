@@ -55,6 +55,19 @@ void Entity::PreloadEntityType(std::string technicalName)
 	Level::Current->AddLoadedEntityType(technicalName);
 }
 
+void Entity::DestroyPhysics()
+{
+
+	Physics::DestroyBody(LeadBody);
+	LeadBody = nullptr;
+	for (Body* body : Bodies)
+	{
+		Physics::DestroyBody(body);
+	}
+	Bodies.clear();
+
+}
+
 void Entity::FinalLevelRemove()
 {
 	DestroyDrawables();
@@ -80,13 +93,7 @@ void Entity::Destroy()
 		}
 	}
 
-	Physics::DestroyBody(LeadBody);
-	LeadBody = nullptr;
-	for (Body* body : Bodies)
-	{
-		Physics::DestroyBody(body);
-	}
-	Bodies.clear();
+	DestroyPhysics();
 
 	Level::Current->RemoveEntity(this);
 }

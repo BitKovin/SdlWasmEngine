@@ -10,11 +10,11 @@
 // ---------------------------------------------------------------------------
 
 uint16_t NetPacket::ComputeChecksum(PacketType    type,
-                                     uint8_t       senderId,
-                                     uint16_t      seq,
-                                     uint16_t      payloadLen,
-                                     const uint8_t* payload,
-                                     size_t         payloadSize)
+    uint8_t       senderId,
+    uint16_t      seq,
+    uint32_t      payloadLen, // <-- Changed to uint32_t
+    const uint8_t* payload,
+    size_t         payloadSize)
 {
     auto crc16_update = [](uint16_t crc, uint8_t byte) -> uint16_t {
         crc ^= static_cast<uint16_t>(byte) << 8;
@@ -25,14 +25,17 @@ uint16_t NetPacket::ComputeChecksum(PacketType    type,
                 crc = static_cast<uint16_t>(crc << 1);
         }
         return crc;
-    };
+        };
 
     uint16_t crc = 0xFFFF;
     crc = crc16_update(crc, static_cast<uint8_t>(type));
     crc = crc16_update(crc, senderId);
     crc = crc16_update(crc, static_cast<uint8_t>(seq >> 8));
     crc = crc16_update(crc, static_cast<uint8_t>(seq & 0xFF));
-    crc = crc16_update(crc, static_cast<uint8_t>(payloadLen >> 8));
+    // 32-bit shift for payload length
+    crc = crc16_update(crc, static_cast<uint8_t>((payloadLen >> 24) & 0xFF));
+    crc = crc16_update(crc, static_cast<uint8_t>((payloadLen >> 16) & 0xFF));
+    crc = crc16_update(crc, static_cast<uint8_t>((payloadLen >> 8) & 0xFF));
     crc = crc16_update(crc, static_cast<uint8_t>(payloadLen & 0xFF));
     for (size_t i = 0; i < payloadSize; ++i) {
         crc = crc16_update(crc, payload[i]);
@@ -57,13 +60,18 @@ bool NetPacket::Parse(const uint8_t* buffer, size_t length, NetPacket& out) {
         return false;
     }
 
-    out.type_           = static_cast<PacketType>(buffer[0]);
-    out.senderId_       = buffer[1];
+    out.type_ = static_cast<PacketType>(buffer[0]);
+    out.senderId_ = buffer[1];
     out.sequenceNumber_ = static_cast<uint16_t>((buffer[2] << 8) | buffer[3]);
-    uint16_t payloadLen = static_cast<uint16_t>((buffer[4] << 8) | buffer[5]);
-    uint16_t checksum   = static_cast<uint16_t>((buffer[6] << 8) | buffer[7]);
-    // bytes 8-9 are padding / reserved to reach 10-byte header
-    // (checksum occupies bytes 6-7; bytes 8-9 are reserved, currently 0)
+
+    // Read 32-bit payload length from bytes 4-7
+    uint32_t payloadLen = (static_cast<uint32_t>(buffer[4]) << 24) |
+        (static_cast<uint32_t>(buffer[5]) << 16) |
+        (static_cast<uint32_t>(buffer[6]) << 8) |
+        static_cast<uint32_t>(buffer[7]);
+
+    // Checksum moved to bytes 8-9
+    uint16_t checksum = static_cast<uint16_t>((buffer[8] << 8) | buffer[9]);
 
     if (length < HEADER_SIZE + payloadLen) {
         out.valid_ = false;
@@ -73,8 +81,8 @@ bool NetPacket::Parse(const uint8_t* buffer, size_t length, NetPacket& out) {
     const uint8_t* payloadPtr = buffer + HEADER_SIZE;
 
     uint16_t expected = ComputeChecksum(out.type_, out.senderId_,
-                                         out.sequenceNumber_, payloadLen,
-                                         payloadPtr, payloadLen);
+        out.sequenceNumber_, payloadLen,
+        payloadPtr, payloadLen);
     if (expected != checksum) {
         out.valid_ = false;
         return false;
@@ -82,7 +90,7 @@ bool NetPacket::Parse(const uint8_t* buffer, size_t length, NetPacket& out) {
 
     out.payload_.assign(payloadPtr, payloadPtr + payloadLen);
     out.readCursor_ = 0;
-    out.valid_      = true;
+    out.valid_ = true;
     return true;
 }
 
@@ -91,10 +99,10 @@ bool NetPacket::Parse(const uint8_t* buffer, size_t length, NetPacket& out) {
 // ---------------------------------------------------------------------------
 
 std::vector<uint8_t> NetPacket::Finalize() {
-    uint16_t payloadLen = static_cast<uint16_t>(payload_.size());
-    uint16_t checksum   = ComputeChecksum(type_, senderId_, sequenceNumber_,
-                                           payloadLen,
-                                           payload_.data(), payload_.size());
+    uint32_t payloadLen = static_cast<uint32_t>(payload_.size()); // <-- Now handles > 65KB
+    uint16_t checksum = ComputeChecksum(type_, senderId_, sequenceNumber_,
+        payloadLen,
+        payload_.data(), payload_.size());
 
     std::vector<uint8_t> out;
     out.reserve(HEADER_SIZE + payload_.size());
@@ -103,12 +111,14 @@ std::vector<uint8_t> NetPacket::Finalize() {
     out.push_back(senderId_);
     out.push_back(static_cast<uint8_t>(sequenceNumber_ >> 8));
     out.push_back(static_cast<uint8_t>(sequenceNumber_ & 0xFF));
-    out.push_back(static_cast<uint8_t>(payloadLen >> 8));
+    // Write 32-bit payload length
+    out.push_back(static_cast<uint8_t>((payloadLen >> 24) & 0xFF));
+    out.push_back(static_cast<uint8_t>((payloadLen >> 16) & 0xFF));
+    out.push_back(static_cast<uint8_t>((payloadLen >> 8) & 0xFF));
     out.push_back(static_cast<uint8_t>(payloadLen & 0xFF));
+    // Checksum
     out.push_back(static_cast<uint8_t>(checksum >> 8));
     out.push_back(static_cast<uint8_t>(checksum & 0xFF));
-    out.push_back(0); // reserved
-    out.push_back(0); // reserved
 
     out.insert(out.end(), payload_.begin(), payload_.end());
     return out;

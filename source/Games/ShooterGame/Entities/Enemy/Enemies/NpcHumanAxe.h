@@ -29,4 +29,8 @@ public:
     void Serialize(json& target) override;
 
     void Deserialize(json& source) override;
+
+    // ── Replication – pass axe-specific state on top of base snapshot ────
+    void NetSerialize(NetPacket& packet) override;
+    void NetDeserialize(NetPacket& packet) override;
 };

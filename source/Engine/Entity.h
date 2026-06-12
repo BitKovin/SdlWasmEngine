@@ -221,7 +221,11 @@ public:
 		return Id;
 	}
 
+	void DestroyPhysics();
+
 protected:
+
+
 
 	void OnDispose()
 	{

@@ -1,7 +1,6 @@
 // NpcHumanBase.h
 #pragma once
 
-#include <Entity.h>
 #include <Input.h>
 #include <MathHelper.hpp>
 #include <Camera.h>
@@ -29,7 +28,21 @@
 
 #include <AiPerception/Observer.h>
 
-class NpcHumanBase : public Entity, public IEnemy
+// NetworkedEntity replaces Entity as the base so we get replication plumbing.
+#include "NetworkedEntity.h"
+
+// ---------------------------------------------------------------------------
+// RPC IDs shared between NpcHumanBase and its subclasses.
+// Keep these stable – they go on the wire.
+// ---------------------------------------------------------------------------
+namespace NpcRPC {
+    constexpr uint8_t TakeDamage = 0; // float damage
+    constexpr uint8_t Death      = 1; // no args
+    constexpr uint8_t Attack     = 2; // no args  (broadcast so all clients play anim)
+    constexpr uint8_t Stun       = 3; // no args
+}
+
+class NpcHumanBase : public NetworkedEntity, public IEnemy
 {
 protected:
 
@@ -119,6 +132,20 @@ protected:
     void SetTarget(Entity* newTarget);
 
     void OnAction(std::string action);
+
+    // ── Replication ──────────────────────────────────────────────────────
+    // Snapshot sent every network tick from the owning peer.
+    void NetSerialize(NetPacket& packet) override;
+    void NetDeserialize(NetPacket& packet) override;
+
+    // Incoming RPC dispatch.
+    void OnRPC(uint8_t rpcId, NetPacket& args) override;
+
+    // Helpers called on non-owning peers when an RPC arrives.
+    void Net_ApplyDamage(float damage);
+    void Net_ApplyDeath();
+    void Net_ApplyAttack();
+    void Net_ApplyStun();
 
 public:
     NpcHumanBase();
