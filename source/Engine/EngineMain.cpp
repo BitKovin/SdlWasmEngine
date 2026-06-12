@@ -36,6 +36,8 @@
 
 #include <tracy/tracy/Tracy.hpp>
 
+#include <Network/NetworkManager.h>
+
 
 EngineMain* EngineMain::MainInstance = nullptr;
 
@@ -58,6 +60,7 @@ EM_JS(int, canvas_get_height, (), {
 
 EngineMain::~EngineMain()
 {
+    NetworkManager::Shutdown();
     FileSystemEngine::Shutdown();
     Level::Current->CloseLevel();
 	UiRenderer::Shutdown();
@@ -721,6 +724,13 @@ void EngineMain::GameUpdate()
     {
         ZoneScopedN("AnalyticsSystem Update");
 		AnalyticsSystem::Get().Tick(Time::GameTime);
+    }
+
+    {
+        ZoneScopedN("NetworkManager Update");
+
+        NetworkManager::Tick(Time::DeltaTimeF);
+
     }
 
     if (!SimulatingGameTicks)

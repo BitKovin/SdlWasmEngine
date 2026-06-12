@@ -454,6 +454,10 @@
     <ClCompile Include="Navigation\Recast\RecastMeshDetail.cpp" />
     <ClCompile Include="Navigation\Recast\RecastRasterization.cpp" />
     <ClCompile Include="Navigation\Recast\RecastRegion.cpp" />
+    <ClCompile Include="Network\ENetTransport.cpp" />
+    <ClCompile Include="Network\NetPacket.cpp" />
+    <ClCompile Include="Network\NetworkedEntity.cpp" />
+    <ClCompile Include="Network\NetworkManager.cpp" />
     <ClCompile Include="OnlineSubsystems\GDKAuth.cpp" />
     <ClCompile Include="Particle\GlobalParticleSystem.cpp" />
     <ClCompile Include="Particle\ParticleEmitter.cpp" />
@@ -641,6 +645,12 @@
     <ClInclude Include="Navigation\Recast\Recast.h" />
     <ClInclude Include="Navigation\Recast\RecastAlloc.h" />
     <ClInclude Include="Navigation\Recast\RecastAssert.h" />
+    <ClInclude Include="Network\ENetTransport.h" />
+    <ClInclude Include="Network\INetworkTransport.h" />
+    <ClInclude Include="Network\NetPacket.h" />
+    <ClInclude Include="Network\NetworkClassIds.h" />
+    <ClInclude Include="Network\NetworkedEntity.h" />
+    <ClInclude Include="Network\NetworkManager.h" />
     <ClInclude Include="OnlineSubsystems\GDKAuth.h" />
     <ClInclude Include="Particle\GlobalParticleSystem.hpp" />
     <ClInclude Include="Particle\ParticleEmitter.h" />

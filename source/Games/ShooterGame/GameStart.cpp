@@ -24,6 +24,12 @@
 #include <Analytics/RGameStats/RGameStatsAnalyticsProvider.h>
 #include <Analytics/RGameStats/EngineHttpClient.h> 
 
+
+#include <Network/NetworkManager.h>
+#include <Network/ENetTransport.h>
+
+std::unique_ptr<ENetTransport> transport;
+
 class GameStart : public Entity
 {
 public:
@@ -44,6 +50,14 @@ public:
 
         LoadConstantAssets();
         LoadingScreenSystem::SetLoadingCanvas(std::make_shared<UiDefaultLoadingScreen>());
+
+        transport = make_unique<ENetTransport>();
+        bool isServer = !transport->TryConnectOrHost("127.0.0.1", 7777, /*maxClients=*/4);
+
+        NetworkManager::BeginLevelLoad(Level::Current);
+        NetworkManager::OnLevelLoaded();
+
+        NetworkManager::Init(transport.get(), isServer);
 
         auto mapArg = EngineMain::MainInstance->Arguments.find("map");
 

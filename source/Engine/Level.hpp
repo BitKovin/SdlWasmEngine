@@ -158,7 +158,9 @@ public:
 		}
 	}
 	
-	void AddEntity(LevelObject* obj);
+	void AddEntity(LevelObject* obj, bool imOwner = false);
+
+	void RemoveEntitySilent(LevelObject* obj);
 
 	void RemoveEntity(LevelObject* obj);
 

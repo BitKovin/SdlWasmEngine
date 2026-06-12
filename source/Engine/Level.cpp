@@ -31,6 +31,9 @@
 
 #include <tracy/tracy/Tracy.hpp>
 
+#include <Network/NetworkManager.h>
+#include <Network/NetworkedEntity.h>
+
 Level* Level::Current = nullptr;
 
 string Level::pendingLoadLevelPath = "";
@@ -120,8 +123,6 @@ Level* Level::OpenLevel(string filePath)
 		SoundManager::CleanAllData();
 	}
 
-
-
 	Time::Update();
 	Time::DeltaTime = 0.0;
 	Time::DeltaTimeF = 0;
@@ -136,6 +137,7 @@ Level* Level::OpenLevel(string filePath)
 
 	Current = newLevel;
 
+	NetworkManager::BeginLevelLoad(Current);
 
 	EngineMain::MainInstance->MainThreadPool = new ThreadPool("Tread Pool");
 
@@ -267,6 +269,8 @@ Level* Level::OpenLevel(string filePath)
 
 	ChangingLevel = false;
 
+	NetworkManager::OnLevelLoaded();
+
 	return newLevel;
 }
 
@@ -288,7 +292,7 @@ bool Level::IsEntityTypeLoaded(const std::string& className)
 
 }
 
-void Level::AddEntity(LevelObject* obj)
+void Level::AddEntity(LevelObject* obj, bool imOwner)
 {
 
 	std::lock_guard<std::recursive_mutex> lock(pendingEntityArrayLock);
@@ -323,10 +327,45 @@ void Level::AddEntity(LevelObject* obj)
 
 	pendingAddLevelObjects.push_back(obj);
 
+	if (!NetworkManager::IsActive()) return;
+
+	auto* ne = dynamic_cast<NetworkedEntity*>(entity);
+	if (!ne) return;  // server-only entity — Trigger, SpawnPoint, etc.
+
+	if (NetworkManager::IsLoadingLevel()) {
+		// Load phase: silent registration, identical on all peers
+		uint32_t netId = NetworkManager::MakeLoadPhaseId(entity->Id);
+		assert(NetworkManager::Find(netId) == nullptr &&
+			"Load-phase networkId collision — rename one of these entities");
+		ne->networkId = netId;
+		ne->networkOwner = 0;
+		ne->isOwned = NetworkManager::IsServer();
+		NetworkManager::Register(ne);
+		// OnNetworkSpawn() fires later in NetworkManager::OnLevelReady()
+
+	}
+	else if (ne->networkId == 0) {
+		// Runtime: fresh local spawn
+		uint8_t owner = imOwner ? NetworkManager::GetLocalPeerId() : 0;
+		ne->networkOwner = owner;
+		ne->isOwned = true;
+		ne->networkId = NetworkManager::AllocateRuntimeId(owner);
+		NetworkManager::Register(ne);
+		NetworkManager::BroadcastSpawn(ne);
+		ne->OnNetworkSpawn();
+
+	}
+	else {
+		// Runtime: received from network — networkId/networkOwner already set
+		ne->isOwned = (ne->networkOwner == NetworkManager::GetLocalPeerId());
+		NetworkManager::Register(ne);
+		ne->OnNetworkSpawn();
+	}
 	
 }
 
-void Level::RemoveEntity(LevelObject* obj)
+
+void Level::RemoveEntitySilent(LevelObject* obj)
 {
 	std::lock_guard<std::recursive_mutex> lock(pendingEntityArrayLock);
 
@@ -353,6 +392,26 @@ void Level::RemoveEntity(LevelObject* obj)
 	}
 
 	PendingRemoveLevelObjects.push_back(obj);
+}
+
+void Level::RemoveEntity(LevelObject* obj)
+{
+	std::lock_guard<std::recursive_mutex> lock(pendingEntityArrayLock);
+
+	RemoveEntitySilent(obj);
+
+	Entity* entity = (Entity*)obj;
+
+	if (NetworkManager::IsActive()) {
+		if (auto* ne = dynamic_cast<NetworkedEntity*>(entity)) {
+			ne->OnNetworkDespawn();
+			if (ne->isOwned) {
+				NetworkManager::BroadcastDespawn(ne->networkId);
+			}
+			NetworkManager::Unregister(ne->networkId);
+		}
+	}
+
 }
 
 void Level::AsyncUpdate(bool paused)
