@@ -21,6 +21,8 @@ public:
 		mesh->Rotation = Rotation;
 	}
 
+	void OnDamage(float Damage, Entity* DamageCauser = nullptr, Entity* Weapon = nullptr);
+
 	void LoadAssets() override
 	{
 
@@ -66,8 +68,33 @@ public:
 
 	}
 
+	void OnRPC(uint8_t rpcId, NetPacket& args) override
+	{
+		if (rpcId == 0 && isOwned)
+		{
+			Destroy();
+		}
+	}
+
 private:
 
 };
 
 REGISTER_ENTITY(NetworkTestCube, "networkTestCube")
+
+void NetworkTestCube::OnDamage(float Damage, Entity* DamageCauser, Entity* Weapon)
+{
+
+	if (isOwned) {
+		Destroy();
+	}
+	else
+	{
+
+		NetPacket args;
+
+		SendRPC(0, args, RPCTarget::All);
+	}
+
+
+}
