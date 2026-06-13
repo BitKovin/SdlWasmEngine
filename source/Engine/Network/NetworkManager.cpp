@@ -656,8 +656,8 @@ void NetworkManager::OnPeerDisconnected(uint8_t peerId) {
 
     if (!s_isServer || !s_level) return;
 
-    std::vector<uint32_t> toDestroy;
-    std::vector<uint32_t> toMigrate;
+    std::vector<uint64_t> toDestroy;
+    std::vector<uint64_t> toMigrate;
 
     for (const auto& [id, entity] : s_entities) {
         if (entity->networkOwner != peerId) continue;
@@ -671,17 +671,19 @@ void NetworkManager::OnPeerDisconnected(uint8_t peerId) {
         }
     }
 
-    for (uint32_t id : toDestroy) {
+    for (uint64_t id : toDestroy) {
         BroadcastDespawn(id);
+       
         if (NetworkedEntity* entity = Find(id)) {
             s_level->RemoveEntitySilent(entity);
         }
+        Unregister(id);
     }
 
     // Transfer surviving entities to server ownership (peer 0).
     // BroadcastOwnerChange sends a reliable PacketType::OwnerChange to every
     // client so they update networkOwner / isOwned immediately.
-    for (uint32_t id : toMigrate) {
+    for (uint64_t id : toMigrate) {
         NetworkedEntity* entity = Find(id);
         if (!entity) continue;
 
@@ -896,6 +898,7 @@ void NetworkManager::DispatchPacket(uint8_t senderId, NetPacket& packet) {
         if (entity && s_level) {
             s_level->RemoveEntity(entity);
         }
+
         break;
     }
 

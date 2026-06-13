@@ -22,6 +22,8 @@ RemotePlayer::RemotePlayer()
 
 	Tags = { "player" };
 
+	DestroyOnOwnerDisconnect = true;
+
 }
 
 void RemotePlayer::Update()

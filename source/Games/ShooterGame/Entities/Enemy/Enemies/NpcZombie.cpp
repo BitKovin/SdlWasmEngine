@@ -3,16 +3,10 @@
 class NpcZombie : public NpcHumanBase
 {
 private:
-    bool attacking = false;
-    bool attackDamageDealt = false;
-
-    static constexpr float AttackDamageDelay = 0.7f;  // seconds into animation to deal damage
-    static constexpr float AttackEndThreshold = 0.15f; // seconds before animation end to transition out
-
-    void UpdateAttackDamage();
-    void UpdateAttackState();
+    bool attackingDamage = false;
 
 protected:
+    void ProcessAnimationEvent(AnimationEvent& event) override;
     void Attack() override;
     void LoadAssets() override;
 
@@ -20,45 +14,78 @@ public:
     NpcZombie();
 
     void Stun() override;
-
     void OnDamage(float Damage, Entity* DamageCauser = nullptr, Entity* Weapon = nullptr) override;
 
+    void UpdateAttackDamage();
     void AsyncUpdate() override;
+
+    void NetSerialize(NetPacket& packet) override;
+    void NetDeserialize(NetPacket& packet) override;
 
     void Serialize(json& target) override;
     void Deserialize(json& source) override;
 };
-
 
 NpcZombie::NpcZombie()
 {
     ClassName = "npc_zombie";
     maxSpeed = 1.5f;
 
-	canBeStunRagdolled = false;
+    pathFollow.allowPartialPath = true;
+
+    canBeStunRagdolled = false;
 
     Health = 100;
     MaxHealth = 100;
 }
 
+void NpcZombie::ProcessAnimationEvent(AnimationEvent& event)
+{
+    if (event.eventName == "attack_start")
+    {
+        attackingDamage = true;
+    }
+
+    if (event.eventName == "attack_end")
+    {
+        mesh->PlayAnimation("run", true, 0.5f);
+        state = NpcState::Chasing;
+        attackingDamage = false;
+    }
+
+    if (event.eventName == "stun_end")
+    {
+        state = NpcState::Idle;
+        mesh->PlayAnimation("run", true, 0.5f);
+    }
+}
+
 void NpcZombie::Stun()
 {
     NpcHumanBase::Stun();
-    attacking = false;
-    attackDamageDealt = false;
+    attackingDamage = false;
 }
 
 void NpcZombie::Attack()
 {
-    if (inAttackDelay.Wait()) return;
+    if (isOwned)
+    {
+        if (inAttackDelay.Wait()) return;
+        inAttackDelay.AddDelay(1.5f);
+
+        state = NpcState::Attacking;
+
+        NetPacket attackArgs(PacketType::RPC);
+        SendRPC(static_cast<uint8_t>(NpcRPC::Attack), attackArgs, RPCTarget::All);
+    }
 
     PlaySoundEffect("event:/NPC/Enemy1/Enemy1AttackStart");
 
-    inAttackDelay.AddDelay(1.5f);
-    mesh->PlayAnimation("attack",false,0.3);
-    mesh->PullRootMotion(); // discard any initial root motion snapshot
-    attacking = true;
-    attackDamageDealt = false;
+    mesh->PlayAnimation("attack");
+    mesh->PullRootMotion();
+
+    if (!isOwned)
+        state = NpcState::Attacking;
 }
 
 void NpcZombie::OnDamage(float Damage, Entity* DamageCauser, Entity* Weapon)
@@ -66,55 +93,46 @@ void NpcZombie::OnDamage(float Damage, Entity* DamageCauser, Entity* Weapon)
     NpcHumanBase::OnDamage(Damage, DamageCauser, Weapon);
 }
 
-// Deals damage exactly once when the animation clock passes AttackDamageDelay
 void NpcZombie::UpdateAttackDamage()
 {
-    if (attackDamageDealt) return;
-    if (mesh->GetAnimationTime() < AttackDamageDelay) return;
+    if (!isOwned)         return;
+    if (!attackingDamage) return;
 
     auto hit = Physics::SphereTrace(
         Position,
         MathHelper::GetForwardVector(mesh->Rotation) * 1.2f + Position,
         0.45f,
         BodyType::World | BodyType::CharacterCapsule,
-        { controller.body });
+        {}, { this });
 
-    // No contact yet — keep checking each frame so parry timing can land
-    if (!hit.hasHit || !hit.entity->HasTag("player")) return;
+    if (!hit.hasHit) return;
 
-    // Commit only once we've actually resolved contact
-    attackDamageDealt = true;
-
-    if (NpcHelper::CheckParry(MathHelper::GetForwardVector(mesh->Rotation), hit.entity))
+    if (hit.entity->HasTag("player"))
     {
-        OnPointDamage(20, hit.shapePosition,
-            MathHelper::FastNormalize(Position - hit.shapePosition), "", this, this);
-        Physics::AddImpulse(mesh->FindHitboxByName("spine_02"),
-            MathHelper::GetForwardVector(mesh->Rotation) * -500.0f);
-        AddDebuffStacks("PoiseBreakDebuff", 100);
-    }
-    else
-    {
-        hit.entity->OnPointDamage(15, hit.shapePosition,
-            MathHelper::FastNormalize(hit.shapePosition - Position), "", this, this);
-    }
-}
-
-// Watches animation time to transition out of attack without events
-void NpcZombie::UpdateAttackState()
-{
-    float dur = mesh->GetAnimationDuration();
-    if (dur > 0.0f && mesh->GetAnimationTime() >= dur - AttackEndThreshold)
-    {
-        attacking = false;
-        attackDamageDealt = false;
-        mesh->PlayAnimation("run", true, 0.5f);
+        if (NpcHelper::CheckParry(MathHelper::GetForwardVector(mesh->Rotation), hit.entity))
+        {
+            OnPointDamage(20, hit.shapePosition,
+                MathHelper::FastNormalize(Position - hit.shapePosition),
+                "", this, this);
+            Physics::AddImpulse(mesh->FindHitboxByName("spine_02"),
+                MathHelper::GetForwardVector(mesh->Rotation) * -500.0f);
+            AddDebuffStacks("PoiseBreakDebuff", 100);
+            attackingDamage = false;
+            return;
+        }
+        else
+        {
+            hit.entity->OnPointDamage(15, hit.shapePosition,
+                MathHelper::FastNormalize(hit.shapePosition - Position),
+                "", this, this);
+            attackingDamage = false;
+        }
     }
 }
 
 void NpcZombie::AsyncUpdate()
 {
-    if (dead)
+    if (IsDead())
     {
         mesh->UpdateHitboxes();
         UpdateStatusWidgets();
@@ -124,22 +142,31 @@ void NpcZombie::AsyncUpdate()
     controller.Update(Time::DeltaTimeF);
     Position = controller.GetPosition();
 
-    UpdatePerception();
+    ResolveTarget();
+
+    if (isOwned)
+        UpdatePerception();
+
     UpdateStatusWidgets();
     UpdateDebuffs(Time::DeltaTimeF);
 
-    if (dead) return;
+    if (IsDead()) return;
 
     mesh->Update(ModifyAnimationSpeed(1.0f));
 
+    auto animEvents = mesh->PullAnimationEvents();
+    for (auto& ev : animEvents)
+        ProcessAnimationEvent(ev);
+
     mesh->Position = Position - vec3(0, 1, 0);
 
-    // Root motion applied only during stun animations
     auto rootMotion = mesh->PullRootMotion();
-    if (stuned || stunnedRagdoll)
+
+    if (isOwned)
     {
         Position += rootMotion.Position;
         controller.SetPosition(Position);
+
         if (rootMotion.Position != vec3())
             controller.SetVelocity(vec3(0, controller.GetVelocity().y, 0));
 
@@ -153,102 +180,125 @@ void NpcZombie::AsyncUpdate()
     UpdateStunnedReturn();
     UpdateReturnFromRagdoll();
 
-    // Time-based stun end (replaces stun_end animation event)
-    if (stuned && !stunnedRagdoll && !returningFromRagdoll)
-    {
-        float dur = mesh->GetAnimationDuration();
-        if (dur > 0.0f && mesh->GetAnimationTime() >= dur - AttackEndThreshold)
-        {
-            stuned = false;
-            mesh->PlayAnimation("run", true, 0.5f);
-        }
-    }
-
     mesh->UpdateHitboxes();
 
-    soundPlayer->Position = vec3(mesh->GetBoneMatrixWorld("head")[3]);
-    soundPlayer->Velocity = controller.GetVelocity();
+    if (soundPlayer)
+    {
+        soundPlayer->Position = vec3(mesh->GetBoneMatrixWorld("head")[3]);
+        soundPlayer->Velocity = controller.GetVelocity();
+    }
 
-    if (dead || stuned || stunnedRagdoll || returningFromRagdoll) return;
+    if (IsDead() || IsStunned() || stunnedRagdoll || returningFromRagdoll) return;
 
-    // Attack state: deal damage at fixed time, stand still, then transition out
-    if (attacking)
+    if (isOwned)
     {
         UpdateAttackDamage();
-        if (dead)return;
-        if (attacking) // parry may have cleared it via Stun()
-            UpdateAttackState();
+        if (IsDead()) return;
 
-        if (attacking) // still attacking after state update — hold in place
+        if (resolvedTarget == nullptr)
         {
+            if (mesh->GetAnimationName() != "idle")
+                mesh->PlayAnimation("idle", true, 0.5f);
+
+            state = NpcState::Idle;
+
             vec3 vel = controller.GetVelocity();
             controller.SetVelocity(vec3(0, vel.y, 0));
             return;
         }
-    }
 
-    if (dead) return;
+        if (mesh->GetAnimationName() == "idle")
+            mesh->PlayAnimation("run", true, 0.5f);
 
-    // No target: idle
-    if (target == nullptr)
-    {
-        if (mesh->GetAnimationName() != "idle")
-            mesh->PlayAnimation("idle", true, 0.5f);
+        if (state == NpcState::Idle)
+            state = NpcState::Chasing;
+
+        if (IsAttacking())
+        {
+            speed = 2.0f;
+            return;
+        }
+
+        vec3 calculatedTargetPos = resolvedTarget->Position;
+
+        if (resolvedTarget->Position.y < Position.y - 0.1f &&
+            resolvedTarget->Position.y > Position.y - 1.5f)
+        {
+            calculatedTargetPos.y = Position.y;
+        }
+
+        vec3 lookAtDir = MathHelper::FastNormalize(calculatedTargetPos - Position);
+
+        if (glm::distance(calculatedTargetPos, Position) < 1.5f &&
+            glm::dot(MathHelper::GetForwardVector(mesh->Rotation), lookAtDir) > 0.93f)
+        {
+            Attack();
+        }
+
+        if (IsFleeing())
+        {
+            UpdateFleeTarget();
+        }
+        else
+        {
+            pathFollow.UpdateStartAndTarget(Position, resolvedTarget->Position);
+            pathFollow.TryPerform();
+        }
+
+        if (pathFollow.FoundTarget)
+        {
+            desiredDirection = glm::normalize(
+                MathHelper::XZ(pathFollow.CalculatedTargetLocation - Position));
+        }
+
+        speed += Time::DeltaTimeF * 6.5f;
+        speed = glm::clamp(speed, 0.0f, ModifyMovementSpeed(maxSpeed));
+
+        movingDirection = glm::mix(movingDirection, desiredDirection,
+            (double)Time::DeltaTime * 10.0);
+        movingDirection = MathHelper::FastNormalize(movingDirection);
 
         vec3 vel = controller.GetVelocity();
-        controller.SetVelocity(vec3(0, vel.y, 0));
-        return;
-    }
-    else if (mesh->GetAnimationName() == "idle")
-    {
-        mesh->PlayAnimation("run", true, 0.5f);
-    }
+        controller.SetVelocity(vec3(movingDirection.x * speed,
+            vel.y,
+            movingDirection.z * speed));
 
-    vec3 lookAtDir = MathHelper::FastNormalize(target->Position - Position);
-
-    if (distance(target->Position, Position) < 1.1f
-        && dot(MathHelper::GetForwardVector(mesh->Rotation), lookAtDir) > 0.93f)
-    {
-        Attack();
-    }
-
-    if (fleeing)
-    {
-        UpdateFleeTarget();
+        mesh->Rotation = vec3(0,
+            MathHelper::FindLookAtRotation(vec3(), movingDirection).y, 0);
     }
     else
     {
-        pathFollow.UpdateStartAndTarget(Position, target->Position);
-        pathFollow.TryPerform();
+        vec3 vel = controller.GetVelocity();
+        controller.SetVelocity(vec3(movingDirection.x * speed,
+            vel.y,
+            movingDirection.z * speed));
+        mesh->Rotation = vec3(0,
+            MathHelper::FindLookAtRotation(vec3(), movingDirection).y, 0);
     }
+}
 
-    if (pathFollow.FoundTarget)
-        desiredDirection = normalize(MathHelper::XZ(pathFollow.CalculatedTargetLocation - Position));
+void NpcZombie::NetSerialize(NetPacket& packet)
+{
+    NpcHumanBase::NetSerialize(packet);
+    packet.WriteBool(attackingDamage);
+}
 
-    speed += Time::DeltaTimeF * 6.5f;
-    speed = glm::clamp(speed, 0.0f, ModifyMovementSpeed(maxSpeed));
-
-    movingDirection = mix(movingDirection, desiredDirection, Time::DeltaTime * 10.0);
-    movingDirection = MathHelper::FastNormalize(movingDirection);
-
-    vec3 vel = controller.GetVelocity();
-    controller.SetVelocity(vec3(movingDirection.x * speed, vel.y, movingDirection.z * speed));
-
-    mesh->Rotation = vec3(0, MathHelper::FindLookAtRotation(vec3(), movingDirection).y, 0);
+void NpcZombie::NetDeserialize(NetPacket& packet)
+{
+    NpcHumanBase::NetDeserialize(packet);
+    attackingDamage = packet.ReadBool();
 }
 
 void NpcZombie::Serialize(json& target)
 {
     NpcHumanBase::Serialize(target);
-    SERIALIZE_FIELD(target, attacking);
-    SERIALIZE_FIELD(target, attackDamageDealt);
+    SERIALIZE_FIELD(target, attackingDamage);
 }
 
 void NpcZombie::Deserialize(json& source)
 {
     NpcHumanBase::Deserialize(source);
-    DESERIALIZE_FIELD(source, attacking);
-    DESERIALIZE_FIELD(source, attackDamageDealt);
+    DESERIALIZE_FIELD(source, attackingDamage);
 }
 
 void NpcZombie::LoadAssets()
