@@ -2,6 +2,7 @@
 #include "Player.hpp"
 
 #include <NetworkManager.h>
+#include <AiPerception/AiPerceptionSystem.h>
 
 namespace
 {
@@ -18,6 +19,9 @@ namespace
 RemotePlayer::RemotePlayer()
 {
 	ClassName = "remotePlayer";
+
+	Tags = { "player" };
+
 }
 
 void RemotePlayer::Update()
@@ -38,10 +42,22 @@ void RemotePlayer::Update()
 
 		Position = targetPosition;
 		Rotation = targetRotation;
+
+		if (observationTarget)
+		{
+			AiPerceptionSystem::RemoveTarget(observationTarget);
+			observationTarget = nullptr;
+
+		}
+
 	}
 	else
 	{
 		timeSinceNetUpdate += Time::DeltaTimeF;
+
+		if(observationTarget == nullptr)
+		observationTarget = AiPerceptionSystem::CreateTarget(Position, Id, { "player" });
+
 	}
 
 	// Extrapolate from the last received snapshot.
@@ -71,6 +87,15 @@ void RemotePlayer::Update()
 		mesh->Position = Position - vec3(0, 0.9f, 0);
 		mesh->Rotation = Rotation;
 	}
+
+	if (observationTarget)
+	{
+		DebugDraw::Point(observationTarget->position);
+
+		observationTarget->position = Position + vec3(0, 0.7f, 0);
+	}
+
+
 }
 
 void RemotePlayer::NetSerialize(NetPacket& packet)

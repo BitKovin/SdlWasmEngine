@@ -135,8 +135,14 @@ void desktop_render_loop() {
 
     while (!quit)
     {
-        Input::PendingMouseDelta = ReadMouseDelta();
+        Input::PendingMouseDelta = vec2();
         Input::StartEventsFrame();
+
+        Uint32 flags = SDL_GetWindowFlags(window);
+
+        if (flags & SDL_WINDOW_INPUT_FOCUS) {
+            Input::PendingMouseDelta = ReadMouseDelta();
+        }
 
         while (SDL_PollEvent(&event))
         {

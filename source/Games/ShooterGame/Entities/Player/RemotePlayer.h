@@ -2,6 +2,7 @@
 
 #include <Network/NetworkedEntity.h>
 #include <SkeletalMesh.hpp>
+#include <AiPerception/ObservationTarget.h>
 
 class RemotePlayer : public NetworkedEntity
 {
@@ -10,6 +11,8 @@ public:
 
 	class Player* referencePlayer = nullptr;
 	SkeletalMesh* mesh = nullptr;
+
+	std::shared_ptr<ObservationTarget> observationTarget;
 
 	vec3 targetPosition{};
 	vec3 targetRotation{};

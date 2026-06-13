@@ -21,10 +21,12 @@ uint8_t      NetworkManager::s_localPeerId = 0;
 uint32_t     NetworkManager::s_localRuntimeSeq = 0;
 uint16_t     NetworkManager::s_outboundSeq = 0;
 
+uint32_t     NetworkManager::s_loadTimeIdSeq = 0;
+
 float        NetworkManager::s_networkTickRate = 30.0f;
 float        NetworkManager::s_networkTickAccum = 0.0f;
 float        NetworkManager::s_validationTickAccum = 0.0f;
-float        NetworkManager::kValidationInterval = 1.0f/10.0f;
+float        NetworkManager::kValidationInterval = 1.0f/5.0f;
 
 Level* NetworkManager::s_level = nullptr;
 INetworkTransport* NetworkManager::s_transport = nullptr;
@@ -32,7 +34,7 @@ INetworkTransport* NetworkManager::s_transport = nullptr;
 std::unordered_map<std::string, uint16_t>  NetworkManager::s_nameToIndex;
 std::vector<std::string>                   NetworkManager::s_indexToName;
 
-std::unordered_map<uint32_t, NetworkedEntity*>  NetworkManager::s_entities;
+std::unordered_map<uint64_t, NetworkedEntity*>  NetworkManager::s_entities;
 std::set<uint8_t>                               NetworkManager::s_pendingReadyClients;
 std::vector<NetworkManager::QueuedPacket>        NetworkManager::s_preLiveQueue;
 std::vector<NetworkManager::PendingUpdate>       NetworkManager::s_updateQueue;
@@ -43,7 +45,6 @@ std::vector<NetworkManager::PendingUpdate>       NetworkManager::s_updateQueue;
 
 namespace {
 
-    constexpr uint32_t RUNTIME_ID_THRESHOLD = 1u << 20;
     constexpr uint8_t  BROADCAST_PEER_ID = 255;
 
     const std::string EMPTY_STRING;
@@ -346,6 +347,7 @@ void NetworkManager::BeginLevelLoad(Level* level) {
     s_level = level;
     s_isLoadingLevel = true;
     s_localRuntimeSeq = 0;
+    s_loadTimeIdSeq = 0;
     s_networkTickAccum = 0.0f;
     s_preLiveQueue.clear();
     s_updateQueue.clear();
@@ -415,11 +417,11 @@ void NetworkManager::Register(NetworkedEntity* entity) {
     s_entities[entity->networkId] = entity;
 }
 
-void NetworkManager::Unregister(uint32_t networkId) {
+void NetworkManager::Unregister(uint64_t networkId) {
     s_entities.erase(networkId);
 }
 
-NetworkedEntity* NetworkManager::Find(uint32_t networkId) {
+NetworkedEntity* NetworkManager::Find(uint64_t networkId) {
     auto it = s_entities.find(networkId);
     return (it != s_entities.end()) ? it->second : nullptr;
 }
@@ -428,31 +430,29 @@ NetworkedEntity* NetworkManager::Find(uint32_t networkId) {
 // ID allocation
 // ---------------------------------------------------------------------------
 
-uint32_t NetworkManager::AllocateRuntimeId(uint8_t ownerId) {
+uint64_t NetworkManager::AllocateRuntimeId(uint8_t ownerId) {
     assert(ownerId == s_localPeerId);
 
-    const uint32_t id =
-        RUNTIME_ID_THRESHOLD +
-        (static_cast<uint32_t>(ownerId) << 20) +
-        s_localRuntimeSeq++;
+    // 32-bit id portion, offset so runtime IDs never collide with
+    // level/load-time IDs (which stay below NETWORK_ID_RUNTIME_OFFSET).
+    const uint32_t id = NETWORK_ID_RUNTIME_OFFSET + s_localRuntimeSeq++;
 
-    assert(id != 0);
-    return id;
+    // customData1 / customData2 are local-use placeholders for now.
+    constexpr uint8_t  customData1 = 0;
+    constexpr uint16_t customData2 = 0;
+
+    const uint64_t networkId = PackNetworkId(id, ownerId, customData1, customData2);
+
+    assert(networkId != 0);
+    return networkId;
 }
 
-uint32_t NetworkManager::MakeLoadPhaseId(const std::string& entityId) {
-    // FNV-1a 32-bit — fast, good distribution, no dependencies
-    uint32_t hash = 2166136261u;
-    for (unsigned char c : entityId) {
-        hash ^= c;
-        hash *= 16777619u;
-    }
-    // Force into load-phase namespace: strip the top 12 bits so the result
-    // is always < RUNTIME_ID_THRESHOLD (1 << 20 = 1,048,576).
-    hash &= (RUNTIME_ID_THRESHOLD - 1);
-    // Zero is reserved (means "unassigned"), remap it
-    if (hash == 0) hash = 1;
-    return hash;
+uint64_t NetworkManager::MakeLoadPhaseId(const std::string& entityId) 
+{   
+
+    s_loadTimeIdSeq++;
+    
+    return s_loadTimeIdSeq + 1;
 }
 
 // ---------------------------------------------------------------------------
@@ -465,7 +465,7 @@ void NetworkManager::BroadcastSpawn(NetworkedEntity* entity) {
     const uint16_t wireIndex = NameToIndex(entity->GetClassName());
 
     NetPacket pkt(PacketType::SpawnEntity);
-    pkt.WriteUInt32(entity->networkId);
+    pkt.WriteUInt64(entity->networkId);
     pkt.WriteUInt16(wireIndex);           // class identified by wire index
     pkt.WriteUInt8(entity->networkOwner);
     entity->NetSerialize(pkt);
@@ -480,9 +480,9 @@ void NetworkManager::BroadcastSpawn(NetworkedEntity* entity) {
     }
 }
 
-void NetworkManager::BroadcastDespawn(uint32_t networkId) {
+void NetworkManager::BroadcastDespawn(uint64_t networkId) {
     NetPacket pkt(PacketType::DespawnEntity);
-    pkt.WriteUInt32(networkId);
+    pkt.WriteUInt64(networkId);
 
     auto bytes = FinalizeOutbound(pkt);
 
@@ -490,6 +490,23 @@ void NetworkManager::BroadcastDespawn(uint32_t networkId) {
         SendReliableNow(bytes, BROADCAST_PEER_ID);
     }
     else {
+        SendReliableNow(bytes, /*server=*/0);
+    }
+}
+
+void NetworkManager::BroadcastOwnerChange(uint64_t networkId, uint8_t newOwner) {
+    NetPacket pkt(PacketType::OwnerChange);
+    pkt.WriteUInt64(networkId);
+    pkt.WriteUInt8(newOwner);
+
+    auto bytes = FinalizeOutbound(pkt);
+
+    if (s_isServer) {
+        // Server broadcasts to every connected client immediately.
+        SendReliableNow(bytes, BROADCAST_PEER_ID);
+    }
+    else {
+        // Clients route through the server; it validates and relays.
         SendReliableNow(bytes, /*server=*/0);
     }
 }
@@ -502,7 +519,7 @@ void NetworkManager::EnqueueEntityUpdate(NetworkedEntity* entity) {
     assert(entity && entity->isOwned);
 
     NetPacket pkt(PacketType::EntityUpdate);
-    pkt.WriteUInt32(entity->networkId);
+    pkt.WriteUInt64(entity->networkId);
     entity->NetSerialize(pkt);
 
     const uint8_t target = s_isServer ? BROADCAST_PEER_ID : uint8_t(0);
@@ -513,10 +530,10 @@ void NetworkManager::EnqueueEntityUpdate(NetworkedEntity* entity) {
 // RPC
 // ---------------------------------------------------------------------------
 
-void NetworkManager::SendRPC(uint32_t networkId, uint8_t rpcId,
+void NetworkManager::SendRPC(uint64_t networkId, uint8_t rpcId,
     NetPacket& args, RPCTarget target) {
     NetPacket pkt(PacketType::RPC);
-    pkt.WriteUInt32(networkId);
+    pkt.WriteUInt64(networkId);
     pkt.WriteUInt8(rpcId);
     pkt.WriteUInt8(static_cast<uint8_t>(target));
 
@@ -582,7 +599,7 @@ void NetworkManager::SendFullSnapshotTo(uint8_t targetPeerId) {
     pkt.WriteUInt32(static_cast<uint32_t>(s_entities.size()));
 
     for (const auto& [id, entity] : s_entities) {
-        pkt.WriteUInt32(entity->networkId);
+        pkt.WriteUInt64(entity->networkId);
         pkt.WriteUInt16(NameToIndex(entity->GetClassName())); // wire index
         pkt.WriteUInt8(entity->networkOwner);
 
@@ -639,18 +656,43 @@ void NetworkManager::OnPeerDisconnected(uint8_t peerId) {
 
     if (!s_isServer || !s_level) return;
 
-    std::vector<uint32_t> toRemove;
+    std::vector<uint32_t> toDestroy;
+    std::vector<uint32_t> toMigrate;
+
     for (const auto& [id, entity] : s_entities) {
-        if (entity->networkOwner == peerId) {
-            toRemove.push_back(id);
+        if (entity->networkOwner != peerId) continue;
+
+        // Entities that can migrate ownership survive under server control.
+        // Everything else is destroyed so stale unowned objects don't linger.
+        if (!entity->DestroyOnOwnerDisconnect && entity->CanMigrateOwner) {
+            toMigrate.push_back(id);
+        } else {
+            toDestroy.push_back(id);
         }
     }
 
-    for (uint32_t id : toRemove) {
+    for (uint32_t id : toDestroy) {
         BroadcastDespawn(id);
         if (NetworkedEntity* entity = Find(id)) {
             s_level->RemoveEntitySilent(entity);
         }
+    }
+
+    // Transfer surviving entities to server ownership (peer 0).
+    // BroadcastOwnerChange sends a reliable PacketType::OwnerChange to every
+    // client so they update networkOwner / isOwned immediately.
+    for (uint32_t id : toMigrate) {
+        NetworkedEntity* entity = Find(id);
+        if (!entity) continue;
+
+        entity->networkOwner = 0;                    // server takes over
+        entity->isOwned      = (s_localPeerId == 0); // always true on the server
+
+        BroadcastOwnerChange(id, /*newOwner=*/0);
+
+        std::fprintf(stdout,
+            "[NetworkManager] Entity %u migrated to server after peer %u disconnected\n",
+            id, peerId);
     }
 }
 
@@ -790,13 +832,13 @@ void NetworkManager::DispatchPacket(uint8_t senderId, NetPacket& packet) {
                                  // ── Entity lifecycle ─────────────────────────────────────────────
 
     case PacketType::SpawnEntity: {
-        const uint32_t networkId = packet.ReadUInt32();
+        const uint64_t networkId = packet.ReadUInt64();
         const uint16_t wireIndex = packet.ReadUInt16(); // was classId
         const uint8_t  networkOwner = packet.ReadUInt8();
 
         if (s_isServer) {
             NetPacket relay(PacketType::SpawnEntity);
-            relay.WriteUInt32(networkId);
+            relay.WriteUInt64(networkId);
             relay.WriteUInt16(wireIndex);
             relay.WriteUInt8(networkOwner);
             packet.CopyRemainingTo(relay);
@@ -842,11 +884,11 @@ void NetworkManager::DispatchPacket(uint8_t senderId, NetPacket& packet) {
     }
 
     case PacketType::DespawnEntity: {
-        const uint32_t networkId = packet.ReadUInt32();
+        const uint64_t networkId = packet.ReadUInt64();
 
         if (s_isServer) {
             NetPacket relay(PacketType::DespawnEntity);
-            relay.WriteUInt32(networkId);
+            relay.WriteUInt64(networkId);
             RelayReliableExcept(senderId, FinalizeOutbound(relay));
         }
 
@@ -858,12 +900,12 @@ void NetworkManager::DispatchPacket(uint8_t senderId, NetPacket& packet) {
     }
 
     case PacketType::EntityUpdate: {
-        const uint32_t networkId = packet.ReadUInt32();
+        const uint64_t networkId = packet.ReadUInt64();
 
         if (s_isServer) {
             // Relay unreliably to all except sender, compressed, immediate.
             NetPacket relay(PacketType::EntityUpdate);
-            relay.WriteUInt32(networkId);
+            relay.WriteUInt64(networkId);
             packet.CopyRemainingTo(relay);
             auto relayBytes = FinalizeOutbound(relay);
             const auto compressed = ByteCompressor::CompressData(relayBytes);
@@ -882,7 +924,7 @@ void NetworkManager::DispatchPacket(uint8_t senderId, NetPacket& packet) {
                                  // ── RPC ──────────────────────────────────────────────────────────
 
     case PacketType::RPC: {
-        const uint32_t  networkId = packet.ReadUInt32();
+        const uint64_t  networkId = packet.ReadUInt64();
         const uint8_t   rpcId = packet.ReadUInt8();
         const RPCTarget target = static_cast<RPCTarget>(packet.ReadUInt8());
 
@@ -890,7 +932,7 @@ void NetworkManager::DispatchPacket(uint8_t senderId, NetPacket& packet) {
             // Relay before applying so clients receive it even if OnRPC
             // removes the entity
             NetPacket relay(PacketType::RPC);
-            relay.WriteUInt32(networkId);
+            relay.WriteUInt64(networkId);
             relay.WriteUInt8(rpcId);
             relay.WriteUInt8(static_cast<uint8_t>(target));
             packet.CopyRemainingTo(relay);
@@ -915,6 +957,30 @@ void NetworkManager::DispatchPacket(uint8_t senderId, NetPacket& packet) {
         break;
     }
 
+    // ── Ownership transfer ───────────────────────────────────────────────
+
+    case PacketType::OwnerChange: {
+        const uint64_t networkId = packet.ReadUInt64();
+        const uint8_t  newOwner  = packet.ReadUInt8();
+
+        if (s_isServer) 
+        {
+            // Relay to all clients before applying locally so they update even
+            // if the entity's OnOwnerChanged callback were to remove it.
+            NetPacket relay(PacketType::OwnerChange);
+            relay.WriteUInt64(networkId);
+            relay.WriteUInt8(newOwner);
+            RelayReliableAll(FinalizeOutbound(relay));
+        }
+
+        NetworkedEntity* entity = Find(networkId);
+        if (entity && entity->CanMigrateOwner) {
+            entity->networkOwner = newOwner;
+            entity->isOwned      = (newOwner == s_localPeerId);
+        }
+        break;
+    }
+
     default:
         std::fprintf(stderr, "[NetworkManager] Unknown packet type %u from peer %u\n",
             static_cast<unsigned>(type), senderId);
@@ -933,11 +999,11 @@ void NetworkManager::OnEntityListReceived(uint8_t /*senderId*/, NetPacket& packe
     // Ensure loop counter matches the 32-bit type we fixed previously
     const uint32_t entityCount = packet.ReadUInt32();
 
-    std::set<uint32_t> snapshotIds;
+    std::set<uint64_t> snapshotIds;
     std::vector<NetworkedEntity*> newlySpawned;
 
     for (uint32_t i = 0; i < entityCount; ++i) {
-        const uint32_t networkId = packet.ReadUInt32();
+        const uint64_t networkId = packet.ReadUInt64();
         const uint16_t wireIndex = packet.ReadUInt16();
         const uint8_t  networkOwner = packet.ReadUInt8();
 

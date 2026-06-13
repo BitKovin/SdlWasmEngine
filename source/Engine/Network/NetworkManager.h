@@ -106,8 +106,8 @@ public:
     // -----------------------------------------------------------------------
 
     static void             Register  (NetworkedEntity* entity);
-    static void             Unregister(uint32_t networkId);
-    static NetworkedEntity* Find      (uint32_t networkId);
+    static void             Unregister(uint64_t networkId);
+    static NetworkedEntity* Find      (uint64_t networkId);
 
     // -----------------------------------------------------------------------
     // ID allocation
@@ -115,16 +115,18 @@ public:
 
     // Allocates the next runtime ID in ownerId's namespace:
     //   (ownerId << 20) | localRuntimeSeq++
-    static uint32_t AllocateRuntimeId(uint8_t ownerId);
+    static uint64_t AllocateRuntimeId(uint8_t ownerId);
 
-    static uint32_t MakeLoadPhaseId(const std::string& entityId);
+    static uint64_t MakeLoadPhaseId(const std::string& entityId);
 
     // -----------------------------------------------------------------------
     // Broadcast helpers  (called by Level only)
     // -----------------------------------------------------------------------
 
     static void BroadcastSpawn  (NetworkedEntity* entity);
-    static void BroadcastDespawn(uint32_t networkId);
+    static void BroadcastDespawn(uint64_t networkId);
+
+    static void BroadcastOwnerChange(uint64_t networkId, uint8_t newOwner);
 
     // -----------------------------------------------------------------------
     // Per-entity update  (called by NetworkedEntity::PushNetworkUpdate only)
@@ -140,7 +142,7 @@ public:
 
     // Sends a reliable RPC immediately (never batched).
     // See RPC_HOWTO.md for the full explanation of authority and routing.
-    static void SendRPC(uint32_t networkId, uint8_t rpcId,
+    static void SendRPC(uint64_t networkId, uint8_t rpcId,
                         NetPacket& args, RPCTarget target);
 
     // -----------------------------------------------------------------------
@@ -179,6 +181,7 @@ private:
     static uint32_t     s_localRuntimeSeq;
     static uint16_t     s_outboundSeq;
 
+    static uint32_t     s_loadTimeIdSeq;
 
     // Network tick accumulator
     static float        s_networkTickRate;   // Hz, set in Init
@@ -206,7 +209,7 @@ private:
     static std::vector<std::string>                  s_indexToName;
 
     // networkId → entity
-    static std::unordered_map<uint32_t, NetworkedEntity*> s_entities;
+    static std::unordered_map<uint64_t, NetworkedEntity*> s_entities;
 
     // Server: peers that have not yet sent PT_ClientReady
     static std::set<uint8_t> s_pendingReadyClients;

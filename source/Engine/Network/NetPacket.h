@@ -21,6 +21,7 @@ enum class PacketType : uint8_t {
     EntityUpdate      = 7,
     RPC               = 8,
     LevelInfo         = 9,
+    OwnerChange       = 10
 };
 
 enum class RPCTarget : uint8_t {
@@ -66,6 +67,7 @@ public:
     void WriteUInt16 (uint16_t       value);
     void WriteInt32  (int32_t        value);
     void WriteUInt32 (uint32_t       value);
+    void WriteUInt64 (uint64_t       value);
     void WriteFloat  (float          value);
     void WriteVector3(const glm::vec3& value);  // x, y, z as three floats
     void WriteQuat   (const glm::quat& value);  // x, y, z, w as four floats
@@ -82,6 +84,7 @@ public:
     uint16_t    ReadUInt16();
     int32_t     ReadInt32();
     uint32_t    ReadUInt32();
+    uint64_t    ReadUInt64();
     float       ReadFloat();
     glm::vec3   ReadVector3();
     glm::quat   ReadQuat();
@@ -146,11 +149,13 @@ private:
     void AppendU8 (uint8_t  v);
     void AppendU16(uint16_t v);
     void AppendU32(uint32_t v);
+    void AppendU64(uint64_t v);
     void AppendF32(float    v);
 
     uint8_t  ConsumeU8();
     uint16_t ConsumeU16();
     uint32_t ConsumeU32();
+    uint64_t ConsumeU64();
     float    ConsumeF32();
 
     void AssertCanRead(size_t bytes) const;

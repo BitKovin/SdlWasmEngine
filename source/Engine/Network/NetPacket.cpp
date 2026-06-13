@@ -186,6 +186,11 @@ void NetPacket::AppendU32(uint32_t v) {
     payload_.push_back(static_cast<uint8_t>( v        & 0xFF));
 }
 
+void NetPacket::AppendU64(uint64_t v) {
+    AppendU32(static_cast<uint32_t>((v >> 32) & 0xFFFFFFFFu));
+    AppendU32(static_cast<uint32_t>( v        & 0xFFFFFFFFu));
+}
+
 void NetPacket::AppendF32(float v) {
     uint32_t bits;
     std::memcpy(&bits, &v, sizeof(bits));
@@ -224,6 +229,12 @@ uint32_t NetPacket::ConsumeU32() {
     return v;
 }
 
+uint64_t NetPacket::ConsumeU64() {
+    uint64_t hi = ConsumeU32();
+    uint64_t lo = ConsumeU32();
+    return (hi << 32) | lo;
+}
+
 float NetPacket::ConsumeF32() {
     uint32_t bits = ConsumeU32();
     float v;
@@ -244,6 +255,7 @@ void NetPacket::WriteUInt16 (uint16_t v) { AppendU16(v); }
 
 void NetPacket::WriteInt32  (int32_t  v) { AppendU32(static_cast<uint32_t>(v)); }
 void NetPacket::WriteUInt32 (uint32_t v) { AppendU32(v); }
+void NetPacket::WriteUInt64 (uint64_t v) { AppendU64(v); }
 
 void NetPacket::WriteFloat  (float    v) { AppendF32(v); }
 
@@ -277,6 +289,7 @@ int16_t     NetPacket::ReadInt16()   { return static_cast<int16_t>(ConsumeU16())
 uint16_t    NetPacket::ReadUInt16()  { return ConsumeU16(); }
 int32_t     NetPacket::ReadInt32()   { return static_cast<int32_t>(ConsumeU32()); }
 uint32_t    NetPacket::ReadUInt32()  { return ConsumeU32(); }
+uint64_t    NetPacket::ReadUInt64()  { return ConsumeU64(); }
 float       NetPacket::ReadFloat()   { return ConsumeF32(); }
 
 glm::vec3 NetPacket::ReadVector3() {
