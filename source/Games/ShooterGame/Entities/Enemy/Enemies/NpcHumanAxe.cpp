@@ -277,8 +277,9 @@ void NpcHumanAxe::AsyncUpdate()
     }
     else
     {
-        // Non-owner: drive the capsule with the replicated velocity so it
-        // stays aligned with the interpolated position from the snapshot.
+        // Non-owner: mirror animation from replicated state and drive capsule.
+        UpdateNonOwnerAnimation();
+
         vec3 vel = controller.GetVelocity();
         controller.SetVelocity(vec3(movingDirection.x * speed,
                                     vel.y,

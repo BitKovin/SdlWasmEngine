@@ -293,7 +293,11 @@ protected:
     void Net_ApplySetTarget(const NpcTarget& newTarget);
 
     // Flee helpers
+    Delay fleeSearchDelay;
     void UpdateFleeTarget();
+
+    // Non-owner animation mirror – call from subclass AsyncUpdate on non-owning peers.
+    void UpdateNonOwnerAnimation();
 
     // ── Sound ─────────────────────────────────────────────────────────────
     void SetupSoundPlayer(SoundPlayer* sp);

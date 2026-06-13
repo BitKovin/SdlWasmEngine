@@ -6,13 +6,7 @@
 #include <Systems/ScoreSystem/ScoreSystem.h>
 #include <Entities/Player/Player.hpp>
 #include <AiPerception/AiPerceptionSystem.h>
-
-// ---------------------------------------------------------------------------
-// We assume the project provides a way to look up entities by networkId.
-// If the API is different, adjust the two calls in ResolveTarget().
-//   Level::Current->FindNetworkedEntityById(uint64_t networkId)
-//   Level::Current->FindRemotePlayerByClientId(uint8_t clientId)
-// ---------------------------------------------------------------------------
+#include <Network/NetworkManager.h>   // for NetworkManager::LocalClientId()
 
 NpcHumanBase::NpcHumanBase()
 {
@@ -44,7 +38,7 @@ NpcHumanBase::NpcHumanBase()
     Poise = 100.f;
 
     getFromRagdollAnimation = new Animation(this);
-
+    
     CanMigrateOwner = true;
 
 }
@@ -87,12 +81,11 @@ void NpcHumanBase::Start()
 
 // ResolveTarget rebuilds resolvedTarget from currentTarget on every peer.
 //
-// Player targets: the local Player::Instance is used when this peer's clientId
-// matches the target's clientId.  Otherwise we look for a RemotePlayer whose
-// networkId client field matches.  RemotePlayer entities that are owned by this
-// peer do NOT have a perception target set (they represent our own avatar on
-// remote machines), so we guard with clientId comparison instead of relying on
-// the perception system.
+// Player targets: we check whether the local peer's client id matches the
+// target's clientId.  If so, use Player::Instance (the local singleton).
+// Otherwise scan for a RemotePlayer whose networkId client field matches.
+// RemotePlayer entities that are locally owned (isOwned==true) represent our
+// own avatar on the server side and should be skipped on remote peers.
 void NpcHumanBase::ResolveTarget()
 {
     switch (currentTarget.type)
@@ -103,26 +96,26 @@ void NpcHumanBase::ResolveTarget()
 
         case TargetType::Player:
         {
-            // Is the target the local player on this peer?
+            // NetworkManager::LocalClientId() returns the client id assigned to
+            // this peer.  When it matches the target's clientId this IS our
+            // local player, so use the singleton.
             if (Player::Instance != nullptr &&
-                networkOwner == currentTarget.clientId)
+                NetworkManager::GetLocalPeerId() == currentTarget.clientId)
             {
-                // We are the peer that owns this player – use the singleton.
                 resolvedTarget = Player::Instance;
             }
             else
             {
-                // Find the RemotePlayer entity whose networkId was packed with
-                // the matching clientId.  RemotePlayer entities owned by us
-                // exist on the server/host side but have isOwned=true, so we
-                // skip them (the owner sees them as the local Player singleton).
+                // Find the RemotePlayer whose networkId was packed with the
+                // matching clientId.  Skip locally-owned networked players
+                // because on that peer they show up as Player::Instance instead.
                 resolvedTarget = nullptr;
                 for (auto& e : Level::Current->LevelObjects)
                 {
                     auto* ne = dynamic_cast<NetworkedEntity*>(e);
-                    if (ne == nullptr) continue;
+                    if (ne == nullptr)     continue;
                     if (!ne->HasTag("player")) continue;
-                    if (ne->isOwned) continue; // skip our own player entity
+                    if (ne->isOwned)       continue;
 
                     if (NetworkIdGetClientId(ne->networkId) == currentTarget.clientId)
                     {
@@ -151,8 +144,7 @@ void NpcHumanBase::ResolveTarget()
 
         case TargetType::Entity:
         {
-            // Entity IDs are not replicated; this path is only meaningful
-            // on the owning/server peer.
+            // Entity IDs are not replicated; only meaningful on the owner.
             resolvedTarget = isOwned
                 ? Level::Current->FindEntityWithId(currentTarget.entityId)
                 : nullptr;
@@ -163,7 +155,7 @@ void NpcHumanBase::ResolveTarget()
 
 // UpdatePerception – owner only.
 // Collects every player-tagged perception target visible this frame,
-// finds which one is closest, then calls TrySetTarget.
+// picks the closest, and calls TrySetTarget.
 void NpcHumanBase::UpdatePerception()
 {
     if (!isOwned || observer == nullptr) return;
@@ -175,53 +167,31 @@ void NpcHumanBase::UpdatePerception()
     if (targetSwitchTimer > 0.0f)
         targetSwitchTimer = std::max(0.0f, targetSwitchTimer - Time::DeltaTimeF);
 
-    // ── Collect all candidate player targets from perception ──────────────
-    // For each visible perception target tagged "player" we build an NpcTarget
-    // and note the world position so we can pick the closest.
-    struct Candidate
-    {
-        NpcTarget target;
-        vec3      worldPos;
-    };
+    struct Candidate { NpcTarget target; vec3 worldPos; };
     std::vector<Candidate> candidates;
 
     for (auto& pt : observer->visibleTargets)
     {
         if (!pt->HasTag("player")) continue;
 
-        // pt->ownerId is the entity Id of the entity that registered this
-        // perception target (typically the player or remote player entity).
         Entity* e = Level::Current->FindEntityWithId(pt->ownerId);
         if (e == nullptr) continue;
 
-        // Determine how to encode this target.
         auto* ne = dynamic_cast<NetworkedEntity*>(e);
         if (ne != nullptr)
         {
             uint8_t ownerClient = NetworkIdGetClientId(ne->networkId);
-
             if (ne->HasTag("player"))
-            {
-                // Use Player encoding so the target resolves to
-                // Player::Instance on the matching peer.
-                candidates.push_back({ NpcTarget::FromPlayer(ownerClient),
-                                       e->Position });
-            }
+                candidates.push_back({ NpcTarget::FromPlayer(ownerClient), e->Position });
             else
-            {
-                candidates.push_back({ NpcTarget::FromNetworkEntity(ne->networkId),
-                                       e->Position });
-            }
+                candidates.push_back({ NpcTarget::FromNetworkEntity(ne->networkId), e->Position });
         }
         else
         {
-            // Non-networked entity (e.g. server-only trigger actor) –
-            // encode by entity Id; only meaningful while we are the owner.
             candidates.push_back({ NpcTarget::FromEntity(e->Id), e->Position });
         }
     }
 
-    // Also react to heard sounds pointing to a player entity.
     for (auto& s : observer->heardSounds)
     {
         Entity* causer = Level::Current->FindEntityWithId(s.causerId);
@@ -237,18 +207,12 @@ void NpcHumanBase::UpdatePerception()
 
     if (candidates.empty()) return;
 
-    // ── Pick closest candidate ────────────────────────────────────────────
-    float    bestDist = std::numeric_limits<float>::max();
-    Candidate* best   = nullptr;
-
+    float      bestDist = std::numeric_limits<float>::max();
+    Candidate* best     = nullptr;
     for (auto& c : candidates)
     {
         float d = glm::distance(Position, c.worldPos);
-        if (d < bestDist)
-        {
-            bestDist = d;
-            best     = &c;
-        }
+        if (d < bestDist) { bestDist = d; best = &c; }
     }
 
     if (best != nullptr)
@@ -256,30 +220,36 @@ void NpcHumanBase::UpdatePerception()
 }
 
 // TrySetTarget – owner only.
-// Switch to a new target only when:
-//   (a) we currently have no target, OR
-//   (b) the cooldown has elapsed AND the candidate is strictly closer than
-//       the current resolved target.
+// Guards:
+//   • same target as current → skip
+//   • NPC is in a state where switching is disallowed → skip
+//   • no current target → accept immediately (no cooldown needed)
+//   • cooldown still ticking → skip
+//   • candidate not closer than current → skip
 void NpcHumanBase::TrySetTarget(const NpcTarget& candidate, const vec3& candidatePos)
 {
-    // Same target – nothing to do.
     if (candidate == currentTarget) return;
 
-    // No current target → accept immediately regardless of cooldown.
+    // Only allow target switching in calm states.
+    // Attacking/Stunned/Dead must finish (or die) before re-targeting.
+    if (state != NpcState::Idle &&
+        state != NpcState::Chasing &&
+        state != NpcState::Fleeing)
+    {
+        return;
+    }
+
     if (!currentTarget.IsValid())
     {
         ApplyTarget(candidate);
         return;
     }
 
-    // Cooldown still active → keep current target.
     if (targetSwitchTimer > 0.0f) return;
 
-    // Compare distances; only switch if the candidate is closer.
-    float currentDist = resolvedTarget
-        ? glm::distance(Position, resolvedTarget->Position)
-        : std::numeric_limits<float>::max();
-
+    float currentDist   = resolvedTarget
+                        ? glm::distance(Position, resolvedTarget->Position)
+                        : std::numeric_limits<float>::max();
     float candidateDist = glm::distance(Position, candidatePos);
 
     if (candidateDist < currentDist)
@@ -287,16 +257,51 @@ void NpcHumanBase::TrySetTarget(const NpcTarget& candidate, const vec3& candidat
 }
 
 // ApplyTarget – owner only.
-// Stores the new descriptor, resets the switch cooldown, and broadcasts via RPC.
+// Stores the new target, migrates ownership to the target's peer (for Player
+// targets), resets the cooldown, and broadcasts via SetTarget RPC.
 void NpcHumanBase::ApplyTarget(const NpcTarget& newTarget)
 {
     currentTarget     = newTarget;
     targetSwitchTimer = TARGET_SWITCH_COOLDOWN;
 
-    // Immediately resolve so the owning peer's AI loop sees it this frame.
+    // Transfer NPC ownership so the target's peer runs the AI and hit detection.
+    // For Player targets the clientId IS the peer that should own this NPC.
+    // For other networked targets we transfer to that entity's owner peer.
+    // For server-only Entity targets, ownership stays with the server (0).
+    if (CanMigrateOwner)
+    {
+        switch (newTarget.type)
+        {
+            case TargetType::Player:
+                SetOwner(newTarget.clientId);
+                break;
+
+            case TargetType::NetworkEntity:
+            {
+                // Find the owner of that networked entity and transfer to them.
+                for (auto& e : Level::Current->LevelObjects)
+                {
+                    auto* ne = dynamic_cast<NetworkedEntity*>(e);
+                    if (ne && ne->networkId == newTarget.networkId)
+                    {
+                        SetOwner(ne->networkOwner);
+                        break;
+                    }
+                }
+                break;
+            }
+
+            case TargetType::Entity:
+            default:
+                SetOwner(0);  // server owns NPC targeting non-networked objects
+                break;
+        }
+    }
+
+    // Resolve immediately so the new owning peer's AI loop sees it this frame.
     ResolveTarget();
 
-    // Broadcast to all non-owning peers so their resolvedTarget stays in sync.
+    // Broadcast the new target to all peers.
     NetPacket args(PacketType::RPC);
     newTarget.Write(args);
     SendRPC(static_cast<uint8_t>(NpcRPC::SetTarget), args, RPCTarget::All);
@@ -307,7 +312,7 @@ void NpcHumanBase::Net_ApplySetTarget(const NpcTarget& newTarget)
 {
     currentTarget     = newTarget;
     targetSwitchTimer = TARGET_SWITCH_COOLDOWN;
-    // resolvedTarget will be rebuilt next ResolveTarget() call.
+    // resolvedTarget will be rebuilt next frame by ResolveTarget().
 }
 
 // ---------------------------------------------------------------------------
@@ -332,12 +337,25 @@ void NpcHumanBase::PlaySoundEffect(std::string eventName)
 // Combat helpers
 // ---------------------------------------------------------------------------
 
+// Stun – plays the stun animation/sound locally and broadcasts to all peers.
+// The owner calls this directly; non-owners receive it via Net_ApplyStun.
+// To avoid the RPC being sent by non-owners who receive it, the send is
+// owner-gated.
 void NpcHumanBase::Stun()
 {
+    if (IsDead()) return;
+
     state = NpcState::Stunned;
     mesh->PlayAnimation("stun");
     mesh->PullRootMotion();
     PlaySoundEffect("event:/NPC/Enemy1/Enemy1Stun");
+
+    // Only the owner broadcasts the Stun RPC.
+    if (isOwned)
+    {
+        NetPacket stunArgs(PacketType::RPC);
+        SendRPC(static_cast<uint8_t>(NpcRPC::Stun), stunArgs, RPCTarget::All);
+    }
 }
 
 void NpcHumanBase::StartStunnedRagdoll()
@@ -485,8 +503,6 @@ void NpcHumanBase::UpdateReturnFromRagdoll()
         {
             returningFromRagdoll = false;
             stunnedRagdoll       = false;
-            // Transition back to Idle; subclass/AI loop will set Chasing as
-            // soon as a target is confirmed.
             if (state == NpcState::Stunned)
                 state = NpcState::Idle;
             mesh->PlayAnimation("run", true, 0.5f);
@@ -553,16 +569,6 @@ void NpcHumanBase::OnPointDamage(float Damage, vec3 Point, vec3 Direction,
 
 void NpcHumanBase::OnDamage(float Damage, Entity* DamageCauser, Entity* Weapon)
 {
-    // ---------------------------------------------------------------------------
-    // Damage flow:
-    //   Player-side  → calls OnPointDamage/OnDamage on its local NPC copy,
-    //                  then sends TakeDamage RPC to the owner.
-    //   Owner        → applies final damage authoritatively; if fatal, broadcasts
-    //                  Death RPC so all peers enter dead state reliably even when
-    //                  a snapshot is lost.
-    //   Non-owner    → no-op; health arrives via snapshot (Health field in
-    //                  NetSerialize).  Death is also covered by the Death RPC.
-    // ---------------------------------------------------------------------------
     if (!isOwned) return;
 
     Damage = ModifyIncomingDamage(Damage);
@@ -594,8 +600,6 @@ void NpcHumanBase::UpdateFleeTarget()
 {
     if (resolvedTarget == nullptr) return;
 
-    return;
-    /*
     if (!fleeSearchDelay.Wait())
     {
         auto path = NavigationSystem::FindFleePath(Position, resolvedTarget->Position);
@@ -607,7 +611,50 @@ void NpcHumanBase::UpdateFleeTarget()
         }
 
         fleeSearchDelay.AddDelay(0.2f);
-    }*/
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Non-owner animation mirror
+//
+// Non-owning peers receive state and speed via the snapshot but never run the
+// owner AI branches that call PlayAnimation.  This function keeps the
+// animation in sync with the replicated state so non-owners don't run in
+// place or play the wrong clip.
+// ---------------------------------------------------------------------------
+void NpcHumanBase::UpdateNonOwnerAnimation()
+{
+    // Stunned / ragdoll / death are driven by their own code paths; skip here.
+    if (IsStunned() || stunnedRagdoll || returningFromRagdoll || IsDead()) return;
+
+    auto animName = mesh->GetAnimationName();
+
+    if (IsAttacking())
+    {
+        // Attack animation is triggered by the Attack RPC; just leave it running.
+        return;
+    }
+
+    if (resolvedTarget == nullptr || IsIdle())
+    {
+        if (animName != "idle")
+            mesh->PlayAnimation("idle", true, 0.5f);
+    }
+    else
+    {
+        // Chasing, Fleeing, or any other active state – run animation.
+        // Use speed threshold so a nearly-stopped NPC doesn't run in place.
+        if (speed > 0.1f)
+        {
+            if (animName != "run")
+                mesh->PlayAnimation("run", true, 0.5f);
+        }
+        else
+        {
+            if (animName != "idle")
+                mesh->PlayAnimation("idle", true, 0.5f);
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -616,59 +663,47 @@ void NpcHumanBase::UpdateFleeTarget()
 
 void NpcHumanBase::NetSerialize(NetPacket& packet)
 {
-    // ── Transform & movement ─────────────────────────────────────────────
     packet.WriteVector3(Position);
     packet.WriteVector3(mesh->Rotation);
     packet.WriteVector3(movingDirection);
     packet.WriteFloat(speed);
 
-    // ── Vital stats ───────────────────────────────────────────────────────
     packet.WriteFloat(Health);
 
-    // ── State ─────────────────────────────────────────────────────────────
     packet.WriteUInt8(static_cast<uint8_t>(state));
     packet.WriteBool(stunnedRagdoll);
     packet.WriteBool(returningFromRagdoll);
 
-    // ── Targeting ─────────────────────────────────────────────────────────
     currentTarget.Write(packet);
     packet.WriteFloat(targetSwitchTimer);
 }
 
 void NpcHumanBase::NetDeserialize(NetPacket& packet)
 {
-    // ── Transform & movement ─────────────────────────────────────────────
     vec3  remotePos     = packet.ReadVector3();
     vec3  remoteRot     = packet.ReadVector3();
     vec3  remoteMoveDir = packet.ReadVector3();
     float remoteSpeed   = packet.ReadFloat();
 
-    // ── Vital stats ───────────────────────────────────────────────────────
-    float remoteHealth = packet.ReadFloat();
+    float remoteHealth  = packet.ReadFloat();
 
-    // ── State ─────────────────────────────────────────────────────────────
-    NpcState remoteState    = static_cast<NpcState>(packet.ReadUInt8());
-    bool     remoteStunRag  = packet.ReadBool();
-    bool     remoteReturn   = packet.ReadBool();
+    NpcState remoteState   = static_cast<NpcState>(packet.ReadUInt8());
+    bool     remoteStunRag = packet.ReadBool();
+    bool     remoteReturn  = packet.ReadBool();
 
-    // ── Targeting ─────────────────────────────────────────────────────────
-    NpcTarget remoteTarget = NpcTarget::Read(packet);
+    NpcTarget remoteTarget      = NpcTarget::Read(packet);
     float     remoteSwitchTimer = packet.ReadFloat();
 
-    // ── Apply transform ───────────────────────────────────────────────────
+    // Apply transform
     Position = mix(Position, remotePos, 0.3f);
     controller.SetPosition(Position);
-
     mesh->Rotation  = remoteRot;
     movingDirection = remoteMoveDir;
     speed           = remoteSpeed;
 
-    // ── Apply health ──────────────────────────────────────────────────────
     Health = remoteHealth;
 
-    // ── Apply targeting ───────────────────────────────────────────────────
-    // Only update the descriptor; the RPC already handled the instant
-    // notification.  The snapshot is the authoritative fallback.
+    // Apply targeting (snapshot is the fallback; RPC handles instant notification)
     if (remoteTarget != currentTarget)
     {
         currentTarget     = remoteTarget;
@@ -679,24 +714,25 @@ void NpcHumanBase::NetDeserialize(NetPacket& packet)
         targetSwitchTimer = remoteSwitchTimer;
     }
 
-    // ── Apply state transitions ───────────────────────────────────────────
-    // State transitions are one-way driven by the RPC; here we only handle
-    // cases where the snapshot arrives but the RPC was lost (failsafe).
+    // Apply state – RPCs are the primary path; snapshot is the failsafe.
     if (remoteState == NpcState::Dead && !IsDead())
-    {
         Death();
-    }
+
     if (remoteState == NpcState::Stunned && !IsStunned())
-    {
         Stun();
-    }
+
     if (remoteStunRag && !stunnedRagdoll)
-    {
         StartStunnedRagdoll();
-    }
+
     if (remoteReturn && !returningFromRagdoll)
-    {
         StartReturnFromRagdoll();
+
+    // Mirror stable states that have no dedicated RPC.
+    // Only overwrite if we're not in a more authoritative transient state.
+    if (!IsDead() && !IsStunned() && !stunnedRagdoll && !returningFromRagdoll)
+    {
+        if (state != remoteState)
+            state = remoteState;
     }
 }
 
@@ -733,8 +769,6 @@ void NpcHumanBase::OnRPC(uint8_t rpcId, NetPacket& args)
     }
 }
 
-// TakeDamage RPC – owner applies damage authoritatively.
-// Non-owners do nothing; health arrives via the snapshot.
 void NpcHumanBase::Net_ApplyDamage(float damage)
 {
     if (!isOwned) return;
@@ -749,29 +783,36 @@ void NpcHumanBase::Net_ApplyDamage(float damage)
     }
 }
 
-// Death RPC – reliable safety net so clients always enter dead state even if
-// a snapshot carrying state==Dead is dropped.
 void NpcHumanBase::Net_ApplyDeath()
 {
-    Death();   // Death() is idempotent (guarded by IsDead()).
+    Death();  // Idempotent – guarded by IsDead().
 }
 
-// Attack RPC – broadcast so every non-owning peer plays the animation in sync.
+// Attack RPC received on non-owning peers: play animation in sync.
 void NpcHumanBase::Net_ApplyAttack()
 {
     if (!isOwned)
         Attack();
 }
 
-// Stun RPC
+// Stun RPC received on non-owning peers.
+// Stun() now sends the RPC itself when called on the owner, so here we call
+// it directly on non-owners without re-broadcasting.
 void NpcHumanBase::Net_ApplyStun()
 {
-    if (!isOwned)
-        Stun();
+    if (isOwned) return;  // Owner already called Stun() and sent this RPC.
+
+    if (IsDead()) return;
+
+    state = NpcState::Stunned;
+    mesh->PlayAnimation("stun");
+    mesh->PullRootMotion();
+    PlaySoundEffect("event:/NPC/Enemy1/Enemy1Stun");
+    // Do NOT call Stun() here – that would send another RPC creating a loop.
 }
 
 // ---------------------------------------------------------------------------
-// Save-game serialization (unchanged behaviour, updated field names)
+// Save-game serialization
 // ---------------------------------------------------------------------------
 
 void NpcHumanBase::Serialize(json& target)
@@ -803,7 +844,6 @@ void NpcHumanBase::Serialize(json& target)
     SERIALIZE_FIELD(target, ragdollPelvisWorldPos);
     SERIALIZE_FIELD(target, pelvisBlendTimer);
 
-    // Serialize the target descriptor (type + id fields).
     uint8_t targetType = static_cast<uint8_t>(currentTarget.type);
     SERIALIZE_FIELD(target, targetType);
     SERIALIZE_FIELD(target, currentTarget.clientId);
@@ -861,15 +901,12 @@ void NpcHumanBase::Deserialize(json& source)
     DESERIALIZE_FIELD(source, ragdollPelvisWorldPos);
     DESERIALIZE_FIELD(source, pelvisBlendTimer);
 
-    // Restore target descriptor.
     uint8_t targetType = 0;
     DESERIALIZE_FIELD(source, targetType);
     currentTarget.type = static_cast<TargetType>(targetType);
     DESERIALIZE_FIELD(source, currentTarget.clientId);
     DESERIALIZE_FIELD(source, currentTarget.networkId);
     DESERIALIZE_FIELD(source, currentTarget.entityId);
-
-    // resolvedTarget will be rebuilt next frame in AsyncUpdate → ResolveTarget().
 }
 
 // ---------------------------------------------------------------------------
@@ -913,13 +950,11 @@ void NpcHumanBase::OnAction(std::string action)
 {
     if (action == "triggerOnPlayer")
     {
-        // Trigger volumes fire on the server/owner, where Player::Instance is
-        // the authoritative local player.  Encode as a Player target using the
-        // local peer's network owner id.
         if (Player::Instance != nullptr)
         {
             auto* ne = dynamic_cast<NetworkedEntity*>(Player::Instance);
-            uint8_t cid = ne ? NetworkIdGetClientId(ne->networkId) : networkOwner;
+            uint8_t cid = ne ? NetworkIdGetClientId(ne->networkId)
+                             : NetworkManager::GetLocalPeerId();
             ApplyTarget(NpcTarget::FromPlayer(cid));
         }
     }

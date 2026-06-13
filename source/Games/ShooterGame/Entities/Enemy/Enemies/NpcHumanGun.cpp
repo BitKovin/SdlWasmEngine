@@ -9,11 +9,14 @@ REGISTER_ENTITY(NpcHumanGun, "npc_human_gun")
 NpcHumanGun::NpcHumanGun()
 {
     ClassName = "npc_human_gun";
-    maxSpeed = 4.2f;
+    maxSpeed  = 4.2f;
     mesh->Scale = vec3(1.15f);
-    Health = 80;
+    Health    = 80;
     MaxHealth = 80;
     pathFollow.allowPartialPath = true;
+
+    // Prevent firing the instant the NPC spawns / gets ownership.
+    cantAttackDelay.AddDelay(0.5f);
 }
 
 // ---------------------------------------------------------------------------
@@ -82,10 +85,10 @@ void NpcHumanGun::Attack()
     bullet->LoadAssets();
     bullet->Position = bonePos;
     bullet->Rotation = bulletRotation;
-    bullet->Speed = bulletSpeed;
+    bullet->Speed    = bulletSpeed;
     bullet->OwnerTag = "enemy";
-    bullet->Damage = 5;
-    bullet->owner = this;
+    bullet->Damage   = 5;
+    bullet->owner    = this;
     bullet->Start();
 
     PlaySoundEffect("event:/NPC/Enemy1/Enemy1AttackStart");
@@ -103,13 +106,15 @@ void NpcHumanGun::Attack()
     shotsFired++;
     if (shotsFired >= shotsPerBurst)
     {
-        shotsFired = 0;
+        shotsFired    = 0;
         shotsPerBurst = 0;
+        // Enforce a pause before the next burst whether we reposition or not.
+        afterAttackDelay.AddDelay(1.5f);
+        cantAttackDelay.AddDelay(0.5f);
         if (!pathFollow.reachedTarget)
         {
-            repositioning = true;
+            repositioning    = true;
             repositionTarget = FindAttackLocation();
-            cantAttackDelay.AddDelay(0.5f);
         }
     }
 }
@@ -189,7 +194,7 @@ void NpcHumanGun::AsyncUpdate()
         UpdatePerception();
 
     accuracyModifier -= Time::DeltaTimeF / 3.0f;
-    accuracyModifier = glm::clamp(accuracyModifier, 0.0f, 5.0f);
+    accuracyModifier  = glm::clamp(accuracyModifier, 0.0f, 5.0f);
 
     UpdateStatusWidgets();
     UpdateDebuffs(Time::DeltaTimeF);
@@ -216,8 +221,8 @@ void NpcHumanGun::AsyncUpdate()
 
         if (rootMotion.Rotation != vec3())
         {
-            mesh->Rotation += rootMotion.Rotation;
-            movingDirection = MathHelper::GetForwardVector(mesh->Rotation);
+            mesh->Rotation  += rootMotion.Rotation;
+            movingDirection  = MathHelper::GetForwardVector(mesh->Rotation);
         }
     }
 
@@ -287,9 +292,9 @@ void NpcHumanGun::AsyncUpdate()
             if (pathFollow.reachedTarget)
             {
                 // Arrived – switch to shooting phase.
-                repositioning = false;
-                shotsPerBurst = 3 + (RandomHelper::RandomInt() % 2);
-                shotsFired = 0;
+                repositioning  = false;
+                shotsPerBurst  = 3 + (RandomHelper::RandomInt() % 2);
+                shotsFired     = 0;
 
                 if (animName == "run")
                     mesh->PlayAnimation("aim", true, 0.3f);
@@ -303,11 +308,13 @@ void NpcHumanGun::AsyncUpdate()
         {
             // SHOOTING phase: stand still and fire the burst.
 
-            // Roll burst size on first entry.
-            if (shotsPerBurst == 0)
+            // Roll burst size on first entry, but only after the inter-burst
+            // pause (afterAttackDelay) has elapsed so the NPC doesn't fire again
+            // immediately after exhausting a burst at its current position.
+            if (shotsPerBurst == 0 && !afterAttackDelay.Wait())
             {
                 shotsPerBurst = 2 + (RandomHelper::RandomInt() % 3);
-                shotsFired = 0;
+                shotsFired    = 0;
             }
 
             if (hasLineOfSight)
@@ -334,10 +341,10 @@ void NpcHumanGun::AsyncUpdate()
                         mesh->PlayAnimation("run", true, 0.6f);
 
                     cantAttackDelay.AddDelay(0.5f);
-                    repositioning = true;
+                    repositioning    = true;
                     repositionTarget = FindAttackLocation();
-                    shotsFired = 0;
-                    shotsPerBurst = 0;
+                    shotsFired       = 0;
+                    shotsPerBurst    = 0;
                 }
                 else
                 {
@@ -368,28 +375,30 @@ void NpcHumanGun::AsyncUpdate()
         }
 
         speed += Time::DeltaTimeF * 6.5f;
-        speed = glm::clamp(speed, 0.0f, ModifyMovementSpeed(maxSpeed));
+        speed  = glm::clamp(speed, 0.0f, ModifyMovementSpeed(maxSpeed));
 
         if ((hasLineOfSight || afterAttackDelay.Wait()) && !repositioning)
             speed = 0.0f;
 
         movingDirection = glm::mix(movingDirection, desiredDirection,
-            (double)Time::DeltaTime * 10.0);
+                                   (double)Time::DeltaTime * 10.0);
         movingDirection = MathHelper::FastNormalize(movingDirection);
 
         vec3 vel = controller.GetVelocity();
         controller.SetVelocity(vec3(movingDirection.x * speed, vel.y,
-            movingDirection.z * speed));
+                                    movingDirection.z * speed));
 
         mesh->Rotation = vec3(0,
             MathHelper::FindLookAtRotation(vec3(), movingDirection).y, 0);
     }
     else
     {
-        // Non-owner: follow replicated velocity from snapshot.
+        // Non-owner: mirror animation from replicated state and drive capsule.
+        UpdateNonOwnerAnimation();
+
         vec3 vel = controller.GetVelocity();
         controller.SetVelocity(vec3(movingDirection.x * speed, vel.y,
-            movingDirection.z * speed));
+                                    movingDirection.z * speed));
         mesh->Rotation = vec3(0,
             MathHelper::FindLookAtRotation(vec3(), movingDirection).y, 0);
     }
@@ -411,7 +420,7 @@ void NpcHumanGun::NetSerialize(NetPacket& packet)
 void NpcHumanGun::NetDeserialize(NetPacket& packet)
 {
     NpcHumanBase::NetDeserialize(packet);
-    repositioning = packet.ReadBool();
+    repositioning    = packet.ReadBool();
     accuracyModifier = packet.ReadFloat();
 }
 
@@ -474,11 +483,11 @@ vec3 NpcHumanGun::FindAttackLocation()
     const float tooCloseThreshold = 2.0f;
 
     // Candidate generation parameters
-    const int   maxIterations = 100;
-    const int   normalTargetCandidates = 20;
+    const int   maxIterations           = 100;
+    const int   normalTargetCandidates  = 20;
     const int   tooCloseTargetCandidates = 30;
-    const float preferredMaxMove = 5.0f;
-    const float absoluteMaxMove = 8.0f;
+    const float preferredMaxMove        = 5.0f;
+    const float absoluteMaxMove         = 8.0f;
 
     // Ring multipliers
     struct Ring { float minMult; float maxMult; };
@@ -489,64 +498,64 @@ vec3 NpcHumanGun::FindAttackLocation()
     };
 
     // Normal mode angle biases (cumulative probabilities)
-    const float normalLeftFlankProb = 0.35f;
-    const float normalRightFlankProb = 0.35f;
-    const float normalBackProb = 0.20f;
-    const float normalLeftFlankAngleBase = -90.0f;
-    const float normalLeftFlankAngleVar = 80.0f;
-    const float normalRightFlankAngleBase = 90.0f;
-    const float normalRightFlankAngleVar = 80.0f;
-    const float normalBackAngleBase = 180.0f;
-    const float normalBackAngleVar = 120.0f;
-    const float normalFrontAngleBase = 0.0f;
-    const float normalFrontAngleVar = 40.0f;
+    const float normalLeftFlankProb       = 0.35f;
+    const float normalRightFlankProb      = 0.35f;
+    const float normalBackProb            = 0.20f;
+    const float normalLeftFlankAngleBase  = -90.0f;
+    const float normalLeftFlankAngleVar   =  80.0f;
+    const float normalRightFlankAngleBase =  90.0f;
+    const float normalRightFlankAngleVar  =  80.0f;
+    const float normalBackAngleBase       = 180.0f;
+    const float normalBackAngleVar        = 120.0f;
+    const float normalFrontAngleBase      =   0.0f;
+    const float normalFrontAngleVar       =  40.0f;
 
     // Too-close mode angle biases
-    const float tooCloseDirectAwayProb = 0.60f;
-    const float tooCloseLeftFlankProb = 0.20f;
-    const float tooCloseDirectAwayAngleBase = 0.0f;
-    const float tooCloseDirectAwayAngleVar = 20.0f;
-    const float tooCloseLeftFlankAngleBase = 60.0f;
-    const float tooCloseLeftFlankAngleVar = 60.0f;
-    const float tooCloseRightFlankAngleBase = -60.0f;
-    const float tooCloseRightFlankAngleVar = 60.0f;
+    const float tooCloseDirectAwayProb       = 0.60f;
+    const float tooCloseLeftFlankProb        = 0.20f;
+    const float tooCloseDirectAwayAngleBase  =   0.0f;
+    const float tooCloseDirectAwayAngleVar   =  20.0f;
+    const float tooCloseLeftFlankAngleBase   =  60.0f;
+    const float tooCloseLeftFlankAngleVar    =  60.0f;
+    const float tooCloseRightFlankAngleBase  = -60.0f;
+    const float tooCloseRightFlankAngleVar   =  60.0f;
 
     // Path checking parameters
     const float segmentDivisor = 2.5f;
-    const int   maxSegments = 10;
+    const int   maxSegments    = 10;
 
     // Fallback parameters
-    const float fallbackDist = 4.0f;
+    const float fallbackDist     = 4.0f;
     const float fallbackDistMult = 0.8f;
 
     // Scoring parameters - common
-    const float distSigma = 0.15f;
-    const float randomScoreMult = 0.25f;
-    const float moveScoreWeight = 1.8f;
+    const float distSigma         = 0.15f;
+    const float randomScoreMult   = 0.25f;
+    const float moveScoreWeight   = 1.8f;
     const float circleScoreWeight = 1.1f;
 
     // Scoring parameters - normal
-    const float normalMovePeak = 0.3f;
-    const float normalMoveSigma = 0.25f;
+    const float normalMovePeak    = 0.3f;
+    const float normalMoveSigma   = 0.25f;
     const float normalFlankWeight = 3.2f;
-    const float normalDistWeight = 2.1f;
+    const float normalDistWeight  = 2.1f;
 
     // Scoring parameters - too close
-    const float tooCloseMovePeak = 0.7f;
-    const float tooCloseMoveSigma = 0.35f;
+    const float tooCloseMovePeak    = 0.7f;
+    const float tooCloseMoveSigma   = 0.35f;
     const float tooCloseFlankWeight = 1.8f;
-    const float tooCloseDistWeight = 3.2f;
+    const float tooCloseDistWeight  = 3.2f;
 
     // Clustering penalty
-    const float clusterSigma = 2.0f;
+    const float clusterSigma  = 2.0f;
     const float clusterWeight = 2.5f;
 
     // Scatter to break perfect circle
     const float scatterRadiusMult = 0.15f;
 
-    const vec3& currentPos = Position;
-    const vec3& targetPos = resolvedTarget->Position;
-    const vec3& targetRot = resolvedTarget->Rotation;
+    const vec3& currentPos  = Position;
+    const vec3& targetPos   = resolvedTarget->Position;
+    const vec3& targetRot   = resolvedTarget->Rotation;
     vec3 targetForward = MathHelper::GetForwardVector(targetRot);
     targetForward.y = 0.0f;
     targetForward = MathHelper::Normalized(targetForward);
@@ -554,16 +563,16 @@ vec3 NpcHumanGun::FindAttackLocation()
         glm::cross(targetForward, vec3(0.0f, 1.0f, 0.0f)));
 
     float currentDistXZ = glm::length(MathHelper::XZ(currentPos - targetPos));
-    bool  isTooClose = currentDistXZ < tooCloseThreshold;
+    bool  isTooClose    = currentDistXZ < tooCloseThreshold;
 
     vec3 referenceForward = targetForward;
-    vec3 referenceRight = targetRight;
+    vec3 referenceRight   = targetRight;
 
     int targetCandidatesLocal = normalTargetCandidates;
     if (isTooClose)
     {
-        referenceForward = MathHelper::Normalized(MathHelper::XZ(currentPos - targetPos));
-        referenceRight = MathHelper::Normalized(
+        referenceForward      = MathHelper::Normalized(MathHelper::XZ(currentPos - targetPos));
+        referenceRight        = MathHelper::Normalized(
             glm::cross(referenceForward, vec3(0.0f, 1.0f, 0.0f)));
         targetCandidatesLocal = tooCloseTargetCandidates;
     }
@@ -571,14 +580,14 @@ vec3 NpcHumanGun::FindAttackLocation()
     std::vector<vec3> otherNpcPositions;
     std::vector<vec3> candidates;
 
-    int   iter = 0;
-    const float desired = attackDesiredRange;
+    int   iter                  = 0;
+    const float desired         = attackDesiredRange;
     bool  relaxedMoveConstraint = false;
 
     for (const auto& ring : rings)
     {
         while (candidates.size() < static_cast<size_t>(targetCandidatesLocal)
-            && iter < maxIterations)
+               && iter < maxIterations)
         {
             ++iter;
 
@@ -589,28 +598,28 @@ vec3 NpcHumanGun::FindAttackLocation()
             {
                 if (r < tooCloseDirectAwayProb)
                     relAngleDeg = tooCloseDirectAwayAngleBase
-                    + (RandomHelper::RandomFloat() - 0.5f) * tooCloseDirectAwayAngleVar;
+                                  + (RandomHelper::RandomFloat() - 0.5f) * tooCloseDirectAwayAngleVar;
                 else if (r < tooCloseDirectAwayProb + tooCloseLeftFlankProb)
                     relAngleDeg = tooCloseLeftFlankAngleBase
-                    + (RandomHelper::RandomFloat() - 0.5f) * tooCloseLeftFlankAngleVar;
+                                  + (RandomHelper::RandomFloat() - 0.5f) * tooCloseLeftFlankAngleVar;
                 else
                     relAngleDeg = tooCloseRightFlankAngleBase
-                    + (RandomHelper::RandomFloat() - 0.5f) * tooCloseRightFlankAngleVar;
+                                  + (RandomHelper::RandomFloat() - 0.5f) * tooCloseRightFlankAngleVar;
             }
             else
             {
                 if (r < normalLeftFlankProb)
                     relAngleDeg = normalLeftFlankAngleBase
-                    + (RandomHelper::RandomFloat() - 0.5f) * normalLeftFlankAngleVar;
+                                  + (RandomHelper::RandomFloat() - 0.5f) * normalLeftFlankAngleVar;
                 else if (r < normalLeftFlankProb + normalRightFlankProb)
                     relAngleDeg = normalRightFlankAngleBase
-                    + (RandomHelper::RandomFloat() - 0.5f) * normalRightFlankAngleVar;
+                                  + (RandomHelper::RandomFloat() - 0.5f) * normalRightFlankAngleVar;
                 else if (r < normalLeftFlankProb + normalRightFlankProb + normalBackProb)
                     relAngleDeg = normalBackAngleBase
-                    + (RandomHelper::RandomFloat() - 0.5f) * normalBackAngleVar;
+                                  + (RandomHelper::RandomFloat() - 0.5f) * normalBackAngleVar;
                 else
                     relAngleDeg = normalFrontAngleBase
-                    + (RandomHelper::RandomFloat() - 0.5f) * normalFrontAngleVar;
+                                  + (RandomHelper::RandomFloat() - 0.5f) * normalFrontAngleVar;
             }
 
             float relAngleRad = MathHelper::ToRadians(relAngleDeg);
@@ -619,7 +628,7 @@ vec3 NpcHumanGun::FindAttackLocation()
                 std::sin(relAngleRad) * referenceRight);
 
             float distMult = ring.minMult
-                + RandomHelper::RandomFloat() * (ring.maxMult - ring.minMult);
+                             + RandomHelper::RandomFloat() * (ring.maxMult - ring.minMult);
             float dist = std::min(desired * distMult, desired);
             vec3 newPos = targetPos + dirToPos * dist;
 
@@ -631,7 +640,7 @@ vec3 NpcHumanGun::FindAttackLocation()
             if (glm::length(MathHelper::XZ(newPos - targetPos)) > desired) continue;
 
             float moveDist = glm::distance(newPos, currentPos);
-            float maxMove = relaxedMoveConstraint ? absoluteMaxMove : preferredMaxMove;
+            float maxMove  = relaxedMoveConstraint ? absoluteMaxMove : preferredMaxMove;
             if (moveDist > maxMove) continue;
 
             auto pathHit = Physics::CylinderTrace(
@@ -640,13 +649,13 @@ vec3 NpcHumanGun::FindAttackLocation()
             if (pathHit.hasHit) continue;
 
             bool pathLOSClear = true;
-            vec3 diff = newPos - currentPos;
+            vec3 diff    = newPos - currentPos;
             float pathLen = glm::length(diff);
-            int segments = std::min(maxSegments,
-                1 + static_cast<int>(pathLen / segmentDivisor));
+            int segments  = std::min(maxSegments,
+                                     1 + static_cast<int>(pathLen / segmentDivisor));
             for (int s = 1; s < segments; ++s)
             {
-                float t = static_cast<float>(s) / static_cast<float>(segments);
+                float t      = static_cast<float>(s) / static_cast<float>(segments);
                 vec3  midPos = currentPos + diff * t;
                 if (!CheckAttackLocation(midPos, targetPos))
                 {
@@ -681,7 +690,7 @@ vec3 NpcHumanGun::FindAttackLocation()
             {
                 vec3 fallbackPos = currentPos + fallbackDirs[i] * fallbackDistLocal;
                 auto h = Physics::CylinderTrace(currentPos, fallbackPos, 0.5f, 0.8f,
-                    BodyType::World | BodyType::MainBody);
+                                                BodyType::World | BodyType::MainBody);
                 if (!h.hasHit && CheckAttackLocation(fallbackPos, targetPos))
                     return fallbackPos;
             }
@@ -694,36 +703,36 @@ vec3 NpcHumanGun::FindAttackLocation()
     }
 
     // Advanced scoring
-    vec3  bestPos = candidates[0];
+    vec3  bestPos   = candidates[0];
     float bestScore = -std::numeric_limits<float>::max();
 
     vec3 currRelDir = MathHelper::Normalized(MathHelper::XZ(currentPos - targetPos));
 
-    float movePeak = isTooClose ? tooCloseMovePeak : normalMovePeak;
-    float moveSigma = isTooClose ? tooCloseMoveSigma : normalMoveSigma;
+    float movePeak   = isTooClose ? tooCloseMovePeak   : normalMovePeak;
+    float moveSigma  = isTooClose ? tooCloseMoveSigma  : normalMoveSigma;
     float flankWeight = isTooClose ? tooCloseFlankWeight : normalFlankWeight;
-    float distWeight = isTooClose ? tooCloseDistWeight : normalDistWeight;
+    float distWeight  = isTooClose ? tooCloseDistWeight  : normalDistWeight;
 
     for (const vec3& cand : candidates)
     {
-        vec3  toTarget = MathHelper::XZ(cand - targetPos);
-        float cDist = glm::length(toTarget);
+        vec3  toTarget  = MathHelper::XZ(cand - targetPos);
+        float cDist     = glm::length(toTarget);
         vec3  attackDir = (cDist > 0.001f) ? toTarget / cDist : vec3(0.0f, 0.0f, 1.0f);
 
         float tacticalScore = -glm::dot(attackDir, referenceForward);
 
-        float distDiff = (cDist - desired) / desired;
+        float distDiff  = (cDist - desired) / desired;
         float distScore = std::exp(-distDiff * distDiff / (2.0f * distSigma * distSigma));
 
         float moveDistScore = glm::distance(cand, currentPos);
-        float moveNorm = moveDistScore / desired;
-        float moveScore = std::exp(-(moveNorm - movePeak) * (moveNorm - movePeak)
-            / (2.0f * moveSigma * moveSigma));
+        float moveNorm      = moveDistScore / desired;
+        float moveScore     = std::exp(-(moveNorm - movePeak) * (moveNorm - movePeak)
+                                       / (2.0f * moveSigma * moveSigma));
 
-        vec3  moveDir = MathHelper::Normalized(MathHelper::XZ(cand - currentPos));
+        vec3  moveDir    = MathHelper::Normalized(MathHelper::XZ(cand - currentPos));
         float circleScore = 1.0f - std::abs(glm::dot(moveDir, currRelDir));
 
-        float randScore = RandomHelper::RandomFloat() * randomScoreMult;
+        float randScore  = RandomHelper::RandomFloat() * randomScoreMult;
 
         float clusterPenalty = 0.0f;
         for (const vec3& otherPos : otherNpcPositions)
@@ -733,17 +742,17 @@ vec3 NpcHumanGun::FindAttackLocation()
             clusterPenalty += std::exp(-(d * d) / (2.0f * clusterSigma * clusterSigma));
         }
 
-        float score = tacticalScore * flankWeight
-            + distScore * distWeight
-            + moveScore * moveScoreWeight
-            + circleScore * circleScoreWeight
-            + randScore
-            - clusterPenalty * clusterWeight;
+        float score = tacticalScore  * flankWeight
+                    + distScore      * distWeight
+                    + moveScore      * moveScoreWeight
+                    + circleScore    * circleScoreWeight
+                    + randScore
+                    - clusterPenalty * clusterWeight;
 
         if (score > bestScore)
         {
             bestScore = score;
-            bestPos = cand;
+            bestPos   = cand;
         }
     }
 
