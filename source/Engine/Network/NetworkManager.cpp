@@ -545,12 +545,18 @@ void NetworkManager::SendRPC(uint64_t networkId, uint8_t rpcId,
     auto bytes = FinalizeOutbound(pkt);
 
     if (s_isServer) {
-        // Apply locally first, then relay
-        NetworkedEntity* entity = Find(networkId);
-        if (entity) {
-            NetPacket argsCopy = args.RewindedCopy();
-            entity->OnRPC(rpcId, argsCopy);
+
+
+        if (target != RPCTarget::Others)
+        {
+            // Apply locally first, then relay
+            NetworkedEntity* entity = Find(networkId);
+            if (entity) {
+                NetPacket argsCopy = args.RewindedCopy();
+                entity->OnRPC(rpcId, argsCopy);
+            }
         }
+
         switch (target) {
         case RPCTarget::All:
             RelayReliableAll(bytes);

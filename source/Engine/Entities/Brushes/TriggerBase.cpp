@@ -38,6 +38,8 @@ void TriggerBase::DoExitAction()
 void TriggerBase::OnRPC(uint8_t rpcId, NetPacket& args)
 {
 
+	if (Destroyed) return;
+
 	RPCIndex i = (RPCIndex)rpcId;
 
 	switch (i)
@@ -65,7 +67,7 @@ void TriggerBase::OnBodyEntered(Body* body, Entity* entity)
 
 		NetPacket args;
 
-		SendRPC((uint8_t)RPCIndex::Enter, args);
+		SendRPC((uint8_t)RPCIndex::Enter, args, RPCTarget::Server);
 	}
 
 }
@@ -76,7 +78,7 @@ void TriggerBase::OnBodyExited(Body* body, Entity* entity)
 	if (entity->HasTag("player"))
 	{
 		NetPacket args;
-		SendRPC((uint8_t)RPCIndex::Exit, args);
+		SendRPC((uint8_t)RPCIndex::Exit, args, RPCTarget::Server);
 	}
 
 }

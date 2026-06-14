@@ -252,6 +252,15 @@ void NpcHumanAxe::AsyncUpdate()
             desiredDirection = glm::normalize(
                 MathHelper::XZ(pathFollow.CalculatedTargetLocation - Position));
         }
+        else
+        {
+            // Path not ready or target unreachable – walk directly toward target
+            // so the NPC never falls back to a stale or zero desiredDirection.
+            vec3 direct = MathHelper::XZ(resolvedTarget->Position - Position);
+            float len = glm::length(direct);
+            if (len > 0.001f)
+                desiredDirection = direct / len;
+        }
 
         speed += Time::DeltaTimeF * 6.5f;
         speed  = glm::clamp(speed, 0.0f, ModifyMovementSpeed(maxSpeed));
@@ -277,6 +286,40 @@ void NpcHumanAxe::AsyncUpdate()
         mesh->Rotation = vec3(0,
             MathHelper::FindLookAtRotation(vec3(), movingDirection).y, 0);
     }
+
+    if (mesh->IsAnimationPlaying() == false)
+    {
+        switch (state)
+        {
+        case NpcState::Idle:
+            mesh->PlayAnimation("idle");
+            break;
+        case NpcState::Chasing:
+            mesh->PlayAnimation("run");
+            break;
+        case NpcState::Attacking:
+            mesh->PlayAnimation("run");
+            break;
+        case NpcState::Stunned:
+            mesh->PlayAnimation("run");
+            break;
+        case NpcState::Fleeing:
+            mesh->PlayAnimation("run");
+            break;
+        case NpcState::Dead:
+            mesh->PlayAnimation("idle");
+            break;
+        default:
+            break;
+        }
+    }
+
+    if (state == NpcState::Idle && mesh->GetAnimationName() == "run")
+        mesh->PlayAnimation("idle");
+
+    if (state == NpcState::Chasing && mesh->GetAnimationName() == "idle")
+        mesh->PlayAnimation("run");
+
 }
 
 // ---------------------------------------------------------------------------
@@ -292,10 +335,10 @@ void NpcHumanAxe::NetSerialize(NetPacket& packet)
 void NpcHumanAxe::NetDeserialize(NetPacket& packet)
 {
     NpcHumanBase::NetDeserialize(packet);
+    // Always read to keep the cursor aligned; only apply on non-owner.
+    bool remoteAttackingDamage = packet.ReadBool();
     if (!isOwned)
-        attackingDamage = packet.ReadBool();
-    else
-        packet.ReadBool(); // consume
+        attackingDamage = remoteAttackingDamage;
 }
 
 // ---------------------------------------------------------------------------

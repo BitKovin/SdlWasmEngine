@@ -58,6 +58,8 @@ public:
 
 	vector<string> Tags;
 
+	uint64_t networkProxyId = 0; //if this entity is represented by another entity in networking (like remote player that follows local one) store network id here. For entity handle.
+
 	Delay destroyDelay = Delay(1000000000);
 
 	BodyType DefaultBrushGroup = BodyType::WorldOpaque;

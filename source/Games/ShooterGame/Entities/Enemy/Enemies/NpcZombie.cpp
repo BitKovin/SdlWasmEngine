@@ -235,6 +235,13 @@ void NpcZombie::AsyncUpdate()
             desiredDirection = glm::normalize(
                 MathHelper::XZ(pathFollow.CalculatedTargetLocation - Position));
         }
+        else
+        {
+            vec3 direct = MathHelper::XZ(resolvedTarget->Position - Position);
+            float len = glm::length(direct);
+            if (len > 0.001f)
+                desiredDirection = direct / len;
+        }
 
         speed += Time::DeltaTimeF * 6.5f;
         speed  = glm::clamp(speed, 0.0f, ModifyMovementSpeed(maxSpeed));
@@ -269,10 +276,9 @@ void NpcZombie::NetSerialize(NetPacket& packet)
 void NpcZombie::NetDeserialize(NetPacket& packet)
 {
     NpcHumanBase::NetDeserialize(packet);
+    bool remoteAttackDamageDealt = packet.ReadBool();
     if (!isOwned)
-        attackDamageDealt = packet.ReadBool();
-    else
-        packet.ReadBool();
+        attackDamageDealt = remoteAttackDamageDealt;
 }
 
 void NpcZombie::Serialize(json& target)

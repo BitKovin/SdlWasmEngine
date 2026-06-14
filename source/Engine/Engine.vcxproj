@@ -376,6 +376,7 @@
     <ClCompile Include="Entities\Brushes\TriggerBase.cpp" />
     <ClCompile Include="Entities\PointLight.cpp" />
     <ClCompile Include="Entities\transformPoint.cpp" />
+    <ClCompile Include="EntityHandle.cpp" />
     <ClCompile Include="FileSystem\EmscriptenFileSystem.cpp" />
     <ClCompile Include="FileSystem\FileSystem.cpp" />
     <ClCompile Include="FileSystem\GDKFileSystem.cpp" />
@@ -547,6 +548,7 @@
     <ClInclude Include="Entities\StaticMeshEntity.h" />
     <ClInclude Include="Entities\transformPoint.h" />
     <ClInclude Include="Entities\WorldSpawn.h" />
+    <ClInclude Include="EntityHandle.h" />
     <ClInclude Include="FileSystem\EmscriptenFileSystem.h" />
     <ClInclude Include="FileSystem\FileSystem.h" />
     <ClInclude Include="FileSystem\GDKFileSystem.h" />

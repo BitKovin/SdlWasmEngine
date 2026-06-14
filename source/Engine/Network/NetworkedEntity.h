@@ -80,6 +80,8 @@ public:
     uint8_t  networkOwner = 0;
     bool     isOwned      = false;
 
+    Entity* LocalProxy = nullptr; 
+
     // ── Ownership policy ─────────────────────────────────────────────────
     // DestroyOnOwnerDisconnect (default: true)
     //   true  — entity is removed from the level when its owner disconnects.

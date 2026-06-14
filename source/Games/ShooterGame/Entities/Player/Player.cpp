@@ -178,8 +178,11 @@ void Player::PostLoadStart()
 	remotePlayer->Position = Position;
 	remotePlayer->Rotation = Rotation;
 	remotePlayer->referencePlayer = this;
+	remotePlayer->LocalProxy = this;
 
 	Level::Current->AddEntity(remotePlayer, true);
+
+	networkProxyId = remotePlayer->networkId;
 
 }
 

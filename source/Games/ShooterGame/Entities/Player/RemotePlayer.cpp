@@ -24,6 +24,7 @@ RemotePlayer::RemotePlayer()
 
 	DestroyOnOwnerDisconnect = true;
 
+
 }
 
 void RemotePlayer::Update()
@@ -32,6 +33,7 @@ void RemotePlayer::Update()
 
 	if (isOwned)
 	{
+
 		if (referencePlayer)
 		{
 			targetPosition = referencePlayer->Position;

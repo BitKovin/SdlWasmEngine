@@ -40,83 +40,80 @@ void NpcHumanGun::ProcessAnimationEvent(AnimationEvent& event)
 
 void NpcHumanGun::Attack()
 {
-    if (cantAttackDelay.Wait()) return;
-    if (inAttackDelay.Wait())   return;
-
-    // resolvedTarget is owner-only meaningful here; guard just in case.
-    if (resolvedTarget == nullptr) return;
-
-    vec3 bonePos = mesh->GetBoneMatrixWorld("weapon_muzzle")[3];
-
-    vec3 predictedTargetPosition = resolvedTarget->Position;
-
-    if (AttackDirectionCheck(bonePos, predictedTargetPosition, resolvedTarget) == false)
+    if (isOwned)
     {
-        inAttackDelay.AddDelay(0.5f);
-        return;
-    }
+        if (cantAttackDelay.Wait()) return;
+        if (inAttackDelay.Wait())   return;
+        if (resolvedTarget == nullptr) return;
 
-    const float bulletSpeed = 50.0f;
+        vec3 bonePos = mesh->GetBoneMatrixWorld("weapon_muzzle")[3];
+        vec3 predictedTargetPosition = resolvedTarget->Position;
 
-    // Lead the target based on its velocity.
-    Player* playerRef = dynamic_cast<Player*>(resolvedTarget);
-    if (playerRef)
-    {
+        if (!AttackDirectionCheck(bonePos, predictedTargetPosition, resolvedTarget))
+        {
+            inAttackDelay.AddDelay(0.5f);
+            return;
+        }
+
+        const float bulletSpeed = 50.0f;
+
+        Player* playerRef = dynamic_cast<Player*>(resolvedTarget);
+        if (playerRef)
+        {
+            predictedTargetPosition +=
+                playerRef->controller.GetVelocity()
+                * glm::distance(Position, resolvedTarget->Position) / bulletSpeed;
+        }
+        else if (resolvedTarget->LeadBody)
+        {
+            predictedTargetPosition +=
+                FromPhysics(resolvedTarget->LeadBody->GetLinearVelocity())
+                * glm::distance(Position, resolvedTarget->Position) / bulletSpeed;
+        }
+
         predictedTargetPosition +=
-            playerRef->controller.GetVelocity()
-            * glm::distance(Position, resolvedTarget->Position) / bulletSpeed;
+            RandomHelper::RandomPosition(
+                glm::distance(resolvedTarget->Position, Position) / 20.0f)
+            * (accuracyModifier + 1.0f);
+
+        vec3 bulletRotation = MathHelper::FindLookAtRotation(bonePos, predictedTargetPosition);
+
+        Bullet* bullet = (Bullet*)Spawn("bullet");
+        bullet->LoadAssets();
+        bullet->Position = bonePos;
+        bullet->Rotation = bulletRotation;
+        bullet->Speed    = bulletSpeed;
+        bullet->OwnerTag = "enemy";
+        bullet->Damage   = 5;
+        bullet->owner    = this;
+        bullet->Start();
+
+        inAttackDelay.AddDelay(ModifyAnimationSpeed(0.5f));
+        afterAttackDelay.AddDelay(3.0f);
+
+        shotsFired++;
+        if (shotsFired >= shotsPerBurst)
+        {
+            shotsFired    = 0;
+            shotsPerBurst = 0;
+            afterAttackDelay.AddDelay(1.5f);
+            cantAttackDelay.AddDelay(0.5f);
+            if (!pathFollow.reachedTarget)
+            {
+                repositioning    = true;
+                repositionTarget = FindAttackLocation();
+            }
+        }
+
+        // Broadcast animation to others.
+        NetPacket attackArgs(PacketType::RPC);
+        SendRPC(static_cast<uint8_t>(NpcRPC::Attack), attackArgs, RPCTarget::Others);
     }
-    else if (resolvedTarget->LeadBody)
-    {
-        predictedTargetPosition +=
-            FromPhysics(resolvedTarget->LeadBody->GetLinearVelocity())
-            * glm::distance(Position, resolvedTarget->Position) / bulletSpeed;
-    }
 
-    predictedTargetPosition +=
-        RandomHelper::RandomPosition(
-            glm::distance(resolvedTarget->Position, Position) / 20.0f)
-        * (accuracyModifier + 1.0f);
-
-    vec3 bulletRotation = MathHelper::FindLookAtRotation(bonePos, predictedTargetPosition);
-
-    // Spawn bullet on the owning peer only — it is a server-authoritative entity.
-    Bullet* bullet = (Bullet*)Spawn("bullet");
-    bullet->LoadAssets();
-    bullet->Position = bonePos;
-    bullet->Rotation = bulletRotation;
-    bullet->Speed    = bulletSpeed;
-    bullet->OwnerTag = "enemy";
-    bullet->Damage   = 5;
-    bullet->owner    = this;
-    bullet->Start();
-
+    // Animation and sound run on every peer.
     PlaySoundEffect("event:/NPC/Enemy1/Enemy1AttackStart");
-
-    inAttackDelay.AddDelay(ModifyAnimationSpeed(0.5f));
-    afterAttackDelay.AddDelay(3.0f);
     mesh->PlayAnimation("fire");
     mesh->PullRootMotion();
-
-    // Broadcast to other peers so they play the fire animation in sync.
-    NetPacket attackArgs(PacketType::RPC);
-    SendRPC(static_cast<uint8_t>(NpcRPC::Attack), attackArgs, RPCTarget::Others);
-
-    // Shoot-and-scoot: count shots; reposition once the burst is done.
-    shotsFired++;
-    if (shotsFired >= shotsPerBurst)
-    {
-        shotsFired    = 0;
-        shotsPerBurst = 0;
-        // Enforce a pause before the next burst whether we reposition or not.
-        afterAttackDelay.AddDelay(1.5f);
-        cantAttackDelay.AddDelay(0.5f);
-        if (!pathFollow.reachedTarget)
-        {
-            repositioning    = true;
-            repositionTarget = FindAttackLocation();
-        }
-    }
 }
 
 // ---------------------------------------------------------------------------
@@ -389,8 +386,24 @@ void NpcHumanGun::AsyncUpdate()
     }
     else
     {
-        // Non-owner: mirror animation from replicated state and drive capsule.
-        UpdateNonOwnerAnimation();
+        // Non-owner: mirror animation from replicated state.
+        // Gun NPC has an extra "aim" state when standing still with a target.
+        if (!IsDead() && !IsStunned() && !stunnedRagdoll && !returningFromRagdoll && !IsAttacking())
+        {
+            auto animName = mesh->GetAnimationName();
+            if (!resolvedTarget || IsIdle())
+            {
+                if (animName != "aim") mesh->PlayAnimation("aim", true, 0.5f);
+            }
+            else if (speed > 0.1f)
+            {
+                if (animName != "run") mesh->PlayAnimation("run", true, 0.5f);
+            }
+            else
+            {
+                if (animName != "aim") mesh->PlayAnimation("aim", true, 0.3f);
+            }
+        }
 
         vec3 vel = controller.GetVelocity();
         controller.SetVelocity(vec3(movingDirection.x * speed, vel.y,
@@ -399,9 +412,6 @@ void NpcHumanGun::AsyncUpdate()
             MathHelper::FindLookAtRotation(vec3(), movingDirection).y, 0);
     }
 }
-
-// ---------------------------------------------------------------------------
-// Replication
 // ---------------------------------------------------------------------------
 
 void NpcHumanGun::NetSerialize(NetPacket& packet)
