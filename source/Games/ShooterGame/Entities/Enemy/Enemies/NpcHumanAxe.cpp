@@ -7,15 +7,13 @@ NpcHumanAxe::NpcHumanAxe()
 {
     ClassName = "npc_human_axe";
     maxSpeed  = 5.0f;
-
     pathFollow.allowPartialPath = true;
-
     Health    = 80;
     MaxHealth = 80;
 }
 
 // ---------------------------------------------------------------------------
-// Animation events
+// Animation events – run on ALL peers (no isOwned gate).
 // ---------------------------------------------------------------------------
 
 void NpcHumanAxe::ProcessAnimationEvent(AnimationEvent& event)
@@ -40,7 +38,7 @@ void NpcHumanAxe::ProcessAnimationEvent(AnimationEvent& event)
 }
 
 // ---------------------------------------------------------------------------
-// Stun
+// Stun – delegates to base which broadcasts to Others.
 // ---------------------------------------------------------------------------
 
 void NpcHumanAxe::Stun()
@@ -51,28 +49,37 @@ void NpcHumanAxe::Stun()
 
 // ---------------------------------------------------------------------------
 // Attack
+//
+// The owner decides WHEN to attack (cooldown + range check).
+// Once the decision is made, it calls Attack() locally and broadcasts via RPC
+// to RPCTarget::Others so every other peer calls Attack() too.
+// The actual animation, sound and state change run identically everywhere.
+// Hit detection (UpdateAttackDamage) stays owner-only since it is the
+// authoritative collision check – it calls OnPointDamage which broadcasts
+// to Others.
 // ---------------------------------------------------------------------------
 
 void NpcHumanAxe::Attack()
 {
+    // Owner enforces cooldown; non-owners just play the animation when the
+    // RPC arrives (cooldown has already been checked by the owner).
     if (isOwned)
     {
         if (inAttackDelay.Wait()) return;
         inAttackDelay.AddDelay(1.5f);
-
-        state = NpcState::Attacking;
-
-        NetPacket attackArgs(PacketType::RPC);
-        SendRPC(static_cast<uint8_t>(NpcRPC::Attack), attackArgs, RPCTarget::All);
     }
 
+    state = NpcState::Attacking;
     PlaySoundEffect("event:/NPC/Enemy1/Enemy1AttackStart");
-
     mesh->PlayAnimation("attack");
     mesh->PullRootMotion();
 
-    if (!isOwned)
-        state = NpcState::Attacking;
+    // Broadcast to every other peer so they play the same animation.
+    if (isOwned)
+    {
+        NetPacket args(PacketType::RPC);
+        SendRPC(static_cast<uint8_t>(NpcRPC::Attack), args, RPCTarget::Others);
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -85,7 +92,8 @@ void NpcHumanAxe::OnDamage(float Damage, Entity* DamageCauser, Entity* Weapon)
 }
 
 // ---------------------------------------------------------------------------
-// Hit detection (owner only)
+// Hit detection – owner only.
+// Calls OnPointDamage which runs effects locally and broadcasts to Others.
 // ---------------------------------------------------------------------------
 
 void NpcHumanAxe::UpdateAttackDamage()
@@ -141,11 +149,8 @@ void NpcHumanAxe::AsyncUpdate()
     controller.Update(Time::DeltaTimeF);
     Position = controller.GetPosition();
 
-    // Rebuild the resolved entity pointer every frame from the synced descriptor.
     ResolveTarget();
 
-    // Perception runs only on the owner; it may call ApplyTarget which sends
-    // the SetTarget RPC to keep non-owners in sync.
     if (isOwned)
         UpdatePerception();
 
@@ -158,25 +163,26 @@ void NpcHumanAxe::AsyncUpdate()
 
     auto animEvents = mesh->PullAnimationEvents();
     for (auto& ev : animEvents)
-        ProcessAnimationEvent(ev);
+        ProcessAnimationEvent(ev);  // runs on all peers
 
     mesh->Position = Position - vec3(0, 1, 0);
 
+    // Root motion applies on ALL peers.
+    // The owner's position is authoritative; non-owners are corrected each
+    // frame by the snapshot lerp in NetDeserialize, so local root motion
+    // makes movement smooth instead of snappy.
     auto rootMotion = mesh->PullRootMotion();
 
-    if (isOwned)
+    Position += rootMotion.Position;
+    controller.SetPosition(Position);
+
+    if (rootMotion.Position != vec3())
+        controller.SetVelocity(vec3(0, controller.GetVelocity().y, 0));
+
+    if (rootMotion.Rotation != vec3())
     {
-        Position += rootMotion.Position;
-        controller.SetPosition(Position);
-
-        if (rootMotion.Position != vec3())
-            controller.SetVelocity(vec3(0, controller.GetVelocity().y, 0));
-
-        if (rootMotion.Rotation != vec3())
-        {
-            mesh->Rotation  += rootMotion.Rotation;
-            movingDirection  = MathHelper::GetForwardVector(mesh->Rotation);
-        }
+        mesh->Rotation  += rootMotion.Rotation;
+        movingDirection  = MathHelper::GetForwardVector(mesh->Rotation);
     }
 
     UpdateStunnedReturn();
@@ -184,7 +190,6 @@ void NpcHumanAxe::AsyncUpdate()
 
     mesh->UpdateHitboxes();
 
-    // soundPlayer can be nulled mid-frame by Death(), so guard here.
     if (soundPlayer)
     {
         soundPlayer->Position = vec3(mesh->GetBoneMatrixWorld("head")[3]);
@@ -196,32 +201,25 @@ void NpcHumanAxe::AsyncUpdate()
     // ── Owner AI ──────────────────────────────────────────────────────────
     if (isOwned)
     {
+        // Hit detection is authoritative; only the owner runs it.
         UpdateAttackDamage();
         if (IsDead()) return;
 
         if (resolvedTarget == nullptr)
         {
-            // No target – idle in place.
-            // Use the animation name as the gate, exactly as the original did,
-            // to avoid fighting with state set elsewhere (e.g. after a stun).
             if (mesh->GetAnimationName() != "idle")
                 mesh->PlayAnimation("idle", true, 0.5f);
-
             state = NpcState::Idle;
-
             vec3 vel = controller.GetVelocity();
             controller.SetVelocity(vec3(0, vel.y, 0));
             return;
         }
 
-        // We have a target. If the mesh is still on "idle", kick off running.
         if (mesh->GetAnimationName() == "idle")
             mesh->PlayAnimation("run", true, 0.5f);
-
         if (state == NpcState::Idle)
             state = NpcState::Chasing;
 
-        // Don't interrupt an ongoing attack.
         if (IsAttacking())
         {
             speed = 2.0f;
@@ -229,12 +227,9 @@ void NpcHumanAxe::AsyncUpdate()
         }
 
         vec3 calculatedTargetPos = resolvedTarget->Position;
-
         if (resolvedTarget->Position.y < Position.y - 0.1f &&
             resolvedTarget->Position.y > Position.y - 1.5f)
-        {
             calculatedTargetPos.y = Position.y;
-        }
 
         vec3 lookAtDir = MathHelper::FastNormalize(calculatedTargetPos - Position);
 
@@ -245,9 +240,7 @@ void NpcHumanAxe::AsyncUpdate()
         }
 
         if (IsFleeing())
-        {
             UpdateFleeTarget();
-        }
         else
         {
             pathFollow.UpdateStartAndTarget(Position, resolvedTarget->Position);
@@ -268,21 +261,18 @@ void NpcHumanAxe::AsyncUpdate()
         movingDirection = MathHelper::FastNormalize(movingDirection);
 
         vec3 vel = controller.GetVelocity();
-        controller.SetVelocity(vec3(movingDirection.x * speed,
-                                    vel.y,
+        controller.SetVelocity(vec3(movingDirection.x * speed, vel.y,
                                     movingDirection.z * speed));
-
         mesh->Rotation = vec3(0,
             MathHelper::FindLookAtRotation(vec3(), movingDirection).y, 0);
     }
     else
     {
-        // Non-owner: mirror animation from replicated state and drive capsule.
+        // Non-owner: mirror animation from replicated state, drive capsule.
         UpdateNonOwnerAnimation();
 
         vec3 vel = controller.GetVelocity();
-        controller.SetVelocity(vec3(movingDirection.x * speed,
-                                    vel.y,
+        controller.SetVelocity(vec3(movingDirection.x * speed, vel.y,
                                     movingDirection.z * speed));
         mesh->Rotation = vec3(0,
             MathHelper::FindLookAtRotation(vec3(), movingDirection).y, 0);
@@ -290,7 +280,7 @@ void NpcHumanAxe::AsyncUpdate()
 }
 
 // ---------------------------------------------------------------------------
-// Replication – axe-specific fields appended after the base snapshot
+// Replication
 // ---------------------------------------------------------------------------
 
 void NpcHumanAxe::NetSerialize(NetPacket& packet)
@@ -302,7 +292,10 @@ void NpcHumanAxe::NetSerialize(NetPacket& packet)
 void NpcHumanAxe::NetDeserialize(NetPacket& packet)
 {
     NpcHumanBase::NetDeserialize(packet);
-    attackingDamage = packet.ReadBool();
+    if (!isOwned)
+        attackingDamage = packet.ReadBool();
+    else
+        packet.ReadBool(); // consume
 }
 
 // ---------------------------------------------------------------------------
@@ -328,9 +321,7 @@ void NpcHumanAxe::Deserialize(json& source)
 void NpcHumanAxe::LoadAssets()
 {
     NpcHumanBase::LoadAssets();
-
     SoundManager::LoadBankFromPath("GameData/sounds/banks/Desktop/SFX.bank");
-
     mesh->TexturesLocation = "GameData/models/enemies/humanAxe/humanAxe.glb/";
     mesh->LoadFromFile("GameData/models/enemies/humanAxe/humanAxe.glb");
     mesh->PreloadAssets();

@@ -179,7 +179,7 @@ void NpcBase::Start()
 	MoveToScheduledTask();
 
 	controller = new CharacterController();
-	controller->movementQuality = CharacterControllerMovementQuality::NpcLowQuality;
+	controller->movementQuality = CharacterControllerMovementQuality::NpcGeneric;
 	controller->Init(this, Position, 0.45f,1.8f, 90);
 
 	mesh->Position = Position - vec3(0, controller->height / 2.0f, 0);

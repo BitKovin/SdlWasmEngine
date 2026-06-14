@@ -98,9 +98,9 @@ void NpcHumanGun::Attack()
     mesh->PlayAnimation("fire");
     mesh->PullRootMotion();
 
-    // Broadcast the fire animation to all peers.
+    // Broadcast to other peers so they play the fire animation in sync.
     NetPacket attackArgs(PacketType::RPC);
-    SendRPC(static_cast<uint8_t>(NpcRPC::Attack), attackArgs, RPCTarget::All);
+    SendRPC(static_cast<uint8_t>(NpcRPC::Attack), attackArgs, RPCTarget::Others);
 
     // Shoot-and-scoot: count shots; reposition once the burst is done.
     shotsFired++;
@@ -211,19 +211,15 @@ void NpcHumanGun::AsyncUpdate()
 
     auto rootMotion = mesh->PullRootMotion();
 
-    // Root motion only on the owner to avoid fighting the snapshot interpolation.
-    if (isOwned)
+    // Root motion applies on ALL peers for smooth movement.
+    Position += rootMotion.Position;
+    controller.SetPosition(Position);
+    if (rootMotion.Position != vec3())
+        controller.SetVelocity(vec3(0, controller.GetVelocity().y, 0));
+    if (rootMotion.Rotation != vec3())
     {
-        Position += rootMotion.Position;
-        controller.SetPosition(Position);
-        if (rootMotion.Position != vec3())
-            controller.SetVelocity(vec3(0, controller.GetVelocity().y, 0));
-
-        if (rootMotion.Rotation != vec3())
-        {
-            mesh->Rotation  += rootMotion.Rotation;
-            movingDirection  = MathHelper::GetForwardVector(mesh->Rotation);
-        }
+        mesh->Rotation  += rootMotion.Rotation;
+        movingDirection  = MathHelper::GetForwardVector(mesh->Rotation);
     }
 
     UpdateStunnedReturn();

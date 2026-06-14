@@ -1,20 +1,13 @@
 // NpcZombie.cpp
 #include "NpcHumanBase.h"
 
-// ---------------------------------------------------------------------------
-// NpcZombie
-//
-// Slow melee enemy. Uses time-based attack transitions instead of animation
-// events (the zombie rig has no event tracks). No separate .h needed.
-// ---------------------------------------------------------------------------
-
 class NpcZombie : public NpcHumanBase
 {
 private:
     bool attackDamageDealt = false;
 
-    static constexpr float AttackDamageDelay  = 0.7f;   // seconds into animation to deal damage
-    static constexpr float AttackEndThreshold = 0.15f;  // seconds before animation end to transition out
+    static constexpr float AttackDamageDelay  = 0.7f;
+    static constexpr float AttackEndThreshold = 0.15f;
 
     void UpdateAttackDamage();
     void UpdateAttackState();
@@ -27,86 +20,58 @@ public:
     NpcZombie();
 
     void Stun() override;
-
     void OnDamage(float Damage, Entity* DamageCauser = nullptr,
                   Entity* Weapon = nullptr) override;
-
     void AsyncUpdate() override;
-
     void Serialize  (json& target) override;
     void Deserialize(json& source) override;
-
     void NetSerialize  (NetPacket& packet) override;
     void NetDeserialize(NetPacket& packet) override;
 };
 
-// ---------------------------------------------------------------------------
-// Constructor
-// ---------------------------------------------------------------------------
-
 NpcZombie::NpcZombie()
 {
-    ClassName = "npc_zombie";
-    maxSpeed  = 1.5f;
-
+    ClassName          = "npc_zombie";
+    maxSpeed           = 1.5f;
     canBeStunRagdolled = false;
-
-    Health    = 100;
-    MaxHealth = 100;
+    Health             = 100;
+    MaxHealth          = 100;
 }
-
-// ---------------------------------------------------------------------------
-// Stun
-// ---------------------------------------------------------------------------
 
 void NpcZombie::Stun()
 {
-    NpcHumanBase::Stun();  // sets state = Stunned
+    NpcHumanBase::Stun();
     attackDamageDealt = false;
 }
 
-// ---------------------------------------------------------------------------
-// Attack
-// ---------------------------------------------------------------------------
-
+// Attack – same logic runs on all peers; owner enforces cooldown.
 void NpcZombie::Attack()
 {
-    // Owner checks cooldown and broadcasts; non-owners just play the animation.
     if (isOwned)
     {
         if (inAttackDelay.Wait()) return;
         inAttackDelay.AddDelay(1.5f);
-
-        state = NpcState::Attacking;
-
-        NetPacket attackArgs(PacketType::RPC);
-        SendRPC(static_cast<uint8_t>(NpcRPC::Attack), attackArgs, RPCTarget::All);
     }
 
+    state             = NpcState::Attacking;
+    attackDamageDealt = false;
     PlaySoundEffect("event:/NPC/Enemy1/Enemy1AttackStart");
-
     mesh->PlayAnimation("attack", false, 0.3f);
     mesh->PullRootMotion();
-    attackDamageDealt = false;
 
-    if (!isOwned)
-        state = NpcState::Attacking;
+    if (isOwned)
+    {
+        NetPacket args(PacketType::RPC);
+        SendRPC(static_cast<uint8_t>(NpcRPC::Attack), args, RPCTarget::Others);
+    }
 }
-
-// ---------------------------------------------------------------------------
-// Damage
-// ---------------------------------------------------------------------------
 
 void NpcZombie::OnDamage(float Damage, Entity* DamageCauser, Entity* Weapon)
 {
     NpcHumanBase::OnDamage(Damage, DamageCauser, Weapon);
 }
 
-// ---------------------------------------------------------------------------
-// Hit detection – fires once when animation clock passes AttackDamageDelay.
-// Owner only; result is authoritative.
-// ---------------------------------------------------------------------------
-
+// Hit detection – owner only; calls OnPointDamage which broadcasts to Others.
 void NpcZombie::UpdateAttackDamage()
 {
     if (!isOwned)          return;
@@ -120,7 +85,6 @@ void NpcZombie::UpdateAttackDamage()
         BodyType::World | BodyType::CharacterCapsule,
         { controller.body });
 
-    // No contact yet — keep checking each frame so parry timing can land.
     if (!hit.hasHit || !hit.entity->HasTag("player")) return;
 
     attackDamageDealt = true;
@@ -142,10 +106,6 @@ void NpcZombie::UpdateAttackDamage()
     }
 }
 
-// ---------------------------------------------------------------------------
-// Attack state – watches animation time to transition out without events.
-// ---------------------------------------------------------------------------
-
 void NpcZombie::UpdateAttackState()
 {
     float dur = mesh->GetAnimationDuration();
@@ -156,10 +116,6 @@ void NpcZombie::UpdateAttackState()
         mesh->PlayAnimation("run", true, 0.5f);
     }
 }
-
-// ---------------------------------------------------------------------------
-// Main update
-// ---------------------------------------------------------------------------
 
 void NpcZombie::AsyncUpdate()
 {
@@ -173,10 +129,8 @@ void NpcZombie::AsyncUpdate()
     controller.Update(Time::DeltaTimeF);
     Position = controller.GetPosition();
 
-    // Rebuild resolved target pointer every frame.
     ResolveTarget();
 
-    // Perception and target switching are owner-only.
     if (isOwned)
         UpdatePerception();
 
@@ -189,16 +143,14 @@ void NpcZombie::AsyncUpdate()
 
     mesh->Position = Position - vec3(0, 1, 0);
 
-    // Zombie only applies root motion during stun animations, not during attack.
-    // Owner-gate it for the same reason as NpcHumanAxe.
+    // Root motion applies on ALL peers – zombie only uses it during stun.
     auto rootMotion = mesh->PullRootMotion();
-    if (isOwned && (IsStunned() || stunnedRagdoll))
+    if (IsStunned() || stunnedRagdoll)
     {
         Position += rootMotion.Position;
         controller.SetPosition(Position);
         if (rootMotion.Position != vec3())
             controller.SetVelocity(vec3(0, controller.GetVelocity().y, 0));
-
         if (rootMotion.Rotation != vec3())
         {
             mesh->Rotation  += rootMotion.Rotation;
@@ -209,7 +161,7 @@ void NpcZombie::AsyncUpdate()
     UpdateStunnedReturn();
     UpdateReturnFromRagdoll();
 
-    // Time-based stun end (zombie rig has no stun_end animation event).
+    // Time-based stun end (zombie rig has no stun_end event).
     if (IsStunned() && !stunnedRagdoll && !returningFromRagdoll)
     {
         float dur = mesh->GetAnimationDuration();
@@ -222,7 +174,6 @@ void NpcZombie::AsyncUpdate()
 
     mesh->UpdateHitboxes();
 
-    // soundPlayer can be nulled mid-frame by Death().
     if (soundPlayer)
     {
         soundPlayer->Position = vec3(mesh->GetBoneMatrixWorld("head")[3]);
@@ -231,19 +182,14 @@ void NpcZombie::AsyncUpdate()
 
     if (IsDead() || IsStunned() || stunnedRagdoll || returningFromRagdoll) return;
 
-    // ── Owner AI ──────────────────────────────────────────────────────────
     if (isOwned)
     {
-        // Attack phase: deal damage at fixed time, then transition out.
         if (IsAttacking())
         {
             UpdateAttackDamage();
             if (IsDead()) return;
-
-            if (IsAttacking()) // parry may have called Stun() and cleared it
-                UpdateAttackState();
-
-            if (IsAttacking()) // still in attack window — hold in place
+            if (IsAttacking()) UpdateAttackState();
+            if (IsAttacking())
             {
                 vec3 vel = controller.GetVelocity();
                 controller.SetVelocity(vec3(0, vel.y, 0));
@@ -253,14 +199,11 @@ void NpcZombie::AsyncUpdate()
 
         if (IsDead()) return;
 
-        // No target: idle.
         if (resolvedTarget == nullptr)
         {
             if (mesh->GetAnimationName() != "idle")
                 mesh->PlayAnimation("idle", true, 0.5f);
-
             state = NpcState::Idle;
-
             vec3 vel = controller.GetVelocity();
             controller.SetVelocity(vec3(0, vel.y, 0));
             return;
@@ -268,7 +211,6 @@ void NpcZombie::AsyncUpdate()
 
         if (mesh->GetAnimationName() == "idle")
             mesh->PlayAnimation("run", true, 0.5f);
-
         if (state == NpcState::Idle)
             state = NpcState::Chasing;
 
@@ -281,9 +223,7 @@ void NpcZombie::AsyncUpdate()
         }
 
         if (IsFleeing())
-        {
             UpdateFleeTarget();
-        }
         else
         {
             pathFollow.UpdateStartAndTarget(Position, resolvedTarget->Position);
@@ -306,15 +246,12 @@ void NpcZombie::AsyncUpdate()
         vec3 vel = controller.GetVelocity();
         controller.SetVelocity(vec3(movingDirection.x * speed, vel.y,
                                     movingDirection.z * speed));
-
         mesh->Rotation = vec3(0,
             MathHelper::FindLookAtRotation(vec3(), movingDirection).y, 0);
     }
     else
     {
-        // Non-owner: mirror animation from replicated state and drive capsule.
         UpdateNonOwnerAnimation();
-
         vec3 vel = controller.GetVelocity();
         controller.SetVelocity(vec3(movingDirection.x * speed, vel.y,
                                     movingDirection.z * speed));
@@ -322,10 +259,6 @@ void NpcZombie::AsyncUpdate()
             MathHelper::FindLookAtRotation(vec3(), movingDirection).y, 0);
     }
 }
-
-// ---------------------------------------------------------------------------
-// Replication
-// ---------------------------------------------------------------------------
 
 void NpcZombie::NetSerialize(NetPacket& packet)
 {
@@ -336,12 +269,11 @@ void NpcZombie::NetSerialize(NetPacket& packet)
 void NpcZombie::NetDeserialize(NetPacket& packet)
 {
     NpcHumanBase::NetDeserialize(packet);
-    attackDamageDealt = packet.ReadBool();
+    if (!isOwned)
+        attackDamageDealt = packet.ReadBool();
+    else
+        packet.ReadBool();
 }
-
-// ---------------------------------------------------------------------------
-// Save-game serialization
-// ---------------------------------------------------------------------------
 
 void NpcZombie::Serialize(json& target)
 {
@@ -355,16 +287,10 @@ void NpcZombie::Deserialize(json& source)
     DESERIALIZE_FIELD(source, attackDamageDealt);
 }
 
-// ---------------------------------------------------------------------------
-// Asset loading
-// ---------------------------------------------------------------------------
-
 void NpcZombie::LoadAssets()
 {
     NpcHumanBase::LoadAssets();
-
     SoundManager::LoadBankFromPath("GameData/sounds/banks/Desktop/SFX.bank");
-
     mesh->TexturesLocation = "GameData/models/enemies/zombie/zombie.glb/";
     mesh->LoadFromFile("GameData/models/enemies/zombie/zombie.glb");
     mesh->PreloadAssets();
