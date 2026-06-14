@@ -99,10 +99,9 @@ void NpcHumanBase::ResolveTarget()
 // players directly as NetworkedEntities.
 void NpcHumanBase::UpdatePerception()
 {
-    if (currentTarget.IsValid())
+    if (currentTarget.IsValid() && currentTarget.Resolve())
         DebugDraw::Line(Position, currentTarget.Resolve()->Position);
 
-    if (!isOwned) return;
 
     // Create observer lazily so it works after an ownership transfer.
     if (observer == nullptr)
@@ -149,26 +148,31 @@ void NpcHumanBase::UpdatePerception()
         candidates.push_back({ h, pos, fromSight });
     };
 
-    // Visible targets
-    for (auto& pt : observer->visibleTargets)
+    if (isOwned)
     {
-        if (!pt->HasTag("player")) continue;
 
-        // Find the entity that registered this perception target.
-        // pt->ownerId is a string entity Id.
-        Entity* e = Level::Current->FindEntityWithId(pt->ownerId);
+        // Visible targets
+        for (auto& pt : observer->visibleTargets)
+        {
+            if (!pt->HasTag("player")) continue;
 
-        if (!e) continue;
+            // Find the entity that registered this perception target.
+            // pt->ownerId is a string entity Id.
+            Entity* e = Level::Current->FindEntityWithId(pt->ownerId);
 
-        auto* ne = dynamic_cast<NetworkedEntity*>(e);
-        if (ne)
-            findOrAdd(EntityHandle::FromNetworked(ne->networkId), e->Position, true);
-        else
-            findOrAdd(EntityHandle::FromEntity(e), e->Position, true);
+            if (!e) continue;
+
+            auto* ne = dynamic_cast<NetworkedEntity*>(e);
+            if (ne)
+                findOrAdd(EntityHandle::FromNetworked(ne->networkId), e->Position, true);
+            else
+                findOrAdd(EntityHandle::FromEntity(e), e->Position, true);
+        }
     }
 
+
     // Heard sounds – wake the NPC even while Idle.
-    if (!IsDead() && !IsStunned())
+    if (!IsDead() && currentTarget.IsValid() == false)
     {
         for (auto& s : observer->heardSounds)
         {
@@ -654,7 +658,7 @@ void NpcHumanBase::NetDeserialize(NetPacket& packet)
     if (!IsDead())
     {
         // Don't overwrite transient ragdoll/stun states with a stale value.
-        bool inTransientState = stunnedRagdoll || returningFromRagdoll || IsStunned();
+        bool inTransientState = stunnedRagdoll || returningFromRagdoll;
         if (!inTransientState)
             state = remoteState;
 

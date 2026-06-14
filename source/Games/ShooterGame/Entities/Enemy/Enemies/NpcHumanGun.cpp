@@ -186,9 +186,7 @@ void NpcHumanGun::AsyncUpdate()
     // Rebuild resolved target pointer every frame.
     ResolveTarget();
 
-    // Perception and target switching are owner-only.
-    if (isOwned)
-        UpdatePerception();
+    UpdatePerception();
 
     accuracyModifier -= Time::DeltaTimeF / 3.0f;
     accuracyModifier  = glm::clamp(accuracyModifier, 0.0f, 5.0f);
@@ -391,18 +389,25 @@ void NpcHumanGun::AsyncUpdate()
         if (!IsDead() && !IsStunned() && !stunnedRagdoll && !returningFromRagdoll && !IsAttacking())
         {
             auto animName = mesh->GetAnimationName();
-            if (!resolvedTarget || IsIdle())
-            {
-                if (animName != "aim") mesh->PlayAnimation("aim", true, 0.5f);
-            }
-            else if (speed > 0.1f)
-            {
-                if (animName != "run") mesh->PlayAnimation("run", true, 0.5f);
-            }
-            else
-            {
-                if (animName != "aim") mesh->PlayAnimation("aim", true, 0.3f);
-            }
+
+			if ((mesh->IsAnimationPlaying() && animName == "fire" && mesh->GetAnimationTime() < 0.5) == false)
+			{
+
+
+				if (!resolvedTarget || IsIdle())
+				{
+					if (animName != "aim") mesh->PlayAnimation("aim", true, 0.5f);
+				}
+				else if (speed > 0.1f)
+				{
+					if (animName != "run") mesh->PlayAnimation("run", true, 0.5f);
+				}
+				else
+				{
+					if (animName != "aim") mesh->PlayAnimation("aim", true, 0.3f);
+				}
+
+			}
         }
 
         vec3 vel = controller.GetVelocity();

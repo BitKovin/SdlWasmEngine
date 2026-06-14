@@ -131,8 +131,8 @@ void NpcZombie::AsyncUpdate()
 
     ResolveTarget();
 
-    if (isOwned)
-        UpdatePerception();
+
+    UpdatePerception();
 
     UpdateStatusWidgets();
     UpdateDebuffs(Time::DeltaTimeF);

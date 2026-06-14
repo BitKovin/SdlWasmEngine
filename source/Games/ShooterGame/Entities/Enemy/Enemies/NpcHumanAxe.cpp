@@ -151,8 +151,7 @@ void NpcHumanAxe::AsyncUpdate()
 
     ResolveTarget();
 
-    if (isOwned)
-        UpdatePerception();
+    UpdatePerception();
 
     UpdateStatusWidgets();
     UpdateDebuffs(Time::DeltaTimeF);
@@ -286,39 +285,6 @@ void NpcHumanAxe::AsyncUpdate()
         mesh->Rotation = vec3(0,
             MathHelper::FindLookAtRotation(vec3(), movingDirection).y, 0);
     }
-
-    if (mesh->IsAnimationPlaying() == false)
-    {
-        switch (state)
-        {
-        case NpcState::Idle:
-            mesh->PlayAnimation("idle");
-            break;
-        case NpcState::Chasing:
-            mesh->PlayAnimation("run");
-            break;
-        case NpcState::Attacking:
-            mesh->PlayAnimation("run");
-            break;
-        case NpcState::Stunned:
-            mesh->PlayAnimation("run");
-            break;
-        case NpcState::Fleeing:
-            mesh->PlayAnimation("run");
-            break;
-        case NpcState::Dead:
-            mesh->PlayAnimation("idle");
-            break;
-        default:
-            break;
-        }
-    }
-
-    if (state == NpcState::Idle && mesh->GetAnimationName() == "run")
-        mesh->PlayAnimation("idle");
-
-    if (state == NpcState::Chasing && mesh->GetAnimationName() == "idle")
-        mesh->PlayAnimation("run");
 
 }
 
