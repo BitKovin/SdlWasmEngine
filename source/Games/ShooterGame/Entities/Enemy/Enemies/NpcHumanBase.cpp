@@ -68,11 +68,10 @@ void NpcHumanBase::Start()
     soundPlayer = SoundPlayer::Create();
     SetupSoundPlayer(soundPlayer);
 
-    if (isOwned)
-    {
-        observer = AiPerceptionSystem::CreateObserver(
+    
+    observer = AiPerceptionSystem::CreateObserver(
             Position, MathHelper::GetForwardVector(mesh->Rotation), 150);
-    }
+    
 }
 
 // ---------------------------------------------------------------------------
@@ -106,8 +105,7 @@ void NpcHumanBase::UpdatePerception()
     // Create observer lazily so it works after an ownership transfer.
     if (observer == nullptr)
     {
-        observer = AiPerceptionSystem::CreateObserver(
-            Position, MathHelper::GetForwardVector(mesh->Rotation), 150);
+        return;
     }
 
     observer->forward  = MathHelper::GetForwardVector(mesh->Rotation);
@@ -346,6 +344,9 @@ void NpcHumanBase::OnDamage(float Damage, Entity* DamageCauser, Entity* Weapon)
 void NpcHumanBase::Death()
 {
     if (IsDead()) return;
+
+    AiPerceptionSystem::RemoveObserver(observer);
+    observer = nullptr;
 
     state = NpcState::Dead;
 

@@ -26,7 +26,7 @@ uint32_t     NetworkManager::s_loadTimeIdSeq = 0;
 float        NetworkManager::s_networkTickRate = 30.0f;
 float        NetworkManager::s_networkTickAccum = 0.0f;
 float        NetworkManager::s_validationTickAccum = 0.0f;
-float        NetworkManager::kValidationInterval = 1.0f/5.0f;
+float        NetworkManager::kValidationInterval = 1.0f/3.0f;
 
 Level* NetworkManager::s_level = nullptr;
 INetworkTransport* NetworkManager::s_transport = nullptr;
@@ -293,12 +293,7 @@ void NetworkManager::Tick(float dt) {
 
     if (s_isLoadingLevel) return;
 
-    // Phase 2: gather — every owned entity enqueues its state
-    for (auto& [id, entity] : s_entities) {
-        if (entity->isOwned) {
-            entity->PushNetworkUpdate(dt);
-        }
-    }
+
 
     // Phase 3: flush — send queued updates once per network tick
     s_networkTickAccum += dt;
@@ -310,6 +305,14 @@ void NetworkManager::Tick(float dt) {
         if (s_networkTickAccum > tickInterval) {
             s_networkTickAccum = 0.0f;
         }
+
+        // Phase 2: gather — every owned entity enqueues its state
+        for (auto& [id, entity] : s_entities) {
+            if (entity->isOwned) {
+                entity->PushNetworkUpdate(dt); //calls EnqueueEntityUpdate
+            }
+        }
+
         FlushUpdateQueue();
     }
 

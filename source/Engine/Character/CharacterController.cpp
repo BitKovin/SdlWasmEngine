@@ -84,6 +84,9 @@ void CharacterController::Destroy()
 
 void CharacterController::Update(float deltaTime)
 {
+
+	if (body == nullptr) return;
+
 	UpdateSmoothPosition(deltaTime);
 
 	// -------------------------------
