@@ -910,6 +910,7 @@ void EngineMain::Render()
                 ResourceStatistics::Instance().renderImGui();
             }
 
+            NetworkManager::DrawDebugUi();
 
             RenderImGui();
         }

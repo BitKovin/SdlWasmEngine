@@ -54,6 +54,12 @@ void AiPerceptionSystem::Update()
     std::vector<std::function<void()>> updateJobs;
     updateJobs.reserve(observers.size() / 3); // Pre-allocate for efficiency
 
+    observers.erase(
+        std::remove(observers.begin(), observers.end(), nullptr),
+        observers.end()
+    );
+
+
     for (auto& observer : observers)
     {
         // Promote sounds emitted last frame into heardSounds so AI can read them this frame,

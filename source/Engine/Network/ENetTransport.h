@@ -63,6 +63,8 @@ public:
     bool TryConnectOrHost(const std::string& address, uint16_t port,
                           int maxClients, uint32_t timeoutMs = 1000);
 
+    NetworkStat GetStat() const;
+
 private:
     // All ENet types (ENetHost*, ENetPeer*, etc.) are hidden inside Impl.
     // Defined in ENetTransport.cpp where enet/enet.h is included.

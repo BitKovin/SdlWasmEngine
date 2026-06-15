@@ -70,6 +70,7 @@ struct ENetTransport::Impl {
 
     ENetPeer* PeerForId(uint8_t peerId) const {
         auto it = peerById.find(peerId);
+
         return it != peerById.end() ? it->second : nullptr;
     }
 
@@ -91,6 +92,10 @@ struct ENetTransport::Impl {
 
     void HandleConnect(ENetEvent& event,
         const std::function<void(uint8_t)>& onConnected) {
+
+        // Force ENet to update the ping moving average 10x faster (every 50ms instead of 500ms)
+        enet_peer_ping_interval(event.peer, 50);
+
         if (isServer) {
             if (nextPeerId == 0) {
                 std::fprintf(stderr, "[ENetTransport] Out of peer IDs\n");
@@ -420,4 +425,61 @@ bool ENetTransport::TryConnectOrHost(const std::string& address, uint16_t port,
 
     Host(port, maxClients);
     return false;
+}
+
+NetworkStat ENetTransport::GetStat() const
+{
+    NetworkStat stat{};
+
+    if (!impl_->host) {
+        return stat;
+    }
+
+    // 1. Host-level stats (Total data across all connections)
+    stat.incomingBytesTotal = impl_->host->totalReceivedData;
+    stat.outgoingBytesTotal = impl_->host->totalSentData;
+
+    // 2. Peer-level stats (RTT and Packet Loss)
+    if (!impl_->isServer && impl_->serverPeer) {
+        // Client Mode: Pull directly from the server connection
+
+        // ENet scales packet loss by ENET_PEER_PACKET_LOSS_SCALE (65536).
+        // Divide by the scale to get a 0.0 - 1.0 ratio, then multiply by 100 for percent.
+        stat.packetLossPercent = (static_cast<float>(impl_->serverPeer->packetLoss) / ENET_PEER_PACKET_LOSS_SCALE) * 100.0f;
+        stat.packetLossPercentVariance = (static_cast<float>(impl_->serverPeer->packetLossVariance) / ENET_PEER_PACKET_LOSS_SCALE) * 100.0f;
+
+        // Cap RTT to the max of uint16_t to prevent overflow wrapping (ENet RTT is uint32_t)
+        stat.roundTripTime = static_cast<uint16_t>(std::min<enet_uint32>(impl_->serverPeer->roundTripTime, UINT16_MAX));
+        stat.roundTripTimeVariance = static_cast<uint16_t>(std::min<enet_uint32>(impl_->serverPeer->roundTripTimeVariance, UINT16_MAX));
+
+    }
+    else if (impl_->isServer && !impl_->peerById.empty()) {
+        // Server Mode: Average the stats across all active clients
+        float totalLoss = 0.0f;
+        float totalLossVar = 0.0f;
+        enet_uint32 totalRtt = 0;
+        enet_uint32 totalRttVar = 0;
+
+        int count = 0;
+        for (const auto& [id, peer] : impl_->peerById) {
+            totalLoss += static_cast<float>(peer->packetLoss);
+            totalLossVar += static_cast<float>(peer->packetLossVariance);
+            totalRtt += peer->roundTripTime;
+            totalRttVar += peer->roundTripTimeVariance;
+            count++;
+        }
+
+        if (count > 0) {
+            stat.packetLossPercent = (totalLoss / count / ENET_PEER_PACKET_LOSS_SCALE) * 100.0f;
+            stat.packetLossPercentVariance = (totalLossVar / count / ENET_PEER_PACKET_LOSS_SCALE) * 100.0f;
+
+            enet_uint32 avgRtt = totalRtt / count;
+            enet_uint32 avgRttVar = totalRttVar / count;
+
+            stat.roundTripTime = static_cast<uint16_t>(std::min<enet_uint32>(avgRtt, UINT16_MAX));
+            stat.roundTripTimeVariance = static_cast<uint16_t>(std::min<enet_uint32>(avgRttVar, UINT16_MAX));
+        }
+    }
+
+    return stat;
 }

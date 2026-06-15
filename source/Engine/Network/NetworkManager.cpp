@@ -625,6 +625,125 @@ void NetworkManager::SendFullSnapshotTo(uint8_t targetPeerId) {
     SendReliableNow(FinalizeOutbound(pkt), targetPeerId);
 }
 
+NetworkStat NetworkManager::GetStat()
+{
+    if (s_transport == nullptr) return NetworkStat{};
+
+    return s_transport->GetStat();
+
+}
+
+void NetworkManager::DrawDebugUi()
+{
+
+    // 1. Calculate top-right position based on the main viewport
+    const float PAD = 10.0f; // Padding from the edge of the screen
+    const ImGuiViewport* viewport = ImGui::GetMainViewport();
+
+    // WorkPos/WorkSize excludes OS taskbars
+    ImVec2 windowPos = ImVec2(
+        viewport->WorkPos.x + viewport->WorkSize.x - PAD,
+        viewport->WorkPos.y + PAD
+    );
+    ImVec2 windowPosPivot = ImVec2(1.0f, 0.0f); // Pivot at top-right corner
+
+    ImGui::SetNextWindowPos(windowPos, ImGuiCond_Always, windowPosPivot);
+
+    // 2. Set background to 50% transparent
+    ImGui::SetNextWindowBgAlpha(0.5f);
+
+    // 3. Apply overlay flags (No title bar, no resize, no move, don't steal focus)
+    ImGuiWindowFlags windowFlags =
+        ImGuiWindowFlags_NoDecoration |       // Removes Title Bar, Resize grip, Scrollbars, Borders
+        ImGuiWindowFlags_AlwaysAutoResize |   // Auto fit content
+        ImGuiWindowFlags_NoSavedSettings |    // Don't save to imgui.ini (always force top right)
+        ImGuiWindowFlags_NoFocusOnAppearing | // Don't take focus away from your game
+        ImGuiWindowFlags_NoNav |              // Ignore gamepad/keyboard navigation
+        ImGuiWindowFlags_NoMove;              // Lock in place
+
+    if (!ImGui::Begin("Network Stats Overlay", nullptr, windowFlags)) {
+        ImGui::End();
+        return;
+    }
+
+    auto netStat = NetworkManager::GetStat();
+
+    // ─── Connection Health ─────────────────────────────────────────────
+    ImGui::TextDisabled("Connection Health");
+    ImGui::Separator();
+
+    // Ping Color Coding
+    ImVec4 pingColor = ImVec4(0.2f, 1.0f, 0.2f, 1.0f); // Green
+    if (netStat.roundTripTime > 150) pingColor = ImVec4(1.0f, 0.2f, 0.2f, 1.0f);
+    else if (netStat.roundTripTime > 80) pingColor = ImVec4(1.0f, 1.0f, 0.2f, 1.0f);
+
+    ImGui::Text("Ping (RTT):");
+    ImGui::SameLine(90);
+    ImGui::TextColored(pingColor, "%u ms", netStat.roundTripTime);
+    ImGui::SameLine();
+    ImGui::TextDisabled("(+/- %u ms)", netStat.roundTripTimeVariance);
+
+    // Packet Loss Color Coding
+    ImVec4 lossColor = ImVec4(0.2f, 1.0f, 0.2f, 1.0f);
+    if (netStat.packetLossPercent > 5.0f) lossColor = ImVec4(1.0f, 0.2f, 0.2f, 1.0f);
+    else if (netStat.packetLossPercent > 1.0f) lossColor = ImVec4(1.0f, 1.0f, 0.2f, 1.0f);
+
+    ImGui::Text("Packet Loss:");
+    ImGui::SameLine(90);
+
+    ImGui::PushStyleColor(ImGuiCol_PlotHistogram, lossColor);
+    char lossBuf[64];
+    std::snprintf(lossBuf, sizeof(lossBuf), "%.2f%% (+/- %.2f%%)", netStat.packetLossPercent, netStat.packetLossPercentVariance);
+    float lossFraction = std::min(netStat.packetLossPercent / 20.0f, 1.0f);
+
+    // FIX: Provide a hardcoded width (e.g., 180.0f) instead of -FLT_MIN
+    // This forces the auto-resizing window to be wide enough for the text.
+    ImGui::ProgressBar(lossFraction, ImVec2(180.0f, 0.0f), lossBuf);
+    ImGui::PopStyleColor();
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    // ─── Data Usage ────────────────────────────────────────────────────
+    ImGui::TextDisabled("Data Usage");
+    ImGui::Separator();
+
+    auto formatBytes = [](uint64_t bytes) -> std::string {
+        const char* suffixes[] = { "B", "KB", "MB", "GB" };
+        int i = 0;
+        double dblBytes = static_cast<double>(bytes);
+        while (dblBytes >= 1024.0 && i < 3) {
+            dblBytes /= 1024.0;
+            i++;
+        }
+        char buf[64];
+        std::snprintf(buf, sizeof(buf), "%.2f %s", dblBytes, suffixes[i]);
+        return std::string(buf);
+        };
+
+    if (ImGui::BeginTable("DataTable", 2, ImGuiTableFlags_None)) {
+        ImGui::TableSetupColumn("Direction", ImGuiTableColumnFlags_WidthFixed, 90.0f);
+        ImGui::TableSetupColumn("Total Bytes", ImGuiTableColumnFlags_WidthStretch);
+
+        ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(0);
+        ImGui::TextColored(ImVec4(0.4f, 0.8f, 1.0f, 1.0f), "RX (In):");
+        ImGui::TableSetColumnIndex(1);
+        ImGui::Text("%s", formatBytes(netStat.incomingBytesTotal).c_str());
+
+        ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(0);
+        ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.4f, 1.0f), "TX (Out):");
+        ImGui::TableSetColumnIndex(1);
+        ImGui::Text("%s", formatBytes(netStat.outgoingBytesTotal).c_str());
+
+        ImGui::EndTable();
+    }
+
+    ImGui::End();
+
+}
+
 // ---------------------------------------------------------------------------
 // Transport callbacks
 // ---------------------------------------------------------------------------

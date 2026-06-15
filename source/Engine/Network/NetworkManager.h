@@ -169,6 +169,10 @@ public:
 
     static float GetTickRate() { return s_networkTickRate; }
 
+    static NetworkStat GetStat();
+
+    static void DrawDebugUi();
+
 private:
     // -----------------------------------------------------------------------
     // Static state

@@ -4,6 +4,8 @@
 #include <functional>
 #include <string>
 
+#include "NetworkStat.h"
+
 // ---------------------------------------------------------------------------
 // INetworkTransport
 //
@@ -85,4 +87,7 @@ public:
 
     // Returns the number of currently connected peers.
     virtual int GetPeerCount() const = 0;
+
+    virtual NetworkStat GetStat() const = 0;
+
 };

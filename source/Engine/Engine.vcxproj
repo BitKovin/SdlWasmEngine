@@ -652,6 +652,7 @@
     <ClInclude Include="Network\NetPacket.h" />
     <ClInclude Include="Network\NetworkedEntity.h" />
     <ClInclude Include="Network\NetworkManager.h" />
+    <ClInclude Include="Network\NetworkStat.h" />
     <ClInclude Include="OnlineSubsystems\GDKAuth.h" />
     <ClInclude Include="Particle\GlobalParticleSystem.hpp" />
     <ClInclude Include="Particle\ParticleEmitter.h" />
