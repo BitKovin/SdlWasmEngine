@@ -13,6 +13,7 @@ RibbonEmitter::RibbonEmitter()
 {
     DepthSorting = false;
     ParticleCulling = false;
+    PixelShader = "fs_unlit";
 }
 
 RibbonEmitter::~RibbonEmitter()
@@ -89,7 +90,11 @@ bool RibbonEmitter::RenderRibbon(const std::vector<Particle>& inParticles)
         const float half = p.Size * 0.5f;
         const int   b = i * 2;
         const float u = arcLen[i] * invLen;  // arc-length U
-        const vec3  light = GetLightForParticle(p);
+        vec3  light = vec3(1.0f);
+
+        if(ParticleLighting)
+            light = GetLightForParticle(p);
+
         const vec4  color = p.Color * vec4(light, 1.0f) * vec4(1.0f, 1.0f, 1.0f, p.Transparency);
         const vec3  nrm = vec3(0.0f, 1.0f, 0.0f);
 

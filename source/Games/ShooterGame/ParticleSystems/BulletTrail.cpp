@@ -12,6 +12,8 @@ public:
 		Emitting = true;
 		InitialSpawnCount = 1;
 		SimpleRibbon = true;
+		ParticleLighting = false;
+		PixelShader = "fs_unlit";
 	}
 
 	Particle UpdateParticle(Particle particle, float deltaTime) override
@@ -27,7 +29,7 @@ public:
 		Particle particle = ParticleEmitter::GetNewParticle();
 		
 		particle.Size = 0.03f;
-		particle.Color = vec4(0.4, 0, 0, 0.65);
+		particle.Color = vec4(0.16, 0.03, 0.03, 0.65);
 		particle.Transparency = 0.8;
 		particle.deathTime = 0.1f;
 

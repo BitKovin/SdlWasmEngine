@@ -1,6 +1,5 @@
 #include "RemotePlayer.h"
 #include "Player.hpp"
-
 #include <NetworkManager.h>
 #include <AiPerception/AiPerceptionSystem.h>
 
@@ -23,8 +22,12 @@ RemotePlayer::RemotePlayer()
 	Tags = { "player" };
 
 	DestroyOnOwnerDisconnect = true;
+}
 
-
+RemotePlayer::~RemotePlayer()
+{
+	if (animator)
+		delete animator;
 }
 
 void RemotePlayer::Update()
@@ -33,16 +36,19 @@ void RemotePlayer::Update()
 
 	if (isOwned)
 	{
-
 		if (referencePlayer)
 		{
 			targetPosition = referencePlayer->Position;
 			targetRotation = referencePlayer->Rotation;
+			playerHeight = referencePlayer->controller.isCrouched ? referencePlayer->controller.crouchHeight : referencePlayer->controller.height;
+
+			// Grab the actual authoritative velocity to prepare it for NetSerialize.
+			// (Adjust "Velocity" to match your referencePlayer's actual velocity property name).
+			predictedVelocity = referencePlayer->controller.GetVelocity();
 		}
 
 		// Local owner should not accumulate prediction state.
 		timeSinceNetUpdate = 0.0f;
-		predictedVelocity = vec3(0.0f);
 
 		Position = targetPosition;
 		Rotation = targetRotation;
@@ -51,17 +57,14 @@ void RemotePlayer::Update()
 		{
 			AiPerceptionSystem::RemoveTarget(observationTarget);
 			observationTarget = nullptr;
-
 		}
-
 	}
 	else
 	{
 		timeSinceNetUpdate += Time::DeltaTimeF;
 
-		if(observationTarget == nullptr)
-		observationTarget = AiPerceptionSystem::CreateTarget(Position, Id, { "player" });
-
+		if (observationTarget == nullptr)
+			observationTarget = AiPerceptionSystem::CreateTarget(Position, Id, { "player" });
 	}
 
 	// Extrapolate from the last received snapshot.
@@ -80,7 +83,8 @@ void RemotePlayer::Update()
 	}
 	else
 	{
-		Position = MathHelper::Interp(Position, predictedPosition, Time::DeltaTimeF, NetworkManager::GetTickRate());
+		// FIX: Use your dedicated correction speed constant instead of the server tick rate
+		Position = MathHelper::Interp(Position, predictedPosition, Time::DeltaTimeF, kCorrectionInterpSpeed);
 	}
 
 	// Rotation can be updated directly, or smoothed if your game benefits from it.
@@ -88,45 +92,52 @@ void RemotePlayer::Update()
 
 	if (mesh)
 	{
-		mesh->Position = Position - vec3(0, 0.9f, 0);
+		mesh->Position = Position - vec3(0, playerHeight / 2.0f, 0);
 		mesh->Rotation = Rotation;
 	}
 
 	if (observationTarget)
 	{
-		DebugDraw::Point(observationTarget->position);
-
 		observationTarget->position = Position + vec3(0, 0.7f, 0);
 	}
+}
 
+void RemotePlayer::AsyncUpdate()
+{
+	if (animator == nullptr) return;
 
+	animator->movementSpeed = length(MathHelper::XZ(predictedVelocity));
+	animator->Update();
+	auto pose = animator->GetResultPose();
+	mesh->PasteAnimationPose(pose);
 }
 
 void RemotePlayer::NetSerialize(NetPacket& packet)
 {
 	packet.WriteVector3(targetPosition);
 	packet.WriteVector3(targetRotation);
+	packet.WriteFloat(playerHeight);
+
+
+	packet.WriteVector3(predictedVelocity);
 }
 
 void RemotePlayer::NetDeserialize(NetPacket& packet)
 {
 	const vec3 newTargetPosition = packet.ReadVector3();
 	const vec3 newTargetRotation = packet.ReadVector3();
+	playerHeight = packet.ReadFloat();
 
-	// Estimate velocity from the time between snapshots.
-	if (timeSinceNetUpdate > 0.0001f)
-	{
-		const vec3 snapshotDelta = newTargetPosition - targetPosition;
-		predictedVelocity = snapshotDelta / timeSinceNetUpdate;
-	}
-	else
-	{
-		predictedVelocity = vec3(0.0f);
-	}
+	// FIX: Read the velocity from the packet
+	const vec3 incomingVelocity = packet.ReadVector3();
 
 	lastNetPosition = targetPosition;
 	targetPosition = newTargetPosition;
 	targetRotation = newTargetRotation;
+
+	// FIX: Assign it directly, completely bypassing local time jitter errors
+	predictedVelocity = incomingVelocity;
+
 	timeSinceNetUpdate = 0.0f;
 }
 
@@ -140,6 +151,9 @@ void RemotePlayer::LoadAssets()
 	mesh->DepthPrePath = false;
 	mesh->Masked = true;
 	mesh->PreloadAssets();
+
+	animator = new PlayerBodyAnimator(this);
+	animator->LoadAssetsIfNeeded();
 }
 
 REGISTER_ENTITY(RemotePlayer, "remotePlayer")

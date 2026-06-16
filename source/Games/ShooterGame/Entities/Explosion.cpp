@@ -284,7 +284,18 @@ void Explosion::Start()
             damage = MathHelper::MapRange(dist, Radius / 2.0f, Radius, MaxPlayerDamage, minPlayerDamage);
         }
 
+        if (isOwned == false)
+        {
 
+            NetworkedEntity* netEntity = dynamic_cast<NetworkedEntity*>(hit.entity);
+            if (netEntity)
+            {
+
+                continue;
+
+            }
+
+        }
 
 
         hit.entity->OnPointDamage(damage, hit.position,

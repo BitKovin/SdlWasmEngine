@@ -26,7 +26,7 @@ float        NetworkManager::s_networkTickAccum    = 0.0f;
 float        NetworkManager::s_validationTickAccum = 0.0f;
 
 
-float NetworkManager::kValidationInterval = 1/5.0f;
+float NetworkManager::kValidationInterval = 1/2.0f;
 
 Level*             NetworkManager::s_level     = nullptr;
 INetworkTransport* NetworkManager::s_transport = nullptr;
@@ -47,6 +47,9 @@ std::vector<NetworkManager::PendingUpdate>                       NetworkManager:
 std::unordered_map<uint64_t, uint32_t> NetworkManager::s_entityReceivedHash;
 
 float NetworkManager::s_digestAccum = 0.0f;
+
+std::unordered_map<uint64_t, float>                            NetworkManager::s_recentlyDespawned;
+std::unordered_map<uint64_t, NetworkManager::UnconfirmedEntity> NetworkManager::s_unconfirmedEntities;
 
 NetworkManager::DeltaStats NetworkManager::s_deltaStats = {};
 
@@ -349,21 +352,27 @@ void NetworkManager::SendEntityDigest() {
 // All corrections are batched into a single reliable CompressAndSend call
 // to the requesting client — they do NOT enter the broadcast update queue.
 //
-// Three correction cases:
+// Stats (s_deltaStats.digest*) are reset here, at the top — they reflect the
+// most recently processed digest cycle, not a session-cumulative total.
+//
+// Three cases:
 //
 //   A) Entity in s_entities, not in client digest
 //      → Client missed a PT_SpawnEntity.
 //      → Send PT_SpawnEntity with current state.
 //
 //   B) Entity in client digest, not in s_entities
-//      → Client has a stale entity (missed PT_DespawnEntity).
-//      → Send PT_DespawnEntity.
+//      → AMBIGUOUS — see the class-level comment "Bidirectional reconciliation
+//        safety net". Only destroyed if s_recentlyDespawned confirms it was
+//        really despawned. Otherwise tracked in s_unconfirmedEntities and,
+//        if it persists past kSpawnResendRequestDelay, met with a
+//        PT_SpawnRequest to the reporting peer — never destroyed on a guess.
 //
 //   C) Entity in both, but client hash ≠ server's lastSentHash
 //      → Client missed an update (packet loss while entity was then suppressed).
 //      → Send PT_EntityUpdate with lastSentPayload (no re-serialise needed).
-//      → Only done for entities this client does NOT own (owning client is
-//        authoritative for its own entities).
+//      → Skipped for entities this client owns — it is authoritative for those,
+//        so the server should never tell it to "correct" its own state.
 //
 // The server resets the idle timers for entities it corrects so the broadcast
 // heartbeat doesn't immediately duplicate the targeted correction.
@@ -371,6 +380,11 @@ void NetworkManager::SendEntityDigest() {
 
 void NetworkManager::ProcessEntityDigest(uint8_t clientPeerId, NetPacket& packet) {
     assert(s_isServer);
+
+    // Reset to "this cycle only" — see comment above.
+    s_deltaStats.digestMissing = 0;
+    s_deltaStats.digestStale   = 0;
+    s_deltaStats.digestPhantom = 0;
 
     const uint16_t clientCount = packet.ReadUInt16();
 
@@ -388,6 +402,11 @@ void NetworkManager::ProcessEntityDigest(uint8_t clientPeerId, NetPacket& packet
     // ── Case A + C: iterate server entities ──────────────────────────────
 
     for (const auto& [id, entity] : s_entities) {
+        // This ID is known to the server — any prior "unconfirmed" tracking
+        // for it (from an earlier digest, before its SpawnEntity caught up)
+        // is now resolved.  Clear it so we stop watching/requesting resends.
+        s_unconfirmedEntities.erase(id);
+
         auto clientIt = clientKnown.find(id);
 
         if (clientIt == clientKnown.end()) {
@@ -430,10 +449,17 @@ void NetworkManager::ProcessEntityDigest(uint8_t clientPeerId, NetPacket& packet
     }
 
     // ── Case B: client has entities the server doesn't ───────────────────
+    //
+    // Do NOT treat absence from s_entities as proof of staleness — see the
+    // class-level comment.  Only a confirmed despawn justifies destroying
+    // something on the client.  Anything else is tracked, not destroyed.
 
     for (const auto& [id, hash] : clientKnown) {
-        if (s_entities.find(id) == s_entities.end()) {
-            // Client has a stale entity — send a targeted DespawnEntity.
+        if (s_entities.find(id) != s_entities.end()) continue; // handled above
+
+        if (s_recentlyDespawned.find(id) != s_recentlyDespawned.end()) {
+            // Confirmed: this ID really was despawned. Safe to tell the
+            // client to remove it regardless of who used to own it.
             NetPacket despawnPkt(PacketType::DespawnEntity);
             despawnPkt.WriteUInt64(id);
             auto despawnBytes = FinalizeOutbound(despawnPkt);
@@ -441,6 +467,29 @@ void NetworkManager::ProcessEntityDigest(uint8_t clientPeerId, NetPacket& packet
                 despawnBytes.begin(), despawnBytes.end());
 
             ++s_deltaStats.digestPhantom;
+            continue;
+        }
+
+        // Unconfirmed — most likely a client-owned entity whose SpawnEntity
+        // is still in flight or queued. Track it; do not destroy it.
+        UnconfirmedEntity& unconfirmed = s_unconfirmedEntities[id];
+        unconfirmed.reportedByPeerId = clientPeerId;
+
+        if (unconfirmed.ageSinceFirstReported >= kSpawnResendRequestDelay
+            && !unconfirmed.resendRequested) {
+            // Persisted well past any plausible delivery delay for a normal
+            // spawn/digest race — ask the owner to resend rather than
+            // silently waiting (or, worse, destroying) forever.
+            NetPacket reqPkt(PacketType::SpawnRequest);
+            reqPkt.WriteUInt64(id);
+            SendReliableNow(FinalizeOutbound(reqPkt), clientPeerId);
+            unconfirmed.resendRequested = true;
+
+            std::fprintf(stdout,
+                "[NetworkManager] Entity %llu unconfirmed for %.1fs — "
+                "requested resend from peer %u\n",
+                static_cast<unsigned long long>(id),
+                unconfirmed.ageSinceFirstReported, clientPeerId);
         }
     }
 
@@ -448,6 +497,40 @@ void NetworkManager::ProcessEntityDigest(uint8_t clientPeerId, NetPacket& packet
     if (!correctionBuffer.empty()) {
         CompressAndSend(correctionBuffer.data(), correctionBuffer.size(),
                         clientPeerId, /*reliable=*/true);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// PruneReconciliationState  (server only, called once per Tick)
+//
+// Ages s_recentlyDespawned and s_unconfirmedEntities, erasing entries past
+// their TTL.  Both maps are small and short-lived in the normal case (an
+// entry resolves within one digest cycle or so); this just bounds the worst
+// case (a peer that disconnects mid-reconciliation, or a genuinely corrupt
+// ID that never resolves).
+// ---------------------------------------------------------------------------
+
+void NetworkManager::PruneReconciliationState(float dt) {
+    for (auto it = s_recentlyDespawned.begin(); it != s_recentlyDespawned.end(); ) {
+        it->second += dt;
+        if (it->second >= kDespawnConfirmationWindow)
+            it = s_recentlyDespawned.erase(it);
+        else
+            ++it;
+    }
+
+    for (auto it = s_unconfirmedEntities.begin(); it != s_unconfirmedEntities.end(); ) {
+        it->second.ageSinceFirstReported += dt;
+        if (it->second.ageSinceFirstReported >= kUnconfirmedEntityCeiling) {
+            std::fprintf(stderr,
+                "[NetworkManager] Giving up on unconfirmed entity %llu "
+                "(reported by peer %u, never resolved)\n",
+                static_cast<unsigned long long>(it->first),
+                it->second.reportedByPeerId);
+            it = s_unconfirmedEntities.erase(it);
+        } else {
+            ++it;
+        }
     }
 }
 // ---------------------------------------------------------------------------
@@ -499,6 +582,9 @@ void NetworkManager::Shutdown() {
 
     s_entityReceivedHash.clear();
     s_digestAccum = 0.0f;
+
+    s_recentlyDespawned.clear();
+    s_unconfirmedEntities.clear();
 
     s_level    = nullptr;
     s_isActive = false;
@@ -574,6 +660,10 @@ void NetworkManager::Tick(float dt) {
                 s_validationTickAccum = 0.0f;
             SendFullSnapshotTo(BROADCAST_PEER_ID);
         }
+
+        // Age out confirmed-despawn / unconfirmed-entity tracking used by
+        // ProcessEntityDigest's Case B.
+        PruneReconciliationState(dt);
     }
 }
 
@@ -610,6 +700,8 @@ void NetworkManager::BeginLevelLoad(Level* level) {
     s_updateQueue.clear();
     s_entityReceivedHash.clear();
     s_lateJoiners.clear();
+    s_recentlyDespawned.clear();
+    s_unconfirmedEntities.clear();
 }
 
 void NetworkManager::OnLevelLoaded() {
@@ -674,6 +766,18 @@ void NetworkManager::Unregister(uint64_t networkId) {
     s_entityUpdateCache.erase(networkId);    // free lastSentPayload memory
     s_pendingEntityStates.erase(networkId);
     s_entityReceivedHash.erase(networkId);
+
+    // Record a positive "this really was despawned" confirmation, server-side
+    // only.  This is the single funnel point for every removal regardless of
+    // who initiated it (Level::RemoveEntity, owner disconnect, etc.), so it's
+    // the right place to make Case B's destructive correction safe — see the
+    // class-level comment "Bidirectional reconciliation safety net".
+    if (s_isServer)
+        s_recentlyDespawned[networkId] = 0.0f;
+
+    // Any pending "unconfirmed, might need a resend request" tracking for
+    // this ID is moot now — it's confirmed gone.
+    s_unconfirmedEntities.erase(networkId);
 }
 
 NetworkedEntity* NetworkManager::Find(uint64_t networkId) {
@@ -1013,7 +1117,6 @@ void NetworkManager::DispatchPacket(uint8_t senderId, NetPacket& packet) {
 
         entity->networkId    = networkId;
         entity->networkOwner = networkOwner;
-        entity->LoadAssetsIfNeeded();
         entity->NetDeserialize(packet);
 
         if (!s_isServer) {
@@ -1033,6 +1136,7 @@ void NetworkManager::DispatchPacket(uint8_t senderId, NetPacket& packet) {
 
         if (s_level) s_level->AddEntity(entity);
 
+        entity->LoadAssetsIfNeeded();
         entity->Start();
 
         break;
@@ -1048,7 +1152,6 @@ void NetworkManager::DispatchPacket(uint8_t senderId, NetPacket& packet) {
         }
 
         if (NetworkedEntity* entity = Find(networkId))
-            if(entity->isOwned == false)
             if (s_level) s_level->RemoveEntity(entity);
         break;
     }
@@ -1059,7 +1162,7 @@ void NetworkManager::DispatchPacket(uint8_t senderId, NetPacket& packet) {
         //   • Server: tracking what clients should have for client-owned entities
         //             (stored in s_entityUpdateCache so ProcessEntityDigest can
         //              reference it when the client sends a digest).
-        //   • Client: dcording the last received hash in s_entityReceivedHash
+        //   • Client: recording the last received hash in s_entityReceivedHash
         //             (included in the next PT_EntityDigest).
         //
         // Both sides compute the same hash from the same bytes, so the digest
@@ -1106,6 +1209,29 @@ void NetworkManager::DispatchPacket(uint8_t senderId, NetPacket& packet) {
         // other.  If this arrives on a client it's a no-op (shouldn't happen).
         if (s_isServer)
             ProcessEntityDigest(senderId, packet);
+        break;
+    }
+
+    case PacketType::SpawnRequest: {
+        // Server is telling us it has no record of this entity after waiting
+        // well past any plausible delivery delay — most likely our original
+        // SpawnEntity was genuinely lost (e.g. a reconnect that broke the
+        // reliable channel's delivery guarantee), not just slow.
+        //
+        // Only act if we still have the entity AND still own it — if we've
+        // since destroyed it ourselves, or ownership moved on, there is
+        // nothing to resend and the server's own reconciliation will settle
+        // once it sees the corresponding despawn/owner-change instead.
+        const uint64_t networkId = packet.ReadUInt64();
+        if (NetworkedEntity* entity = Find(networkId)) {
+            if (entity->isOwned) {
+                std::fprintf(stdout,
+                    "[NetworkManager] Server requested resend of entity %llu — "
+                    "re-broadcasting spawn\n",
+                    static_cast<unsigned long long>(networkId));
+                BroadcastSpawn(entity);
+            }
+        }
         break;
     }
 
@@ -1232,15 +1358,15 @@ void NetworkManager::OnEntityListReceived(uint8_t /*senderId*/, NetPacket& packe
             entity->networkOwner = networkOwner;
             entity->isOwned      = (networkOwner == s_localPeerId);
 
-            if (!s_isLoadingLevel) {
-                entity->LoadAssetsIfNeeded();
-            }
-
             entity->NetDeserialize(readPkt);
+
 
             if (s_level) s_level->AddEntity(entity);
 
-            entity->Start();
+            if (!s_isLoadingLevel) {
+                entity->LoadAssetsIfNeeded();
+                entity->Start();
+            }
 
             if (!s_isLoadingLevel) newlySpawned.push_back(entity);
         }
@@ -1262,7 +1388,6 @@ void NetworkManager::OnEntityListReceived(uint8_t /*senderId*/, NetPacket& packe
             "[NetworkManager] Snapshot: removing stale entity %u\n",
             entity->networkId);
         if (s_level) {
-            if(entity->isOwned == false)
             s_isLoadingLevel ? s_level->RemoveEntitySilent(entity)
                              : s_level->RemoveEntity(entity);
         }
@@ -1442,7 +1567,22 @@ void NetworkManager::DrawDebugUi() {
     if (s_isServer) {
         ImGui::Text("Missing fixed:  %u", s_deltaStats.digestMissing);
         ImGui::Text("Stale fixed:    %u", s_deltaStats.digestStale);
-        ImGui::Text("Phantom fixed:  %u", s_deltaStats.digestPhantom);
+        ImGui::Text("Phantom fixed:  %u (confirmed despawns only)",
+            s_deltaStats.digestPhantom);
+
+        // Unconfirmed entities: IDs a client reported that the server
+        // doesn't have, but hasn't confirmed despawned either — these are
+        // tracked, never destroyed, and only escalated to a SpawnRequest
+        // after kSpawnResendRequestDelay. Non-zero here briefly during a
+        // spawn is normal; non-zero for a long time means a spawn may have
+        // genuinely been lost.
+        if (!s_unconfirmedEntities.empty()) {
+            ImVec4 warnColor(1.f, 0.7f, 0.2f, 1.f);
+            ImGui::TextColored(warnColor, "Unconfirmed: %zu (awaiting spawn)",
+                s_unconfirmedEntities.size());
+        } else {
+            ImGui::TextDisabled("Unconfirmed: 0");
+        }
     } else {
         ImGui::Text("Digest interval: %.0f ms  (%.0f Hz)",
             kDigestInterval * 1000.f, 1.f / kDigestInterval);

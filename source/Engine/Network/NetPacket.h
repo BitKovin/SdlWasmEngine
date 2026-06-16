@@ -28,7 +28,16 @@ enum class PacketType : uint8_t {
     // Server diffs this against its authoritative state and sends targeted
     // corrections (SpawnEntity / EntityUpdate / DespawnEntity) back to only
     // this client, without touching the normal broadcast update queue.
-    EntityDigest      = 11
+    EntityDigest      = 11,
+
+    // Server → Client (the entity's owner), reliable.
+    // Payload: uint64 networkId.
+    // Sent when a client's digest has reported an entity ID the server has
+    // no record of for longer than a grace window — i.e. the original
+    // SpawnEntity likely never arrived (not just "in flight"). Asks the
+    // owning client to resend it. The client looks the ID up locally; if it
+    // still owns that entity, it re-broadcasts SpawnEntity for it.
+    SpawnRequest      = 12
 };
 
 enum class RPCTarget : uint8_t {

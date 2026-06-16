@@ -42,10 +42,31 @@ class LevelObjectFactory;
 // The server ProcessEntityDigest() diffs the client's view against its own
 // authoritative state (s_entities + s_entityUpdateCache) and sends targeted
 // reliable corrections without touching the broadcast update queue:
-//   • Client missing entity       → PT_SpawnEntity to that client
-//   • Client hash ≠ server hash   → PT_EntityUpdate to that client
-//   • Client has unknown entity   → PT_DespawnEntity to that client
+//   • Client missing entity            → PT_SpawnEntity to that client
+//   • Client hash ≠ server hash        → PT_EntityUpdate to that client (skipped
+//                                         for entities that client itself owns —
+//                                         it is authoritative for those)
+//   • Client reports an unknown ID     → only destroyed if s_recentlyDespawned
+//                                         positively confirms it was really
+//                                         despawned; otherwise tracked and, if
+//                                         it persists, met with PT_SpawnRequest
+//                                         rather than a destructive command —
+//                                         see "Bidirectional reconciliation" below.
 // All corrections are batched into one CompressAndSend call per client.
+//
+// Bidirectional reconciliation safety net
+// ----------------------------------------
+// An ID absent from s_entities is ambiguous: it might be a real ghost the
+// client should drop, OR a brand-new entity the client owns and registered
+// locally — the client's digest can easily outrace the reliable SpawnEntity
+// packet announcing that entity to the server, since local registration is
+// instant but network delivery isn't. Treating both cases identically would
+// mean the server can order a client to destroy something it legitimately
+// owns. So "destroy" requires positive proof (s_recentlyDespawned, populated
+// by every Unregister() regardless of who initiated it); everything else
+// goes into s_unconfirmedEntities and, only if it persists well past any
+// plausible delivery delay (kSpawnResendRequestDelay), is met with an active
+// PT_SpawnRequest asking the owning client to resend — never a destroy.
 //
 // Late-join flow
 // --------------
@@ -270,7 +291,57 @@ private:
     static constexpr float     kDigestInterval = 0.5f; // 2 Hz
 
     // -----------------------------------------------------------------------
-    // Debug stats  (reset each flush, displayed in DrawDebugUi)
+    // Bidirectional reconciliation safety nets  (server only)
+    //
+    // ProcessEntityDigest's Case B ("client reports an ID the server doesn't
+    // have") is inherently ambiguous: the ID could be
+    //   (a) a real ghost — a despawn the client missed, or
+    //   (b) a brand-new client-owned entity whose reliable SpawnEntity packet
+    //       simply hasn't been processed by the server yet — registration
+    //       happens locally and instantly on the owning client, so the very
+    //       next digest (≤0.5 s later) can easily outrace a SpawnEntity that
+    //       is still in flight or queued behind other reliable traffic.
+    //
+    // Treating both as (a) means the server can tell a client to destroy an
+    // entity it legitimately owns and just created. To avoid that, "destroy"
+    // is only issued for IDs we can positively confirm were really despawned;
+    // everything else is tracked and, if it persists well past any plausible
+    // network delay, met with an active request to resend rather than a
+    // destructive command.
+    // -----------------------------------------------------------------------
+
+    // networkId → seconds since this ID was confirmed despawned via Unregister.
+    // Populated for every removal regardless of who initiated it, so Case B
+    // can require positive proof before telling a client to destroy something.
+    static std::unordered_map<uint64_t, float> s_recentlyDespawned;
+    static constexpr float kDespawnConfirmationWindow = 30.0f; // prune after this
+
+    // Tracks IDs reported by a digest that are neither in s_entities nor in
+    // s_recentlyDespawned — i.e. genuinely unknown, not confirmed-destroyed.
+    struct UnconfirmedEntity {
+        float   ageSinceFirstReported = 0.0f;
+        uint8_t reportedByPeerId      = 255; // who to ask to resend
+        bool    resendRequested       = false; // avoid spamming SpawnRequest
+    };
+    static std::unordered_map<uint64_t, UnconfirmedEntity> s_unconfirmedEntities;
+
+    // How long an ID may sit unconfirmed before we actively ask its reporting
+    // peer to resend the spawn.  Well above the normal digest interval and
+    // any plausible reliable-channel delay, so it only fires for genuine loss
+    // (e.g. a reconnect that broke the reliable channel's delivery guarantee),
+    // not ordinary spawn/digest races.
+    static constexpr float kSpawnResendRequestDelay = 2.0f;
+
+    // Give up tracking (and stop asking) past this point to bound memory.
+    static constexpr float kUnconfirmedEntityCeiling = 60.0f;
+
+    // Ages s_recentlyDespawned / s_unconfirmedEntities and prunes expired
+    // entries.  Called once per server Tick.
+    static void PruneReconciliationState(float dt);
+
+    // -----------------------------------------------------------------------
+    // Debug stats  (reflect the most recently processed digest cycle —
+    // reset at the top of ProcessEntityDigest, not session-cumulative)
     // -----------------------------------------------------------------------
 
     struct DeltaStats {
