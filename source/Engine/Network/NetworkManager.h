@@ -20,24 +20,41 @@ class LevelObjectFactory;
 //
 // Static singleton.  Owns nothing; all lifetime is managed by the caller.
 //
-// Class identification
-// --------------------
-// There are no manually assigned class IDs in packet headers.  Instead,
-// NetworkManager::Init reads LevelObjectFactory's registry (which is a
-// std::map<string, …> and therefore always sorted the same way) and builds
-// a uint16_t wire index for each registered type.  Index 0 is assigned to
-// the alphabetically first name, 1 to the second, and so on.  Because both
-// peers run identical code, the assignment is deterministic without any
-// coordination.  The index is what travels in PT_SpawnEntity and
-// PT_FullSnapshot.  Collision is structurally impossible: the map already
-// enforces unique names.
+// Entity update pipeline (server → client)
+// ----------------------------------------
+// Frame N:  entities call PushNetworkUpdate → EnqueueEntityUpdate stores the
+//           serialised payload in s_pendingEntityStates (map, latest wins).
+// Tick:     FlushUpdateQueue runs the delta check per entity (FNV-1a hash vs
+//           lastSentHash in s_entityUpdateCache).  Unchanged entities are
+//           skipped; changed ones are concatenated and compressed as a single
+//           blob per target.  lastSentPayload is also stored so corrections
+//           can be resent without re-serialising.
 //
-// Sending model
-// -------------
-// Entity-update packets are accumulated every game frame and flushed once
-// per network tick (default 20 Hz) as a single compressed bundle.
-// Reliable packets (handshake, spawn, despawn, RPC) bypass the queue and
-// are compressed and sent immediately.
+// Reconciliation digest (client → server → corrections)
+// -------------------------------------------------------
+// Every kDigestInterval (0.5 s, 2 Hz) the client sends PT_EntityDigest:
+//   uint16  entityCount
+//   N ×  { uint64 networkId, uint32 stateHash }
+// where stateHash is the hash of the last payload the client received for
+// that entity (stored in s_entityReceivedHash; updated on every EntityUpdate
+// and FullSnapshot receipt).
+//
+// The server ProcessEntityDigest() diffs the client's view against its own
+// authoritative state (s_entities + s_entityUpdateCache) and sends targeted
+// reliable corrections without touching the broadcast update queue:
+//   • Client missing entity       → PT_SpawnEntity to that client
+//   • Client hash ≠ server hash   → PT_EntityUpdate to that client
+//   • Client has unknown entity   → PT_DespawnEntity to that client
+// All corrections are batched into one CompressAndSend call per client.
+//
+// Late-join flow
+// --------------
+// Peers that connect while the level is already live are tracked in
+// s_lateJoiners.  When their PT_ClientReady arrives the server sends them
+// PT_LevelReady + PT_FullSnapshot (targeted) instead of broadcasting
+// PT_LevelReady to everyone and calling OnLevelReady() server-side a second
+// time.  The FullSnapshot populates the client's s_entityReceivedHash so
+// the very first digest is already authoritative.
 // ---------------------------------------------------------------------------
 
 class NetworkManager {
@@ -48,30 +65,17 @@ public:
     // Lifecycle
     // -----------------------------------------------------------------------
 
-    // Initialize.  Must be called before any level loads.
-    //
-    // Reads LevelObjectFactory::instance().GetRegistry() to build the stable
-    // wire-index table.  The factory must be fully populated before this call.
-    //
-    // transport       — must remain alive for the session.
-    // asServer        — true if this peer is the host (peerId = 0).
-    // networkTickRate — entity-update flush rate in Hz (default 20).
     static void Init(INetworkTransport* transport, bool asServer,
                      float networkTickRate = 20.0f);
-
-    // Tear down: flush queues, disconnect transport, reset all tables.
-    // Safe to call even if Init was never called.
     static void Shutdown();
 
-    // Called once per frame by the engine main loop.
-    //
-    // Phase 1 — Receive: poll transport, dispatch all arrived packets.
-    // Phase 2 — Gather:  call PushNetworkUpdate on every owned entity,
-    //                    enqueuing their state into s_updateQueue.
-    // Phase 3 — Flush:   when the network tick interval has elapsed,
-    //                    concatenate, compress, and send the update queue.
-    //
-    // No-op if isLoadingLevel is true.
+    // One call per engine frame.
+    //   Phase 1 — Receive:  poll transport, dispatch arrived packets.
+    //   Phase 2 — Gather:   call PushNetworkUpdate on every owned entity.
+    //   Phase 3 — Flush:    when the network tick interval has elapsed,
+    //                       run delta check, compress, send.
+    //   Phase 4 — Digest:   client sends PT_EntityDigest every 0.5 s.
+    //   Phase 5 — Validate: server broadcasts FullSnapshot every 15 s.
     static void Tick(float dt);
 
     // -----------------------------------------------------------------------
@@ -87,18 +91,8 @@ public:
     // Level load coordination  (called by Level, not by game entity code)
     // -----------------------------------------------------------------------
 
-    // Mark start of a level load.  Resets the runtime ID sequence counter.
-    // Must be called before Level::Load() begins adding entities.
     static void BeginLevelLoad(Level* level);
-
-    // Called by Level::FinishLoading() after all load-phase entities are added.
-    // Server → broadcasts PT_LevelLoadComplete; waits for PT_ClientReady.
-    // Client → sends PT_ClientReady; waits for PT_LevelReady.
     static void OnLevelLoaded();
-
-    // Called internally once all peers are confirmed ready.
-    // Transitions out of loading state, fires OnNetworkSpawn, flushes queue.
-    // Must not be called by game code.
     static void OnLevelReady();
 
     // -----------------------------------------------------------------------
@@ -113,35 +107,27 @@ public:
     // ID allocation
     // -----------------------------------------------------------------------
 
-    // Allocates the next runtime ID in ownerId's namespace:
-    //   (ownerId << 20) | localRuntimeSeq++
     static uint64_t AllocateRuntimeId(uint8_t ownerId);
-
     static uint64_t MakeLoadPhaseId(const std::string& entityId);
 
     // -----------------------------------------------------------------------
     // Broadcast helpers  (called by Level only)
     // -----------------------------------------------------------------------
 
-    static void BroadcastSpawn  (NetworkedEntity* entity);
-    static void BroadcastDespawn(uint64_t networkId);
-
+    static void BroadcastSpawn      (NetworkedEntity* entity);
+    static void BroadcastDespawn    (uint64_t networkId);
     static void BroadcastOwnerChange(uint64_t networkId, uint8_t newOwner);
 
     // -----------------------------------------------------------------------
     // Per-entity update  (called by NetworkedEntity::PushNetworkUpdate only)
     // -----------------------------------------------------------------------
 
-    // Appends a PT_EntityUpdate packet into s_updateQueue.
-    // Not sent until the next network tick flush.
     static void EnqueueEntityUpdate(NetworkedEntity* entity);
 
     // -----------------------------------------------------------------------
-    // RPC  (called by NetworkedEntity::SendRPC only)
+    // RPC
     // -----------------------------------------------------------------------
 
-    // Sends a reliable RPC immediately (never batched).
-    // See RPC_HOWTO.md for the full explanation of authority and routing.
     static void SendRPC(uint64_t networkId, uint8_t rpcId,
                         NetPacket& args, RPCTarget target);
 
@@ -149,13 +135,7 @@ public:
     // Server helpers
     // -----------------------------------------------------------------------
 
-    // Spawn an entity on behalf of a remote client (e.g. PlayerCharacter).
-    // Allocates an ID in the client's namespace and broadcasts PT_SpawnEntity.
-    // Must only be called on the server.
-    static void SpawnForPlayer(NetworkedEntity* entity, uint8_t targetPeerId);
-
-    // Send the full world snapshot to a single late-joining client.
-    // Must only be called on the server.
+    static void SpawnForPlayer    (NetworkedEntity* entity, uint8_t targetPeerId);
     static void SendFullSnapshotTo(uint8_t targetPeerId);
 
     // -----------------------------------------------------------------------
@@ -167,11 +147,9 @@ public:
     static void OnPeerConnected   (uint8_t peerId);
     static void OnPeerDisconnected(uint8_t peerId);
 
-    static float GetTickRate() { return s_networkTickRate; }
-
+    static float       GetTickRate() { return s_networkTickRate; }
     static NetworkStat GetStat();
-
-    static void DrawDebugUi();
+    static void        DrawDebugUi();
 
 private:
     // -----------------------------------------------------------------------
@@ -184,108 +162,165 @@ private:
     static uint8_t      s_localPeerId;
     static uint32_t     s_localRuntimeSeq;
     static uint16_t     s_outboundSeq;
-
     static uint32_t     s_loadTimeIdSeq;
 
-    // Network tick accumulator
-    static float        s_networkTickRate;   // Hz, set in Init
-    static float        s_networkTickAccum;  // seconds accumulated since last flush
+    static float        s_networkTickRate;
+    static float        s_networkTickAccum;
     static float        s_validationTickAccum;
-    static float        kValidationInterval;
+    static float        kValidationInterval;   // 15 s — safety net only
 
-    static Level*                s_level;
-    static INetworkTransport*    s_transport;
+    static Level*             s_level;
+    static INetworkTransport* s_transport;
 
     // -----------------------------------------------------------------------
     // Class registry
-    //
-    // Built once in Init() from LevelObjectFactory::GetRegistry().
-    // The factory's std::map is sorted, so the indices are stable across all
-    // peers without any negotiation.
-    //
-    // s_nameToIndex : className  → uint16_t wire index (used when sending)
-    // s_indexToName : wire index → className           (used when receiving)
-    //
-    // Factories for NetworkedEntity subclasses are fetched from
-    // LevelObjectFactory at lookup time; we do not duplicate them here.
     // -----------------------------------------------------------------------
+
     static std::unordered_map<std::string, uint16_t> s_nameToIndex;
     static std::vector<std::string>                  s_indexToName;
 
     // networkId → entity
     static std::unordered_map<uint64_t, NetworkedEntity*> s_entities;
 
-    // Server: peers that have not yet sent PT_ClientReady
+    // Server: peers whose PT_ClientReady has not yet arrived (initial load)
     static std::set<uint8_t> s_pendingReadyClients;
 
-    // Packets received before OnLevelReady() fires.
-    // Stored as individual compressed NetPacket slices so FlushPreLiveQueue
-    // can replay them through the normal OnPacketReceived path.
+    // Server: peers that connected while the level was already live.
+    // Separated from s_pendingReadyClients so the initial-load "all ready?"
+    // check ignores them.  Cleared when their PT_ClientReady arrives.
+    static std::set<uint8_t> s_lateJoiners;
+
     struct QueuedPacket {
         uint8_t              senderId;
-        std::vector<uint8_t> buffer; // one compressed NetPacket
+        std::vector<uint8_t> buffer;
     };
     static std::vector<QueuedPacket> s_preLiveQueue;
 
     // -----------------------------------------------------------------------
-    // Outbound update queue
+    // Delta-compression entity map
     //
-    // Populated every frame by EnqueueEntityUpdate.  Flushed once per network
-    // tick by FlushUpdateQueue.  Entries are grouped by routing target so all
-    // updates for the same destination are concatenated into one compressed
-    // blob — giving zlib more bytes to work with.
-    //
-    // Reliable packets (spawns, despawns, RPCs) are never queued here; they
-    // are compressed and sent immediately via SendReliableNow.
+    // Populated each frame by EnqueueEntityUpdate; keyed by networkId so
+    // multiple writes per tick automatically keep the freshest state only.
+    // Flushed and cleared by FlushUpdateQueue.
     // -----------------------------------------------------------------------
+
+    struct PendingEntityState {
+        std::vector<uint8_t> payloadBytes; // networkId + entity state, no header
+        uint8_t              targetPeerId;
+    };
+    static std::unordered_map<uint64_t, PendingEntityState> s_pendingEntityStates;
+
+    // -----------------------------------------------------------------------
+    // Delta-compression cache
+    //
+    // One entry per entity, updated on every sent EntityUpdate.
+    //
+    // lastSentPayload is kept alongside lastSentHash so ProcessEntityDigest
+    // can resend a correction without re-serialising the entity.
+    // -----------------------------------------------------------------------
+
+    struct EntityUpdateCache {
+        uint32_t             lastSentHash     = 0;
+        std::vector<uint8_t> lastSentPayload; // full EntityUpdate payload bytes
+        float                timeSinceLastSent = 999.0f; // large → force first send
+        bool                 everSent         = false;
+    };
+    static std::unordered_map<uint64_t, EntityUpdateCache> s_entityUpdateCache;
+
+    // Resend unchanged entity state periodically as a reliability heartbeat.
+    static constexpr float kIdleResendInterval = 3.0f; // seconds
+
+    // -----------------------------------------------------------------------
+    // Relay queue  (server only)
+    //
+    // Batches client-EntityUpdate relays so each unique sender produces one
+    // compressed BroadcastExcept call per flush instead of one per entity.
+    //
+    // Also: when queueing a relay the server records the hash + payload in
+    // s_entityUpdateCache so ProcessEntityDigest has a reference for
+    // client-owned entities too.
+    // -----------------------------------------------------------------------
+
+    struct RelayUpdate {
+        std::vector<uint8_t> bytes;
+        uint8_t              excludePeerId;
+    };
+    static std::vector<RelayUpdate> s_relayQueue;
+
+    // Legacy unreliable queue (non-entity unreliable updates, if any)
     struct PendingUpdate {
-        std::vector<uint8_t> bytes;        // finalized, uncompressed NetPacket bytes
-        uint8_t              targetPeerId; // 255 = broadcast; 0–254 = specific peer
+        std::vector<uint8_t> bytes;
+        uint8_t              targetPeerId;
     };
     static std::vector<PendingUpdate> s_updateQueue;
+
+    // -----------------------------------------------------------------------
+    // Reconciliation digest
+    //
+    // Client-side: hash of the last payload received for each entity.
+    //   Updated in DispatchPacket when an EntityUpdate or FullSnapshot arrives.
+    //   Sent to the server in PT_EntityDigest every kDigestInterval seconds.
+    //
+    // Server-side: nothing extra — uses s_entityUpdateCache for its reference.
+    // -----------------------------------------------------------------------
+
+    static std::unordered_map<uint64_t, uint32_t> s_entityReceivedHash;
+
+    static float               s_digestAccum;
+    static constexpr float     kDigestInterval = 0.5f; // 2 Hz
+
+    // -----------------------------------------------------------------------
+    // Debug stats  (reset each flush, displayed in DrawDebugUi)
+    // -----------------------------------------------------------------------
+
+    struct DeltaStats {
+        // Delta compression (per flush)
+        uint32_t entitiesTotal   = 0;
+        uint32_t entitiesSent    = 0;
+        uint32_t entitiesSkipped = 0;
+        // Reconciliation (per digest cycle, server-side)
+        uint32_t digestMissing   = 0; // entities sent as SpawnEntity correction
+        uint32_t digestStale     = 0; // entities sent as EntityUpdate correction
+        uint32_t digestPhantom   = 0; // entities sent as DespawnEntity correction
+    };
+    static DeltaStats s_deltaStats;
 
     // -----------------------------------------------------------------------
     // Internal helpers
     // -----------------------------------------------------------------------
 
-    // Build s_nameToIndex / s_indexToName from LevelObjectFactory.
     static void BuildClassRegistry();
-
-    // Resolve a wire index to a class name.  Returns "" if out of range.
     static const std::string& IndexToName(uint16_t index);
-
-    // Resolve a class name to a wire index.  Asserts if not found.
-    static uint16_t NameToIndex(const std::string& name);
+    static uint16_t           NameToIndex(const std::string& name);
 
     static void OnEntityListReceived(uint8_t senderId, NetPacket& packet);
     static void FlushPreLiveQueue();
     static void DispatchPacket(uint8_t senderId, NetPacket& packet);
     static void FlushUpdateQueue();
 
-    // Compress bytes and send via transport immediately (reliable).
-    // Routing: server → targetPeerId (255 = broadcast to all); client → server.
-    static void SendReliableNow(const std::vector<uint8_t>& bytes,
-                                uint8_t targetPeerId);
+    // Builds and sends PT_EntityDigest to the server (client only, 2 Hz).
+    static void SendEntityDigest();
 
-    // Compress and relay to all peers except one (reliable, server only).
+    // Diffs a client's digest against authoritative state and sends targeted
+    // corrections (server only).  Corrections are reliable and bypass the
+    // broadcast update queue entirely.
+    static void ProcessEntityDigest(uint8_t clientPeerId, NetPacket& packet);
+
+    static void SendReliableNow   (const std::vector<uint8_t>& bytes,
+                                   uint8_t targetPeerId);
     static void RelayReliableExcept(uint8_t excludePeerId,
                                     const std::vector<uint8_t>& bytes);
+    static void RelayReliableAll  (const std::vector<uint8_t>& bytes);
 
-    // Compress and relay to all peers (reliable, server only).
-    static void RelayReliableAll(const std::vector<uint8_t>& bytes);
-
-    // Push finalized bytes into s_updateQueue for the next tick flush.
     static void EnqueueUpdate(std::vector<uint8_t> bytes, uint8_t targetPeerId);
 
-    // Stamp senderId + outbound sequence number, finalize, return raw bytes.
     static std::vector<uint8_t> FinalizeOutbound(NetPacket& pkt);
 
-    // Compress bytes and call the appropriate transport method.
-    // Single primitive — all outgoing traffic passes through here.
     static void CompressAndSend(const uint8_t* data, size_t length,
                                 uint8_t targetPeerId, bool reliable);
 
-    // Returns true for packet types that bypass the pre-live queue and are
-    // always sent reliably and immediately (never batched).
     static bool IsHandshakePacket(PacketType type);
+
+    // FNV-1a 32-bit — fast dirty-check hash for delta compression + digest.
+    static uint32_t HashPayload(const uint8_t* data, size_t size);
 };

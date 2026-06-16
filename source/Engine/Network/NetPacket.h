@@ -7,7 +7,7 @@
 #include <glm.h>
 
 // ---------------------------------------------------------------------------
-// PacketType / RPCTarget enums (§5)
+// PacketType / RPCTarget enums
 // ---------------------------------------------------------------------------
 
 enum class PacketType : uint8_t {
@@ -21,7 +21,14 @@ enum class PacketType : uint8_t {
     EntityUpdate      = 7,
     RPC               = 8,
     LevelInfo         = 9,
-    OwnerChange       = 10
+    OwnerChange       = 10,
+
+    // Client → Server, 2 Hz.
+    // Payload: uint16 entityCount + N × (uint64 networkId + uint32 stateHash).
+    // Server diffs this against its authoritative state and sends targeted
+    // corrections (SpawnEntity / EntityUpdate / DespawnEntity) back to only
+    // this client, without touching the normal broadcast update queue.
+    EntityDigest      = 11
 };
 
 enum class RPCTarget : uint8_t {
@@ -31,51 +38,77 @@ enum class RPCTarget : uint8_t {
 };
 
 // ---------------------------------------------------------------------------
-// NetPacket (§5)
+// NetPacket
 //
-// Single serialization and transport container.
-// Header layout (10 bytes, always present):
+// Single serialisation and transport container.
+//
+// Header layout (10 bytes):
 //   uint8_t   packetType
 //   uint8_t   senderId
-//   uint16_t  sequenceNumber
-//   uint16_t  payloadLength
-//   uint16_t  checksum         (CRC-16 over type+senderId+seq+payloadLen+payload)
+//   uint16_t  sequenceNumber   (big-endian)
+//   uint32_t  payloadLength    (big-endian)
+//   uint16_t  checksum         (CRC-16/CCITT-FALSE over all header fields + payload)
+//
 // ---------------------------------------------------------------------------
 
 class NetPacket {
 public:
-    // ── Construction ──────────────────────────────────────────────────────
+    // ── Construction ─────────────────────────────────────────────────────
 
-    // Outbound packet.
     explicit NetPacket(PacketType type);
-
-    // Default-constructible so it can be used as an out-param in Parse().
     NetPacket() = default;
 
-    // Parse an inbound raw byte buffer.
-    // Returns false (and leaves 'out' invalid) on checksum mismatch or
-    // truncated header.
+    // Parse an inbound raw buffer.  Returns false on checksum mismatch or
+    // truncated header; leaves 'out' invalid in that case.
     static bool Parse(const uint8_t* buffer, size_t length, NetPacket& out);
 
 
-    // ── Write (append to payload) ─────────────────────────────────────────
+    // ── Write (append to payload) ────────────────────────────────────────
 
-    void WriteBool   (bool           value);
-    void WriteInt8   (int8_t         value);
-    void WriteUInt8  (uint8_t        value);
-    void WriteInt16  (int16_t        value);
-    void WriteUInt16 (uint16_t       value);
-    void WriteInt32  (int32_t        value);
-    void WriteUInt32 (uint32_t       value);
-    void WriteUInt64 (uint64_t       value);
-    void WriteFloat  (float          value);
-    void WriteVector3(const glm::vec3& value);  // x, y, z as three floats
-    void WriteQuat   (const glm::quat& value);  // x, y, z, w as four floats
-    void WriteString (const std::string& value); // WriteUInt16(len) + bytes
+    void WriteBool   (bool             value);
+    void WriteInt8   (int8_t           value);
+    void WriteUInt8  (uint8_t          value);
+    void WriteInt16  (int16_t          value);
+    void WriteUInt16 (uint16_t         value);
+    void WriteInt32  (int32_t          value);
+    void WriteUInt32 (uint32_t         value);
+    void WriteUInt64 (uint64_t         value);
+    void WriteFloat  (float            value);
+    void WriteVector3(const glm::vec3& value);   // 12 bytes: x,y,z as full f32
+    void WriteQuat   (const glm::quat& value);   // 16 bytes: x,y,z,w as full f32
+    void WriteString (const std::string& value); // uint16 len + bytes
 
 
-    // ── Read (consume from payload in order) ──────────────────────────────
-    // Asserts in debug builds if reading past end of payload.
+    // ── Quantised write helpers ──────────────────────────────────────────
+    //
+    // These opt-in helpers trade a small amount of precision for a large
+    // reduction in per-entity bandwidth.  Use them in NetSerialize /
+    // NetDeserialize pairs; they are completely independent of the full-
+    // precision helpers above.
+    //
+    // WritePackedVec3 — 6 bytes (vs 12 for WriteVector3)
+    //   Each axis is quantised to a signed 16-bit integer.
+    //   invScale = 1.0 / desired_precision_in_world_units.
+    //   Example: invScale = 100.0   → 0.01 m precision, ±327 m range
+    //            invScale =  10.0   → 0.10 m precision, ±3276 m range
+    //            invScale = 1000.0  → 0.001 m precision, ±32 m range
+    //   Matching read: ReadPackedVec3(1.0f / invScale)
+    //
+    // WritePackedQuat — 4 bytes (vs 16 for WriteQuat)
+    //   Smallest-three encoding: drops the largest-magnitude component (always
+    //   reconstructable from the unit-quaternion constraint) and quantises the
+    //   remaining three to 10 bits each.  Error is ~0.001 rad (~0.06°).
+    //   Matching read: ReadPackedQuat()
+
+    void      WritePackedVec3(const glm::vec3& v, float invScale);
+    glm::vec3 ReadPackedVec3 (float scale);
+
+    void      WritePackedQuat(const glm::quat& q);
+    glm::quat ReadPackedQuat ();
+
+
+    // ── Read (consume from payload in order) ────────────────────────────
+    // Debug-asserts in debug builds if reading past end.
 
     bool        ReadBool();
     int8_t      ReadInt8();
@@ -91,7 +124,7 @@ public:
     std::string ReadString();
 
 
-    // ── Metadata ──────────────────────────────────────────────────────────
+    // ── Metadata ─────────────────────────────────────────────────────────
 
     PacketType GetType()           const;
     uint8_t    GetSenderId()       const;
@@ -102,31 +135,34 @@ public:
     void SetSequenceNumber(uint16_t seq);
 
 
-    // ── Serialization ─────────────────────────────────────────────────────
+    // ── Serialisation ────────────────────────────────────────────────────
 
-    // Finalize: writes payloadLength + checksum into header, returns full bytes.
-    // Must be called exactly once after all Write calls.
+    // Finalise: stamps payloadLength + checksum, returns the complete wire
+    // bytes (header + payload).  Call exactly once, after all Write calls.
     std::vector<uint8_t> Finalize();
 
+    // Build a fully-formed wire packet from a pre-built payload vector
+    // without constructing a NetPacket object.  Used by NetworkManager's
+    // flush path to avoid allocating/filling a throw-away packet object
+    // for each entity update.
+    static std::vector<uint8_t> BuildFromPayload(PacketType       type,
+                                                  uint8_t          senderId,
+                                                  uint16_t         seq,
+                                                  const std::vector<uint8_t>& payload);
+
     // Returns a copy with the read cursor reset to payload start.
-    // Used by the server to relay received packets without re-serializing.
     NetPacket RewindedCopy() const;
 
 
     // ── Helpers used by NetworkManager ───────────────────────────────────
 
-    // Returns a const reference to the raw payload bytes.
-    // Used when copying RPC args into a relay packet.
     const std::vector<uint8_t>& GetPayloadBytes() const;
 
-    // Copies all bytes from the current read cursor to the end of this
-    // packet's payload into 'dest' via WriteUInt8 calls.
-    // Used when the server needs to relay a packet that it partially read.
     void CopyRemainingTo(NetPacket& dest) const;
 
 
-    // ── Internal size (header only, no payload) ───────────────────────────
-    static constexpr size_t HEADER_SIZE = 10;
+    // ── Constants ────────────────────────────────────────────────────────
+    static constexpr size_t HEADER_SIZE = 10; // 1+1+2+4+2
 
 private:
     PacketType            type_           = PacketType::PeerIdAssign;
@@ -145,7 +181,7 @@ private:
                                      const uint8_t* payload,
                                      size_t         payloadSize);
 
-    // Low-level write helpers (little-endian)
+    // Low-level write helpers (big-endian / network byte order)
     void AppendU8 (uint8_t  v);
     void AppendU16(uint16_t v);
     void AppendU32(uint32_t v);

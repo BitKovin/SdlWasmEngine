@@ -98,9 +98,8 @@ void NpcHumanBase::ResolveTarget()
 // players directly as NetworkedEntities.
 void NpcHumanBase::UpdatePerception()
 {
-    if (currentTarget.IsValid() && currentTarget.Resolve())
-        DebugDraw::Line(Position, currentTarget.Resolve()->Position);
 
+    if (IsDead()) return;
 
     // Create observer lazily so it works after an ownership transfer.
     if (observer == nullptr)
