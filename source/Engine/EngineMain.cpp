@@ -730,6 +730,8 @@ void EngineMain::GameUpdate()
         ZoneScopedN("NetworkManager Update");
 
         NetworkManager::Tick(Time::DeltaTimeF);
+        Level::Current->AddPendingLevelObjects();
+        Level::Current->RemovePendingEntities();
 
     }
 

@@ -118,8 +118,6 @@ public:
     virtual void OnNetworkSpawn()   {}
     virtual void OnNetworkDespawn() {}
 
-    void Destroy() override;
-
     // ── Ownership transfer ───────────────────────────────────────────────
     // Both functions are no-ops when CanMigrateOwner is false.
     // The change is broadcast reliably to all peers via PacketType::OwnerChange.

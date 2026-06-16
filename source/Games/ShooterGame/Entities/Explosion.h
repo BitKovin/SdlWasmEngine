@@ -1,25 +1,25 @@
 // Explosion.h
 #pragma once
 
-#include <Entity.h>
+#include <Network/NetworkedEntity.h>
 #include <SkeletalMesh.hpp>
 #include <vector>
 #include <cmath>
 
 enum class ExplosionLayer { Flash, Fireball, InnerFire, Spark, Smoke };
 
-struct ExplosionParticle
-{
-    StaticMesh* mesh = nullptr;
-    vec3            dir;          // unit spread direction
-    float           speed;        // max world-unit travel distance
-    float           peakSize;     // sphere scale at peak
-    float           lifeStart;    // seconds from entity spawn
-    float           lifeEnd;      // seconds from entity spawn
-    ExplosionLayer  layer;
+struct ExplosionParticle {
+    StaticMesh* mesh;
+    vec3 dir;
+    ExplosionLayer layer;
+
+    float speedMultiplier;
+    float sizeMultiplier;
+    float startFraction;
+    float endFraction;
 };
 
-class Explosion : public Entity
+class Explosion : public NetworkedEntity
 {
 public:
     Explosion();
@@ -66,4 +66,8 @@ private:
     static vec4 FlashColor(float t);
     static vec4 FireballColor(float t);
     static vec4 SmokeColor(float t);
+
+    void NetSerialize(NetPacket& packet);
+    void NetDeserialize(NetPacket& packet);
+
 };

@@ -325,7 +325,6 @@ void WeaponFirearm::PerformAttack()
 void WeaponFirearm::FireSingleBullet(const vec3& startLoc, const vec4& gridOffset)
 {
 	Bullet* bullet = static_cast<Bullet*>(LevelObjectFactory::instance().create(params.bulletClass));
-	Level::Current->AddEntity(bullet);
 
 	bullet->debuffOnHit = params.debuffOnHit;
 	bullet->debuffStacks = params.debuffStacksOnHit;
@@ -352,6 +351,7 @@ void WeaponFirearm::FireSingleBullet(const vec3& startLoc, const vec4& gridOffse
 	bullet->Speed = params.bulletSpeed;
 	bullet->Position = startLoc + offset * 0.002f;
 	bullet->Rotation = MathHelper::FindLookAtRotation(startLoc, endLoc);
+	Level::Current->AddEntity(bullet);
 	bullet->Start();
 	bullet->LoadAssetsIfNeeded();
 	bullet->Damage = params.bulletDamage;

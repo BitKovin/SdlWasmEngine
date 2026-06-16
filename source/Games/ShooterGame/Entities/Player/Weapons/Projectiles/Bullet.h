@@ -1,12 +1,12 @@
 #pragma once
 
-#include <Entity.h>
+#include <Network/NetworkedEntity.h>
 
 #include <Particle/ParticleSystem.hpp>
 
 #include <Physics.h>
 
-class Bullet : public Entity
+class Bullet : public NetworkedEntity
 {
 
 protected:
@@ -45,5 +45,8 @@ public:
 	void Update();
 
 	virtual void TargetHit(Physics::HitResult hit);
+
+	void NetSerialize(NetPacket& packet);
+	void NetDeserialize(NetPacket& packet);
 
 };

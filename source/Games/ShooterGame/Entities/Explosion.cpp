@@ -134,11 +134,33 @@ vec4 Explosion::SmokeColor(float t)
     return vec4(base, base, base, alpha) * vec4(0.4f, 0.4f, 0.4f,0.9f);
 }
 
+void Explosion::NetSerialize(NetPacket& packet)
+{
+    packet.WriteVector3(Position);
+    packet.WriteFloat(Radius);
+    packet.WriteFloat(Lifetime);
+    packet.WriteFloat(minDamage);
+    packet.WriteFloat(MaxDamage);
+    packet.WriteFloat(minPlayerDamage);
+    packet.WriteFloat(MaxPlayerDamage);
+}
+
+void Explosion::NetDeserialize(NetPacket& packet)
+{
+    Position = packet.ReadVector3();
+    Radius = packet.ReadFloat();
+    Lifetime = packet.ReadFloat();
+    minDamage = packet.ReadFloat();
+    MaxDamage = packet.ReadFloat();
+    minPlayerDamage = packet.ReadFloat();
+    MaxPlayerDamage = packet.ReadFloat();
+}
+
 // ---------------------------------------------------------------------------
 // Entity
 // ---------------------------------------------------------------------------
 
-Explosion::Explosion() {}
+Explosion::Explosion() { ClassName = "explosion"; }
 Explosion::~Explosion() {}
 
 void Explosion::LoadAssets()
@@ -150,9 +172,6 @@ void Explosion::LoadAssets()
 
 void Explosion::BuildParticles()
 {
-    const float L = Lifetime;
-    const float R = Radius;
-
     const char* kMesh = "GameData/models/effects/explosion.glb";
     const char* kTex = "GameData/models/effects/explosion.glb/";
 
@@ -161,8 +180,7 @@ void Explosion::BuildParticles()
             auto* m = new StaticMesh(this);
             m->LoadFromFile(kMesh);
             m->TexturesLocation = kTex;
-			m->blendMode = BgfxStateManager::Blend::Additive;
-            //m->SetPixelShader("fs_unlit");
+            m->blendMode = BgfxStateManager::Blend::Additive;
             m->SetPixelShader("fs_default_simple");
             m->Transparent = true;
             m->DepthWrite = false;
@@ -171,58 +189,51 @@ void Explosion::BuildParticles()
             return m;
         };
 
-    // ------------------------------------------------------------------
-    // Flash → Smoke  (6 particles, full lifetime)
-    // Stationary anchor — small speed, grows to fill center,
-    // transitions through orange into grey smoke.
-    // ------------------------------------------------------------------
+    // Flash -> Smoke
     for (int i = 0; i < 3; i++)
     {
         ExplosionParticle p;
         p.mesh = MakeMesh();
-        //p.mesh->blendMode = BgfxStateManager::Blend::Additive;
         p.dir = RandBiased(vec3(0, 1, 0), 0.3f);
-        p.speed = R * RandF(0.50f, 0.7f);   // enough to visibly separate
-        p.peakSize = R * RandF(0.75f, 0.9f);    // peak before continued growth
-        p.lifeStart = 0.f;
-        p.lifeEnd = L;
+
+        p.speedMultiplier = RandF(0.50f, 0.7f);
+        p.sizeMultiplier = RandF(0.75f, 0.9f);
+        p.startFraction = 0.f;
+        p.endFraction = 1.0f; // 100% of Lifetime
+
         p.layer = ExplosionLayer::Flash;
         particles.push_back(p);
     }
 
-    // ------------------------------------------------------------------
-    // Fireball  (9 particles)
-    // Wide speed range so they scatter visibly — fastest ones reach the
-    // edge of the blast radius, slowest stay mid-field.
-    // ------------------------------------------------------------------
+    // Fireball
     for (int i = 0; i < 3; i++)
     {
         ExplosionParticle p;
         p.mesh = MakeMesh();
         p.mesh->blendMode = BgfxStateManager::Blend::Additive;
         p.dir = RandBiased(vec3(0, 1, 0), 0.3f);
-        p.speed = R * RandF(1.0f, 2.2f) * 0.6f;     // fast — they need to travel
-        p.peakSize = R * RandF(0.40f, 0.80f);   // smaller peak — growth adds the rest
-        p.lifeStart = 0.f;
-        p.lifeEnd = L * RandF(0.50f, 0.70f);
+
+        p.speedMultiplier = RandF(1.0f, 2.2f) * 0.6f;
+        p.sizeMultiplier = RandF(0.40f, 0.80f);
+        p.startFraction = 0.f;
+        p.endFraction = RandF(0.50f, 0.70f); // 50-70% of Lifetime
+
         p.layer = ExplosionLayer::Fireball;
         particles.push_back(p);
     }
 
-    // ------------------------------------------------------------------
-    // Smoke  (10 particles)
-    // Start while fire still burns. Rise outward steadily.
-    // Large peakSize since tScale grows past 1.0 anyway.
-    // ------------------------------------------------------------------
+    // Smoke
     for (int i = 0; i < 4; i++)
     {
         ExplosionParticle p;
         p.mesh = MakeMesh();
         p.dir = RandBiased(vec3(0, 1, 0), 0.85f);
-        p.speed = R * RandF(0.80f, 1.40f);   // rises far enough to clear the fireball
-        p.peakSize = R * RandF(0.8f, 1.3f);
-        p.lifeStart = L * RandF(0.08f, 0.20f);
-        p.lifeEnd = L;
+
+        p.speedMultiplier = RandF(0.80f, 1.40f);
+        p.sizeMultiplier = RandF(0.8f, 1.3f);
+        p.startFraction = RandF(0.08f, 0.20f); // Starts at 8-20% of Lifetime
+        p.endFraction = 1.0f;
+
         p.layer = ExplosionLayer::Smoke;
         particles.push_back(p);
     }
@@ -238,6 +249,8 @@ void Explosion::Start()
     }
     DestroyWithDelay(Lifetime);
 	WeaponFireFlash::CreateAt(Position, Lifetime, Radius * 10, 2.5f);
+
+    if (isOwned == false) return;
 
     bool hasHit = true;
 
@@ -271,6 +284,9 @@ void Explosion::Start()
             damage = MathHelper::MapRange(dist, Radius / 2.0f, Radius, MaxPlayerDamage, minPlayerDamage);
         }
 
+
+
+
         hit.entity->OnPointDamage(damage, hit.position,
             normalize(hit.position - Position),
             hit.hitboxName, damageCauser, this);
@@ -287,14 +303,20 @@ void Explosion::Start()
 
 void Explosion::TickParticle(ExplosionParticle& p, float elapsed)
 {
-    if (elapsed < p.lifeStart || elapsed > p.lifeEnd)
+    // Evaluate actual start/end times based on CURRENT Lifetime
+    float currentStart = p.startFraction * Lifetime;
+    float currentEnd = p.endFraction * Lifetime;
+
+    if (elapsed < currentStart || elapsed > currentEnd)
     {
         p.mesh->Color = vec4(0.f, 0.f, 0.f, 0.f);
         return;
     }
 
-    float duration = p.lifeEnd - p.lifeStart;
-    float t = std::max(0.f, std::min(1.f, (elapsed - p.lifeStart) / duration));
+    float duration = currentEnd - currentStart;
+
+    // Safety check to prevent divide-by-zero if Lifetime drops to 0
+    float t = (duration > 0.0001f) ? std::max(0.f, std::min(1.f, (elapsed - currentStart) / duration)) : 1.f;
 
     float tPos = 0.f;
     float tScale = 0.f;
@@ -303,37 +325,24 @@ void Explosion::TickParticle(ExplosionParticle& p, float elapsed)
     switch (p.layer)
     {
     case ExplosionLayer::Flash:
-        // Drifts outward gently then stalls — it's an anchor, not a projectile
         tPos = EaseOutCubic(t);
-
-        // Ramp to full size by t=0.20, then hold — becomes smoke in place
         tScale = (t < 0.20f) ? EaseOutCubic(t / 0.20f) : 1.f;
-
-		tScale += t * 0.25f;  // slight continued growth to add to smoke later
-
+        tScale += t * 0.25f;
         color = FlashColor(t);
         break;
 
     case ExplosionLayer::Fireball:
-        // Constant outward push — linear so it keeps moving across full life
         tPos = t;
-
-        // Ramp to peak by t=0.25, then continue growing slowly (never shrinks)
         if (t < 0.25f)
             tScale = EaseOutCubic(t / 0.25f);
         else
-            tScale = 1.f + (t - 0.25f) * 0.30f;  // slow continued expansion
-
+            tScale = 1.f + (t - 0.25f) * 0.30f;
         color = FireballColor(t);
         break;
 
     case ExplosionLayer::Smoke:
-        // Slow constant rise — linear, no easing, keeps moving to end
         tPos = t;
-
-        // Grows steadily for entire life — smoke expands, never contracts
         tScale = EaseOutQuad(t) * 1.2f + t * 0.25f;
-
         color = SmokeColor(t);
         break;
 
@@ -341,8 +350,12 @@ void Explosion::TickParticle(ExplosionParticle& p, float elapsed)
         break;
     }
 
-    vec3 offset = p.dir * (p.speed * tPos) * 0.5f;
-    float s = p.peakSize * tScale;
+    // Evaluate actual sizes and speeds based on CURRENT Radius
+    float currentSpeed = p.speedMultiplier * Radius;
+    float currentPeakSize = p.sizeMultiplier * Radius;
+
+    vec3 offset = p.dir * (currentSpeed * tPos) * 0.5f;
+    float s = currentPeakSize * tScale;
 
     p.mesh->Position = Position + offset;
     p.mesh->Scale = vec3(s, s, s);

@@ -25,10 +25,8 @@ float        NetworkManager::s_networkTickRate     = 30.0f;
 float        NetworkManager::s_networkTickAccum    = 0.0f;
 float        NetworkManager::s_validationTickAccum = 0.0f;
 
-// kValidationInterval: raised from 200 ms (5 Hz) to 15 s.
-// The full snapshot is now a last-resort safety net; the 2 Hz digest
-// protocol handles all routine reconciliation far more efficiently.
-float NetworkManager::kValidationInterval = 1/2.0f;
+
+float NetworkManager::kValidationInterval = 1/5.0f;
 
 Level*             NetworkManager::s_level     = nullptr;
 INetworkTransport* NetworkManager::s_transport = nullptr;
@@ -1016,7 +1014,6 @@ void NetworkManager::DispatchPacket(uint8_t senderId, NetPacket& packet) {
         entity->networkId    = networkId;
         entity->networkOwner = networkOwner;
         entity->LoadAssetsIfNeeded();
-        entity->Start();
         entity->NetDeserialize(packet);
 
         if (!s_isServer) {
@@ -1035,6 +1032,9 @@ void NetworkManager::DispatchPacket(uint8_t senderId, NetPacket& packet) {
         }
 
         if (s_level) s_level->AddEntity(entity);
+
+        entity->Start();
+
         break;
     }
 
@@ -1048,6 +1048,7 @@ void NetworkManager::DispatchPacket(uint8_t senderId, NetPacket& packet) {
         }
 
         if (NetworkedEntity* entity = Find(networkId))
+            if(entity->isOwned == false)
             if (s_level) s_level->RemoveEntity(entity);
         break;
     }
@@ -1058,7 +1059,7 @@ void NetworkManager::DispatchPacket(uint8_t senderId, NetPacket& packet) {
         //   • Server: tracking what clients should have for client-owned entities
         //             (stored in s_entityUpdateCache so ProcessEntityDigest can
         //              reference it when the client sends a digest).
-        //   • Client: recording the last received hash in s_entityReceivedHash
+        //   • Client: dcording the last received hash in s_entityReceivedHash
         //             (included in the next PT_EntityDigest).
         //
         // Both sides compute the same hash from the same bytes, so the digest
@@ -1233,12 +1234,13 @@ void NetworkManager::OnEntityListReceived(uint8_t /*senderId*/, NetPacket& packe
 
             if (!s_isLoadingLevel) {
                 entity->LoadAssetsIfNeeded();
-                entity->Start();
             }
 
             entity->NetDeserialize(readPkt);
 
             if (s_level) s_level->AddEntity(entity);
+
+            entity->Start();
 
             if (!s_isLoadingLevel) newlySpawned.push_back(entity);
         }
@@ -1260,6 +1262,7 @@ void NetworkManager::OnEntityListReceived(uint8_t /*senderId*/, NetPacket& packe
             "[NetworkManager] Snapshot: removing stale entity %u\n",
             entity->networkId);
         if (s_level) {
+            if(entity->isOwned == false)
             s_isLoadingLevel ? s_level->RemoveEntitySilent(entity)
                              : s_level->RemoveEntity(entity);
         }

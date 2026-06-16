@@ -8,14 +8,6 @@ void NetworkedEntity::PushNetworkUpdate(float /*dt*/) {
     NetworkManager::EnqueueEntityUpdate(this);
 }
 
-void NetworkedEntity::Destroy()
-{
-
-    if (isOwned == false) return;
-
-    Entity::Destroy();
-
-}
 
 void NetworkedEntity::SendRPC(uint8_t rpcId, NetPacket& args, RPCTarget target) {
     if (!NetworkManager::IsActive()) return;

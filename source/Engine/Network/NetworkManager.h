@@ -167,7 +167,7 @@ private:
     static float        s_networkTickRate;
     static float        s_networkTickAccum;
     static float        s_validationTickAccum;
-    static float        kValidationInterval;   // 15 s — safety net only
+    static float        kValidationInterval;
 
     static Level*             s_level;
     static INetworkTransport* s_transport;

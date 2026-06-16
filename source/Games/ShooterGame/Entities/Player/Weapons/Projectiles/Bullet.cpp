@@ -13,7 +13,7 @@ REGISTER_ENTITY(Bullet, "bullet")
 
 Bullet::Bullet()
 {
-
+	DestroyOnOwnerDisconnect = true;
 }
 
 Bullet::~Bullet()
@@ -51,44 +51,71 @@ void Bullet::Update()
 
 	trail->Position = Position;
 
-	//auto hit = Physics::LineTrace(oldPos, Position, BodyType::GroupHitTest, {}, {owner});
-	auto hit = Physics::SphereTrace(oldPos, Position,0.07f, BodyType::GroupHitTest, {}, { owner });
-
-	if (hit.hasHit)
+	if (isOwned)
 	{
 
-		if (hit.entity == owner)
+		Physics::HitResult hit = Physics::SphereTrace(oldPos, Position, 0.07f, BodyType::GroupHitTest, {}, { owner });
+
+		if (hit.hasHit)
 		{
-			oldPos = Position;
+
+			if (hit.entity == owner)
+			{
+				oldPos = Position;
+				return;
+			}
+
+			if (hit.entity->HasTag(OwnerTag) == false)
+			{
+
+				TargetHit(hit);
+
+			}
+
+
+
+			//Logger::Log(hit.surfaceName);
+
+			//GlobalParticleSystem::SpawnParticleAt("hit_flesh", hit.position, MathHelper::FindLookAtRotation(vec3(0), MathHelper::FastNormalize(Position - oldPos)), vec3(2.0f));
+
+
+
+			Position = hit.position;
+			trail->Position = hit.position;
+			trail->StopAll();
+			trail->DestroyWithDelay(0.5f);
+			trail = nullptr;
+			UpdateEnabled = false;
+			Destroy();
+
+			return;
+		}
+	}
+	else
+	{
+		Physics::HitResult hit = Physics::SphereTrace(oldPos, Position, 0.1f, BodyType::World);
+
+		if (hit.hasHit)
+		{
+			UpdateEnabled = false;
+			Visible = false;
+			Position = hit.position;
+			trail->Position = hit.position;
+			trail->StopAll();
+			trail->DestroyWithDelay(0.5f);
 			return;
 		}
 
-		if (hit.entity->HasTag(OwnerTag) == false)
-		{
-
-			TargetHit(hit);
-
-		}
-
-
-
-		//Logger::Log(hit.surfaceName);
-
-		//GlobalParticleSystem::SpawnParticleAt("hit_flesh", hit.position, MathHelper::FindLookAtRotation(vec3(0), MathHelper::FastNormalize(Position - oldPos)), vec3(2.0f));
-
-
-		Destroy();
-		trail->Position = hit.position;
-		trail->StopAll();
-		trail->DestroyWithDelay(0.5f);
-		trail = nullptr;
-		return;
 	}
+
+
 
 	if (traveledDistance > MaxDistance)
 	{
+		Visible = false;
+		UpdateEnabled = false;
 		Destroy();
-		trail->Position = hit.position;
+		trail->Position = Position;// hit.position;
 		trail->StopAll();
 		trail->DestroyWithDelay(0.5f);
 		trail = nullptr;
@@ -100,6 +127,8 @@ void Bullet::Update()
 
 void Bullet::TargetHit(Physics::HitResult hit)
 {
+
+	if (isOwned == false) return;
 
 	hit.entity->OnPointDamage(Damage, hit.position, MathHelper::FastNormalize(Position - oldPos), hit.hitboxName, damageCauser, this);
 
@@ -117,5 +146,21 @@ void Bullet::TargetHit(Physics::HitResult hit)
 
 	vec3 forward = MathHelper::GetForwardVector(Rotation);
 	Physics::AddImpulseAtLocation(hit.hitbody, forward * (Damage + 2) * 14.0f, hit.position);
+
+}
+
+void Bullet::NetSerialize(NetPacket& packet)
+{
+
+	packet.WriteVector3(Position);
+	packet.WriteVector3(Rotation);
+
+}
+
+void Bullet::NetDeserialize(NetPacket & packet)
+{
+
+	Position = packet.ReadVector3();
+	Rotation = packet.ReadVector3();
 
 }

@@ -43,14 +43,16 @@ void Entity::PreloadEntityType(std::string technicalName)
 
 	if (Level::Current->IsEntityTypeLoaded(technicalName)) return; //already preloaded
 
-	auto entity = Spawn(technicalName);
+	auto entity = LevelObjectFactory::instance().create(technicalName);
 
 	if (entity)
 	{
 		//entity->Start();
 		entity->LoadAssets();
 		entity->SaveGame = false;
-		entity->Destroy();
+		entity->DestroyPhysics();
+		entity->DestroyDrawables();
+		delete(entity);
 	}
 	Level::Current->AddLoadedEntityType(technicalName);
 }
