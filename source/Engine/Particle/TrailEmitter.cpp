@@ -40,8 +40,7 @@ void TrailEmitter::GenerateIndices(std::vector<uint32_t>& dst, int n)
 // ---------------------------------------------------------------------------
 // RenderRibbon
 // ---------------------------------------------------------------------------
-bool TrailEmitter::RenderRibbon(const std::vector<Particle>& inParticles)
-{
+bool TrailEmitter::RenderRibbon(const std::vector<Particle>& inParticles, bgfx::TransientVertexBuffer& tvb, bgfx::TransientIndexBuffer& tib) {
     primitiveCount = 0;
 
     if (inParticles.size() < 2 || destroyed)
@@ -110,9 +109,7 @@ bool TrailEmitter::RenderRibbon(const std::vector<Particle>& inParticles)
 
     primitiveCount = static_cast<int>(idxCount) / 3;
 
-    bgfx::TransientVertexBuffer tvb;
-    bgfx::TransientIndexBuffer  tib;
-
+    // Allocated into references passed from DrawForward
     bgfx::allocTransientVertexBuffer(&tvb, vCount, layout);
     bgfx::allocTransientIndexBuffer(&tib, idxCount, true);
 
@@ -146,26 +143,20 @@ void TrailEmitter::DrawForward(mat4x4 view, mat4x4 projection) {
     }
     auto startState = BgfxStateManager::GetState();
 
-    // --- Stencil: clear trail's stencil region before drawing ---
-    // You need a separate pre-pass to clear stencil to 0 for this trail,
-    // OR rely on a global stencil clear at the start of the frame.
-    // Then draw with stencil: pass if == 0, increment on pass.
-
     BgfxStateManager::SetWriteDepth(true);
     BgfxStateManager::SetCull(BgfxStateManager::Cull::None);
     BgfxStateManager::SetBlend(BlendMode);
 
     // Enable stencil: PASS only if stencil == 0, then increment to 1
-    // This prevents any pixel from being touched more than once
     uint32_t stencilState =
-        BGFX_STENCIL_TEST_EQUAL                          // pass if stencil == ref
-        | BGFX_STENCIL_FUNC_REF(0)                       // ref value = 0
+        BGFX_STENCIL_TEST_EQUAL
+        | BGFX_STENCIL_FUNC_REF(0)
         | BGFX_STENCIL_FUNC_RMASK(0xFF)
-        | BGFX_STENCIL_OP_FAIL_S_KEEP                    // stencil fail: keep
-        | BGFX_STENCIL_OP_FAIL_Z_KEEP                    // depth fail: keep
-        | BGFX_STENCIL_OP_PASS_Z_INCR;                   // depth+stencil pass: increment
+        | BGFX_STENCIL_OP_FAIL_S_KEEP
+        | BGFX_STENCIL_OP_FAIL_Z_KEEP
+        | BGFX_STENCIL_OP_PASS_Z_INCR;
 
-    bgfx::setStencil(stencilState, stencilState);   // back face = no stencil (culled anyway)
+    bgfx::setStencil(stencilState, stencilState);
 
     Shader* shader = ShaderManager::GetShaderProgram("vs_default", PixelShader);
     if (shader == nullptr) return;
@@ -177,19 +168,43 @@ void TrailEmitter::DrawForward(mat4x4 view, mat4x4 projection) {
     shader->SetUniform("is_particle", true);
     shader->SetUniform("is_decal", false);
     shader->SetUniform("viewmodelScaleFactor", 1);
-    shader->SetUniform("isViewmodel", IsViewmodel);
     Renderer::SetSurfaceShaderUniforms(shader);
     shader->SetTexture("u_texture", savedTexture);
-    if (!RenderRibbon(finalizedParticles))
+
+    // Local transient instances to bypass scope restrictions safely
+    bgfx::TransientVertexBuffer tvb;
+    bgfx::TransientIndexBuffer  tib;
+
+    if (!RenderRibbon(finalizedParticles, tvb, tib))
     {
-        bgfx::setStencil(BGFX_STENCIL_NONE, BGFX_STENCIL_NONE); // restore before early out
+        bgfx::setStencil(BGFX_STENCIL_NONE, BGFX_STENCIL_NONE);
         BgfxStateManager::SetState(startState);
         return;
     }
+
     BgfxStateManager::Apply();
     shader->Submit(ViewIdManager::GetCurrentId());
 
-    // Restore stencil to no-op for subsequent draws
+    // --- Second Pass: Reset stencil back to 0 where we just drew ---
+    uint32_t stencilStateClear =
+        BGFX_STENCIL_TEST_ALWAYS
+        | BGFX_STENCIL_FUNC_REF(0)
+        | BGFX_STENCIL_FUNC_RMASK(0xFF)
+        | BGFX_STENCIL_OP_FAIL_S_KEEP
+        | BGFX_STENCIL_OP_FAIL_Z_KEEP
+        | BGFX_STENCIL_OP_PASS_Z_REPLACE;
+
+    // Rebind the identical frame-allocated buffer pointers 
+    bgfx::setVertexBuffer(0, &tvb);
+    bgfx::setIndexBuffer(&tib);
+
+    bgfx::setStencil(stencilStateClear, stencilStateClear);
+    BgfxStateManager::SetWriteAlpha(false);
+    BgfxStateManager::SetWriteRGB(false);
+    BgfxStateManager::Apply();
+    shader->Submit(ViewIdManager::GetCurrentId());
+
+    // Restore stencil to no-op for subsequent engine draws
     bgfx::setStencil(BGFX_STENCIL_NONE, BGFX_STENCIL_NONE);
     BgfxStateManager::SetState(startState);
 }

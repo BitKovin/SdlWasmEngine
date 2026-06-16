@@ -17,7 +17,7 @@ public:
 
     // Builds ribbon geometry and uploads it into transient bgfx buffers.
     // Returns false if there is nothing to draw.
-    bool RenderRibbon(const std::vector<Particle>& particles);
+    bool RenderRibbon(const std::vector<Particle>& inParticles, bgfx::TransientVertexBuffer& tvb, bgfx::TransientIndexBuffer& tib);
 
     int GetPrimitiveCount() const { return primitiveCount; }
 
