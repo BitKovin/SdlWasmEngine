@@ -20,6 +20,10 @@ void Entity::FromData(EntityData data)
 	{
 		Rotation.y = data.GetPropertyFloat("angle") + 90;
 	}
+	else
+	{
+		Rotation.y = 90;
+	}
 
 
 

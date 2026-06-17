@@ -5,7 +5,7 @@ REGISTER_ENTITY(TestNpc, "testnpc")
 
 TestNpc::TestNpc()
 {
-	ClassName = "testnpc";
+ 	ClassName = "testnpc";
 	maxSpeed  = 6.5f;
 	Health    = 80;
 	MaxHealth = 80;
@@ -339,6 +339,7 @@ void TestNpc::LoadAssets()
 	NpcHumanBase::LoadAssets();
 	SoundManager::LoadBankFromPath("GameData/sounds/banks/Desktop/SFX.bank");
 	mesh->LoadFromFile("GameData/models/enemies/dog/dog.glb");
+	mesh->PreloadAssets();
 	mesh->CreateHitboxes(this);
 	mesh->PlayAnimation("run", true);
 	mesh->SetLooped(true);

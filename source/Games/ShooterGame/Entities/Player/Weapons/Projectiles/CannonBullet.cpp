@@ -67,8 +67,10 @@ public:
 				explosion->Lifetime = 2.9f;
 				explosion->LoadAssetsIfNeeded();
 				explosion->damageCauser = damageCauser;
-				explosion->Start();
+
 				Level::Current->AddEntity(explosion);
+
+				explosion->Start();
 
 				Destroy();
 				trail->Position = hit.position;

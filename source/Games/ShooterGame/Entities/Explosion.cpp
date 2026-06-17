@@ -250,7 +250,6 @@ void Explosion::Start()
     DestroyWithDelay(Lifetime);
 	WeaponFireFlash::CreateAt(Position, Lifetime, Radius * 10, 2.5f);
 
-    if (isOwned == false) return;
 
     bool hasHit = true;
 

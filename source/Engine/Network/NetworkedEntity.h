@@ -78,7 +78,7 @@ class NetworkedEntity : public Entity {
 public:
     uint64_t networkId    = 0;
     uint8_t  networkOwner = 0;
-    bool     isOwned      = false;
+    bool     isOwned      = true;
 
     Entity* LocalProxy = nullptr; 
 
