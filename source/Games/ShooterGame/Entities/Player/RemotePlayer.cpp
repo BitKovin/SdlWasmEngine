@@ -1,6 +1,6 @@
 #include "RemotePlayer.h"
 #include "Player.hpp"
-#include <NetworkManager.h>
+#include <Network/NetworkManager.h>
 #include <AiPerception/AiPerceptionSystem.h>
 
 namespace

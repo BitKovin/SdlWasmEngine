@@ -114,17 +114,25 @@ void RGameStatsAnalyticsProvider::Tick(float GameTime)
 
 }
 
-std::string RGameStatsAnalyticsProvider::get_current_utc_timestamp() {
-    // 1. Get current time point from the UTC clock (explicitly UTC-0)
-    auto now = std::chrono::utc_clock::now();
+std::string RGameStatsAnalyticsProvider::get_current_utc_timestamp()
+{
+    using namespace std::chrono;
 
-    // 2. Floor to millisecond precision
-    auto now_ms = std::chrono::floor<std::chrono::milliseconds>(now);
+    const auto now = system_clock::now();
+    const auto time = system_clock::to_time_t(now);
 
-    // 3. Format to ISO 8601 string. 
-    // The '{:%Q%q}' or standard time formatters on utc_time respect UTC.
-    // We append 'Z' to explicitly denote Zulu / UTC-0 time zone.
-    return std::format("{:%Y-%m-%dT%H:%M:%S}Z", now_ms);
+    std::tm utc_tm{};
+
+#if defined(_WIN32)
+    gmtime_s(&utc_tm, &time);
+#else
+    gmtime_r(&time, &utc_tm);
+#endif
+
+    std::ostringstream oss;
+    oss << std::put_time(&utc_tm, "%Y-%m-%dT%H:%M:%SZ");
+
+    return oss.str();
 }
 
 //history stores last 10 events

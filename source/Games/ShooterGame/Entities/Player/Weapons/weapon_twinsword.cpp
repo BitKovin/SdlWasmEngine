@@ -88,7 +88,7 @@ public:
 		for (auto* vm : { viewmodel_r, viewmodel_l })
 		{
 			vm->GravityAlignedRotation = true;
-			vm->LoadFromFile("GameData/models/player/weapons/twinsword/twinsword.glb");
+			vm->LoadFromFile("GameData/models/player/weapons/twinsword/twinsword.glb"); 
 			vm->TexturesLocation = "GameData/models/player/weapons/twinsword/twinsword.glb/";
 			vm->PlayAnimation("draw", false, 0.0f);
 			vm->PreloadAssets();

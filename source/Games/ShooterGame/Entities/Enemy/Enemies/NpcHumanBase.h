@@ -27,8 +27,8 @@
 #include <Character/CharacterController.h>
 #include <AiPerception/Observer.h>
 
-#include "NetworkedEntity.h"
-#include "EntityHandle.h"
+#include <Network/NetworkedEntity.h>
+#include <EntityHandle.h>
 
 // ---------------------------------------------------------------------------
 // NpcRPC

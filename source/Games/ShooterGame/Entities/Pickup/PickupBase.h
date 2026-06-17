@@ -2,7 +2,7 @@
 
 #include <Physics.h>
 #include <Entity.h>
-#include <NetworkedEntity.h>
+#include <Network/NetworkedEntity.h>
 
 class PickupBase : public NetworkedEntity
 {
