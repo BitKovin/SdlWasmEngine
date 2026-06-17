@@ -288,7 +288,7 @@ private:
     static std::unordered_map<uint64_t, uint32_t> s_entityReceivedHash;
 
     static float               s_digestAccum;
-    static constexpr float     kDigestInterval = 0.5f; // 2 Hz
+    static constexpr float     kDigestInterval = 0.3333333333f; // 3 Hz
 
     // -----------------------------------------------------------------------
     // Bidirectional reconciliation safety nets  (server only)
