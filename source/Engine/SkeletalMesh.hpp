@@ -187,8 +187,6 @@ private:
 
 	float oldAnimTime = 0;
 
-	string filePath = "";
-
 	quat rootMotionBasisQuat;
 
 	float oldAnimationEventTime = 0;
@@ -222,6 +220,8 @@ protected:
 	AnimationPose lastPose;
 
 public:
+
+	string filePath = "";
 
 	SkeletalMeshMetaData metaData;
 	AnimationData* currentAnimationData = nullptr;

@@ -8,6 +8,7 @@ public:
 	Animation(Entity* owner) : SkeletalMesh(owner)
 	{
 		skipMeshLoad = true;
+		Visible = false;
 	}
 
 	bool IsInFrustrum(Frustum frustrum)	{return false;};
@@ -18,11 +19,12 @@ public:
 
 	bool IsShadowVisible(){return false;}
 
-	void DrawForward(mat4x4 view, mat4x4 projection){}
+	void DrawForward(mat4x4 view, mat4x4 projection)override {}
 
-	void DrawDepth(mat4x4 view, mat4x4 projection) {}
+	void DrawDepth(mat4x4 view, mat4x4 projection)override {}
 
-	void DrawShadow(mat4x4 view, mat4x4 projection){}
+	void DrawShadow(mat4x4 view, mat4x4 projection)override {}
+	void DrawMeshShadow(mat4x4 view, mat4x4 projection) override {}
 
 private:
 

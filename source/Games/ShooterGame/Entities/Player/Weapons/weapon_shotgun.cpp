@@ -6,6 +6,7 @@ public:
     {
         params.ammoType = WeaponAmmoType::ShotgunShells;
         params.modelPath = "GameData/models/player/weapons/shotgun/shotgun.glb";
+        params.modelPathTp = "GameData/models/player/weapons/shotgun/shotgun_tp.glb";
         params.texturesLocation = "GameData/models/player/weapons/shotgun/shotgun.glb/";
         params.fireSoundEvent = "GameData/sounds/weapons/shotgun/shotgun_fire2.wav";
         params.useOneshotSound = false;

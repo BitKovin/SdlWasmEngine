@@ -13,6 +13,9 @@ WeaponFirearm::WeaponFirearm(const FirearmParams& initialParams)
 	: params(initialParams)
 {
 	LateUpdateWhenPaused = params.lateUpdateWhenPaused;
+
+	thirdPersonModelPath = params.modelPathTp;
+
 }
 
 void WeaponFirearm::Start() {
@@ -32,6 +35,9 @@ void WeaponFirearm::Start() {
 
 void WeaponFirearm::LoadAssets()
 {
+
+	Weapon::LoadAssets();
+
 	SoundManager::LoadBankFromPath("GameData/sounds/banks/Desktop/Weapons.bank");
 	SoundManager::LoadBankFromPath("GameData/sounds/banks/Desktop/SFX.bank");
 

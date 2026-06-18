@@ -21,7 +21,7 @@ uint32_t     NetworkManager::s_localRuntimeSeq = 0;
 uint16_t     NetworkManager::s_outboundSeq = 0;
 uint32_t     NetworkManager::s_loadTimeIdSeq = 0;
 
-float        NetworkManager::s_networkTickRate = 20.0f;
+float        NetworkManager::s_networkTickRate = 30.0f;
 float        NetworkManager::s_networkTickAccum = 0.0f;
 float        NetworkManager::s_validationTickAccum = 0.0f;
 

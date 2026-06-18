@@ -47,6 +47,7 @@ public:
         );
 
         
+        thirdPersonModelPath = "GameData/models/player/weapons/pistol/pistol_tp.glb";
 
 		//params.debuffOnHit = "QuicksilverDebuff";
 		//params.debuffStacksOnHit = 55.0f;

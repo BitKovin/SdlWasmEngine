@@ -1079,6 +1079,7 @@ BoundingBox SkeletalMesh::GetBoundingBox()
 
 	mat4 world = GetWorldMatrix();
 
+
 	if (InRagdoll == false)
 	{
 		return model->ComputeAnimatedBounds(world, boneTransforms);

@@ -61,6 +61,9 @@ public:
 		LateUpdateWhenPaused = true;
 		startTrailDelay.AddDelay(100000000.0f); // inert until StartAttack arms it
 		SupportsOffhandWeapon = false;
+
+		thirdPersonModelPath = "GameData/models/player/weapons/twinsword/twinsword_tp.glb";
+
 	}
 
 	// -----------------------------------------------------------------------
@@ -78,6 +81,9 @@ public:
 
 	void LoadAssets() override
 	{
+
+		Weapon::LoadAssets();
+
 		SoundManager::LoadBankFromPath("GameData/sounds/banks/Desktop/Weapons.bank");
 
 		viewmodel_r = new SkeletalMesh(owner);

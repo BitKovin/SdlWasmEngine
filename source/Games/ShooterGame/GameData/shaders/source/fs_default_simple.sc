@@ -109,6 +109,9 @@ void main()
 
     vec3 normal = v_normal;
 
+    if (gl_FrontFacing)
+        normal = -normal;
+
     if (flipedNormals.x > 0.0)
         normal = -normal;
 

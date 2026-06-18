@@ -67,6 +67,9 @@ public:
 
 	void LoadAssets() override
 	{
+
+		Weapon::LoadAssets();
+
 		SoundManager::LoadBankFromPath("GameData/sounds/banks/Desktop/Weapons.bank");
 
 		viewmodel = new SkeletalMesh(owner);

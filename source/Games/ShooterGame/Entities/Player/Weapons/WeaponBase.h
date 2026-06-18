@@ -45,6 +45,8 @@ public:
 
 	static inline std::string ArmsModelPath = "GameData/models/player/arms_p.glb";
 
+	std::string thirdPersonModelPath = "GameData/models/player/weapons/pistol/pistol_tp.glb";
+
 	bool Illegal = false;
 
 	float bobScale = 1.0f;
@@ -90,6 +92,7 @@ public:
 		return thirdPersonPose;
 	}
 
+	void LoadAssets() override;
 
 
 private:

@@ -250,7 +250,7 @@ void AssetRegistry::EndLevelLoad()
 
 void AssetRegistry::MarkAsUsed(std::string filename)
 {
-	if (loadingLevel == false) return;
+	if (loadingLevel == false && !LoadingConstantAssets) return;
 
 	loadedAssetsDuringLoading.insert(filename);
 

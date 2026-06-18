@@ -13,7 +13,7 @@ public:
         params.ammoType = WeaponAmmoType::CannonBullets;
         params.modelPath = "GameData/models/player/weapons/cannon/cannon.glb";
         params.texturesLocation = "GameData/models/player/weapons/cannon/cannon.glb/";
-        params.modelPathTp = "GameData/models/player/weapons/pistol/pistol_tp.glb";
+        params.modelPathTp = "GameData/models/player/weapons/cannon/cannon_tp.glb";
         params.texturesLocationTp = "GameData/models/player/weapons/pistol/pistol_tp.glb/";
         params.fireSoundEvent = "event:/Weapons/cannon/cannon_fire";
         params.useOneshotSound = false;

@@ -43,6 +43,9 @@ public:
 	{
 
 		LateUpdateWhenPaused = true;
+
+		thirdPersonModelPath = "GameData/models/player/weapons/cane/cane_tp.glb";
+
 	}
 
 	SoundPlayer* fireSoundPlayer = nullptr;
@@ -60,6 +63,8 @@ public:
 
 		pushDelay.AddDelay(100000000);
 
+		thirdPersonModelPath = "GameData/models/player/weapons/cane/cane_tp.glb";
+
 	}
 
 	void SetViewmodelScaleFactor(float factor)
@@ -70,6 +75,8 @@ public:
 
 	void LoadAssets()
 	{
+
+		Weapon::LoadAssets();
 
 		SoundManager::LoadBankFromPath("GameData/sounds/banks/Desktop/Weapons.bank");
 		SoundManager::LoadBankFromPath("GameData/sounds/banks/Desktop/SFX.bank");

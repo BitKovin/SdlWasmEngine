@@ -147,7 +147,6 @@ void StaticMesh::DrawForward(mat4x4 view, mat4x4 projection)
 
 	forward_shader_program->UseProgram();
 
-	bool flipedNormals = finalizedScale.x * finalizedScale.y * finalizedScale.z < 0;
 
 	forward_shader_program->SetUniform("masked", Masked);
 
@@ -177,7 +176,7 @@ void StaticMesh::DrawForward(mat4x4 view, mat4x4 projection)
 	forward_shader_program->SetUniform("view", view);
 
 	forward_shader_program->SetUniform("customId", CustomId);
-	forward_shader_program->SetUniform("flipedNormals", flipedNormals);
+	forward_shader_program->SetUniform("flipedNormals", false);
 
 	ApplyAdditionalShaderParams(forward_shader_program);
 
@@ -189,7 +188,17 @@ void StaticMesh::DrawForward(mat4x4 view, mat4x4 projection)
 	for (roj::SkinnedMesh& mesh : model->meshes)
 	{
 
-		if (finalMeshHideList.contains(mesh.name)) continue;
+		bool isHiddenMesh = false;
+		for (const auto& hideName : finalMeshHideList)
+		{
+			if (StringHelper::StartsWith(mesh.name, hideName) || hideName == mesh.name)
+			{
+				isHiddenMesh = true;
+				break;
+			}
+		}
+		if (isHiddenMesh)
+			continue;
 
 		if (ColorTexture == nullptr && ColorTextureId == 0)
 		{
@@ -315,7 +324,17 @@ void StaticMesh::DrawDepth(mat4x4 view, mat4x4 projection)
 
 	for (roj::SkinnedMesh& mesh : model->meshes)
 	{
-		if (finalMeshHideList.contains(mesh.name)) continue;
+		bool isHiddenMesh = false;
+		for (const auto& hideName : finalMeshHideList)
+		{
+			if (StringHelper::StartsWith(mesh.name, hideName) || hideName == mesh.name)
+			{
+				isHiddenMesh = true;
+				break;
+			}
+		}
+		if (isHiddenMesh)
+			continue;
 
 		if (mask)
 		{
@@ -385,7 +404,17 @@ void StaticMesh::DrawCustomId(mat4x4 view, mat4x4 projection)
 
 	for (roj::SkinnedMesh& mesh : model->meshes)
 	{
-		if (finalMeshHideList.contains(mesh.name)) continue;
+		bool isHiddenMesh = false;
+		for (const auto& hideName : finalMeshHideList)
+		{
+			if (StringHelper::StartsWith(mesh.name, hideName) || hideName == mesh.name)
+			{
+				isHiddenMesh = true;
+				break;
+			}
+		}
+		if (isHiddenMesh)
+			continue;
 
 
 		if (ColorTexture == nullptr && ColorTextureId == 0)
@@ -451,7 +480,17 @@ void StaticMesh::DrawShadow(mat4x4 view, mat4x4 projection)
 
 	for (roj::SkinnedMesh& mesh : model->meshes)
 	{
-		if (finalMeshHideList.contains(mesh.name)) continue;
+		bool isHiddenMesh = false;
+		for (const auto& hideName : finalMeshHideList)
+		{
+			if (StringHelper::StartsWith(mesh.name, hideName) || hideName == mesh.name)
+			{
+				isHiddenMesh = true;
+				break;
+			}
+		}
+		if (isHiddenMesh)
+			continue;
 
 		if (mask)
 		{
@@ -576,7 +615,17 @@ void StaticMesh::DrawMeshShadow(mat4x4 view, mat4x4 projection)
         const roj::SkinnedMesh&         mesh    = model->meshes[i];
         const roj::ShadowVolumePrecomp& precomp = mesh.shadowVolumePrecomp;
  
-        if (finalMeshHideList.contains(mesh.name)) continue;
+		bool isHiddenMesh = false;
+		for (const auto& hideName : finalMeshHideList)
+		{
+			if (StringHelper::StartsWith(mesh.name, hideName) || hideName == mesh.name)
+			{
+				isHiddenMesh = true;
+				break;
+			}
+		}
+		if (isHiddenMesh)
+			continue;
  
         // A1. Caps (now uses index buffer)
         if (bgfx::isValid(precomp.capVbh) && precomp.capIndexCount > 0)

@@ -50,8 +50,8 @@ public:
         params.ammoType = WeaponAmmoType::PistolBullets;
         params.modelPath = "GameData/models/player/weapons/stg44/stg44.glb";
         params.fireSoundEvent = "event:/Weapons/pistol/pistol_fire";
-        params.modelPathTp = "GameData/models/player/weapons/mpsd/mpsd_tp.glb";
-        params.texturesLocationTp = "GameData/models/player/weapons/mpsd/mpsd_tp.glb/";
+        params.modelPathTp = "GameData/models/player/weapons/stg44/stg44_tp.glb";
+        params.texturesLocationTp = "GameData/models/player/weapons/stg44/stg44_tp.glb/";
         params.useOneshotSound = true;
         params.pitchModifier = 1.2f;
         params.fireVolume = 0.4f;
