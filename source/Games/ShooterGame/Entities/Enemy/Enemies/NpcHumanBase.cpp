@@ -630,7 +630,6 @@ void NpcHumanBase::NetDeserialize(NetPacket& packet)
     // Owner discards snapshots from the previous owner (in-flight after transfer).
     if (isOwned) return;
 
-    Position = mix(Position, remotePos, 0.3f);
     controller.SetPosition(Position);
     mesh->Rotation  = remoteRot;
     movingDirection = remoteMoveDir;

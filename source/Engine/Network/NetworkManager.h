@@ -32,7 +32,7 @@ class LevelObjectFactory;
 //
 // Reconciliation digest (client → server → corrections)
 // -------------------------------------------------------
-// Every kDigestInterval (0.5 s, 2 Hz) the client sends PT_EntityDigest:
+// Every kDigestInterval (0.333 s, 3 Hz) the client sends PT_EntityDigest:
 //   uint16  entityCount
 //   N ×  { uint64 networkId, uint32 stateHash }
 // where stateHash is the hash of the last payload the client received for
@@ -95,8 +95,8 @@ public:
     //   Phase 2 — Gather:   call PushNetworkUpdate on every owned entity.
     //   Phase 3 — Flush:    when the network tick interval has elapsed,
     //                       run delta check, compress, send.
-    //   Phase 4 — Digest:   client sends PT_EntityDigest every 0.5 s.
-    //   Phase 5 — Validate: server broadcasts FullSnapshot every 15 s.
+    //   Phase 4 — Digest:   client sends PT_EntityDigest every 0.333 s (3 Hz).
+    //   Phase 5 — Validate: server broadcasts FullSnapshot every 0.5 s (2 Hz).
     static void Tick(float dt);
 
     // -----------------------------------------------------------------------
@@ -243,7 +243,7 @@ private:
     struct EntityUpdateCache {
         uint32_t             lastSentHash     = 0;
         std::vector<uint8_t> lastSentPayload; // full EntityUpdate payload bytes
-        float                timeSinceLastSent = 999.0f; // large → force first send
+        float                timeSinceLastSent = 99999.0f; // large → force first send
         bool                 everSent         = false;
     };
     static std::unordered_map<uint64_t, EntityUpdateCache> s_entityUpdateCache;

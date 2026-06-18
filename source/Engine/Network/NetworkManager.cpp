@@ -86,6 +86,31 @@ namespace {
     };
     std::vector<PendingSpawn> g_pendingSpawns;
 
+    // ── Maximum uncompressed bytes per unreliable EntityUpdate batch ──────────
+    //
+    // Every unreliable send goes through ByteCompressor then the transport as a
+    // single UDP datagram.  Unreliable datagrams are NOT fragmented by ENet (or
+    // most game transports), so the on-wire size must fit within the path MTU.
+    //
+    // Calculation (worst-case, incompressible payload):
+    //   LZ4 compressBound(1100) = 1100 + (1100/255) + 16 = 1120 bytes compressed
+    //   Transport overhead: IP(20) + UDP(8) + ENet unreliable header(~16) = 44 bytes
+    //   Worst-case wire size: 1120 + 44 = 1164 bytes
+    //
+    //   MTU floors:  Ethernet = 1500, ENet default = 1400, IPv6 minimum = 1280.
+    //   1164 < 1280 — safe on all three with comfortable margin.
+    //
+    // When the aggregated batch for a target exceeds this threshold, Phase 4 (and
+    // Phase 3 for relay batches) splits it at NetPacket boundaries and issues
+    // multiple sends.  Each send is independently compressed, so the receiver
+    // processes them as separate bundles — no protocol changes needed.
+    //
+    // Tune upward if your transport supports larger unreliable datagrams, or if
+    // you observe that entity-update throughput becomes the bottleneck at this
+    // chunk size.  Do NOT raise it above compressBound⁻¹(MTU - overhead) for
+    // your specific transport without verifying the transport can handle it.
+    constexpr size_t kMaxUnreliableBatchBytes = 1100;
+
 } // namespace
 
 // ---------------------------------------------------------------------------
@@ -380,6 +405,91 @@ void NetworkManager::FlushUpdateQueue() {
         }
     }
 
+    // ── Shared helper: split a concatenated NetPacket buffer at packet ───────
+    //   boundaries and call sendFn for each chunk ≤ kMaxUnreliableBatchBytes.
+    //
+    // WHY THIS EXISTS:
+    //   Unreliable UDP packets are not fragmented by the transport.  When many
+    //   entities spawn simultaneously, Phase 1 above concatenates ALL of their
+    //   EntityUpdate payloads into a single groups[] buffer.  If the compressed
+    //   output of that buffer exceeds the transport's unreliable MTU (~1 400 B),
+    //   one of two things happens depending on the transport / OS:
+    //
+    //     (a) The packet is silently dropped: the client never receives any of
+    //         those EntityUpdates.
+    //     (b) The OS sends the oversized UDP datagram via IP fragmentation.
+    //         If a fragment is dropped in flight, or the receiver's SO_RCVBUF is
+    //         smaller than the assembled datagram, recv() returns a TRUNCATED
+    //         compressed bitstream.  The decompressor may:
+    //           • throw on the truncated stream (caught, entire bundle discarded), or
+    //           • successfully decompress the intact prefix, giving a shorter
+    //             decompressed buffer.  The packet-parse loop then processes the
+    //             first K inner packets correctly and breaks at the corrupted K+1th
+    //             (truncated header / payloadLen garbage / bad checksum).
+    //         Either way, entities K+1 … N receive no update.
+    //
+    //   In both cases, the server's delta-compression cache already recorded
+    //   iCount = 2 for ALL entities (set during Phase 1 above, before the send).
+    //   The server believes it delivered the packets.  Those entities are now
+    //   suppressed for the next kIdleResendInterval seconds.
+    //   The client waits until its kDigestInterval digest fires (~333 ms later)
+    //   to receive corrections — producing the observed teleport snap.
+    //
+    // HOW IT WORKS:
+    //   Each element of a groups[] buffer is a complete NetPacket produced by
+    //   BuildFromPayload.  The on-wire layout is:
+    //     [0]    packetType    (1 byte)
+    //     [1]    senderId      (1 byte)
+    //     [2-3]  sequenceNum   (uint16 big-endian)
+    //     [4-7]  payloadLength (uint32 big-endian)  ← read here to find next boundary
+    //     [8-9]  checksum      (uint16 CRC-16)
+    //     [10 … 10+payloadLength-1]  payload
+    //
+    //   We walk the buffer reading payloadLength from bytes [cursor+4 … cursor+7],
+    //   advance cursor by HEADER_SIZE + payloadLength, and flush a chunk whenever
+    //   adding the NEXT packet would push the chunk over kMaxUnreliableBatchBytes.
+    //   A single packet that is already larger than the threshold is sent alone
+    //   (we cannot split within a packet).
+    //
+    // RECEIVER COMPATIBILITY:
+    //   OnPacketReceived already loops over all inner packets in a decompressed
+    //   bundle.  Splitting one large bundle into N smaller ones is transparent —
+    //   each bundle is independently decompressed and dispatched identically.
+
+    auto sendChunked = [&](const std::vector<uint8_t>& raw, auto sendFn) {
+        size_t chunkStart = 0;
+        size_t cursor     = 0;
+
+        while (cursor < raw.size()) {
+            // Guard: enough bytes for a complete header?
+            if (cursor + NetPacket::HEADER_SIZE > raw.size()) break;
+
+            // Read payloadLength from bytes [4..7] of the inner packet header.
+            const uint32_t pl =
+                (uint32_t(raw[cursor + 4]) << 24) | (uint32_t(raw[cursor + 5]) << 16) |
+                (uint32_t(raw[cursor + 6]) <<  8) | uint32_t(raw[cursor + 7]);
+
+            const size_t next = cursor + NetPacket::HEADER_SIZE + pl;
+            if (next > raw.size()) break; // malformed inner packet (should never happen)
+
+            // Flush the current chunk BEFORE advancing past this packet if
+            // including it would exceed the limit — but only when the chunk is
+            // non-empty (cursor > chunkStart).  If the chunk is empty, this
+            // single packet already exceeds the threshold and must be sent alone.
+            if (next - chunkStart > kMaxUnreliableBatchBytes && cursor > chunkStart) {
+                sendFn(raw.data() + chunkStart, cursor - chunkStart);
+                chunkStart = cursor;
+            }
+
+            cursor = next;
+        }
+
+        // Flush whatever remains (also covers the common fast-path where the
+        // entire buffer fits in one chunk without ever entering the if above).
+        if (chunkStart < cursor)
+            sendFn(raw.data() + chunkStart, cursor - chunkStart);
+    };
+
     // ── Phase 3: Relay queue (client EntityUpdates relayed by server) ─────
 
     if (!s_relayQueue.empty()) {
@@ -393,18 +503,27 @@ void NetworkManager::FlushUpdateQueue() {
             }
         }
         for (auto& [excludeId, raw] : relayGroups) {
-            const auto compressed = ByteCompressor::CompressData(raw);
-            s_transport->BroadcastExcept(excludeId,
-                compressed.data(), compressed.size(), /*reliable=*/false);
+            sendChunked(raw, [&](const uint8_t* data, size_t len) {
+                const auto compressed = ByteCompressor::CompressData(
+                    std::vector<uint8_t>(data, data + len));
+                s_transport->BroadcastExcept(excludeId,
+                    compressed.data(), compressed.size(), /*reliable=*/false);
+            });
         }
     }
 
     // ── Phase 4: Send owned-entity / legacy groups ────────────────────────
+    // Uses sendChunked (defined above) so that when the aggregated buffer for
+    // a target exceeds kMaxUnreliableBatchBytes the flush is split into multiple
+    // unreliable sends rather than one oversized packet that the transport drops
+    // or delivers truncated.
 
     for (auto& [key, raw] : groups) {
         if (raw.empty()) continue;
         const uint8_t targetPeerId = static_cast<uint8_t>((key >> 8) & 0xFF);
-        CompressAndSend(raw.data(), raw.size(), targetPeerId, /*reliable=*/false);
+        sendChunked(raw, [&](const uint8_t* data, size_t len) {
+            CompressAndSend(data, len, targetPeerId, /*reliable=*/false);
+        });
     }
 }
 
@@ -723,8 +842,8 @@ void NetworkManager::Shutdown() {
 // Phase 1 — Receive
 // Phase 2 — Gather (owned entities)
 // Phase 3 — Flush  (network tick rate, 20–30 Hz)
-// Phase 4 — Digest (client only, 2 Hz)
-// Phase 5 — Validation snapshot + client-state reapply (server only, 5 Hz)
+// Phase 4 — Digest (client only, 3 Hz)
+// Phase 5 — Validation snapshot + client-state reapply (server only, 2 Hz)
 // ---------------------------------------------------------------------------
 
 void NetworkManager::Tick(float dt) {
@@ -776,7 +895,8 @@ void NetworkManager::Tick(float dt) {
 
             // Send the authoritative snapshot so clients can correct any
             // divergence caused by locally moving a server-owned entity.
-            // This is what snaps back the client in ~0.2 s.
+            // kValidationInterval = 0.5 s (2 Hz), so clients snap back within
+            // one validation period at most.
             SendFullSnapshotTo(BROADCAST_PEER_ID);
 
             // FIX: symmetric server-side snap-back for client-owned entities.
@@ -1044,6 +1164,22 @@ void NetworkManager::SendFullSnapshotTo(uint8_t targetPeerId) {
         NetPacket entityData(PacketType::EntityUpdate);
         entity->NetSerialize(entityData);
         const auto& stateBytes = entityData.GetPayloadBytes();
+
+        // GUARD: the per-entity payload size is encoded as uint16 in the
+        // FullSnapshot wire format.  If any entity's serialised state exceeds
+        // 65 535 bytes, the cast silently truncates the written size while the
+        // loop below still writes all bytes.  The receiver then reads fewer bytes
+        // than are present, leaving its read cursor inside this entity's data.
+        // Every subsequent entity in the snapshot is then parsed from the wrong
+        // offset — silent, total snapshot corruption from this entity onward.
+        //
+        // This should never fire in a well-designed game (entities should carry
+        // lightweight transforms and references, not bulk data).  If it does,
+        // the fix is to reduce the entity's NetSerialize output, not to widen
+        // the field (which would be a wire-format breaking change).
+        assert(stateBytes.size() <= 0xFFFF &&
+            "Entity serialised state exceeds 65535 bytes — FullSnapshot would "
+            "be corrupted from this entity onward.  Reduce NetSerialize output.");
 
         pkt.WriteUInt16(static_cast<uint16_t>(stateBytes.size()));
         for (uint8_t b : stateBytes)
