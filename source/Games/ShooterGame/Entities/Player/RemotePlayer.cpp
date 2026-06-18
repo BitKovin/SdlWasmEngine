@@ -4,6 +4,8 @@
 #include <AiPerception/AiPerceptionSystem.h>
 #include "Weapons/WeaponFirearm.h"
 
+#include <Animation.h>
+
 namespace
 {
 	// How far the rendered position is allowed to drift before we snap.
@@ -207,7 +209,7 @@ void RemotePlayer::LoadAssets()
 	weaponL->MeshHideList = { "w_r" };
 	weaponL->TwoSided = true;
 
-	weaponAnimation = new SkeletalMesh(this);
+	weaponAnimation = new Animation(this);
 	weaponAnimation->LoadFromFile("GameData/animations/player/tp_weapons.glb");
 	Drawables.push_back(weaponAnimation);//just to it gets cleaned with entity. doesn't gets drawn anyway
 

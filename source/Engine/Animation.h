@@ -13,7 +13,7 @@ public:
 
 	bool IsInFrustrum(Frustum frustrum)	{return false;};
 
-	virtual bool isVisible(){return false;}
+	virtual bool isVisible() override{return false;}
 
 	bool IsCameraVisible(){return false;}
 

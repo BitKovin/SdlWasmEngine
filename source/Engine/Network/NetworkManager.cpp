@@ -26,7 +26,7 @@ float        NetworkManager::s_networkTickAccum = 0.0f;
 float        NetworkManager::s_validationTickAccum = 0.0f;
 
 
-float NetworkManager::kValidationInterval = 1 / 2.0f;
+float NetworkManager::kValidationInterval = 1 / 3.0f;
 
 Level* NetworkManager::s_level = nullptr;
 INetworkTransport* NetworkManager::s_transport = nullptr;
