@@ -562,7 +562,6 @@
     <ClInclude Include="Helpers\Mesh\shadow_volume.hpp" />
     <ClInclude Include="http\http_client.h" />
     <ClInclude Include="imgui\FA6FreeSolidFontData.h" />
-    <ClInclude Include="imgui\fs_ocornut_imgui.bin.h" />
     <ClInclude Include="imgui\GraphEditor.h" />
     <ClInclude Include="imgui\IconsFontAwesome6.h" />
     <ClInclude Include="imgui\imconfig.h" />
@@ -581,7 +580,6 @@
     <ClInclude Include="imgui\imstb_truetype.h" />
     <ClInclude Include="imgui\ImVectorEditor.h" />
     <ClInclude Include="imgui\ImZoomSlider.h" />
-    <ClInclude Include="imgui\vs_ocornut_imgui.bin.h" />
     <ClInclude Include="includedLibraries\stb_image.h" />
     <ClInclude Include="includedLibraries\stb_image_resize.h" />
     <ClInclude Include="includedLibraries\stb_image_write.h" />

@@ -21,6 +21,8 @@
 #include "bx/math.h"
 #include "bx/timer.h"
 
+#include <ShaderManager.h>
+
 // Data
 static uint8_t g_View = 255;
 static bgfx::TextureHandle g_FontTexture = BGFX_INVALID_HANDLE;
@@ -136,20 +138,11 @@ bool ImGui_Implbgfx_CreateFontsTexture()
     return true;
 }
 
-#include "fs_ocornut_imgui.bin.h"
-#include "vs_ocornut_imgui.bin.h"
-
-static const bgfx::EmbeddedShader s_embeddedShaders[] = {
-    BGFX_EMBEDDED_SHADER(vs_ocornut_imgui),
-    BGFX_EMBEDDED_SHADER(fs_ocornut_imgui), BGFX_EMBEDDED_SHADER_END()};
 
 bool ImGui_Implbgfx_CreateDeviceObjects()
 {
     bgfx::RendererType::Enum type = bgfx::getRendererType();
-    g_ShaderHandle = bgfx::createProgram(
-        bgfx::createEmbeddedShader(s_embeddedShaders, type, "vs_ocornut_imgui"),
-        bgfx::createEmbeddedShader(s_embeddedShaders, type, "fs_ocornut_imgui"),
-        true);
+    g_ShaderHandle = ShaderManager::GetShaderProgram("imgui/vs_ocornut_imgui", "imgui/fs_ocornut_imgui")->GetProgram();
 
     g_VertexLayout.begin()
         .add(bgfx::Attrib::Position, 2, bgfx::AttribType::Float)
