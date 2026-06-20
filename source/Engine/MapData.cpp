@@ -162,8 +162,7 @@ bool EntityData::GetPropertyBool(const std::string& propName, bool defaultValue)
     }
 
     std::string boolStr = parts[0];
-    std::replace(boolStr.begin(), boolStr.end(), '0', 'f');
-    std::replace(boolStr.begin(), boolStr.end(), '1', 't');
+
     std::transform(boolStr.begin(), boolStr.end(), boolStr.begin(), ::tolower);
 
     if (boolStr == "true" || (boolStr == "1")) {

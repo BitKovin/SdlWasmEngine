@@ -1,0 +1,122 @@
+default
+{
+	castShadows 1
+	receiveShadows 1
+	sampleSize 16
+	longestCurve 0.000000
+}
+
+0 // ESurfaceType::Triangles V: 219 I: 723 
+{
+	shader models/enviroment/sewers/bricks
+	sampleSize 0
+}
+
+1 // ESurfaceType::Triangles V: 178 I: 453 
+{
+	shader models/enviroment/sewers/concrete_base_02
+	sampleSize 0
+}
+
+2 // ESurfaceType::Triangles V: 15 I: 48 
+{
+	shader models/enviroment/sewers/concrete_dirty
+	sampleSize 0
+}
+
+3 // ESurfaceType::Meta V: 6 I: 12 planar
+{
+	shader textures/skies/skybox2_overcast_cube
+	sampleSize 0
+}
+
+4 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/asphalt_old_pt_1
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+5 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/asphalt_old_pt_1
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+6 // ESurfaceType::Meta V: 5 I: 9 planar
+{
+	shader textures/psx_textures_2/asphalt_old_pt_1
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+7 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/asphalt_old_pt_1
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+8 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/brick_wall_pt_5_door
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+9 // ESurfaceType::Meta V: 17 I: 33 planar
+{
+	shader textures/psx_textures_2/brick_wall_pt_5
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+10 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/psx_textures_2/brick_wall_pt_5_window
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+11 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/trigger
+	entity 5
+	castShadows 0
+	sampleSize 0
+}
+
+12 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/trigger
+	entity 5
+	castShadows 0
+	sampleSize 0
+}
+
+13 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/trigger
+	entity 5
+	castShadows 0
+	sampleSize 0
+}
+
+14 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/trigger
+	entity 5
+	castShadows 0
+	sampleSize 0
+}
+
+15 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/trigger
+	entity 5
+	castShadows 0
+	sampleSize 0
+}
+
+16 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/trigger
+	entity 5
+	castShadows 0
+	sampleSize 0
+}
+

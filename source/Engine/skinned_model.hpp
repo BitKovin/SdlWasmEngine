@@ -67,13 +67,8 @@ namespace roj
                 bgfx::destroy(ibh);
                 ibh = BGFX_INVALID_HANDLE;
             }
-            if (bgfx::isValid(shadowVolumePrecomp.capVbh))
-            {
-                bgfx::destroy(shadowVolumePrecomp.capVbh);
-                bgfx::destroy(shadowVolumePrecomp.edgeIbh);
-                bgfx::destroy(shadowVolumePrecomp.edgeVbh);
-                shadowVolumePrecomp = ShadowVolumePrecomp();
-            }
+
+            shadowVolumePrecomp = ShadowVolumePrecomp();
 
             // Clear CPU-side vectors
             vertices.clear();

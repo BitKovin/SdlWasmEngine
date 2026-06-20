@@ -26,6 +26,7 @@ public:
 		onSpawnedAction = data.GetPropertyString("onSpawned", onSpawnedAction);
 		onDespawnedAction = data.GetPropertyString("onDespawned", onDespawnedAction);
 		actionTarget = data.GetPropertyString("target", actionTarget);
+		autoTriggerOnPlayer = data.GetPropertyBool("autoTrigger");
 	}
 
 	void LoadAssets()
