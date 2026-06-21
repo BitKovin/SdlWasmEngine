@@ -134,3 +134,14 @@
 ( -32 192 160 ) ( -32 320 160 ) ( -32 192 192 ) common/trigger [ -0 -1 0 0 ] [ -0 0 -1 0 ] -0 1 1 0 0 0
 }
 }
+// entity 6
+{
+"classname" "npc_human_axe"
+"origin" "144 496 192"
+}
+// entity 7
+{
+"classname" "npc_dog"
+"origin" "352 592 192"
+"angle" "105"
+}

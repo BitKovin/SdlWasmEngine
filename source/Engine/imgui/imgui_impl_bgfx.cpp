@@ -141,7 +141,6 @@ bool ImGui_Implbgfx_CreateFontsTexture()
 
 bool ImGui_Implbgfx_CreateDeviceObjects()
 {
-    bgfx::RendererType::Enum type = bgfx::getRendererType();
     g_ShaderHandle = ShaderManager::GetShaderProgram("imgui/vs_ocornut_imgui", "imgui/fs_ocornut_imgui")->GetProgram();
 
     g_VertexLayout.begin()

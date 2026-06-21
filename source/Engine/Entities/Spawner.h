@@ -48,9 +48,6 @@ public:
 
 
 
-		DebugDraw::Line(Position, MathHelper::GetForwardVector(Rotation) + Position, 10, 0);
-		DebugDraw::Line(Position, vec3(0,1.0f,0) + Position, 10, 0);
-
 		Level::Current->AddEntity(entity);
 
 		entity->Start();

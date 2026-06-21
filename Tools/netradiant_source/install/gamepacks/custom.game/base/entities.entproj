@@ -2525,60 +2525,178 @@
       "properties": []
     },
     {
-  "name": "info_train_spline_control",
-  "entityType": "point",
-  "color": [1, 0.5, 1],
-  "box": [-8, -8, -8, 8, 8, 8],
-  "description": "Defines a control point for a spline curve.",
-  "inherits": [],
-  "properties": [
-    {
-      "key": "targetname",
-      "displayName": "Targetname",
-      "type": "String",
-      "defaultValue": "",
-      "description": "The \"control\" key in a main splinepoint references to this.",
-      "bitIndex": 0,
-      "isBuiltIn": false
-    }
-  ]
-},
-{
-  "name": "info_train_spline_main",
-  "entityType": "point",
-  "color": [0, 1, 0],
-  "box": [-8, -8, -8, 8, 8, 8],
-  "description": "Defines a main point for a spline curve. The spline between this point and next point is named after this point, i.e. use this point's targetname. Create new key/value pairs named \"controlX\" (where X is a number greater than or equal to 2) if you need additional control points.",
-  "inherits": [],
-  "properties": [
-    {
-      "key": "targetname",
-      "displayName": "Targetname",
-      "type": "String",
-      "defaultValue": "",
-      "description": "The name of this point.",
-      "bitIndex": 0,
-      "isBuiltIn": false
+      "name": "info_train_spline_control",
+      "entityType": "point",
+      "color": [
+        1,
+        0.5,
+        1
+      ],
+      "box": [
+        -8,
+        -8,
+        -8,
+        8,
+        8,
+        8
+      ],
+      "description": "Defines a control point for a spline curve.",
+      "inherits": [],
+      "properties": [
+        {
+          "key": "targetname",
+          "displayName": "Targetname",
+          "type": "String",
+          "defaultValue": "",
+          "description": "The \u0022control\u0022 key in a main splinepoint references to this.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        }
+      ]
     },
     {
-      "key": "target",
-      "displayName": "Target",
-      "type": "Target",
-      "defaultValue": "",
-      "description": "Target spline point.",
-      "bitIndex": 0,
-      "isBuiltIn": false
+      "name": "info_train_spline_main",
+      "entityType": "point",
+      "color": [
+        0,
+        1,
+        0
+      ],
+      "box": [
+        -8,
+        -8,
+        -8,
+        8,
+        8,
+        8
+      ],
+      "description": "Defines a main point for a spline curve. The spline between this point and next point is named after this point, i.e. use this point\u0027s targetname. Create new key/value pairs named \u0022controlX\u0022 (where X is a number greater than or equal to 2) if you need additional control points.",
+      "inherits": [],
+      "properties": [
+        {
+          "key": "targetname",
+          "displayName": "Targetname",
+          "type": "String",
+          "defaultValue": "",
+          "description": "The name of this point.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "target",
+          "displayName": "Target",
+          "type": "Target",
+          "defaultValue": "",
+          "description": "Target spline point.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "control",
+          "displayName": "Control",
+          "type": "String",
+          "defaultValue": "",
+          "description": "Sets a control point for this spline.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        }
+      ]
     },
     {
-      "key": "control",
-      "displayName": "Control",
-      "type": "String",
-      "defaultValue": "",
-      "description": "Sets a control point for this spline.",
-      "bitIndex": 0,
-      "isBuiltIn": false
+      "name": "npc_human_base",
+      "entityType": "abstract",
+      "color": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "box": [
+        -16,
+        -16,
+        -16,
+        16,
+        16,
+        16
+      ],
+      "description": "base human",
+      "inherits": [],
+      "properties": [
+        {
+          "key": "targetname",
+          "displayName": "Name",
+          "type": "String",
+          "defaultValue": "",
+          "description": "Logical name of this entity. Used by other entities to target it.",
+          "bitIndex": 0,
+          "isBuiltIn": true
+        }
+      ]
+    },
+    {
+      "name": "npc_human_axe",
+      "entityType": "point",
+      "color": [
+        0.796078431372549,
+        0.027450980392156862,
+        0.027450980392156862
+      ],
+      "box": [
+        -16,
+        -16,
+        -30,
+        16,
+        16,
+        30
+      ],
+      "description": "sword enemy",
+      "inherits": [
+        "npc_human_base"
+      ],
+      "properties": []
+    },
+    {
+      "name": "npc_human_gun",
+      "entityType": "point",
+      "color": [
+        0.17647058823529413,
+        0.17647058823529413,
+        0.8235294117647058
+      ],
+      "box": [
+        -16,
+        -16,
+        -32,
+        16,
+        16,
+        32
+      ],
+      "description": "gun enemy",
+      "inherits": [
+        "npc_human_base"
+      ],
+      "properties": []
+    },
+    {
+      "name": "npc_dog",
+      "entityType": "point",
+      "color": [
+        0.5843137254901961,
+        0.39215686274509803,
+        0.6078431372549019
+      ],
+      "box": [
+        -16,
+        -16,
+        -32,
+        16,
+        16,
+        16
+      ],
+      "description": "",
+      "inherits": [
+        "npc_human_base"
+      ],
+      "properties": []
     }
-  ]
-}
   ]
 }

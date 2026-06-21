@@ -1,7 +1,8 @@
 // TestNpc.cpp
 #include "TestNpc.hpp"
 
-REGISTER_ENTITY(TestNpc, "testnpc")
+//REGISTER_ENTITY(TestNpc, "testnpc")
+REGISTER_ENTITY(TestNpc, "npc_dog")
 
 TestNpc::TestNpc()
 {
