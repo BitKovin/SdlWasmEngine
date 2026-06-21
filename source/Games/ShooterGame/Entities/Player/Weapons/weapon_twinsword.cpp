@@ -462,10 +462,10 @@ public:
 			StartAttack();
 
 		// Block: hold to block, release to lower guard
-		if (Input::GetAction("block")->PressedBuffered(0.1f) && !isBlocking)
+		if (Input::GetAction("attack2")->PressedBuffered(0.1f) && !isBlocking)
 			StartBlock();
 
-		if (!Input::GetAction("block")->Holding() && isBlocking)
+		if (!Input::GetAction("attack2")->Holding() && isBlocking)
 			EndBlock();
 
 		// Resolve hit each frame while inside the valid window:
