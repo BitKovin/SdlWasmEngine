@@ -50,7 +50,7 @@ public:
 	// Block state
 	bool isBlocking = false;
 
-	const float Damage = 30.0f;
+	const float Damage = 20.0f;
 
 	SoundPlayer* fireSoundPlayer = nullptr;
 	SoundPlayer* fireSoundPlayer2 = nullptr;
@@ -358,7 +358,7 @@ public:
 
 			if (viewmodel_r->GetAnimationName() == "attack2_counter")
 			{
-				damangeToDeal *= 2.5f;
+				damangeToDeal *= 3.0f;
 			}
 
 			bool isEnemy = dynamic_cast<IEnemy*>(hit.entity) && hit.entity->Health > 0;

@@ -73,6 +73,10 @@ protected:
     float maxSpeed = 5.5f;
     float speed    = 4.0f;
 
+    std::string damageSoundPath = "event:/NPC/Enemy1/Enemy1Damage";
+    std::string deathSoundPath = "event:/NPC/Enemy1/Enemy1Death";
+    std::string stunSoundPath = "event:/NPC/Enemy1/Enemy1Stun";
+
     // ── State ─────────────────────────────────────────────────────────────
     NpcState state = NpcState::Idle;
 

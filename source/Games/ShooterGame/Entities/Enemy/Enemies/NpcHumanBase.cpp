@@ -267,6 +267,9 @@ void NpcHumanBase::SetupSoundPlayer(SoundPlayer* sp)
 
 void NpcHumanBase::PlaySoundEffect(std::string eventName)
 {
+
+    if (eventName.empty())return;
+
     if (!soundPlayer) return;
     soundPlayer->SetSound(FmodEventInstance::Create(eventName));
     soundPlayer->Play();
@@ -317,6 +320,10 @@ void NpcHumanBase::OnDamage(float Damage, Entity* DamageCauser, Entity* Weapon)
 {
     if (IsDead()) return;
 
+    float damageScale = ModifyIncomingDamage(1.0f);
+
+    assert(damageScale == 1.0f);
+
     Damage = ModifyIncomingDamage(Damage);
 
     // Score only on the peer that has a local player.
@@ -329,7 +336,7 @@ void NpcHumanBase::OnDamage(float Damage, Entity* DamageCauser, Entity* Weapon)
     {
         controller.SetVelocity(controller.GetVelocity() / 2.0f);
         speed /= 2.0f;
-        PlaySoundEffect("event:/NPC/Enemy1/Enemy1Damage");
+        PlaySoundEffect(damageSoundPath);
     }
 
     if (Health <= 0)
@@ -353,7 +360,7 @@ void NpcHumanBase::Death()
     mesh->SetAnimationPaused(true);
     controller.SetVelocity(vec3(0));
 
-    PlaySoundEffect("event:/NPC/Enemy1/Enemy1Death");
+    PlaySoundEffect(deathSoundPath);
 
     GetDebuffsList().clear();
     UpdateStatusWidgets();
@@ -385,7 +392,7 @@ void NpcHumanBase::Stun()
     state = NpcState::Stunned;
     mesh->PlayAnimation("stun");
     mesh->PullRootMotion();
-    PlaySoundEffect("event:/NPC/Enemy1/Enemy1Stun");
+    PlaySoundEffect(stunSoundPath);
 
     if (isOwned)
     {

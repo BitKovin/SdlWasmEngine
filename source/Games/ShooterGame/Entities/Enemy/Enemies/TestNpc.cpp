@@ -8,14 +8,19 @@ TestNpc::TestNpc()
 {
  	ClassName = "testnpc";
 	maxSpeed  = 6.5f;
-	Health    = 80;
-	MaxHealth = 80;
+	Health    = 70;
+	MaxHealth = 70;
 
 	// Dog rig is a quadruped: it has no calf_l/calf_r/thigh_l/thigh_r
 	// hitboxes, so the base class's leg-hit ragdoll trigger doesn't apply.
 	canBeStunRagdolled = false;
 
 	mesh->MeshCustomShaderParams["rim_pow"] = vec4(2.0f);
+
+	deathSoundPath = "event:/NPC/Dog/DogDeath";
+	stunSoundPath = "event:/NPC/Dog/DogStun";
+	damageSoundPath = "";
+
 }
 
 // ---------------------------------------------------------------------------
@@ -120,9 +125,15 @@ void TestNpc::UpdateAttackDamage()
 
 	if (NpcHelper::CheckParry(MathHelper::GetForwardVector(mesh->Rotation), hit.entity))
 	{
-		OnPointDamage(10, hit.shapePosition,
-			MathHelper::FastNormalize(Position - hit.shapePosition),
-			"", this, this);
+
+		if (Health > 20)
+		{
+			OnPointDamage(15, hit.shapePosition,
+				MathHelper::FastNormalize(Position - hit.shapePosition),
+				"", this, this);
+		}
+
+
 		AddDebuffStacks("PoiseBreakDebuff", 100);
 		Stun();
 		attackingDamage = false;

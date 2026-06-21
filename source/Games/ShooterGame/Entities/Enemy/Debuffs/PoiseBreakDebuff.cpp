@@ -31,7 +31,7 @@ public:
             Entity* targetEnt = dynamic_cast<Entity*>(target_);
             if (targetEnt)
             {
-                targetEnt->OnDamage(amount / 3.0f); // deal some damage instead
+                //targetEnt->OnDamage(amount / 3.0f); // deal some damage instead
             }
 
         }
