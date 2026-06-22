@@ -6,6 +6,10 @@
 #include <vector>
 #include <cfloat>
 
+#include <imgui/imgui.h>
+
+#include <EngineMain.h>
+
 // ---------------------------------------------------------------------------
 // UiNavigation
 //
@@ -68,6 +72,10 @@ public:
     static void Update(UiElement* root)
     {
         s_root = root;
+
+        auto& io = ImGui::GetIO();
+        if ((io.WantCaptureKeyboard || io.WantCaptureMouse) && EngineMain::MainInstance->DebugUiEnabled) 
+            return;
 
         if (Focused && (!Focused->IsVisible() || !Focused->HitCheck || Focused->DisableFocus))
             SetFocus(nullptr);
