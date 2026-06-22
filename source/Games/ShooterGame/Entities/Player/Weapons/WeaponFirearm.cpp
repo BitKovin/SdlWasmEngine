@@ -26,7 +26,6 @@ void WeaponFirearm::Start() {
 	attackDelay.AddDelay(params.switchDelayTime - 0.1f);
 	SwitchDelay.AddDelay(params.switchDelayTime);
 
-	AmmoType = params.ammoType;
 
 	Update();
 	AsyncUpdate();
@@ -294,7 +293,7 @@ void WeaponFirearm::PerformAttack()
 			FireSingleBullet(startLoc, vec4(0));
 	}
 
-	owner->ConsumeAmmo(AmmoType, 1);
+	owner->ConsumeAmmo(GetAmmoType(), 1);
 
 	if (fireLeft)
 	{

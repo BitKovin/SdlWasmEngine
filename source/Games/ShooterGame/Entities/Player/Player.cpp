@@ -153,14 +153,14 @@ void Player::Start()
 	else
 	{
 		// Slots mode - use original system
-		AddWeaponByName("weapon_twinsword");
-		AddWeaponByName("weapon_shotgun");
-		AddWeaponByName("weapon_mpsd");
-		AddWeaponByName("weapon_cannon");
+		//AddWeaponByName("weapon_twinsword");
+		//AddWeaponByName("weapon_shotgun");
+		//AddWeaponByName("weapon_mpsd");
+		//AddWeaponByName("weapon_cannon");
 
 		// Offhand weapons for slots mode
-		offhandWeapons.push_back("weapon_cane");
-		desiredOffhandWeapon = 2;
+		//offhandWeapons.push_back("weapon_cane");
+		//desiredOffhandWeapon = 2;
 	}
 
 	cameraRotation.y = Rotation.y;
@@ -735,6 +735,7 @@ void Player::SwitchWeaponOffhand(const string& classname)
 
 	DestroyWeaponOffhand();
 
+
 	if (!classname.empty())
 	{
 		currentOffhandWeapon = (Weapon*)Spawn(classname);
@@ -805,18 +806,41 @@ void Player::AddWeapon(const WeaponSlotData& weaponData)
 {
 	int slot = weaponData.slot;
 
-	if (slot < 0 || slot >= weaponSlots.size()) return;
-
-	if (weaponSlots[slot].className.empty() ||
-		weaponSlots[slot].priority < weaponData.priority)
+	if (weaponData.AmmoType != WeaponAmmoType::None)
 	{
-		weaponSlots[slot] = weaponData;
+		AddAmmo((WeaponAmmoType)weaponData.AmmoType, weaponData.startAmmo);
+	}
 
-		if (currentSlot == slot)
+	if (weaponData.offhand)
+	{
+
+		auto findRes = std::find(offhandWeapons.begin(), offhandWeapons.end(), weaponData.className);
+
+
+		if (findRes != offhandWeapons.end()) return;
+
+		offhandWeapons.push_back(weaponData.className);
+		
+		desiredOffhandWeapon = offhandWeapons.size() - 1;
+
+	}
+	else
+	{
+
+		if (slot < 0 || slot >= weaponSlots.size()) return;
+
+		if (weaponSlots[slot].className.empty() ||
+			weaponSlots[slot].priority < weaponData.priority)
 		{
+			weaponSlots[slot] = weaponData;
+
+			
 			SwitchToSlot(slot, true);
+			
 		}
 	}
+
+
 }
 
 void Player::AddWeaponByName(const string& className)
@@ -2949,6 +2973,13 @@ void Player::OnLevelEnd()
 // Called by StartedTouchLadder when the touch count goes from 0 → 1.
 // Guards against interrupting mantling or other high-priority states.
 // ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// EnterLadder
+//
+// Called by StartedTouchLadder (touch count 0→1) AND each frame by
+// TryGrabLadderDeferred while the player is non-grounded inside a trigger.
+// Guards against interrupting mantling or other high-priority states.
+// ─────────────────────────────────────────────────────────────────────────────
 void Player::EnterLadder(float inputY)
 {
 	if (IsMantling()) return;
@@ -2959,11 +2990,11 @@ void Player::EnterLadder(float inputY)
 	float climbVel = 0.0f;
 
 	if (pitch < -LadderLookDeadZone)
-		climbVel = inputY * LadderClimbSpeed;       // looking up:   W=up, S=down
+		climbVel = inputY * LadderClimbSpeed;        // looking up:   W=up,   S=down
 	else if (pitch > LadderLookDeadZone)
-		climbVel = -inputY * LadderClimbSpeed;      // looking down: W=down, S=up
+		climbVel = -inputY * LadderClimbSpeed;       // looking down: W=down, S=up
 
-	// No movement would result from grabbing — don't grab.
+	// No vertical movement would result — don't grab.
 	if (climbVel == 0.0f)
 		return;
 
@@ -2971,8 +3002,11 @@ void Player::EnterLadder(float inputY)
 	if (inputY < 0.0f && velocity.y > -0.6f)
 		return;
 
-	// Looking down while grounded and walking forward — would just descend
-// into the floor. Don't grab.
+	// Grounded + looking down + pressing forward: the player is walking on flat
+	// ground (or standing at the top of a platform).  Don't grab yet — let them
+	// walk away freely.  TryGrabLadderDeferred() will re-evaluate the moment
+	// they step off the edge and leave the ground, which is the intended signal
+	// for a top-of-ladder descent.
 	if (pitch > LadderLookDeadZone && inputY > 0.0f && controller.onGround)
 		return;
 
@@ -2986,9 +3020,40 @@ void Player::EnterLadder(float inputY)
 
 	moveState = MoveState::OnLadder;
 
-	// Weapon suppression is automatic: CanHoldWeapon() returns false for OnLadder,
-	// and UpdateWeaponSuppression() (called each frame in Update) will handle the
-	// destroy/restore cycle without any extra work here.
+	// Rebuild the physics body with stepHeight = 0 and suppress gravity.
+	// Must come AFTER UnCrouch() (which restores stepHeight to 0.4) and
+	// AFTER zeroing velocity (SetLadderMode preserves whatever velocity it
+	// finds, so zero it first).
+	controller.SetLadderMode(true);
+
+	// Weapon suppression is automatic: CanHoldWeapon() returns false for
+	// OnLadder, and UpdateWeaponSuppression() handles destroy/restore each
+	// frame without any extra work here.
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TryGrabLadderDeferred
+//
+// Call this every frame from your movement-update dispatcher whenever:
+//   moveState != OnLadder  &&  numTouchingLadders > 0
+//
+// EnterLadder blocks grabs while the player is grounded so they can stand
+// at a ladder's base or walk away from the trigger freely.  Once the player
+// steps off a ledge — becoming non-grounded while still inside the trigger —
+// that guard no longer applies and EnterLadder will succeed, giving the
+// natural "lean off the edge → catch the ladder" feel for top descents.
+//
+// The velocity.y <= 0 check prevents accidental grabs mid-jump (the player
+// must be falling, not ascending).
+// ─────────────────────────────────────────────────────────────────────────────
+void Player::TryGrabLadderDeferred(float inputY)
+{
+	if (IsOnLadder()) return;
+	if (numTouchingLadders <= 0) return;
+	if (controller.onGround) return;          // still grounded — too early
+	if (controller.GetVelocity().y > 0.0f) return; // rising (jump) — don't grab
+
+	EnterLadder(inputY);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -3001,6 +3066,10 @@ void Player::ExitLadder()
 {
 	if (!IsOnLadder()) return;
 	moveState = MoveState::Default;
+
+	// Restore the pre-ladder physics body (stepHeight = 0.4) and re-enable
+	// gravity integration in CharacterController::Update().
+	controller.SetLadderMode(false);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -3020,10 +3089,10 @@ void Player::UpdateStateLadder(vec2 input)
 	// ── Jump: dismount the ladder ─────────────────────────────────────────────
 	if (Input::GetAction("jump")->PressedBuffered())
 	{
-		ExitLadder();
+		ExitLadder();  // also calls SetLadderMode(false) and restores gravity
 
-		// Push the player away from the ladder so they don't immediately re-grab it.
-		// "Away" = backwards relative to camera yaw (opposite of where they're facing).
+		// Push the player away from the ladder so they don't immediately re-grab.
+		// "Away" = backwards relative to camera yaw (opposite of where they face).
 		vec3 away = -MathHelper::GetForwardVector(vec3(0, cameraRotation.y, 0));
 		controller.SetVelocity(away * 3.5f + vec3(0, 5.0f, 0));
 		jumpDelay.AddDelay(0.35f);
@@ -3036,9 +3105,7 @@ void Player::UpdateStateLadder(vec2 input)
 	//
 	// When looking up   (pitch < -deadZone): W (input.y > 0) → climb up   (+y)
 	// When looking down (pitch > +deadZone): W (input.y > 0) → climb down (-y)
-	// Within the dead zone (roughly horizontal): forward input has no vertical effect.
-	//
-	// This mirrors classic Quake/Half-Life ladder feel.
+	// Within the dead zone (roughly horizontal): no vertical effect from W/S.
 	//
 	float pitch = cameraRotation.x;
 	float climbVel = 0.0f;
@@ -3056,13 +3123,27 @@ void Player::UpdateStateLadder(vec2 input)
 	// else: looking horizontally — no vertical movement from W/S.
 
 	// ── Lock horizontal, apply vertical ──────────────────────────────────────
-	// Zero XZ velocity every frame — the player is glued to the ladder rungs.
-	// We deliberately bypass gravity here by overwriting Y directly.
-	vec3 vel = vec3(0.0f, climbVel, 0.0f);
-	controller.SetVelocity(vel);
+	// Zero XZ velocity every frame — the player is glued to the ladder.
+	// Gravity is suppressed by controller.suppressGravity so this Y value
+	// is exactly what gets integrated — no fighting against manual gravity.
+	controller.SetVelocity(vec3(0.0f, climbVel, 0.0f));
 
-	if (climbVel <= 0 && controller.onGround)
+	// ── Bottom-of-ladder exit ─────────────────────────────────────────────────
+	// Exit whenever the player is grounded and not actively climbing upward.
+	// This covers:
+	//   climbVel == 0  — idle at ground (bottom or any mid-ladder floor)
+	//   climbVel <  0  — descending, reached the ground (the reported fix)
+	//
+	// Using <= 0 was previously unsafe because a player could enter OnLadder
+	// while grounded at the top of a platform, making climbVel < 0 + onGround
+	// fire immediately.  That path is now closed: TryGrabLadderDeferred only
+	// runs when !onGround, so by the time the player is in OnLadder state the
+	// only way onGround can be true again while descending is at the real bottom.
+	if (climbVel <= 0.0f && controller.onGround)
+	{
 		ExitLadder();
+		return;
+	}
 
 	// Update position tracking so the inter-frame safety check in Update()
 	// doesn't flag the sudden velocity change as a teleport.

@@ -2697,6 +2697,252 @@
         "npc_human_base"
       ],
       "properties": []
+    },
+    {
+      "name": "item_weapon_twinswords",
+      "entityType": "point",
+      "color": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "box": [
+        -16,
+        -16,
+        -16,
+        16,
+        16,
+        16
+      ],
+      "description": "",
+      "inherits": [
+        "item_pickupBase"
+      ],
+      "properties": [
+        {
+          "key": "model",
+          "displayName": "Model Path",
+          "type": "Model",
+          "defaultValue": "models/pickups/weapons/twinswords.glb",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "modelscale",
+          "displayName": "Uniform Scale",
+          "type": "Real",
+          "defaultValue": "32",
+          "description": "Will by scaled by 32 in engine.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        }
+      ]
+    },
+    {
+      "name": "item_weapon_pistol",
+      "entityType": "point",
+      "color": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "box": [
+        -16,
+        -16,
+        -16,
+        16,
+        16,
+        16
+      ],
+      "description": "",
+      "inherits": [
+        "item_pickupBase"
+      ],
+      "properties": [
+        {
+          "key": "model",
+          "displayName": "Model Path",
+          "type": "Model",
+          "defaultValue": "models/pickups/weapons/pistol.glb",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "modelscale",
+          "displayName": "Uniform Scale",
+          "type": "Real",
+          "defaultValue": "32",
+          "description": "Will by scaled by 32 in engine.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        }
+      ]
+    },
+    {
+      "name": "item_weapon_shotgun",
+      "entityType": "point",
+      "color": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "box": [
+        -16,
+        -16,
+        -16,
+        16,
+        16,
+        16
+      ],
+      "description": "",
+      "inherits": [
+        "item_pickupBase"
+      ],
+      "properties": [
+        {
+          "key": "model",
+          "displayName": "Model Path",
+          "type": "Model",
+          "defaultValue": "models/pickups/weapons/shotgun.glb",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "modelscale",
+          "displayName": "Uniform Scale",
+          "type": "Real",
+          "defaultValue": "32",
+          "description": "Will by scaled by 32 in engine.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        }
+      ]
+    },
+    {
+      "name": "item_weapon_smg",
+      "entityType": "point",
+      "color": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "box": [
+        -16,
+        -16,
+        -16,
+        16,
+        16,
+        16
+      ],
+      "description": "",
+      "inherits": [
+        "item_pickupBase"
+      ],
+      "properties": [
+        {
+          "key": "model",
+          "displayName": "Model Path",
+          "type": "Model",
+          "defaultValue": "models/pickups/weapons/stg44.glb",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "modelscale",
+          "displayName": "Uniform Scale",
+          "type": "Real",
+          "defaultValue": "32",
+          "description": "Will by scaled by 32 in engine.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        }
+      ]
+    },
+    {
+      "name": "item_weapon_cannon",
+      "entityType": "point",
+      "color": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "box": [
+        -16,
+        -16,
+        -16,
+        16,
+        16,
+        16
+      ],
+      "description": "",
+      "inherits": [
+        "item_pickupBase"
+      ],
+      "properties": [
+        {
+          "key": "model",
+          "displayName": "Model Path",
+          "type": "Model",
+          "defaultValue": "models/pickups/weapons/cannon.glb",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "modelscale",
+          "displayName": "Uniform Scale",
+          "type": "Real",
+          "defaultValue": "32",
+          "description": "Will by scaled by 32 in engine.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        }
+      ]
+    },
+    {
+      "name": "item_weapon_cane",
+      "entityType": "point",
+      "color": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "box": [
+        -16,
+        -16,
+        -16,
+        16,
+        16,
+        16
+      ],
+      "description": "",
+      "inherits": [
+        "item_pickupBase"
+      ],
+      "properties": [
+        {
+          "key": "model",
+          "displayName": "Model Path",
+          "type": "Model",
+          "defaultValue": "models/pickups/weapons/cane.glb",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "modelscale",
+          "displayName": "Uniform Scale",
+          "type": "Real",
+          "defaultValue": "32",
+          "description": "Will by scaled by 32 in engine.",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        }
+      ]
     }
   ]
 }

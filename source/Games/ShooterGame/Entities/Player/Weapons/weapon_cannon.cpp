@@ -74,7 +74,8 @@ public:
     {
         WeaponSlotData data = WeaponFirearm::GetDefaultData();
         data.className = "weapon_cannon";
-        data.slot = 3;
+        data.slot = 4;
+        data.AmmoType = WeaponAmmoType::CannonBullets;
         return data;
     }
 

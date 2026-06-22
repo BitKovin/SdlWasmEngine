@@ -369,6 +369,7 @@ private:
 	// ── Ladder helpers ────────────────────────────────────────────────────────
 	// EnterLadder/ExitLadder are the only places that set OnLadder state.
 	void EnterLadder(float inputY);
+	void TryGrabLadderDeferred(float inputY);
 	void ExitLadder();
 
 	// Ladder tuning
@@ -442,7 +443,7 @@ public:
 	int currentSlot = 0;
 	std::vector<WeaponSlotData> weaponSlots;
 
-	std::vector<std::string> offhandWeapons = { "", "weapon_lefthand_empty" };
+	std::vector<std::string> offhandWeapons = {""}; // "weapon_lefthand_empty" 
 	int offhandWeapon = 0;
 	int desiredOffhandWeapon = 0;
 

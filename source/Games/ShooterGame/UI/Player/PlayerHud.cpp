@@ -85,10 +85,10 @@ void PlayerHud::Update()
     ammoText->text = "";
     if (player->currentWeapon)
     {
-        if (player->currentWeapon->AmmoType != WeaponAmmoType::None)
+        if (player->currentWeapon->GetAmmoType() != WeaponAmmoType::None)
         {
-            int ammoCount = player->GetAmmo(player->currentWeapon->AmmoType);
-            int ammoLimit = player->GetAmmoLimit(player->currentWeapon->AmmoType);
+            int ammoCount = player->GetAmmo(player->currentWeapon->GetAmmoType());
+            int ammoLimit = player->GetAmmoLimit(player->currentWeapon->GetAmmoType());
             ammoText->text = to_string(ammoCount) + " / " + to_string(ammoLimit);
 		}
     }

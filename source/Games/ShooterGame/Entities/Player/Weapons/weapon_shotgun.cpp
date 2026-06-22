@@ -69,7 +69,8 @@ public:
     WeaponSlotData GetDefaultData() override {
         WeaponSlotData data = WeaponFirearm::GetDefaultData();
         data.className = "weapon_shotgun";
-        data.slot = 1;
+        data.slot = 2;
+        data.AmmoType = WeaponAmmoType::ShotgunShells;
         return data;
     }
 };

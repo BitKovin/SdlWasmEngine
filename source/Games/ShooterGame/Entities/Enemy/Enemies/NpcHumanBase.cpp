@@ -322,7 +322,6 @@ void NpcHumanBase::OnDamage(float Damage, Entity* DamageCauser, Entity* Weapon)
 
     float damageScale = ModifyIncomingDamage(1.0f);
 
-    assert(damageScale == 1.0f);
 
     Damage = ModifyIncomingDamage(Damage);
 

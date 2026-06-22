@@ -47,7 +47,7 @@ public:
 	float height = 1.8;
 	float radius = 0.4;
 
-	vec3 currentGroundNormal = vec3(0.0f,1.0f,0.0f);
+	vec3 currentGroundNormal = vec3(0.0f, 1.0f, 0.0f);
 
 	float groundMaxAngle = 40;
 
@@ -85,6 +85,16 @@ public:
 
 	bool isCrouched = false;
 
+	// ── Ladder mode ───────────────────────────────────────────────────────────
+	// When true, CharacterController::Update() skips manual gravity integration
+	// so the ladder code has sole control over vertical velocity.
+	// Call SetLadderMode(true/false) — it also rebuilds the physics body with
+	// stepHeight = 0 so the capsule bottom sits flush with the player's feet
+	// and can't catch on platform corners during descent.
+	bool suppressGravity = false;
+	bool isOnLadder = false;
+	void SetLadderMode(bool enabled);
+
 	// Registry of all live CharacterControllers. Populated in Init(), removed in destructor.
 	static std::vector<CharacterController*> s_allControllers;
 
@@ -92,6 +102,9 @@ private:
 
 	Entity* owner = nullptr;
 	float standingHeight = 1.8f;
+
+	// Saved before SetLadderMode(true) zeroes stepHeight; restored on exit.
+	float savedStepHeight = 0.4f;
 
 	float currentCameraHeight = 0.0f;
 	float targetCameraHeight = 0.0f;

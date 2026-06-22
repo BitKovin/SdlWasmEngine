@@ -16,6 +16,8 @@ void PickupBase::OnBodyEntered(Body* body, Entity* entity)
 
 	Entity::OnBodyEntered(body, entity);
 
+	if (pickedUp) return;
+
 	Player* player = dynamic_cast<Player*>(entity);
 
 	if (player)
@@ -43,6 +45,9 @@ void PickupBase::OnPickup(Player* player)
 
 	SendRPC(RPC_PICKED_UP, args, RPCTarget::All);
 
+	pickedUp = true;
+	Visible = false;
+
 }
 
 void PickupBase::OnRPC(uint8_t rpcId, NetPacket& args)
@@ -50,13 +55,23 @@ void PickupBase::OnRPC(uint8_t rpcId, NetPacket& args)
 
 	if (rpcId == RPC_PICKED_UP)
 	{
-		Destroy();
+
+		if (NetworkManager::IsActive() && NetworkReplicated == false)
+		{
+
+		}
+		else
+		{
+			Destroy();
+		}
+
 
 		SoundPlayer::PlayOneshot(pickupSound, 1);
 
-		if (NetworkManager::IsServer())
+		if (NetworkManager::IsServer() && eventFired == false)
 		{
 			CallActionOnEveryEntityWithName(target, pickupEvent);
+			eventFired = true;
 		}
 
 	}

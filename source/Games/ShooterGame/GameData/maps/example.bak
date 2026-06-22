@@ -96,7 +96,7 @@
 // entity 1
 {
 "classname" "info_player_start"
-"origin" "-176 -224 208"
+"origin" "-176 -224 192"
 }
 // entity 2
 {
@@ -143,4 +143,17 @@
 {
 "classname" "npc_dog"
 "origin" "352 592 192"
+"angle" "105"
+}
+// entity 8
+{
+"classname" "item_weapon_cane"
+"origin" "-208 16 192"
+"modelscale" "32"
+}
+// entity 9
+{
+"classname" "item_weapon_pistol"
+"origin" "-192 48 192"
+"modelscale" "32"
 }

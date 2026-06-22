@@ -254,6 +254,25 @@ public:
 				if( !string_empty( model ) && !m_entity.hasKeyValue( key ) )
 					m_model.modelChanged( model );
 			}
+			{ // handle entity class default modelscale when key is not explicitly set
+				const EntityClass& eclass = m_entity.getEntityClass();
+				if( !m_entity.hasKeyValue( "modelscale" ) && !m_entity.hasKeyValue( "modelscale_vec" ) ){
+					const char* scaleVec = EntityClass_valueForKey( eclass, "modelscale_vec" );
+					if( !string_empty( scaleVec ) ){
+						read_scalevec( m_scaleKey.m_scale, scaleVec );
+						m_scale = m_scaleKey.m_scale;
+						updateTransform();
+					}
+					else{
+						const char* scale = EntityClass_valueForKey( eclass, "modelscale" );
+						if( !string_empty( scale ) ){
+							read_scale( m_scaleKey.m_scale, scale );
+							m_scale = m_scaleKey.m_scale;
+							updateTransform();
+						}
+					}
+				}
+			}
 		}
 	}
 	void instanceDetach( const scene::Path& path ){

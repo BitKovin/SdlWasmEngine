@@ -108,7 +108,8 @@ public:
     WeaponSlotData GetDefaultData() override {
         WeaponSlotData data = WeaponFirearm::GetDefaultData();
         data.className = "weapon_sniper";
-        data.slot = 3;
+        data.slot = 4;
+        data.AmmoType = WeaponAmmoType::PistolBullets;
         return data;
     }
 };

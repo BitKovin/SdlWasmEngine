@@ -8,6 +8,12 @@ class PickupBase : public NetworkedEntity
 {
 public:
 	
+	bool NetworkReplicated = false;
+
+	bool pickedUp = false;
+
+	bool eventFired = false;
+
 	static inline uint8_t RPC_PICKED_UP = 0;
 
 	std::string target;

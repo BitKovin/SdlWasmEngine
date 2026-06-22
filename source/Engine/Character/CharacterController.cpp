@@ -114,7 +114,7 @@ void CharacterController::Update(float deltaTime)
 				vec3 targetPos = currentPos + platformDelta;
 
 				// sweep character to follow platform while resolving collisions
-				Physics::SweepBody(body, targetPos, {owner});
+				Physics::SweepBody(body, targetPos, { owner });
 			}
 
 			prevAttachWorldPos = attachWorldPos;
@@ -223,13 +223,18 @@ void CharacterController::Update(float deltaTime)
 		onGround = false;
 	}
 
-	if (onGround && velocity.y < 0)
+	// Manual gravity — skipped when the ladder (or any future system) takes
+	// sole ownership of vertical velocity via suppressGravity.
+	if (!suppressGravity)
 	{
-		velocity.y -= gravity * deltaTime * (1.0f - walkableNormal.y);
-	}
-	else
-	{
-		velocity.y -= gravity * deltaTime;
+		if (onGround && velocity.y < 0)
+		{
+			velocity.y -= gravity * deltaTime * (1.0f - walkableNormal.y);
+		}
+		else
+		{
+			velocity.y -= gravity * deltaTime;
+		}
 	}
 
 	if (onGround && velocity.y <= 0)
@@ -240,7 +245,7 @@ void CharacterController::Update(float deltaTime)
 		float snapDelta = newVerticalPosition - currentPosition.y;
 		if (std::abs(snapDelta) > 0.005f)
 		{
-			Physics::SweepBody(body, vec3(currentPosition.x, newVerticalPosition, currentPosition.z), {owner});
+			Physics::SweepBody(body, vec3(currentPosition.x, newVerticalPosition, currentPosition.z), { owner });
 
 			float moved = currentPosition.y - FromPhysics(body->GetPosition()).y;
 			if (std::abs(moved) > 0.001f && movementQuality != CharacterControllerMovementQuality::NpcGeneric)
@@ -341,7 +346,7 @@ void CharacterController::Update(float deltaTime)
 	if (sensorBody && body)
 	{
 		Physics::SetBodyPosition(sensorBody, FromPhysics(body->GetPosition()) - vec3(0, stepHeight * 0.5f, 0));
-		Physics::SetLinearVelocity(sensorBody, FromPhysics(body->GetLinearVelocity()));	
+		Physics::SetLinearVelocity(sensorBody, FromPhysics(body->GetLinearVelocity()));
 	}
 
 
@@ -559,6 +564,72 @@ float CharacterController::GroundAngleDeg(const glm::vec3& normal)
 	return glm::degrees(GroundAngleRad(normal));
 }
 
+// ── SetLadderMode ──────────────────────────────────────────────────────────
+//
+// Called by Player::EnterLadder / ExitLadder.
+//
+// What it does:
+//   1. Toggles suppressGravity so CharacterController::Update() stops applying
+//      manual gravity while the player is on a ladder.
+//   2. Rebuilds the physics body with stepHeight = 0 on entry (restored on
+//      exit).  Normally the capsule bottom sits 0.4 m above the player's feet
+//      (the step-height gap).  On a ladder that raised bottom catches on the
+//      top corner of the platform when descending.  Zeroing stepHeight makes
+//      the capsule sit flush with the feet so it slides past cleanly.
+//   3. Preserves logical position: GetPosition() returns the same value before
+//      and after the call because bodyPos is derived from GetPosition() with
+//      the NEW stepHeight baked in.
+//
+void CharacterController::SetLadderMode(bool enabled)
+{
+	if (isOnLadder == enabled) return;
+
+	isOnLadder = enabled;
+	suppressGravity = enabled;
+
+	// Save/restore the pre-ladder velocity so the body rebuild is transparent.
+	vec3 oldVel = GetVelocity();
+	// Logical center — accounts for the current stepHeight offset so the
+	// character doesn't jump when the body is replaced.
+	vec3 logicalPos = GetPosition();
+
+	if (enabled)
+	{
+		savedStepHeight = stepHeight;
+		stepHeight = 0.0f;
+	}
+	else
+	{
+		stepHeight = savedStepHeight;
+	}
+
+	// Body center in physics space = logical center + stepHeight/2 up.
+	// With stepHeight == 0 (ladder) body center IS the logical center.
+	vec3 bodyPos = logicalPos + vec3(0.0f, stepHeight * 0.5f, 0.0f);
+
+	Destroy(); // cleans up ignore pairs, nulls body & sensorBody
+
+	// Main body — capsule, same construction as Init().
+	body = Physics::CreateCharacterBody(owner, bodyPos, radius, standingHeight - stepHeight, 30);
+	body->GetMotionProperties()->SetLinearDamping(0);
+	Physics::GetBodyData(body)->dynamicCollisionGroupOrMask = true;
+	Physics::GetBodyData(body)->sensorCollisionMode = SensorCollisionMode::NotCollideWithSensors;
+	Physics::SetGravityFactor(body, 0);
+
+	// Sensor body — cylinder, full standing height, centred on logical position.
+	// Update() will keep re-snapping it to body->GetPosition() - stepHeight*0.5
+	// every frame so the initial placement just needs to be in the right ballpark.
+	sensorBody = Physics::CreateCharacterCylinderBody(owner, logicalPos, radius, standingHeight, 30);
+	sensorBody->GetMotionProperties()->SetLinearDamping(0);
+	Physics::GetBodyData(sensorBody)->dynamicCollisionGroupOrMask = true;
+	Physics::GetBodyData(sensorBody)->sensorCollisionMode = SensorCollisionMode::CollideOnlyWithSensors;
+	Physics::SetGravityFactor(sensorBody, 0);
+
+	height = standingHeight;
+
+	SetVelocity(oldVel);
+}
+
 void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedGroundHeight, bool& canStand, vec3& avgNormal, vec3& notWalkableNormal)
 {
 	hitsGround = false;
@@ -566,7 +637,7 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 	avgNormal = vec3(0, 1, 0);
 	canStand = false;
 	standingOnBody = nullptr;
-	notWalkableNormal = vec3(0,1,0);
+	notWalkableNormal = vec3(0, 1, 0);
 
 	vec3 heightOffset = vec3(0, stepHeight, 0);
 	float outheight = 0;
@@ -666,7 +737,7 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 		startRadius = 1;
 		rayRadius = 0;
 
-		if(length(GetVelocity())>0.2f)
+		if (length(GetVelocity()) > 0.2f)
 			startRadius = 0.5f;
 
 	}
@@ -784,12 +855,12 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 	}
 	else
 	{
-		notWalkableNormal = vec3(0,1,0);
+		notWalkableNormal = vec3(0, 1, 0);
 	}
 
 	const int totalHits = walkHits + steepHits;
 	hitsGround = hitsGround && (totalHits > 0);
-	canStand = hitsGround && (GroundAngleDeg(avgNormal) <= groundMaxAngle) && canStand && walkHits>3;
+	canStand = hitsGround && (GroundAngleDeg(avgNormal) <= groundMaxAngle) && canStand && walkHits > 3;
 }
 
 bool CharacterController::CheckGroundAt(vec3 location, float checkRadius, float& outheight, bool& canStand, vec3& normal, const Body** hitBody)
@@ -851,8 +922,8 @@ void CharacterController::UpdateCharacterStacking(float deltaTime)
 {
 	if (!body) return;
 
-	const BodyID myID    = body->GetID();
-	const vec3   myPos   = GetPosition();
+	const BodyID myID = body->GetID();
+	const vec3   myPos = GetPosition();
 	const float  myFeetY = myPos.y - height * 0.5f;
 
 	// ── 1. Detect which characters are currently below us ───────────────────
@@ -862,19 +933,19 @@ void CharacterController::UpdateCharacterStacking(float deltaTime)
 	{
 		if (other == this || !other->body) continue;
 
-		const vec3  otherPos      = other->GetPosition();
-		const float otherTopY     = otherPos.y + other->height * 0.5f;
+		const vec3  otherPos = other->GetPosition();
+		const float otherTopY = otherPos.y + other->height * 0.5f;
 		const float combinedRadii = radius + other->radius;
 
 		// Horizontal distance (XZ only)
-		const vec3  diff3   = myPos - otherPos;
-		const float xzDist  = glm::length(vec2(diff3.x, diff3.z));
+		const vec3  diff3 = myPos - otherPos;
+		const float xzDist = glm::length(vec2(diff3.x, diff3.z));
 
 		// yDiff ~= 0 when our feet sit exactly on their top.
 		// Accept a window above (+height*0.5) so that the pair is detected
 		// slightly before contact, and below (-stepHeight - 0.3) to keep
 		// the pair alive while we are passing through.
-		const float yDiff             = myFeetY - otherTopY;
+		const float yDiff = myFeetY - otherTopY;
 		const bool  verticallyStacked = (yDiff > -(stepHeight + 0.3f)) && (yDiff < height * 0.5f);
 
 		// Small extra margin so the pair is established just before the
@@ -929,9 +1000,9 @@ void CharacterController::UpdateCharacterStacking(float deltaTime)
 		vec3 diff = GetPosition() - other->GetPosition();
 		diff.y = 0.0f; // horizontal only
 
-		const float dist          = glm::length(diff);
+		const float dist = glm::length(diff);
 		const float combinedRadii = radius + other->radius;
-		const float overlap       = combinedRadii - dist;
+		const float overlap = combinedRadii - dist;
 
 		if (overlap <= 0.0f) continue;
 
@@ -943,7 +1014,7 @@ void CharacterController::UpdateCharacterStacking(float deltaTime)
 
 		// Frame-rate-independent continuous push, scaled by overlap depth.
 		const float magnitude = overlap * 8.0f;
-		Physics::AddImpulse(body,        pushDir * ( magnitude * deltaTime));
+		Physics::AddImpulse(body, pushDir * (magnitude * deltaTime));
 		Physics::AddImpulse(other->body, pushDir * (-magnitude * deltaTime));
 	}
 }

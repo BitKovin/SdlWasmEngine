@@ -176,7 +176,8 @@ public:
     WeaponSlotData GetDefaultData() override {
         WeaponSlotData data = WeaponFirearm::GetDefaultData();
         data.className = "weapon_mpsd";
-        data.slot = 2;
+        data.slot = 3;
+        data.AmmoType = WeaponAmmoType::PistolBullets;
         return data;
     }
 };

@@ -36,7 +36,7 @@ class PickupAmmoCannon : public PickupBase
 		mesh->Scale = vec3(1 / 32.f);
 		Drawables.push_back(mesh);
 
-	}	
+	}
 
 };
 

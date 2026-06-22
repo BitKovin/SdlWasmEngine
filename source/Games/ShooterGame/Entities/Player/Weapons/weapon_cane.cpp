@@ -564,6 +564,7 @@ public:
 		WeaponSlotData data;
 
 		data.className = "weapon_cane";
+		data.offhand = true;
 
 		return data;
 	}

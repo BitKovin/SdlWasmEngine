@@ -1,9 +1,0 @@
-libs/assimp/code/AssetLib/MD5/MD5Parser.o: \
- libs/assimp/code/AssetLib/MD5/MD5Parser.cpp \
- libs/assimp/code/AssetLib/MD5/MD5Loader.h \
- libs/assimp/code/AssetLib/MD5/MD5Parser.h \
- libs/assimp/include/assimp/types.h \
- libs/assimp/include/assimp/ParsingUtils.h \
- libs/assimp/include/assimp/BaseImporter.h \
- libs/assimp/code/Material/MaterialSystem.h \
- libs/assimp/include/assimp/fast_atof.h libs/assimp/include/assimp/mesh.h

@@ -5,19 +5,6 @@
 #include <Helpers/JsonHelper.hpp>
 #include <Animation.h>
 
-struct WeaponSlotData
-{
-	string className = "";
-	int slot = 0;
-	int priority = 0;
-
-	std::string inventoryUUID = ""; // For inventory system tracking
-
-	auto operator<=>(const WeaponSlotData&) const = default;
-
-	NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(WeaponSlotData, className,slot,priority)
-};
-
 enum class WeaponAmmoType : uint8_t
 {
 	None = 0,
@@ -25,6 +12,25 @@ enum class WeaponAmmoType : uint8_t
 	ShotgunShells,
 	CannonBullets
 };
+
+struct WeaponSlotData
+{
+	string className = "";
+	int slot = 0;
+	int priority = 0;
+
+	int startAmmo = 4;
+	WeaponAmmoType AmmoType = WeaponAmmoType::None;
+
+	bool offhand = false;
+
+	std::string inventoryUUID = ""; // For inventory system tracking
+
+	auto operator<=>(const WeaponSlotData&) const = default;
+
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(WeaponSlotData, className,slot,priority, offhand, AmmoType)
+};
+
 
 class Player;
 
@@ -36,8 +42,6 @@ protected:
 	Delay SwitchDelay;
 
 public:
-
-	WeaponAmmoType AmmoType = WeaponAmmoType::None;
 
 	float HideWeapon = 0;
 
@@ -85,6 +89,11 @@ public:
 	virtual WeaponSlotData GetDefaultData()
 	{
 		return WeaponSlotData();
+	}
+
+	WeaponAmmoType GetAmmoType()
+	{
+		return Data.AmmoType;
 	}
 
 	virtual AnimationPose ApplyWeaponAnimation(AnimationPose thirdPersonPose)
