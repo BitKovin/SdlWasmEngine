@@ -1,392 +1,277 @@
 #include "RemotePlayer.h"
+#include "PlayerRepresentation.h"
+#include "PlayerState.h"
 #include "Player.hpp"
+#include "LevelObjectFactory.h"
+#include "Weapons/WeaponBase.h"
+#include "Weapons/WeaponFirearm.h"
 #include <Network/NetworkManager.h>
 #include <AiPerception/AiPerceptionSystem.h>
-#include "Weapons/WeaponFirearm.h"
-
-#include <Animation.h>
+#include <cassert>
 
 namespace
 {
-	// How far the rendered position is allowed to drift before we snap.
-	constexpr float kSnapDistance = 2.5f;
+    // How far the rendered position is allowed to drift before we snap.
+    constexpr float kSnapDistance         = 2.5f;
 
-	// Correction smoothing toward the extrapolated position.
-	constexpr float kCorrectionInterpSpeed = 18.0f;
+    // Correction smoothing toward the extrapolated position.
+    constexpr float kCorrectionInterpSpeed = 18.0f;
 
-	// Prevent runaway prediction if packets stall.
-	constexpr float kMaxPredictionTime = 0.25f;
+    // Prevent runaway prediction if packets stall.
+    constexpr float kMaxPredictionTime    = 0.25f;
 }
+
+// ─── Lifecycle ────────────────────────────────────────────────────────────────
 
 RemotePlayer::RemotePlayer()
 {
-	ClassName = "remotePlayer";
-
-	Tags = { "player" };
-
-	DestroyOnOwnerDisconnect = true;
-
-	weaponR = new SkeletalMesh(this);
-	Drawables.push_back(weaponR);
-	weaponL = new SkeletalMesh(this);
-	Drawables.push_back(weaponL);
-
-}
-
-RemotePlayer::~RemotePlayer()
-{
-	if (animator)
-		delete animator;
-}
-
-void RemotePlayer::Update()
-{
-	Visible = !isOwned;
-
-	if (isOwned)
-	{
-		if (Visible)
-			RecalculateWeaponPaths();
-
-		if (referencePlayer)
-		{
-			targetPosition = referencePlayer->Position;
-			targetRotation = referencePlayer->Rotation;
-			playerHeight = referencePlayer->controller.isCrouched ? referencePlayer->controller.crouchHeight : referencePlayer->controller.height;
-
-			predictedVelocity = referencePlayer->controller.GetVelocity();
-
-			weaponRIndex = GetWeaponIndexFromRef(referencePlayer->currentWeapon);
-			weaponLIndex = GetWeaponIndexFromRef(referencePlayer->currentOffhandWeapon);
-
-			weaponRAkimbo = false;
-
-			if (referencePlayer->currentWeapon)
-			{
-				WeaponFirearm* weapFirearm = dynamic_cast<WeaponFirearm*>(referencePlayer->currentWeapon);
-
-				if (weapFirearm)
-					weaponRAkimbo = weapFirearm->akimbo; // FIX: Changed '==' to '='
-			}
-
-			cameraRotation = referencePlayer->cameraRotation;
-		}
-
-		// Local owner should not accumulate prediction state.
-		timeSinceNetUpdate = 0.0f;
-
-		Position = targetPosition;
-		Rotation = targetRotation;
-
-		if (observationTarget)
-		{
-			AiPerceptionSystem::RemoveTarget(observationTarget);
-			observationTarget = nullptr;
-		}
-	}
-	else
-	{
-		timeSinceNetUpdate += Time::DeltaTimeF;
-
-		if (observationTarget == nullptr)
-			observationTarget = AiPerceptionSystem::CreateTarget(Position, Id, { "player" });
-	}
-
-	// Extrapolate from the last received snapshot.
-	const float predictionTime = (timeSinceNetUpdate > kMaxPredictionTime)
-		? kMaxPredictionTime
-		: timeSinceNetUpdate;
-
-	vec3 predictedPosition = targetPosition + (predictedVelocity * predictionTime);
-
-	// Interpolate only as a correction step, not as the primary motion path.
-	const float errorDistance = distance(Position, predictedPosition);
-
-	if (errorDistance > kSnapDistance)
-	{
-		Position = predictedPosition;
-	}
-	else
-	{
-		Position = MathHelper::Interp(Position, predictedPosition, Time::DeltaTimeF, kCorrectionInterpSpeed);
-	}
-
-	Rotation = targetRotation;
-
-	if (mesh)
-	{
-		mesh->Position = Position - vec3(0, playerHeight / 2.0f, 0);
-		mesh->Rotation = Rotation;
-	}
-
-	if (observationTarget)
-	{
-		observationTarget->position = Position + vec3(0, 0.7f, 0);
-	}
-}
-
-void RemotePlayer::AsyncUpdate()
-{
-	if (animator == nullptr) return;
-
-	UpdateWeaponMeshes();
-
-	animator->movementSpeed = length(MathHelper::XZ(predictedVelocity));
-	animator->Update();
-	auto pose = animator->GetResultPose();
-
-	pose = ApplyWeaponAnimation(pose);
-
-	mesh->PasteAnimationPose(pose);
-
-	if (weaponR->Visible)
-		weaponR->PasteAnimationPose(pose);
-
-	if(weaponL->Visible)
-		weaponL->PasteAnimationPose(pose);
-
-	weaponR->Position = weaponL->Position = mesh->Position;
-	weaponR->Rotation = weaponL->Rotation = mesh->Rotation;
-}
-
-void RemotePlayer::NetSerialize(NetPacket& packet)
-{
-	packet.WriteVector3(targetPosition);
-	packet.WriteVector3(targetRotation);
-	packet.WriteFloat(playerHeight);
-	packet.WriteVector3(predictedVelocity);
-	packet.WriteVector3(cameraRotation);
-
-	packet.WriteUInt16(weaponRIndex);
-	packet.WriteUInt16(weaponLIndex);
-
-	packet.WriteBool(weaponRAkimbo);
-}
-
-void RemotePlayer::NetDeserialize(NetPacket& packet)
-{
-	const vec3 newTargetPosition = packet.ReadVector3();
-	const vec3 newTargetRotation = packet.ReadVector3();
-	playerHeight = packet.ReadFloat();
-
-	const vec3 incomingVelocity = packet.ReadVector3();
-
-	lastNetPosition = targetPosition;
-	targetPosition = newTargetPosition;
-	targetRotation = newTargetRotation;
-
-	predictedVelocity = incomingVelocity;
-
-	timeSinceNetUpdate = 0.0f;
-
-	cameraRotation = packet.ReadVector3();
-
-	uint16_t newWeaponR = packet.ReadUInt16();
-	uint16_t newWeaponL = packet.ReadUInt16();
-
-	// NEW: Deserialize the akimbo state
-	bool newAkimbo = packet.ReadBool();
-
-	if (newWeaponR != weaponRIndex || newWeaponL != weaponLIndex)
-	{
-		weaponRIndex = newWeaponR;
-		weaponLIndex = newWeaponL;
-
-		RecalculateWeaponPaths();
-	}
-
-
-	weaponRAkimbo = newAkimbo;
+    ClassName                = "remotePlayer";
+    Tags                     = { "player" };
+    DestroyOnOwnerDisconnect = true;
 }
 
 void RemotePlayer::LoadAssets()
 {
-	mesh = new SkeletalMesh(this);
-	Drawables.push_back(mesh);
-
-
-	weaponR->MeshHideList = { "w_l" };
-	weaponL->MeshHideList = { "w_r" };
-	weaponL->TwoSided = true;
-
-	weaponAnimation = new Animation(this);
-	weaponAnimation->LoadFromFile("GameData/animations/player/tp_weapons.glb");
-	Drawables.push_back(weaponAnimation);//just to it gets cleaned with entity. doesn't gets drawn anyway
-
-	weaponAnimation->PlayAnimation("weapon_rl",true,0);
-
-	mesh->LoadFromFile("GameData/models/player/body/player_body.glb");
-	mesh->GravityAlignedRotation = true;
-	mesh->DepthPrePath = false;
-	mesh->Masked = true;
-	mesh->PreloadAssets();
-
-	animator = new PlayerBodyAnimator(this);
-	animator->LoadAssetsIfNeeded();
+    // Spawn the visual representation as a regular (non-networked) level entity.
+    // It lives alongside this entity and is destroyed with it.
+    representation = new PlayerRepresentation();
+    Level::Current->AddEntity(representation, true);
+    representation->LoadAssetsIfNeeded();
 }
 
-AnimationPose RemotePlayer::ApplyWeaponAnimation(AnimationPose pose) {
-	// FIX: Check against UINT16_MAX so weapon index 0 (first in registry) isn't ignored
-	if (weaponRIndex == UINT16_MAX && weaponLIndex == UINT16_MAX)
-		return pose;
+void RemotePlayer::Destroy()
+{
+    // Destroy the representation first so it is cleanly removed from the level
+    // before RemotePlayer itself is taken out.
+    if (representation)
+    {
+        representation->Destroy();
+        representation = nullptr;
+    }
 
-	AnimationPose outPose = pose;
-
-	if (weaponRIndex != UINT16_MAX || weaponLIndex != UINT16_MAX)
-	{
-		outPose = AnimationPose::LayeredLerp("spine_03", weaponAnimation->GetRootNode(), pose, weaponAnimation->GetAnimationPose(), 1, 1);
-	}
-
-	outPose.boneTransforms["spine_02"] = outPose.boneTransforms["spine_02"]
-		* MathHelper::GetRotationMatrix(
-			vec3(0, 0, cameraRotation.x * -0.75f));
-
-	return outPose;
+    Entity::Destroy();
 }
 
-void RemotePlayer::UpdateWeaponMeshes() {
-	if (weaponR->filePath != weaponRModelPath)
-	{
-		weaponR->LoadFromFile(weaponRModelPath);
-		weaponR->TexturesLocation = weaponRModelPath + "/";
-		// FIX: Removed the static hide list assignment from here so it doesn't conflict
-	}
+// ─── Per-frame update ─────────────────────────────────────────────────────────
 
-	if (weaponL->filePath != weaponLModelPath)
-	{
-		weaponL->LoadFromFile(weaponLModelPath);
-		weaponL->TexturesLocation = weaponLModelPath + "/";
-		weaponL->MeshHideList = { "w_r" };
-	}
+void RemotePlayer::Update()
+{
+    
 
-	// NEW: Dynamically handle weaponR's hide list every frame based on Akimbo state
-	if (weaponRAkimbo)
-	{
-		// Clear the hide list to show both parts
-		if (!weaponR->MeshHideList.empty()) {
-			weaponR->MeshHideList.clear();
-		}
-	}
-	else
-	{
-		// Enforce hiding the left part of the weapon if not akimbo
-		if (weaponR->MeshHideList.empty() || weaponR->MeshHideList.count("w_l") == 0) {
-			weaponR->MeshHideList = { "w_l" };
-		}
-	}
+    if (isOwned)
+    {
+        if (referencePlayer)
+        {
+            // Keep prediction fields in sync with the live player so
+            // NetSerialize sends accurate data.
+            targetPosition    = referencePlayer->Position;
+            targetRotation    = referencePlayer->Rotation;
+            playerHeight      = referencePlayer->controller.isCrouched
+                ? referencePlayer->controller.crouchHeight
+                : referencePlayer->controller.height;
+            predictedVelocity = referencePlayer->controller.GetVelocity();
+            cameraRotation    = referencePlayer->cameraRotation;
 
-	if (weaponR->filePath.empty())
-		weaponR->Visible = false;
+            weaponRIndex  = GetWeaponIndexFromRef(referencePlayer->currentWeapon);
+            weaponLIndex  = GetWeaponIndexFromRef(referencePlayer->currentOffhandWeapon);
 
-	if (weaponL->filePath.empty())
-		weaponL->Visible = false;
+            weaponRAkimbo = false;
+            if (referencePlayer->currentWeapon)
+            {
+                WeaponFirearm* fw = dynamic_cast<WeaponFirearm*>(referencePlayer->currentWeapon);
+                if (fw) weaponRAkimbo = fw->akimbo;
+            }
+
+            // Build state directly from the player pointer — model paths are
+            // resolved without touching the weapon registry.
+            if (representation)
+            {
+                PlayerState state        = PlayerState::FromPlayerPtr(referencePlayer);
+                representation->Visible  = false; // hidden by default; a mirror can override
+                representation->ApplyState(state);
+            }
+        }
+
+        timeSinceNetUpdate = 0.0f;
+        Position = targetPosition;
+        Rotation = targetRotation;
+
+        if (observationTarget)
+        {
+            AiPerceptionSystem::RemoveTarget(observationTarget);
+            observationTarget = nullptr;
+        }
+    }
+    else
+    {
+        timeSinceNetUpdate += Time::DeltaTimeF;
+
+        if (!observationTarget)
+            observationTarget = AiPerceptionSystem::CreateTarget(Position, Id, { "player" });
+    }
+
+    // ── Dead-reckoning ────────────────────────────────────────────────────────
+    // For the owned case timeSinceNetUpdate == 0, so this is a no-op and
+    // Position stays equal to targetPosition set above.
+    const float predictionTime = (timeSinceNetUpdate > kMaxPredictionTime)
+        ? kMaxPredictionTime
+        : timeSinceNetUpdate;
+
+    const vec3  predictedPosition = targetPosition + (predictedVelocity * predictionTime);
+    const float errorDistance     = distance(Position, predictedPosition);
+
+    if (errorDistance > kSnapDistance)
+        Position = predictedPosition;
+    else
+        Position = MathHelper::Interp(Position, predictedPosition, Time::DeltaTimeF, kCorrectionInterpSpeed);
+
+    Rotation = targetRotation;
+
+    // ── Push final state to the representation (remote players only) ──────────
+    if (!isOwned && representation)
+    {
+        PlayerState state;
+        state.position         = Position;
+        state.rotation         = Rotation;
+        state.cameraRotation   = cameraRotation;
+        state.velocity         = predictedVelocity;
+        state.playerHeight     = playerHeight;
+        state.weaponRAkimbo    = weaponRAkimbo;
+        state.weaponRModelPath = weaponRModelPath;
+        state.weaponLModelPath = weaponLModelPath;
+
+        representation->Visible = true;
+        representation->ApplyState(state);
+    }
+
+    if (observationTarget)
+        observationTarget->position = Position + vec3(0, 0.7f, 0);
 }
 
-void RemotePlayer::RecalculateWeaponPaths() {
-	// FIX: Explicitly check against UINT16_MAX instead of casting IDs to booleans
-	bool hasWeaponR = (weaponRIndex != UINT16_MAX);
-	bool hasWeaponL = (weaponLIndex != UINT16_MAX);
-
-	weaponR->Visible = hasWeaponR;
-	weaponL->Visible = hasWeaponL;
-
-	if (hasWeaponR)
-	{
-		std::string weapClassname = GetClassNameFromId(weaponRIndex);
-		if (!weapClassname.empty())
-		{
-			auto weapEnt = LevelObjectFactory::instance().create(weapClassname);
-			Weapon* weapPtr = dynamic_cast<Weapon*>(weapEnt);
-			assert(weapPtr);
-
-			WeaponFirearm* firearmPtr = dynamic_cast<WeaponFirearm*>(weapEnt);
-			weaponRModelPath = firearmPtr ? firearmPtr->params.modelPathTp : weapPtr->thirdPersonModelPath;
-
-			delete weapEnt;
-		}
-	}
-	else
-	{
-		// FIX: Explicitly clear the path when unequipped
-		weaponRModelPath = "";
-		weaponR->filePath = "";
-	}
-
-	if (hasWeaponL)
-	{
-		std::string weapClassname = GetClassNameFromId(weaponLIndex);
-		if (!weapClassname.empty())
-		{
-			auto weapEnt = LevelObjectFactory::instance().create(weapClassname);
-			Weapon* weapPtr = dynamic_cast<Weapon*>(weapEnt);
-			assert(weapPtr);
-
-			WeaponFirearm* firearmPtr = dynamic_cast<WeaponFirearm*>(weapEnt);
-			weaponLModelPath = firearmPtr ? firearmPtr->params.modelPathTp : weapPtr->thirdPersonModelPath;
-
-			delete weapEnt;
-		}
-	}
-	else
-	{
-		// FIX: Explicitly clear the path when unequipped
-		weaponLModelPath = "";
-		weaponL->filePath = "";
-	}
+void RemotePlayer::AsyncUpdate()
+{
+    // All visual / animation work lives in PlayerRepresentation::AsyncUpdate(),
+    // which the level system calls automatically.
 }
 
-map<std::string, uint16_t> weaponClassNameToIndexMap;
-std::map<uint16_t, std::string> weaponIndexToClassNameMap;
+// ─── Network serialization ────────────────────────────────────────────────────
+
+void RemotePlayer::NetSerialize(NetPacket& packet)
+{
+    packet.WriteVector3(targetPosition);
+    packet.WriteVector3(targetRotation);
+    packet.WriteFloat(playerHeight);
+    packet.WriteVector3(predictedVelocity);
+    packet.WriteVector3(cameraRotation);
+
+    packet.WriteUInt16(weaponRIndex);
+    packet.WriteUInt16(weaponLIndex);
+    packet.WriteBool(weaponRAkimbo);
+}
+
+void RemotePlayer::NetDeserialize(NetPacket& packet)
+{
+    const vec3     newTargetPosition = packet.ReadVector3();
+    const vec3     newTargetRotation = packet.ReadVector3();
+    const float    newPlayerHeight   = packet.ReadFloat();
+    const vec3     incomingVelocity  = packet.ReadVector3();
+
+    lastNetPosition    = targetPosition;
+    targetPosition     = newTargetPosition;
+    targetRotation     = newTargetRotation;
+    playerHeight       = newPlayerHeight;
+    predictedVelocity  = incomingVelocity;
+    timeSinceNetUpdate = 0.0f;
+
+    cameraRotation = packet.ReadVector3();
+
+    const uint16_t newWeaponR = packet.ReadUInt16();
+    const uint16_t newWeaponL = packet.ReadUInt16();
+    const bool     newAkimbo  = packet.ReadBool();
+
+    if (newWeaponR != weaponRIndex || newWeaponL != weaponLIndex)
+    {
+        weaponRIndex = newWeaponR;
+        weaponLIndex = newWeaponL;
+        RecalculateWeaponPaths(); // updates weaponRModelPath / weaponLModelPath
+    }
+
+    weaponRAkimbo = newAkimbo;
+}
+
+// ─── Weapon path resolution ───────────────────────────────────────────────────
+// Paths are cached in RemotePlayer and pushed to PlayerRepresentation via
+// PlayerState. The representation never touches the weapon registry.
+
+void RemotePlayer::RecalculateWeaponPaths()
+{
+    auto resolvePath = [this](uint16_t index) -> std::string
+    {
+        if (index == UINT16_MAX)
+            return {};
+
+        const std::string weapClassname = GetClassNameFromId(index);
+        if (weapClassname.empty())
+            return {};
+
+        auto weapEnt = LevelObjectFactory::instance().create(weapClassname);
+        auto* weapPtr = dynamic_cast<Weapon*>(weapEnt);
+        assert(weapPtr);
+
+        auto*       firearmPtr = dynamic_cast<WeaponFirearm*>(weapEnt);
+        std::string path = firearmPtr ? firearmPtr->params.modelPathTp
+                                      : weapPtr->thirdPersonModelPath;
+        delete weapEnt;
+        return path;
+    };
+
+    weaponRModelPath = resolvePath(weaponRIndex);
+    weaponLModelPath = resolvePath(weaponLIndex);
+}
+
+// ─── Weapon registry cache ────────────────────────────────────────────────────
+// Maps weapon class names ↔ factory registry indices. Used only during
+// serialization; the representation layer works exclusively with model paths.
+
+static std::map<std::string, uint16_t> weaponClassNameToIndexMap;
+static std::map<uint16_t, std::string> weaponIndexToClassNameMap;
 
 uint16_t RemotePlayer::GetWeaponIndexFromRef(Entity* ent)
 {
-	if (ent == nullptr)
-		return UINT16_MAX; // or 0, depending on your invalid value
+    if (!ent) return UINT16_MAX;
 
-	// Check cache first
-	auto cached = weaponClassNameToIndexMap.find(ent->ClassName);
-	if (cached != weaponClassNameToIndexMap.end())
-		return cached->second;
+    auto cached = weaponClassNameToIndexMap.find(ent->ClassName);
+    if (cached != weaponClassNameToIndexMap.end())
+        return cached->second;
 
-	const auto& registry = LevelObjectFactory::instance().GetRegistry();
+    const auto& registry = LevelObjectFactory::instance().GetRegistry();
+    auto it = registry.find(ent->ClassName);
+    if (it == registry.end()) return UINT16_MAX;
 
-	auto it = registry.find(ent->ClassName);
-	if (it == registry.end())
-		return UINT16_MAX; // class not found
-
-	uint16_t index = static_cast<uint16_t>(
-		std::distance(registry.begin(), it));
-
-	weaponClassNameToIndexMap.emplace(ent->ClassName, index);
-	weaponIndexToClassNameMap.emplace(index, ent->ClassName);
-
-	return index;
+    uint16_t index = static_cast<uint16_t>(std::distance(registry.begin(), it));
+    weaponClassNameToIndexMap.emplace(ent->ClassName, index);
+    weaponIndexToClassNameMap.emplace(index, ent->ClassName);
+    return index;
 }
 
 std::string RemotePlayer::GetClassNameFromId(uint16_t id)
 {
+    if (id == UINT16_MAX) return {};
 
-	if (id == UINT16_MAX)
-		return "";
+    auto cached = weaponIndexToClassNameMap.find(id);
+    if (cached != weaponIndexToClassNameMap.end())
+        return cached->second;
 
-	auto cached = weaponIndexToClassNameMap.find(id);
-	if (cached != weaponIndexToClassNameMap.end())
-		return cached->second;
+    const auto& registry = LevelObjectFactory::instance().GetRegistry();
+    if (id >= registry.size()) return {};
 
-	const auto& registry = LevelObjectFactory::instance().GetRegistry();
+    auto it = registry.begin();
+    std::advance(it, id);
 
-	if (id >= registry.size())
-		return {};
-
-	auto it = registry.begin();
-	std::advance(it, id);
-
-	const std::string& className = it->first;
-
-	weaponIndexToClassNameMap.emplace(id, className);
-	weaponClassNameToIndexMap.emplace(className, id);
-
-	return className;
+    const std::string& className = it->first;
+    weaponIndexToClassNameMap.emplace(id, className);
+    weaponClassNameToIndexMap.emplace(className, id);
+    return className;
 }
 
 REGISTER_ENTITY(RemotePlayer, "remotePlayer")
