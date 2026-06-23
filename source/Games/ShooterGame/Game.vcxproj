@@ -440,6 +440,8 @@
     <ClCompile Include="Entities\Player\InventoryMenu.cpp" />
     <ClCompile Include="Entities\Player\LevelEndLogic.cpp" />
     <ClCompile Include="Entities\Player\Player.cpp" />
+    <ClCompile Include="Entities\Player\PlayerCloneArea\PlayerCloneAreaBase.cpp" />
+    <ClCompile Include="Entities\Player\PlayerCloneArea\PlayerMirrorCloneArea.cpp" />
     <ClCompile Include="Entities\Player\PlayerRepresentation.cpp" />
     <ClCompile Include="Entities\Player\PlayerState.cpp" />
     <ClCompile Include="Entities\Player\Player_Mantle.cpp" />
@@ -537,6 +539,7 @@
     <ClInclude Include="Entities\Player\InventoryMenu.h" />
     <ClInclude Include="Entities\Player\Player.hpp" />
     <ClInclude Include="Entities\Player\PlayerBodyAnimator.h" />
+    <ClInclude Include="Entities\Player\PlayerCloneArea\PlayerCloneAreaBase.h" />
     <ClInclude Include="Entities\Player\PlayerRepresentation.h" />
     <ClInclude Include="Entities\Player\PlayerState.h" />
     <ClInclude Include="Entities\Player\RemotePlayer.h" />

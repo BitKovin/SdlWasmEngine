@@ -9,24 +9,26 @@
 #include <AiPerception/AiPerceptionSystem.h>
 #include <cassert>
 
+#include "PlayerCloneArea/PlayerCloneAreaBase.h"
+
 namespace
 {
     // How far the rendered position is allowed to drift before we snap.
-    constexpr float kSnapDistance         = 2.5f;
+    constexpr float kSnapDistance = 2.5f;
 
     // Correction smoothing toward the extrapolated position.
     constexpr float kCorrectionInterpSpeed = 18.0f;
 
     // Prevent runaway prediction if packets stall.
-    constexpr float kMaxPredictionTime    = 0.25f;
+    constexpr float kMaxPredictionTime = 0.25f;
 }
 
 // ─── Lifecycle ────────────────────────────────────────────────────────────────
 
 RemotePlayer::RemotePlayer()
 {
-    ClassName                = "remotePlayer";
-    Tags                     = { "player" };
+    ClassName = "remotePlayer";
+    Tags = { "player" };
     DestroyOnOwnerDisconnect = true;
 }
 
@@ -49,6 +51,14 @@ void RemotePlayer::Destroy()
         representation = nullptr;
     }
 
+    // The clone (if any) is a separate level entity and won't be cleaned up
+    // by anything else, so it has to be torn down explicitly too.
+    if (mirrorCloneRepresentation)
+    {
+        mirrorCloneRepresentation->Destroy();
+        mirrorCloneRepresentation = nullptr;
+    }
+
     Entity::Destroy();
 }
 
@@ -56,7 +66,7 @@ void RemotePlayer::Destroy()
 
 void RemotePlayer::Update()
 {
-    
+
 
     if (isOwned)
     {
@@ -64,16 +74,16 @@ void RemotePlayer::Update()
         {
             // Keep prediction fields in sync with the live player so
             // NetSerialize sends accurate data.
-            targetPosition    = referencePlayer->Position;
-            targetRotation    = referencePlayer->Rotation;
-            playerHeight      = referencePlayer->controller.isCrouched
+            targetPosition = referencePlayer->Position;
+            targetRotation = referencePlayer->Rotation;
+            playerHeight = referencePlayer->controller.isCrouched
                 ? referencePlayer->controller.crouchHeight
                 : referencePlayer->controller.height;
             predictedVelocity = referencePlayer->controller.GetVelocity();
-            cameraRotation    = referencePlayer->cameraRotation;
+            cameraRotation = referencePlayer->cameraRotation;
 
-            weaponRIndex  = GetWeaponIndexFromRef(referencePlayer->currentWeapon);
-            weaponLIndex  = GetWeaponIndexFromRef(referencePlayer->currentOffhandWeapon);
+            weaponRIndex = GetWeaponIndexFromRef(referencePlayer->currentWeapon);
+            weaponLIndex = GetWeaponIndexFromRef(referencePlayer->currentOffhandWeapon);
 
             weaponRAkimbo = false;
             if (referencePlayer->currentWeapon)
@@ -86,9 +96,13 @@ void RemotePlayer::Update()
             // resolved without touching the weapon registry.
             if (representation)
             {
-                PlayerState state        = PlayerState::FromPlayerPtr(referencePlayer);
-                representation->Visible  = false; // hidden by default; a mirror can override
+                PlayerState state = PlayerState::FromPlayerPtr(referencePlayer);
+                representation->Visible = false; // hidden by default; a mirror can override
                 representation->ApplyState(state);
+
+                // Owned players don't render their own body, so the only
+                // place their pose shows up is in a clone area (mirror).
+                UpdatePlayerClone(state);
             }
         }
 
@@ -118,7 +132,7 @@ void RemotePlayer::Update()
         : timeSinceNetUpdate;
 
     const vec3  predictedPosition = targetPosition + (predictedVelocity * predictionTime);
-    const float errorDistance     = distance(Position, predictedPosition);
+    const float errorDistance = distance(Position, predictedPosition);
 
     if (errorDistance > kSnapDistance)
         Position = predictedPosition;
@@ -131,17 +145,19 @@ void RemotePlayer::Update()
     if (!isOwned && representation)
     {
         PlayerState state;
-        state.position         = Position;
-        state.rotation         = Rotation;
-        state.cameraRotation   = cameraRotation;
-        state.velocity         = predictedVelocity;
-        state.playerHeight     = playerHeight;
-        state.weaponRAkimbo    = weaponRAkimbo;
+        state.position = Position;
+        state.rotation = Rotation;
+        state.cameraRotation = cameraRotation;
+        state.velocity = predictedVelocity;
+        state.playerHeight = playerHeight;
+        state.weaponRAkimbo = weaponRAkimbo;
         state.weaponRModelPath = weaponRModelPath;
         state.weaponLModelPath = weaponLModelPath;
 
         representation->Visible = true;
         representation->ApplyState(state);
+
+        UpdatePlayerClone(state);
     }
 
     if (observationTarget)
@@ -173,21 +189,21 @@ void RemotePlayer::NetDeserialize(NetPacket& packet)
 {
     const vec3     newTargetPosition = packet.ReadVector3();
     const vec3     newTargetRotation = packet.ReadVector3();
-    const float    newPlayerHeight   = packet.ReadFloat();
-    const vec3     incomingVelocity  = packet.ReadVector3();
+    const float    newPlayerHeight = packet.ReadFloat();
+    const vec3     incomingVelocity = packet.ReadVector3();
 
-    lastNetPosition    = targetPosition;
-    targetPosition     = newTargetPosition;
-    targetRotation     = newTargetRotation;
-    playerHeight       = newPlayerHeight;
-    predictedVelocity  = incomingVelocity;
+    lastNetPosition = targetPosition;
+    targetPosition = newTargetPosition;
+    targetRotation = newTargetRotation;
+    playerHeight = newPlayerHeight;
+    predictedVelocity = incomingVelocity;
     timeSinceNetUpdate = 0.0f;
 
     cameraRotation = packet.ReadVector3();
 
     const uint16_t newWeaponR = packet.ReadUInt16();
     const uint16_t newWeaponL = packet.ReadUInt16();
-    const bool     newAkimbo  = packet.ReadBool();
+    const bool     newAkimbo = packet.ReadBool();
 
     if (newWeaponR != weaponRIndex || newWeaponL != weaponLIndex)
     {
@@ -206,27 +222,70 @@ void RemotePlayer::NetDeserialize(NetPacket& packet)
 void RemotePlayer::RecalculateWeaponPaths()
 {
     auto resolvePath = [this](uint16_t index) -> std::string
-    {
-        if (index == UINT16_MAX)
-            return {};
+        {
+            if (index == UINT16_MAX)
+                return {};
 
-        const std::string weapClassname = GetClassNameFromId(index);
-        if (weapClassname.empty())
-            return {};
+            const std::string weapClassname = GetClassNameFromId(index);
+            if (weapClassname.empty())
+                return {};
 
-        auto weapEnt = LevelObjectFactory::instance().create(weapClassname);
-        auto* weapPtr = dynamic_cast<Weapon*>(weapEnt);
-        assert(weapPtr);
+            auto weapEnt = LevelObjectFactory::instance().create(weapClassname);
+            auto* weapPtr = dynamic_cast<Weapon*>(weapEnt);
+            assert(weapPtr);
 
-        auto*       firearmPtr = dynamic_cast<WeaponFirearm*>(weapEnt);
-        std::string path = firearmPtr ? firearmPtr->params.modelPathTp
-                                      : weapPtr->thirdPersonModelPath;
-        delete weapEnt;
-        return path;
-    };
+            auto* firearmPtr = dynamic_cast<WeaponFirearm*>(weapEnt);
+            std::string path = firearmPtr ? firearmPtr->params.modelPathTp
+                : weapPtr->thirdPersonModelPath;
+            delete weapEnt;
+            return path;
+        };
 
     weaponRModelPath = resolvePath(weaponRIndex);
     weaponLModelPath = resolvePath(weaponLIndex);
+}
+
+void RemotePlayer::UpdatePlayerClone(const PlayerState& state)
+{
+    std::vector<Physics::HitResult> overlapingAreas = Physics::PointTrace(Position, BodyType::Area1);
+
+    PlayerCloneAreaBase* cloneArea = nullptr;
+
+    for (auto area : overlapingAreas)
+    {
+        PlayerCloneAreaBase* areaCast = dynamic_cast<PlayerCloneAreaBase*>(area.entity);
+
+        if (areaCast)
+        {
+            cloneArea = areaCast;
+        }
+    }
+
+    // Not standing in a clone area: drop the clone if we had one, and stop.
+    if (!cloneArea)
+    {
+        if (mirrorCloneRepresentation)
+        {
+            mirrorCloneRepresentation->Destroy();
+            mirrorCloneRepresentation = nullptr;
+        }
+        return;
+    }
+
+    // Lazily spawn the clone the first time it's needed. It's a regular,
+    // independent PlayerRepresentation, same as the player's normal one.
+    if (!mirrorCloneRepresentation)
+    {
+        mirrorCloneRepresentation = new PlayerRepresentation();
+        Level::Current->AddEntity(mirrorCloneRepresentation, true);
+        mirrorCloneRepresentation->LoadAssetsIfNeeded();
+    }
+
+    // Same pose as the regular representation (same PlayerState) — only the
+    // transform differs, e.g. a mirror's reflection matrix.
+    mirrorCloneRepresentation->transformModifier = cloneArea->GetTransformation();
+    mirrorCloneRepresentation->Visible = true;
+    mirrorCloneRepresentation->ApplyState(state);
 }
 
 // ─── Weapon registry cache ────────────────────────────────────────────────────

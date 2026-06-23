@@ -7,7 +7,7 @@
 PlayerRepresentation::PlayerRepresentation()
 {
     ClassName = "playerRepresentation";
-    Tags      = { "player" };
+    Tags = { "player" };
 
     // Weapon meshes are created up-front so LoadAssets() can configure their
     // hide lists before any model is loaded.
@@ -34,7 +34,10 @@ void PlayerRepresentation::LoadAssets()
     // other hand so they don't bleed through. Akimbo overrides this at runtime.
     weaponR->MeshHideList = { "w_l" };
     weaponL->MeshHideList = { "w_r" };
-    weaponL->TwoSided     = true;
+    weaponL->TwoSided = true;
+    weaponR->TwoSided = true;
+    weaponR->GravityAlignedRotation = true;
+    weaponL->GravityAlignedRotation = true;
 
     // Weapon animation clip — kept in Drawables for lifetime management only;
     // it is never submitted to the renderer directly.
@@ -45,9 +48,10 @@ void PlayerRepresentation::LoadAssets()
 
     mesh->LoadFromFile("GameData/models/player/body/player_body.glb");
     mesh->GravityAlignedRotation = true;
-    mesh->DepthPrePath           = false;
-    mesh->Masked                 = true;
+    mesh->DepthPrePath = false;
+    mesh->Masked = true;
     mesh->PreloadAssets();
+    mesh->TwoSided = true;
 
     animator = new PlayerBodyAnimator(this);
     animator->LoadAssetsIfNeeded();
@@ -58,6 +62,13 @@ void PlayerRepresentation::LoadAssets()
 void PlayerRepresentation::ApplyState(const PlayerState& state)
 {
     currentState = state;
+
+    // A planar reflection has a negative determinant; a pure rotation or
+    // translation (identity, portal) doesn't. Cached here because both
+    // GetTransformedRotation() and Update() need to agree on it, and
+    // transformModifier is expected to already be final by the time
+    // ApplyState() runs (callers set it just before calling this).
+    isMirrored = glm::determinant(glm::mat3(transformModifier)) < 0.0f;
 
     // Update the entity's world position/rotation so the level system
     // (AI queries, culling, etc.) sees the post-transform location.
@@ -75,6 +86,12 @@ void PlayerRepresentation::Update()
     // skeleton root ends up at ground level.
     mesh->Position = Position - vec3(0, currentState.playerHeight / 2.0f, 0);
     mesh->Rotation = Rotation;
+
+    // Flips the geometry's handedness so it visually mirrors rather than
+    // just facing a mirrored direction. Assumes the rig's left/right
+    // symmetry axis is local X -- adjust the component here if your model
+    // uses a different axis.
+    mesh->Scale = isMirrored ? vec3(-1, 1, 1) : vec3(1, 1, 1);
 }
 
 void PlayerRepresentation::AsyncUpdate()
@@ -100,6 +117,7 @@ void PlayerRepresentation::AsyncUpdate()
     // Weapon meshes share the body mesh's world transform.
     weaponR->Position = weaponL->Position = mesh->Position;
     weaponR->Rotation = weaponL->Rotation = mesh->Rotation;
+    weaponR->Scale = weaponL->Scale = mesh->Scale;
 }
 
 // ─── Transform modifier ───────────────────────────────────────────────────────
@@ -114,9 +132,30 @@ vec3 PlayerRepresentation::GetTransformedRotation() const
     // Combine the modifier's rotation with the player's current Euler rotation.
     // For the identity case this degenerates to the player's rotation, but we
     // always go through the matrix path so mirrors / portals work correctly.
-    glm::mat4 playerRotMat = MathHelper::GetRotationMatrix(currentState.rotation);
-    glm::mat4 modRotMat    = glm::mat4(glm::mat3(transformModifier));
-    glm::mat3 combined     = glm::mat3(modRotMat * playerRotMat);
+    glm::mat3 playerRotMat = glm::mat3(MathHelper::GetRotationMatrix(currentState.rotation));
+    glm::mat3 modRotMat = glm::mat3(transformModifier);
+    glm::mat3 combined;
+
+    if (isMirrored)
+    {
+        // modRotMat includes an odd number of reflections, so naively
+        // multiplying gives a det=-1 matrix that glm::quat_cast cannot
+        // represent correctly (it assumes a proper rotation). Instead,
+        // reflect two of the player's basis vectors through the mirror and
+        // re-derive the third with a cross product -- that keeps the result
+        // a proper, quat_cast-safe rotation. The actual handedness flip
+        // (what makes the mesh *look* mirrored, not just turned around) is
+        // applied separately via Scale in Update()/AsyncUpdate().
+        glm::vec3 up = modRotMat * playerRotMat[1];
+        glm::vec3 forward = modRotMat * playerRotMat[2];
+        glm::vec3 right = glm::cross(up, forward);
+
+        combined = glm::mat3(right, up, forward);
+    }
+    else
+    {
+        combined = modRotMat * playerRotMat;
+    }
 
     return MathHelper::ToYawPitchRoll(glm::quat_cast(combined));
 }

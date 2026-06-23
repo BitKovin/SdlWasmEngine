@@ -77,11 +77,11 @@ enum BodyType : uint32_t {
 	Area4 = 1u << 18, //per game logic for areas
 	Area5 = 1u << 19, //per game logic for areas
 
-	CustomType1 = 1u << 21, //per custom type
-	CustomType2 = 1u << 22, //per custom type
-	CustomType3 = 1u << 23, //per custom type
-	CustomType4 = 1u << 24, //per custom type
-	CustomType5 = 1u << 25, //per custom type
+	CustomType1 = 1u << 21, //per game custom type
+	CustomType2 = 1u << 22, //per game custom type
+	CustomType3 = 1u << 23, //per game custom type
+	CustomType4 = 1u << 24, //per game custom type
+	CustomType5 = 1u << 25, //per game custom type
 
 	// Combined groups:
 	World = WorldOpaque | WorldTransparent,

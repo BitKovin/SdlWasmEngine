@@ -23,6 +23,21 @@
 //   and feed it state from the same source (RemotePlayer or a local Player*
 //   via PlayerState::FromPlayerPtr), then set this matrix to the reflection
 //   transform.
+//
+// Mirrors specifically
+//   A planar reflection matrix has a negative determinant (it flips
+//   handedness), which a plain rotation can't represent and quat_cast can't
+//   decompose correctly. ApplyState() detects this case (determinant < 0)
+//   and:
+//     - builds the rotation by reflecting two basis vectors and re-deriving
+//       the third via cross product, so it stays a proper, quat_cast-safe
+//       rotation;
+//     - flips mesh->Scale.x (and the weapon meshes') to -1, which is what
+//       actually makes the geometry itself look mirrored rather than just
+//       rotated to face the wrong way.
+//   This assumes the character rig's left/right symmetry axis is local X.
+//   If your asset uses a different axis, change the flipped component in
+//   Update() / AsyncUpdate() to match.
 class PlayerRepresentation : public Entity
 {
 public:
@@ -43,11 +58,16 @@ public:
 private:
     PlayerState currentState;
 
-    SkeletalMesh*       mesh           = nullptr;
-    SkeletalMesh*       weaponR        = nullptr;
-    SkeletalMesh*       weaponL        = nullptr;
-    Animation*          weaponAnimation = nullptr;
-    PlayerBodyAnimator* animator        = nullptr;
+    // Cached each ApplyState() from transformModifier's determinant. True
+    // when transformModifier is an odd reflection (a mirror), as opposed to
+    // a pure rotation/translation (e.g. a portal).
+    bool isMirrored = false;
+
+    SkeletalMesh* mesh = nullptr;
+    SkeletalMesh* weaponR = nullptr;
+    SkeletalMesh* weaponL = nullptr;
+    Animation* weaponAnimation = nullptr;
+    PlayerBodyAnimator* animator = nullptr;
 
     // Apply transformModifier to the raw position / rotation from currentState.
     vec3 GetTransformedPosition() const;

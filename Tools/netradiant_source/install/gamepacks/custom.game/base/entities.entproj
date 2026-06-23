@@ -2943,6 +2943,36 @@
           "isBuiltIn": false
         }
       ]
+    },
+    {
+      "name": "area_mirror",
+      "entityType": "group",
+      "color": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "box": [
+        -16,
+        -16,
+        -16,
+        16,
+        16,
+        16
+      ],
+      "description": "mirrors player inside this area against plane described in transform point",
+      "inherits": [],
+      "properties": [
+        {
+          "key": "target",
+          "displayName": "Target",
+          "type": "Target",
+          "defaultValue": "",
+          "description": "Targetname of entity to activate/target.",
+          "bitIndex": 0,
+          "isBuiltIn": true
+        }
+      ]
     }
   ]
 }

@@ -26,7 +26,7 @@ default
 
 3 // ESurfaceType::Meta V: 6 I: 12 planar
 {
-	shader textures/skies/skybox2_overcast_cube
+	shader textures/skies/skybox2_overcast_night_cube
 	sampleSize 0
 }
 
@@ -74,48 +74,174 @@ default
 
 11 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/common/trigger
-	entity 5
-	castShadows 0
-	sampleSize 0
+	shader textures/psx_textures_2/corrugated_steel_pt_4
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
 }
 
 12 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/common/trigger
-	entity 5
-	castShadows 0
-	sampleSize 0
+	shader textures/psx_textures_2/corrugated_steel_pt_4
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
 }
 
 13 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/common/trigger
-	entity 5
-	castShadows 0
-	sampleSize 0
+	shader textures/psx_textures_2/corrugated_steel_pt_4
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
 }
 
 14 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/common/trigger
-	entity 5
-	castShadows 0
-	sampleSize 0
+	shader textures/psx_textures_2/corrugated_steel_pt_4
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
 15 // ESurfaceType::Meta V: 4 I: 6 planar
 {
-	shader textures/common/trigger
-	entity 5
-	castShadows 0
-	sampleSize 0
+	shader textures/psx_textures_2/corrugated_steel_pt_4
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
 16 // ESurfaceType::Meta V: 4 I: 6 planar
 {
 	shader textures/common/trigger
 	entity 5
+	castShadows 0
+	sampleSize 0
+}
+
+17 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/trigger
+	entity 5
+	castShadows 0
+	sampleSize 0
+}
+
+18 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/trigger
+	entity 5
+	castShadows 0
+	sampleSize 0
+}
+
+19 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/trigger
+	entity 5
+	castShadows 0
+	sampleSize 0
+}
+
+20 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/trigger
+	entity 5
+	castShadows 0
+	sampleSize 0
+}
+
+21 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/trigger
+	entity 5
+	castShadows 0
+	sampleSize 0
+}
+
+22 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/generic/trigger_t
+	entity 15
+	castShadows 0
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+23 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/generic/trigger_t
+	entity 15
+	castShadows 0
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+24 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/generic/trigger_t
+	entity 15
+	castShadows 0
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+25 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/generic/trigger_t
+	entity 15
+	castShadows 0
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+26 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/generic/trigger_t
+	entity 15
+	castShadows 0
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+27 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/generic/trigger_t
+	entity 15
+	castShadows 0
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+28 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/trigger
+	entity 16
+	castShadows 0
+	sampleSize 0
+}
+
+29 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/trigger
+	entity 16
+	castShadows 0
+	sampleSize 0
+}
+
+30 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/trigger
+	entity 16
+	castShadows 0
+	sampleSize 0
+}
+
+31 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/trigger
+	entity 16
+	castShadows 0
+	sampleSize 0
+}
+
+32 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/trigger
+	entity 16
+	castShadows 0
+	sampleSize 0
+}
+
+33 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/trigger
+	entity 16
 	castShadows 0
 	sampleSize 0
 }

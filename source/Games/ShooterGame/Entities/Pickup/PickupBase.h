@@ -8,6 +8,7 @@ class PickupBase : public NetworkedEntity
 {
 public:
 	
+
 	bool NetworkReplicated = false;
 
 	bool pickedUp = false;

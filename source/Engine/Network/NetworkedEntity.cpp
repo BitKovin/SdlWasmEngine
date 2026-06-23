@@ -10,7 +10,15 @@ void NetworkedEntity::PushNetworkUpdate(float /*dt*/) {
 
 
 void NetworkedEntity::SendRPC(uint8_t rpcId, NetPacket& args, RPCTarget target) {
-    if (!NetworkManager::IsActive()) return;
+    if (!NetworkManager::IsActive())
+    {
+        if (target == RPCTarget::All || target == RPCTarget::Server)
+        {
+            OnRPC(rpcId, args);
+        }
+
+        return;
+    }
     NetworkManager::SendRPC(networkId, rpcId, args, target);
 }
 

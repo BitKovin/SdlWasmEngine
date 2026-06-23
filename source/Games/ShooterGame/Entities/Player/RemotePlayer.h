@@ -34,6 +34,8 @@ public:
     // independently.
     PlayerRepresentation* representation = nullptr;
 
+    PlayerRepresentation* mirrorCloneRepresentation = nullptr;
+
     std::shared_ptr<ObservationTarget> observationTarget;
 
     // ── Prediction state ──────────────────────────────────────────────────────
@@ -65,6 +67,8 @@ public:
     // Recomputes weaponRModelPath / weaponLModelPath from the current indices.
     // Called from NetDeserialize whenever weapon indices change.
     void RecalculateWeaponPaths();
+
+    void UpdatePlayerClone(const PlayerState& state);
 
     // Bidirectionally maps weapon class names ↔ registry indices.
     // Used only for serialization; the representation works with paths.

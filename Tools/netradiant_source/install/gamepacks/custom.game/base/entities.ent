@@ -437,4 +437,7 @@ gun enemy
         <flag key="no_dificuly_normal" name="Don't spawn on Normal" bit="1" />
         <flag key="no_dificuly_hard" name="Don't spawn on Hard" bit="2" />
     </point>
+    <group name="area_mirror" color="0.5 0.5 0.5">
+mirrors player inside this area against plane described in transform point
+<target key="target" name="Target">Targetname of entity to activate/target.</target><string key="classname" name="Classname" value="area_mirror">The classname of the entity.</string></group>
 </classes>
