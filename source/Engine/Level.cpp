@@ -286,7 +286,7 @@ Level* Level::OpenLevel(string filePath)
 		o->PostLoadStart();
 	}
 
-	if (pendingLoadLevelPath != Current->filePath)
+	if (pendingLoadLevelPath != Current->filePath)//if we connected to server that has another level
 	{
 		return OpenLevel(pendingLoadLevelPath);
 	}
