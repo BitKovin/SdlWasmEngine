@@ -21,6 +21,10 @@ uint32_t     NetworkManager::s_localRuntimeSeq = 0;
 uint16_t     NetworkManager::s_outboundSeq = 0;
 uint32_t     NetworkManager::s_loadTimeIdSeq = 0;
 
+uint32_t    NetworkManager::s_levelPathHash     = 0;
+std::string NetworkManager::s_serverLevelPath;
+bool        NetworkManager::s_levelLoadRequested = false;
+
 float        NetworkManager::s_networkTickRate = 30.0f;
 float        NetworkManager::s_networkTickAccum = 0.0f;
 float        NetworkManager::s_validationTickAccum = 0.0f;
@@ -128,8 +132,23 @@ uint32_t NetworkManager::HashPayload(const uint8_t* data, size_t size) {
 }
 
 // ---------------------------------------------------------------------------
-// BuildClassRegistry
+// IsLoadTimeId
+//
+// MakeLoadPhaseId() returns small raw sequential integers (2, 3, 4 ...) that
+// are NOT passed through PackNetworkId.  AllocateRuntimeId() encodes both
+// NETWORK_ID_RUNTIME_OFFSET and the owner peer into the result via
+// PackNetworkId, making every runtime ID >= NETWORK_ID_RUNTIME_OFFSET.
+// Anything below that boundary was placed there by MakeLoadPhaseId and is
+// therefore a load-time entity that every client already has in the scene
+// from Level::LoadFromFile — it must not be re-spawned via network packets.
 // ---------------------------------------------------------------------------
+
+bool NetworkManager::IsLoadTimeId(uint64_t networkId) {
+    return networkId != 0 &&
+           networkId < static_cast<uint64_t>(NETWORK_ID_RUNTIME_OFFSET);
+}
+
+
 
 void NetworkManager::BuildClassRegistry() {
     s_nameToIndex.clear();
@@ -170,6 +189,8 @@ bool NetworkManager::IsHandshakePacket(PacketType type) {
     case PacketType::ClientReady:
     case PacketType::LevelReady:
     case PacketType::FullSnapshot:
+    case PacketType::LevelInfo:
+    case PacketType::RequestLevelInfo:
         return true;
     default:
         return false;
@@ -193,12 +214,23 @@ void NetworkManager::CompressAndSend(const uint8_t* data, size_t length,
     const std::vector<uint8_t> compressed =
         ByteCompressor::CompressData(std::vector<uint8_t>(data, data + length));
 
+    // Prepend the level-path hash (4 bytes) OUTSIDE the compressed payload so
+    // the receiver can validate and early-out before paying decompression cost.
+    // A zero hash from either side means "pre-level / handshake" — skipped.
+    std::vector<uint8_t> bundle;
+    bundle.reserve(4 + compressed.size());
+    bundle.push_back(uint8_t(s_levelPathHash >> 24));
+    bundle.push_back(uint8_t(s_levelPathHash >> 16));
+    bundle.push_back(uint8_t(s_levelPathHash >>  8));
+    bundle.push_back(uint8_t(s_levelPathHash));
+    bundle.insert(bundle.end(), compressed.begin(), compressed.end());
+
     if (targetPeerId == BROADCAST_PEER_ID)
-        s_transport->Broadcast(compressed.data(), compressed.size(), reliable);
+        s_transport->Broadcast(bundle.data(), bundle.size(), reliable);
     else if (s_isServer)
-        s_transport->Send(targetPeerId, compressed.data(), compressed.size(), reliable);
+        s_transport->Send(targetPeerId, bundle.data(), bundle.size(), reliable);
     else
-        s_transport->Send(0, compressed.data(), compressed.size(), reliable);
+        s_transport->Send(0, bundle.data(), bundle.size(), reliable);
 }
 
 void NetworkManager::SendReliableNow(const std::vector<uint8_t>& bytes,
@@ -210,14 +242,28 @@ void NetworkManager::RelayReliableExcept(uint8_t excludePeerId,
     const std::vector<uint8_t>& bytes) {
     assert(s_isServer);
     const auto compressed = ByteCompressor::CompressData(bytes);
+    std::vector<uint8_t> bundle;
+    bundle.reserve(4 + compressed.size());
+    bundle.push_back(uint8_t(s_levelPathHash >> 24));
+    bundle.push_back(uint8_t(s_levelPathHash >> 16));
+    bundle.push_back(uint8_t(s_levelPathHash >>  8));
+    bundle.push_back(uint8_t(s_levelPathHash));
+    bundle.insert(bundle.end(), compressed.begin(), compressed.end());
     s_transport->BroadcastExcept(excludePeerId,
-        compressed.data(), compressed.size(), /*reliable=*/true);
+        bundle.data(), bundle.size(), /*reliable=*/true);
 }
 
 void NetworkManager::RelayReliableAll(const std::vector<uint8_t>& bytes) {
     assert(s_isServer);
     const auto compressed = ByteCompressor::CompressData(bytes);
-    s_transport->Broadcast(compressed.data(), compressed.size(), /*reliable=*/true);
+    std::vector<uint8_t> bundle;
+    bundle.reserve(4 + compressed.size());
+    bundle.push_back(uint8_t(s_levelPathHash >> 24));
+    bundle.push_back(uint8_t(s_levelPathHash >> 16));
+    bundle.push_back(uint8_t(s_levelPathHash >>  8));
+    bundle.push_back(uint8_t(s_levelPathHash));
+    bundle.insert(bundle.end(), compressed.begin(), compressed.end());
+    s_transport->Broadcast(bundle.data(), bundle.size(), /*reliable=*/true);
 }
 
 void NetworkManager::EnqueueUpdate(std::vector<uint8_t> bytes, uint8_t targetPeerId) {
@@ -506,8 +552,15 @@ void NetworkManager::FlushUpdateQueue() {
             sendChunked(raw, [&](const uint8_t* data, size_t len) {
                 const auto compressed = ByteCompressor::CompressData(
                     std::vector<uint8_t>(data, data + len));
+                std::vector<uint8_t> bundle;
+                bundle.reserve(4 + compressed.size());
+                bundle.push_back(uint8_t(s_levelPathHash >> 24));
+                bundle.push_back(uint8_t(s_levelPathHash >> 16));
+                bundle.push_back(uint8_t(s_levelPathHash >>  8));
+                bundle.push_back(uint8_t(s_levelPathHash));
+                bundle.insert(bundle.end(), compressed.begin(), compressed.end());
                 s_transport->BroadcastExcept(excludeId,
-                    compressed.data(), compressed.size(), /*reliable=*/false);
+                    bundle.data(), bundle.size(), /*reliable=*/false);
             });
         }
     }
@@ -639,6 +692,11 @@ void NetworkManager::ProcessEntityDigest(uint8_t clientPeerId, NetPacket& packet
 
         if (clientIt == clientKnown.end()) {
             // Case A: client is missing this entity entirely.
+            // Don't send a SpawnEntity for load-time entities — they already
+            // exist on the client from Level::LoadFromFile.  A mismatch here
+            // means the client is on the wrong level (the hash guard handles that).
+            if (IsLoadTimeId(id)) continue;
+
             // Resend as a full SpawnEntity so the client can instantiate it.
             NetPacket spawnPkt(PacketType::SpawnEntity);
             spawnPkt.WriteUInt64(entity->networkId);
@@ -827,6 +885,9 @@ void NetworkManager::Shutdown() {
     s_networkTickAccum = 0.0f;
     s_validationTickAccum = 0.0f;
     s_deltaStats = {};
+    s_levelPathHash      = 0;
+    s_serverLevelPath.clear();
+    s_levelLoadRequested = false;
 
     if (s_transport) {
         s_transport->Disconnect();
@@ -970,6 +1031,17 @@ void NetworkManager::BeginLevelLoad(Level* level) {
     s_digestAccum = 0.0f;
     s_preLiveQueue.clear();
 
+    // Compute the FNV-1a hash of the level path so every outgoing packet
+    // bundle carries this value and receivers can drop bundles from peers
+    // that are on a different level.
+    s_levelPathHash = level->filePath.empty() ? 0u
+        : HashPayload(reinterpret_cast<const uint8_t*>(level->filePath.data()),
+                      level->filePath.size());
+
+    // A new load is now in progress — clear the "pending" flag so a future
+    // mismatch can trigger another load if needed.
+    s_levelLoadRequested = false;
+
     // Clear per-entity delta state so the new level starts fresh.
     // This also releases the lastSentPayload memory for old entities.
     s_pendingEntityStates.clear();
@@ -992,8 +1064,7 @@ void NetworkManager::OnLevelLoaded() {
     if (s_isServer) {
         NetPacket pkt(PacketType::LevelLoadComplete);
         auto bytes = FinalizeOutbound(pkt);
-        const auto compressed = ByteCompressor::CompressData(bytes);
-        s_transport->Broadcast(compressed.data(), compressed.size(), true);
+        CompressAndSend(bytes.data(), bytes.size(), BROADCAST_PEER_ID, /*reliable=*/true);
 
         std::fprintf(stdout,
             "[NetworkManager] PT_LevelLoadComplete sent, awaiting %zu client(s)\n",
@@ -1028,8 +1099,15 @@ void NetworkManager::FlushPreLiveQueue() {
     std::vector<QueuedPacket> queue = std::move(s_preLiveQueue);
     s_preLiveQueue.clear();
 
-    for (auto& qp : queue)
-        OnPacketReceived(qp.senderId, qp.buffer.data(), qp.buffer.size());
+    // The pre-live queue stores raw (uncompressed) inner packet bytes that
+    // were already hash-validated when they arrived.  Parse and dispatch them
+    // directly — no decompression or second hash check needed.
+    for (auto& qp : queue) {
+        if (qp.buffer.size() < NetPacket::HEADER_SIZE) continue;
+        NetPacket packet;
+        if (!NetPacket::Parse(qp.buffer.data(), qp.buffer.size(), packet)) continue;
+        DispatchPacket(qp.senderId, packet);
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -1263,10 +1341,42 @@ NetworkStat NetworkManager::GetStat() {
 void NetworkManager::OnPacketReceived(uint8_t senderId,
     const uint8_t* buffer, size_t length)
 {
+    // ── Level hash guard ────────────────────────────────────────────────────
+    //
+    // Every bundle carries a 4-byte FNV-1a level-path hash prepended BEFORE
+    // the compressed payload.  When both sides have a level loaded (non-zero
+    // hash), the hashes must match or the entire bundle is dropped.
+    //
+    // Zero hash from either side means "pre-level / handshake traffic" — no
+    // validation.  This lets PeerIdAssign, LevelInfo, ClientReady, etc. flow
+    // normally during the initial load sequence before both sides agree on a
+    // level.
+    //
+    // Server on mismatch  → send PT_LevelInfo to that client so it can load
+    //                        the correct level.
+    // Client on mismatch  → send PT_RequestLevelInfo; server replies with
+    //                        PT_LevelInfo; PT_LevelInfo handler calls
+    //                        Level::LoadFromFile (next frame).
+
+    if (length < 4) {
+        std::fprintf(stderr,
+            "[NetworkManager] Bundle too short (%zu bytes) from peer %u — dropped\n",
+            length, senderId);
+        return;
+    }
+
+    const uint32_t receivedHash =
+        (uint32_t(buffer[0]) << 24) | (uint32_t(buffer[1]) << 16) |
+        (uint32_t(buffer[2]) <<  8) |  uint32_t(buffer[3]);
+
+
+
+    // ── Decompress (body starts after the 4-byte hash prefix) ──────────────
+
     std::vector<uint8_t> decompressed;
     try {
         decompressed = ByteCompressor::DecompressData(
-            std::vector<uint8_t>(buffer, buffer + length));
+            std::vector<uint8_t>(buffer + 4, buffer + length));
     }
     catch (const std::exception& e) {
         std::fprintf(stderr,
@@ -1310,11 +1420,37 @@ void NetworkManager::OnPacketReceived(uint8_t senderId,
 
         const PacketType type = packet.GetType();
 
+        if(type != PacketType::LevelInfo)
+        if (receivedHash != 0 && s_levelPathHash != 0 && receivedHash != s_levelPathHash) {
+            if (s_isServer) {
+                std::fprintf(stderr,
+                    "[NetworkManager] Peer %u wrong level hash "
+                    "(got 0x%08X, have 0x%08X) — sending LevelInfo\n",
+                    senderId, receivedHash, s_levelPathHash);
+                NetPacket pkt(PacketType::LevelInfo);
+                pkt.WriteString(s_level ? s_level->filePath : "");
+                SendReliableNow(FinalizeOutbound(pkt), senderId);
+            }
+            else if (!s_levelLoadRequested) {
+                std::fprintf(stderr,
+                    "[NetworkManager] Server level hash mismatch "
+                    "(got 0x%08X, have 0x%08X) — requesting LevelInfo\n",
+                    receivedHash, s_levelPathHash);
+                NetPacket pkt(PacketType::RequestLevelInfo);
+                SendReliableNow(FinalizeOutbound(pkt), 0);
+                // Don't spam — suppress until BeginLevelLoad clears this flag.
+                s_levelLoadRequested = true;
+            }
+            return; // drop the bundle in both cases
+        }
+
         if (!IsHandshakePacket(type) && s_isLoadingLevel) {
+            // Store raw (uncompressed) inner packet bytes.  FlushPreLiveQueue
+            // will Parse + Dispatch them directly without another round-trip
+            // through OnPacketReceived, so no hash prefix is needed.
             QueuedPacket qp;
             qp.senderId = senderId;
-            qp.buffer = ByteCompressor::CompressData(
-                std::vector<uint8_t>(ptr, ptr + packetSize));
+            qp.buffer.assign(ptr, ptr + packetSize);
             s_preLiveQueue.push_back(std::move(qp));
             continue;
         }
@@ -1339,8 +1475,38 @@ void NetworkManager::DispatchPacket(uint8_t senderId, NetPacket& packet) {
     }
 
     case PacketType::LevelInfo: {
-        const std::string levelName = packet.ReadString();
-        std::fprintf(stdout, "[NetworkManager] Level info: '%s'\n", levelName.c_str());
+        const std::string levelPath = packet.ReadString();
+        std::fprintf(stdout, "[NetworkManager] LevelInfo: '%s'\n", levelPath.c_str());
+
+        if (!s_isServer && !levelPath.empty()) {
+            s_serverLevelPath = levelPath;
+
+            // If we're already on the right level, nothing to do.
+            const uint32_t incomingHash = HashPayload(
+                reinterpret_cast<const uint8_t*>(levelPath.data()),
+                levelPath.size());
+
+            if (incomingHash != s_levelPathHash) {
+                std::fprintf(stdout,
+                    "[NetworkManager] Level mismatch — loading '%s'\n",
+                    levelPath.c_str());
+               
+                Level::LoadLevelFromFile(levelPath); // loads next frame via BeginLevelLoad
+            }
+        }
+        break;
+    }
+
+    case PacketType::RequestLevelInfo: {
+        // A client detected a level hash mismatch and is asking which level to load.
+        // Only the server responds; clients never relay this.
+        if (s_isServer) {
+            std::fprintf(stdout,
+                "[NetworkManager] Peer %u requested LevelInfo — sending\n", senderId);
+            NetPacket reply(PacketType::LevelInfo);
+            reply.WriteString(s_level ? s_level->filePath : "");
+            SendReliableNow(FinalizeOutbound(reply), senderId);
+        }
         break;
     }
 
@@ -1386,8 +1552,7 @@ void NetworkManager::DispatchPacket(uint8_t senderId, NetPacket& packet) {
             if (s_pendingReadyClients.empty()) {
                 NetPacket ready(PacketType::LevelReady);
                 auto bytes = FinalizeOutbound(ready);
-                const auto compressed = ByteCompressor::CompressData(bytes);
-                s_transport->Broadcast(compressed.data(), compressed.size(), true);
+                CompressAndSend(bytes.data(), bytes.size(), BROADCAST_PEER_ID, /*reliable=*/true);
                 OnLevelReady();
             }
         }
@@ -1411,6 +1576,18 @@ void NetworkManager::DispatchPacket(uint8_t senderId, NetPacket& packet) {
         const uint64_t networkId = packet.ReadUInt64();
         const uint16_t wireIndex = packet.ReadUInt16();
         const uint8_t  networkOwner = packet.ReadUInt8();
+
+        // Load-time entities (ID < NETWORK_ID_RUNTIME_OFFSET) are created by
+        // Level::LoadFromFile on every client.  Network-spawning them would
+        // create duplicates, so we drop the packet entirely — including relay.
+        // The server should never broadcast spawns for load-time entities;
+        // this guard is a safety net for any code path that slips through.
+        if (IsLoadTimeId(networkId)) {
+            std::fprintf(stderr,
+                "[NetworkManager] Ignoring PT_SpawnEntity for load-time ID %llu\n",
+                static_cast<unsigned long long>(networkId));
+            break;
+        }
 
         if (s_isServer) {
             NetPacket relay(PacketType::SpawnEntity);
@@ -1681,6 +1858,17 @@ void NetworkManager::OnEntityListReceived(uint8_t /*senderId*/, NetPacket& packe
                 existing->NetDeserialize(readPkt);
         }
         else {
+            // Load-time entities must already be present in s_entities from
+            // Level::LoadFromFile.  If a snapshot references one that we don't
+            // have, the level hasn't finished loading yet — do not try to
+            // instantiate it here.  Mark it in snapshotIds so the stale-removal
+            // pass below doesn't erroneously destroy it either.
+            if (IsLoadTimeId(networkId)) {
+                s_entityReceivedHash[networkId] = stateHash;
+                snapshotIds.insert(networkId);
+                continue;
+            }
+
             const std::string& className = IndexToName(wireIndex);
             if (className.empty()) continue;
 

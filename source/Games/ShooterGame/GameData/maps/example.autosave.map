@@ -49,12 +49,12 @@
 }
 // brush 5
 {
-( 1136 832 480 ) ( 1136 -336 480 ) ( -288 832 480 ) skies/skybox2_overcast_cube [ 0 1 0 0 ] [ 1 0 0 0 ] -0 1 1 0 0 0
-( 1136 832 480 ) ( -288 832 480 ) ( 1136 832 464 ) skies/skybox2_overcast_cube [ -1 -0 -0 0 ] [ 0 0 -1 0 ] -0 1 1 0 0 0
-( 1136 832 480 ) ( 1136 832 464 ) ( 1136 -336 480 ) skies/skybox2_overcast_cube [ -0 1 -0 0 ] [ 0 0 -1 0 ] -0 1 1 0 0 0
-( -288 -336 464 ) ( 1136 -336 464 ) ( -288 832 464 ) skies/skybox2_overcast_cube [ 0 1 0 0 ] [ -1 0 0 0 ] -0 1 1 0 0 0
-( -288 -336 464 ) ( -288 -336 480 ) ( 1136 -336 464 ) skies/skybox2_overcast_cube [ 1 -0 -0 0 ] [ -0 -0 -1 0 ] -0 1 1 0 0 0
-( -288 -336 464 ) ( -288 832 464 ) ( -288 -336 480 ) skies/skybox2_overcast_cube [ -0 -1 0 0 ] [ -0 0 -1 0 ] -0 1 1 0 0 0
+( 1136 832 480 ) ( 1136 -336 480 ) ( -288 832 480 ) skies/skybox2_overcast_night_cube [ 0 1 0 0 ] [ 1 0 0 0 ] -0 1 1 0 0 0
+( 1136 832 480 ) ( -288 832 480 ) ( 1136 832 464 ) skies/skybox2_overcast_night_cube [ -1 -0 -0 0 ] [ 0 0 -1 0 ] -0 1 1 0 0 0
+( 1136 832 480 ) ( 1136 832 464 ) ( 1136 -336 480 ) skies/skybox2_overcast_night_cube [ -0 1 -0 0 ] [ 0 0 -1 0 ] -0 1 1 0 0 0
+( -288 -336 464 ) ( 1136 -336 464 ) ( -288 832 464 ) skies/skybox2_overcast_night_cube [ 0 1 0 0 ] [ -1 0 0 0 ] -0 1 1 0 0 0
+( -288 -336 464 ) ( -288 -336 480 ) ( 1136 -336 464 ) skies/skybox2_overcast_night_cube [ 1 -0 -0 0 ] [ -0 -0 -1 0 ] -0 1 1 0 0 0
+( -288 -336 464 ) ( -288 832 464 ) ( -288 -336 480 ) skies/skybox2_overcast_night_cube [ -0 -1 0 0 ] [ -0 0 -1 0 ] -0 1 1 0 0 0
 }
 // brush 6
 {
@@ -223,4 +223,18 @@
 ( 576 -72 160 ) ( 576 -72 176 ) ( 880 -72 160 ) common/trigger [ 1 0 0 0 ] [ 0 0 -1 0 ] -0 1 1 0 0 0
 ( 576 -72 160 ) ( 576 8 160 ) ( 576 -72 176 ) common/trigger [ 0 -1 0 56 ] [ -0 0 -1 0 ] -0 1 1 0 0 0
 }
+}
+// entity 17
+{
+"classname" "light"
+"origin" "800 384 296"
+"light" "100"
+"target" "sunTarget"
+"_sun" "1"
+}
+// entity 18
+{
+"classname" "transformPoint"
+"origin" "824 352 216"
+"targetname" "sunTarget"
 }

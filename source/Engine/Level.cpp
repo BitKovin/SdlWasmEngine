@@ -286,6 +286,11 @@ Level* Level::OpenLevel(string filePath)
 		o->PostLoadStart();
 	}
 
+	if (pendingLoadLevelPath != Current->filePath)
+	{
+		return OpenLevel(pendingLoadLevelPath);
+	}
+
 	return newLevel;
 }
 

@@ -52,12 +52,12 @@ public:
         LoadingScreenSystem::SetLoadingCanvas(std::make_shared<UiDefaultLoadingScreen>());
 
         transport = make_unique<ENetTransport>();
-        //bool isServer = !transport->TryConnectOrHost("192.168.0.100", 25666, /*maxClients=*/4);
+        bool isServer = !transport->TryConnectOrHost("192.168.0.100", 25666, /*maxClients=*/4);
 
         NetworkManager::BeginLevelLoad(Level::Current);
         NetworkManager::OnLevelLoaded();
 
-        //NetworkManager::Init(transport.get(), isServer);
+        NetworkManager::Init(transport.get(), isServer);
 
         auto mapArg = EngineMain::MainInstance->Arguments.find("map");
 

@@ -675,7 +675,14 @@ void Player::TryWallJump()
 			ConsumeStamina();
 		}
 
+		vec3 vectorToHit = normalize(hit.position - Position);
 
+		auto newHit = Physics::LineTrace(Position, vectorToHit + Position, BodyType::GroupCollisionTest & ~BodyType::CharacterCapsule, {}, { this });
+
+		if (newHit.hasHit)
+			hit = newHit;
+
+		DebugDraw::Line(hit.position, hit.normal + hit.position);
 
 		vec3 wallNormal = hit.normal;
 

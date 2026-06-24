@@ -185,6 +185,26 @@ private:
     static uint16_t     s_outboundSeq;
     static uint32_t     s_loadTimeIdSeq;
 
+    // -----------------------------------------------------------------------
+    // Level-hash sync
+    //
+    // FNV-1a of the current level's filePath, computed in BeginLevelLoad.
+    // Prepended (uncompressed) to every outgoing bundle so the receiver can
+    // reject packets from a peer on the wrong level before paying decompression
+    // cost.  Zero means "no level loaded yet" — validation is skipped when
+    // either side is still in the pre-level state.
+    //
+    // s_serverLevelPath: client-only, caches the path last received via
+    //   PT_LevelInfo so Level::LoadFromFile can be called on mismatch.
+    // s_levelLoadRequested: prevents flooding Level::LoadFromFile / sending
+    //   repeated PT_RequestLevelInfo packets between the scheduling call and
+    //   the actual BeginLevelLoad on the next frame.
+    // -----------------------------------------------------------------------
+
+    static uint32_t    s_levelPathHash;
+    static std::string s_serverLevelPath;
+    static bool        s_levelLoadRequested;
+
     static float        s_networkTickRate;
     static float        s_networkTickAccum;
     static float        s_validationTickAccum;
@@ -391,6 +411,14 @@ private:
                                 uint8_t targetPeerId, bool reliable);
 
     static bool IsHandshakePacket(PacketType type);
+
+    // Returns true for IDs produced by MakeLoadPhaseId() (small sequential
+    // integers that do NOT go through PackNetworkId).  These entities are
+    // spawned during Level::LoadFromFile and must not be re-created via
+    // network PT_SpawnEntity packets.
+    // NOTE: PacketType::RequestLevelInfo must be present in your PacketType
+    //       enum (NetPacket.h) for the level-hash mismatch recovery path.
+    static bool IsLoadTimeId(uint64_t networkId);
 
     // FNV-1a 32-bit — fast dirty-check hash for delta compression + digest.
     static uint32_t HashPayload(const uint8_t* data, size_t size);
