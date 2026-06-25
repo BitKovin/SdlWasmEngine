@@ -78,10 +78,10 @@ void main()
         // All slots share the same UV — they live in separate atlas textures
         int  slots     = int(numLightmapSlots.x);
 
-        if (slots > 0) o_lightmap += texture2D(s_bspLightmap,  v_texcoord1).rgb * lmStyleColor0.rgb;
-        if (slots > 1) o_lightmap += texture2D(s_bspLightmap1, v_texcoord2).rgb * lmStyleColor1.rgb;
-        if (slots > 2) o_lightmap += texture2D(s_bspLightmap2, v_texcoord3).rgb * lmStyleColor2.rgb;
-        if (slots > 3) o_lightmap += texture2D(s_bspLightmap3, v_texcoord4).rgb * lmStyleColor3.rgb;
+        if (slots > 0) o_lightmap += texture2DLod(s_bspLightmap,  v_texcoord1,0).rgb * lmStyleColor0.rgb;
+        if (slots > 1) o_lightmap += texture2DLod(s_bspLightmap1, v_texcoord2,0).rgb * lmStyleColor1.rgb;
+        if (slots > 2) o_lightmap += texture2DLod(s_bspLightmap2, v_texcoord3,0).rgb * lmStyleColor2.rgb;
+        if (slots > 3) o_lightmap += texture2DLod(s_bspLightmap3, v_texcoord4,0).rgb * lmStyleColor3.rgb;
 
         o_lightmap *= vertexLightFactor;
 

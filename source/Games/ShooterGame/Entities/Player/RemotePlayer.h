@@ -51,12 +51,14 @@ public:
     // ── Weapon state (indices for the wire, paths for the representation) ────
     uint16_t    weaponRIndex      = UINT16_MAX;
     uint16_t    weaponLIndex      = UINT16_MAX;
-    bool        weaponRAkimbo     = false;
+
     std::string weaponRModelPath;
     std::string weaponLModelPath;
 
+    uint8_t weaponRHandlingType = 0;
+
     // ── Virtuals ──────────────────────────────────────────────────────────────
-    void Update()     override;
+    void LateUpdate()     override;
     void AsyncUpdate() override;
     void Destroy()    override;
 

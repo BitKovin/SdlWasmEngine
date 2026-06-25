@@ -43,6 +43,8 @@ protected:
 
 public:
 
+	uint8_t weaponHandlingType = 0; //0 default with left hand holding, 1 for left hand resting, 2 for 2 separate hands holding 2 copies of weapon
+
 	float HideWeapon = 0;
 
 	WeaponSlotData Data;

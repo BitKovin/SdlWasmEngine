@@ -536,6 +536,11 @@ void StaticMesh::DrawMeshShadow(mat4x4 view, mat4x4 projection)
 {
     if (model == nullptr) return;
  
+	auto lightData = GetLightVolData();
+
+	lastLightDir = lightData.direction * -1.0f;
+	lastLightVolData = lightData;
+
     // ── Shadow colour (unchanged) ─────────────────────────────────────────────
     const vec3  ambientColor     = lastLightVolData.ambientColor;
     const vec3  directionalColor = lastLightVolData.directColor;

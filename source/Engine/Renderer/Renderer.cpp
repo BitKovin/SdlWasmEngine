@@ -274,6 +274,9 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
 
         for (auto* mesh : VissibleRenderList)
         {
+
+            if (mesh->OnlyShadows) continue;
+
             const mat4& P = mesh->IsViewmodel
                 ? Camera::finalizedProjectionViewmodel
                 : Camera::finalizedProjection;
@@ -299,6 +302,7 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
 
         // Clear depth only — no color attachment on this FBO.
         bgfx::setViewClear(vid, BGFX_CLEAR_DEPTH | BGFX_CLEAR_STENCIL, kClearBlack, 1.0f, 0);
+        //bgfx::setViewClear(vid, BGFX_CLEAR_DEPTH | BGFX_CLEAR_STENCIL | BGFX_CLEAR_COLOR, kClearBlack, 1.0f, 0);
 
         // Depth write only, less-than test, back-face cull.
         BgfxStateManager::Reset();
@@ -311,6 +315,9 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
 
         for (auto* mesh : VissibleRenderList)
         {
+
+            if (mesh->OnlyShadows) continue;
+
             const mat4& P = mesh->IsViewmodel
                 ? Camera::finalizedProjectionViewmodel
                 : Camera::finalizedProjection;
@@ -352,8 +359,10 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
         for (auto* mesh : VissibleRenderList)
         {
             
+            if (mesh->OnlyShadows) continue;
+
             if (mesh->Transparent) continue;
-            if (mesh->IsDetailShadow()) continue;
+            if (mesh->ReceiveDetailShadows == false) continue;
             const mat4& P = mesh->IsViewmodel
                 ? Camera::finalizedProjectionViewmodel
                 : Camera::finalizedProjection;
@@ -362,6 +371,7 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
 
         for (auto* mesh : VissibleRenderList)
         {
+
             if (mesh->IsDetailShadow() == false) continue;
             if (mesh->IsViewmodel) continue;
 
@@ -370,8 +380,11 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
 
         for (auto* mesh : VissibleRenderList)
         {
+
+            if (mesh->OnlyShadows) continue;
+
             if (mesh->Transparent) continue;
-            if (mesh->IsDetailShadow() == false) continue;
+            if (mesh->ReceiveDetailShadows) continue;
             const mat4& P = mesh->IsViewmodel
                 ? Camera::finalizedProjectionViewmodel
                 : Camera::finalizedProjection;
@@ -404,6 +417,9 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
 
         for (auto* mesh : VissibleRenderList)
         {
+
+            if (mesh->OnlyShadows) continue;
+
             if (!mesh->Transparent) continue;
             const mat4& P = mesh->IsViewmodel
                 ? Camera::finalizedProjectionViewmodel

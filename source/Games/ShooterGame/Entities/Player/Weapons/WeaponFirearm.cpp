@@ -380,7 +380,9 @@ void WeaponFirearm::NotifyNpcs()
 void WeaponFirearm::AsyncUpdate()
 {
 
-	float hide = HideWeapon;
+	float hide = HideWeapon || lastFrameHide;
+
+	lastFrameHide = HideWeapon;
 
 	if (akimbo)
 	{

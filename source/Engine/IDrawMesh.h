@@ -21,7 +21,11 @@ public:
 
 	bool IsViewmodel = false;
 
+	bool ReceiveDetailShadows = false;
+
 	bool Transparent = false;
+
+	bool OnlyShadows = false;
 
 	bool StaticNavigation = false;
 

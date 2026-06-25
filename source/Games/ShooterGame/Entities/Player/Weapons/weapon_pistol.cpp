@@ -46,6 +46,7 @@ public:
             CameraShake::ShakeType::SingleWave // shakeType
         );
 
+        weaponHandlingType = 1;
         
         thirdPersonModelPath = "GameData/models/player/weapons/pistol/pistol_tp.glb";
 

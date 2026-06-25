@@ -38,6 +38,8 @@ void PlayerRepresentation::LoadAssets()
     weaponR->TwoSided = true;
     weaponR->GravityAlignedRotation = true;
     weaponL->GravityAlignedRotation = true;
+    weaponR->CastDetailShadows = true;
+    weaponL->CastDetailShadows = true;
 
     // Weapon animation clip — kept in Drawables for lifetime management only;
     // it is never submitted to the renderer directly.
@@ -50,6 +52,7 @@ void PlayerRepresentation::LoadAssets()
     mesh->GravityAlignedRotation = true;
     mesh->DepthPrePath = false;
     mesh->Masked = true;
+    mesh->CastDetailShadows = true;
     mesh->PreloadAssets();
     mesh->TwoSided = true;
 
@@ -104,6 +107,40 @@ void PlayerRepresentation::AsyncUpdate()
     animator->movementSpeed = length(MathHelper::XZ(currentState.velocity));
     animator->Update();
 
+    std::string desiredAnimationName = "weapon_rl";
+
+    switch (currentState.weaponRHandlingType)
+    {
+
+    case 0:
+        desiredAnimationName = "weapon_r";
+        break;
+
+    case 1:
+        desiredAnimationName = "weapon_r";
+        break;
+
+    case 2:
+        desiredAnimationName = "weapon_rl";
+        break;
+
+    default:
+        break;
+    }
+
+
+    if (currentState.weaponLModelPath.empty() == false)
+    {
+        desiredAnimationName = "weapon_rl";
+    }
+
+    if (weaponAnimation->GetAnimationName() != desiredAnimationName)
+    {
+        weaponAnimation->PlayAnimation(desiredAnimationName, true);
+    }
+
+    weaponAnimation->Update(Time::DeltaTimeF);
+
     AnimationPose pose = animator->GetResultPose();
     pose = ApplyWeaponAnimation(pose);
 
@@ -118,7 +155,17 @@ void PlayerRepresentation::AsyncUpdate()
     weaponR->Position = weaponL->Position = mesh->Position;
     weaponR->Rotation = weaponL->Rotation = mesh->Rotation;
     weaponR->Scale = weaponL->Scale = mesh->Scale;
+
+    mesh->OnlyShadows = OnlyShadows;
+    weaponR->OnlyShadows = OnlyShadows;
+    weaponL->OnlyShadows = OnlyShadows;
+
+    weaponR->Scale *= vec3(0.93f);
+    weaponL->Scale *= vec3(0.93f);
+    mesh->Scale *= vec3(0.93f);
+
 }
+
 
 // ─── Transform modifier ───────────────────────────────────────────────────────
 
@@ -165,7 +212,7 @@ vec3 PlayerRepresentation::GetTransformedRotation() const
 AnimationPose PlayerRepresentation::ApplyWeaponAnimation(AnimationPose pose)
 {
     const bool hasR = !currentState.weaponRModelPath.empty();
-    const bool hasL = !currentState.weaponLModelPath.empty();
+    const bool hasL = !currentState.weaponLModelPath.empty() || currentState.weaponRHandlingType == 2;
 
     if (!hasR && !hasL)
         return pose;
@@ -179,11 +226,35 @@ AnimationPose PlayerRepresentation::ApplyWeaponAnimation(AnimationPose pose)
         weaponAnimation->GetAnimationPose(),
         1, 1);
 
+    if (hasL == false && currentState.weaponRHandlingType == 1)
+    {
+        outPose = AnimationPose::LayeredLerp(
+            "clavicle_l",
+            weaponAnimation->GetRootNode(),
+            outPose,
+            pose,
+            0, 1);
+    }
+
+    if (hasR == false)
+    {
+        outPose = AnimationPose::LayeredLerp(
+            "clavicle_r",
+            weaponAnimation->GetRootNode(),
+            outPose,
+            pose,
+            0, 1);
+    }
+
+
+
     // Tilt the mid-spine to follow camera pitch, giving the impression the
     // character is aiming at the crosshair.
     outPose.boneTransforms["spine_02"] = outPose.boneTransforms["spine_02"]
         * MathHelper::GetRotationMatrix(
-            vec3(0, 0, currentState.cameraRotation.x * -0.75f));
+            vec3(0, 0, currentState.cameraRotation.x * -0.95f));
+
+
 
     return outPose;
 }
@@ -209,7 +280,7 @@ void PlayerRepresentation::UpdateWeaponMeshes()
 
     // Akimbo shows both mesh halves on the right-hand weapon; otherwise the
     // left half ("w_l") stays hidden to avoid T-posing the second grip.
-    if (currentState.weaponRAkimbo)
+    if (currentState.weaponRHandlingType == 2)
     {
         weaponR->MeshHideList.clear();
     }

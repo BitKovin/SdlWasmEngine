@@ -55,6 +55,9 @@ public:
     void Update()     override;
     void AsyncUpdate() override;
 
+
+    bool OnlyShadows = false;
+
 private:
     PlayerState currentState;
 
@@ -62,6 +65,7 @@ private:
     // when transformModifier is an odd reflection (a mirror), as opposed to
     // a pure rotation/translation (e.g. a portal).
     bool isMirrored = false;
+
 
     SkeletalMesh* mesh = nullptr;
     SkeletalMesh* weaponR = nullptr;

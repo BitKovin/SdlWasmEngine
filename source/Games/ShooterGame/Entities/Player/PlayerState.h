@@ -16,7 +16,8 @@ struct PlayerState
     vec3  velocity{};
 
     float playerHeight  = 0.0f;
-    bool  weaponRAkimbo = false;
+
+    uint8_t weaponRHandlingType = 0; //0 default with left hand holding, 1 for left hand resting, 2 for 2 separate hands holding 2 copies of weapon
 
     // Resolved third-person model paths. Empty string == no weapon equipped.
     std::string weaponRModelPath;

@@ -63,7 +63,7 @@ public:
 		SupportsOffhandWeapon = false;
 
 		thirdPersonModelPath = "GameData/models/player/weapons/twinsword/twinsword_tp.glb";
-
+		weaponHandlingType = 2;
 	}
 
 	// -----------------------------------------------------------------------

@@ -300,8 +300,7 @@ void RenderTexture::copyFrom(const RenderTexture* src) {
         Renderer* r = EngineMain::MainInstance->MainRenderer;
 
         setAsRenderTarget();
-        bgfx::setViewClear(ViewIdManager::GetCurrentId(),
-            BGFX_CLEAR_COLOR, 0x000000ff, 1.0f, 0);
+
 
         r->copyShader->UseProgram();
         r->copyShader->SetTexture("screenTexture", src->textureHandle());

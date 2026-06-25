@@ -2569,7 +2569,7 @@ void Player::UpdateBody()
 
 
 	bodyMesh->PasteAnimationPose(pose);
-	bodyMesh->Position = Position - vec3(0, controller.height / 2.0f, 0) - playerForward * 0.3f;
+	bodyMesh->Position = Position - vec3(0, controller.height / 2.0f, 0) - playerForward * 0.2f;
 	bodyMesh->Rotation.y = cameraRotation.y;
 
 	if (InThirdPerson())
@@ -2957,6 +2957,8 @@ void Player::LoadAssets()
 	bodyMesh->Masked = true;
 	//bodyMesh->TexturesLocation = "GameData/models/npc/guard.glb/";
 	bodyMesh->PreloadAssets();
+	bodyMesh->CastDetailShadows = false;
+	bodyMesh->Scale = vec3(0.94f);
 
 	bodyAnimator.LoadAssetsIfNeeded();
 

@@ -64,9 +64,10 @@ void RemotePlayer::Destroy()
 
 // ─── Per-frame update ─────────────────────────────────────────────────────────
 
-void RemotePlayer::Update()
+void RemotePlayer::LateUpdate()
 {
 
+    representation->OnlyShadows = isOwned;
 
     if (isOwned)
     {
@@ -85,11 +86,13 @@ void RemotePlayer::Update()
             weaponRIndex = GetWeaponIndexFromRef(referencePlayer->currentWeapon);
             weaponLIndex = GetWeaponIndexFromRef(referencePlayer->currentOffhandWeapon);
 
-            weaponRAkimbo = false;
+            weaponRHandlingType = referencePlayer->currentWeapon ? referencePlayer->currentWeapon->weaponHandlingType : 0;
+
             if (referencePlayer->currentWeapon)
             {
                 WeaponFirearm* fw = dynamic_cast<WeaponFirearm*>(referencePlayer->currentWeapon);
-                if (fw) weaponRAkimbo = fw->akimbo;
+                if (fw && fw->akimbo)
+                    weaponRHandlingType = 2;
             }
 
             // Build state directly from the player pointer — model paths are
@@ -97,7 +100,6 @@ void RemotePlayer::Update()
             if (representation)
             {
                 PlayerState state = PlayerState::FromPlayerPtr(referencePlayer);
-                representation->Visible = false; // hidden by default; a mirror can override
                 representation->ApplyState(state);
 
                 // Owned players don't render their own body, so the only
@@ -150,7 +152,7 @@ void RemotePlayer::Update()
         state.cameraRotation = cameraRotation;
         state.velocity = predictedVelocity;
         state.playerHeight = playerHeight;
-        state.weaponRAkimbo = weaponRAkimbo;
+
         state.weaponRModelPath = weaponRModelPath;
         state.weaponLModelPath = weaponLModelPath;
 
@@ -182,7 +184,7 @@ void RemotePlayer::NetSerialize(NetPacket& packet)
 
     packet.WriteUInt16(weaponRIndex);
     packet.WriteUInt16(weaponLIndex);
-    packet.WriteBool(weaponRAkimbo);
+    packet.WriteUInt8(weaponRHandlingType);
 }
 
 void RemotePlayer::NetDeserialize(NetPacket& packet)
@@ -203,7 +205,7 @@ void RemotePlayer::NetDeserialize(NetPacket& packet)
 
     const uint16_t newWeaponR = packet.ReadUInt16();
     const uint16_t newWeaponL = packet.ReadUInt16();
-    const bool     newAkimbo = packet.ReadBool();
+    const uint8_t     newHandling = packet.ReadUInt8();
 
     if (newWeaponR != weaponRIndex || newWeaponL != weaponLIndex)
     {
@@ -212,7 +214,7 @@ void RemotePlayer::NetDeserialize(NetPacket& packet)
         RecalculateWeaponPaths(); // updates weaponRModelPath / weaponLModelPath
     }
 
-    weaponRAkimbo = newAkimbo;
+    weaponRHandlingType = newHandling;
 }
 
 // ─── Weapon path resolution ───────────────────────────────────────────────────

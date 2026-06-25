@@ -127,6 +127,8 @@ public:
 
 protected:
 
+	bool lastFrameHide = false;
+
 	void StopTrail(ParticleSystem* trail);
 
 	float akimboDistanceProgress = 0.0f;
