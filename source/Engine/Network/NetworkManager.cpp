@@ -1679,7 +1679,7 @@ void NetworkManager::DispatchPacket(uint8_t senderId, NetPacket& packet) {
         }
 
         if (NetworkedEntity* entity = Find(networkId))
-            if (s_level) s_level->RemoveEntity(entity);
+            if (s_level) entity->Destroy();
         break;
     }
 
@@ -1945,8 +1945,7 @@ void NetworkManager::OnEntityListReceived(uint8_t /*senderId*/, NetPacket& packe
             "[NetworkManager] Snapshot: removing stale entity %u\n",
             entity->networkId);
         if (s_level) {
-            s_isLoadingLevel ? s_level->RemoveEntitySilent(entity)
-                : s_level->RemoveEntity(entity);
+            entity->Destroy();;
         }
     }
 
@@ -2011,7 +2010,7 @@ void NetworkManager::OnPeerDisconnected(uint8_t peerId) {
     for (uint64_t id : toDestroy) {
         BroadcastDespawn(id);
         if (NetworkedEntity* e = Find(id))
-            s_level->RemoveEntitySilent(e);
+            e->Destroy();
         Unregister(id);
     }
 
@@ -2021,8 +2020,8 @@ void NetworkManager::OnPeerDisconnected(uint8_t peerId) {
             entity->isOwned = (s_localPeerId == 0);
             BroadcastOwnerChange(id, 0);
             std::fprintf(stdout,
-                "[NetworkManager] Entity %u migrated to server after peer %u left\n",
-                id, peerId);
+                "[NetworkManager] Entity %llu migrated to server after peer %u left\n",
+                static_cast<unsigned long long>(id), peerId);
         }
     }
 }

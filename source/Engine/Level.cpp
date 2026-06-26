@@ -45,12 +45,22 @@ void Level::CloseLevel()
 	delete(EngineMain::MainInstance->MainThreadPool);
 
 	Current->AddPendingLevelObjects();
-
 	for (LevelObject* obj : Current->LevelObjects)
 	{
 		obj->Dispose();
+		Current->RemoveEntity(obj);
 	}
 	
+
+	NetworkManager::Tick(0.5f);
+
+
+	Current->AddPendingLevelObjects();
+	for (LevelObject* obj : Current->LevelObjects)
+	{
+		obj->Dispose();
+		Current->RemoveEntity(obj);
+	}
 
 	Current->RemovePendingEntities();
 	Current->MemoryCleanPendingEntities();

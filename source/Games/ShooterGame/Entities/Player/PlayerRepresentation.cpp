@@ -117,7 +117,7 @@ void PlayerRepresentation::AsyncUpdate()
         break;
 
     case 1:
-        desiredAnimationName = "weapon_r";
+        desiredAnimationName = "weapon_rl";
         break;
 
     case 2:
@@ -226,7 +226,7 @@ AnimationPose PlayerRepresentation::ApplyWeaponAnimation(AnimationPose pose)
         weaponAnimation->GetAnimationPose(),
         1, 1);
 
-    if (hasL == false && currentState.weaponRHandlingType == 1)
+    if (hasL == false)
     {
         outPose = AnimationPose::LayeredLerp(
             "clavicle_l",

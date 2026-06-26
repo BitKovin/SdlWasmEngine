@@ -70,6 +70,7 @@ public:
         }
         else
         {
+            if(NetworkManager::IsServer())
             Level::LoadLevelFromFile("GameData/maps/lvl1_proto.bsp");
         }
 		

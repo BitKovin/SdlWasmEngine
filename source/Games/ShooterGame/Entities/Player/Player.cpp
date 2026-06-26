@@ -26,6 +26,9 @@
 #include <World/WorldOrientationManager.h>
 #include "RemotePlayer.h"
 
+#include <Console/Console.h>
+#include <Console/ConsoleRegister.h>
+
 REGISTER_ENTITY(Player, "player")
 
 Player* Player::Instance = nullptr;
@@ -854,6 +857,8 @@ void Player::AddWeaponByName(const string& className)
 {
 
 	Weapon* weap = (Weapon*)LevelObjectFactory::instance().create(className);
+
+	if (weap == nullptr) return;
 
 	AddWeapon(weap->GetDefaultData());
 
@@ -3174,4 +3179,21 @@ void Player::StoppedTouchLadder()
 	numTouchingLadders = std::max(0, numTouchingLadders - 1);
 	if (numTouchingLadders == 0 && IsOnLadder())
 		ExitLadder();
+}
+
+
+CONSOLE_FUNC("weapon.give", "weapon.give <weapon_name>")
+{
+	std::string levelName = Console::ArgString(args, 0, "");
+	if (levelName != "")
+	{
+		
+		Player::Instance->AddWeaponByName(levelName);
+
+		Console::Get().AddLog("Giving weapon: %s", levelName.c_str());
+	}
+	else
+	{
+		Console::Get().AddLog("Usage: weapon.give <weapon_name>");
+	}
 }

@@ -270,6 +270,8 @@ void NpcHumanBase::PlaySoundEffect(std::string eventName)
 
     if (eventName.empty())return;
 
+    if (pendingNetDeath) return;
+
     if (!soundPlayer) return;
     soundPlayer->SetSound(FmodEventInstance::Create(eventName));
     soundPlayer->Play();
@@ -350,7 +352,6 @@ void NpcHumanBase::Death()
 {
     if (IsDead()) return;
 
-    pendingNetDeath = false;
 
     AiPerceptionSystem::RemoveObserver(observer);
     observer = nullptr;
@@ -372,14 +373,20 @@ void NpcHumanBase::Death()
     if (Player::Instance != nullptr)
     {
         ScoreSystem::Instance().addScore(MaxHealth * 0.5f);
-        CallActionOnEntityWithId(OwnerId, "despawned");
     }
+
+    if(NetworkManager::IsServer())
+        CallActionOnEntityWithId(OwnerId, "despawned");
 
     if (soundPlayer)
     {
         soundPlayer->DestroyWithDelay(3);
         soundPlayer = nullptr;
     }
+
+
+    pendingNetDeath = false;
+
 }
 
 // Stun – owner originates it and broadcasts to others.

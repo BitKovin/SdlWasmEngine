@@ -7,7 +7,6 @@
 "_lightmapscale" "0.5"
 "gridsize" "32 32 64"
 "_tb_mod" "textures"
-"_noshadersun" "1"
 // brush 0
 {
 ( -352 -480 304 ) ( -352 528 16 ) ( -352 528 304 ) generic/bricks 0 0 0 0.75 0.75 0 0 0
@@ -1426,7 +1425,7 @@
 {
 "classname" "spawner"
 "origin" "80 -640 48"
-"className" "testnpc"
+"className" "npc_dog"
 "targetname" "sp1"
 "onSpawned" "add"
 "angle" "-21.7186"
@@ -1698,7 +1697,7 @@
 {
 "classname" "spawner"
 "origin" "-32 -592 48"
-"className" "testnpc"
+"className" "npc_dog"
 "targetname" "sp1"
 "onSpawned" "add"
 "angle" "-21.7186"
@@ -1710,7 +1709,7 @@
 {
 "classname" "spawner"
 "origin" "176 -576 48"
-"className" "testnpc"
+"className" "npc_dog"
 "targetname" "sp1"
 "onSpawned" "add"
 "angle" "-21.7186"
@@ -2101,12 +2100,4 @@
 "classname" "env_door"
 "origin" "151.84 550.189 16"
 "angle" "180"
-}
-// entity 78
-{
-"classname" "light"
-"origin" "256 224 80"
-"light" "100"
-"target" "rpmp_1"
-"_sun" "1"
 }

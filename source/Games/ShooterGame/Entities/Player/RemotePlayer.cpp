@@ -34,11 +34,11 @@ RemotePlayer::RemotePlayer()
 
 void RemotePlayer::LoadAssets()
 {
-    // Spawn the visual representation as a regular (non-networked) level entity.
-    // It lives alongside this entity and is destroyed with it.
+
     representation = new PlayerRepresentation();
-    Level::Current->AddEntity(representation, true);
     representation->LoadAssetsIfNeeded();
+    delete(representation);
+    representation = nullptr;
 }
 
 void RemotePlayer::Destroy()
@@ -64,10 +64,21 @@ void RemotePlayer::Destroy()
 
 // ─── Per-frame update ─────────────────────────────────────────────────────────
 
-void RemotePlayer::LateUpdate()
+void RemotePlayer::Update()
 {
 
-    representation->OnlyShadows = isOwned;
+    if (representation == nullptr)
+    {
+        representation = new PlayerRepresentation();
+        Level::Current->AddEntity(representation, true);
+        representation->LoadAssetsIfNeeded();
+        representation->OnlyShadows = isOwned;
+    }
+
+}
+
+void RemotePlayer::LateUpdate()
+{
 
     if (isOwned)
     {
@@ -170,6 +181,8 @@ void RemotePlayer::LateUpdate()
 
 void RemotePlayer::AsyncUpdate()
 {
+
+
     // All visual / animation work lives in PlayerRepresentation::AsyncUpdate(),
     // which the level system calls automatically.
 }

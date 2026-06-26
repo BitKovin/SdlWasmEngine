@@ -58,6 +58,9 @@ public:
     uint8_t weaponRHandlingType = 0;
 
     // ── Virtuals ──────────────────────────────────────────────────────────────
+
+    void Update() override;
+
     void LateUpdate()     override;
     void AsyncUpdate() override;
     void Destroy()    override;
