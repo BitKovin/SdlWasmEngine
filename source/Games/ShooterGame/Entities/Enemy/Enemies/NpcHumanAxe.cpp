@@ -238,6 +238,7 @@ void NpcHumanAxe::AsyncUpdate()
 	if (glm::distance(calculatedTargetPos, Position) < 1.5f &&
 		glm::dot(MathHelper::GetForwardVector(mesh->Rotation), lookAtDir) > 0.93f)
 	{
+		if(isOwned)
 		Attack();
 	}
 

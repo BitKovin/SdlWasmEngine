@@ -73,6 +73,10 @@ protected:
     float maxSpeed = 5.5f;
     float speed    = 4.0f;
 
+    bool pendingNetDeath = false;
+
+    uint32_t numUpdates = 0;
+
     std::string damageSoundPath = "event:/NPC/Enemy1/Enemy1Damage";
     std::string deathSoundPath = "event:/NPC/Enemy1/Enemy1Death";
     std::string stunSoundPath = "event:/NPC/Enemy1/Enemy1Stun";
@@ -176,6 +180,8 @@ protected:
     void NetSerialize(NetPacket& packet)       override;
     void NetDeserialize(NetPacket& packet)     override;
     void OnRPC(uint8_t rpcId, NetPacket& args) override;
+
+    void LateUpdate() override;
 
 public:
     NpcHumanBase();

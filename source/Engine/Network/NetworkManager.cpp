@@ -21,11 +21,11 @@ uint32_t     NetworkManager::s_localRuntimeSeq = 0;
 uint16_t     NetworkManager::s_outboundSeq = 0;
 uint32_t     NetworkManager::s_loadTimeIdSeq = 0;
 
-uint32_t    NetworkManager::s_levelPathHash     = 0;
+uint32_t    NetworkManager::s_levelPathHash = 0;
 std::string NetworkManager::s_serverLevelPath;
 bool        NetworkManager::s_levelLoadRequested = false;
 
-float        NetworkManager::s_networkTickRate = 30.0f;
+float        NetworkManager::s_networkTickRate = 20.0f;
 float        NetworkManager::s_networkTickAccum = 0.0f;
 float        NetworkManager::s_validationTickAccum = 0.0f;
 
@@ -76,14 +76,20 @@ namespace {
     // one on the first EntityUpdate.
     std::unordered_map<uint64_t, uint8_t> g_identicalSentCount;
 
-    // ── FIX: Deferred spawn queue ─────────────────────────────────────────────
+    // ── Deferred spawn queue ─────────────────────────────────────────────────
     //
     // BroadcastSpawn no longer sends immediately.  Instead it queues here, and
-    // FlushUpdateQueue drains the queue on the next network tick, calling
-    // NetSerialize at that point.  This ensures the spawn packet carries the
-    // fully-settled post-physics state rather than the T=0 position, eliminating
+    // FlushPendingSpawns() drains the queue at the start of the next game frame
+    // (the very next Tick() call), calling NetSerialize at that point.
+    // This ensures the spawn packet carries the fully-settled
+    // post-initialization state rather than the T=0 position, eliminating
     // the visible snap that occurred when the first EntityUpdate arrived with a
     // slightly different transform a frame later.
+    //
+    // Deliberately decoupled from the network tick rate: spawns are low-volume
+    // reliable packets — there is no bandwidth benefit to batching them, and
+    // delaying by up to one tick interval (33 ms at 30 Hz) is unnecessary
+    // when the entity is ready by the very next game frame.
     struct PendingSpawn {
         uint64_t entityId;
         uint8_t  targetPeerId;
@@ -145,7 +151,7 @@ uint32_t NetworkManager::HashPayload(const uint8_t* data, size_t size) {
 
 bool NetworkManager::IsLoadTimeId(uint64_t networkId) {
     return networkId != 0 &&
-           networkId < static_cast<uint64_t>(NETWORK_ID_RUNTIME_OFFSET);
+        networkId < static_cast<uint64_t>(NETWORK_ID_RUNTIME_OFFSET);
 }
 
 
@@ -221,7 +227,7 @@ void NetworkManager::CompressAndSend(const uint8_t* data, size_t length,
     bundle.reserve(4 + compressed.size());
     bundle.push_back(uint8_t(s_levelPathHash >> 24));
     bundle.push_back(uint8_t(s_levelPathHash >> 16));
-    bundle.push_back(uint8_t(s_levelPathHash >>  8));
+    bundle.push_back(uint8_t(s_levelPathHash >> 8));
     bundle.push_back(uint8_t(s_levelPathHash));
     bundle.insert(bundle.end(), compressed.begin(), compressed.end());
 
@@ -246,7 +252,7 @@ void NetworkManager::RelayReliableExcept(uint8_t excludePeerId,
     bundle.reserve(4 + compressed.size());
     bundle.push_back(uint8_t(s_levelPathHash >> 24));
     bundle.push_back(uint8_t(s_levelPathHash >> 16));
-    bundle.push_back(uint8_t(s_levelPathHash >>  8));
+    bundle.push_back(uint8_t(s_levelPathHash >> 8));
     bundle.push_back(uint8_t(s_levelPathHash));
     bundle.insert(bundle.end(), compressed.begin(), compressed.end());
     s_transport->BroadcastExcept(excludePeerId,
@@ -260,7 +266,7 @@ void NetworkManager::RelayReliableAll(const std::vector<uint8_t>& bytes) {
     bundle.reserve(4 + compressed.size());
     bundle.push_back(uint8_t(s_levelPathHash >> 24));
     bundle.push_back(uint8_t(s_levelPathHash >> 16));
-    bundle.push_back(uint8_t(s_levelPathHash >>  8));
+    bundle.push_back(uint8_t(s_levelPathHash >> 8));
     bundle.push_back(uint8_t(s_levelPathHash));
     bundle.insert(bundle.end(), compressed.begin(), compressed.end());
     s_transport->Broadcast(bundle.data(), bundle.size(), /*reliable=*/true);
@@ -292,15 +298,74 @@ void NetworkManager::EnqueueEntityUpdate(NetworkedEntity* entity) {
 }
 
 // ---------------------------------------------------------------------------
+// FlushPendingSpawns
+//
+// Drains g_pendingSpawns and sends a PT_SpawnEntity for each entry.
+// Called unconditionally at the start of every Tick() (after Poll, after the
+// loading guard) so spawn packets leave as soon as the next game frame begins
+// — independent of the network tick accumulator.
+//
+// This is correct because by the time the next Tick() runs the entity has
+// finished its post-registration initialization (OnNetworkSpawn has been
+// called, physics have settled for one frame), so NetSerialize captures the
+// right state rather than the T=0 position at spawn time.
+//
+// The delta cache is seeded here from the same serialization so the first
+// regular EntityUpdate from FlushUpdateQueue counts as the "second send" of
+// this state (iCount 0→1 here, then 1→2 on the next identical update →
+// suppressed).  Without this, the entity would need to go through the full
+// two-send cycle again from scratch, doubling unnecessary traffic.
+// ---------------------------------------------------------------------------
+
+void NetworkManager::FlushPendingSpawns() {
+    if (g_pendingSpawns.empty()) return;
+
+    std::vector<PendingSpawn> spawns = std::move(g_pendingSpawns);
+
+    for (const auto& ps : spawns) {
+        NetworkedEntity* entity = Find(ps.entityId);
+        if (!entity) continue; // destroyed between BroadcastSpawn and flush
+
+        // Serialize fresh state once.  Reuse the cache-format payload
+        // (networkId + state) for both the spawn packet and the delta-cache
+        // seed so we only call NetSerialize once per entity.
+        NetPacket cachePkt(PacketType::EntityUpdate);
+        cachePkt.WriteUInt64(entity->networkId);
+        entity->NetSerialize(cachePkt);
+        const auto& cachePayload = cachePkt.GetPayloadBytes(); // networkId + state
+
+        // Build the spawn packet: header fields first, then state bytes
+        // (bytes 8+ of cachePayload, skipping the networkId prefix).
+        NetPacket spawnPkt(PacketType::SpawnEntity);
+        spawnPkt.WriteUInt64(entity->networkId);
+        spawnPkt.WriteUInt16(NameToIndex(entity->GetClassName()));
+        spawnPkt.WriteUInt8(entity->networkOwner);
+        for (size_t i = 8; i < cachePayload.size(); ++i)
+            spawnPkt.WriteUInt8(cachePayload[i]);
+
+        SendReliableNow(FinalizeOutbound(spawnPkt), ps.targetPeerId);
+
+        // Seed the delta cache so the first regular EntityUpdate from
+        // FlushUpdateQueue counts as the "second send" of this state.
+        if (entity->isOwned) {
+            const uint32_t seedHash =
+                HashPayload(cachePayload.data(), cachePayload.size());
+            EntityUpdateCache& cache = s_entityUpdateCache[entity->networkId];
+            cache.lastSentHash = seedHash;
+            cache.lastSentPayload = cachePayload;
+            cache.everSent = true;
+            cache.timeSinceLastSent = 0.0f;
+            g_identicalSentCount[entity->networkId] = 1; // spawn = first send
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
 // FlushUpdateQueue
 //
-// Phase 0 — Deferred spawns (NEW)
-//   Drain g_pendingSpawns.  BroadcastSpawn queues here instead of sending
-//   immediately so NetSerialize is called one network-tick later with the
-//   post-physics settled state.  The delta cache is seeded from the same
-//   serialization so the first regular EntityUpdate from FlushUpdateQueue is
-//   treated as "second send of same state" rather than "first send" — this
-//   dovetails with the double-send-before-stale change below.
+// Called once per network tick (s_networkTickRate Hz).  Responsible for
+// high-volume entity-state bandwidth only.  Spawn flushing has been moved to
+// FlushPendingSpawns() which Tick() calls every game frame.
 //
 // Phase 1 — Delta check:  skip entity if hash unchanged AND already sent
 //   at least 2 identical packets.  (Was: skip after 1 identical packet.)
@@ -316,56 +381,6 @@ void NetworkManager::EnqueueEntityUpdate(NetworkedEntity* entity) {
 // ---------------------------------------------------------------------------
 
 void NetworkManager::FlushUpdateQueue() {
-
-    // ── Phase 0: Deferred spawns ─────────────────────────────────────────
-    //
-    // Drain before the hasWork check so spawns are never accidentally held
-    // an extra tick just because there happen to be no entity-state changes.
-
-    if (!g_pendingSpawns.empty()) {
-        std::vector<PendingSpawn> spawns = std::move(g_pendingSpawns);
-
-        for (const auto& ps : spawns) {
-            NetworkedEntity* entity = Find(ps.entityId);
-            if (!entity) continue; // destroyed between BroadcastSpawn and flush
-
-            // Serialize fresh state once.  Reuse the cache-format payload
-            // (networkId + state) for both the spawn packet and the delta-cache
-            // seed so we only call NetSerialize once per entity.
-            NetPacket cachePkt(PacketType::EntityUpdate);
-            cachePkt.WriteUInt64(entity->networkId);
-            entity->NetSerialize(cachePkt);
-            const auto& cachePayload = cachePkt.GetPayloadBytes(); // networkId + state
-
-            // Build the spawn packet: header fields first, then state bytes
-            // (bytes 8+ of cachePayload, skipping the networkId prefix).
-            NetPacket spawnPkt(PacketType::SpawnEntity);
-            spawnPkt.WriteUInt64(entity->networkId);
-            spawnPkt.WriteUInt16(NameToIndex(entity->GetClassName()));
-            spawnPkt.WriteUInt8(entity->networkOwner);
-            for (size_t i = 8; i < cachePayload.size(); ++i)
-                spawnPkt.WriteUInt8(cachePayload[i]);
-
-            SendReliableNow(FinalizeOutbound(spawnPkt), ps.targetPeerId);
-
-            // Seed the delta cache for owned entities so the first regular
-            // EntityUpdate from Phase 1 counts as the "second send" of this
-            // state (iCount = 1 → send one more time → iCount = 2 → suppress).
-            // Without this, the first EntityUpdate would reset iCount to 0 and
-            // the entity would need to go through the full two-send cycle again
-            // before it could be suppressed, doubling unnecessary traffic.
-            if (entity->isOwned) {
-                const uint32_t seedHash =
-                    HashPayload(cachePayload.data(), cachePayload.size());
-                EntityUpdateCache& cache = s_entityUpdateCache[entity->networkId];
-                cache.lastSentHash = seedHash;
-                cache.lastSentPayload = cachePayload;
-                cache.everSent = true;
-                cache.timeSinceLastSent = 0.0f;
-                g_identicalSentCount[entity->networkId] = 1; // spawn = first send
-            }
-        }
-    }
 
     const bool hasWork = !s_pendingEntityStates.empty()
         || !s_updateQueue.empty()
@@ -504,7 +519,7 @@ void NetworkManager::FlushUpdateQueue() {
 
     auto sendChunked = [&](const std::vector<uint8_t>& raw, auto sendFn) {
         size_t chunkStart = 0;
-        size_t cursor     = 0;
+        size_t cursor = 0;
 
         while (cursor < raw.size()) {
             // Guard: enough bytes for a complete header?
@@ -513,7 +528,7 @@ void NetworkManager::FlushUpdateQueue() {
             // Read payloadLength from bytes [4..7] of the inner packet header.
             const uint32_t pl =
                 (uint32_t(raw[cursor + 4]) << 24) | (uint32_t(raw[cursor + 5]) << 16) |
-                (uint32_t(raw[cursor + 6]) <<  8) | uint32_t(raw[cursor + 7]);
+                (uint32_t(raw[cursor + 6]) << 8) | uint32_t(raw[cursor + 7]);
 
             const size_t next = cursor + NetPacket::HEADER_SIZE + pl;
             if (next > raw.size()) break; // malformed inner packet (should never happen)
@@ -534,7 +549,7 @@ void NetworkManager::FlushUpdateQueue() {
         // entire buffer fits in one chunk without ever entering the if above).
         if (chunkStart < cursor)
             sendFn(raw.data() + chunkStart, cursor - chunkStart);
-    };
+        };
 
     // ── Phase 3: Relay queue (client EntityUpdates relayed by server) ─────
 
@@ -556,12 +571,12 @@ void NetworkManager::FlushUpdateQueue() {
                 bundle.reserve(4 + compressed.size());
                 bundle.push_back(uint8_t(s_levelPathHash >> 24));
                 bundle.push_back(uint8_t(s_levelPathHash >> 16));
-                bundle.push_back(uint8_t(s_levelPathHash >>  8));
+                bundle.push_back(uint8_t(s_levelPathHash >> 8));
                 bundle.push_back(uint8_t(s_levelPathHash));
                 bundle.insert(bundle.end(), compressed.begin(), compressed.end());
                 s_transport->BroadcastExcept(excludeId,
                     bundle.data(), bundle.size(), /*reliable=*/false);
-            });
+                });
         }
     }
 
@@ -576,7 +591,7 @@ void NetworkManager::FlushUpdateQueue() {
         const uint8_t targetPeerId = static_cast<uint8_t>((key >> 8) & 0xFF);
         sendChunked(raw, [&](const uint8_t* data, size_t len) {
             CompressAndSend(data, len, targetPeerId, /*reliable=*/false);
-        });
+            });
     }
 }
 
@@ -885,7 +900,7 @@ void NetworkManager::Shutdown() {
     s_networkTickAccum = 0.0f;
     s_validationTickAccum = 0.0f;
     s_deltaStats = {};
-    s_levelPathHash      = 0;
+    s_levelPathHash = 0;
     s_serverLevelPath.clear();
     s_levelLoadRequested = false;
 
@@ -900,30 +915,48 @@ void NetworkManager::Shutdown() {
 // ---------------------------------------------------------------------------
 // Tick
 //
-// Phase 1 — Receive
-// Phase 2 — Gather (owned entities)
-// Phase 3 — Flush  (network tick rate, 20–30 Hz)
-// Phase 4 — Digest (client only, 3 Hz)
-// Phase 5 — Validation snapshot + client-state reapply (server only, 2 Hz)
+// Phase 1 — Receive     (every frame — transport poll + immediate packet dispatch)
+// Phase 2 — Spawn flush (every frame — BroadcastSpawn deferred sends)
+// Phase 3 — Gather      (every frame — owned-entity state collection)
+// Phase 4 — Flush       (network tick rate, 20–30 Hz — unreliable entity updates)
+// Phase 5 — Digest      (client only, kDigestInterval Hz)
+// Phase 6 — Validation  (server only, kValidationInterval Hz)
+//
+// Phases 1–3 are frame-rate coupled so that incoming packets (including all
+// request-response flows) and spawn notifications are never held behind the
+// network tick accumulator.  Only high-volume entity state (Phases 4–6) is
+// rate-limited to keep bandwidth predictable.
 // ---------------------------------------------------------------------------
 
 void NetworkManager::Tick(float dt) {
     if (!s_isActive) return;
 
-    // Phase 1: receive
+    // Phase 1: receive — runs every frame, independent of tick rate.
+    // OnPacketReceived dispatches handshake, RPC, spawn/despawn, and
+    // request-response packets immediately so round-trips are not delayed
+    // by the network tick accumulator.
     s_transport->Poll();
 
     if (s_isLoadingLevel) return;
 
-    // Phase 2: gather — every owned entity enqueues its current state.
-    // Multiple writes per tick for the same entity are harmless (map key
+    // Phase 2: deferred spawn flush — runs every frame.
+    // Entities queued by BroadcastSpawn() are sent here, at the top of the
+    // next game frame, so NetSerialize captures the fully-settled
+    // post-initialization state.  Spawn packets are reliable and infrequent;
+    // holding them until the next network tick would add unnecessary latency.
+    FlushPendingSpawns();
+
+    // Phase 3: gather — every owned entity enqueues its current state.
+    // Multiple writes per frame for the same entity are harmless (map key
     // ensures latest state wins).
     for (auto& [id, entity] : s_entities) {
         if (entity->isOwned)
             entity->PushNetworkUpdate(dt);
     }
 
-    // Phase 3: flush
+    // Phase 4: flush entity updates — capped at s_networkTickRate.
+    // Batching unreliable entity-state packets at a fixed rate keeps
+    // bandwidth predictable and avoids per-frame UDP overhead.
     s_networkTickAccum += dt;
     const float tickInterval = 1.0f / s_networkTickRate;
     if (s_networkTickAccum >= tickInterval) {
@@ -933,9 +966,9 @@ void NetworkManager::Tick(float dt) {
         FlushUpdateQueue();
     }
 
-    // Phase 4: digest (client only)
-    // The client sends a compact (id, hash) list every 0.5 s so the server
-    // can spot and correct any divergence caused by packet loss + suppression.
+    // Phase 5: digest (client only) — kDigestInterval timer, independent of tick rate.
+    // The client sends a compact (id, hash) list so the server can spot and
+    // correct any divergence caused by packet loss + suppression.
     if (!s_isServer) {
         s_digestAccum += dt;
         if (s_digestAccum >= kDigestInterval) {
@@ -946,7 +979,7 @@ void NetworkManager::Tick(float dt) {
         }
     }
 
-    // Phase 5: validation snapshot + server-side client-state reapply (server only)
+    // Phase 6: validation snapshot + server-side client-state reapply (server only)
     if (s_isServer) {
         s_validationTickAccum += dt;
         if (s_validationTickAccum >= kValidationInterval) {
@@ -1036,7 +1069,7 @@ void NetworkManager::BeginLevelLoad(Level* level) {
     // that are on a different level.
     s_levelPathHash = level->filePath.empty() ? 0u
         : HashPayload(reinterpret_cast<const uint8_t*>(level->filePath.data()),
-                      level->filePath.size());
+            level->filePath.size());
 
     // A new load is now in progress — clear the "pending" flag so a future
     // mismatch can trigger another load if needed.
@@ -1367,7 +1400,7 @@ void NetworkManager::OnPacketReceived(uint8_t senderId,
 
     const uint32_t receivedHash =
         (uint32_t(buffer[0]) << 24) | (uint32_t(buffer[1]) << 16) |
-        (uint32_t(buffer[2]) <<  8) |  uint32_t(buffer[3]);
+        (uint32_t(buffer[2]) << 8) | uint32_t(buffer[3]);
 
 
 
@@ -1420,29 +1453,29 @@ void NetworkManager::OnPacketReceived(uint8_t senderId,
 
         const PacketType type = packet.GetType();
 
-        if(type != PacketType::LevelInfo)
-        if (receivedHash != 0 && s_levelPathHash != 0 && receivedHash != s_levelPathHash) {
-            if (s_isServer) {
-                std::fprintf(stderr,
-                    "[NetworkManager] Peer %u wrong level hash "
-                    "(got 0x%08X, have 0x%08X) — sending LevelInfo\n",
-                    senderId, receivedHash, s_levelPathHash);
-                NetPacket pkt(PacketType::LevelInfo);
-                pkt.WriteString(s_level ? s_level->filePath : "");
-                SendReliableNow(FinalizeOutbound(pkt), senderId);
+        if (type != PacketType::LevelInfo)
+            if (receivedHash != 0 && s_levelPathHash != 0 && receivedHash != s_levelPathHash) {
+                if (s_isServer) {
+                    std::fprintf(stderr,
+                        "[NetworkManager] Peer %u wrong level hash "
+                        "(got 0x%08X, have 0x%08X) — sending LevelInfo\n",
+                        senderId, receivedHash, s_levelPathHash);
+                    NetPacket pkt(PacketType::LevelInfo);
+                    pkt.WriteString(s_level ? s_level->filePath : "");
+                    SendReliableNow(FinalizeOutbound(pkt), senderId);
+                }
+                else if (!s_levelLoadRequested) {
+                    std::fprintf(stderr,
+                        "[NetworkManager] Server level hash mismatch "
+                        "(got 0x%08X, have 0x%08X) — requesting LevelInfo\n",
+                        receivedHash, s_levelPathHash);
+                    NetPacket pkt(PacketType::RequestLevelInfo);
+                    SendReliableNow(FinalizeOutbound(pkt), 0);
+                    // Don't spam — suppress until BeginLevelLoad clears this flag.
+                    s_levelLoadRequested = true;
+                }
+                return; // drop the bundle in both cases
             }
-            else if (!s_levelLoadRequested) {
-                std::fprintf(stderr,
-                    "[NetworkManager] Server level hash mismatch "
-                    "(got 0x%08X, have 0x%08X) — requesting LevelInfo\n",
-                    receivedHash, s_levelPathHash);
-                NetPacket pkt(PacketType::RequestLevelInfo);
-                SendReliableNow(FinalizeOutbound(pkt), 0);
-                // Don't spam — suppress until BeginLevelLoad clears this flag.
-                s_levelLoadRequested = true;
-            }
-            return; // drop the bundle in both cases
-        }
 
         if (!IsHandshakePacket(type) && s_isLoadingLevel) {
             // Store raw (uncompressed) inner packet bytes.  FlushPreLiveQueue
@@ -1490,7 +1523,7 @@ void NetworkManager::DispatchPacket(uint8_t senderId, NetPacket& packet) {
                 std::fprintf(stdout,
                     "[NetworkManager] Level mismatch — loading '%s'\n",
                     levelPath.c_str());
-               
+
                 Level::LoadLevelFromFile(levelPath); // loads next frame via BeginLevelLoad
             }
         }

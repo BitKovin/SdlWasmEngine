@@ -66,6 +66,7 @@ public:
     void NetDeserialize(NetPacket& packet) override;
     void LoadAssets() override;
 
+
     // Recomputes weaponRModelPath / weaponLModelPath from the current indices.
     // Called from NetDeserialize whenever weapon indices change.
     void RecalculateWeaponPaths();

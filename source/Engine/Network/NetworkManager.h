@@ -145,6 +145,8 @@ public:
 
     static void EnqueueEntityUpdate(NetworkedEntity* entity);
 
+    static void FlushPendingSpawns();
+
     // -----------------------------------------------------------------------
     // RPC
     // -----------------------------------------------------------------------

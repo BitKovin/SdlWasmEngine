@@ -164,6 +164,8 @@ void RemotePlayer::LateUpdate()
 
     if (observationTarget)
         observationTarget->position = Position + vec3(0, 0.7f, 0);
+
+
 }
 
 void RemotePlayer::AsyncUpdate()

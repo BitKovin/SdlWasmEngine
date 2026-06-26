@@ -350,6 +350,8 @@ void NpcHumanBase::Death()
 {
     if (IsDead()) return;
 
+    pendingNetDeath = false;
+
     AiPerceptionSystem::RemoveObserver(observer);
     observer = nullptr;
 
@@ -633,6 +635,8 @@ void NpcHumanBase::NetDeserialize(NetPacket& packet)
     EntityHandle remoteTarget      = EntityHandle::Read(packet);
     float        remoteSwitchTimer = packet.ReadFloat();
 
+    Position = remotePos;
+
     // Owner discards snapshots from the previous owner (in-flight after transfer).
     if (isOwned) return;
 
@@ -656,7 +660,8 @@ void NpcHumanBase::NetDeserialize(NetPacket& packet)
     // it's needed for late joiners who missed the Death RPC.
     if (remoteState == NpcState::Dead && !IsDead())
     {
-        Death();
+
+        pendingNetDeath = true;
         return;
     }
 
@@ -743,6 +748,18 @@ void NpcHumanBase::OnRPC(uint8_t rpcId, NetPacket& args)
         default:
             break;
     }
+}
+
+void NpcHumanBase::LateUpdate()
+{
+
+    if (pendingNetDeath && numUpdates>2)
+    {
+        Death();
+    }
+
+
+    numUpdates++;
 }
 
 // ---------------------------------------------------------------------------

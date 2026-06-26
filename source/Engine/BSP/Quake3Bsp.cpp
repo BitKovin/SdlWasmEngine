@@ -2577,6 +2577,9 @@ BSPModelRef::BSPModelRef(CQuake3BSP* bsp_ptr, int model_id, tBSPModel& model_ref
         points.push_back(v.Position / MAP_SCALE);
 
     bounds = BoundingBox::FromPoints(points);
+
+    ReceiveDetailShadows = true;
+
 }
 
 BSPModelRef::~BSPModelRef() {}

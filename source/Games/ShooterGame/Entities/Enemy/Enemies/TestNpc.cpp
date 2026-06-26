@@ -267,7 +267,8 @@ void TestNpc::AsyncUpdate()
 	if (glm::distance(calculatedTargetPos, Position) < 5.0f &&
 		glm::dot(MathHelper::GetForwardVector(mesh->Rotation), lookAtDir) > 0.975f)
 	{
-		Attack();
+		if(isOwned)
+			Attack();
 	}
 
 	if (IsFleeing())
