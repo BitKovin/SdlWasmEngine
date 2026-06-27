@@ -53,9 +53,26 @@ namespace {
 // ---------------------------------------------------------------------------
 
 struct ENetTransport::Impl {
-    static constexpr enet_uint8 CHANNEL_RELIABLE = 0;
-    static constexpr enet_uint8 CHANNEL_UNRELIABLE = 1;
-    static constexpr int        CHANNEL_COUNT = 2;
+    static constexpr enet_uint8  CHANNEL_RELIABLE = 0;
+    static constexpr enet_uint8  CHANNEL_UNRELIABLE = 1;
+    static constexpr int         CHANNEL_COUNT = 2;
+
+    // How often each peer is pinged (ms).  Tighter than the ENet default
+    // (500 ms) so that RTT estimates converge faster and timeout detection
+    // fires on the first missed window rather than after several slow cycles.
+    static constexpr enet_uint32 PEER_PING_INTERVAL_MS = 50;
+
+    // Peer timeout window.  If no data (including pings/ACKs) is received
+    // from a peer for longer than PEER_TIMEOUT_MIN_MS, ENet begins the
+    // timeout process.  If silence continues past PEER_TIMEOUT_MAX_MS the
+    // peer is forcibly disconnected and ENET_EVENT_TYPE_DISCONNECT fires.
+    //
+    // ENet defaults are 5 000 ms / 30 000 ms — far too long for development
+    // where clients routinely pause on breakpoints.  With the values below a
+    // frozen client is evicted within 1.5–4 s.
+    static constexpr enet_uint32 PEER_TIMEOUT_LIMIT_MS = ENET_PEER_TIMEOUT_LIMIT; // keep default multiplier (32)
+    static constexpr enet_uint32 PEER_TIMEOUT_MIN_MS = 5000;
+    static constexpr enet_uint32 PEER_TIMEOUT_MAX_MS = 15000;
 
     ENetHost* host = nullptr;
     bool      isServer = false;
@@ -93,8 +110,20 @@ struct ENetTransport::Impl {
     void HandleConnect(ENetEvent& event,
         const std::function<void(uint8_t)>& onConnected) {
 
-        // Force ENet to update the ping moving average 10x faster (every 50ms instead of 500ms)
-        enet_peer_ping_interval(event.peer, 50);
+        // Tighten the ping cadence so RTT estimates converge quickly.
+        enet_peer_ping_interval(event.peer, PEER_PING_INTERVAL_MS);
+
+        // Set an aggressive timeout so that a peer that stops responding
+        // (e.g. a client frozen on a breakpoint) is evicted within a few
+        // seconds instead of ENet's default 5–30 s window.
+        //
+        // Note: enet_peer_ping_interval only affects RTT sampling; it has
+        // NO effect on when ENet declares a peer dead.  enet_peer_timeout is
+        // the only knob that controls that threshold.
+        enet_peer_timeout(event.peer,
+            PEER_TIMEOUT_LIMIT_MS,
+            PEER_TIMEOUT_MIN_MS,
+            PEER_TIMEOUT_MAX_MS);
 
         if (isServer) {
             if (nextPeerId == 0) {

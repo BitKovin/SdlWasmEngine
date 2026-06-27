@@ -1425,7 +1425,7 @@
 {
 "classname" "spawner"
 "origin" "80 -640 48"
-"className" "testnpc"
+"className" "npc_dog"
 "targetname" "sp1"
 "onSpawned" "add"
 "angle" "-21.7186"
@@ -1697,7 +1697,7 @@
 {
 "classname" "spawner"
 "origin" "-32 -592 48"
-"className" "testnpc"
+"className" "npc_dog"
 "targetname" "sp1"
 "onSpawned" "add"
 "angle" "-21.7186"
@@ -1709,7 +1709,7 @@
 {
 "classname" "spawner"
 "origin" "176 -576 48"
-"className" "testnpc"
+"className" "npc_dog"
 "targetname" "sp1"
 "onSpawned" "add"
 "angle" "-21.7186"
@@ -2100,4 +2100,16 @@
 "classname" "env_door"
 "origin" "151.84 550.189 16"
 "angle" "180"
+}
+// entity 78
+{
+"classname" "item_weapon_pistol"
+"origin" "-48 272 32"
+"modelscale" "32"
+}
+// entity 79
+{
+"classname" "item_weapon_shotgun"
+"origin" "-16 256 32"
+"modelscale" "32"
 }
