@@ -11,8 +11,8 @@ NpcHumanGun::NpcHumanGun()
     ClassName = "npc_human_gun";
     maxSpeed = 4.2f;
     mesh->Scale = vec3(1.15f);
-    Health = 80;
-    MaxHealth = 80;
+    Health = 90;
+    MaxHealth = 90;
     pathFollow.allowPartialPath = true;
 
     // Prevent firing the instant the NPC spawns / gets ownership.

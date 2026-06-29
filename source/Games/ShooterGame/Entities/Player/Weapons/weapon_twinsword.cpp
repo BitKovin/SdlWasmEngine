@@ -50,11 +50,28 @@ public:
 	// Block state
 	bool isBlocking = false;
 
-	const float Damage = 20.0f;
+	const float Damage = 25.0f;
 
 	SoundPlayer* fireSoundPlayer = nullptr;
 	SoundPlayer* fireSoundPlayer2 = nullptr;
 	SoundPlayer* hitSoundPlayer = nullptr;
+
+	// -----------------------------------------------------------------------
+	// Ultimate mode
+	// -----------------------------------------------------------------------
+
+	bool ultimateActive = true;
+	const float UltimateSpeedMultiplier = 1.65f;
+
+	bool IsUltimateMode() const { return ultimateActive; }
+
+	// Single source of truth — multiply anim speed, divide delays by this value
+	float GetAttackSpeedScale() const
+	{
+		return IsUltimateMode() ? UltimateSpeedMultiplier : 1.0f;
+	}
+
+	// -----------------------------------------------------------------------
 
 	weapon_twinsword()
 	{
@@ -94,7 +111,7 @@ public:
 		for (auto* vm : { viewmodel_r, viewmodel_l })
 		{
 			vm->GravityAlignedRotation = true;
-			vm->LoadFromFile("GameData/models/player/weapons/twinsword/twinsword.glb"); 
+			vm->LoadFromFile("GameData/models/player/weapons/twinsword/twinsword.glb");
 			vm->TexturesLocation = "GameData/models/player/weapons/twinsword/twinsword.glb/";
 			vm->PlayAnimation("draw", false, 0.0f);
 			vm->PreloadAssets();
@@ -145,8 +162,6 @@ public:
 	// Normal attacks pass one true flag; counter-attacks pass both.
 	void StartNewTrails(bool spawnRight, bool spawnLeft)
 	{
-
-
 		MathHelper::Transform weaponTransform = MathHelper::Transform();
 		weaponTransform.Position = Position;
 		weaponTransform.Rotation = Rotation;
@@ -155,7 +170,6 @@ public:
 
 		if (spawnRight)
 		{
-
 			trail_r = new particle_system_meleeTrail();
 			vec3 trailStart = viewmodel_r->GetBoneMatrixWorld("trailR_start")[3];
 			vec3 trailEnd = viewmodel_r->GetBoneMatrixWorld("trailR_end")[3];
@@ -229,7 +243,6 @@ public:
 			trailStart = vec3(inverseWeaponMatrix * vec4(trailStart, 1.0f));
 			trailEnd = vec3(inverseWeaponMatrix * vec4(trailEnd, 1.0f));
 
-
 			trail_l->SetTrailTransform(trailStart, trailEnd);
 			trail_l->RelativeTransform = weaponMatrix; // anchor to camera space so it follows the viewmodel
 		}
@@ -265,17 +278,15 @@ public:
 
 	void StartAttack()
 	{
-
 		if (counterAvailable)
-		{
 			pendingCounterAttack = true;
-		}
 
 		if (attackDelay.Wait() || isBlocking) return;
 
+		const float s = GetAttackSpeedScale();
+
 		if (counterAvailable)
 		{
-
 			pendingCounterAttack = false;
 
 			// Counter-attack: both swords swing — spawn a trail on each
@@ -290,9 +301,9 @@ public:
 			pendingTrailRight = true;
 			pendingTrailLeft = true;
 
-			attackDelay.AddDelay(0.5f);
-			pendingAttackStartDelay.AddDelay(0.15f);
-			pendingAttackEndDelay.AddDelay(0.45f);
+			attackDelay.AddDelay(0.5f / s);
+			pendingAttackStartDelay.AddDelay(0.15f / s);
+			pendingAttackEndDelay.AddDelay(0.45f / s);
 
 			Camera::AddCameraShake(CameraShake(
 				1.5f, 1.5f, vec3(0), vec3(0),
@@ -310,9 +321,9 @@ public:
 			pendingTrailRight = isRight;
 			pendingTrailLeft = !isRight;
 
-			attackDelay.AddDelay(0.5f);
-			pendingAttackStartDelay.AddDelay(0.15f);
-			pendingAttackEndDelay.AddDelay(0.5f);
+			attackDelay.AddDelay(0.5f / s);
+			pendingAttackStartDelay.AddDelay(0.15f / s);
+			pendingAttackEndDelay.AddDelay(0.5f / s);
 
 			Camera::AddCameraShake(CameraShake(
 				1.0f, 1.0f, vec3(0), vec3(0),
@@ -326,13 +337,13 @@ public:
 
 		// Kill the previous trails and queue new ones
 		StopTrails();
-		startTrailDelay.AddDelay(0.15f);
+		startTrailDelay.AddDelay(0.15f / s);
 
 		soundToggle ? fireSoundPlayer->Play() : fireSoundPlayer2->Play();
 		soundToggle = !soundToggle;
 
 		pendingAttack = true;
-		reAttackDelay.AddDelay(0.55f);
+		reAttackDelay.AddDelay(0.55f / s);
 
 		WarnAboutAttack();
 	}
@@ -361,11 +372,17 @@ public:
 				damangeToDeal *= 3.0f;
 			}
 
+			float ultimateFinalDamageMultiplier = 2.0f / GetAttackSpeedScale();
+
+			if (IsUltimateMode())
+				damangeToDeal *= ultimateFinalDamageMultiplier;
+
 			bool isEnemy = dynamic_cast<IEnemy*>(hit.entity) && hit.entity->Health > 0;
 
 			if (isEnemy)
 			{
-				Player::Instance->Heal(damangeToDeal * 0.15f);
+				Player::Instance->Heal(damangeToDeal * 0.20f
+				* IsUltimateMode() ? 1.5f : 1.0f);
 			}
 
 			hit.entity->OnPointDamage(
@@ -408,7 +425,6 @@ public:
 
 	void EndBlock()
 	{
-
 		if (viewmodel_r->GetAnimationName() == "block_start" && viewmodel_r->GetAnimationTime() < 0.2f) return;
 
 		// Arm the spam window so the next block press can't instantly parry
@@ -422,7 +438,6 @@ public:
 
 			attackDelay.AddDelay(0.3f);
 		}
-
 	}
 
 	// Called by the engine when an enemy attack lands during the parry window
@@ -451,11 +466,9 @@ public:
 
 	void Update() override
 	{
-
 		if (counterWindow.Wait() == false)
 			pendingCounterAttack = false;
 
-			
 
 		// Primary attack / counter
 		if ((Input::GetAction("attack")->PressedBuffered(0.3f) || pendingCounterAttack))
@@ -485,7 +498,7 @@ public:
 			isBlocking &&
 			viewmodel_r->GetAnimationTime() < viewmodel_r->GetAnimationDuration();
 
-		if(blockAnimPlaying)
+		if (blockAnimPlaying)
 			blockingWindow.AddDelay(0.1f);
 
 		Parrying = blockAnimPlaying && !parrySpamWindow.Wait() || blockingWindow.Wait();
@@ -494,8 +507,9 @@ public:
 
 	void AsyncUpdate() override
 	{
-		viewmodel_r->Update();
-		viewmodel_l->Update();
+		const float speed = GetAttackSpeedScale();
+		viewmodel_r->Update(speed);
+		viewmodel_l->Update(speed);
 
 		const float hide = 1.0f;
 

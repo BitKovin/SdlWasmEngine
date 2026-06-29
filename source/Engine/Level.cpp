@@ -524,7 +524,7 @@ void Level::MemoryCleanPendingEntities()
 
 		if (DeletedLevelObjectAdresses.find(entity) != DeletedLevelObjectAdresses.end())
 		{
-			Logger::Log("entity was deleted twice. possible crash avoided");
+			//Logger::Log("entity was deleted twice. possible crash avoided");
 			continue;
 		}
 

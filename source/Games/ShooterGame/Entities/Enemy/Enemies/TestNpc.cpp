@@ -8,8 +8,8 @@ TestNpc::TestNpc()
 {
  	ClassName = "testnpc";
 	maxSpeed  = 6.5f;
-	Health    = 70;
-	MaxHealth = 70;
+	Health    = 80;
+	MaxHealth = 80;
 
 	// Dog rig is a quadruped: it has no calf_l/calf_r/thigh_l/thigh_r
 	// hitboxes, so the base class's leg-hit ragdoll trigger doesn't apply.

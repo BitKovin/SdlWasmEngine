@@ -8,8 +8,8 @@ NpcHumanAxe::NpcHumanAxe()
 	ClassName = "npc_human_axe";
 	maxSpeed = 5.0f;
 	pathFollow.allowPartialPath = true;
-	Health = 80;
-	MaxHealth = 80;
+	Health = 110;
+	MaxHealth = 110;
 }
 
 // ---------------------------------------------------------------------------
