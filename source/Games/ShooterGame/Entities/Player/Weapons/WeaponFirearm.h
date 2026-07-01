@@ -125,6 +125,8 @@ public:
 	void Serialize(json& target);
 	void Deserialize(json& source) override;
 
+	virtual bool IsInUltimateAkimbo();
+
 protected:
 
 	bool lastFrameHide = false;

@@ -520,3 +520,8 @@ void WeaponFirearm::Deserialize(json& source)
 	viewmodelLeft->SetAnimationState(viewmodelLeftData);
 
 }
+
+bool WeaponFirearm::IsInUltimateAkimbo()
+{
+	return false;
+}

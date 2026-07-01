@@ -52,6 +52,7 @@ public:
 
     bool IsConnected() const override;
     int  GetPeerCount() const override;
+    std::string GetConnectionString() const override;
 
     // Convenience for testing: try to connect to address:port, blocking up to
     // timeoutMs for the result.  If the connection succeeds, returns true and

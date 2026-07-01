@@ -120,6 +120,8 @@ function(platform_configure_game_target game_target)
 
         "SHELL:-s AGGRESSIVE_VARIABLE_ELIMINATION=1"
         "SHELL:-s ELIMINATE_DUPLICATE_FUNCTIONS=1"
+        
+        "SHELL:-lwebsocket.js"
 
         "SHELL:-gsource-map"
         "SHELL:--source-map-base http://localhost:8779/Build/ShooterGame/emscripten/bin/"

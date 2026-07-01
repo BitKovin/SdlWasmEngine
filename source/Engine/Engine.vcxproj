@@ -459,6 +459,8 @@
     <ClCompile Include="Network\NetPacket.cpp" />
     <ClCompile Include="Network\NetworkedEntity.cpp" />
     <ClCompile Include="Network\NetworkManager.cpp" />
+    <ClCompile Include="Network\RelayTransport_Emscripten.cpp" />
+    <ClCompile Include="Network\RelayTransport_Native.cpp" />
     <ClCompile Include="OnlineSubsystems\GDKAuth.cpp" />
     <ClCompile Include="Particle\GlobalParticleSystem.cpp" />
     <ClCompile Include="Particle\ParticleEmitter.cpp" />
@@ -651,6 +653,8 @@
     <ClInclude Include="Network\NetworkedEntity.h" />
     <ClInclude Include="Network\NetworkManager.h" />
     <ClInclude Include="Network\NetworkStat.h" />
+    <ClInclude Include="Network\RelayProtocol.h" />
+    <ClInclude Include="Network\RelayTransport.h" />
     <ClInclude Include="OnlineSubsystems\GDKAuth.h" />
     <ClInclude Include="Particle\GlobalParticleSystem.hpp" />
     <ClInclude Include="Particle\ParticleEmitter.h" />

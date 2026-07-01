@@ -1118,6 +1118,8 @@ void NetworkManager::OnLevelReady() {
     s_networkTickAccum = 0.0f;
     s_digestAccum = 0.0f;
 
+
+
     std::fprintf(stdout,
         "[NetworkManager] Level ready — firing OnNetworkSpawn on %zu entities\n",
         s_entities.size());

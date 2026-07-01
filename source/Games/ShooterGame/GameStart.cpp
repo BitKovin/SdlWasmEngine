@@ -27,8 +27,44 @@
 
 #include <Network/NetworkManager.h>
 #include <Network/ENetTransport.h>
+#include <Network/RelayTransport.h>
 
-std::unique_ptr<ENetTransport> transport;
+std::unique_ptr<INetworkTransport> transport;
+
+
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+
+EM_JS(char*, get_input_js, (), {
+    let input = window.prompt("Enter room id (or any one char to create server)");
+    if (input === null) input = "";
+
+    // Modern way - no need for ALLOC_NORMAL
+    let len = lengthBytesUTF8(input) + 1;
+    let ptr = _malloc(len);
+    stringToUTF8(input, ptr, len);
+    return ptr;
+    });
+
+#endif
+
+// Then in your function:
+std::string getRoomInput() {
+    std::string roomId;
+
+#ifdef __EMSCRIPTEN__
+    char* jsStr = get_input_js();
+    if (jsStr) {
+        roomId = jsStr;
+        free(jsStr);
+    }
+#else
+    std::cout << "Enter room id (or any one char to create server)\n";
+    std::cin >> roomId;
+#endif
+
+    return roomId;
+}
 
 class GameStart : public Entity
 {
@@ -38,6 +74,7 @@ public:
 
 
     void testHttp();
+
 
 	void Start()
 	{
@@ -51,8 +88,41 @@ public:
         LoadConstantAssets();
         LoadingScreenSystem::SetLoadingCanvas(std::make_shared<UiDefaultLoadingScreen>());
 
-        transport = make_unique<ENetTransport>();
-        bool isServer = !transport->TryConnectOrHost("192.168.0.100", 25666, /*maxClients=*/4);
+        bool isServer = true;
+        
+        if (true)
+        {
+#ifdef __EMSCRIPTEN__
+            transport = std::make_unique<RelayTransport>("127.0.0.1", /*wsPort=*/5080, 0);
+#else
+            transport = std::make_unique<RelayTransport>("127.0.0.1", /*tcpPort=*/7777, /*udpPort=*/7778);
+#endif
+
+            std::string roomId = getRoomInput();
+
+            if (roomId.size() < 2)
+            {
+                transport->Host(0, /*maxClients=*/4);
+                isServer = true; // Correctly modifies the outer scope variable
+            }
+            else
+            {
+                transport->Connect(roomId, 0);
+                isServer = false; // Correctly modifies the outer scope variable
+            }
+
+          
+        }
+        else //enet implementation
+        {
+
+            transport = make_unique<ENetTransport>();
+
+            auto enetTransport =dynamic_cast<ENetTransport*>(transport.get());
+
+            isServer = !enetTransport->TryConnectOrHost("192.168.0.100", 25666, /*maxClients=*/4);
+        }
+        
 
         NetworkManager::BeginLevelLoad(Level::Current);
         NetworkManager::OnLevelLoaded();

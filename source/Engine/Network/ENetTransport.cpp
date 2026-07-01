@@ -78,6 +78,10 @@ struct ENetTransport::Impl {
     bool      isServer = false;
     uint8_t   nextPeerId = 1;
 
+    // Backing storage for GetConnectionString(): "address:port" for Connect(),
+    // "0.0.0.0:port" for Host(). Cleared on Disconnect().
+    std::string connectionDesc;
+
     ENetPeer* serverPeer = nullptr; // client-only
 
     std::unordered_map<uint8_t, ENetPeer*> peerById;
@@ -290,6 +294,7 @@ bool ENetTransport::Host(uint16_t port, int maxClients) {
     }
 
     impl_->isServer = true;
+    impl_->connectionDesc = "0.0.0.0:" + std::to_string(port);
     std::fprintf(stdout, "[ENetTransport] Hosting on port %u (max %d clients)\n",
         port, maxClients);
     return true;
@@ -318,6 +323,7 @@ bool ENetTransport::Connect(const std::string& address, uint16_t port) {
     }
 
     impl_->isServer = false;
+    impl_->connectionDesc = address + ":" + std::to_string(port);
     std::fprintf(stdout, "[ENetTransport] Connecting to %s:%u\n", address.c_str(), port);
     return true;
 }
@@ -336,6 +342,7 @@ void ENetTransport::Disconnect() {
     impl_->peerById.clear();
     impl_->idByPeer.clear();
     impl_->nextPeerId = 1;
+    impl_->connectionDesc.clear();
 }
 
 void ENetTransport::Poll() {
@@ -397,6 +404,10 @@ bool ENetTransport::IsConnected() const {
 int ENetTransport::GetPeerCount() const {
     if (!impl_->host) return 0;
     return static_cast<int>(impl_->host->connectedPeers);
+}
+
+std::string ENetTransport::GetConnectionString() const {
+    return impl_->connectionDesc;
 }
 
 bool ENetTransport::TryConnectOrHost(const std::string& address, uint16_t port,

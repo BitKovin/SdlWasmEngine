@@ -10,7 +10,8 @@
 // INetworkTransport
 //
 // Abstract transport layer. NetworkManager talks only to this interface.
-// Concrete implementations: ENetTransport, SteamTransport, EOSTransport, etc.
+// Concrete implementations: ENetTransport, RelayTransport, SteamTransport,
+// EOSTransport, etc.
 //
 // Threading model: all callbacks fire on the thread that calls Poll().
 // Poll() must be called once per frame from the same thread as the engine
@@ -23,7 +24,8 @@ public:
 
     // -----------------------------------------------------------------------
     // Callbacks — set by NetworkManager before calling any other method.
-    // All three must be set before Connect/Host is called.
+    // onPeerConnected / onPeerDisconnected / onPacketReceived must be set
+    // before Connect/Host is called. onHostChanged is optional.
     // -----------------------------------------------------------------------
 
     // Fired when a peer connects. peerId is assigned by the transport layer
@@ -36,6 +38,18 @@ public:
 
     // Fired when a packet arrives from a peer.
     std::function<void(uint8_t senderId, const uint8_t* data, size_t length)> onPacketReceived;
+
+    // Fired when the authoritative "host" of the current session changes —
+    // e.g. the peer that created the room/session disconnects and another
+    // peer takes over. Optional: most transports never call this.
+    // ENetTransport never fires it (its server process is never one of the
+    // migratable peers). RelayTransport fires it when host migration is
+    // enabled for the room and the previous host (peerId 0) disconnects.
+    // NetworkManager does not currently subscribe to this — wiring up
+    // migration handling on the game-logic side is left for later — but the
+    // hook lives on the interface now so that work doesn't require another
+    // interface change.
+    std::function<void(uint8_t newHostPeerId)> onHostChanged;
 
     // -----------------------------------------------------------------------
     // Lifecycle
@@ -90,4 +104,10 @@ public:
 
     virtual NetworkStat GetStat() const = 0;
 
+    // Returns a transport-specific string another peer can use to join this
+    // session. For direct transports (ENetTransport) this is "address:port".
+    // For relay-based transports (RelayTransport) this is the room code (a
+    // server-issued UUID — see RelayTransport::CreateRoom/JoinRoom). Empty
+    // string if not currently hosting or joined.
+    virtual std::string GetConnectionString() const = 0;
 };

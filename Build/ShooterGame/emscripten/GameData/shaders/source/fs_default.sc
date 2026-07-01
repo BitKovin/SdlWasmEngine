@@ -232,6 +232,9 @@ void main()
 
     vec3 normal = normalize(mul(TBN, mapN));
 
+    if (gl_FrontFacing)
+        normal = -normal;
+
     if(length(T) < 0.1)
         normal = N;
 
