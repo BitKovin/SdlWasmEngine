@@ -312,6 +312,9 @@ set(BIT7Z_AUTO_FORMAT ON CACHE BOOL "enable auto format support" FORCE)
 add_subdirectory(${LIB_DIR}/bit7z)
 target_link_libraries(engine PUBLIC bit7z)
 
+add_subdirectory(${LIB_DIR}/vaudio)
+target_link_libraries(engine PUBLIC vaudio_native)
+
 # ——————————————————————————————————————————————————————————
 # Hook 3 — post-library platform fixups
 # (e.g. bimg_encode SSE workaround on Emscripten)
@@ -397,6 +400,8 @@ if(NOT ENGINE_AS_LIBRARY)
     string(REGEX REPLACE "[^A-Za-z0-9_]" "_" GAME_TARGET_NAME "${GAME_NAME}")
 
     add_executable(${GAME_TARGET_NAME} ${GAME_SOURCES})
+
+    vaudio_copy_runtime(${GAME_TARGET_NAME})
 
     if(MSVC)
         target_compile_options(${GAME_TARGET_NAME} PRIVATE /EHsc)

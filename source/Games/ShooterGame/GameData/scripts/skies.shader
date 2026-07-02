@@ -66,3 +66,78 @@ textures/skies/skybox2_overcast_night_cube
         tcMod scale 3 2
     }
 }
+
+textures/skies/skybox_red_cube
+{
+    surfaceparm noimpact
+    surfaceparm nolightmap
+    surfaceparm sky
+
+    q3map_lightimage env/skybox_red_cube_up.png
+
+    // --- SKY LIGHT CONTROL ---
+    // Weak ambient skylight (brightness 20, iterations 3)
+    q3map_skylight 120 5
+
+    // Optional: dim sun to match overcast feel
+    q3map_sun 0.7 0.2 0.2 0 -15 70
+
+    // --- SKYBOX DRAW ---
+    skyparms env/skybox_red_cube - -
+    {
+        map env/skybox_red_cube.png
+        blendfunc GL_ONE GL_ONE
+        tcMod scroll 0.05 0.06
+        tcMod scale 3 2
+    }
+}
+
+textures/skies/skybox_overcast_cube
+{
+    surfaceparm noimpact
+    surfaceparm nolightmap
+    surfaceparm sky
+
+    q3map_lightimage env/skybox_overcast_cube_up.png
+
+    // --- SKY LIGHT CONTROL ---
+    // Weak ambient skylight (brightness 20, iterations 3)
+    q3map_skylight 110 3
+
+    // Optional: dim sun to match overcast feel
+    q3map_sun 0.4 0.4 0.4 0 -15 70
+
+    // --- SKYBOX DRAW ---
+    skyparms env/skybox_overcast_cube - -
+    {
+        map env/skybox_overcast_cube.png
+        blendfunc GL_ONE GL_ONE
+        tcMod scroll 0.05 0.06
+        tcMod scale 3 2
+    }
+}
+
+textures/skies/skybox_cloudy_cube
+{
+    surfaceparm noimpact
+    surfaceparm nolightmap
+    surfaceparm sky
+
+    q3map_lightimage env/skybox_cloudy_cube_up.png
+
+    // --- SKY LIGHT CONTROL ---
+    // Weak ambient skylight (brightness 20, iterations 3)
+    q3map_skylight 180 3
+
+    // Optional: dim sun to match overcast feel
+    q3map_sun 1.0 1.0 1.0 0 -15 70
+
+    // --- SKYBOX DRAW ---
+    skyparms env/skybox_cloudy_cube - -
+    {
+        map env/skybox_cloudy_cube.png
+        blendfunc GL_ONE GL_ONE
+        tcMod scroll 0.05 0.06
+        tcMod scale 3 2
+    }
+}

@@ -520,6 +520,8 @@ void NpcBase::Update()
 {
 	Entity::Update();
 
+	Position = controller->GetSmoothPosition();
+
 	UpdateTask();
 
 }
@@ -533,7 +535,6 @@ void NpcBase::AsyncUpdate()
 		ZoneScopedN("Controller Update");
 
 		controller->Update(Time::DeltaTimeF);
-		Position = controller->GetSmoothPosition();
 	}
 
 	{

@@ -1,0 +1,1645 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>vaudio</name>
+    </assembly>
+    <members>
+        <member name="T:vaudio.Extensions">
+            <summary>
+            Extensions for existing C# classes
+            </summary>
+        </member>
+        <member name="M:vaudio.Extensions.RemoveAssert``1(System.Collections.Generic.List{``0},``0)">
+            <summary>
+            Removes an item from a list, asserting it already contained that item
+            </summary>
+        </member>
+        <member name="M:vaudio.Extensions.AddUnique``1(System.Collections.Generic.List{``0},``0)">
+            <summary>
+            Adds an item to the list, asserting it doesn't already contain that item
+            </summary>
+        </member>
+        <member name="T:vaudio.MaterialProperties">
+            <summary>
+            Acoustic properties for a specific material
+            </summary>
+        </member>
+        <member name="P:vaudio.MaterialProperties.AbsorptionLF">
+            <summary>
+            Percentage of low-frequency energy that is lost on each bounce (0.0 to 1.0).
+            </summary>
+            <exception cref="T:System.ArgumentException">Thrown if the value is outside [0, 1] or is NaN/Infinity</exception>
+        </member>
+        <member name="P:vaudio.MaterialProperties.AbsorptionHF">
+            <summary>
+            Percentage of high-frequency energy that is lost on each bounce (0.0 to 1.0).
+            </summary>
+            <exception cref="T:System.ArgumentException">Thrown if the value is outside [0, 1] or is NaN/Infinity</exception>
+        </member>
+        <member name="P:vaudio.MaterialProperties.Scattering">
+            <summary>
+            Scattering strength (0.0 to 1.0), where 0.0 has no scattering and 1.0 skews the ray reflection direction by up to 90 degrees
+            </summary>
+            <exception cref="T:System.ArgumentException">Thrown if the value is outside [0, 1] or is NaN/Infinity</exception>
+        </member>
+        <member name="P:vaudio.MaterialProperties.TransmissionLF">
+            <summary>
+            Low-frequency transmission in decibels per meter (0.0 or greater).
+            </summary>
+            <exception cref="T:System.ArgumentException">Thrown if the value is negative or is NaN/Infinity</exception>
+        </member>
+        <member name="P:vaudio.MaterialProperties.TransmissionHF">
+            <summary>
+            High-frequency transmission in decibels per meter (0.0 or greater).
+            </summary>
+            <exception cref="T:System.ArgumentException">Thrown if the value is negative or is NaN/Infinity</exception>
+        </member>
+        <member name="P:vaudio.MaterialProperties.PlaneTransmissionLF">
+            <summary>
+            Percentage of low-frequency energy lost when a ray passes through a flat <see cref="T:vaudio.PlanePrimitive" />, <see cref="T:vaudio.DiskPrimitive"/>, <see cref="T:vaudio.TrianglePrimitive" /> or non-watertight <see cref="T:vaudio.MeshPrimitive" />. Ranges from 0.0 to 1.0
+            </summary>
+            <exception cref="T:System.ArgumentException">Thrown if the value is outside [0, 1] or is NaN/Infinity</exception>
+        </member>
+        <member name="P:vaudio.MaterialProperties.PlaneTransmissionHF">
+            <summary>
+            Percentage of high-frequency energy lost when a ray passes through a flat <see cref="T:vaudio.PlanePrimitive" />, <see cref="T:vaudio.DiskPrimitive"/>, <see cref="T:vaudio.TrianglePrimitive" /> or non-watertight <see cref="T:vaudio.MeshPrimitive" />. Ranges from 0.0 to 1.0
+            </summary>
+            <exception cref="T:System.ArgumentException">Thrown if the value is outside [0, 1] or is NaN/Infinity</exception>
+        </member>
+        <member name="M:vaudio.MaterialProperties.TransmissionForThickness(System.Single)">
+            <summary>
+            Returns the dB/m transmission value that reduces energy to 0.1% after travelling <paramref name="metersToBlock"/> meters through a material
+            </summary>
+        </member>
+        <member name="M:vaudio.MaterialProperties.#ctor">
+            <summary>
+            Create a MaterialProperties with all values set to 0
+            </summary>
+        </member>
+        <member name="M:vaudio.MaterialProperties.#ctor(vaudio.MaterialProperties)">
+            <summary>
+            Create a MaterialProperties with the same values as another
+            </summary>
+        </member>
+        <member name="M:vaudio.MaterialProperties.#ctor(System.Single,System.Single,System.Single,System.Single,System.Single,System.Single,System.Single)">
+            <summary>
+            Create a MaterialProperties with all values provided
+            </summary>
+        </member>
+        <member name="M:vaudio.MaterialProperties.Update(vaudio.MaterialProperties)">
+            <summary>
+            Copy all properties from another MaterialProperties
+            </summary>
+        </member>
+        <member name="M:vaudio.MaterialProperties.Update(System.Single,System.Single,System.Single,System.Single,System.Single,System.Single,System.Single)">
+            <summary>
+            Update all properties
+            </summary>
+        </member>
+        <member name="T:vaudio.VisualisationData">
+            <summary>
+            Struct containing the position and normal of a ray bounce
+            </summary>
+        </member>
+        <member name="F:vaudio.VisualisationData.position">
+            <summary>
+            The world-space position of the ray bounce
+            </summary>
+        </member>
+        <member name="F:vaudio.VisualisationData.normal">
+            <summary>
+            The world-space normal of the ray bounce. Guaranteed to be normalised
+            </summary>
+        </member>
+        <member name="T:vaudio.Emitter">
+            <summary>
+            A 3D position that casts rays and is discovered by other Emitters
+            </summary>
+        </member>
+        <member name="M:vaudio.Emitter.#ctor">
+            <summary>Create a new Emitter with default settings</summary>
+        </member>
+        <member name="F:vaudio.Emitter.overridePositions">
+            <summary>
+            When defined, rays will be cast out of these positions rather than the default <see cref="F:vaudio.Emitter.Position"/>. Do not edit this array once set - you must provide an entire new array each time.
+            </summary>
+        </member>
+        <member name="F:vaudio.Emitter.overrideRayDirections">
+            <summary>
+            When defined, rays will be cast in these directions rather than the default.  Do not edit this array once set - you must provide an entire new array each time.
+            </summary>
+        </member>
+        <member name="P:vaudio.Emitter.LogCallback">
+            <summary>
+            A custom logging callback. Defaults to <see cref="M:System.Console.WriteLine"/>
+            </summary>
+        </member>
+        <member name="P:vaudio.Emitter.LogErrorCallback">
+            <summary>
+            A custom logging callback. Defaults to <see cref="P:System.Console.Error"/>.WriteLine()
+            </summary>
+        </member>
+        <member name="M:vaudio.Emitter.GetTargetFilter(vaudio.Emitter)">
+            <summary>
+            Get an object containing the LF and HF gain for a target emitter, to be applied to a low pass filter. <br />
+            Only access when <see cref="M:vaudio.Emitter.HasRaytracedTarget(vaudio.Emitter)" /> is true.
+            </summary>
+        </member>
+        <member name="F:vaudio.Emitter.HasRelativeReverb">
+            <summary>Whether this emitter is used as a reference point for calculating relative reverb gain and direction</summary>
+        </member>
+        <member name="P:vaudio.Emitter.CastsRays">
+            <summary>Whether this emitter casts rays. False if all ray counts and/or bounce counts are set to 0.</summary>
+        </member>
+        <member name="F:vaudio.Emitter.RelativeReverbInnerThreshold">
+            <summary>The lower bound of the relative reverb blend range. This affects the directional reverb that is heard by this emitter.</summary>
+        </member>
+        <member name="F:vaudio.Emitter.RelativeReverbOuterThreshold">
+            <summary>The upper bound of the relative reverb blend range. This affects the directional reverb that is heard by this emitter.</summary>
+        </member>
+        <member name="M:vaudio.Emitter.AddTarget(vaudio.Emitter)">
+            <summary>
+            Adds an emitter to this emitter's target list
+            </summary>
+            <param name="target">The target emitter to add</param>
+            <exception cref="T:System.InvalidOperationException">Thrown if <paramref name="target"/> has already been added</exception>
+        </member>
+        <member name="F:vaudio.Emitter.Initialising">
+            <summary>
+            True if this emitter hasn't cast its own rays yet.
+            </summary>
+        </member>
+        <member name="M:vaudio.Emitter.RemoveTarget(vaudio.Emitter)">
+            <summary>
+            Removes an emitter from this emitter's target list
+            </summary>
+            <param name="target">The target emitter to remove</param>
+        </member>
+        <member name="M:vaudio.Emitter.HasTarget(vaudio.Emitter)">
+            <summary>
+            Returns whether the target emitter is in this emitter's target list
+            </summary>
+        </member>
+        <member name="M:vaudio.Emitter.HasRaytracedTarget(vaudio.Emitter)">
+            <summary>
+            Returns whether a target emitter has been raytraced. If true, it is safe to check the target's filter via <see cref="M:vaudio.Emitter.GetTargetFilter(vaudio.Emitter)"/>
+            </summary>
+        </member>
+        <member name="M:vaudio.Emitter.Validate">
+            <summary>
+            Validates this emitter's configuration
+            </summary>
+            <exception cref="T:System.ArgumentException">Thrown if the custom ambientGainFormula or gainFormula throws an exception</exception>
+        </member>
+        <member name="F:vaudio.Emitter.OnRaytracingComplete">
+            <summary>
+            A callback that is invoked after this emitter casts its rays for the first time.
+            </summary>
+        </member>
+        <member name="F:vaudio.Emitter.OnRaytracedByAnotherEmitter">
+            <summary>
+            A callback that is invoked when another emitter raytraces this emitter for the first time.
+            The first argument is the other emitter that raytraced this emitter.
+            </summary>
+        </member>
+        <member name="P:vaudio.Emitter.GainFormula">
+            <summary>
+            The custom formula for calculating this emitter's low- and high-frequency gains when it is the target of another emitter. This is invoked for both low-frequency and high-frequency energy. Set to null to use the default formula. <br />
+            Parameters: (bool lowFrequency, int occlusionRayCount, int permeationRayCount, int permeationBounceCount, float occlusionEnergy, float permeationEnergy) <br />
+            Returns: float
+            </summary>
+            <exception cref="T:System.ArgumentException">Thrown if the formula throws an exception during validation</exception>
+        </member>
+        <member name="P:vaudio.Emitter.AmbientGainFormula">
+            <summary>
+            The custom formula for calculating the low- and high-frequency gains in for <see cref="F:vaudio.Emitter.AmbientFilter"/>. This is invoked for both low-frequency and high-frequency energy. Set to null to use the default formula. <br />
+            Parameters: (bool lowFrequency, int ambientOcclusionRayCount, int ambientPermeationRayCount, int ambientPermeationBounceCount, float ambientOcclusionEnergy, float ambientPermeationEnergy) <br />
+            Returns: float
+            </summary>
+            <exception cref="T:System.ArgumentException">Thrown if the formula throws an exception during validation</exception>
+        </member>
+        <member name="P:vaudio.Emitter.OcclusionEnergyCap">
+            <summary>
+            The percentage of occlusion energy required for this emitter to be at full volume. Defaults to 15% of the other emitter's <see cref="P:vaudio.Emitter.OcclusionRayCount"/>.
+            </summary>
+            <exception cref="T:System.ArgumentException">Thrown when the value is NaN, Infinity, or less than 0</exception>
+        </member>
+        <member name="P:vaudio.Emitter.PermeationEnergyCap">
+            <summary>
+            The percentage of permeation energy required for this emitter to be at full volume. Defaults to 15% of the other emitter's <see cref="P:vaudio.Emitter.PermeationRayCount"/> * <see cref="P:vaudio.Emitter.PermeationBounceCount"/>.
+            </summary>
+            <exception cref="T:System.ArgumentException">Thrown when the value is NaN, Infinity, or less than 0</exception>
+        </member>
+        <member name="P:vaudio.Emitter.AmbientOcclusionEnergyCap">
+            <summary>
+            The percentage of occlusion energy required for the emitter to be at full volume. Defaults to 15% of this emitter's <see cref="P:vaudio.Emitter.AmbientOcclusionRayCount"/>.
+            </summary>
+            <exception cref="T:System.ArgumentException">Thrown when the value is NaN, Infinity, or less than 0</exception>
+        </member>
+        <member name="P:vaudio.Emitter.AmbientPermeationEnergyCap">
+            <summary>
+            The percentage of permeation energy required for the emitter to be at full volume. Defaults to 15% of this emitter's <see cref="P:vaudio.Emitter.AmbientPermeationRayCount"/> * <see cref="P:vaudio.Emitter.AmbientPermeationBounceCount"/>.
+            </summary>
+            <exception cref="T:System.ArgumentException">Thrown when the value is NaN, Infinity, or less than 0</exception>
+        </member>
+        <member name="M:vaudio.Emitter.ResetTrails">
+            <summary>
+            Call this function to invalidate the ray cache - all memory will be cleaned up and all rays will be re-cast
+            </summary>
+        </member>
+        <member name="P:vaudio.Emitter.WithinWorldBounds">
+            <summary>
+            Emitters outside the world bounds will not be raytraced. Set <see cref="F:vaudio.Emitter.ClampPosition"/> to true to keep this emitter inside the world bounds
+            </summary>
+        </member>
+        <member name="F:vaudio.Emitter.ProcessedReverb">
+            <summary>
+            Contains reverb data that has been transformed into more usable parameters
+            </summary>
+        </member>
+        <member name="F:vaudio.Emitter.EAX">
+            <summary>
+            EAX reverb properties for the listener. Contains parameters compatible with EAX reverb effects
+            </summary>
+        </member>
+        <member name="F:vaudio.Emitter.AmbientFilter">
+            <summary>
+            This object contains the LF and HF gain for ambient sounds, to be applied to a low pass filter
+            </summary>
+        </member>
+        <member name="F:vaudio.Emitter.Position">
+            <summary>
+            The position of this Emitter. Can be a Vector3F or IPosition
+            </summary>
+        </member>
+        <member name="P:vaudio.Emitter.TrailCount">
+            <summary>Number of trails this emitter will create</summary>
+        </member>
+        <member name="P:vaudio.Emitter.TrailBounceCount">
+            <summary>Number of bounces per trail</summary>
+        </member>
+        <member name="P:vaudio.Emitter.ReverbEnabled">
+            <summary>True if both <see cref="P:vaudio.Emitter.ReverbRayCount" /> and <see cref="P:vaudio.Emitter.ReverbBounceCount" /> are greater than zero</summary>
+        </member>
+        <member name="P:vaudio.Emitter.OcclusionEnabled">
+            <summary>True if both <see cref="P:vaudio.Emitter.OcclusionRayCount" /> and <see cref="P:vaudio.Emitter.OcclusionBounceCount" /> are greater than zero</summary>
+        </member>
+        <member name="P:vaudio.Emitter.PermeationEnabled">
+            <summary>True if both <see cref="P:vaudio.Emitter.PermeationRayCount" /> and <see cref="P:vaudio.Emitter.PermeationBounceCount" /> are greater than zero</summary>
+        </member>
+        <member name="P:vaudio.Emitter.AmbientOcclusionEnabled">
+            <summary>True if both <see cref="P:vaudio.Emitter.AmbientOcclusionRayCount" /> and <see cref="P:vaudio.Emitter.AmbientOcclusionBounceCount" /> are greater than zero</summary>
+        </member>
+        <member name="P:vaudio.Emitter.AmbientPermeationEnabled">
+            <summary>True if both <see cref="P:vaudio.Emitter.AmbientPermeationRayCount" /> and <see cref="P:vaudio.Emitter.AmbientPermeationBounceCount" /> are greater than zero</summary>
+        </member>
+        <member name="P:vaudio.Emitter.VisualisationEnabled">
+            <summary>True if both <see cref="P:vaudio.Emitter.VisualisationRayCount" /> and <see cref="P:vaudio.Emitter.VisualisationBounceCount" /> are greater than zero</summary>
+        </member>
+        <member name="F:vaudio.Emitter.Name">
+            <summary>User-defined name of this emitter</summary>
+        </member>
+        <member name="F:vaudio.Emitter.Type">
+            <summary>User-defined type for this emitter</summary>
+        </member>
+        <member name="F:vaudio.Emitter.RandomTrailColor">
+            <summary>
+            Whether to render each trail a different color (dev build only)
+            </summary>
+        </member>
+        <member name="F:vaudio.Emitter.TrailColor">
+            <summary>
+            The color of ray trails in the debug window (dev build only)
+            </summary>
+        </member>
+        <member name="F:vaudio.Emitter.ReverbColor">
+            <summary>
+            The color of reverb rays in the debug window (dev build only)
+            </summary>
+        </member>
+        <member name="F:vaudio.Emitter.OcclusionColor">
+            <summary>
+            The color of occlusion rays in the debug window (dev build only)
+            </summary>
+        </member>
+        <member name="F:vaudio.Emitter.PermeationColor">
+            <summary>
+            The color of permeation rays in the debug window (dev build only)
+            </summary>
+        </member>
+        <member name="F:vaudio.Emitter.AmbientPermeationColor">
+            <summary>
+            The color of ambientPermeation rays in the debug window (dev build only)
+            </summary>
+        </member>
+        <member name="P:vaudio.Emitter.MaxEchogramTime">
+            <summary>How long (in milliseconds) the echogram records data for. Returning reverb rays after this period will be ignored. Defaults to 5000ms</summary>
+        </member>
+        <member name="P:vaudio.Emitter.EchogramGranularity">
+            <summary>The length (in milliseconds) of each entry in the echogram. Defaults to 50ms</summary>
+        </member>
+        <member name="P:vaudio.Emitter.RefreshRayCount">
+            <summary>
+            The number of trails that are rebuilt from scratch each frame to prevent staleness when the listener moves. Clamped to minimum of 0.
+            </summary>
+        </member>
+        <member name="P:vaudio.Emitter.RefreshDistanceThreshold">
+            <summary>
+            A ray trail will be re-created if an old ray bounce position is too far away from the new ray bounce position. This setting controls the allowed distance between old and new ray bounce positions. Defaults to 1.0f. Clamped to minimum of 0.
+            </summary>
+        </member>
+        <member name="P:vaudio.Emitter.ReverbRayCount">
+            <summary>Number of reverb rays cast</summary>
+        </member>
+        <member name="P:vaudio.Emitter.ReverbBounceCount">
+            <summary>Number of bounces per reverb ray</summary>
+        </member>
+        <member name="P:vaudio.Emitter.ReverbEnergyCap">
+            <summary>
+            The percentage of returning energy required for reverb to be at maximum volume. Defaults to 20% of the other emitter's <see cref="P:vaudio.Emitter.ReverbRayCount"/> * <see cref="P:vaudio.Emitter.ReverbBounceCount"/>.
+            </summary>
+            <exception cref="T:System.ArgumentException">Thrown when the value is NaN, Infinity, less than 0.0001f or greater than 1</exception>
+        </member>
+        <member name="P:vaudio.Emitter.OcclusionRayCount">
+            <summary>Number of occlusion rays cast</summary>
+        </member>
+        <member name="P:vaudio.Emitter.OcclusionBounceCount">
+            <summary>Number of bounces per occlusion ray</summary>
+        </member>
+        <member name="P:vaudio.Emitter.PermeationRayCount">
+            <summary>Number of permeation rays cast</summary>
+        </member>
+        <member name="P:vaudio.Emitter.PermeationBounceCount">
+            <summary>Number of bounces per permeation ray</summary>
+        </member>
+        <member name="P:vaudio.Emitter.AmbientOcclusionRayCount">
+            <summary>Number of ambient occlusion rays cast</summary>
+        </member>
+        <member name="P:vaudio.Emitter.AmbientOcclusionBounceCount">
+            <summary>Number of bounces per ambient occlusion ray</summary>
+        </member>
+        <member name="P:vaudio.Emitter.AmbientPermeationRayCount">
+            <summary>Number of ambient permeation rays cast</summary>
+        </member>
+        <member name="P:vaudio.Emitter.AmbientPermeationBounceCount">
+            <summary>Number of bounces per ambient permeation ray</summary>
+        </member>
+        <member name="P:vaudio.Emitter.VisualisationRayCount">
+            <summary>Number of visualisation rays cast</summary>
+        </member>
+        <member name="P:vaudio.Emitter.VisualisationBounceCount">
+            <summary>Number of times each visualisation ray bounces</summary>
+        </member>
+        <member name="P:vaudio.Emitter.VisualisationUpdateFrequency">
+            <summary>How often - in milliseconds - to cast visualisation rays. Defaults to 500</summary>
+        </member>
+        <member name="P:vaudio.Emitter.VisualisationCallback">
+            <summary>
+            Callback that is invoked with <see cref="T:vaudio.VisualisationData"/> for each bounce produced by an emitter's visualisation rays. Do not modify the array or access it outside this callback.
+            </summary>
+        </member>
+        <member name="P:vaudio.Emitter.MinimumPermeationEnergy">
+            <summary>
+            The threshold below which permeation rays are cancelled to prevent unnecessary traversal. Clamped to minimum of 0
+            </summary>
+        </member>
+        <member name="P:vaudio.Emitter.ReservedEmitterTargets">
+            <summary>
+            The number of emitters that are allocated ahead of time, to prevent runtime allocations. Clamped to minimum of 0
+            </summary>
+        </member>
+        <member name="F:vaudio.Emitter.ClampPosition">
+            <summary>Whether to clamp this emitter's position to the world bounds, to prevent it from going out of bounds</summary>
+        </member>
+        <member name="P:vaudio.Emitter.OverridePositions">
+            <summary>
+            When defined, rays will be cast out of these positions rather than the default <see cref="F:vaudio.Emitter.Position"/>
+            </summary>
+        </member>
+        <member name="P:vaudio.Emitter.OverrideRayDirections">
+            <summary>
+            When defined, rays will be cast in these directions rather than the default spherical ray distribution
+            </summary>
+        </member>
+        <member name="P:vaudio.Emitter.ScatteringSeed">
+            <summary>A seed used to randomise scattering vectors</summary>
+        </member>
+        <member name="F:vaudio.Emitter.OnlyScatterXZ">
+            <summary>Whether to only scatter rays around their yaw (no pitch or Y component)</summary>
+        </member>
+        <member name="F:vaudio.Emitter.AffectsGroupedEAX">
+            <summary>
+            Controls whether this Emitter's EAX is blended to produced grouped EAX. Set this to false for listener emitters
+            </summary>
+        </member>
+        <member name="P:vaudio.Emitter.GroupedEAXIndex">
+            <summary>
+            Read-only index indicating which <see cref="F:vaudio.World.GroupedEAX" /> reverb effect should be used for this emitter
+            </summary>
+        </member>
+        <member name="P:vaudio.Emitter.OutsidePercent">
+            <summary>The percentage of ambient occlusion rays that reached the edge of the world. Ranges from 0.0 to 1.0</summary>
+        </member>
+        <member name="F:vaudio.ThreadMesh.supports3DPermeation">
+            <summary>
+            Whether this mesh supports permeation raytracing.
+            Set to true for watertight meshes (e.g. 3D models).
+            Set to false for non-watertight meshes (e.g. heightmaps).
+            </summary>
+        </member>
+        <member name="T:vaudio.CapsulePrimitive">
+            <summary>A capsule (cylinder with hemispherical caps) audio primitive</summary>
+        </member>
+        <member name="P:vaudio.CapsulePrimitive.radius">
+            <summary>Radius of the capsule</summary>
+        </member>
+        <member name="P:vaudio.CapsulePrimitive.length">
+            <summary>Length of the cylindrical body between the hemispherical caps</summary>
+        </member>
+        <member name="P:vaudio.CapsulePrimitive.transform">
+            <summary>
+            Must only contain rotation and translation components, not scale
+            </summary>
+        </member>
+        <member name="T:vaudio.ConePrimitive">
+            <summary>A circular cone audio primitive</summary>
+        </member>
+        <member name="P:vaudio.ConePrimitive.radius">
+            <summary>Radius of the cone base</summary>
+        </member>
+        <member name="P:vaudio.ConePrimitive.height">
+            <summary>Height of the cone from base to apex</summary>
+        </member>
+        <member name="P:vaudio.ConePrimitive.transform">
+            <summary>
+            Must only contain rotation and translation components, not scale
+            </summary>
+        </member>
+        <member name="T:vaudio.CylinderPrimitive">
+            <summary>A cylindrical audio primitive</summary>
+        </member>
+        <member name="P:vaudio.CylinderPrimitive.radius">
+            <summary>Radius of the cylinder</summary>
+        </member>
+        <member name="P:vaudio.CylinderPrimitive.length">
+            <summary>Length of the cylinder along its axis</summary>
+        </member>
+        <member name="P:vaudio.CylinderPrimitive.transform">
+            <summary>
+            Must only contain rotation and translation components, not scale
+            </summary>
+        </member>
+        <member name="T:vaudio.DiskPrimitive">
+            <summary>A circular disk audio primitive</summary>
+        </member>
+        <member name="P:vaudio.DiskPrimitive.radius">
+            <summary>Radius of the disk</summary>
+        </member>
+        <member name="P:vaudio.DiskPrimitive.transform">
+            <summary>
+            Must only contain rotation and translation components, not scale
+            </summary>
+        </member>
+        <member name="T:vaudio.HalfSpherePrimitive">
+            <summary>A hemispherical audio primitive</summary>
+        </member>
+        <member name="P:vaudio.HalfSpherePrimitive.radius">
+            <summary>Radius of the hemisphere</summary>
+        </member>
+        <member name="P:vaudio.HalfSpherePrimitive.transform">
+            <summary>
+            Must only contain rotation and translation components, not scale
+            </summary>
+        </member>
+        <member name="T:vaudio.Mesh">
+            <summary>A triangle mesh whose BVH is built once and can be shared across multiple <see cref="T:vaudio.MeshPrimitive"/> instances</summary>
+        </member>
+        <member name="M:vaudio.Mesh.#ctor(System.Collections.Generic.List{vaudio.Vector},vaudio.Vector,vaudio.Vector)">
+            <summary>Create a mesh from a list of vertices</summary>
+            <param name="vertices">Triangle vertices (every 3 form a triangle)</param>
+            <param name="minBounds">Minimum corner of the local-space AABB</param>
+            <param name="maxBounds">Maximum corner of the local-space AABB</param>
+        </member>
+        <member name="M:vaudio.Mesh.#ctor(vaudio.Vector[],vaudio.Vector,vaudio.Vector)">
+            <summary>Create a mesh from an array of vertices</summary>
+            <param name="vertices">Triangle vertices (every 3 form a triangle)</param>
+            <param name="minBounds">Minimum corner of the local-space AABB</param>
+            <param name="maxBounds">Maximum corner of the local-space AABB</param>
+        </member>
+        <member name="M:vaudio.Mesh.#ctor(vaudio.Vector*,System.Int32,vaudio.Vector,vaudio.Vector)">
+            <summary>Create a mesh from an unmanaged array of vertices</summary>
+            <param name="vertices">Triangle vertices (every 3 form a triangle)</param>
+            <param name="verticesCount">Number of vertices</param>
+            <param name="minBounds">Minimum corner of the local-space AABB</param>
+            <param name="maxBounds">Maximum corner of the local-space AABB</param>
+        </member>
+        <member name="T:vaudio.MeshPrimitive">
+            <summary>An audio primitive defined by an arbitrary triangle mesh</summary>
+        </member>
+        <member name="M:vaudio.MeshPrimitive.#ctor(vaudio.MaterialType,System.Collections.Generic.List{vaudio.Vector},vaudio.Vector,vaudio.Vector,vaudio.Matrix)">
+            <summary>Create a mesh primitive from a list of vertices</summary>
+            <param name="material">Surface material type</param>
+            <param name="vertices">Triangle vertices (every 3 form a triangle)</param>
+            <param name="minBounds">Minimum corner of the AABB</param>
+            <param name="maxBounds">Maximum corner of the AABB</param>
+            <param name="transform">World transform (rotation and translation only)</param>
+        </member>
+        <member name="M:vaudio.MeshPrimitive.#ctor(vaudio.MaterialType,vaudio.Vector[],vaudio.Vector,vaudio.Vector,vaudio.Matrix)">
+            <summary>Create a mesh primitive from an array of vertices</summary>
+            <param name="material">Surface material type</param>
+            <param name="vertices">Triangle vertices (every 3 form a triangle)</param>
+            <param name="minBounds">Minimum corner of the AABB</param>
+            <param name="maxBounds">Maximum corner of the AABB</param>
+            <param name="transform">World transform (rotation and translation only)</param>
+        </member>
+        <member name="M:vaudio.MeshPrimitive.#ctor(vaudio.MaterialType,vaudio.Vector*,System.Int32,vaudio.Vector,vaudio.Vector,vaudio.Matrix)">
+            <summary>Create a mesh primitive from an unmanaged array of vertices</summary>
+            <param name="material">Surface material type</param>
+            <param name="vertices">Triangle vertices (every 3 form a triangle)</param>
+            <param name="verticesCount">Number of vertices</param>
+            <param name="minBounds">Minimum corner of the AABB</param>
+            <param name="maxBounds">Maximum corner of the AABB</param>
+            <param name="transform">World transform (rotation and translation only)</param>
+        </member>
+        <member name="M:vaudio.MeshPrimitive.#ctor(vaudio.MaterialType,vaudio.Mesh,vaudio.Matrix)">
+            <summary>Create a mesh primitive that shares geometry with a <see cref="T:vaudio.Mesh"/>. The BVH is built once in the <see cref="T:vaudio.Mesh"/> and reused by every instance.</summary>
+            <param name="material">Surface material type</param>
+            <param name="mesh">Shared mesh geometry</param>
+            <param name="transform">World transform (rotation and translation only)</param>
+        </member>
+        <member name="M:vaudio.MeshPrimitive.DisposeBuffer">
+            <summary>Dispose the OpenGL vertex buffer</summary>
+        </member>
+        <member name="P:vaudio.MeshPrimitive.Supports3DPermeation">
+            <summary>If this is a watertight mesh, permeation rays will lose energy based on how far the ray travels through this mesh. If not, set this field to false and permeation rays will lose a flat percentage of energy when they touch this mesh (controlled by <see cref="P:vaudio.MaterialProperties.PlaneTransmissionLF"/> and <see cref="P:vaudio.MaterialProperties.PlaneTransmissionHF"/>).</summary>
+        </member>
+        <member name="P:vaudio.MeshPrimitive.transform">
+            <summary>Can contain scale, rotation and translation components</summary>
+        </member>
+        <member name="T:vaudio.PlanePrimitive">
+            <summary>A flat plane audio primitive</summary>
+        </member>
+        <member name="P:vaudio.PlanePrimitive.width">
+            <summary>Width of the plane</summary>
+        </member>
+        <member name="P:vaudio.PlanePrimitive.height">
+            <summary>Height of the plane</summary>
+        </member>
+        <member name="P:vaudio.PlanePrimitive.transform">
+            <summary>
+            Must only contain rotation and translation components, not scale
+            </summary>
+        </member>
+        <member name="T:vaudio.Primitive">
+            <summary>
+            A 3D primitive that rays collide with.
+            </summary>
+        </member>
+        <member name="P:vaudio.Primitive.material">
+            <summary>
+            Determines the amount of energy lost when rays bounce off this primitive, permeate through it, and scatter off it
+            </summary>
+            <exception cref="T:System.InvalidOperationException">Thrown if this is set to MaterialType.Air</exception>
+        </member>
+        <member name="T:vaudio.PrismPrimitive">
+            <summary>A rectangular prism (box) audio primitive</summary>
+        </member>
+        <member name="P:vaudio.PrismPrimitive.size">
+            <summary>Dimensions of the prism along each axis</summary>
+        </member>
+        <member name="P:vaudio.PrismPrimitive.transform">
+            <summary>
+            Must only contain rotation and translation components, not scale
+            </summary>
+        </member>
+        <member name="T:vaudio.RectangularConePrimitive">
+            <summary>A rectangular cone audio primitive</summary>
+        </member>
+        <member name="P:vaudio.RectangularConePrimitive.width">
+            <summary>Width of the rectangular base</summary>
+        </member>
+        <member name="P:vaudio.RectangularConePrimitive.length">
+            <summary>Length of the rectangular base</summary>
+        </member>
+        <member name="P:vaudio.RectangularConePrimitive.height">
+            <summary>Height of the cone from base to apex</summary>
+        </member>
+        <member name="P:vaudio.RectangularConePrimitive.transform">
+            <summary>
+            Must only contain rotation and translation components, not scale
+            </summary>
+        </member>
+        <member name="T:vaudio.SpherePrimitive">
+            <summary>A spherical audio primitive</summary>
+        </member>
+        <member name="P:vaudio.SpherePrimitive.center">
+            <summary>Center position of the sphere in world space</summary>
+        </member>
+        <member name="P:vaudio.SpherePrimitive.radius">
+            <summary>Radius of the sphere</summary>
+        </member>
+        <member name="T:vaudio.TrianglePrimitive">
+            <summary>
+            A triangle primitive
+            </summary>
+        </member>
+        <member name="P:vaudio.TrianglePrimitive.position0">
+            <summary>First vertex of the triangle</summary>
+        </member>
+        <member name="P:vaudio.TrianglePrimitive.position1">
+            <summary>Second vertex of the triangle</summary>
+        </member>
+        <member name="P:vaudio.TrianglePrimitive.position2">
+            <summary>Third vertex of the triangle</summary>
+        </member>
+        <member name="T:vaudio.TriangularConePrimitive">
+            <summary>
+            A cone primitive with a triangular cross-section
+            </summary>
+        </member>
+        <member name="P:vaudio.TriangularConePrimitive.radius">
+            <summary>
+            The radius of the triangular base
+            </summary>
+        </member>
+        <member name="P:vaudio.TriangularConePrimitive.height">
+            <summary>
+            The height of the cone
+            </summary>
+        </member>
+        <member name="P:vaudio.TriangularConePrimitive.transform">
+            <summary>
+            Must only contain rotation and translation components, not scale
+            </summary>
+        </member>
+        <member name="T:vaudio.TriangularPrismPrimitive">
+            <summary>
+            A triangular prism primitive
+            </summary>
+        </member>
+        <member name="P:vaudio.TriangularPrismPrimitive.radius">
+            <summary>
+            Circumradius of the triangular cross-section
+            </summary>
+        </member>
+        <member name="P:vaudio.TriangularPrismPrimitive.length">
+            <summary>
+            Length of the prism along its axis
+            </summary>
+        </member>
+        <member name="P:vaudio.TriangularPrismPrimitive.transform">
+            <summary>
+            Must only contain rotation and translation components, not scale
+            </summary>
+        </member>
+        <member name="T:vaudio.Vector2D">
+            <summary>A 2D vector with double-precision floating-point components</summary>
+        </member>
+        <member name="F:vaudio.Vector2D.Zero">
+            <summary>A vector with all components set to zero</summary>
+        </member>
+        <member name="F:vaudio.Vector2D.X">
+            <summary>The X component</summary>
+        </member>
+        <member name="F:vaudio.Vector2D.Y">
+            <summary>The Y component</summary>
+        </member>
+        <member name="M:vaudio.Vector2D.#ctor(System.Double)">
+            <summary>Creates a vector with all components set to <paramref name="v"/></summary>
+        </member>
+        <member name="M:vaudio.Vector2D.#ctor(System.Double,System.Double)">
+            <summary>Creates a vector with the specified components</summary>
+        </member>
+        <member name="T:vaudio.CustomEAXFormulas">
+            <summary>
+            Class containing functions that can be overriden to manually calculate each EAX parameter
+            </summary>
+        </member>
+        <member name="M:vaudio.CustomEAXFormulas.Initialise(vaudio.ProcessedReverb,System.Single,System.Single,System.Single,System.Single[],System.Single[],System.Single[])">
+            <summary>Initialises the formula calculator with echogram data from a processed reverb result</summary>
+            <param name="processed">The processed reverb results containing material and geometry data</param>
+            <param name="totalReturnedEnergyLF">Total LF energy that returned to the emitter</param>
+            <param name="totalReturnedEnergyHF">Total HF energy that returned to the emitter</param>
+            <param name="echogramGranularity">The duration (in milliseconds) of each entry in the echogram arrays</param>
+            <param name="echogramLF">Low-frequency echogram energy bins</param>
+            <param name="echogramHF">High-frequency echogram energy bins</param>
+            <param name="echogramAverage">Average echogram energy bins used for most calculations</param>
+        </member>
+        <member name="M:vaudio.CustomEAXFormulas.CalculateDiffusion">
+            <summary>Calculates the EAX diffusion parameter based on how smoothly energy accumulates over time</summary>
+            <returns>Diffusion value, typically in the range 0.0–1.0</returns>
+        </member>
+        <member name="M:vaudio.CustomEAXFormulas.CalculateDensity">
+            <summary>Calculates the EAX density parameter based on the number of energy peaks in the early echogram</summary>
+            <returns>Density value, typically in the range 0.0–1.0</returns>
+        </member>
+        <member name="M:vaudio.CustomEAXFormulas.CalculateReflectionsDelay(System.Single)">
+            <summary>Calculates the delay in seconds before the first significant reflection is detected</summary>
+            <param name="energyThreshold">Fraction of peak energy required to consider a bin significant (e.g. 0.1 = 10%)</param>
+            <returns>Delay in seconds to the first reflection, or 0 if none found</returns>
+        </member>
+        <member name="M:vaudio.CustomEAXFormulas.CalculateLateReverbDelay">
+            <summary>Calculates the delay in seconds before late reverb begins, based on the 25% energy accumulation point</summary>
+            <returns>Late reverb delay in seconds</returns>
+        </member>
+        <member name="M:vaudio.CustomEAXFormulas.CalculateFrequencyGains(System.Single,System.Single@,System.Single@)">
+            <summary>Calculates the low and high frequency gain values relative to a reference energy level</summary>
+            <param name="referenceEnergy">Reference energy used to normalise the output gains</param>
+            <param name="lfGain">Output low-frequency gain</param>
+            <param name="hfGain">Output high-frequency gain</param>
+        </member>
+        <member name="M:vaudio.CustomEAXFormulas.CalculateReflectionsAndLateReverbGain(System.Single,System.Single,System.Single@,System.Single@)">
+            <summary>Calculates the gain for early reflections and late reverb by splitting the echogram at a transition point</summary>
+            <param name="earlyLateTransitionMs">Time in milliseconds marking the boundary between early and late energy</param>
+            <param name="referenceEnergy">Reference energy used to normalise the output gains</param>
+            <param name="reflectionsGain">Output gain for early reflections</param>
+            <param name="lateReverbGain">Output gain for late reverb</param>
+        </member>
+        <member name="M:vaudio.CustomEAXFormulas.CalculateRT60(System.Single[])">
+            <summary>Calculates the RT60 reverberation time in seconds for a given echogram using linear regression on the decay slope</summary>
+            <param name="echogram">Energy echogram bins to analyse</param>
+            <returns>RT60 in seconds, or 0 if the decay cannot be determined</returns>
+        </member>
+        <member name="M:vaudio.CustomEAXFormulas.TryCalculateDecayTime(System.Single[],System.Int32,System.Single,System.Single,System.Int32,System.Single,System.Single)">
+            <summary>Attempts to estimate RT60 by fitting a linear regression to the decay slope between -5 dB and <paramref name="targetDecayDb"/> below the peak</summary>
+            <param name="echogramDb">Echogram values in decibels</param>
+            <param name="peakIndex">Index of the peak energy bin</param>
+            <param name="peakDb">Peak energy level in dB</param>
+            <param name="binDurationMs">Duration of each echogram bin in milliseconds</param>
+            <param name="echogramLength">The length of the echogram array</param>
+            <param name="targetDecayDb">The dB drop range to use for the regression (e.g. 20, 30, or 60)</param>
+            <param name="scaleFactor">Multiplier applied when extrapolating to full RT60</param>
+            <returns>Estimated RT60 in seconds, or 0 if there are insufficient data points or the slope is non-negative</returns>
+        </member>
+        <member name="T:vaudio.EAXReverb">
+            <summary>
+            EAX reverb parameters that can be directly copied to an EAX reverb effect (e.g. in OpenAL)
+            </summary>
+        </member>
+        <member name="M:vaudio.EAXReverb.CreateEmpty">
+            <summary>Create an empty EAXReverb object</summary>
+        </member>
+        <member name="M:vaudio.EAXReverb.Equals(System.Object)">
+            <inheritdoc />
+        </member>
+        <member name="M:vaudio.EAXReverb.GetHashCode">
+            <inheritdoc />
+        </member>
+        <member name="F:vaudio.EAXReverb.RelativeDirections">
+            <summary>
+            The direction that both early reflections and late reverb should be heard from, relative to each emitters with <see cref="F:vaudio.Emitter.HasRelativeReverb"/> set to true
+            </summary>
+        </member>
+        <member name="F:vaudio.EAXReverb.RelativeGains">
+            <summary>
+            The gain for this reverb effect, relative to each emitter with <see cref="F:vaudio.Emitter.HasRelativeReverb"/> set to true
+            </summary>
+        </member>
+        <member name="F:vaudio.EAXReverb.ReflectionsDelay">
+            <summary>Delay before early reflections are heard, in seconds (0–0.3)</summary>
+        </member>
+        <member name="F:vaudio.EAXReverb.Density">
+            <summary>Modal density of the late reverberation (0–1)</summary>
+        </member>
+        <member name="F:vaudio.EAXReverb.Diffusion">
+            <summary>Echo diffusion of the late reverberation (0–1)</summary>
+        </member>
+        <member name="F:vaudio.EAXReverb.GainLF">
+            <summary>Low-frequency gain of the reverb (0–1)</summary>
+        </member>
+        <member name="F:vaudio.EAXReverb.GainHF">
+            <summary>High-frequency gain of the reverb (0–1)</summary>
+        </member>
+        <member name="F:vaudio.EAXReverb.Gain">
+            <summary>Overall linear gain of the reverb (0–1)</summary>
+        </member>
+        <member name="F:vaudio.EAXReverb.DecayTime">
+            <summary>Reverberation decay time at mid frequencies, in seconds (0.1–20)</summary>
+        </member>
+        <member name="F:vaudio.EAXReverb.DecayLFRatio">
+            <summary>Ratio of low-frequency decay time to mid-frequency decay time (0.1–2)</summary>
+        </member>
+        <member name="F:vaudio.EAXReverb.DecayHFRatio">
+            <summary>Ratio of high-frequency decay time to mid-frequency decay time (0.1–2)</summary>
+        </member>
+        <member name="F:vaudio.EAXReverb.ReflectionsGain">
+            <summary>Linear gain of early reflections (0–3.16)</summary>
+        </member>
+        <member name="F:vaudio.EAXReverb.LateReverbGain">
+            <summary>Linear gain of late reverberation (0–10)</summary>
+        </member>
+        <member name="F:vaudio.EAXReverb.LateReverbDelay">
+            <summary>Delay of late reverberation relative to early reflections, in seconds (0–0.1)</summary>
+        </member>
+        <member name="F:vaudio.EAXReverb.EchoTime">
+            <summary>Cycling time of the echo effect, in seconds (0.075–0.25)</summary>
+        </member>
+        <member name="F:vaudio.EAXReverb.EchoDepth">
+            <summary>Amplitude of the echo effect (0–1)</summary>
+        </member>
+        <member name="F:vaudio.EAXReverb.ModulationTime">
+            <summary>Cycling time of the modulation effect, in seconds (0.04–4)</summary>
+        </member>
+        <member name="F:vaudio.EAXReverb.ModulationDepth">
+            <summary>Amplitude of the modulation effect (0–1)</summary>
+        </member>
+        <member name="F:vaudio.EAXReverb.AirAbsorptionGainHF">
+            <summary>Linear gain applied per meter of distance for high-frequency air absorption (0.892–1)</summary>
+        </member>
+        <member name="F:vaudio.EAXReverb.HFReference">
+            <summary>Reference frequency for high-frequency decay ratio, in Hz (1000–20000)</summary>
+        </member>
+        <member name="F:vaudio.EAXReverb.LFReference">
+            <summary>Reference frequency for low-frequency decay ratio, in Hz (20–1000)</summary>
+        </member>
+        <member name="F:vaudio.EAXReverb.RoomRolloffFactor">
+            <summary>Rolloff factor for reflected sound sources (0–10)</summary>
+        </member>
+        <member name="F:vaudio.EAXReverb.DecayHFLimit">
+            <summary>Whether to limit high-frequency decay time to the air absorption limit (0 or 1)</summary>
+        </member>
+        <member name="T:vaudio.EAXUtils">
+            <summary>
+            Helper class for calculating the similarity of EAX presets
+            </summary>
+        </member>
+        <member name="M:vaudio.EAXUtils.FindBestMatch(vaudio.EAXReverb,System.Collections.Generic.List{vaudio.EAXReverb},System.Int32@)">
+            <summary>Finds the candidate reverb preset most similar to the target</summary>
+            <param name="target">The reverb results to match against</param>
+            <param name="candidates">The list of candidates to search</param>
+            <param name="index">The index of the best match in <paramref name="candidates"/>, or -1 if none found</param>
+            <returns>The best matching candidate, or <see langword="null"/> if <paramref name="candidates"/> is empty</returns>
+        </member>
+        <member name="M:vaudio.EAXUtils.GetSimilarity(vaudio.EAXReverb,vaudio.EAXReverb)">
+            <summary>Computes a similarity score between two reverb presets</summary>
+            <param name="a">First reverb results</param>
+            <param name="b">Second reverb results</param>
+            <returns>A value in [0, 1] where 1 means identical</returns>
+        </member>
+        <member name="M:vaudio.EAXUtils.NormalizedDifference(System.Single,System.Single,System.Single)">
+            <summary>Returns the absolute difference between <paramref name="a"/> and <paramref name="b"/>, normalized to [0, 1] by <paramref name="maxExpectedRange"/></summary>
+        </member>
+        <member name="T:vaudio.ProcessedReverb">
+            <summary>
+            Useful properties produced by reverb rays 
+            </summary>
+        </member>
+        <member name="F:vaudio.ProcessedReverb.ReturnedPercent">
+            <summary>
+            The percentage of energy that returned back to the emitter. <br />
+            Calculated as raw.ReturnedTotal / (ReverbRayCount * ReverbBounceCount)
+            </summary>
+        </member>
+        <member name="F:vaudio.ProcessedReverb.OutsidePercent">
+            <summary>
+            The percentage of energy that escaped outside (hit the world edge). <br />
+            Calculated as raw.OutsideTotal / (ReverbRayCount * ReverbBounceCount)
+            </summary>
+        </member>
+        <member name="F:vaudio.ProcessedReverb.MeasuredDecayTimeLF">
+            <summary>
+            The low-frequency reverberation decay time measured from the echogram. <br />
+            Calculated using RT20, RT30, or RT60 method depending on echogram length and room size. <br />
+            Used to calculate EAX DecayTime and DecayLFRatio.
+            </summary>
+        </member>
+        <member name="F:vaudio.ProcessedReverb.MeasuredDecayTimeHF">
+            <summary>
+            The high-frequency reverberation decay time measured from the echogram. <br />
+            Calculated using RT20, RT30, or RT60 method depending on echogram length and room size. <br />
+            Used to calculate EAX DecayTime and DecayHFRatio.
+            </summary>
+        </member>
+        <member name="F:vaudio.ProcessedReverb.MaterialRoughness">
+            <summary>
+            The average roughness/scattering of all surfaces that all rays hit.
+            </summary>
+        </member>
+        <member name="P:vaudio.ProcessedReverb.MaterialSmoothness">
+            <summary>
+            Inverse of MaterialRoughness.
+            </summary>
+        </member>
+        <member name="F:vaudio.ProcessedReverb.MaterialAbsorptionLF">
+            <summary>
+            The average low-frequency absorption of all surfaces that all rays hit.
+            </summary>
+        </member>
+        <member name="F:vaudio.ProcessedReverb.MaterialAbsorptionHF">
+            <summary>
+            The average high-frequency absorption of all surfaces that all rays hit.
+            </summary>
+        </member>
+        <member name="P:vaudio.ProcessedReverb.MaterialAbsorption">
+            <summary>
+            The average absorption of all surfaces that all rays hit.
+            </summary>
+        </member>
+        <member name="T:vaudio.AirAbsorptionSettings">
+            <summary>
+            Settings that control how sound energy is absorbed by the air over distance
+            </summary>
+        </member>
+        <member name="M:vaudio.AirAbsorptionSettings.#ctor">
+            <summary>Create a new AirAbsorptionSettings with default settings</summary>
+        </member>
+        <member name="P:vaudio.AirAbsorptionSettings.Humidity">
+            <summary>Relative humidity as a percentage (0–1). Defaults to 0.1f</summary>
+        </member>
+        <member name="P:vaudio.AirAbsorptionSettings.Temperature">
+            <summary>Air temperature in degrees Celsius. Defaults to 26</summary>
+        </member>
+        <member name="P:vaudio.AirAbsorptionSettings.Pressure">
+            <summary>Atmospheric pressure in Pascals. Defaults to 101325</summary>
+        </member>
+        <member name="P:vaudio.AirAbsorptionSettings.CustomFormulaLF">
+            <summary>
+            Custom formula for low frequency sound. Takes distance (meters) and returns energy loss as a percentage
+            </summary>
+        </member>
+        <member name="P:vaudio.AirAbsorptionSettings.CustomFormulaHF">
+            <summary>
+            Custom air absorption formula for high frequencies. Takes distance (meters) and returns energy loss as a percentage
+            </summary>
+        </member>
+        <member name="T:vaudio.MaterialType">
+            <summary>
+            Material type enum. First 23 values contain default materials. First 1000 values are reserved.
+            </summary>
+        </member>
+        <member name="T:vaudio.Matrix">
+            <summary>A 4x4 single-precision floating-point matrix laid out to match GLSL expectations</summary>
+        </member>
+        <member name="M:vaudio.Matrix.#ctor(System.Single,System.Single,System.Single,System.Single,System.Single,System.Single,System.Single,System.Single,System.Single,System.Single,System.Single,System.Single,System.Single,System.Single,System.Single,System.Single)">
+            <summary>Initializes a new matrix with all 16 elements in column-major order (each group of 4 is one column)</summary>
+        </member>
+        <member name="M:vaudio.Matrix.ToNumerics">
+            <summary>Converts this matrix to a <see cref="T:System.Numerics.Matrix4x4"/></summary>
+        </member>
+        <member name="M:vaudio.Matrix.Inverse">
+            <summary>Returns the inverse of this matrix</summary>
+            <exception cref="T:System.ArithmeticException">Thrown when the matrix has no inverse (determinant is zero)</exception>
+        </member>
+        <member name="M:vaudio.Matrix.CreateTranslation(System.Single,System.Single,System.Single)">
+            <summary>Create a translation matrix</summary>
+        </member>
+        <member name="M:vaudio.Matrix.CreateTranslation(vaudio.Vector)">
+            <inheritdoc cref="M:vaudio.Matrix.CreateTranslation(System.Single,System.Single,System.Single)"/>
+        </member>
+        <member name="M:vaudio.Matrix.CreateTranslation(System.Numerics.Vector3)">
+            <inheritdoc cref="M:vaudio.Matrix.CreateTranslation(System.Single,System.Single,System.Single)"/>
+        </member>
+        <member name="M:vaudio.Matrix.CreateRotationX(System.Single)">
+            <summary>Create a rotation matrix around the X axis</summary>
+            <param name="rads">Angle in radians</param>
+        </member>
+        <member name="M:vaudio.Matrix.CreateRotationY(System.Single)">
+            <summary>Create a rotation matrix around the Y axis</summary>
+            <param name="rads">Angle in radians</param>
+        </member>
+        <member name="M:vaudio.Matrix.CreateRotationZ(System.Single)">
+            <summary>Create a rotation matrix around the Z axis</summary>
+            <param name="rads">Angle in radians</param>
+        </member>
+        <member name="M:vaudio.Matrix.CreateScale(vaudio.Vector)">
+            <summary>Create a scale matrix. Note scale matrices can only be set on <see cref="T:vaudio.MeshPrimitive"/> and not any other primitive</summary>
+        </member>
+        <member name="M:vaudio.Matrix.CreateScale(System.Single,System.Single,System.Single)">
+            <inheritdoc cref="M:vaudio.Matrix.CreateScale(vaudio.Vector)"/>
+        </member>
+        <member name="M:vaudio.Matrix.CreateScale(System.Single)">
+            <inheritdoc cref="M:vaudio.Matrix.CreateScale(vaudio.Vector)"/>
+        </member>
+        <member name="M:vaudio.Matrix.CreateFromQuaternion(System.Numerics.Quaternion)">
+            <summary>Create a rotation matrix from a <see cref="T:System.Numerics.Quaternion"/></summary>
+        </member>
+        <member name="M:vaudio.Matrix.CreateFromQuaternionTransposed(System.Numerics.Quaternion)">
+            <summary>Create a transposed rotation matrix from a <see cref="T:System.Numerics.Quaternion"/></summary>
+        </member>
+        <member name="M:vaudio.Matrix.IsEqual(vaudio.Matrix)">
+            <summary>Returns true if all elements are exactly equal to those in <paramref name="other"/></summary>
+        </member>
+        <member name="M:vaudio.Matrix.Equals(System.Object)">
+            <inheritdoc/>
+        </member>
+        <member name="M:vaudio.Matrix.GetHashCode">
+            <inheritdoc/>
+        </member>
+        <member name="M:vaudio.Matrix.op_Equality(vaudio.Matrix,vaudio.Matrix)">
+            <summary>Returns true if <paramref name="a"/> equals <paramref name="b"/></summary>
+        </member>
+        <member name="M:vaudio.Matrix.op_Inequality(vaudio.Matrix,vaudio.Matrix)">
+            <summary>Returns true if <paramref name="a"/> does not equal <paramref name="b"/></summary>
+        </member>
+        <member name="M:vaudio.Matrix.op_Multiply(vaudio.Matrix,vaudio.Matrix)">
+            <summary>Multiply two matrices together</summary>
+        </member>
+        <member name="F:vaudio.Matrix.Identity">
+            <summary>The identity matrix</summary>
+        </member>
+        <member name="M:vaudio.Matrix.CreateOrthoProjection(System.Single,System.Single,System.Single,System.Single,System.Single,System.Single)">
+            <summary>Create an orthographic projection matrix</summary>
+        </member>
+        <member name="T:vaudio.Vector">
+            <summary>A 3D vector with single-precision floating-point components</summary>
+        </member>
+        <member name="F:vaudio.Vector.Zero">
+            <summary>A vector with all components set to zero</summary>
+        </member>
+        <member name="F:vaudio.Vector.One">
+            <summary>A vector with all components set to one</summary>
+        </member>
+        <member name="F:vaudio.Vector.MIN">
+            <summary>A vector with all components set to <see cref="F:System.Single.MinValue"/></summary>
+        </member>
+        <member name="F:vaudio.Vector.MAX">
+            <summary>A vector with all components set to <see cref="F:System.Single.MaxValue"/></summary>
+        </member>
+        <member name="F:vaudio.Vector.Up">
+            <summary>A unit vector pointing upward (0, 1, 0)</summary>
+        </member>
+        <member name="M:vaudio.Vector.#ctor(System.Single)">
+            <summary>Creates a vector with all components set to <paramref name="v"/></summary>
+        </member>
+        <member name="M:vaudio.Vector.#ctor(System.Single,System.Single,System.Single)">
+            <summary>Creates a vector with the specified components</summary>
+        </member>
+        <member name="M:vaudio.Vector.#ctor(System.Numerics.Vector3)">
+            <summary>Creates a vector from a <see cref="T:System.Numerics.Vector3"/></summary>
+        </member>
+        <member name="F:vaudio.Vector.X">
+            <summary>The X component</summary>
+        </member>
+        <member name="F:vaudio.Vector.Y">
+            <summary>The Y component</summary>
+        </member>
+        <member name="F:vaudio.Vector.Z">
+            <summary>The Z component</summary>
+        </member>
+        <member name="M:vaudio.Vector.ToNumerics">
+            <summary>Converts to <see cref="T:System.Numerics.Vector3"/></summary>
+        </member>
+        <member name="P:vaudio.Vector.Magnitude">
+            <summary>The length of this vector</summary>
+        </member>
+        <member name="M:vaudio.Vector.Normalize">
+            <summary>Normalizes this vector in place</summary>
+        </member>
+        <member name="P:vaudio.Vector.Normalized">
+            <summary>Returns a normalized copy of this vector</summary>
+        </member>
+        <member name="M:vaudio.Vector.Dot(vaudio.Vector,vaudio.Vector)">
+            <summary>Returns the dot product of <paramref name="a"/> and <paramref name="b"/></summary>
+        </member>
+        <member name="M:vaudio.Vector.Cross(vaudio.Vector,vaudio.Vector)">
+            <summary>Returns the cross product of <paramref name="a"/> and <paramref name="b"/></summary>
+        </member>
+        <member name="M:vaudio.Vector.Reflect(vaudio.Vector,vaudio.Vector)">
+            <summary>Reflects direction about the normal</summary>
+        </member>
+        <member name="M:vaudio.Vector.FromPitchYaw(System.Single,System.Single)">
+            <summary>Creates a direction vector from pitch and yaw angles in radians</summary>
+        </member>
+        <member name="M:vaudio.Vector.TransformNormal(vaudio.Vector,vaudio.Matrix)">
+            <summary>Transforms a normal vector by a matrix, ignoring translation</summary>
+        </member>
+        <member name="M:vaudio.Vector.TransformNormalByInverseTranspose(vaudio.Vector,vaudio.Matrix)">
+            <summary>Transforms a normal vector by the transpose of the given inverse matrix (i.e. the inverse-transpose of the forward transform), supporting non-uniform scale</summary>
+        </member>
+        <member name="M:vaudio.Vector.ToString">
+            <inheritdoc/>
+        </member>
+        <member name="M:vaudio.Vector.GetHashCode">
+            <inheritdoc/>
+        </member>
+        <member name="M:vaudio.Vector.Equals(System.Object)">
+            <inheritdoc/>
+        </member>
+        <member name="M:vaudio.Vector.IsEqual(vaudio.Vector)">
+            <summary>Returns true if all components of this vector equal those of <paramref name="other"/></summary>
+        </member>
+        <member name="P:vaudio.Vector.Item(System.Int32)">
+            <summary>Gets or sets a component by index (0=X, 1=Y, 2=Z)</summary>
+        </member>
+        <member name="M:vaudio.Vector.op_Equality(vaudio.Vector,vaudio.Vector)">
+            <summary>Returns true if <paramref name="a"/> equals <paramref name="b"/></summary>
+        </member>
+        <member name="M:vaudio.Vector.op_Inequality(vaudio.Vector,vaudio.Vector)">
+            <summary>Returns true if <paramref name="a"/> does not equal <paramref name="b"/></summary>
+        </member>
+        <member name="M:vaudio.Vector.op_GreaterThanOrEqual(vaudio.Vector,vaudio.Vector)">
+            <summary>Returns true if all components of <paramref name="a"/> are greater than or equal to those of <paramref name="b"/></summary>
+        </member>
+        <member name="M:vaudio.Vector.op_LessThanOrEqual(vaudio.Vector,vaudio.Vector)">
+            <summary>Returns true if all components of <paramref name="a"/> are less than or equal to those of <paramref name="b"/></summary>
+        </member>
+        <member name="M:vaudio.Vector.op_GreaterThan(vaudio.Vector,vaudio.Vector)">
+            <summary>Returns true if all components of <paramref name="a"/> are greater than those of <paramref name="b"/></summary>
+        </member>
+        <member name="M:vaudio.Vector.op_LessThan(vaudio.Vector,vaudio.Vector)">
+            <summary>Returns true if all components of <paramref name="a"/> are less than those of <paramref name="b"/></summary>
+        </member>
+        <member name="M:vaudio.Vector.op_Addition(vaudio.Vector,vaudio.Vector)">
+            <summary>Returns the component-wise sum of <paramref name="a"/> and <paramref name="b"/></summary>
+        </member>
+        <member name="M:vaudio.Vector.op_Subtraction(vaudio.Vector,vaudio.Vector)">
+            <summary>Returns the component-wise difference of <paramref name="a"/> and <paramref name="b"/></summary>
+        </member>
+        <member name="M:vaudio.Vector.op_Multiply(vaudio.Vector,vaudio.Vector)">
+            <summary>Returns the component-wise product of <paramref name="a"/> and <paramref name="b"/></summary>
+        </member>
+        <member name="M:vaudio.Vector.op_Division(vaudio.Vector,vaudio.Vector)">
+            <summary>Returns the component-wise quotient of <paramref name="a"/> and <paramref name="b"/></summary>
+        </member>
+        <member name="M:vaudio.Vector.op_Multiply(vaudio.Vector,System.Single)">
+            <summary>Scales <paramref name="a"/> by scalar <paramref name="b"/></summary>
+        </member>
+        <member name="M:vaudio.Vector.op_Division(vaudio.Vector,System.Single)">
+            <summary>Divides <paramref name="a"/> by scalar <paramref name="b"/></summary>
+        </member>
+        <member name="M:vaudio.Vector.op_Multiply(System.Single,vaudio.Vector)">
+            <summary>Scales <paramref name="a"/> by scalar <paramref name="b"/></summary>
+        </member>
+        <member name="M:vaudio.Vector.op_Division(System.Single,vaudio.Vector)">
+            <summary>Divides scalar <paramref name="b"/> by each component of <paramref name="a"/></summary>
+        </member>
+        <member name="M:vaudio.Vector.op_UnaryNegation(vaudio.Vector)">
+            <summary>Returns the negation of <paramref name="a"/></summary>
+        </member>
+        <member name="M:vaudio.Vector.op_Multiply(vaudio.Vector,vaudio.Matrix)">
+            <summary>Transforms a vector by a matrix, including translation</summary>
+        </member>
+        <member name="M:vaudio.Vector.GetMin(vaudio.Vector,vaudio.Vector)">
+            <summary>Returns the component-wise minimum of <paramref name="a"/> and <paramref name="b"/></summary>
+        </member>
+        <member name="M:vaudio.Vector.GetMax(vaudio.Vector,vaudio.Vector)">
+            <summary>Returns the component-wise maximum of <paramref name="a"/> and <paramref name="b"/></summary>
+        </member>
+        <member name="M:vaudio.Vector.Lerp(vaudio.Vector,vaudio.Vector,System.Single)">
+            <summary>Interpolates from one vector to another</summary>
+        </member>
+        <member name="M:vaudio.Vector.GreaterAny(vaudio.Vector)">
+            <summary>
+            Returns true if any component of this vector is greater than the corresponding component in the other vector
+            </summary>
+        </member>
+        <member name="M:vaudio.Vector.GreaterEqualAny(vaudio.Vector)">
+            <summary>
+            Returns true if any component of this vector is greater than or equal to the corresponding component in the other vector
+            </summary>
+        </member>
+        <member name="M:vaudio.Vector.LessAny(vaudio.Vector)">
+            <summary>
+            Returns true if any component of this vector is less than the corresponding component in the other vector
+            </summary>
+        </member>
+        <member name="M:vaudio.Vector.LessEqualAny(vaudio.Vector)">
+            <summary>
+            Returns true if any component of this vector is less than or equal to the corresponding component in the other vector
+            </summary>
+        </member>
+        <member name="M:vaudio.Vector.GetPosition">
+            <summary>
+            <see cref="T:vaudio.IPosition" /> implementation, returns itself
+            </summary>
+        </member>
+        <member name="T:vaudio.Color">
+            <summary>Represents a 32-bit ABGR color value</summary>
+        </member>
+        <member name="M:vaudio.Color.#ctor(System.UInt32)">
+            <summary>Creates a color from a packed ABGR value</summary>
+            <param name="abgr">Packed 32-bit ABGR value</param>
+        </member>
+        <member name="M:vaudio.Color.#ctor(System.Byte,System.Byte,System.Byte,System.Byte)">
+            <summary>Creates a color from byte components. Alpha defaults to 255</summary>
+        </member>
+        <member name="M:vaudio.Color.#ctor(System.Single,System.Single,System.Single,System.Single)">
+            <summary>Creates a color from normalized float components. Alpha defaults to 1</summary>
+        </member>
+        <member name="M:vaudio.Color.#ctor(vaudio.Color,System.Single)">
+            <summary>Creates a color from another color with a alpha value</summary>
+            <param name="other">Source color</param>
+            <param name="alpha">New alpha channel (0–1)</param>
+        </member>
+        <member name="M:vaudio.Color.WithAlpha(System.Single)">
+            <summary>Returns a copy of this color with the specified normalized alpha</summary>
+            <param name="alpha">New alpha channel (0.0 – 1.0)</param>
+        </member>
+        <member name="F:vaudio.Color.Value">
+            <summary>Packed 32-bit ABGR value</summary>
+        </member>
+        <member name="P:vaudio.Color.ARGB">
+            <summary>Packed 32-bit ARGB value</summary>
+        </member>
+        <member name="P:vaudio.Color.R">
+            <summary>Red channel</summary>
+        </member>
+        <member name="P:vaudio.Color.G">
+            <summary>Green channel</summary>
+        </member>
+        <member name="P:vaudio.Color.B">
+            <summary>Blue channel</summary>
+        </member>
+        <member name="P:vaudio.Color.A">
+            <summary>Alpha channel</summary>
+        </member>
+        <member name="M:vaudio.Color.Interpolate(vaudio.Color,vaudio.Color,System.Double)">
+            <summary>Linearly interpolates between two colors</summary>
+            <param name="A">Start color</param>
+            <param name="B">End color</param>
+            <param name="pos">Interpolation factor (0.0 – 1.0)</param>
+        </member>
+        <member name="M:vaudio.Color.op_Equality(vaudio.Color,vaudio.Color)">
+            <summary>Returns true if two colors have identical values</summary>
+        </member>
+        <member name="M:vaudio.Color.op_Inequality(vaudio.Color,vaudio.Color)">
+            <summary>Returns true if two colors differ</summary>
+        </member>
+        <member name="M:vaudio.Color.ToString">
+            <inheritdoc/>
+        </member>
+        <member name="M:vaudio.Color.Equals(System.Object)">
+            <inheritdoc/>
+        </member>
+        <member name="M:vaudio.Color.GetHashCode">
+            <inheritdoc/>
+        </member>
+        <member name="T:vaudio.LowPassFilter">
+            <summary>
+            Contains the low-frequency and high-frequency gain for an Emitter
+            </summary>
+        </member>
+        <member name="F:vaudio.LowPassFilter.GainLF">
+            <summary>
+            Low-frequency gain in the range 0.0 to 1.0
+            </summary>
+        </member>
+        <member name="F:vaudio.LowPassFilter.GainHF">
+            <summary>
+            High-frequency gain in the range 0.0 to 1.0
+            </summary>
+        </member>
+        <member name="T:vaudio.FuncPosition">
+            <summary>An <see cref="T:vaudio.IPosition"/> that gets its position via a callback function</summary>
+        </member>
+        <member name="M:vaudio.FuncPosition.#ctor(System.Func{vaudio.Vector})">
+            <param name="position">A function invoked each time the position is queried</param>
+        </member>
+        <member name="M:vaudio.FuncPosition.GetPosition">
+            <inheritdoc/>
+        </member>
+        <member name="T:vaudio.IPosition">
+            <summary>Returns a 3D position</summary>
+        </member>
+        <member name="M:vaudio.IPosition.GetPosition">
+            <summary>Returns a 3D position</summary>
+        </member>
+        <member name="T:vaudio.ThreadStatistics">
+            <summary>Provides thread pool size statistics for task scheduling</summary>
+        </member>
+        <member name="F:vaudio.ThreadStatistics.ThreadCount">
+            <summary>The minimum number of threads in the thread pool</summary>
+        </member>
+        <member name="F:vaudio.ThreadStatistics.BackgroundThreadCount">
+            <summary>The number of threads available for background tasks, excluding the main thread</summary>
+        </member>
+        <member name="T:vaudio.World">
+            <summary>
+            A standalone world with its own primitives, emitters, materials and settings
+            </summary>
+        </member>
+        <member name="M:vaudio.World.CalculateListenerRelativePan(vaudio.Vector,System.Single,System.Single)">
+            <summary>
+            Helper function that converts a world-space direction to a listener-space direction
+            </summary>
+        </member>
+        <member name="M:vaudio.World.#ctor">
+            <summary>Create a new world</summary>
+        </member>
+        <member name="M:vaudio.World.Dispose">
+            <summary>
+            Waits for background thread to complete, then disposes everything. <br />
+            After calling this method, this world cannot be reused.
+            </summary>
+        </member>
+        <member name="P:vaudio.World.AreThreadsRunning">
+            <summary>
+            True while background raytracing threads are still running. <br />
+            After setting <see cref="F:vaudio.World.PendingShutdown"/>, continue calling <see cref="M:vaudio.World.Update"/> until this is false, then call <see cref="M:vaudio.World.Dispose"/>.
+            </summary>
+        </member>
+        <member name="M:vaudio.World.Update">
+            <summary>
+            Updates the raytracing simulation. Call this method regularly to process raytracing results and submit new work. <br /> <br />
+            This method does nothing if background raytracing threads are still running. When threads are idle, it performs the following operations: <br />
+            - Handles the last raytracing results, updating reverb objects and invoking <see cref="F:vaudio.Emitter.OnRaytracedByAnotherEmitter"/> callbacks <br />
+            - Applies new settings and resizes memory buffers if needed (e.g., if ray counts were changed) <br />
+            - Processes new, modified, and removed primitives <br />
+            - Starts raytracing again on background threads <br /> <br />
+            This method must be called from the main thread. The actual raytracing runs on background threads. <br />
+            Calling this more frequently (multiple times per frame) is safe and can reduce latency for emitter updates.
+            </summary>
+        </member>
+        <member name="M:vaudio.World.Wait">
+            <summary>
+            Blocks the calling thread until all background raytracing threads complete, then handles the results (updates reverb objects and invokes <see cref="F:vaudio.Emitter.OnRaytracingComplete"/> and <see cref="F:vaudio.Emitter.OnRaytracedByAnotherEmitter"/> callbacks for each emitter).
+            </summary>
+        </member>
+        <member name="M:vaudio.World.AddPrimitive(vaudio.Primitive)">
+            <summary>
+            Adds a 3D object to the raytracing scene. <br />
+            This method is thread-safe and will not affect the current raytracing threads. <br />
+            Primitives completely outside the world bounds will be ignored during raytracing. <br />
+            </summary>
+            <exception cref="T:System.InvalidOperationException">Thrown if the primitive's material does not exist or is MaterialType.Air. Also thrown if this primitive has already been added to this World, or added to another World.</exception>
+        </member>
+        <member name="M:vaudio.World.RemovePrimitive(vaudio.Primitive)">
+            <summary>
+            Removes a 3D object from the raytracing scene. <br />
+            This method is thread-safe and will not affect the current raytracing threads. <br />
+            <exception cref="T:System.InvalidOperationException">Thrown if the primitive is null.</exception>
+            </summary>
+        </member>
+        <member name="P:vaudio.World.MainThreadTime">
+            <summary>
+            The average time (in milliseconds) spent by <see cref="M:vaudio.World.Update"/> on the main thread.
+            </summary>
+            <remarks>
+            This includes time spent handling previous raytracing results, applying new settings, <br />
+            processing primitive updates and submitting work to background threads. <br />
+            Use this metric to monitor main thread performance impact.
+            </remarks>
+        </member>
+        <member name="P:vaudio.World.PreparationTime">
+            <summary>
+            The average time (in milliseconds) spent in the preparation thread before the raytracing threads begin.
+            </summary>
+            <remarks>
+            This phase updates the BVH (Bounding Volume Hierarchy) acceleration structure with new, modified, <br />
+            and removed primitives. Higher values are a result of complex scene changes.
+            </remarks>
+        </member>
+        <member name="P:vaudio.World.RaytracingTime">
+            <summary>
+            The average time (in milliseconds) spent in the raytracing threads.
+            </summary>
+            <remarks>
+            This is the real-world elapsed time it takes for raytracing to complete, not the sum of all thread times. <br />
+            This value is automatically adjusted based on how many threads perform raytracing. <br />
+            Use this to monitor raytracing performance and adjust ray counts if needed.
+            </remarks>
+        </member>
+        <member name="P:vaudio.World.AnalysisTime">
+            <summary>
+            The average time (in milliseconds) spent in the analysing thread after the raytracing threads complete.
+            </summary>
+            <remarks>
+            This phase runs after raytracing completes and calculate reverb properties. <br />
+            Use this to monitor raytracing performance and adjust ray counts if needed.
+            </remarks>
+        </member>
+        <member name="P:vaudio.World.Latency">
+            <summary>
+            The average time (in milliseconds) between when <see cref="M:vaudio.World.Update"/> is invoked, and when <see cref="F:vaudio.World.OnReverbUpdated"/> is invoked.
+            </summary>
+        </member>
+        <member name="F:vaudio.World.RaysCastThisFrame">
+            <summary>
+            The number of rays cast this frame.
+            </summary>
+        </member>
+        <member name="P:vaudio.World.TotalPossibleRayCount">
+            <summary>
+            The total number of rays that could potentially be cast each frame, including trail rays, reverb rays, occlusion rays, permeation rays and visualisation rays
+            </summary>
+        </member>
+        <member name="P:vaudio.World.RayCachePercent">
+            <summary>
+            The percentage of rays that were reused from previous frames, rather than being cast this frame. Higher values indicate better performance.
+            </summary>
+        </member>
+        <member name="M:vaudio.World.AddEmitter(vaudio.Emitter)">
+            <summary>
+            Add an Emitter to the world. <br />
+            This method is thread-safe and will not affect the current raytracing threads. <br />
+            <exception cref="T:System.InvalidOperationException">Thrown if the emitter was already added to this World, or added to another <see cref="T:vaudio.World"/></exception>
+            </summary>
+        </member>
+        <member name="M:vaudio.World.RemoveEmitter(vaudio.Emitter)">
+            <summary>
+            Remove an <see cref="T:vaudio.Emitter"/> from the world. <br />
+            This method is thread-safe and will not affect the current raytracing threads. <br />
+            This emitter's OnRaytracingComplete callback will not be invoked.
+            </summary>
+        </member>
+        <member name="M:vaudio.World.Export(System.String)">
+            <summary>
+            Exports all world settings, materials, primitives, and emitters to a binary file.
+            </summary>
+        </member>
+        <member name="M:vaudio.World.Export(System.IO.Stream)">
+            <summary>
+            Exports all world settings, materials, primitives, and emitters to a stream.
+            </summary>
+        </member>
+        <member name="M:vaudio.World.Import(System.String,System.Collections.Generic.List{vaudio.Emitter}@,System.Collections.Generic.List{vaudio.Primitive}@)">
+            <summary>
+            Imports world settings, materials, primitives, and emitters from a binary file produced by <see cref="M:vaudio.World.Export(System.String)"/> or <see cref="M:vaudio.World.Export(System.IO.Stream)"/>.
+            Existing primitives and emitters are not removed before importing.
+            </summary>
+        </member>
+        <member name="M:vaudio.World.Import(System.IO.Stream,System.Collections.Generic.List{vaudio.Emitter}@,System.Collections.Generic.List{vaudio.Primitive}@)">
+            <summary>
+            Imports world settings, materials, primitives, and emitters from a stream produced by <see cref="M:vaudio.World.Export(System.IO.Stream)"/>.
+            Existing primitives and emitters are not removed before importing.
+            </summary>
+        </member>
+        <member name="F:vaudio.World.CameraPosition">
+            <summary>
+            The position of the camera in the debug window (dev build only)
+            <exception cref="T:System.InvalidOperationException">Thrown if renderingEnabled is false.</exception>
+            </summary>
+        </member>
+        <member name="F:vaudio.World.CameraPitch">
+            <summary>
+            The pitch of the camera in the debug window (dev build only)
+            <exception cref="T:System.InvalidOperationException">Thrown if renderingEnabled is false.</exception>
+            </summary>
+        </member>
+        <member name="F:vaudio.World.CameraYaw">
+            <summary>
+            The yaw of the camera in the debug window (dev build only)
+            <exception cref="T:System.InvalidOperationException">Thrown if renderingEnabled is false.</exception>
+            </summary>
+        </member>
+        <member name="F:vaudio.World.FieldOfView">
+            <summary>
+            The field of view (in radians) of the camera in the debug window (dev build only)
+            <exception cref="T:System.InvalidOperationException">Thrown if renderingEnabled is false.</exception>
+            </summary>
+        </member>
+        <member name="F:vaudio.World.RenderTime">
+            <summary>The time spent (in milliseconds) rendering the debug window (dev build only)</summary>
+        </member>
+        <member name="F:vaudio.World.WindowSize">
+            <summary>The size of the debug window (dev build only)</summary>
+        </member>
+        <member name="F:vaudio.World.WindowPosition">
+            <summary>The position of the debug window (dev build only)</summary>
+        </member>
+        <member name="P:vaudio.World.MaximumGroupedEAXCount">
+            <summary>
+            The maximum number of grouped EAX reverb properties created for all emitters. Higher values increase accuracy but are more expensive to run. Defaults to 3
+            </summary>
+            <exception cref="T:System.ArgumentException">Thrown when the value is less than 1</exception>
+        </member>
+        <member name="P:vaudio.World.WorkItemCount">
+            <summary>
+            The number of work items to split trails across for load balancing. A higher workItemCount helps evenly distribute work across all threads.
+            </summary>
+            <exception cref="T:System.ArgumentException">Thrown when the value is less than 1</exception>
+        </member>
+        <member name="P:vaudio.World.InverseSpeedOfSound">
+            <summary>
+            Inverse speed of sound in seconds per meter. Defaults to 1.0f / 343.0f. Affects reverb calculation
+            </summary>
+            <exception cref="T:System.ArgumentException">Thrown when the value is NaN, Infinity or less than or equal to 0</exception>
+        </member>
+        <member name="P:vaudio.World.ReferenceFrequencyLF">
+            <summary>
+            Low-frequency reference (Hz) for air absorption, reverb, and material scattering
+            </summary>
+            <exception cref="T:System.ArgumentException">Thrown when the value is NaN or Infinity, or less than or equal to 0</exception>
+        </member>
+        <member name="P:vaudio.World.ReferenceFrequencyHF">
+            <summary>
+            High-frequency reference (Hz) for air absorption, reverb, and material scattering
+            </summary>
+            <exception cref="T:System.ArgumentException">Thrown when the value is NaN or Infinity, or less than or equal to 0</exception>
+        </member>
+        <member name="P:vaudio.World.MaximumConcurrencyLevel">
+            <summary>The maximum amount of threads that can run in parallel for this world</summary>
+            <exception cref="T:System.ArgumentException">Thrown when the value is less than 1</exception>
+        </member>
+        <member name="P:vaudio.World.LogMemoryAllocationWarnings">
+            <summary>
+            Whether to log memory allocation warnings
+            </summary>
+        </member>
+        <member name="P:vaudio.World.MetersPerUnit">
+            <summary>
+            Gets meters per world unit. Affects air absorption and reverb calculation.
+            <exception cref="T:System.ArgumentException">Thrown when the value is NaN, Infinity or less than or equal to 0</exception>
+            </summary>
+        </member>
+        <member name="P:vaudio.World.AirAbsorption">
+            <summary>
+            Air absorption settings. Set to null to disable air absorption.
+            </summary>
+            <exception cref="T:System.ArgumentException">Thrown when air absorption validation fails</exception>
+        </member>
+        <member name="P:vaudio.World.CustomEAXFormulas">
+            <summary>
+            Custom formulas for calculating EAX properties (diffusion, density, etc). Set to null to use default formulas.
+            </summary>
+        </member>
+        <member name="P:vaudio.World.EmittersOutsideTheWorldAreMuffled">
+            <summary>
+            Whether <see cref="T:vaudio.Emitter"/>s outside the world have 0 occlusion/permeation energy (true) or maximum energy (false).
+            </summary>
+        </member>
+        <member name="P:vaudio.World.LogCallback">
+            <summary>
+            A custom logging callback. Defaults to <see cref="M:System.Console.WriteLine"/>
+            </summary>
+        </member>
+        <member name="F:vaudio.World.RenderingEnabled">
+            <summary>Whether to render the raytracing scene in a separate window (dev build only)</summary>
+        </member>
+        <member name="P:vaudio.World.Epsilon">
+            <summary>
+            The epsilon value used for ray offsets, world bounds clamping and line-of-sight tests. Defaults to 0.01f
+            </summary>
+        </member>
+        <member name="P:vaudio.World.Position">
+            <summary>
+            The minimum bounds of the world. <br />
+            <see cref="T:vaudio.Emitter"/>s outside the world will not be raytraced, and <see cref="T:vaudio.Primitive"/>s that are fully outside these bounds will not affect raytracing.
+            </summary>
+            <exception cref="T:System.ArgumentException">Thrown when worldPosition is NaN or Infinity</exception>
+        </member>
+        <member name="P:vaudio.World.Size">
+            <summary>
+            The size of the world. <br />
+            <see cref="T:vaudio.Emitter"/>s outside the world will not be raytraced, and <see cref="T:vaudio.Primitive"/>s that are fully outside these bounds will be ignored
+            </summary>
+            <exception cref="T:System.ArgumentException">Thrown when worldSize is NaN, Infinity, or less than or equal to (0, 0, 0)</exception>
+        </member>
+        <member name="P:vaudio.World.MaxBounds">
+            <summary>
+            The maximum bounds of the world (Position + Size)
+            </summary>
+        </member>
+        <member name="P:vaudio.World.WorldIsIndoors">
+            <summary>
+            Whether the entire world is considered indoors or outdoors. When false, reverb rays stop checking for line-of-sight after hitting the world edge. Defaults to false.
+            </summary>
+        </member>
+        <member name="M:vaudio.World.GetMaterial(vaudio.MaterialType)">
+            <summary>
+            Get properties for a specific material.
+            </summary>
+        </member>
+        <member name="M:vaudio.World.HasMaterial(vaudio.MaterialType)">
+            <summary>
+            Returns true if a material exists
+            </summary>
+        </member>
+        <member name="M:vaudio.World.AddMaterial(vaudio.MaterialType,vaudio.MaterialProperties,vaudio.Color)">
+            <summary>Add a new material to this world</summary>
+            <exception cref="T:System.InvalidOperationException">Thrown if a material already exists with the same type</exception>
+        </member>
+        <member name="F:vaudio.World.PendingShutdown">
+            <summary>
+            When set to true, <see cref="M:vaudio.World.Update"/> will stop submitting work to background threads. <br />
+            When <see cref="P:vaudio.World.ThreadsRunning"/> becomes false, it is safe to call <see cref="M:vaudio.World.Dispose"/>.
+            </summary>
+        </member>
+        <member name="P:vaudio.World.SingleThreaded">
+            <summary>
+            No longer has any effect. Use <see cref="P:vaudio.World.MaximumConcurrencyLevel"/> = 1 instead.
+            </summary>
+        </member>
+        <member name="M:vaudio.World.GetMaterialColor(vaudio.MaterialType)">
+            <summary>Gets the debug rendering color for a specific material type (dev build only)</summary>
+        </member>
+        <member name="M:vaudio.World.SetMaterialColor(vaudio.MaterialType,vaudio.Color)">
+            <summary>Sets the debug rendering color for a specific material type (dev build only)</summary>
+        </member>
+        <member name="P:vaudio.World.ReverbCalculated">
+            <summary>
+            Returns true when raytracing has run at least once, and it is safe to access reverb objects
+            </summary>
+        </member>
+        <member name="F:vaudio.World.GroupedEAX">
+            <summary>
+            List of grouped EAX reverb properties for all emitters. Contains parameters compatible with EAX reverb effects.
+            </summary>
+        </member>
+        <member name="F:vaudio.World.OnRaytracingCompleted">
+            <summary>
+            This callback is invoked right after the background threads finish running. At this point, the results of the background threads have not been processed yet (EAX is not updated yet, low pass filters not updated, ambience not updated, etc). After this, <see cref="F:vaudio.World.OnReverbUpdated" /> will be invoked next.
+            </summary>
+        </member>
+        <member name="F:vaudio.World.OnReverbUpdated">
+            <summary>
+            This callback is invoked after EAX reverb results are updated. This gives you a chance to update your EAX effects, so they can be applied to an emitter in it's <see cref="F:vaudio.Emitter.OnRaytracingComplete"/> callback. After this, each emitter's callback are invoked, and then <see cref="F:vaudio.World.OnRaytracingResultsHandled" /> will be invoked next.
+            </summary>
+        </member>
+        <member name="F:vaudio.World.OnRaytracingResultsHandled">
+            <summary>
+            This callback is invoked after all raytracing results (EAX, filters, etc) have been processed. After this, new emitter/primitive settings will be applied, and the background threads will start again.
+            </summary>
+        </member>
+    </members>
+</doc>

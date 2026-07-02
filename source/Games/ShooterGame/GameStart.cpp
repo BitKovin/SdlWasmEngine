@@ -90,7 +90,7 @@ public:
 
         bool isServer = true;
         
-        if (true)
+        if (false)
         {
 #ifdef __EMSCRIPTEN__
             transport = std::make_unique<RelayTransport>("127.0.0.1", /*wsPort=*/5080, 0);
