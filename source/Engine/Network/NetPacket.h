@@ -31,7 +31,9 @@ enum class PacketType : uint8_t {
     EntityDigest      = 11,
 
     SpawnRequest      = 12,
-    RequestLevelInfo  = 13
+    RequestLevelInfo  = 13,
+	Ping              = 14,
+	Pong              = 15
 };
 
 enum class RPCTarget : uint8_t {

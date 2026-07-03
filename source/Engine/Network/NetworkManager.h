@@ -76,6 +76,36 @@ class LevelObjectFactory;
 // PT_LevelReady to everyone and calling OnLevelReady() server-side a second
 // time.  The FullSnapshot populates the client's s_entityReceivedHash so
 // the very first digest is already authoritative.
+//
+// Connection health (ping / timeout)
+// -----------------------------------
+// Deliberately NOT delegated to INetworkTransport::GetStat() — not every
+// transport implementation surfaces RTT, and when one does it may be
+// measuring a different layer (raw socket vs. after our own compress +
+// dispatch pipeline) than what actually matters to the game. NetworkManager
+// measures and owns this itself:
+//   • Every kPingInterval seconds each side sends an unreliable PT_Ping
+//     carrying its own local clock (see PacketType::Ping for why unreliable).
+//     Server -> broadcasts one Ping; every client's Pong reply carries its
+//     own senderId, so one send still yields a per-client RTT sample.
+//     Client -> sends its Ping to the server only (its one connection).
+//   • The receiver of a Ping immediately echoes it back as a PT_Pong.
+//   • The original sender turns a returned Pong into an RTT sample and
+//     folds it into an RFC 6298-style smoothed srtt/rttvar per peer
+//     (s_connectionHealth), independent of clock sync between machines.
+//   • Separately, ANY successfully-parsed packet from a peer (not just
+//     Pong) resets that peer's "time since last heard from" — so a peer
+//     that's clearly still sending data isn't falsely flagged just because
+//     a Pong happened to get lost.
+//   • If a peer goes silent for kConnectionTimeout seconds, NetworkManager
+//     treats it as gone on its own initiative: server-side this runs the
+//     same entity destroy/migration cleanup a transport disconnect would
+//     (via OnPeerDisconnected), and onConnectionTimeout fires either way so
+//     game code can react (UI, forcing the transport to actually close the
+//     socket, etc.) without NetworkManager needing to know that transport's
+//     specific API for it.
+// This all runs every Tick() regardless of s_isLoadingLevel — a slow level
+// load is exactly when you still want to notice a peer dropping.
 // ---------------------------------------------------------------------------
 
 class NetworkManager {
@@ -87,7 +117,7 @@ public:
     // -----------------------------------------------------------------------
 
     static void Init(INetworkTransport* transport, bool asServer,
-                     float networkTickRate = 20.0f);
+        float networkTickRate = 20.0f);
     static void Shutdown();
 
     // One call per engine frame.
@@ -120,9 +150,9 @@ public:
     // Entity registration  (called by Level::AddEntity / RemoveEntity only)
     // -----------------------------------------------------------------------
 
-    static void             Register  (NetworkedEntity* entity);
+    static void             Register(NetworkedEntity* entity);
     static void             Unregister(uint64_t networkId);
-    static NetworkedEntity* Find      (uint64_t networkId);
+    static NetworkedEntity* Find(uint64_t networkId);
 
     // -----------------------------------------------------------------------
     // ID allocation
@@ -135,8 +165,8 @@ public:
     // Broadcast helpers  (called by Level only)
     // -----------------------------------------------------------------------
 
-    static void BroadcastSpawn      (NetworkedEntity* entity);
-    static void BroadcastDespawn    (uint64_t networkId);
+    static void BroadcastSpawn(NetworkedEntity* entity);
+    static void BroadcastDespawn(uint64_t networkId);
     static void BroadcastOwnerChange(uint64_t networkId, uint8_t newOwner);
 
     // -----------------------------------------------------------------------
@@ -152,23 +182,54 @@ public:
     // -----------------------------------------------------------------------
 
     static void SendRPC(uint64_t networkId, uint8_t rpcId,
-                        NetPacket& args, RPCTarget target);
+        NetPacket& args, RPCTarget target);
 
     // -----------------------------------------------------------------------
     // Server helpers
     // -----------------------------------------------------------------------
 
-    static void SpawnForPlayer    (NetworkedEntity* entity, uint8_t targetPeerId);
+    static void SpawnForPlayer(NetworkedEntity* entity, uint8_t targetPeerId);
     static void SendFullSnapshotTo(uint8_t targetPeerId);
 
     // -----------------------------------------------------------------------
     // Transport callbacks  (wired internally; must not be called by game code)
     // -----------------------------------------------------------------------
 
-    static void OnPacketReceived  (uint8_t senderId,
-                                   const uint8_t* buffer, size_t length);
-    static void OnPeerConnected   (uint8_t peerId);
+    static void OnPacketReceived(uint8_t senderId,
+        const uint8_t* buffer, size_t length);
+    static void OnPeerConnected(uint8_t peerId);
     static void OnPeerDisconnected(uint8_t peerId);
+
+    // -----------------------------------------------------------------------
+    // Connection health  (measured by NetworkManager itself — see the class
+    // doc comment above for the ping/pong + timeout design)
+    // -----------------------------------------------------------------------
+
+    struct ConnectionStats {
+        uint32_t rttMs = 0;     // smoothed round-trip time
+        uint32_t rttVarianceMs = 0;     // smoothed RTT deviation (jitter)
+        float    timeSinceLastRecv = 0.0f;  // seconds since ANY packet arrived
+        bool     hasSample = false; // at least one Ping/Pong round trip completed
+        bool     timedOut = false; // silent for >= kConnectionTimeout
+    };
+
+    // Server: pass a connected client's peerId. Client: pass 0 (the server;
+    // also the default, since a client only ever has one peer to ask about).
+    // Returns a default-constructed (all-zero, hasSample=false) ConnectionStats
+    // for a peerId that isn't currently tracked.
+    static ConnectionStats GetConnectionStats(uint8_t peerId = 0);
+    static bool            IsPeerTimedOut(uint8_t peerId = 0);
+
+    // Fired once, the moment a peer's silence first crosses kConnectionTimeout.
+    // By the time this fires, NetworkManager has already run its own cleanup
+    // (server: entity destroy/migration via the same path a transport-reported
+    // disconnect uses; either role: connection-health tracking for that peer
+    // is cleared). This callback is purely a notification hook for whatever
+    // the game layer wants to do about it (UI, attempt reconnect, ask the
+    // transport to actually tear down the socket, etc.) — NetworkManager
+    // deliberately does not assume a specific transport API for that.
+    // Cleared on Shutdown(); re-set it after each Init() if needed.
+    static std::function<void(uint8_t peerId)> onConnectionTimeout;
 
     static float       GetTickRate() { return s_networkTickRate; }
     static NetworkStat GetStat();
@@ -212,7 +273,7 @@ private:
     static float        s_validationTickAccum;
     static float        kValidationInterval;
 
-    static Level*             s_level;
+    static Level* s_level;
     static INetworkTransport* s_transport;
 
     // -----------------------------------------------------------------------
@@ -263,10 +324,10 @@ private:
     // -----------------------------------------------------------------------
 
     struct EntityUpdateCache {
-        uint32_t             lastSentHash     = 0;
+        uint32_t             lastSentHash = 0;
         std::vector<uint8_t> lastSentPayload; // full EntityUpdate payload bytes
         float                timeSinceLastSent = 99999.0f; // large → force first send
-        bool                 everSent         = false;
+        bool                 everSent = false;
     };
     static std::unordered_map<uint64_t, EntityUpdateCache> s_entityUpdateCache;
 
@@ -313,6 +374,59 @@ private:
     static constexpr float     kDigestInterval = 0.3333333333f; // 3 Hz
 
     // -----------------------------------------------------------------------
+    // Connection health  (see class doc comment for the overall design)
+    //
+    // s_connectionHealth is keyed by peerId and is the single source of
+    // truth for "who are we currently tracking": entries are seeded in
+    // OnPeerConnected and erased in OnPeerDisconnected (including when that
+    // is invoked by our own timeout detection, not just by the transport).
+    // TouchPeerLastRecv() deliberately uses find(), never operator[], so an
+    // untracked/unknown sender can't silently start being tracked outside
+    // that lifecycle.
+    // -----------------------------------------------------------------------
+
+    struct ConnectionHealth {
+        float timeSinceLastRecv = 0.0f; // seconds since any packet from this peer
+        float srttMs = 0.0f; // smoothed RTT (RFC 6298-style EWMA)
+        float rttVarMs = 0.0f; // smoothed mean deviation of RTT
+        bool  hasSample = false;
+        bool  timedOut = false;
+    };
+    static std::unordered_map<uint8_t, ConnectionHealth> s_connectionHealth;
+
+    // Free-running local clock (ms since Init()), advanced by dt each Tick.
+    // Deliberately dt-accumulated rather than a wall-clock/steady_clock read,
+    // matching every other timer in this class — and, as a side effect, a
+    // frame hitch that delays Poll() shows up as inflated RTT too, which is
+    // an arguably-honest picture of the connection as the game experiences
+    // it. Only needs to be monotonic on our own side; the two ends never
+    // need synchronised clocks (see PacketType::Ping).
+    static double s_localClockMs;
+
+    static float s_pingAccum;
+    static constexpr float kPingInterval = 1.0f;  // seconds between pings, each direction
+    static constexpr float kConnectionTimeout = 10.0f; // seconds of silence before a peer is declared lost
+
+    // Runs every Tick(), before the s_isLoadingLevel early-out, so a hung
+    // level load neither masks a dropped peer nor starves outgoing pings.
+    static void UpdateConnectionHealth(float dt);
+
+    // Sends this side's periodic PT_Ping (broadcast if server, to-server if
+    // client). Unreliable — see PacketType::Ping.
+    static void SendPingNow();
+
+    // Resets timeSinceLastRecv (and clears a stale timedOut flag) for a
+    // known peer. Called for every successfully-parsed inbound packet,
+    // regardless of type — proof of life doesn't require it to be a Pong.
+    static void TouchPeerLastRecv(uint8_t peerId);
+
+    // Folds one RTT sample (from a returned Pong) into that peer's smoothed
+    // srtt/rttvar. Discards implausible samples (e.g. a very late Pong from
+    // a peer that briefly vanished) rather than letting one outlier skew
+    // the running estimate.
+    static void RecordRttSample(uint8_t peerId, uint32_t sampleRttMs);
+
+    // -----------------------------------------------------------------------
     // Bidirectional reconciliation safety nets  (server only)
     //
     // ProcessEntityDigest's Case B ("client reports an ID the server doesn't
@@ -342,8 +456,8 @@ private:
     // s_recentlyDespawned — i.e. genuinely unknown, not confirmed-destroyed.
     struct UnconfirmedEntity {
         float   ageSinceFirstReported = 0.0f;
-        uint8_t reportedByPeerId      = 255; // who to ask to resend
-        bool    resendRequested       = false; // avoid spamming SpawnRequest
+        uint8_t reportedByPeerId = 255; // who to ask to resend
+        bool    resendRequested = false; // avoid spamming SpawnRequest
     };
     static std::unordered_map<uint64_t, UnconfirmedEntity> s_unconfirmedEntities;
 
@@ -368,13 +482,13 @@ private:
 
     struct DeltaStats {
         // Delta compression (per flush)
-        uint32_t entitiesTotal   = 0;
-        uint32_t entitiesSent    = 0;
+        uint32_t entitiesTotal = 0;
+        uint32_t entitiesSent = 0;
         uint32_t entitiesSkipped = 0;
         // Reconciliation (per digest cycle, server-side)
-        uint32_t digestMissing   = 0; // entities sent as SpawnEntity correction
-        uint32_t digestStale     = 0; // entities sent as EntityUpdate correction
-        uint32_t digestPhantom   = 0; // entities sent as DespawnEntity correction
+        uint32_t digestMissing = 0; // entities sent as SpawnEntity correction
+        uint32_t digestStale = 0; // entities sent as EntityUpdate correction
+        uint32_t digestPhantom = 0; // entities sent as DespawnEntity correction
     };
     static DeltaStats s_deltaStats;
 
@@ -399,18 +513,18 @@ private:
     // broadcast update queue entirely.
     static void ProcessEntityDigest(uint8_t clientPeerId, NetPacket& packet);
 
-    static void SendReliableNow   (const std::vector<uint8_t>& bytes,
-                                   uint8_t targetPeerId);
+    static void SendReliableNow(const std::vector<uint8_t>& bytes,
+        uint8_t targetPeerId);
     static void RelayReliableExcept(uint8_t excludePeerId,
-                                    const std::vector<uint8_t>& bytes);
-    static void RelayReliableAll  (const std::vector<uint8_t>& bytes);
+        const std::vector<uint8_t>& bytes);
+    static void RelayReliableAll(const std::vector<uint8_t>& bytes);
 
     static void EnqueueUpdate(std::vector<uint8_t> bytes, uint8_t targetPeerId);
 
     static std::vector<uint8_t> FinalizeOutbound(NetPacket& pkt);
 
     static void CompressAndSend(const uint8_t* data, size_t length,
-                                uint8_t targetPeerId, bool reliable);
+        uint8_t targetPeerId, bool reliable);
 
     static bool IsHandshakePacket(PacketType type);
 

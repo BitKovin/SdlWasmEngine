@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 #include <cstdio>
 #include <set>
 
@@ -51,6 +52,11 @@ std::vector<NetworkManager::PendingUpdate>                       NetworkManager:
 std::unordered_map<uint64_t, uint32_t> NetworkManager::s_entityReceivedHash;
 
 float NetworkManager::s_digestAccum = 0.0f;
+
+std::unordered_map<uint8_t, NetworkManager::ConnectionHealth> NetworkManager::s_connectionHealth;
+double NetworkManager::s_localClockMs = 0.0;
+float  NetworkManager::s_pingAccum = 0.0f;
+std::function<void(uint8_t)> NetworkManager::onConnectionTimeout;
 
 std::unordered_map<uint64_t, float>                            NetworkManager::s_recentlyDespawned;
 std::unordered_map<uint64_t, NetworkManager::UnconfirmedEntity> NetworkManager::s_unconfirmedEntities;
@@ -197,6 +203,14 @@ bool NetworkManager::IsHandshakePacket(PacketType type) {
     case PacketType::FullSnapshot:
     case PacketType::LevelInfo:
     case PacketType::RequestLevelInfo:
+        return true;
+        // Not "handshake" in the one-time-setup sense, but this function's real
+        // job here is "process immediately, don't hold behind s_preLiveQueue" —
+        // Ping/Pong must keep flowing through a level load so connection health
+        // doesn't go blind (or falsely trip a timeout) for however long that
+        // load takes.
+    case PacketType::Ping:
+    case PacketType::Pong:
         return true;
     default:
         return false;
@@ -836,6 +850,126 @@ void NetworkManager::PruneReconciliationState(float dt) {
         }
     }
 }
+
+// ---------------------------------------------------------------------------
+// Connection health
+//
+// See the class doc comment at the top of NetworkManager.h for the overall
+// design. Everything here is transport-agnostic: it only assumes
+// CompressAndSend can reach a peer and that OnPacketReceived is called for
+// whatever that peer sends back.
+// ---------------------------------------------------------------------------
+
+void NetworkManager::SendPingNow() {
+    NetPacket ping(PacketType::Ping);
+    ping.WriteUInt32(uint32_t(s_localClockMs));
+    const auto bytes = FinalizeOutbound(ping);
+
+    // Server: one broadcast reaches every client; each one's Pong reply
+    // carries its own senderId, so this single send still yields a distinct
+    // RTT sample per client. Client: only ever has the server to talk to.
+    CompressAndSend(bytes.data(), bytes.size(),
+        s_isServer ? BROADCAST_PEER_ID : uint8_t(0), /*reliable=*/false);
+}
+
+void NetworkManager::TouchPeerLastRecv(uint8_t peerId) {
+    const auto it = s_connectionHealth.find(peerId);
+    if (it == s_connectionHealth.end())
+        return; // not a peer we're currently tracking — nothing to update
+
+    it->second.timeSinceLastRecv = 0.0f;
+    // A peer that was flagged timed out but is now demonstrably talking
+    // again (e.g. a transient stall rather than a real drop) is current.
+    it->second.timedOut = false;
+}
+
+void NetworkManager::RecordRttSample(uint8_t peerId, uint32_t sampleRttMs) {
+    // Discard implausible samples (e.g. a very late Pong from a peer that
+    // briefly vanished and came back) instead of letting one outlier yank
+    // the smoothed estimate around.
+    constexpr uint32_t kMaxPlausibleRttMs = 5000;
+    if (sampleRttMs > kMaxPlausibleRttMs)
+        return;
+
+    const auto it = s_connectionHealth.find(peerId);
+    if (it == s_connectionHealth.end())
+        return; // Pong from a peer we're no longer tracking (e.g. raced a disconnect) — drop it
+
+    ConnectionHealth& health = it->second;
+    if (!health.hasSample) {
+        health.srttMs = float(sampleRttMs);
+        health.rttVarMs = float(sampleRttMs) * 0.5f;
+        health.hasSample = true;
+    }
+    else {
+        // RFC 6298-style exponential smoothing (alpha = 1/8, beta = 1/4).
+        const float delta = float(sampleRttMs) - health.srttMs;
+        health.rttVarMs += 0.25f * (std::fabs(delta) - health.rttVarMs);
+        health.srttMs += 0.125f * delta;
+    }
+}
+
+// Runs every Tick(), including while a level is loading — see the class doc
+// comment for why that matters.
+void NetworkManager::UpdateConnectionHealth(float dt) {
+    s_localClockMs += double(dt) * 1000.0;
+
+    s_pingAccum += dt;
+    if (s_pingAccum >= kPingInterval) {
+        s_pingAccum -= kPingInterval;
+        if (s_pingAccum > kPingInterval)
+            s_pingAccum = 0.0f;
+        SendPingNow();
+    }
+
+    // Age every tracked peer and collect anyone crossing the timeout
+    // threshold this tick. Collected first, then handled after the loop:
+    // OnPeerDisconnected() (called below) erases from s_connectionHealth,
+    // and doing that while iterating it would invalidate the iterator.
+    std::vector<uint8_t> timedOutPeers;
+    for (auto& [peerId, health] : s_connectionHealth) {
+        health.timeSinceLastRecv += dt;
+        if (!health.timedOut && health.timeSinceLastRecv >= kConnectionTimeout) {
+            health.timedOut = true;
+            timedOutPeers.push_back(peerId);
+        }
+    }
+
+    for (uint8_t peerId : timedOutPeers) {
+        std::fprintf(stderr,
+            "[NetworkManager] Peer %u timed out (no packets for %.1fs) — "
+            "treating as disconnected\n", peerId, kConnectionTimeout);
+
+        // Same cleanup path a transport-reported disconnect uses (entity
+        // destroy/migration server-side; tracking cleanup either way).
+        // Idempotent if the transport later fires its own real disconnect
+        // for the same peer — by then there's nothing left to clean up.
+        OnPeerDisconnected(peerId);
+
+        if (onConnectionTimeout)
+            onConnectionTimeout(peerId);
+    }
+}
+
+NetworkManager::ConnectionStats NetworkManager::GetConnectionStats(uint8_t peerId) {
+    ConnectionStats out;
+    const auto it = s_connectionHealth.find(peerId);
+    if (it == s_connectionHealth.end())
+        return out; // untracked peer — default (all-zero, hasSample=false)
+
+    const ConnectionHealth& health = it->second;
+    out.rttMs = uint32_t(health.srttMs + 0.5f);
+    out.rttVarianceMs = uint32_t(health.rttVarMs + 0.5f);
+    out.timeSinceLastRecv = health.timeSinceLastRecv;
+    out.hasSample = health.hasSample;
+    out.timedOut = health.timedOut;
+    return out;
+}
+
+bool NetworkManager::IsPeerTimedOut(uint8_t peerId) {
+    return GetConnectionStats(peerId).timedOut;
+}
+
 // ---------------------------------------------------------------------------
 // Lifecycle
 // ---------------------------------------------------------------------------
@@ -857,6 +991,10 @@ void NetworkManager::Init(INetworkTransport* transport, bool asServer,
     s_networkTickAccum = 0.0f;
     s_validationTickAccum = 0.0f;
     s_digestAccum = 0.0f;
+
+    s_connectionHealth.clear();
+    s_localClockMs = 0.0;
+    s_pingAccum = 0.0f;
 
     BuildClassRegistry();
 
@@ -889,6 +1027,14 @@ void NetworkManager::Shutdown() {
     s_recentlyDespawned.clear();
     s_unconfirmedEntities.clear();
 
+    // Connection-health tracking is per-connection, not per-level — clear it
+    // here (session end) but deliberately NOT in BeginLevelLoad, so RTT
+    // history and timeout timers survive a level transition.
+    s_connectionHealth.clear();
+    s_localClockMs = 0.0;
+    s_pingAccum = 0.0f;
+    onConnectionTimeout = nullptr; // avoid a stale capture firing after re-Init
+
     // Clear file-scope implementation caches.
     g_identicalSentCount.clear();
     g_pendingSpawns.clear();
@@ -915,17 +1061,20 @@ void NetworkManager::Shutdown() {
 // ---------------------------------------------------------------------------
 // Tick
 //
-// Phase 1 — Receive     (every frame — transport poll + immediate packet dispatch)
-// Phase 2 — Spawn flush (every frame — BroadcastSpawn deferred sends)
-// Phase 3 — Gather      (every frame — owned-entity state collection)
-// Phase 4 — Flush       (network tick rate, 20–30 Hz — unreliable entity updates)
-// Phase 5 — Digest      (client only, kDigestInterval Hz)
-// Phase 6 — Validation  (server only, kValidationInterval Hz)
+// Phase 1   — Receive     (every frame — transport poll + immediate packet dispatch)
+// Phase 1.5 — Health      (every frame, even mid-load — ping cadence + peer timeout)
+// Phase 2   — Spawn flush (every frame — BroadcastSpawn deferred sends)
+// Phase 3   — Gather      (every frame — owned-entity state collection)
+// Phase 4   — Flush       (network tick rate, 20–30 Hz — unreliable entity updates)
+// Phase 5   — Digest      (client only, kDigestInterval Hz)
+// Phase 6   — Validation  (server only, kValidationInterval Hz)
 //
 // Phases 1–3 are frame-rate coupled so that incoming packets (including all
 // request-response flows) and spawn notifications are never held behind the
 // network tick accumulator.  Only high-volume entity state (Phases 4–6) is
-// rate-limited to keep bandwidth predictable.
+// rate-limited to keep bandwidth predictable. Phase 1.5 runs even while
+// s_isLoadingLevel is true (unlike everything after it) — see
+// UpdateConnectionHealth.
 // ---------------------------------------------------------------------------
 
 void NetworkManager::Tick(float dt) {
@@ -936,6 +1085,12 @@ void NetworkManager::Tick(float dt) {
     // request-response packets immediately so round-trips are not delayed
     // by the network tick accumulator.
     s_transport->Poll();
+
+    // Phase 1.5: connection health — runs every frame, BEFORE the loading
+    // early-out below, so a hung/crashed peer is still detected during a
+    // level load, and our own pings keep flowing rather than stalling for
+    // however long that load takes.
+    UpdateConnectionHealth(dt);
 
     if (s_isLoadingLevel) return;
 
@@ -1366,7 +1521,51 @@ void NetworkManager::SpawnForPlayer(NetworkedEntity* entity, uint8_t targetPeerI
 // ---------------------------------------------------------------------------
 
 NetworkStat NetworkManager::GetStat() {
-    return s_transport ? s_transport->GetStat() : NetworkStat{};
+    NetworkStat stat = s_transport ? s_transport->GetStat() : NetworkStat{};
+
+    // Round-trip time is measured by NetworkManager itself (see the class
+    // doc comment / ConnectionHealth), not trusted from the transport —
+    // overwrite whatever the transport reported for these two fields only.
+    //
+    // NetworkStat::roundTripTime(Variance) are uint16_t on the wire; our own
+    // ConnectionHealth math is done in uint32_t ms for headroom (kept well
+    // under 65535 today by kMaxPlausibleRttMs's 5000ms sample clamp, but
+    // clamped explicitly here too rather than relying on an implicit
+    // truncation staying accidentally safe if that constant ever changes).
+    constexpr uint32_t kU16Max = 65535u;
+    auto toWireRtt = [kU16Max](uint32_t ms) { return uint16_t(std::min(ms, kU16Max)); };
+
+    if (!s_isServer) {
+        // A client only ever has one peer to ask about: the server.
+        const ConnectionStats cs = GetConnectionStats(0);
+        if (cs.hasSample) {
+            stat.roundTripTime = toWireRtt(cs.rttMs);
+            stat.roundTripTimeVariance = toWireRtt(cs.rttVarianceMs);
+        }
+    }
+    else {
+        // A server has one RTT per client, not a single global number —
+        // surface whichever currently-connected client has the highest
+        // latency, so a single glance at this overlay flags whoever is
+        // struggling. For a real per-client breakdown use
+        // GetConnectionStats(peerId) (see DrawDebugUi's peer list).
+        uint32_t worstRttMs = 0, worstVarMs = 0;
+        bool any = false;
+        for (const auto& [peerId, health] : s_connectionHealth) {
+            if (!health.hasSample) continue;
+            any = true;
+            if (uint32_t(health.srttMs) >= worstRttMs) {
+                worstRttMs = uint32_t(health.srttMs);
+                worstVarMs = uint32_t(health.rttVarMs);
+            }
+        }
+        if (any) {
+            stat.roundTripTime = toWireRtt(worstRttMs);
+            stat.roundTripTimeVariance = toWireRtt(worstVarMs);
+        }
+    }
+
+    return stat;
 }
 
 // ---------------------------------------------------------------------------
@@ -1453,9 +1652,21 @@ void NetworkManager::OnPacketReceived(uint8_t senderId,
         }
         offset += packetSize;
 
+        // A well-formed packet made it through the checksum — the peer is
+        // demonstrably alive right now, regardless of its type or what
+        // happens to it next (queued, dropped below for a level mismatch,
+        // dispatched normally). Deliberately NOT gated behind the level-hash
+        // check that follows, for the same reason.
+        TouchPeerLastRecv(senderId);
+
         const PacketType type = packet.GetType();
 
-        if (type != PacketType::LevelInfo)
+        // Ping/Pong are connection-health plumbing, not level-scoped state —
+        // they must get through even while the two sides briefly disagree
+        // on which level is loaded, or RTT/timeout tracking would blackout
+        // for the whole mismatch window.
+        if (type != PacketType::LevelInfo &&
+            type != PacketType::Ping && type != PacketType::Pong)
             if (receivedHash != 0 && s_levelPathHash != 0 && receivedHash != s_levelPathHash) {
                 if (s_isServer) {
                     std::fprintf(stderr,
@@ -1605,7 +1816,29 @@ void NetworkManager::DispatchPacket(uint8_t senderId, NetPacket& packet) {
         break;
     }
 
-                                 // ── Entity lifecycle ──────────────────────────────────────────────
+                                 // ── Connection health ─────────────────────────────────────────────
+
+    case PacketType::Ping: {
+        // Echo the timestamp straight back to whoever sent it so they can
+        // measure round-trip time against their own clock. Unreliable —
+        // see PacketType::Ping for why that matters here.
+        const uint32_t timestampMs = packet.ReadUInt32();
+        NetPacket pong(PacketType::Pong);
+        pong.WriteUInt32(timestampMs);
+        const auto bytes = FinalizeOutbound(pong);
+        CompressAndSend(bytes.data(), bytes.size(), senderId, /*reliable=*/false);
+        break;
+    }
+
+    case PacketType::Pong: {
+        const uint32_t echoedMs = packet.ReadUInt32();
+        const uint32_t nowMs = uint32_t(s_localClockMs);
+        const uint32_t sampleRttMs = nowMs - echoedMs; // unsigned subtraction wraps safely
+        RecordRttSample(senderId, sampleRttMs);
+        break;
+    }
+
+                         // ── Entity lifecycle ──────────────────────────────────────────────
 
     case PacketType::SpawnEntity: {
         const uint64_t networkId = packet.ReadUInt64();
@@ -1961,6 +2194,13 @@ void NetworkManager::OnEntityListReceived(uint8_t /*senderId*/, NetPacket& packe
 
 void NetworkManager::OnPeerConnected(uint8_t peerId) {
     std::fprintf(stdout, "[NetworkManager] Peer connected: %u\n", peerId);
+
+    // Start health tracking immediately (both roles): server tracks each
+    // client as it joins; client tracks peerId 0 for the server connection —
+    // per INetworkTransport::onPeerConnected's contract, this fires once on
+    // the client side for that connection and peerId is always 0 there.
+    s_connectionHealth[peerId] = ConnectionHealth{};
+
     if (!s_isServer) return;
 
     // Assign the peer its ID.
@@ -1996,6 +2236,7 @@ void NetworkManager::OnPeerDisconnected(uint8_t peerId) {
 
     s_pendingReadyClients.erase(peerId);
     s_lateJoiners.erase(peerId);
+    s_connectionHealth.erase(peerId);
 
     if (!s_isServer || !s_level) return;
 
@@ -2067,6 +2308,19 @@ void NetworkManager::DrawDebugUi() {
     ImGui::TextColored(pingColor(netStat.roundTripTime),
         "%u ms (+/- %u ms)", netStat.roundTripTime, netStat.roundTripTimeVariance);
 
+    if (!s_isServer) {
+        // Single connection — show staleness directly under the ping line.
+        const ConnectionStats cs = GetConnectionStats(0);
+        ImGui::Text("Last packet:"); ImGui::SameLine(90);
+        if (cs.timedOut) {
+            ImGui::TextColored(ImVec4(1.f, 0.2f, 0.2f, 1.f),
+                "%.1f s ago [TIMED OUT]", cs.timeSinceLastRecv);
+        }
+        else {
+            ImGui::Text("%.1f s ago", cs.timeSinceLastRecv);
+        }
+    }
+
     ImGui::Text("Loss:"); ImGui::SameLine(90);
     {
         ImVec4 lc = netStat.packetLossPercent > 5.f
@@ -2083,6 +2337,35 @@ void NetworkManager::DrawDebugUi() {
         ImGui::PopStyleColor();
     }
     ImGui::Spacing();
+
+    // ── Connected peers  (server only — per-client health breakdown) ────
+    if (s_isServer) {
+        ImGui::TextDisabled("Connected Peers");
+        ImGui::Separator();
+
+        if (s_connectionHealth.empty()) {
+            ImGui::TextDisabled("(none)");
+        }
+        else {
+            for (const auto& [peerId, health] : s_connectionHealth) {
+                const ConnectionStats cs = GetConnectionStats(peerId);
+                if (cs.timedOut) {
+                    ImGui::TextColored(ImVec4(1.f, 0.2f, 0.2f, 1.f),
+                        "Peer %u: TIMED OUT (%.1fs silent)", peerId, cs.timeSinceLastRecv);
+                }
+                else if (!cs.hasSample) {
+                    ImGui::TextColored(ImVec4(0.6f, 0.6f, 0.6f, 1.f),
+                        "Peer %u: no ping sample yet (%.1fs silent)", peerId, cs.timeSinceLastRecv);
+                }
+                else {
+                    ImGui::TextColored(pingColor(cs.rttMs),
+                        "Peer %u: %u ms (+/- %u ms), %.1fs silent",
+                        peerId, cs.rttMs, cs.rttVarianceMs, cs.timeSinceLastRecv);
+                }
+            }
+        }
+        ImGui::Spacing();
+    }
 
     // ── Data usage ────────────────────────────────────────────────────
     ImGui::TextDisabled("Data Usage");
