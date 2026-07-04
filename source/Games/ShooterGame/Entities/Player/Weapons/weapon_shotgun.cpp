@@ -47,6 +47,7 @@ public:
 
     void Update() override {
         WeaponFirearm::Update();
+        HideWeapon = true;
     }
 
     void PerformAttack() override {

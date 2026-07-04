@@ -520,8 +520,6 @@ void NpcBase::Update()
 {
 	Entity::Update();
 
-	Position = controller->GetSmoothPosition();
-
 	UpdateTask();
 
 }
@@ -534,7 +532,13 @@ void NpcBase::AsyncUpdate()
 	{
 		ZoneScopedN("Controller Update");
 
-		controller->Update(Time::DeltaTimeF);
+		if (taskState.HasToLockPosition == false || DoingTask == false)
+		{
+			controller->Update(Time::DeltaTimeF);
+			Position = controller->GetSmoothPosition();
+		}
+
+
 	}
 
 	{
@@ -624,8 +628,10 @@ void NpcBase::AsyncUpdate()
 
 	bool lockAtTarget =
 		((target_attack && target_sees && target_attackInRange && npcType == NpcType::Guard)
-			|| (target_follow && target_sees && length(curMove) < 1) || (target_follow && distanceToTarget < 2.5f))
-		&& DoingTask == false;
+			|| (target_follow && target_sees && length(curMove) < 1) || (target_follow && distanceToTarget < 2.5f));
+
+	if(DoingTask)
+		lockAtTarget = false;
 
 	if (isStunned() || mesh->InRagdoll)
 	{

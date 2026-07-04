@@ -9,6 +9,7 @@ private:
     // ── Shoot-and-scoot state ─────────────────────────────────────────────
     bool  repositioning      = false;
     vec3  repositionTarget   = vec3();
+    float repositionElapsed = 0.0f;
     vec3  desiredTargetLocation = vec3();
     int   shotsFired         = 0;
     int   shotsPerBurst      = 0;

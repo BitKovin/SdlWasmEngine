@@ -2732,7 +2732,7 @@
           "key": "modelscale",
           "displayName": "Uniform Scale",
           "type": "Real",
-          "defaultValue": "32",
+          "defaultValue": "48",
           "description": "Will by scaled by 32 in engine.",
           "bitIndex": 0,
           "isBuiltIn": false
@@ -2773,7 +2773,7 @@
           "key": "modelscale",
           "displayName": "Uniform Scale",
           "type": "Real",
-          "defaultValue": "32",
+          "defaultValue": "48",
           "description": "Will by scaled by 32 in engine.",
           "bitIndex": 0,
           "isBuiltIn": false
@@ -2814,7 +2814,7 @@
           "key": "modelscale",
           "displayName": "Uniform Scale",
           "type": "Real",
-          "defaultValue": "32",
+          "defaultValue": "48",
           "description": "Will by scaled by 32 in engine.",
           "bitIndex": 0,
           "isBuiltIn": false
@@ -2855,7 +2855,7 @@
           "key": "modelscale",
           "displayName": "Uniform Scale",
           "type": "Real",
-          "defaultValue": "32",
+          "defaultValue": "48",
           "description": "Will by scaled by 32 in engine.",
           "bitIndex": 0,
           "isBuiltIn": false
@@ -2896,7 +2896,7 @@
           "key": "modelscale",
           "displayName": "Uniform Scale",
           "type": "Real",
-          "defaultValue": "32",
+          "defaultValue": "48",
           "description": "Will by scaled by 32 in engine.",
           "bitIndex": 0,
           "isBuiltIn": false
@@ -2937,7 +2937,7 @@
           "key": "modelscale",
           "displayName": "Uniform Scale",
           "type": "Real",
-          "defaultValue": "32",
+          "defaultValue": "48",
           "description": "Will by scaled by 32 in engine.",
           "bitIndex": 0,
           "isBuiltIn": false

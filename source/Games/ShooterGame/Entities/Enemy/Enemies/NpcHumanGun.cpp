@@ -98,9 +98,18 @@ void NpcHumanGun::Attack()
             shotsPerBurst = 0;
             afterAttackDelay.AddDelay(1.5f);
             cantAttackDelay.AddDelay(0.5f);
-            if (!pathFollow.reachedTarget)
+
+            // Only relocate if the spot we're already standing in has stopped
+            // being a good one to shoot from. Previously this fired on every
+            // burst regardless of whether the current position was still
+            // fine, so the NPC would abandon a perfectly good attack spot
+            // (in range, clear shot) and run off to find a new one for no
+            // reason.
+            bool stillInGoodSpot = CheckAttackLocation(Position, resolvedTarget->Position);
+            if (!pathFollow.reachedTarget && !stillInGoodSpot)
             {
                 repositioning = true;
+                repositionElapsed = 0.0f;
                 repositionTarget = FindAttackLocation();
             }
         }
@@ -280,9 +289,31 @@ void NpcHumanGun::AsyncUpdate()
 
             cantAttackDelay.AddDelay(0.5f);
 
-            if (pathFollow.reachedTarget)
+            repositionElapsed += Time::DeltaTimeF;
+
+            // pathFollow.reachedTarget is only refreshed at the bottom of
+            // this function (pathFollow.TryPerform(), after this frame's
+            // movement has already been applied), so it always reports
+            // arrival one frame late. At a full sprint that's enough to
+            // overshoot a spot that sits close to a ledge. Checking our own
+            // fresh distance to repositionTarget catches arrival the same
+            // frame it happens, instead of one frame after the fact.
+            const float repositionArriveRadius = 0.5f;
+            bool arrivedAtRepositionTarget =
+                pathFollow.reachedTarget ||
+                glm::distance(Position, repositionTarget) < repositionArriveRadius;
+
+            // Safety net: if relocating is taking too long (bad path, a
+            // moving obstacle, a target spot that was farther than it
+            // looked, etc.) stop sprinting and start shooting from wherever
+            // we currently are instead of continuing to run — this bounds
+            // exactly the "runs a long way past the player" failure mode.
+            const float maxRepositionTime = 3.5f;
+            bool repositionTimedOut = repositionElapsed > maxRepositionTime;
+
+            if (arrivedAtRepositionTarget || repositionTimedOut)
             {
-                // Arrived – switch to shooting phase.
+                // Arrived (or gave up) – switch to shooting phase.
                 repositioning = false;
                 shotsPerBurst = 3 + (RandomHelper::RandomInt() % 2);
                 shotsFired = 0;
@@ -333,6 +364,7 @@ void NpcHumanGun::AsyncUpdate()
 
                     cantAttackDelay.AddDelay(0.5f);
                     repositioning = true;
+                    repositionElapsed = 0.0f;
                     repositionTarget = FindAttackLocation();
                     shotsFired = 0;
                     shotsPerBurst = 0;
@@ -368,7 +400,18 @@ void NpcHumanGun::AsyncUpdate()
         speed += Time::DeltaTimeF * 6.5f;
         speed = glm::clamp(speed, 0.0f, ModifyMovementSpeed(maxSpeed));
 
-        if ((hasLineOfSight || afterAttackDelay.Wait()) && !repositioning)
+        // repositioning is the only path in this state machine that's meant
+        // to move the NPC (it's what drives the "run" animation above). Any
+        // time we're not repositioning we must be fully stationary — that
+        // includes holding aim with LOS, the after-attack grace window, and
+        // the "stuck at closest reachable spot, no LOS" case above.
+        //
+        // Previously this only zeroed speed when hasLineOfSight or
+        // afterAttackDelay was true. The "stuck" case has neither (that's
+        // exactly how it's reached), so speed kept ramping up every frame
+        // with nothing to stop it, and the NPC would drift/slide while the
+        // aim animation played.
+        if (!repositioning)
             speed = 0.0f;
 
         movingDirection = glm::mix(movingDirection, desiredDirection,
@@ -448,6 +491,7 @@ void NpcHumanGun::Serialize(json& target)
     SERIALIZE_FIELD(target, accuracyModifier);
     SERIALIZE_FIELD(target, repositioning);
     SERIALIZE_FIELD(target, repositionTarget);
+    SERIALIZE_FIELD(target, repositionElapsed);
     SERIALIZE_FIELD(target, shotsFired);
     SERIALIZE_FIELD(target, shotsPerBurst);
 }
@@ -461,6 +505,7 @@ void NpcHumanGun::Deserialize(json& source)
     DESERIALIZE_FIELD(source, accuracyModifier);
     DESERIALIZE_FIELD(source, repositioning);
     DESERIALIZE_FIELD(source, repositionTarget);
+    DESERIALIZE_FIELD(source, repositionElapsed);
     DESERIALIZE_FIELD(source, shotsFired);
     DESERIALIZE_FIELD(source, shotsPerBurst);
 }
@@ -643,6 +688,22 @@ vec3 NpcHumanGun::FindAttackLocation()
             float dist = std::min(desired * distMult, desired);
             vec3 newPos = targetPos + dirToPos * dist;
 
+            // Keep candidates at the NPC's own current elevation rather than
+            // the target's. dirToPos is purely horizontal (it's built from
+            // referenceForward/referenceRight, both flattened to the XZ
+            // plane), so without this line every candidate silently lands
+            // at the target's height. For an NPC perched above the target —
+            // a rooftop, a ledge — that means every generated spot is
+            // effectively "go down to their level", which is what was
+            // dragging gunners off their vantage points. It also meant
+            // moveDist below was inflated by the height gap for every
+            // candidate, frequently emptying the candidate list and falling
+            // through to the "walk straight to the target" fallback further
+            // down. Actual walkability is still confirmed by the
+            // CylinderTrace/LOS checks below and, for the final pick, by the
+            // real navmesh pathfind added earlier in this function.
+            newPos.y = currentPos.y;
+
             float scatterRadius = desired * scatterRadiusMult;
             vec3 scatter = RandomHelper::RandomPosition(scatterRadius);
             scatter.y = 0.0f;
@@ -709,13 +770,20 @@ vec3 NpcHumanGun::FindAttackLocation()
         }
         else
         {
-            return targetPos;
+            // Don't fall through to the target's exact position — for an
+            // elevated NPC (a rooftop gunner, anything on a ledge) that
+            // means walking straight down to the target's level. Holding
+            // the current spot is the safe choice when nothing better can
+            // be found; the state machine will simply re-evaluate next
+            // cycle (hold aim, or try again once something changes).
+            return currentPos;
         }
     }
 
     // Advanced scoring
-    vec3  bestPos = candidates[0];
-    float bestScore = -std::numeric_limits<float>::max();
+    struct ScoredCandidate { float score; vec3 pos; };
+    std::vector<ScoredCandidate> scoredCandidates;
+    scoredCandidates.reserve(candidates.size());
 
     vec3 currRelDir = MathHelper::Normalized(MathHelper::XZ(currentPos - targetPos));
 
@@ -760,12 +828,49 @@ vec3 NpcHumanGun::FindAttackLocation()
             + randScore
             - clusterPenalty * clusterWeight;
 
-        if (score > bestScore)
-        {
-            bestScore = score;
-            bestPos = cand;
-        }
+        scoredCandidates.push_back({ score, cand });
     }
 
-    return bestPos;
+    std::sort(scoredCandidates.begin(), scoredCandidates.end(),
+        [](const ScoredCandidate& a, const ScoredCandidate& b) { return a.score > b.score; });
+
+    // ------------------------------------------------------------------
+    // Real-path validation.
+    //
+    // Every check above (moveDist <= maxMove, the CylinderTrace, the LOS
+    // segment walk) only looks at the straight line between currentPos and
+    // a candidate. A candidate can look close as the crow flies while the
+    // actual navmesh route around some obstacle is much longer — that
+    // mismatch is what let the NPC commit to a "reposition" that turned
+    // into a long sprint, carrying it past the player and, if the route
+    // passed near a drop, off a ledge it never would have crossed on a
+    // short, direct path.
+    //
+    // Walk the candidates best-score-first and take the first one whose
+    // real path is fully reachable and short enough. In the common case
+    // this costs a single extra pathfinding call, on the top candidate.
+    // ------------------------------------------------------------------
+    const float maxRepositionPathLength = absoluteMaxMove * 1.5f;
+
+    for (const auto& sc : scoredCandidates)
+    {
+        bool navReached = false;
+        std::vector<vec3> navPath = NavigationSystem::FindSimplePath(
+            currentPos, sc.pos, 0.3f, &navReached, false);
+
+        if (!navReached || navPath.size() < 2)
+            continue;
+
+        float navPathLength = 0.0f;
+        for (size_t i = 1; i < navPath.size(); ++i)
+            navPathLength += glm::distance(navPath[i - 1], navPath[i]);
+
+        if (navPathLength <= maxRepositionPathLength)
+            return sc.pos;
+    }
+
+    // Nothing scored well AND had a short, fully-reachable path. Staying put
+    // is safer than committing to a long, exposed run to a spot we can't
+    // actually confirm is close.
+    return currentPos;
 }

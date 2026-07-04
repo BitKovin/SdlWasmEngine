@@ -97,9 +97,9 @@ public:
 
     Particle UpdateParticle(Particle particle, float deltaTime) override
     {
-        particle.velocity -= WorldOrientationManager::GetUpVector()* 6.0f * (deltaTime / 2.0f);
+        particle.velocity -= WorldOrientationManager::GetUpVector()* 5.0f * (deltaTime / 2.0f);
         particle = ParticleEmitter::UpdateParticle(particle, deltaTime);
-        particle.velocity -= WorldOrientationManager::GetUpVector() * 6.0f * (deltaTime / 2.0f);
+        particle.velocity -= WorldOrientationManager::GetUpVector() * 5.0f * (deltaTime / 2.0f);
         particle.Transparency = std::max(particle.Transparency - (deltaTime / 1.5f), 0.0f);
         return particle;
     }
@@ -146,7 +146,7 @@ public:
             particle.UserValue1 += deltaTime;
 
 
-        float spawnInterval = 0.05f * Time::TimeScale;
+        float spawnInterval = 0.02f * Time::TimeScale;
         if (particle.UserValue1 > spawnInterval)
         {
             particle.UserValue1 -= spawnInterval;
@@ -211,7 +211,7 @@ public:
         Particle particle = ParticleEmitter::GetNewParticle();
         particle.BouncePower = 0.5f;
         particle.CollisionRadius = 0.2f;
-        particle.Size = 0.3;
+        particle.Size = 0.4;
 
         particle.position2 = Position;
 

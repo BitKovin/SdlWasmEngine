@@ -355,7 +355,7 @@ gun enemy
     </point>
     <point name="item_weapon_twinswords" color="0.5 0.5 0.5" box="-16 -16 -16 16 16 16">
         <model key="model" name="Model Path" value="models/pickups/weapons/twinswords.glb" />
-        <real key="modelscale" name="Uniform Scale" value="32">Will by scaled by 32 in engine.</real>
+        <real key="modelscale" name="Uniform Scale" value="48">Will by scaled by 32 in engine.</real>
         <string key="classname" name="Classname" value="item_weapon_twinswords">The classname of the entity.</string>
         <string key="targetname" name="Name" />
         <target key="target" name="Target">Targetname of entity to activate/target.</target>
@@ -369,7 +369,7 @@ gun enemy
     </point>
     <point name="item_weapon_pistol" color="0.5 0.5 0.5" box="-16 -16 -16 16 16 16">
         <model key="model" name="Model Path" value="models/pickups/weapons/pistol.glb" />
-        <real key="modelscale" name="Uniform Scale" value="32">Will by scaled by 32 in engine.</real>
+        <real key="modelscale" name="Uniform Scale" value="48">Will by scaled by 32 in engine.</real>
         <string key="classname" name="Classname" value="item_weapon_pistol">The classname of the entity.</string>
         <string key="targetname" name="Name" />
         <target key="target" name="Target">Targetname of entity to activate/target.</target>
@@ -383,7 +383,7 @@ gun enemy
     </point>
     <point name="item_weapon_shotgun" color="0.5 0.5 0.5" box="-16 -16 -16 16 16 16">
         <model key="model" name="Model Path" value="models/pickups/weapons/shotgun.glb" />
-        <real key="modelscale" name="Uniform Scale" value="32">Will by scaled by 32 in engine.</real>
+        <real key="modelscale" name="Uniform Scale" value="48">Will by scaled by 32 in engine.</real>
         <string key="classname" name="Classname" value="item_weapon_shotgun">The classname of the entity.</string>
         <string key="targetname" name="Name" />
         <target key="target" name="Target">Targetname of entity to activate/target.</target>
@@ -397,7 +397,7 @@ gun enemy
     </point>
     <point name="item_weapon_smg" color="0.5 0.5 0.5" box="-16 -16 -16 16 16 16">
         <model key="model" name="Model Path" value="models/pickups/weapons/stg44.glb" />
-        <real key="modelscale" name="Uniform Scale" value="32">Will by scaled by 32 in engine.</real>
+        <real key="modelscale" name="Uniform Scale" value="48">Will by scaled by 32 in engine.</real>
         <string key="classname" name="Classname" value="item_weapon_smg">The classname of the entity.</string>
         <string key="targetname" name="Name" />
         <target key="target" name="Target">Targetname of entity to activate/target.</target>
@@ -411,7 +411,7 @@ gun enemy
     </point>
     <point name="item_weapon_cannon" color="0.5 0.5 0.5" box="-16 -16 -16 16 16 16">
         <model key="model" name="Model Path" value="models/pickups/weapons/cannon.glb" />
-        <real key="modelscale" name="Uniform Scale" value="32">Will by scaled by 32 in engine.</real>
+        <real key="modelscale" name="Uniform Scale" value="48">Will by scaled by 32 in engine.</real>
         <string key="classname" name="Classname" value="item_weapon_cannon">The classname of the entity.</string>
         <string key="targetname" name="Name" />
         <target key="target" name="Target">Targetname of entity to activate/target.</target>
@@ -425,7 +425,7 @@ gun enemy
     </point>
     <point name="item_weapon_cane" color="0.5 0.5 0.5" box="-16 -16 -16 16 16 16">
         <model key="model" name="Model Path" value="models/pickups/weapons/cane.glb" />
-        <real key="modelscale" name="Uniform Scale" value="32">Will by scaled by 32 in engine.</real>
+        <real key="modelscale" name="Uniform Scale" value="48">Will by scaled by 32 in engine.</real>
         <string key="classname" name="Classname" value="item_weapon_cane">The classname of the entity.</string>
         <string key="targetname" name="Name" />
         <target key="target" name="Target">Targetname of entity to activate/target.</target>

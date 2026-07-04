@@ -254,7 +254,7 @@ void Player::UpdateStateGroundAir(vec2 input)
 	if (IsMantling()) return;
 
 	if (onGround)
-		bobProgress += glm::length(MathHelper::XZ(velocity)) * Time::DeltaTime;
+		bobProgress += glm::length(MathHelper::XZ(velocity)) * Time::DeltaTime * 0.80f;
 
 	// ── Slope info ────────────────────────────────────────────────────────
 	const vec3& groundNormal = controller.currentGroundNormal;
@@ -1555,9 +1555,9 @@ vec3 Player::GetBobForMainWeapon()
 	vec3 bobT = vec3(0);
 
 	bobT.y = (float)(sin(bobProgress * bobSpeed * 2) + 0.2f) * -0.15f;
-	bobT.x = (float)((sin(bobProgress * bobSpeed * 1)) - 0.15f) * 0.3f;
+	bobT.x = (float)((sin(bobProgress * bobSpeed * 1)) - 0.17f) * 0.3f;
 
-	return bobT * 0.02f;
+	return bobT * 0.03f;
 }
 
 IInteractive* Player::UpdateInteractionRaycast()
@@ -1775,7 +1775,7 @@ void Player::UpdateWeapon()
 	if (currentOffhandWeapon != nullptr)
 	{
 
-		currentOffhandWeapon->Position = Camera::position + MathHelper::TransformVector(vec3(0, -bob.y + 0.001, bob.x) * 2.0f, Camera::GetRotationMatrix());
+		currentOffhandWeapon->Position = Camera::position + MathHelper::TransformVector(vec3(0, -bob.y + 0.001, bob.x) * 1.0f, Camera::GetRotationMatrix());
 		currentOffhandWeapon->Rotation = lerp(cameraRotation, Camera::rotation , 0.3f) + runHideRotation;
 		if (dead)
 			currentOffhandWeapon->Rotation.x += std::min(deathAnimDelay.GetProgress(), 1.0f) * 30.0f;
