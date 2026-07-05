@@ -160,9 +160,9 @@ void PlayerRepresentation::AsyncUpdate()
     weaponR->OnlyShadows = OnlyShadows;
     weaponL->OnlyShadows = OnlyShadows;
 
-    weaponR->Scale *= vec3(0.93f);
-    weaponL->Scale *= vec3(0.93f);
-    mesh->Scale *= vec3(0.93f);
+    weaponR->Scale *= vec3(0.95f);
+    weaponL->Scale *= vec3(0.95f);
+    mesh->Scale *= vec3(0.95f);
 
 }
 
@@ -226,7 +226,7 @@ AnimationPose PlayerRepresentation::ApplyWeaponAnimation(AnimationPose pose)
         weaponAnimation->GetAnimationPose(),
         1, 1);
 
-    if (hasL == false)
+    if (hasL == false && currentState.weaponRHandlingType != 0)
     {
         outPose = AnimationPose::LayeredLerp(
             "clavicle_l",

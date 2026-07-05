@@ -114,6 +114,14 @@ public:
 		return p;
 	}
 
+
+	void SnapLastParticleToEmitterPosition() {
+		std::lock_guard<std::recursive_mutex> lock(particlesMutex);
+		if (!Particles.empty()) {
+			Particles.back().position = Position;
+		}
+	}
+
 	void DrawForward(mat4x4 view, mat4x4 projection);
 
 	void FinalizeFrameData();

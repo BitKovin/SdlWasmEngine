@@ -60,7 +60,7 @@ public:
 	// Ultimate mode
 	// -----------------------------------------------------------------------
 
-	bool ultimateActive = true;
+	bool ultimateActive = false;
 	const float UltimateSpeedMultiplier = 1.65f;
 
 	bool IsUltimateMode() const { return ultimateActive; }

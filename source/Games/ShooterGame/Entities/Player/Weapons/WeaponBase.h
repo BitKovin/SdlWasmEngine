@@ -49,7 +49,7 @@ public:
 
 	WeaponSlotData Data;
 
-	static inline std::string ArmsModelPath = "GameData/models/player/arms_p.glb";
+	static inline std::string ArmsModelPath = "GameData/models/player/arms_a.glb";
 
 	std::string thirdPersonModelPath = "GameData/models/player/weapons/pistol/pistol_tp.glb";
 

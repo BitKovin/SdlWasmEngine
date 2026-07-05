@@ -138,12 +138,38 @@ float getAspectRatio()
 
 vec3 smoothPosterize(vec3 color, float steps, float softness, vec2 uv)
 {
+    float gammaDist = 0.6;
+    color = pow(color, vec3_splat(gammaDist));
+
     float n = (smoothNoise(uv * 2.1) - 0.5) / steps * 0.7;
-    color += n;
-    color *= steps;
-    vec3 floored = floor(color);
-    vec3 fr = smoothstep(0.5 - softness, 0.5 + softness, fract(color));
-    return (floored + fr) / steps;
+    float N = max(steps - 1.0, 1.0);
+
+    // --- METHOD A: VALUE POSTERIZATION (Perfect Separation) ---
+    float val = max(color.r, max(color.g, color.b));
+    float safeVal = max(val, 0.0001);
+    
+    float noisyVal = clamp(val + n, 0.0, 1.0) * N;
+    float valFloored = floor(noisyVal);
+    float valFr = smoothstep(1.0 - softness, 1.0, fract(noisyVal));
+    float postVal = min(valFloored + valFr, N) / N;
+    
+    vec3 valueStepped = color * (postVal / safeVal);
+
+    // --- METHOD B: INDIVIDUAL RGB POSTERIZATION (Stylized Color Shifts) ---
+    vec3 noisyRGB = clamp(color + vec3_splat(n), 0.0, 1.0) * N;
+    vec3 rgbFloored = floor(noisyRGB);
+    vec3 rgbFr = smoothstep(1.0 - softness, 1.0, fract(noisyRGB));
+    vec3 rgbStepped = min(rgbFloored + rgbFr, vec3_splat(N)) / N;
+
+    // --- THE MAGIC BLEND ---
+    // 0.0 = Perfect preservation (no color shifting at all)
+    // 1.0 = Pure RGB snapping (colors will merge again)
+    // 0.2 to 0.4 = The Sweet Spot! (Beautiful hue shifts, no merging)
+    float colorShiftStrength = 0.35; 
+    
+    vec3 finalColor = mix(valueStepped, rgbStepped, colorShiftStrength);
+
+    return pow(finalColor, vec3_splat(1.0 / gammaDist));
 }
 
 // ---------------------------------------------------------------------------
@@ -208,9 +234,13 @@ void main()
 
     color = GetFromLUT(color);
 
-    if(depthValue<0.999)
+    if(depthValue<0.25)
     {
         color = smoothPosterize(color, 60.0, 0.35, coord * vec2(aspectRatio, 1.0));
+    }
+    else if(depthValue<0.999)
+    {
+        color = smoothPosterize(color, 50.0, 0.35, coord * vec2(aspectRatio, 1.0));
     }
 
     color += bayer_value / 256.0;

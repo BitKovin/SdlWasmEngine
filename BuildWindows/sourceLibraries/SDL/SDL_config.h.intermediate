@@ -70,7 +70,7 @@
 /* #undef HAVE_STDLIB_H */
 /* #undef HAVE_STRINGS_H */
 /* #undef HAVE_STRING_H */
-/* #undef HAVE_SYS_TYPES_H */
+#define HAVE_SYS_TYPES_H 1
 /* #undef HAVE_WCHAR_H */
 /* #undef HAVE_LINUX_INPUT_H */
 /* #undef HAVE_PTHREAD_NP_H */

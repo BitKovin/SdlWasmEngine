@@ -79,38 +79,60 @@ void RemotePlayer::Update()
 
 void RemotePlayer::LateUpdate()
 {
+    // Builds the PlayerState for a genuine remote player from the fields
+    // NetDeserialize() populated. This can't go through
+    // PlayerState::FromPlayerPtr() the way the owned branch below does,
+    // because a remote player has no local, simulated Player object to read
+    // from -- its position, weapon handling, and weapon paths all arrive
+    // over the wire and live directly on this RemotePlayer instead. Since
+    // this is the only other spot that builds a PlayerState, every field
+    // PlayerState exposes needs to be mirrored here by hand; if PlayerState
+    // grows a new field, update it here too or remote observers will silently
+    // see the default value for it (this is how weaponRHandlingType was
+    // getting lost).
+    auto buildNetworkedState = [this]() -> PlayerState
+    {
+        PlayerState state;
+        state.position            = Position;
+        state.rotation            = Rotation;
+        state.cameraRotation      = cameraRotation;
+        state.velocity            = predictedVelocity;
+        state.playerHeight        = playerHeight;
+        state.weaponRHandlingType = weaponRHandlingType;
+        state.weaponRModelPath    = weaponRModelPath;
+        state.weaponLModelPath    = weaponLModelPath;
+        return state;
+    };
 
     if (isOwned)
     {
         if (referencePlayer)
         {
-            // Keep prediction fields in sync with the live player so
-            // NetSerialize sends accurate data.
-            targetPosition = referencePlayer->Position;
-            targetRotation = referencePlayer->Rotation;
-            playerHeight = referencePlayer->controller.isCrouched
-                ? referencePlayer->controller.crouchHeight
-                : referencePlayer->controller.height;
-            predictedVelocity = referencePlayer->controller.GetVelocity();
-            cameraRotation = referencePlayer->cameraRotation;
+            // Single source of truth: build the canonical PlayerState once,
+            // then pull the prediction / NetSerialize fields from it instead
+            // of re-deriving them by hand. Previously this block recomputed
+            // playerHeight, cameraRotation, and weaponRHandlingType (including
+            // the akimbo override) independently of FromPlayerPtr(), so the
+            // value sent to remote clients could silently drift from whatever
+            // FromPlayerPtr() -- the only path that's actually kept up to
+            // date -- was computing for the local mirror clone.
+            const PlayerState state = PlayerState::FromPlayerPtr(referencePlayer);
 
+            targetPosition      = state.position;
+            targetRotation      = state.rotation;
+            playerHeight        = state.playerHeight;
+            predictedVelocity   = state.velocity;
+            cameraRotation      = state.cameraRotation;
+            weaponRHandlingType = state.weaponRHandlingType;
+
+            // Weapon indices aren't part of PlayerState -- it intentionally
+            // stays decoupled from the weapon registry -- so they still have
+            // to be resolved separately, only for the network payload.
             weaponRIndex = GetWeaponIndexFromRef(referencePlayer->currentWeapon);
             weaponLIndex = GetWeaponIndexFromRef(referencePlayer->currentOffhandWeapon);
 
-            weaponRHandlingType = referencePlayer->currentWeapon ? referencePlayer->currentWeapon->weaponHandlingType : 0;
-
-            if (referencePlayer->currentWeapon)
-            {
-                WeaponFirearm* fw = dynamic_cast<WeaponFirearm*>(referencePlayer->currentWeapon);
-                if (fw && fw->akimbo)
-                    weaponRHandlingType = 2;
-            }
-
-            // Build state directly from the player pointer — model paths are
-            // resolved without touching the weapon registry.
             if (representation)
             {
-                PlayerState state = PlayerState::FromPlayerPtr(referencePlayer);
                 representation->ApplyState(state);
 
                 // Owned players don't render their own body, so the only
@@ -157,15 +179,7 @@ void RemotePlayer::LateUpdate()
     // ── Push final state to the representation (remote players only) ──────────
     if (!isOwned && representation)
     {
-        PlayerState state;
-        state.position = Position;
-        state.rotation = Rotation;
-        state.cameraRotation = cameraRotation;
-        state.velocity = predictedVelocity;
-        state.playerHeight = playerHeight;
-
-        state.weaponRModelPath = weaponRModelPath;
-        state.weaponLModelPath = weaponLModelPath;
+        const PlayerState state = buildNetworkedState();
 
         representation->Visible = true;
         representation->ApplyState(state);

@@ -2454,6 +2454,8 @@ void Player::Update()
 		UpdateInteraction();
 	}
 
+	UpdateWeapon();
+
 }
 
 void Player::AsyncUpdate()
@@ -2492,7 +2494,6 @@ void Player::LateUpdate()
 
 		}
 
-	UpdateWeapon();
 
 	if (CurrentMaxRestrictionLevel > CurrentClearance)
 	{
@@ -2567,7 +2568,7 @@ void Player::UpdateBody()
 	else
 	{
 		mat4 scale0 = scale(vec3(0));
-		//pose.SetBoneTransform("neck_01", scale0);
+		pose.SetBoneTransform("neck_01", scale0);
 		pose.SetBoneTransform("upperarm_r", scale0);
 		pose.SetBoneTransform("upperarm_l", scale0);
 	}

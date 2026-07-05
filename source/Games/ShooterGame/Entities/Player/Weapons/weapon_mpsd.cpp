@@ -95,6 +95,8 @@ public:
 
         thirdPersonAnimator = make_unique<Animator_Rifle>(this);
 
+        weaponHandlingType = 0;
+
 		SupportsOffhandWeapon = false;
 
     }

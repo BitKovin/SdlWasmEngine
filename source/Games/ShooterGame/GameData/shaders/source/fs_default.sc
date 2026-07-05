@@ -26,6 +26,8 @@ uniform vec4 specular_scale; // @ (0.05, 0.0, 0.0, 0.0) - Scales specular intens
 uniform vec4 modelColor;
 uniform vec4 PointLightsNumber;
 
+uniform vec4 isViewmodel;
+
 #ifndef MAX_POINT_LIGHTS
     #define MAX_POINT_LIGHTS 16
 #endif
@@ -40,7 +42,7 @@ float ComputeStyledDiffuse(vec3 normal, vec3 lightDir)
 
 {
 
-    float factor = clamp(dot(normal, normalize(lightDir)) * 0.7 + 0.3, 0.0, 1.0);
+    float factor = clamp(dot(normal, normalize(lightDir)) * 0.9 + 0.1, 0.0, 1.0);
 
 
 
@@ -61,7 +63,7 @@ float ComputeStyledDiffuse(vec3 normal, vec3 lightDir)
     float high_curve = smoothstep(mid_start, mid_end, factor);
 
 
-    return mix(mix(low_curve, high_curve, curve_mix),factor, 0.5);
+    return factor;// mix(mix(low_curve, high_curve, curve_mix),factor, 0.5);
 
 }
 
@@ -118,7 +120,7 @@ vec3 CalculateContourRim(vec3 normal, vec3 viewDir)
     // This transitions from 1.0 at NdotV=0.2 (grazing) down to 0.0 at NdotV=0.4 (facing).
     float frontMask = smoothstep(0.4, 0.2, NdotV); 
     
-    return rimEdge * frontMask * rim_color.rgb * 0.07; 
+    return rimEdge * frontMask * rim_color.rgb * 0.045; 
 }
 
 // ==========================================
@@ -243,11 +245,19 @@ void main()
 
     // Accumulate Lighting
     vec3 dirDiffuse  = CalculateDirectionalDiffuse(normal, lightDir);
-    vec3 dirSpecular = CalculateDirectionalSpecular(normal, lightDir, viewDir);
+
+
+    float luma = pow(dot(color, vec3(0.299, 0.587, 0.114)), 1.5);
+
+    float specularFactor = mix(luma * 1.0f, 0.2, 0.2) * 2.0;
+
+    vec3 dirSpecular = CalculateDirectionalSpecular(normal, lightDir, viewDir) * specularFactor;
     
     vec3 pointDiffuse  = vec3(0.0,0.0,0.0);
     vec3 pointSpecular = vec3(0.0,0.0,0.0);
     CalculatePointLights(normal, v_world.xyz, viewDir, pointDiffuse, pointSpecular);
+
+    pointSpecular *= specularFactor;
 
     vec3 emissive = texture2D(u_textureEmissive, v_texcoord0).rgb;
 

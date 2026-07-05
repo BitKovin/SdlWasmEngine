@@ -408,24 +408,6 @@ void WeaponFirearm::AsyncUpdate()
 		armsLeft->PasteAnimationPose(poseL);
 	}
 
-	if (smokeTrail)
-	{
-		mat4 boneMat = (viewmodel)->GetBoneMatrixWorld("weapon_fire_point");
-		vec3 startLoc = MathHelper::DecomposeMatrix(boneMat).Position;
-
-		smokeTrail->Position = startLoc;
-
-	}
-
-	if (smokeTrailL)
-	{
-		mat4 boneMat = (viewmodelLeft)->GetBoneMatrixWorld("weapon_fire_point");
-		vec3 startLoc = MathHelper::DecomposeMatrix(boneMat).Position;
-
-		smokeTrailL->Position = startLoc;
-
-	}
-
 
 }
 
@@ -459,6 +441,27 @@ void WeaponFirearm::LateUpdate()
 		armsLeft->Position = viewmodelLeft->Position;
 		armsLeft->Rotation = viewmodelLeft->Rotation;
 	}
+
+	if (smokeTrail)
+	{
+		mat4 boneMat = (viewmodel)->GetBoneMatrixWorld("weapon_fire_point");
+		vec3 startLoc = MathHelper::DecomposeMatrix(boneMat).Position;
+
+		smokeTrail->Position = startLoc;
+		smokeTrail->emitters[0]->SnapLastParticleToEmitterPosition();
+
+	}
+
+	if (smokeTrailL)
+	{
+		mat4 boneMat = (viewmodelLeft)->GetBoneMatrixWorld("weapon_fire_point");
+		vec3 startLoc = MathHelper::DecomposeMatrix(boneMat).Position;
+
+		smokeTrailL->Position = startLoc;
+		smokeTrailL->emitters[0]->SnapLastParticleToEmitterPosition();
+
+	}
+
 }
 
 WeaponSlotData WeaponFirearm::GetDefaultData() {
