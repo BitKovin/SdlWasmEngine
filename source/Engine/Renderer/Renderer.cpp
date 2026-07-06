@@ -13,6 +13,8 @@
 
 #include <World/WorldOrientationManager.h>
 
+#include <StaticMesh.h>
+
 // -----------------------------------------------------------------------
 // bgfx clear-color helper  (RGBA packed as uint32_t 0xRRGGBBAA)
 // -----------------------------------------------------------------------
@@ -193,6 +195,97 @@ void Renderer::RenderLevel(Level* level, bgfx::FrameBufferHandle targetFrameBuff
     BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Always);
     BgfxStateManager::Apply();
     RenderFullscreenQuad(fullscreenShader);
+    frameNumber++;
+}
+
+// Two shadow colors are treated as "the same" for batching purposes if every
+// channel is within this distance of each other.
+constexpr float kShadowGroupMaxColorDist = 0.03f;
+
+// Two meshes are only grouped together if their world-space bounds are within
+// this margin of touching. Prevents unrelated, distant casters that happen to
+// share a color from being merged (and possibly stomping each other's stencil
+// bits if they *do* end up overlapping on screen unexpectedly).
+constexpr float kShadowGroupBoundsTouchEpsilon = 0.01f;
+
+static bool ShadowColorsSimilar(const vec3& a, const vec3& b)
+{
+    return std::abs(a.r - b.r) <= kShadowGroupMaxColorDist &&
+        std::abs(a.g - b.g) <= kShadowGroupMaxColorDist &&
+        std::abs(a.b - b.b) <= kShadowGroupMaxColorDist;
+}
+
+void Renderer::DrawDetailShadows(const std::vector<IDrawMesh*>& VissibleRenderList)
+{
+    struct ShadowCandidate
+    {
+        StaticMesh* mesh;
+        vec3        shadowColor;
+        BoundingBox bounds; // swap for your bounds type / accessor
+    };
+
+    std::vector<ShadowCandidate> candidates;
+    candidates.reserve(VissibleRenderList.size());
+
+    for (auto* m : VissibleRenderList)
+    {
+        if (!m->IsDetailShadow()) continue;
+        if (m->IsViewmodel) continue;
+
+		StaticMesh* mesh = dynamic_cast<StaticMesh*>(m);
+
+        vec3 shadowColor = mesh->GetShadowColorMult(); // computed at most once per frame per mesh
+        if (shadowColor.r >= 0.999f && shadowColor.g >= 0.999f && shadowColor.b >= 0.999f)
+            continue; // effectively no shadow, skip
+
+        candidates.push_back({ mesh, shadowColor, mesh->finalizedBoundingBox });
+    }
+
+    std::vector<bool> used(candidates.size(), false);
+
+    for (size_t i = 0; i < candidates.size(); ++i)
+    {
+        if (used[i]) continue;
+
+        std::vector<size_t> group{ i };
+        used[i] = true;
+
+        // Greedily pull in any remaining candidate that's color-similar to,
+        // and bounds-touching, anything already in the group.
+        bool grew = true;
+        while (grew)
+        {
+            grew = false;
+            for (size_t j = 0; j < candidates.size(); ++j)
+            {
+                if (used[j]) continue;
+
+                for (size_t gi : group)
+                {
+                    if (ShadowColorsSimilar(candidates[gi].shadowColor, candidates[j].shadowColor) &&
+                        candidates[gi].bounds.Intersects(candidates[j].bounds))
+                    {
+                        group.push_back(j);
+                        used[j] = true;
+                        grew = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Render the whole group as a single stencil-fill / darken / clear cycle.
+        auto savedState = BgfxStateManager::GetState();
+
+        for (size_t gi : group)
+            candidates[gi].mesh->DrawShadowVolumeStencil(Camera::finalizedView, Camera::finalizedProjection);
+
+        StaticMesh::ApplyShadowDarkening(candidates[group[0]].shadowColor);
+        StaticMesh::ClearShadowStencil();
+
+        BgfxStateManager::SetState(savedState);
+        bgfx::setStencil(BGFX_STENCIL_DEFAULT);
+    }
 }
 
 // -----------------------------------------------------------------------
@@ -369,14 +462,7 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
             mesh->DrawForward(Camera::finalizedView, P);
         }
 
-        for (auto* mesh : VissibleRenderList)
-        {
-
-            if (mesh->IsDetailShadow() == false) continue;
-            if (mesh->IsViewmodel) continue;
-
-            mesh->DrawMeshShadow(Camera::finalizedView, Camera::finalizedProjection);
-        }
+        DrawDetailShadows(VissibleRenderList);
 
         for (auto* mesh : VissibleRenderList)
         {

@@ -532,94 +532,100 @@ void StaticMesh::DrawShadow(mat4x4 view, mat4x4 projection)
 	BgfxStateManager::SetState(startState);
 }
 
-void StaticMesh::DrawMeshShadow(mat4x4 view, mat4x4 projection)
+// ── Shadow colour, cached once per frame per mesh ──────────────────────────
+vec3 StaticMesh::GetShadowColorMult()
 {
-    if (model == nullptr) return;
- 
-	auto lightData = GetLightVolData();
+	const uint64_t frame = Renderer::Instance->frameNumber;
+	if (shadowColorMultFrame == frame)
+		return cachedShadowColorMult;
 
+	shadowColorMultFrame = frame;
+
+	if (model == nullptr)
+	{
+		cachedShadowColorMult = vec3(1.0f);
+		return cachedShadowColorMult;
+	}
+
+	auto lightData = GetLightVolData();
 	lastLightDir = lightData.direction * -1.0f;
 	lastLightVolData = lightData;
 
-    // ── Shadow colour (unchanged) ─────────────────────────────────────────────
-    const vec3  ambientColor     = lastLightVolData.ambientColor;
-    const vec3  directionalColor = lastLightVolData.directColor;
-    constexpr float kEps = 0.001f;
- 
-    vec3 shadowColor;
-    shadowColor.r = (directionalColor.r > kEps) ? (ambientColor.r / directionalColor.r) : 1.0f;
-    shadowColor.g = (directionalColor.g > kEps) ? (ambientColor.g / directionalColor.g) : 1.0f;
-    shadowColor.b = (directionalColor.b > kEps) ? (ambientColor.b / directionalColor.b) : 1.0f;
-    shadowColor   = clamp(shadowColor, vec3(0.0f), vec3(1.0f));
- 
-    float ambientLum     = dot(ambientColor,     vec3(0.299f, 0.587f, 0.114f));
-    float directionalLum = dot(directionalColor, vec3(0.299f, 0.587f, 0.114f));
-    float uniformShadow  = (directionalLum > kEps)
-        ? glm::clamp(ambientLum / directionalLum, 0.0f, 1.0f) : 1.0f;
- 
-    float blendT = 1.0f - uniformShadow;
-    shadowColor  = mix(vec3(uniformShadow), shadowColor, blendT);
-    vec3 d       = vec3(1.0f) - shadowColor;
-    shadowColor  = vec3(1.0f) - d * d;
-    shadowColor += 0.05f;
-    shadowColor  = clamp(shadowColor, vec3(0.0f), vec3(1.0f));
-    shadowColor  = 1.0f - shadowColor;
-    shadowColor *= 1.12f;
-    shadowColor  = 1.0f - shadowColor;
- 
-    if (shadowColor.r >= 0.999f && shadowColor.g >= 0.999f && shadowColor.b >= 0.999f)
-        return;
- 
-    // Fake light position for directional light.
-    // lastLightVolData.direction is FROM light TOWARD surface.
-    // We want the fake source in the opposite direction, very far away.
-    const vec3 fakeLightPos = normalize(lastLightVolData.direction) * 1e6f;
- 
-    const bgfx::ViewId viewId = ViewIdManager::GetCurrentId();
- 
-    Shader* capShader  = ShaderManager::GetShaderProgram("shadowVolume/vs_shadowvolcap",  "shadowVolume/fs_shadowvol");
-    Shader* edgeShader = ShaderManager::GetShaderProgram("shadowVolume/vs_shadowvoledge", "shadowVolume/fs_shadowvol");
- 
-    auto setCommonUniforms = [&](Shader* sh)
-    {
-        sh->UseProgram();
-        sh->SetUniform("world",            finalizedWorld);
-        sh->SetUniform("view",             view);
-        sh->SetUniform("projection",       projection);
-        sh->SetUniform("u_shadowLightPos", vec4(fakeLightPos, 0.0f));
-        ApplyAdditionalShaderParams(sh);
-    };
- 
-    // ─────────────────────────────────────────────────────────────────────────
-    // PASS A — Z-FAIL STENCIL
-    // No colour write, no depth write, depth test read-only, no face culling.
-    // Front face depth-fail → DECREMENT, back face depth-fail → INCREMENT.
-    // ─────────────────────────────────────────────────────────────────────────
- 
-    auto savedState = BgfxStateManager::GetState();
-    BgfxStateManager::SetCull(BgfxStateManager::Cull::None);
-    BgfxStateManager::SetWriteRGB(false);
-    BgfxStateManager::SetWriteAlpha(false);
-    BgfxStateManager::SetWriteDepth(false);
-    BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Less);
+	const vec3 ambientColor = lastLightVolData.ambientColor;
+	const vec3 directionalColor = lastLightVolData.directColor;
+	constexpr float kEps = 0.001f;
+
+	vec3 shadowColor;
+	shadowColor.r = (directionalColor.r > kEps) ? (ambientColor.r / directionalColor.r) : 1.0f;
+	shadowColor.g = (directionalColor.g > kEps) ? (ambientColor.g / directionalColor.g) : 1.0f;
+	shadowColor.b = (directionalColor.b > kEps) ? (ambientColor.b / directionalColor.b) : 1.0f;
+	shadowColor = clamp(shadowColor, vec3(0.0f), vec3(1.0f));
+
+	float ambientLum = dot(ambientColor, vec3(0.299f, 0.587f, 0.114f));
+	float directionalLum = dot(directionalColor, vec3(0.299f, 0.587f, 0.114f));
+	float uniformShadow = (directionalLum > kEps)
+		? glm::clamp(ambientLum / directionalLum, 0.0f, 1.0f) : 1.0f;
+
+	float blendT = 1.0f - uniformShadow;
+	shadowColor = mix(vec3(uniformShadow), shadowColor, blendT);
+	vec3 d = vec3(1.0f) - shadowColor;
+	shadowColor = vec3(1.0f) - d * d;
+	shadowColor += 0.05f;
+	shadowColor = clamp(shadowColor, vec3(0.0f), vec3(1.0f));
+	shadowColor = 1.0f - shadowColor;
+	shadowColor *= 1.12f;
+	shadowColor = 1.0f - shadowColor;
+
+	cachedShadowColorMult = shadowColor;
+	return cachedShadowColorMult;
+}
+
+// ── PASS A — Z-FAIL STENCIL FILL (per-mesh geometry) ────────────────────────
+void StaticMesh::DrawShadowVolumeStencil(mat4x4 view, mat4x4 projection)
+{
+	if (model == nullptr) return;
+
+	// lastLightVolData must already be populated — GetShadowColorMult() does that.
+	const vec3 fakeLightPos = normalize(lastLightVolData.direction) * 1e6f;
+
+	const bgfx::ViewId viewId = ViewIdManager::GetCurrentId();
+
+	Shader* capShader = ShaderManager::GetShaderProgram("shadowVolume/vs_shadowvolcap", "shadowVolume/fs_shadowvol");
+	Shader* edgeShader = ShaderManager::GetShaderProgram("shadowVolume/vs_shadowvoledge", "shadowVolume/fs_shadowvol");
+
+	auto setCommonUniforms = [&](Shader* sh)
+		{
+			sh->UseProgram();
+			sh->SetUniform("world", finalizedWorld);
+			sh->SetUniform("view", view);
+			sh->SetUniform("projection", projection);
+			sh->SetUniform("u_shadowLightPos", vec4(fakeLightPos, 0.0f));
+			ApplyAdditionalShaderParams(sh);
+		};
+
+	BgfxStateManager::SetCull(BgfxStateManager::Cull::None);
+	BgfxStateManager::SetWriteRGB(false);
+	BgfxStateManager::SetWriteAlpha(false);
+	BgfxStateManager::SetWriteDepth(false);
+	BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Less);
 	BgfxStateManager::SetMSAA(false);
-    BgfxStateManager::Apply();
- 
-    const uint32_t frontStencil =
-        BGFX_STENCIL_TEST_ALWAYS      | BGFX_STENCIL_FUNC_REF(0) |
-        BGFX_STENCIL_FUNC_RMASK(0xFF) | BGFX_STENCIL_OP_FAIL_S_KEEP |
-        BGFX_STENCIL_OP_FAIL_Z_DECR   | BGFX_STENCIL_OP_PASS_Z_KEEP;
- 
-    const uint32_t backStencil =
-        BGFX_STENCIL_TEST_ALWAYS      | BGFX_STENCIL_FUNC_REF(0) |
-        BGFX_STENCIL_FUNC_RMASK(0xFF) | BGFX_STENCIL_OP_FAIL_S_KEEP |
-        BGFX_STENCIL_OP_FAIL_Z_INCR   | BGFX_STENCIL_OP_PASS_Z_KEEP;
- 
-    for (size_t i = 0; i < model->meshes.size(); ++i)
-    {
-        const roj::SkinnedMesh&         mesh    = model->meshes[i];
-        const roj::ShadowVolumePrecomp& precomp = mesh.shadowVolumePrecomp;
- 
+	BgfxStateManager::Apply();
+
+	const uint32_t frontStencil =
+		BGFX_STENCIL_TEST_ALWAYS | BGFX_STENCIL_FUNC_REF(0) |
+		BGFX_STENCIL_FUNC_RMASK(0xFF) | BGFX_STENCIL_OP_FAIL_S_KEEP |
+		BGFX_STENCIL_OP_FAIL_Z_DECR | BGFX_STENCIL_OP_PASS_Z_KEEP;
+
+	const uint32_t backStencil =
+		BGFX_STENCIL_TEST_ALWAYS | BGFX_STENCIL_FUNC_REF(0) |
+		BGFX_STENCIL_FUNC_RMASK(0xFF) | BGFX_STENCIL_OP_FAIL_S_KEEP |
+		BGFX_STENCIL_OP_FAIL_Z_INCR | BGFX_STENCIL_OP_PASS_Z_KEEP;
+
+	for (size_t i = 0; i < model->meshes.size(); ++i)
+	{
+		const roj::SkinnedMesh& mesh = model->meshes[i];
+		const roj::ShadowVolumePrecomp& precomp = mesh.shadowVolumePrecomp;
+
 		bool isHiddenMesh = false;
 		for (const auto& hideName : finalMeshHideList)
 		{
@@ -631,74 +637,88 @@ void StaticMesh::DrawMeshShadow(mat4x4 view, mat4x4 projection)
 		}
 		if (isHiddenMesh)
 			continue;
- 
-        // A1. Caps (now uses index buffer)
-        if (bgfx::isValid(precomp.capVbh) && precomp.capIndexCount > 0)
-        {
-            setCommonUniforms(capShader);
-            bgfx::setStencil(frontStencil, backStencil);
-            bgfx::setVertexBuffer(0, precomp.capVbh);
-            bgfx::setIndexBuffer(precomp.capIbh);
-            BgfxStateManager::Apply();
-            capShader->Submit(viewId);
-        }
- 
-        // A2. Edges
-        if (bgfx::isValid(precomp.edgeVbh) && precomp.edgeIndexCount > 0)
-        {
-            setCommonUniforms(edgeShader);
-            bgfx::setStencil(frontStencil, backStencil);
-            bgfx::setVertexBuffer(0, precomp.edgeVbh);
-            bgfx::setIndexBuffer(precomp.edgeIbh);
-            BgfxStateManager::Apply();
-            edgeShader->Submit(viewId);
-        }
-    }
- 
-    // ─────────────────────────────────────────────────────────────────────────
-    // PASS B — SHADOW DARKENING (multiply blend, stencil != 0)
-    // ─────────────────────────────────────────────────────────────────────────
- 
-    BgfxStateManager::SetCull(BgfxStateManager::Cull::CW);
-    BgfxStateManager::SetWriteRGB(true);
-    BgfxStateManager::SetWriteAlpha(true);
-    BgfxStateManager::SetBlend(BgfxStateManager::Blend::Multiply);
-    BgfxStateManager::SetWriteDepth(false);
-	BgfxStateManager::SetMSAA(false);// no need to msaa fullscreen effect 
-    BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::None);
-    BgfxStateManager::Apply();
- 
-    Shader* colorShader = ShaderManager::GetShaderProgram("vs_fullscreen", "fs_fullscreen_color");
-    colorShader->UseProgram();
-    colorShader->SetUniform("u_color",     vec4(shadowColor, 1.0f));
-  
- 
-    bgfx::setStencil(
-        BGFX_STENCIL_TEST_NOTEQUAL    | BGFX_STENCIL_FUNC_REF(0) |
-        BGFX_STENCIL_FUNC_RMASK(0xFF) | BGFX_STENCIL_OP_FAIL_S_KEEP |
-        BGFX_STENCIL_OP_FAIL_Z_KEEP   | BGFX_STENCIL_OP_PASS_Z_KEEP);
-    BgfxStateManager::Apply();
+
+		if (bgfx::isValid(precomp.capVbh) && precomp.capIndexCount > 0)
+		{
+			setCommonUniforms(capShader);
+			bgfx::setStencil(frontStencil, backStencil);
+			bgfx::setVertexBuffer(0, precomp.capVbh);
+			bgfx::setIndexBuffer(precomp.capIbh);
+			BgfxStateManager::Apply();
+			capShader->Submit(viewId);
+		}
+
+		if (bgfx::isValid(precomp.edgeVbh) && precomp.edgeIndexCount > 0)
+		{
+			setCommonUniforms(edgeShader);
+			bgfx::setStencil(frontStencil, backStencil);
+			bgfx::setVertexBuffer(0, precomp.edgeVbh);
+			bgfx::setIndexBuffer(precomp.edgeIbh);
+			BgfxStateManager::Apply();
+			edgeShader->Submit(viewId);
+		}
+	}
+}
+
+// ── PASS B — SHADOW DARKENING (one call per group) ──────────────────────────
+void StaticMesh::ApplyShadowDarkening(const vec3& shadowColor)
+{
+	BgfxStateManager::SetCull(BgfxStateManager::Cull::CW);
+	BgfxStateManager::SetWriteRGB(true);
+	BgfxStateManager::SetWriteAlpha(true);
+	BgfxStateManager::SetBlend(BgfxStateManager::Blend::Multiply);
+	BgfxStateManager::SetWriteDepth(false);
+	BgfxStateManager::SetMSAA(false);
+	BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::None);
+	BgfxStateManager::Apply();
+
+	Shader* colorShader = ShaderManager::GetShaderProgram("vs_fullscreen", "fs_fullscreen_color");
+	colorShader->UseProgram();
+	colorShader->SetUniform("u_color", vec4(shadowColor, 1.0f));
+
+	bgfx::setStencil(
+		BGFX_STENCIL_TEST_NOTEQUAL | BGFX_STENCIL_FUNC_REF(0) |
+		BGFX_STENCIL_FUNC_RMASK(0xFF) | BGFX_STENCIL_OP_FAIL_S_KEEP |
+		BGFX_STENCIL_OP_FAIL_Z_KEEP | BGFX_STENCIL_OP_PASS_Z_KEEP);
+	BgfxStateManager::Apply();
 	Renderer::Instance->RenderFullscreenQuad(colorShader);
- 
-    // ─────────────────────────────────────────────────────────────────────────
-    // PASS C — STENCIL CLEAR (no colour/depth write, stencil != 0 → REPLACE 0)
-    // ─────────────────────────────────────────────────────────────────────────
- 
-    BgfxStateManager::SetWriteRGB(false);
-    BgfxStateManager::SetWriteAlpha(false);
-    BgfxStateManager::SetWriteDepth(false);
-    BgfxStateManager::Apply();
- 
+}
+
+// ── PASS C — STENCIL CLEAR (one call per group) ─────────────────────────────
+void StaticMesh::ClearShadowStencil()
+{
+	BgfxStateManager::SetWriteRGB(false);
+	BgfxStateManager::SetWriteAlpha(false);
+	BgfxStateManager::SetWriteDepth(false);
+	BgfxStateManager::Apply();
+
+	Shader* colorShader = ShaderManager::GetShaderProgram("vs_fullscreen", "fs_fullscreen_color");
+
 	bgfx::setStencil(
 		BGFX_STENCIL_TEST_NOTEQUAL | BGFX_STENCIL_FUNC_REF(0) |
 		BGFX_STENCIL_FUNC_RMASK(0xFF) | BGFX_STENCIL_OP_FAIL_S_KEEP |
 		BGFX_STENCIL_OP_FAIL_Z_KEEP | BGFX_STENCIL_OP_PASS_Z_REPLACE);
 	BgfxStateManager::Apply();
 	Renderer::Instance->RenderFullscreenQuad(colorShader);
-    
- 
-    BgfxStateManager::SetState(savedState);
-    bgfx::setStencil(BGFX_STENCIL_DEFAULT);
+}
+
+// ── Thin wrapper kept for single-mesh call sites ────────────────────────────
+void StaticMesh::DrawMeshShadow(mat4x4 view, mat4x4 projection)
+{
+	if (model == nullptr) return;
+
+	vec3 shadowColor = GetShadowColorMult();
+	if (shadowColor.r >= 0.999f && shadowColor.g >= 0.999f && shadowColor.b >= 0.999f)
+		return;
+
+	auto savedState = BgfxStateManager::GetState();
+
+	DrawShadowVolumeStencil(view, projection);
+	ApplyShadowDarkening(shadowColor);
+	ClearShadowStencil();
+
+	BgfxStateManager::SetState(savedState);
+	bgfx::setStencil(BGFX_STENCIL_DEFAULT);
 }
 
 void StaticMesh::PreloadAssets()

@@ -21,6 +21,8 @@ public:
 
 	void RenderLevel(Level* level, bgfx::FrameBufferHandle targetFrameBuffer);
 
+	void DrawDetailShadows(const std::vector<IDrawMesh*>& VissibleRenderList);
+
 	void RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList);
 
 	void RenderDirectionalLightShadows(vector<IDrawMesh*>& ShadowRenderList, Framebuffer& fbo, int numCascades);
@@ -41,6 +43,8 @@ public:
 	Shader* copyShader = nullptr;
 	Shader* depthCopyShader = nullptr;
 	Shader* depthMsaaResolveShader = nullptr;
+
+	uint64_t frameNumber = 0;
 
 private:
 
@@ -79,5 +83,7 @@ private:
 
 	Shader* blurShader = nullptr;
 	Shader* blurApplyShader = nullptr;
+
+
 
 };

@@ -26,6 +26,8 @@ class StaticMesh : public IDrawMesh
 {
 private:
 
+	friend class Renderer;
+
 	LightVolPointData lastLightVolData = LightVolPointData();
 
 	vec3 lastLightDir = vec3(0.0f, -1.0f, 0.0f); //so we don't recaclulate it twice per frame
@@ -221,11 +223,20 @@ public:
 	void DrawCustomId(mat4x4 view, mat4x4 projection);
 
 	void DrawShadow(mat4x4 view, mat4x4 projection);
-	void DrawMeshShadow(mat4x4 view, mat4x4 projection);
+
+
+	vec3 GetShadowColorMult();                                   // cached per-frame
+	void DrawShadowVolumeStencil(mat4x4 view, mat4x4 projection); // Pass A only
+	static void ApplyShadowDarkening(const vec3& shadowColor);    // Pass B only
+	static void ClearShadowStencil();                             // Pass C only
+
+	void DrawMeshShadow(mat4x4 view, mat4x4 projection);          // kept, single-mesh convenience wrapper
+
 
 	void PreloadAssets();
 
-
-private:
+	private:
+		uint64_t shadowColorMultFrame = ~0ull;
+		vec3     cachedShadowColorMult = vec3(1.0f);
 
 };
