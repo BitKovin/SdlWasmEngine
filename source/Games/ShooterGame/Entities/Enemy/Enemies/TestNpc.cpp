@@ -68,6 +68,7 @@ void TestNpc::Stun()
 
 void TestNpc::Attack()
 {
+
 	if (isOwned)
 	{
 		if (inAttackDelay.Wait()) return;
@@ -172,6 +173,7 @@ void TestNpc::AsyncUpdate()
 
 	if (IsDead()) return;
 
+	mesh->UpdatePoseOnlyWhenRendered = state != NpcState::Attacking;
 	mesh->Update(ModifyAnimationSpeed(1.0f));
 
 	auto animEvents = mesh->PullAnimationEvents();
