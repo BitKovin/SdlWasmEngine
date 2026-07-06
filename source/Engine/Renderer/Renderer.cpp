@@ -200,13 +200,7 @@ void Renderer::RenderLevel(Level* level, bgfx::FrameBufferHandle targetFrameBuff
 
 // Two shadow colors are treated as "the same" for batching purposes if every
 // channel is within this distance of each other.
-constexpr float kShadowGroupMaxColorDist = 0.03f;
-
-// Two meshes are only grouped together if their world-space bounds are within
-// this margin of touching. Prevents unrelated, distant casters that happen to
-// share a color from being merged (and possibly stomping each other's stencil
-// bits if they *do* end up overlapping on screen unexpectedly).
-constexpr float kShadowGroupBoundsTouchEpsilon = 0.01f;
+constexpr float kShadowGroupMaxColorDist = 0.02f;
 
 static bool ShadowColorsSimilar(const vec3& a, const vec3& b)
 {
