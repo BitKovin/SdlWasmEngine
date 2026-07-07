@@ -5,7 +5,6 @@
 "_tb_textures" "textures;textures\FPSTextures;textures\FPSTextures_HD;textures\Ground;textures\building_1;textures\common;textures\delvenPack;textures\generic;textures\levelPlans;textures\lq_conc;textures\lq_dev;textures\lq_flesh;textures\lq_greek;textures\lq_health_ammo;textures\lq_legacy;textures\lq_liquidsky;textures\lq_mayan;textures\lq_medieval;textures\lq_metal;textures\lq_palette;textures\lq_props;textures\lq_tech;textures\lq_terra;textures\lq_utility;textures\lq_wood;textures\metal;textures\noise;textures\particles;textures\pp;textures\skies;textures\tormentPack;textures\ui;textures\ui\debuffs;textures\wall;textures\water;textures\wood"
 "_ambient" "5"
 "gridsize" "32 32 32"
-"_noshadersun" "1"
 "_tb_mod" "textures"
 "_lightmapscale" "0.5"
 // brush 0
@@ -1526,15 +1525,6 @@
 }
 // brush 168
 {
-( -1944 -5272 91 ) ( -1944 -5296 91 ) ( -2040 -5272 91 ) psx_mega_pack/door_3_double 342 64 0 0.5 0.5 0 0 0
-( -1940 -5272 24 ) ( -2036 -5272 24 ) ( -1940 -5272 16 ) psx_mega_pack/door_3_double 43 16 -0 0.5 0.5 0 0 0
-( -1960 -5272 24 ) ( -1960 -5272 16 ) ( -1960 -5296 24 ) psx_mega_pack/door_3_double 342 64 0 0.5 0.5 0 0 0
-( -2040 -5296 16 ) ( -1944 -5296 16 ) ( -2040 -5272 16 ) psx_mega_pack/door_3_double 342 64 0 0.5 0.5 0 0 0
-( -2040 -5274 24 ) ( -2040 -5274 32 ) ( -1944 -5274 24 ) psx_mega_pack/door_3_double 58.9997558594 32 -0 0.5 0.5 0 0 0
-( -2032 -5296 16 ) ( -2032 -5272 16 ) ( -2032 -5296 24 ) psx_mega_pack/door_3_double 342 64 0 0.5 0.5 0 0 0
-}
-// brush 169
-{
 ( -2132 -6870 176 ) ( -2132 -6646 16 ) ( -2132 -6646 176 ) psx_textures_2/wallpaper_wall_pt_1 0 32 0 0.5 0.5 0 0 0
 ( -2100 -6002 176 ) ( -2132 -6002 16 ) ( -2132 -6002 176 ) psx_textures_2/wallpaper_wall_pt_1 0 32 0 0.5 0.5 0 0 0
 ( -2100 -6870 16 ) ( -2132 -6646 16 ) ( -2132 -6870 16 ) psx_textures_2/wallpaper_wall_pt_1 0 32 0 0.5 0.5 0 0 0
@@ -1542,7 +1532,7 @@
 ( -2132 -4864 176 ) ( -2100 -4864 16 ) ( -2100 -4864 176 ) psx_textures_2/wallpaper_wall_pt_1 0 32 0 0.5 0.5 0 0 0
 ( -2084 -6870 176 ) ( -2084 -6646 16 ) ( -2084 -6870 16 ) psx_textures_2/wallpaper_wall_pt_1 0 32 0 0.5 0.5 0 0 0
 }
-// brush 170
+// brush 169
 {
 ( -2132 -6870 232 ) ( -2132 -6646 72 ) ( -2132 -6646 232 ) psx_textures_2/wallpaper_wall_pt_1_1 0 32 0 0.5 0.5 0 0 0
 ( -2100 -6578 232 ) ( -2132 -6578 72 ) ( -2132 -6578 232 ) psx_textures_2/wallpaper_wall_pt_1_1 0 32 0 0.5 0.5 0 0 0
@@ -1551,16 +1541,7 @@
 ( -2132 -4864 232 ) ( -2100 -4864 72 ) ( -2100 -4864 232 ) psx_textures_2/wallpaper_wall_pt_1_1 0 32 0 0.5 0.5 0 0 0
 ( -2084 -6870 232 ) ( -2084 -6646 72 ) ( -2084 -6870 72 ) psx_textures_2/wallpaper_wall_pt_1_1 0 32 0 0.5 0.5 0 0 0
 }
-// brush 171
-{
-( -1944 -5008 91 ) ( -1944 -5032 91 ) ( -2040 -5008 91 ) psx_textures_2/brick_wall_pt_5_door 16 16 0 0.5 0.5 0 0 0
-( -1930 -5008 40 ) ( -2026 -5008 40 ) ( -1930 -5008 32 ) psx_textures_2/brick_wall_pt_5_door 7.8798828125 32 -0 0.5 0.5 0 0 0
-( -1962 -5008 24 ) ( -1962 -5008 16 ) ( -1962 -5032 24 ) psx_textures_2/brick_wall_pt_5_door 16 16 0 0.5 0.5 0 0 0
-( -2040 -5032 16 ) ( -1944 -5032 16 ) ( -2040 -5008 16 ) psx_textures_2/brick_wall_pt_5_door 16 16 0 0.5 0.5 0 0 0
-( -2040 -5010 0 ) ( -2040 -5010 8 ) ( -1944 -5010 0 ) psx_textures_2/brick_wall_pt_5_door 6.9489746094 32 -0 0.5 0.5 0 0 0
-( -2023 -5032 16 ) ( -2023 -5008 16 ) ( -2023 -5032 24 ) psx_textures_2/brick_wall_pt_5_door 16 16 0 0.5 0.5 0 0 0
-}
-// brush 172
+// brush 170
 {
 ( -1946 -4926 91 ) ( -1946 -4950 91 ) ( -2042 -4926 91 ) psx_mega_pack/door_3_double 60 188 0 0.5 0.5 0 0 0
 ( -1942 -4926 24 ) ( -2038 -4926 24 ) ( -1942 -4926 16 ) psx_mega_pack/door_3_double 45 16 -0 0.5 0.5 0 0 0
@@ -1569,7 +1550,7 @@
 ( -2042 -4928 24 ) ( -2042 -4928 32 ) ( -1946 -4928 24 ) psx_mega_pack/door_3_double 64 34.4594573975 -0 0.5 0.5 0 0 0
 ( -2034 -4950 16 ) ( -2034 -4926 16 ) ( -2034 -4950 24 ) psx_mega_pack/door_3_double 319 64 0 0.5 0.5 0 0 0
 }
-// brush 173
+// brush 171
 {
 ( -2702 -4864 176 ) ( -2702 -4832 16 ) ( -2702 -4832 176 ) psx_textures_2/wallpaper_wall_pt_1_1 0 32 0 0.5 0.5 0 0 0
 ( -1902 -4864 176 ) ( -2126 -4864 16 ) ( -2126 -4864 176 ) psx_textures_2/wallpaper_wall_pt_1_1 14 32 0 0.5 0.5 0 0 0
@@ -1578,7 +1559,7 @@
 ( -1902 -4832 176 ) ( -2126 -4832 16 ) ( -1902 -4832 16 ) psx_textures_2/wallpaper_wall_pt_1_1 14 32 0 0.5 0.5 0 0 0
 ( -2084 -4832 176 ) ( -2084 -4864 16 ) ( -2084 -4864 176 ) psx_textures_2/wallpaper_wall_pt_1_1 0 32 0 0.5 0.5 0 0 0
 }
-// brush 174
+// brush 172
 {
 ( -2702 -4656 176 ) ( -2702 -4624 16 ) ( -2702 -4624 176 ) psx_textures_2/wallpaper_wall_pt_1_1 0 32 0 0.5 0.5 0 0 0
 ( -1902 -4672 176 ) ( -2126 -4672 16 ) ( -2126 -4672 176 ) psx_textures_2/wallpaper_wall_pt_1_1 0 32 0 0.5 0.5 0 0 0
@@ -1587,7 +1568,7 @@
 ( -1902 -4640 176 ) ( -2126 -4640 16 ) ( -1902 -4640 16 ) psx_textures_2/wallpaper_wall_pt_1_1 0 32 0 0.5 0.5 0 0 0
 ( -1906 -4624 176 ) ( -1906 -4656 16 ) ( -1906 -4656 176 ) psx_textures_2/wallpaper_wall_pt_1_1 0 32 0 0.5 0.5 0 0 0
 }
-// brush 175
+// brush 173
 {
 ( -1910 -4888 176 ) ( -1910 -4856 16 ) ( -1910 -4856 176 ) psx_textures_2/wallpaper_wall_pt_1_1 -24 32 0 0.5 0.5 0 0 0
 ( -1166 -4896 176 ) ( -1390 -4896 16 ) ( -1390 -4896 176 ) psx_textures_2/wallpaper_wall_pt_1_1 -18 32 0 0.5 0.5 0 0 0
@@ -1596,7 +1577,7 @@
 ( -1554 -4856 176 ) ( -1554 -4888 16 ) ( -1554 -4888 176 ) psx_textures_2/wallpaper_wall_pt_1_1 -24 32 0 0.5 0.5 0 0 0
 ( -1896 -4896 104 ) ( -1896 -4912 104 ) ( -1880 -4896 104 ) psx_textures_2/wallpaper_wall_pt_1_1 0 0 0 1 1 0 0 0
 }
-// brush 176
+// brush 174
 {
 ( -1620 -6014 176 ) ( -1620 -5790 16 ) ( -1620 -5790 176 ) psx_textures_2/wallpaper_wall_pt_1_1 -18 32 0 0.5 0.5 0 0 0
 ( -1556 -5320 32 ) ( -1556 -5320 16 ) ( -1572 -5320 32 ) psx_textures_2/wallpaper_wall_pt_1_1 0 32 0 0.5 0.5 0 0 0
@@ -1605,7 +1586,7 @@
 ( -1540 -6014 176 ) ( -1540 -5790 16 ) ( -1540 -6014 16 ) psx_textures_2/wallpaper_wall_pt_1_1 -18 32 0 0.5 0.5 0 0 0
 ( -1620 -4896 104 ) ( -1636 -4896 104 ) ( -1620 -4912 104 ) psx_textures_2/wallpaper_wall_pt_1_1 0 0 0 1 1 0 0 0
 }
-// brush 177
+// brush 175
 {
 ( -1908 -6454 176 ) ( -1908 -6230 16 ) ( -1908 -6230 176 ) psx_textures_2/wallpaper_wall_pt_1 0 32 0 0.5 0.5 0 0 0
 ( -1812 -5480 32 ) ( -1812 -5480 16 ) ( -1828 -5480 32 ) psx_textures_2/wallpaper_wall_pt_1 0 32 0 0.5 0.5 0 0 0
@@ -1614,7 +1595,7 @@
 ( -1796 -6454 176 ) ( -1796 -6230 16 ) ( -1796 -6454 16 ) psx_textures_2/wallpaper_wall_pt_1 0 32 0 0.5 0.5 0 0 0
 ( -1768 -5471 88 ) ( -1768 -5455 88 ) ( -1752 -5471 88 ) common/caulk 0 0 0 1 1 0 0 0
 }
-// brush 178
+// brush 176
 {
 ( -1837 -5599 32 ) ( -1837 -5599 16 ) ( -1837 -5583 32 ) psx_textures_2/wallpaper_wall_pt_1 0 32 180 0.5 0.5 0 0 0
 ( -2811 -5583 176 ) ( -2587 -5583 16 ) ( -2811 -5583 16 ) psx_textures_2/wallpaper_wall_pt_1 0 32 0 0.5 0.5 0 0 0
@@ -1623,7 +1604,7 @@
 ( -1675 -5607 176 ) ( -1675 -5639 16 ) ( -1675 -5639 176 ) psx_textures_2/wallpaper_wall_pt_1 0 32 0 0.5 0.5 0 0 0
 ( -1768 -5471 88 ) ( -1768 -5455 88 ) ( -1752 -5471 88 ) common/caulk 0 0 0 1 1 0 0 0
 }
-// brush 179
+// brush 177
 {
 ( -1684 -6454 176 ) ( -1684 -6230 16 ) ( -1684 -6230 176 ) psx_textures_2/wallpaper_wall_pt_1 0 32 0 0.5 0.5 0 0 0
 ( -1556 -5480 32 ) ( -1556 -5480 16 ) ( -1572 -5480 32 ) psx_textures_2/wallpaper_wall_pt_1 0 32 0 0.5 0.5 0 0 0
@@ -1632,7 +1613,7 @@
 ( -1572 -6454 176 ) ( -1572 -6230 16 ) ( -1572 -6454 16 ) psx_textures_2/wallpaper_wall_pt_1 0 32 0 0.5 0.5 0 0 0
 ( -1768 -5471 88 ) ( -1768 -5455 88 ) ( -1752 -5471 88 ) common/caulk 0 0 0 1 1 0 0 0
 }
-// brush 180
+// brush 178
 {
 ( -2126 -5984 176 ) ( -2126 -5952 16 ) ( -2126 -5952 176 ) psx_textures_2/wallpaper_wall_pt_1_1 0 32 0 0.5 0.5 0 0 0
 ( -1166 -5984 176 ) ( -1390 -5984 16 ) ( -1390 -5984 176 ) psx_textures_2/wallpaper_wall_pt_1_1 0 32 0 0.5 0.5 0 0 0
@@ -1641,7 +1622,7 @@
 ( -1170 -5952 176 ) ( -1170 -5984 16 ) ( -1170 -5984 176 ) psx_textures_2/wallpaper_wall_pt_1_1 0 32 0 0.5 0.5 0 0 0
 ( -1296 -5792 88 ) ( -1296 -5800 88 ) ( -1288 -5792 88 ) psx_textures_2/wallpaper_wall_pt_1_1 0 0 0 1 1 0 0 0
 }
-// brush 181
+// brush 179
 {
 ( -1174 -5874 176 ) ( -1174 -5650 16 ) ( -1174 -5650 176 ) psx_textures_2/wallpaper_wall_pt_1_1 0 32 0 0.5 0.5 0 0 0
 ( -1142 -5826 176 ) ( -1174 -5826 16 ) ( -1174 -5826 176 ) psx_textures_2/wallpaper_wall_pt_1_1 0 32 0 0.5 0.5 0 0 0
@@ -1650,7 +1631,7 @@
 ( -1170 -5874 176 ) ( -1170 -5650 16 ) ( -1170 -5874 16 ) psx_textures_2/wallpaper_wall_pt_1_1 0 32 0 0.5 0.5 0 0 0
 ( -1296 -5792 88 ) ( -1296 -5800 88 ) ( -1288 -5792 88 ) psx_textures_2/wallpaper_wall_pt_1_1 0 0 0 1 1 0 0 0
 }
-// brush 182
+// brush 180
 {
 ( -1916 -5768 176 ) ( -1916 -5736 16 ) ( -1916 -5736 176 ) psx_textures_2/wallpaper_wall_pt_1_1 0 32 0 0.5 0.5 0 0 0
 ( -1166 -5792 176 ) ( -1390 -5792 16 ) ( -1390 -5792 176 ) psx_textures_2/wallpaper_wall_pt_1_1 0 32 0 0.5 0.5 0 0 0
@@ -1659,7 +1640,7 @@
 ( -1170 -5736 176 ) ( -1170 -5768 16 ) ( -1170 -5768 176 ) psx_textures_2/wallpaper_wall_pt_1_1 0 32 0 0.5 0.5 0 0 0
 ( -1296 -5792 88 ) ( -1296 -5800 88 ) ( -1288 -5792 88 ) psx_textures_2/wallpaper_wall_pt_1_1 0 0 0 1 1 0 0 0
 }
-// brush 183
+// brush 181
 {
 ( -1174 -6066 176 ) ( -1174 -5842 16 ) ( -1174 -5842 176 ) psx_textures_2/wallpaper_wall_pt_1_1 0 32 0 0.5 0.5 0 0 0
 ( -1142 -6062 176 ) ( -1174 -6062 16 ) ( -1174 -6062 176 ) psx_textures_2/wallpaper_wall_pt_1_1 0 32 0 0.5 0.5 0 0 0
@@ -1668,7 +1649,7 @@
 ( -1170 -6066 176 ) ( -1170 -5842 16 ) ( -1170 -6066 16 ) psx_textures_2/wallpaper_wall_pt_1_1 0 32 0 0.5 0.5 0 0 0
 ( -1296 -5792 88 ) ( -1296 -5800 88 ) ( -1288 -5792 88 ) psx_textures_2/wallpaper_wall_pt_1_1 0 0 0 1 1 0 0 0
 }
-// brush 184
+// brush 182
 {
 patchDef2
 {
@@ -1681,38 +1662,19 @@ delvenPack/dlv_wood1b
 )
 }
 }
-// brush 185
-{
-( -112 -5152 128 ) ( -112 -5248 128 ) ( -288 -5152 128 ) NULL 0 0 0 1 1 0 0 0
-( -112 -5152 32 ) ( -288 -5152 32 ) ( -112 -5152 16 ) NULL 0 0 0 1 1 0 0 0
-( -112 -5152 32 ) ( -112 -5152 16 ) ( -112 -5248 32 ) NULL 0 0 0 1 1 0 0 0
-( -288 -5248 16 ) ( -112 -5248 16 ) ( -288 -5152 16 ) NULL 0 0 0 1 1 0 0 0
-( -288 -5248 16 ) ( -288 -5248 32 ) ( -112 -5248 16 ) NULL 0 0 0 1 1 0 0 0
-( -288 -5248 16 ) ( -288 -5152 16 ) ( -288 -5248 32 ) NULL 0 0 0 1 1 0 0 0
-}
 }
 // entity 1
 {
 "classname" "info_player_start"
-"origin" "-48 256 40"
-"angle" "270"
+"origin" "-128 400 40"
 }
 // entity 2
-{
-"classname" "light"
-"origin" "-80 -640 176"
-"light" "30"
-"target" "sun_target"
-"_sun" "1"
-"_color" "0.34902 0.34902 1"
-}
-// entity 3
 {
 "classname" "transformPoint"
 "origin" "-80 -640 80"
 "targetname" "sun_target"
 }
-// entity 4
+// entity 3
 {
 "classname" "light"
 "origin" "-608 -2992 64"
@@ -1721,7 +1683,7 @@ delvenPack/dlv_wood1b
 "scale" "1"
 "_color" "0.486275 0.239216 0.0941176"
 }
-// entity 5
+// entity 4
 {
 "classname" "spawner"
 "origin" "-1128 -3176 48"
@@ -1730,7 +1692,7 @@ delvenPack/dlv_wood1b
 "targetname" "sp_g_1_1"
 "autoTrigger" "1"
 }
-// entity 6
+// entity 5
 {
 "classname" "spawner"
 "origin" "-920 -2440 48"
@@ -1738,7 +1700,7 @@ delvenPack/dlv_wood1b
 "className" "npc_human_axe"
 "targetname" "sp_g_1_1"
 }
-// entity 7
+// entity 6
 {
 "classname" "spawner"
 "origin" "-768 -4504 52"
@@ -1746,7 +1708,7 @@ delvenPack/dlv_wood1b
 "className" "npc_human_axe"
 "targetname" "sp_g_1_2"
 }
-// entity 8
+// entity 7
 {
 "classname" "spawner"
 "origin" "-1064 -4216 52"
@@ -1754,7 +1716,7 @@ delvenPack/dlv_wood1b
 "className" "npc_human_axe"
 "targetname" "sp_g_1_2"
 }
-// entity 9
+// entity 8
 {
 "classname" "spawner"
 "origin" "-960 -3960 52"
@@ -1762,7 +1724,7 @@ delvenPack/dlv_wood1b
 "className" "npc_human_axe"
 "targetname" "sp_g_1_2"
 }
-// entity 10
+// entity 9
 {
 "classname" "spawner"
 "origin" "-1080 -3696 52"
@@ -1770,7 +1732,7 @@ delvenPack/dlv_wood1b
 "className" "npc_human_axe"
 "targetname" "sp_g_1_2"
 }
-// entity 11
+// entity 10
 {
 "classname" "spawner"
 "origin" "-840 -3104 52"
@@ -1778,7 +1740,7 @@ delvenPack/dlv_wood1b
 "targetname" "sp_g_1_1"
 "angle" "112.112"
 }
-// entity 12
+// entity 11
 {
 "classname" "triggerOnce"
 "target" "sp_g_1_1"
@@ -1792,7 +1754,7 @@ delvenPack/dlv_wood1b
 ( -428.7628760028 -1852.0527550069 148 ) ( -508.7628760028 -1990.6168196125 20 ) ( -508.7628760028 -1990.6168196125 148 ) lq_dev/trigger 26.5662841797 0 0 0.8660253882 1 0 0 0
 }
 }
-// entity 13
+// entity 12
 {
 "classname" "triggerOnce"
 "target" "sp_g_1_2"
@@ -1806,7 +1768,7 @@ delvenPack/dlv_wood1b
 ( -655.1091989575 -2900.7915060063 148 ) ( -655.1091940164 -3060.7915050829 20 ) ( -655.1091940164 -3060.7915050829 148 ) lq_dev/trigger -2.9774169922 0 0 0.9659258127 1 0 0 0
 }
 }
-// entity 14
+// entity 13
 {
 "classname" "spawner"
 "origin" "-904 -2896 52"
@@ -1814,7 +1776,7 @@ delvenPack/dlv_wood1b
 "className" "npc_human_axe"
 "targetname" "sp_g_1_1"
 }
-// entity 15
+// entity 14
 {
 "classname" "spawner"
 "origin" "-976 -4664 52"
@@ -1822,21 +1784,21 @@ delvenPack/dlv_wood1b
 "className" "npc_human_axe"
 "targetname" "sp_g_1_2"
 }
-// entity 16
+// entity 15
 {
 "classname" "spawner"
 "origin" "-784 -3280 64"
 "className" "testnpc"
 "targetname" "sp_g_1_1"
 }
-// entity 17
+// entity 16
 {
 "classname" "spawner"
 "origin" "-1040 -4496 64"
 "className" "testnpc"
 "targetname" "sp_g_1_1"
 }
-// entity 18
+// entity 17
 {
 "classname" "spawner"
 "origin" "-624 -4864 48"
@@ -1845,7 +1807,7 @@ delvenPack/dlv_wood1b
 "targetname" "sp_g_1_2"
 "autoTrigger" "1"
 }
-// entity 19
+// entity 18
 {
 "classname" "spawner"
 "origin" "-816 -3760 48"
@@ -1853,7 +1815,7 @@ delvenPack/dlv_wood1b
 "targetname" "sp_g_1_2"
 "angle" "83.4638"
 }
-// entity 20
+// entity 19
 {
 "classname" "spawner"
 "origin" "-720 -4656 48"
@@ -1861,7 +1823,7 @@ delvenPack/dlv_wood1b
 "targetname" "sp_g_1_2"
 "angle" "85.2966"
 }
-// entity 21
+// entity 20
 {
 "classname" "spawner"
 "origin" "-1000 -2888 144"
@@ -1870,7 +1832,7 @@ delvenPack/dlv_wood1b
 "targetname" "sp_g_1_1"
 "autoTrigger" "1"
 }
-// entity 22
+// entity 21
 {
 "classname" "func_door"
 // brush 0
@@ -2036,7 +1998,7 @@ delvenPack/dlv_wood1b
 ( 232 -5849 108 ) ( 232 -5852 -32 ) ( 232 -5852 108 ) building_1/b1_f1 -665.9995117188 12 180 1.2000000477 -1.1000000238 0 0 0
 }
 }
-// entity 23
+// entity 22
 {
 "classname" "func_group"
 // brush 0
@@ -2526,7 +2488,7 @@ delvenPack/dlv_wood1b
 ( 232 -5850 111 ) ( 232 -5849 111 ) ( 232 -5850 -32 ) building_1/b1_f1 -665.9990234375 12 180 1.2000000477 -1.1000000238 0 0 0
 }
 }
-// entity 24
+// entity 23
 {
 "classname" "func_door"
 "targetname" "d1_b1_1"
@@ -2695,7 +2657,7 @@ delvenPack/dlv_wood1b
 ( -1172 -5870 108 ) ( -1172 -5873 -32 ) ( -1172 -5873 108 ) building_1/b1_f1 702.3334960938 12 0 1.2000000477 1.1000000238 0 0 0
 }
 }
-// entity 25
+// entity 24
 {
 "classname" "func_group"
 // brush 0
@@ -3149,14 +3111,14 @@ delvenPack/dlv_wood1b
 ( -1172 -5872 -32 ) ( -1172 -5873 -32 ) ( -1172 -5872 111 ) building_1/b1_f1 0 20 0 1 1.2000000477 0 0 0
 }
 }
-// entity 26
+// entity 25
 {
 "classname" "transformPoint"
 "origin" "-1172 -5850 114"
 "angles" "0 -90 0"
 "targetname" "d1_b1_tp_1"
 }
-// entity 27
+// entity 26
 {
 "classname" "trigger"
 "target" "d1_b1_1"
@@ -3172,7 +3134,7 @@ delvenPack/dlv_wood1b
 ( -992 -5728 52 ) ( -992 -5984 20 ) ( -992 -5984 52 ) lq_dev/trigger 0 0 0 1 1 0 0 0
 }
 }
-// entity 28
+// entity 27
 {
 "classname" "light"
 "origin" "-1563 -5872 115"
@@ -3182,7 +3144,7 @@ delvenPack/dlv_wood1b
 "scale" "1"
 "fade" "0.5"
 }
-// entity 29
+// entity 28
 {
 "classname" "light"
 "origin" "-2020 -5872 115"
@@ -3192,7 +3154,7 @@ delvenPack/dlv_wood1b
 "scale" "1"
 "fade" "0.055"
 }
-// entity 30
+// entity 29
 {
 "classname" "light"
 "origin" "-2020 -5472 115"
@@ -3202,7 +3164,7 @@ delvenPack/dlv_wood1b
 "scale" "1"
 "fade" "0.2"
 }
-// entity 31
+// entity 30
 {
 "classname" "light"
 "origin" "-1563 -5872 115"
@@ -3212,7 +3174,7 @@ delvenPack/dlv_wood1b
 "fade" "0.2"
 "scale" "1"
 }
-// entity 32
+// entity 31
 {
 "classname" "light"
 "origin" "-2020 -5872 115"
@@ -3222,7 +3184,7 @@ delvenPack/dlv_wood1b
 "fade" "0.2"
 "scale" "0.3"
 }
-// entity 33
+// entity 32
 {
 "classname" "light"
 "origin" "-2020 -5472 115"
@@ -3232,7 +3194,7 @@ delvenPack/dlv_wood1b
 "fade" "0.3"
 "scale" "1"
 }
-// entity 34
+// entity 33
 {
 "classname" "light"
 "origin" "-1203 -5872 147"
@@ -3242,7 +3204,7 @@ delvenPack/dlv_wood1b
 "scale" "1"
 "fade" "0.2"
 }
-// entity 35
+// entity 34
 {
 "classname" "light"
 "origin" "-2020 -5142 115"
@@ -3252,7 +3214,7 @@ delvenPack/dlv_wood1b
 "scale" "1"
 "fade" "0.4"
 }
-// entity 36
+// entity 35
 {
 "classname" "light"
 "origin" "-2020 -4764 115"
@@ -3262,14 +3224,14 @@ delvenPack/dlv_wood1b
 "scale" "1"
 "fade" "0.2"
 }
-// entity 37
+// entity 36
 {
 "classname" "light"
 "origin" "-1762 -5074 120"
 "light" "100"
 "_color" "1 0.690196 0.545098"
 }
-// entity 38
+// entity 37
 {
 "classname" "light"
 "origin" "-2380 -4750 115"
@@ -3279,7 +3241,7 @@ delvenPack/dlv_wood1b
 "scale" "1"
 "fade" "0.2"
 }
-// entity 39
+// entity 38
 {
 "classname" "func_group"
 // brush 0
@@ -3733,7 +3695,7 @@ delvenPack/dlv_wood1b
 ( -2696 -4752 160 ) ( -2696 -4752 134 ) ( -2696 -4772 160 ) delvenPack/dlv_metalpip2a 12 0 180 1 1 0 0 0
 }
 }
-// entity 40
+// entity 39
 {
 "classname" "light"
 "origin" "-2684 -4750 131"
@@ -3743,7 +3705,7 @@ delvenPack/dlv_wood1b
 "scale" "1"
 "fade" "0.6"
 }
-// entity 41
+// entity 40
 {
 "classname" "light"
 "origin" "-2844 -4430 125"
@@ -3753,7 +3715,7 @@ delvenPack/dlv_wood1b
 "fade" "0.36"
 "spawnflags" "1"
 }
-// entity 42
+// entity 41
 {
 "classname" "light"
 "origin" "-2758 -4894 97"
@@ -3763,7 +3725,7 @@ delvenPack/dlv_wood1b
 "fade" "0.36"
 "spawnflags" "1"
 }
-// entity 43
+// entity 42
 {
 "classname" "light"
 "origin" "-3814 -4430 161"
@@ -3773,7 +3735,7 @@ delvenPack/dlv_wood1b
 "fade" "0.36"
 "spawnflags" "1"
 }
-// entity 44
+// entity 43
 {
 "classname" "light"
 "origin" "-3366 -5070 161"
@@ -3783,7 +3745,7 @@ delvenPack/dlv_wood1b
 "fade" "0.36"
 "spawnflags" "1"
 }
-// entity 45
+// entity 44
 {
 "classname" "light"
 "origin" "-4172 -4654 157"
@@ -3793,7 +3755,7 @@ delvenPack/dlv_wood1b
 "fade" "0.36"
 "spawnflags" "1"
 }
-// entity 46
+// entity 45
 {
 "classname" "light"
 "origin" "-4076 -5070 157"
@@ -3803,7 +3765,7 @@ delvenPack/dlv_wood1b
 "fade" "0.36"
 "spawnflags" "1"
 }
-// entity 47
+// entity 46
 {
 "classname" "light"
 "origin" "-3426 -4501 163"
@@ -3813,7 +3775,7 @@ delvenPack/dlv_wood1b
 "fade" "0.36"
 "spawnflags" "1"
 }
-// entity 48
+// entity 47
 {
 "classname" "func_door"
 "targetLocation" "-12 0 0"
@@ -3830,7 +3792,7 @@ delvenPack/dlv_wood1b
 ( -1618 -4969 72 ) ( -1618 -4975 50 ) ( -1618 -4975 72 ) lq_props/med_book_red 0 0 0 1 1 0 0 0
 }
 }
-// entity 49
+// entity 48
 {
 "classname" "triggerOnce"
 "target" "b1_of1_book_hid"
@@ -3845,7 +3807,7 @@ delvenPack/dlv_wood1b
 ( -1640 -4944 24 ) ( -1640 -4944 16 ) ( -1640 -5000 24 ) lq_utility/trigger 56 0 0 1 1 0 0 0
 }
 }
-// entity 50
+// entity 49
 {
 "classname" "transformPoint"
 "origin" "-1776 -5312 96"
@@ -3853,7 +3815,7 @@ delvenPack/dlv_wood1b
 "targetname" "b1_o1_sd_1_tp"
 "angles" "0 160 0"
 }
-// entity 51
+// entity 50
 {
 "classname" "func_door"
 "targetname" "b1_of1_book_hid"
@@ -3870,7 +3832,7 @@ delvenPack/dlv_wood1b
 ( -1712 -5312 48 ) ( -1712 -5288 48 ) ( -1712 -5312 24 ) psx_textures_2/wallpaper_wall_pt_1 0 32 0 0.5 0.5 0 0 0
 }
 }
-// entity 52
+// entity 51
 {
 "classname" "func_group"
 // brush 0
@@ -3912,7 +3874,7 @@ delvenPack/dlv_wood1b
 ( -2972 -4644 72 ) ( -2972 -4644 216 ) ( -2972 -4500 72 ) common/caulk 20 0.0011940002 180 1 -1 0 0 0
 }
 }
-// entity 53
+// entity 52
 {
 "classname" "func_group"
 // brush 0
@@ -3954,7 +3916,7 @@ delvenPack/dlv_wood1b
 ( -2972 -4996 72 ) ( -2972 -4996 216 ) ( -2972 -4852 72 ) common/caulk 52 0.001625061 180 1 -1 0 0 0
 }
 }
-// entity 54
+// entity 53
 {
 "classname" "func_group"
 // brush 0
@@ -3996,7 +3958,7 @@ delvenPack/dlv_wood1b
 ( -3260 -4644 72 ) ( -3260 -4644 216 ) ( -3260 -4500 72 ) common/caulk 20 0.0023956299 180 1 -1 0 0 0
 }
 }
-// entity 55
+// entity 54
 {
 "classname" "func_group"
 // brush 0
@@ -4038,7 +4000,7 @@ delvenPack/dlv_wood1b
 ( -3260 -4996 72 ) ( -3260 -4996 216 ) ( -3260 -4852 72 ) common/caulk 52 0.0029182434 180 1 -1 0 0 0
 }
 }
-// entity 56
+// entity 55
 {
 "classname" "func_group"
 // brush 0
@@ -4080,7 +4042,7 @@ delvenPack/dlv_wood1b
 ( -3388 -4644 72 ) ( -3388 -4644 216 ) ( -3388 -4500 72 ) common/caulk 20 0.0027961731 180 1 -1 0 0 0
 }
 }
-// entity 57
+// entity 56
 {
 "classname" "func_group"
 // brush 0
@@ -4122,7 +4084,7 @@ delvenPack/dlv_wood1b
 ( -3388 -4996 72 ) ( -3388 -4996 216 ) ( -3388 -4852 72 ) common/caulk 52 0.0033493042 180 1 -1 0 0 0
 }
 }
-// entity 58
+// entity 57
 {
 "classname" "func_group"
 // brush 0
@@ -4164,7 +4126,7 @@ delvenPack/dlv_wood1b
 ( -3516 -4644 72 ) ( -3516 -4644 216 ) ( -3516 -4500 72 ) common/caulk 20 0.0031967163 180 1 -1 0 0 0
 }
 }
-// entity 59
+// entity 58
 {
 "classname" "func_group"
 // brush 0
@@ -4206,7 +4168,7 @@ delvenPack/dlv_wood1b
 ( -3516 -4996 72 ) ( -3516 -4996 216 ) ( -3516 -4852 72 ) common/caulk 52 0.003780365 180 1 -1 0 0 0
 }
 }
-// entity 60
+// entity 59
 {
 "classname" "func_group"
 // brush 0
@@ -4248,7 +4210,7 @@ delvenPack/dlv_wood1b
 ( -3772 -4644 72 ) ( -3772 -4644 216 ) ( -3772 -4500 72 ) common/caulk 20 0.0035972595 180 1 -1 0 0 0
 }
 }
-// entity 61
+// entity 60
 {
 "classname" "func_group"
 // brush 0
@@ -4290,7 +4252,7 @@ delvenPack/dlv_wood1b
 ( -3772 -4996 72 ) ( -3772 -4996 216 ) ( -3772 -4852 72 ) common/caulk 52 0.0042114258 180 1 -1 0 0 0
 }
 }
-// entity 62
+// entity 61
 {
 "classname" "func_group"
 // brush 0
@@ -4332,7 +4294,7 @@ delvenPack/dlv_wood1b
 ( -3964 -4644 72 ) ( -3964 -4644 216 ) ( -3964 -4500 72 ) common/caulk 20 0.0039978027 180 1 -1 0 0 0
 }
 }
-// entity 63
+// entity 62
 {
 "classname" "func_group"
 // brush 0
@@ -4374,7 +4336,7 @@ delvenPack/dlv_wood1b
 ( -3964 -4996 72 ) ( -3964 -4996 216 ) ( -3964 -4852 72 ) common/caulk 52 0.0046424866 180 1 -1 0 0 0
 }
 }
-// entity 64
+// entity 63
 {
 "classname" "vis_through"
 // brush 0
@@ -4450,7 +4412,7 @@ delvenPack/dlv_wood1b
 ( -2824 -4984 144 ) ( -2824 -4984 136 ) ( -2824 -5104 144 ) FPSTextures/Wall_79 0 24 0 1 1 0 0 0
 }
 }
-// entity 65
+// entity 64
 {
 "classname" "light"
 "origin" "-2844 -5473 193"
@@ -4458,7 +4420,7 @@ delvenPack/dlv_wood1b
 "spawnflags" "1"
 "_color" "1 0.972549 0.662745"
 }
-// entity 66
+// entity 65
 {
 "classname" "func_group"
 // brush 0
@@ -4498,7 +4460,7 @@ delvenPack/dlv_wood1b
 ( -271.6774262066 -655.4285858787 211.9999923706 ) ( -271.6774262066 -666.5714438687 211.9999923706 ) ( -274.8387164818 -666.5714438687 195.8297804189 ) lq_conc/conc1_1 78.923034668 116.8842163086 0 1.8571430445 2.021276474 0 0 0
 }
 }
-// entity 67
+// entity 66
 {
 "classname" "light"
 "origin" "-160 -658 156"
@@ -4507,7 +4469,7 @@ delvenPack/dlv_wood1b
 "fade" "0.8"
 "_color" "1 0.960784 0.529412"
 }
-// entity 68
+// entity 67
 {
 "classname" "func_group"
 // brush 0
@@ -4547,7 +4509,7 @@ delvenPack/dlv_wood1b
 ( -693.4512480822 -1553.6156929128 211.9999923706 ) ( -700.2115304886 -1562.4735631007 211.9999923706 ) ( -702.7245571205 -1560.5556336927 195.8297804189 ) lq_conc/conc1_1 9.7144775391 116.2615585327 0 1.4763101339 2.0338292122 0 0 0
 }
 }
-// entity 69
+// entity 68
 {
 "classname" "light"
 "origin" "-610.954 -1621.71 148"
@@ -4557,7 +4519,7 @@ delvenPack/dlv_wood1b
 "_color" "1 0.960784 0.529412"
 "style" "10"
 }
-// entity 70
+// entity 69
 {
 "classname" "func_group"
 // brush 0
@@ -4597,7 +4559,7 @@ delvenPack/dlv_wood1b
 ( -1064.6558276183 -2459.7727158564 211.9999923706 ) ( -1064.733109378 -2470.9153054923 211.9999923706 ) ( -1067.8943235197 -2470.8933802309 195.8297804189 ) lq_conc/conc1_1 26.5217285156 115.1834335327 0 1.8570941687 2.0559370518 0 0 0
 }
 }
-// entity 71
+// entity 70
 {
 "classname" "light"
 "origin" "-952.99 -2463.01 156"
@@ -4607,7 +4569,7 @@ delvenPack/dlv_wood1b
 "_color" "1 0.960784 0.529412"
 "style" "1"
 }
-// entity 72
+// entity 71
 {
 "classname" "func_group"
 // brush 0
@@ -4647,7 +4609,7 @@ delvenPack/dlv_wood1b
 ( -1065.1682642297 -3425.9939616418 207.008558354 ) ( -1066.4571418163 -3436.9850319286 205.7053191165 ) ( -1069.3898026742 -3434.7372512829 189.6486544264 ) lq_conc/conc1_1 21.0164794922 51.4918823242 6.762134552 1.8446669579 2.0613493919 0 0 0
 }
 }
-// entity 73
+// entity 72
 {
 "classname" "light"
 "origin" "-953.918 -3435.02 150.904"
@@ -4657,7 +4619,7 @@ delvenPack/dlv_wood1b
 "_color" "1 0.960784 0.529412"
 "style" "5"
 }
-// entity 74
+// entity 73
 {
 "classname" "func_group"
 // brush 0
@@ -4697,7 +4659,7 @@ delvenPack/dlv_wood1b
 ( -1160.6558276183 -6027.7727158564 211.9999923706 ) ( -1160.733109378 -6038.9153054923 211.9999923706 ) ( -1163.8943235197 -6038.8933802309 195.8297804189 ) lq_conc/conc1_1 27.802734375 115.1834335327 0 1.8570941687 2.0559370518 0 0 0
 }
 }
-// entity 75
+// entity 74
 {
 "classname" "light"
 "origin" "-1048.99 -6031.01 156"
@@ -4707,43 +4669,43 @@ delvenPack/dlv_wood1b
 "_color" "1 0.960784 0.529412"
 "style" "10"
 }
-// entity 76
+// entity 75
 {
 "classname" "item_ammo_shotgun"
 "origin" "104 212 20"
 }
-// entity 77
+// entity 76
 {
 "classname" "item_ammo_pistol"
 "origin" "100.898 167.102 20"
 "angle" "90"
 }
-// entity 78
+// entity 77
 {
 "classname" "item_ammo_cannon"
 "origin" "96.0998 312.1 20"
 "angle" "90"
 }
-// entity 79
+// entity 78
 {
 "classname" "item_ammo_cannon"
 "origin" "96.0998 288.1 20"
 "angle" "90"
 }
-// entity 80
+// entity 79
 {
 "classname" "item_ammo_shotgun"
 "origin" "104 232 36"
 "model" "models/weapons/glock.glb"
 "modelscale" "32"
 }
-// entity 81
+// entity 80
 {
 "classname" "item_ammo_pistol"
 "origin" "100.898 139.102 20"
 "angle" "90"
 }
-// entity 82
+// entity 81
 {
 "classname" "triggerOnce"
 "target" "level_end"
@@ -4757,26 +4719,26 @@ delvenPack/dlv_wood1b
 ( -2752 -4832 16 ) ( -2752 -4672 16 ) ( -2752 -4832 32 ) lq_dev/trigger 0 0 0 1 1 0 0 0
 }
 }
-// entity 83
+// entity 82
 {
 "classname" "transformPoint"
 "origin" "-992 -5200 336"
 "targetname" "level_end_camera_start"
 }
-// entity 84
+// entity 83
 {
 "classname" "transformPoint"
 "origin" "-864 -4288 112"
 "targetname" "level_end_camera_target"
 }
-// entity 85
+// entity 84
 {
 "classname" "logic_level_end"
 "origin" "-2832 -4736 64"
 "nextLevel" "test"
 "targetname" "level_end"
 }
-// entity 86
+// entity 85
 {
 "classname" "light"
 "origin" "-1664 -5248 64"
@@ -4786,7 +4748,7 @@ delvenPack/dlv_wood1b
 "radius" "64"
 "style" "10"
 }
-// entity 87
+// entity 86
 {
 "classname" "func_group"
 // brush 0
@@ -4817,14 +4779,14 @@ delvenPack/dlv_wood1b
 ( -496 -1580 16 ) ( -496 -1580 48 ) ( -496 -1612 16 ) common/caulk 0 0 0 1 1 0 0 0
 }
 }
-// entity 88
+// entity 87
 {
 "classname" "item_key_red"
 "origin" "-1856 -4992 48"
 "model" "models/pickups/key.obj"
 "angle" "0"
 }
-// entity 89
+// entity 88
 {
 "classname" "trigger_key_once"
 "target" "b1_of1_book_hid"
@@ -4841,13 +4803,13 @@ delvenPack/dlv_wood1b
 ( -1704 -5264 24 ) ( -1704 -5264 16 ) ( -1704 -5320 24 ) common/trigger 56 0 0 1 1 0 0 0
 }
 }
-// entity 90
+// entity 89
 {
 "classname" "item_key_blue"
 "origin" "-1808 -4992 48"
 "model" "models/pickups/key.obj"
 }
-// entity 91
+// entity 90
 {
 "classname" "misc_model"
 "origin" "-591.727 -5719.03 112"
@@ -4857,7 +4819,7 @@ delvenPack/dlv_wood1b
 "_lightmapscale" "0.5"
 "spawnflags" "12"
 }
-// entity 92
+// entity 91
 {
 "classname" "misc_model"
 "origin" "-591.727 -5438.03 112"
@@ -4867,7 +4829,7 @@ delvenPack/dlv_wood1b
 "_lightmapscale" "0.5"
 "spawnflags" "12"
 }
-// entity 93
+// entity 92
 {
 "classname" "misc_model"
 "origin" "-308.897 -5718.82 112"
@@ -4877,7 +4839,7 @@ delvenPack/dlv_wood1b
 "_lightmapscale" "0.5"
 "spawnflags" "12"
 }
-// entity 94
+// entity 93
 {
 "classname" "misc_model"
 "origin" "-309.107 -5437.99 112"
@@ -4886,13 +4848,13 @@ delvenPack/dlv_wood1b
 "_lightmapscale" "0.5"
 "spawnflags" "12"
 }
-// entity 95
+// entity 94
 {
 "classname" "light"
 "origin" "-443 -5679 152"
 "light" "200"
 }
-// entity 96
+// entity 95
 {
 "classname" "misc_model"
 "origin" "-248.897 -5778.82 47"
@@ -4901,7 +4863,7 @@ delvenPack/dlv_wood1b
 "angle" "-90"
 "_lightmapscale" "0.5"
 }
-// entity 97
+// entity 96
 {
 "classname" "misc_model"
 "origin" "-398.754 -5798.24 47"
@@ -4910,7 +4872,7 @@ delvenPack/dlv_wood1b
 "angle" "14.8097"
 "_lightmapscale" "0.5"
 }
-// entity 98
+// entity 97
 {
 "classname" "misc_model"
 "origin" "-589.897 -5696.82 21"
@@ -4919,7 +4881,7 @@ delvenPack/dlv_wood1b
 "angle" "-90"
 "_lightmapscale" "0.5"
 }
-// entity 99
+// entity 98
 {
 "classname" "misc_model"
 "origin" "-589.897 -5391.82 21"
@@ -4928,7 +4890,7 @@ delvenPack/dlv_wood1b
 "angle" "-90"
 "_lightmapscale" "0.5"
 }
-// entity 100
+// entity 99
 {
 "classname" "misc_model"
 "origin" "-374.897 -5437.82 21"
@@ -4937,7 +4899,7 @@ delvenPack/dlv_wood1b
 "angle" "-90"
 "_lightmapscale" "0.5"
 }
-// entity 101
+// entity 100
 {
 "classname" "func_physics_dynamic"
 "angle" "0"
@@ -4964,13 +4926,13 @@ delvenPack/dlv_wood1b
 {
 ( 80 -272 208 ) ( 80 -320 208 ) ( 16 -272 208 ) lq_props/radiowood 0 0 0 1 1 0 0 0
 ( 80 -272 112 ) ( 16 -272 112 ) ( 80 -272 96 ) lq_props/radiowood 0 0 0 1 1 0 0 0
-( 64 -272 112 ) ( 64 -272 96 ) ( 64 -320 112 ) lq_props/radiowood 0 0 0 1 1 0 0 0
+( 96 -272 112 ) ( 96 -272 96 ) ( 96 -320 112 ) lq_props/radiowood 0 0 0 1 1 0 0 0
 ( 16 -320 96 ) ( 80 -320 96 ) ( 16 -272 96 ) lq_props/radiowood 0 0 0 1 1 0 0 0
 ( 16 -320 96 ) ( 16 -320 112 ) ( 80 -320 96 ) lq_props/radiowood 0 0 0 1 1 0 0 0
-( 16 -320 96 ) ( 16 -272 96 ) ( 16 -320 112 ) lq_props/radiowood 0 0 0 1 1 0 0 0
+( -16 -320 96 ) ( -16 -272 96 ) ( -16 -320 112 ) lq_props/radiowood 0 0 0 1 1 0 0 0
 }
 }
-// entity 102
+// entity 101
 {
 "classname" "trigger_ladder"
 "angle" "0"
@@ -4985,7 +4947,7 @@ delvenPack/dlv_wood1b
 ( -288 180 20 ) ( -288 252 20 ) ( -288 180 22 ) common/trigger 0 0 0 1 1 0 0 0
 }
 }
-// entity 103
+// entity 102
 {
 "classname" "func_group"
 // brush 0
@@ -4998,7 +4960,7 @@ delvenPack/dlv_wood1b
 ( 128 64 16 ) ( 128 64 17 ) ( 128 65 16 ) lq_conc/conc1_1 0 0 0 0.5 0.5 0 0 0
 }
 }
-// entity 104
+// entity 103
 {
 "classname" "func_group"
 // brush 0
@@ -5011,7 +4973,7 @@ delvenPack/dlv_wood1b
 ( -1024 -3712 16 ) ( -896 -3712 16 ) ( -1024 -3712 144 ) common/caulk 0 0 0 1 1 0 0 0
 }
 }
-// entity 105
+// entity 104
 {
 "classname" "func_door"
 "targetname" "dh1"
@@ -5027,14 +4989,14 @@ delvenPack/dlv_wood1b
 ( -1936.5 -5180.5 16.0000009537 ) ( -1912.5 -5180.5 16.0000009537 ) ( -1936.5 -5180.5 23.2098775788 ) psx_mega_pack/door_1 70 32 -0 0.5 0.5 0 0 0
 }
 }
-// entity 106
+// entity 105
 {
 "classname" "transformPoint"
 "origin" "-1915 -5181 90"
 "angle" "250"
 "targetname" "dhrp1"
 }
-// entity 107
+// entity 106
 {
 "classname" "trigger"
 "target" "dh1"
@@ -5050,173 +5012,241 @@ delvenPack/dlv_wood1b
 ( -1968 -5232 16 ) ( -1968 -5152 16 ) ( -1968 -5232 32 ) common/trigger 496 0 0 1 1 0 0 0
 }
 }
-// entity 108
+// entity 107
 {
 "classname" "misc_model"
 "origin" "-32 -5536 160"
 "model" "models/cube.obj"
 }
-// entity 109
+// entity 108
 {
 "classname" "misc_model"
 "origin" "-48 -5536 160"
 "model" "models/cube.obj"
 }
-// entity 110
+// entity 109
 {
 "classname" "nav_point"
 "origin" "32 -752 16"
 "targetname" "test_walk_1"
 "target" "test_walk_2"
 }
-// entity 111
+// entity 110
 {
 "classname" "nav_point"
 "origin" "32 -816 16"
 "targetname" "test_walk_2"
 "target" "test_walk_3"
 }
-// entity 112
+// entity 111
 {
 "classname" "nav_point"
 "origin" "-80 -896 16"
 "targetname" "test_walk_3"
 "target" "test_walk_4"
 }
-// entity 113
+// entity 112
 {
 "classname" "nav_point"
 "origin" "-96 -944 16"
 "targetname" "test_walk_4"
 "target" "test_walk_5"
 }
-// entity 114
+// entity 113
 {
 "classname" "nav_point"
 "origin" "-80 -1024 16"
 "targetname" "test_walk_5"
 "target" "test_walk_6"
 }
-// entity 115
+// entity 114
 {
 "classname" "nav_point"
 "origin" "32 -1024 16"
 "targetname" "test_walk_6"
 "target" "test_walk_7"
 }
-// entity 116
+// entity 115
 {
 "classname" "nav_point"
 "origin" "16 -1104 16"
 "targetname" "test_walk_7"
 "target" "test_walk_8"
 }
-// entity 117
+// entity 116
 {
 "classname" "nav_point"
 "origin" "-160 -1120 16"
 "targetname" "test_walk_8"
 "target" "test_walk_9"
 }
-// entity 118
+// entity 117
 {
 "classname" "nav_point"
 "origin" "-160 -912 16"
 "targetname" "test_walk_9"
 "target" "test_walk_10"
 }
-// entity 119
+// entity 118
 {
 "classname" "nav_point"
 "origin" "-64 -704 16"
 "targetname" "test_walk_10"
 "target" "test_walk_11"
 }
-// entity 120
+// entity 119
 {
 "classname" "nav_point"
 "origin" "32 -704 16"
 "targetname" "test_walk_11"
 "target" "test_walk_12"
 }
-// entity 121
+// entity 120
 {
 "classname" "npc_guard"
 "origin" "-80 -576 128"
 "target" "test_walk_1"
 }
-// entity 122
+// entity 121
 {
 "classname" "nav_point"
 "origin" "32 -672 16"
 "targetname" "test_walk_12"
 "target" "test_walk_13"
 }
-// entity 123
+// entity 122
 {
 "classname" "nav_point"
 "origin" "32 -608 16"
 "targetname" "test_walk_13"
 "target" "test_walk_14"
 }
-// entity 124
+// entity 123
 {
 "classname" "nav_point"
 "origin" "0 -576 16"
 "targetname" "test_walk_14"
 "target" "test_walk_15"
 }
-// entity 125
+// entity 124
 {
 "classname" "nav_point"
 "origin" "-144 -592 16"
 "targetname" "test_walk_15"
 "target" "test_walk_16"
 }
-// entity 126
+// entity 125
 {
 "classname" "nav_point"
 "origin" "-144 -656 16"
 "targetname" "test_walk_16"
 "target" "test_walk_17"
 }
-// entity 127
+// entity 126
 {
 "classname" "nav_point"
-"origin" "-128 -688 16"
+"origin" "-144 -688 16"
 "targetname" "test_walk_17"
 "target" "test_walk_18"
 }
-// entity 128
+// entity 127
 {
 "classname" "nav_point"
 "origin" "-112 -704 16"
 "targetname" "test_walk_18"
 "target" "test_walk_19"
 }
-// entity 129
+// entity 128
 {
 "classname" "nav_point"
 "origin" "-80 -752 16"
 "targetname" "test_walk_19"
 "target" "test_walk_20"
 }
-// entity 130
+// entity 129
 {
 "classname" "nav_point"
 "origin" "-48 -784 16"
 "targetname" "test_walk_20"
 "target" "test_walk_21"
 }
-// entity 131
+// entity 130
 {
 "classname" "nav_point"
 "origin" "-16 -752 16"
 "targetname" "test_walk_21"
 "target" "test_walk_1"
 }
-// entity 132
+// entity 131
 {
 "classname" "networkTestCube"
 "origin" "-80 -48 64"
+}
+// entity 132
+{
+"classname" "func_door"
+"targetname" "test_move_1"
+"time" "2"
+"targetLocation" "0 0 200"
+// brush 0
+{
+( -304 80 32 ) ( -304 -16 32 ) ( -352 80 32 ) delvenPack/dlv_metalpip2a 112 0 0 1 1 0 0 0
+( -304 80 32 ) ( -352 80 32 ) ( -304 80 16 ) delvenPack/dlv_metalpip2a 112 0 -0 1 1 0 0 0
+( -288 80 32 ) ( -288 80 16 ) ( -288 -16 32 ) delvenPack/dlv_metalpip2a -0 0 0 1 1 0 0 0
+( -352 -16 16 ) ( -304 -16 16 ) ( -352 80 16 ) delvenPack/dlv_metalpip2a 112 0 0 1 1 0 0 0
+( -352 -16 16 ) ( -352 -16 32 ) ( -304 -16 16 ) delvenPack/dlv_metalpip2a 112 0 -0 1 1 0 0 0
+( -384 -16 16 ) ( -384 80 16 ) ( -384 -16 32 ) delvenPack/dlv_metalpip2a -0 0 0 1 1 0 0 0
+}
+}
+// entity 133
+{
+"classname" "trigger"
+"onEnterAction" "open"
+"onExitAction" "close"
+"target" "test_move_1"
+// brush 0
+{
+( -288 80 304 ) ( -288 -16 304 ) ( -384 80 304 ) common/trigger 0 0 0 1 1 0 0 0
+( -288 80 48 ) ( -384 80 48 ) ( -288 80 32 ) common/trigger 0 16 -0 1 1 0 0 0
+( -288 80 48 ) ( -288 80 32 ) ( -288 -16 48 ) common/trigger 0 16 0 1 1 0 0 0
+( -384 -16 32 ) ( -288 -16 32 ) ( -384 80 32 ) common/trigger 0 0 0 1 1 0 0 0
+( -384 -16 32 ) ( -384 -16 48 ) ( -288 -16 32 ) common/trigger 0 16 -0 1 1 0 0 0
+( -384 -16 32 ) ( -384 80 32 ) ( -384 -16 48 ) common/trigger 0 16 0 1 1 0 0 0
+}
+}
+// entity 134
+{
+"classname" "item_weapon_cane"
+"origin" "80 416 64"
+"modelscale" "48"
+}
+// entity 135
+{
+"classname" "item_weapon_pistol"
+"origin" "80 384 64"
+"modelscale" "48"
+}
+// entity 136
+{
+"classname" "item_weapon_shotgun"
+"origin" "96 352 48"
+"modelscale" "48"
+}
+// entity 137
+{
+"classname" "item_weapon_smg"
+"origin" "128 320 64"
+"modelscale" "48"
+}
+// entity 138
+{
+"classname" "item_weapon_twinswords"
+"origin" "64 352 48"
+"modelscale" "48"
+}
+// entity 139
+{
+"classname" "item_weapon_cannon"
+"origin" "128 384 48"
+"modelscale" "48"
 }

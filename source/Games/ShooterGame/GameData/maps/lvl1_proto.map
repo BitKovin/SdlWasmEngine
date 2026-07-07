@@ -5,7 +5,6 @@
 "_tb_textures" "textures;textures\FPSTextures;textures\FPSTextures_HD;textures\Ground;textures\building_1;textures\common;textures\delvenPack;textures\generic;textures\levelPlans;textures\lq_conc;textures\lq_dev;textures\lq_flesh;textures\lq_greek;textures\lq_health_ammo;textures\lq_legacy;textures\lq_liquidsky;textures\lq_mayan;textures\lq_medieval;textures\lq_metal;textures\lq_palette;textures\lq_props;textures\lq_tech;textures\lq_terra;textures\lq_utility;textures\lq_wood;textures\metal;textures\noise;textures\particles;textures\pp;textures\skies;textures\tormentPack;textures\ui;textures\ui\debuffs;textures\wall;textures\water;textures\wood"
 "_ambient" "5"
 "gridsize" "32 32 32"
-"_noshadersun" "1"
 "_tb_mod" "textures"
 "_lightmapscale" "0.5"
 // brush 0
@@ -1526,15 +1525,6 @@
 }
 // brush 168
 {
-( -1944 -5272 91 ) ( -1944 -5296 91 ) ( -2040 -5272 91 ) psx_mega_pack/door_3_double 342 64 0 0.5 0.5 0 0 0
-( -1940 -5272 24 ) ( -2036 -5272 24 ) ( -1940 -5272 16 ) psx_mega_pack/door_3_double 43 16 -0 0.5 0.5 0 0 0
-( -1960 -5272 24 ) ( -1960 -5272 16 ) ( -1960 -5296 24 ) psx_mega_pack/door_3_double 342 64 0 0.5 0.5 0 0 0
-( -2040 -5296 16 ) ( -1944 -5296 16 ) ( -2040 -5272 16 ) psx_mega_pack/door_3_double 342 64 0 0.5 0.5 0 0 0
-( -2040 -5274 24 ) ( -2040 -5274 32 ) ( -1944 -5274 24 ) psx_mega_pack/door_3_double 58.9997558594 32 -0 0.5 0.5 0 0 0
-( -2032 -5296 16 ) ( -2032 -5272 16 ) ( -2032 -5296 24 ) psx_mega_pack/door_3_double 342 64 0 0.5 0.5 0 0 0
-}
-// brush 169
-{
 ( -2132 -6870 176 ) ( -2132 -6646 16 ) ( -2132 -6646 176 ) psx_textures_2/wallpaper_wall_pt_1 0 32 0 0.5 0.5 0 0 0
 ( -2100 -6002 176 ) ( -2132 -6002 16 ) ( -2132 -6002 176 ) psx_textures_2/wallpaper_wall_pt_1 0 32 0 0.5 0.5 0 0 0
 ( -2100 -6870 16 ) ( -2132 -6646 16 ) ( -2132 -6870 16 ) psx_textures_2/wallpaper_wall_pt_1 0 32 0 0.5 0.5 0 0 0
@@ -1542,7 +1532,7 @@
 ( -2132 -4864 176 ) ( -2100 -4864 16 ) ( -2100 -4864 176 ) psx_textures_2/wallpaper_wall_pt_1 0 32 0 0.5 0.5 0 0 0
 ( -2084 -6870 176 ) ( -2084 -6646 16 ) ( -2084 -6870 16 ) psx_textures_2/wallpaper_wall_pt_1 0 32 0 0.5 0.5 0 0 0
 }
-// brush 170
+// brush 169
 {
 ( -2132 -6870 232 ) ( -2132 -6646 72 ) ( -2132 -6646 232 ) psx_textures_2/wallpaper_wall_pt_1_1 0 32 0 0.5 0.5 0 0 0
 ( -2100 -6578 232 ) ( -2132 -6578 72 ) ( -2132 -6578 232 ) psx_textures_2/wallpaper_wall_pt_1_1 0 32 0 0.5 0.5 0 0 0
@@ -1551,16 +1541,7 @@
 ( -2132 -4864 232 ) ( -2100 -4864 72 ) ( -2100 -4864 232 ) psx_textures_2/wallpaper_wall_pt_1_1 0 32 0 0.5 0.5 0 0 0
 ( -2084 -6870 232 ) ( -2084 -6646 72 ) ( -2084 -6870 72 ) psx_textures_2/wallpaper_wall_pt_1_1 0 32 0 0.5 0.5 0 0 0
 }
-// brush 171
-{
-( -1944 -5008 91 ) ( -1944 -5032 91 ) ( -2040 -5008 91 ) psx_textures_2/brick_wall_pt_5_door 16 16 0 0.5 0.5 0 0 0
-( -1930 -5008 40 ) ( -2026 -5008 40 ) ( -1930 -5008 32 ) psx_textures_2/brick_wall_pt_5_door 7.8798828125 32 -0 0.5 0.5 0 0 0
-( -1962 -5008 24 ) ( -1962 -5008 16 ) ( -1962 -5032 24 ) psx_textures_2/brick_wall_pt_5_door 16 16 0 0.5 0.5 0 0 0
-( -2040 -5032 16 ) ( -1944 -5032 16 ) ( -2040 -5008 16 ) psx_textures_2/brick_wall_pt_5_door 16 16 0 0.5 0.5 0 0 0
-( -2040 -5010 0 ) ( -2040 -5010 8 ) ( -1944 -5010 0 ) psx_textures_2/brick_wall_pt_5_door 6.9489746094 32 -0 0.5 0.5 0 0 0
-( -2023 -5032 16 ) ( -2023 -5008 16 ) ( -2023 -5032 24 ) psx_textures_2/brick_wall_pt_5_door 16 16 0 0.5 0.5 0 0 0
-}
-// brush 172
+// brush 170
 {
 ( -1946 -4926 91 ) ( -1946 -4950 91 ) ( -2042 -4926 91 ) psx_mega_pack/door_3_double 60 188 0 0.5 0.5 0 0 0
 ( -1942 -4926 24 ) ( -2038 -4926 24 ) ( -1942 -4926 16 ) psx_mega_pack/door_3_double 45 16 -0 0.5 0.5 0 0 0
@@ -1569,7 +1550,7 @@
 ( -2042 -4928 24 ) ( -2042 -4928 32 ) ( -1946 -4928 24 ) psx_mega_pack/door_3_double 64 34.4594573975 -0 0.5 0.5 0 0 0
 ( -2034 -4950 16 ) ( -2034 -4926 16 ) ( -2034 -4950 24 ) psx_mega_pack/door_3_double 319 64 0 0.5 0.5 0 0 0
 }
-// brush 173
+// brush 171
 {
 ( -2702 -4864 176 ) ( -2702 -4832 16 ) ( -2702 -4832 176 ) psx_textures_2/wallpaper_wall_pt_1_1 0 32 0 0.5 0.5 0 0 0
 ( -1902 -4864 176 ) ( -2126 -4864 16 ) ( -2126 -4864 176 ) psx_textures_2/wallpaper_wall_pt_1_1 14 32 0 0.5 0.5 0 0 0
@@ -1578,7 +1559,7 @@
 ( -1902 -4832 176 ) ( -2126 -4832 16 ) ( -1902 -4832 16 ) psx_textures_2/wallpaper_wall_pt_1_1 14 32 0 0.5 0.5 0 0 0
 ( -2084 -4832 176 ) ( -2084 -4864 16 ) ( -2084 -4864 176 ) psx_textures_2/wallpaper_wall_pt_1_1 0 32 0 0.5 0.5 0 0 0
 }
-// brush 174
+// brush 172
 {
 ( -2702 -4656 176 ) ( -2702 -4624 16 ) ( -2702 -4624 176 ) psx_textures_2/wallpaper_wall_pt_1_1 0 32 0 0.5 0.5 0 0 0
 ( -1902 -4672 176 ) ( -2126 -4672 16 ) ( -2126 -4672 176 ) psx_textures_2/wallpaper_wall_pt_1_1 0 32 0 0.5 0.5 0 0 0
@@ -1587,7 +1568,7 @@
 ( -1902 -4640 176 ) ( -2126 -4640 16 ) ( -1902 -4640 16 ) psx_textures_2/wallpaper_wall_pt_1_1 0 32 0 0.5 0.5 0 0 0
 ( -1906 -4624 176 ) ( -1906 -4656 16 ) ( -1906 -4656 176 ) psx_textures_2/wallpaper_wall_pt_1_1 0 32 0 0.5 0.5 0 0 0
 }
-// brush 175
+// brush 173
 {
 ( -1910 -4888 176 ) ( -1910 -4856 16 ) ( -1910 -4856 176 ) psx_textures_2/wallpaper_wall_pt_1_1 -24 32 0 0.5 0.5 0 0 0
 ( -1166 -4896 176 ) ( -1390 -4896 16 ) ( -1390 -4896 176 ) psx_textures_2/wallpaper_wall_pt_1_1 -18 32 0 0.5 0.5 0 0 0
@@ -1596,7 +1577,7 @@
 ( -1554 -4856 176 ) ( -1554 -4888 16 ) ( -1554 -4888 176 ) psx_textures_2/wallpaper_wall_pt_1_1 -24 32 0 0.5 0.5 0 0 0
 ( -1896 -4896 104 ) ( -1896 -4912 104 ) ( -1880 -4896 104 ) psx_textures_2/wallpaper_wall_pt_1_1 0 0 0 1 1 0 0 0
 }
-// brush 176
+// brush 174
 {
 ( -1620 -6014 176 ) ( -1620 -5790 16 ) ( -1620 -5790 176 ) psx_textures_2/wallpaper_wall_pt_1_1 -18 32 0 0.5 0.5 0 0 0
 ( -1556 -5320 32 ) ( -1556 -5320 16 ) ( -1572 -5320 32 ) psx_textures_2/wallpaper_wall_pt_1_1 0 32 0 0.5 0.5 0 0 0
@@ -1605,7 +1586,7 @@
 ( -1540 -6014 176 ) ( -1540 -5790 16 ) ( -1540 -6014 16 ) psx_textures_2/wallpaper_wall_pt_1_1 -18 32 0 0.5 0.5 0 0 0
 ( -1620 -4896 104 ) ( -1636 -4896 104 ) ( -1620 -4912 104 ) psx_textures_2/wallpaper_wall_pt_1_1 0 0 0 1 1 0 0 0
 }
-// brush 177
+// brush 175
 {
 ( -1908 -6454 176 ) ( -1908 -6230 16 ) ( -1908 -6230 176 ) psx_textures_2/wallpaper_wall_pt_1 0 32 0 0.5 0.5 0 0 0
 ( -1812 -5480 32 ) ( -1812 -5480 16 ) ( -1828 -5480 32 ) psx_textures_2/wallpaper_wall_pt_1 0 32 0 0.5 0.5 0 0 0
@@ -1614,7 +1595,7 @@
 ( -1796 -6454 176 ) ( -1796 -6230 16 ) ( -1796 -6454 16 ) psx_textures_2/wallpaper_wall_pt_1 0 32 0 0.5 0.5 0 0 0
 ( -1768 -5471 88 ) ( -1768 -5455 88 ) ( -1752 -5471 88 ) common/caulk 0 0 0 1 1 0 0 0
 }
-// brush 178
+// brush 176
 {
 ( -1837 -5599 32 ) ( -1837 -5599 16 ) ( -1837 -5583 32 ) psx_textures_2/wallpaper_wall_pt_1 0 32 180 0.5 0.5 0 0 0
 ( -2811 -5583 176 ) ( -2587 -5583 16 ) ( -2811 -5583 16 ) psx_textures_2/wallpaper_wall_pt_1 0 32 0 0.5 0.5 0 0 0
@@ -1623,7 +1604,7 @@
 ( -1675 -5607 176 ) ( -1675 -5639 16 ) ( -1675 -5639 176 ) psx_textures_2/wallpaper_wall_pt_1 0 32 0 0.5 0.5 0 0 0
 ( -1768 -5471 88 ) ( -1768 -5455 88 ) ( -1752 -5471 88 ) common/caulk 0 0 0 1 1 0 0 0
 }
-// brush 179
+// brush 177
 {
 ( -1684 -6454 176 ) ( -1684 -6230 16 ) ( -1684 -6230 176 ) psx_textures_2/wallpaper_wall_pt_1 0 32 0 0.5 0.5 0 0 0
 ( -1556 -5480 32 ) ( -1556 -5480 16 ) ( -1572 -5480 32 ) psx_textures_2/wallpaper_wall_pt_1 0 32 0 0.5 0.5 0 0 0
@@ -1632,7 +1613,7 @@
 ( -1572 -6454 176 ) ( -1572 -6230 16 ) ( -1572 -6454 16 ) psx_textures_2/wallpaper_wall_pt_1 0 32 0 0.5 0.5 0 0 0
 ( -1768 -5471 88 ) ( -1768 -5455 88 ) ( -1752 -5471 88 ) common/caulk 0 0 0 1 1 0 0 0
 }
-// brush 180
+// brush 178
 {
 ( -2126 -5984 176 ) ( -2126 -5952 16 ) ( -2126 -5952 176 ) psx_textures_2/wallpaper_wall_pt_1_1 0 32 0 0.5 0.5 0 0 0
 ( -1166 -5984 176 ) ( -1390 -5984 16 ) ( -1390 -5984 176 ) psx_textures_2/wallpaper_wall_pt_1_1 0 32 0 0.5 0.5 0 0 0
@@ -1641,7 +1622,7 @@
 ( -1170 -5952 176 ) ( -1170 -5984 16 ) ( -1170 -5984 176 ) psx_textures_2/wallpaper_wall_pt_1_1 0 32 0 0.5 0.5 0 0 0
 ( -1296 -5792 88 ) ( -1296 -5800 88 ) ( -1288 -5792 88 ) psx_textures_2/wallpaper_wall_pt_1_1 0 0 0 1 1 0 0 0
 }
-// brush 181
+// brush 179
 {
 ( -1174 -5874 176 ) ( -1174 -5650 16 ) ( -1174 -5650 176 ) psx_textures_2/wallpaper_wall_pt_1_1 0 32 0 0.5 0.5 0 0 0
 ( -1142 -5826 176 ) ( -1174 -5826 16 ) ( -1174 -5826 176 ) psx_textures_2/wallpaper_wall_pt_1_1 0 32 0 0.5 0.5 0 0 0
@@ -1650,7 +1631,7 @@
 ( -1170 -5874 176 ) ( -1170 -5650 16 ) ( -1170 -5874 16 ) psx_textures_2/wallpaper_wall_pt_1_1 0 32 0 0.5 0.5 0 0 0
 ( -1296 -5792 88 ) ( -1296 -5800 88 ) ( -1288 -5792 88 ) psx_textures_2/wallpaper_wall_pt_1_1 0 0 0 1 1 0 0 0
 }
-// brush 182
+// brush 180
 {
 ( -1916 -5768 176 ) ( -1916 -5736 16 ) ( -1916 -5736 176 ) psx_textures_2/wallpaper_wall_pt_1_1 0 32 0 0.5 0.5 0 0 0
 ( -1166 -5792 176 ) ( -1390 -5792 16 ) ( -1390 -5792 176 ) psx_textures_2/wallpaper_wall_pt_1_1 0 32 0 0.5 0.5 0 0 0
@@ -1659,7 +1640,7 @@
 ( -1170 -5736 176 ) ( -1170 -5768 16 ) ( -1170 -5768 176 ) psx_textures_2/wallpaper_wall_pt_1_1 0 32 0 0.5 0.5 0 0 0
 ( -1296 -5792 88 ) ( -1296 -5800 88 ) ( -1288 -5792 88 ) psx_textures_2/wallpaper_wall_pt_1_1 0 0 0 1 1 0 0 0
 }
-// brush 183
+// brush 181
 {
 ( -1174 -6066 176 ) ( -1174 -5842 16 ) ( -1174 -5842 176 ) psx_textures_2/wallpaper_wall_pt_1_1 0 32 0 0.5 0.5 0 0 0
 ( -1142 -6062 176 ) ( -1174 -6062 16 ) ( -1174 -6062 176 ) psx_textures_2/wallpaper_wall_pt_1_1 0 32 0 0.5 0.5 0 0 0
@@ -1668,7 +1649,7 @@
 ( -1170 -6066 176 ) ( -1170 -5842 16 ) ( -1170 -6066 16 ) psx_textures_2/wallpaper_wall_pt_1_1 0 32 0 0.5 0.5 0 0 0
 ( -1296 -5792 88 ) ( -1296 -5800 88 ) ( -1288 -5792 88 ) psx_textures_2/wallpaper_wall_pt_1_1 0 0 0 1 1 0 0 0
 }
-// brush 184
+// brush 182
 {
 patchDef2
 {
@@ -1681,21 +1662,11 @@ delvenPack/dlv_wood1b
 )
 }
 }
-// brush 185
-{
-( -112 -5152 128 ) ( -112 -5248 128 ) ( -288 -5152 128 ) NULL 0 0 0 1 1 0 0 0
-( -112 -5152 32 ) ( -288 -5152 32 ) ( -112 -5152 16 ) NULL 0 0 0 1 1 0 0 0
-( -112 -5152 32 ) ( -112 -5152 16 ) ( -112 -5248 32 ) NULL 0 0 0 1 1 0 0 0
-( -288 -5248 16 ) ( -112 -5248 16 ) ( -288 -5152 16 ) NULL 0 0 0 1 1 0 0 0
-( -288 -5248 16 ) ( -288 -5248 32 ) ( -112 -5248 16 ) NULL 0 0 0 1 1 0 0 0
-( -288 -5248 16 ) ( -288 -5152 16 ) ( -288 -5248 32 ) NULL 0 0 0 1 1 0 0 0
-}
 }
 // entity 1
 {
 "classname" "info_player_start"
-"origin" "-48 256 40"
-"angle" "270"
+"origin" "-128 400 40"
 }
 // entity 2
 {
@@ -4964,10 +4935,10 @@ delvenPack/dlv_wood1b
 {
 ( 80 -272 208 ) ( 80 -320 208 ) ( 16 -272 208 ) lq_props/radiowood 0 0 0 1 1 0 0 0
 ( 80 -272 112 ) ( 16 -272 112 ) ( 80 -272 96 ) lq_props/radiowood 0 0 0 1 1 0 0 0
-( 64 -272 112 ) ( 64 -272 96 ) ( 64 -320 112 ) lq_props/radiowood 0 0 0 1 1 0 0 0
+( 96 -272 112 ) ( 96 -272 96 ) ( 96 -320 112 ) lq_props/radiowood 0 0 0 1 1 0 0 0
 ( 16 -320 96 ) ( 80 -320 96 ) ( 16 -272 96 ) lq_props/radiowood 0 0 0 1 1 0 0 0
 ( 16 -320 96 ) ( 16 -320 112 ) ( 80 -320 96 ) lq_props/radiowood 0 0 0 1 1 0 0 0
-( 16 -320 96 ) ( 16 -272 96 ) ( 16 -320 112 ) lq_props/radiowood 0 0 0 1 1 0 0 0
+( -16 -320 96 ) ( -16 -272 96 ) ( -16 -320 112 ) lq_props/radiowood 0 0 0 1 1 0 0 0
 }
 }
 // entity 102
@@ -5183,7 +5154,7 @@ delvenPack/dlv_wood1b
 // entity 127
 {
 "classname" "nav_point"
-"origin" "-128 -688 16"
+"origin" "-144 -688 16"
 "targetname" "test_walk_17"
 "target" "test_walk_18"
 }
@@ -5251,4 +5222,40 @@ delvenPack/dlv_wood1b
 ( -384 -16 32 ) ( -384 -16 48 ) ( -288 -16 32 ) common/trigger 0 16 -0 1 1 0 0 0
 ( -384 -16 32 ) ( -384 80 32 ) ( -384 -16 48 ) common/trigger 0 16 0 1 1 0 0 0
 }
+}
+// entity 135
+{
+"classname" "item_weapon_cane"
+"origin" "80 416 64"
+"modelscale" "48"
+}
+// entity 136
+{
+"classname" "item_weapon_pistol"
+"origin" "80 384 64"
+"modelscale" "48"
+}
+// entity 137
+{
+"classname" "item_weapon_shotgun"
+"origin" "96 352 48"
+"modelscale" "48"
+}
+// entity 138
+{
+"classname" "item_weapon_smg"
+"origin" "128 320 64"
+"modelscale" "48"
+}
+// entity 139
+{
+"classname" "item_weapon_twinswords"
+"origin" "64 352 48"
+"modelscale" "48"
+}
+// entity 140
+{
+"classname" "item_weapon_cannon"
+"origin" "128 384 48"
+"modelscale" "48"
 }

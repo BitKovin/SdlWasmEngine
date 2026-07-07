@@ -4,7 +4,7 @@ $input v_texcoord0
 
 SAMPLER2D(screenTexture, 0);
 SAMPLER2D(depthTexture, 1);
-SAMPLER2D(noiseTexture,  2);// @texture GameData/textures/noise/grainy5_256.png
+SAMPLER2D(noiseTexture,  2);// @texture GameData/textures/noise/grainy5_256.jpg
 SAMPLER2D(LutTexture,    3);// @texture GameData/textures/pp/main.png
 
 uniform vec4 screenResolution;    // .xy

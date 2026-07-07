@@ -1715,7 +1715,7 @@ void Player::UpdateWeapon()
 	if (firearm != nullptr)
 	{
 
-		if (Input::GetAction("test")->Pressed())
+		if (Input::GetAction("slotTest")->Pressed())
 		{
 			if (firearm)
 			{
@@ -2975,10 +2975,18 @@ void Player::OnLevelEnd()
 	Hud.SetVisible(false);
 
 	if (currentWeapon)
+	{
 		currentWeapon->Destroy();
+		currentWeapon = nullptr;
+	}
+
 
 	if (currentOffhandWeapon)
+	{
 		currentOffhandWeapon->Destroy();
+		currentOffhandWeapon = nullptr;
+	}
+
 
 }
 
