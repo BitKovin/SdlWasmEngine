@@ -102,6 +102,8 @@ inline bool endsWith(const std::string& str, const std::string& suffix) {
 Level* Level::OpenLevel(string filePath)
 {
 
+	EngineMain::MainInstance->Paused = false;
+
 	ChangingLevel = true;
 
 	CurrentLevelChangeId++;

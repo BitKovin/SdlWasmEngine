@@ -74,13 +74,56 @@ void PlayerHud::Init(Player* playerRef)
 
     hudCanvas->AddChild(useIndicator);
 
+	playerStatusContainer = make_shared<UiImage>();
+	hudCanvas->AddChild(playerStatusContainer);
+
+	playerStatusContainer->ImagePath = "GameData/textures/ui/hud/status.png";
+	playerStatusContainer->size = vec2(392, 317);
+	playerStatusContainer->origin = vec2(0.0f, 1.0f);
+	playerStatusContainer->pivot = vec2(0.0f, 1.0f);
+
+	playerStatusContainer->color = vec4(vec3(.85f),0.9f);
+
+	healthBar = make_shared<UiImage>();
+	playerStatusContainer->AddChild(healthBar);
+	healthBar->ImagePath = "GameData/textures/ui/hud/progressbar.png";
+	healthBar->size = vec2(302, 37);
+	healthBar->position = vec2(28, 160);
+	healthBar->color = vec4(1, 0.2, 0.2, 1);
+
+
+    armorBar = make_shared<UiImage>();
+    playerStatusContainer->AddChild(armorBar);
+    armorBar->ImagePath = "GameData/textures/ui/hud/progressbar.png";
+    armorBar->size = vec2(302, 37);
+    armorBar->position = vec2(28, 92);
+    armorBar->color = vec4(1.1, 0.7, 0.0, 1);
+
+	staminaBar1 = make_shared<StaminaBar>();
+	playerStatusContainer->AddChild(staminaBar1);
+	staminaBar1->origin = vec2(0, 1);
+	staminaBar1->pivot = vec2(0, 1);
+	staminaBar1->position = vec2(40, -15);
+
+    staminaBar2 = make_shared<StaminaBar>();
+    playerStatusContainer->AddChild(staminaBar2);
+    staminaBar2->origin = vec2(0, 1);
+    staminaBar2->pivot = vec2(0, 1);
+    staminaBar2->position = vec2(40 + 95, -15);
+
+    staminaBar3 = make_shared<StaminaBar>();
+    playerStatusContainer->AddChild(staminaBar3);
+    staminaBar3->origin = vec2(0, 1);
+    staminaBar3->pivot = vec2(0, 1);
+    staminaBar3->position = vec2(40 + 95 * 2, -15);
+
     //hudCanvas->AddChild(std::make_shared<UiScoreIndicator>());
 
 }
 
 void PlayerHud::Update()
 {
-    text->text = std::to_string((int)player->Health) + "\n" + to_string(player->stamina);
+    text->text = "";// std::to_string((int)player->Health) + "\n" + to_string(player->stamina);
 
     ammoText->text = "";
     if (player->currentWeapon)
@@ -94,6 +137,19 @@ void PlayerHud::Update()
     }
 
     crosshair->visible = !useIndicator->visible;
+
+    healthBar->size = vec2(glm::max(0.0f, glm::min(1.0f, player->Health / player->MaxHealth)) * 302, 37);
+
+	float stamina = player->stamina;
+
+	float stamina1 = glm::clamp(stamina, 0.0f, 1.0f);
+	float stamina2 = glm::clamp(stamina - 1.0f, 0.0f, 1.0f);
+	float stamina3 = glm::clamp(stamina - 2.0f, 0.0f, 1.0f);
+
+	staminaBar1->stamina = stamina1;
+	staminaBar2->stamina = stamina2;
+	staminaBar3->stamina = stamina3;
+
 
 	//frameRate->text = "FPS: " + to_string((int)(1.0f / Time::DeltaTimeF));
 
@@ -247,4 +303,43 @@ void UseIndicator::Update()
 
     progressBar->Progress = playerRef->interactionProgress;
 
+}
+
+StaminaBar::StaminaBar()
+{
+
+	ImagePath = "GameData/textures/ui/hud/stamina_bg.png";
+    size = vec2(81, 77) * 1.05f;
+
+	staminaFill = make_shared<UiProgressBar>();
+	AddChild(staminaFill);
+	staminaFill->BackgroundImage = "GameData/textures/ui/hud/stamina_fill.png";
+    staminaFill->BackgroundColor = vec4(0);
+	staminaFill->ProgressImage = "GameData/textures/ui/hud/stamina_fill.png";
+	staminaFill->size = vec2(58, 55) * 1.05f;
+    staminaFill->rotation = -90;
+    staminaFill->position = vec2(-1,0);
+
+	staminaFill->color = vec4(vec3(0.8f), 1);
+
+    staminaFill->pivot = vec2(0.5f);
+	staminaFill->origin = vec2(0.5f);
+
+	shadowImage = make_shared<UiImage>();
+    AddChild(shadowImage);
+    shadowImage->ImagePath = ImagePath;
+	shadowImage->size = size * 1.05f;
+	shadowImage->color = vec4(vec3(0), 0.4f);
+	shadowImage->position = vec2(1, 1);
+
+    stamina = 0.5f;
+
+}
+
+void StaminaBar::Update()
+{
+
+    staminaFill->Progress = stamina;
+
+    UiImage::Update();
 }

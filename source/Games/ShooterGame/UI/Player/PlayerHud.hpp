@@ -51,7 +51,21 @@ private:
 
 };
 
+class StaminaBar : public UiImage
+{
 
+public:
+
+	StaminaBar();
+
+	std::shared_ptr<UiProgressBar> staminaFill;
+	std::shared_ptr<UiImage> shadowImage;
+
+	float stamina = 1.0f;
+
+	void Update() override;
+
+};
 
 class PlayerHud
 {
@@ -88,5 +102,14 @@ private:
 	std::shared_ptr<UiText> frameRate;
 
 	std::shared_ptr<UseIndicator> useIndicator;
+
+
+	std::shared_ptr<UiImage> healthBar;
+	std::shared_ptr<UiImage> armorBar;
+	std::shared_ptr<UiImage> playerStatusContainer;
+
+	std::shared_ptr<StaminaBar> staminaBar1;
+	std::shared_ptr<StaminaBar> staminaBar2;
+	std::shared_ptr<StaminaBar> staminaBar3;
 
 };
