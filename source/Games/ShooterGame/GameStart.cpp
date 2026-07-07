@@ -292,6 +292,9 @@ private:
 GameStart::GameStart()
 {
 
+	PauseGameManager::SetGamePaused(false);
+	PauseGameManager::SetGamePausedGameplay(false);
+
     NpcBase::globalPhraceDelay = Delay();
 
     LoadConstantAssets();
