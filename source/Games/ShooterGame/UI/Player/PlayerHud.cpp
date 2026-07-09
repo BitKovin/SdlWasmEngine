@@ -41,6 +41,18 @@ void PlayerHud::Init(Player* playerRef)
     text->pivot = vec2(0, 1);
     text->text = std::to_string((int)player->Health);
 
+	text->font = UiRenderer::LoadFont("GameData/fonts/TypographerRotunda.ttf", 100);
+    text->fontSize = 100;
+
+    text->shadowEnabled = true;
+    text->shadowSoftness = 8;
+    text->shadowSpread = 5;
+    text->shadowColor = vec4(0, 0, 0, 0.8);
+	text->outlineEnabled = true;
+    text->outlineWidth = 2;
+
+	//text->glowEnabled = true;
+
     ammoText = make_shared<UiText>();
     ammoText->position = vec2(-20, -20);
     ammoText->origin = vec2(1, 1);
@@ -75,7 +87,7 @@ void PlayerHud::Init(Player* playerRef)
     hudCanvas->AddChild(useIndicator);
 
 	playerStatusContainer = make_shared<UiImage>();
-	hudCanvas->AddChild(playerStatusContainer);
+	//hudCanvas->AddChild(playerStatusContainer);
 
 	playerStatusContainer->ImagePath = "GameData/textures/ui/hud/status.png";
 	playerStatusContainer->size = vec2(392, 317);
@@ -87,35 +99,35 @@ void PlayerHud::Init(Player* playerRef)
 	healthBar = make_shared<UiImage>();
 	playerStatusContainer->AddChild(healthBar);
 	healthBar->ImagePath = "GameData/textures/ui/hud/progressbar.png";
-	healthBar->size = vec2(302, 37);
-	healthBar->position = vec2(28, 160);
+	healthBar->size = vec2(282, 37);
+	healthBar->position = vec2(47, 158);
 	healthBar->color = vec4(1, 0.2, 0.2, 1);
 
 
     armorBar = make_shared<UiImage>();
     playerStatusContainer->AddChild(armorBar);
     armorBar->ImagePath = "GameData/textures/ui/hud/progressbar.png";
-    armorBar->size = vec2(302, 37);
-    armorBar->position = vec2(28, 92);
+    armorBar->size = vec2(282, 37);
+    armorBar->position = vec2(47, 92);
     armorBar->color = vec4(1.1, 0.7, 0.0, 1);
 
 	staminaBar1 = make_shared<StaminaBar>();
 	playerStatusContainer->AddChild(staminaBar1);
 	staminaBar1->origin = vec2(0, 1);
 	staminaBar1->pivot = vec2(0, 1);
-	staminaBar1->position = vec2(40, -15);
+	staminaBar1->position = vec2(50, -25);
 
     staminaBar2 = make_shared<StaminaBar>();
     playerStatusContainer->AddChild(staminaBar2);
     staminaBar2->origin = vec2(0, 1);
     staminaBar2->pivot = vec2(0, 1);
-    staminaBar2->position = vec2(40 + 95, -15);
+    staminaBar2->position = vec2(50 + 90, -25);
 
     staminaBar3 = make_shared<StaminaBar>();
     playerStatusContainer->AddChild(staminaBar3);
     staminaBar3->origin = vec2(0, 1);
     staminaBar3->pivot = vec2(0, 1);
-    staminaBar3->position = vec2(40 + 95 * 2, -15);
+    staminaBar3->position = vec2(50 + 90 * 2, -25);
 
     //hudCanvas->AddChild(std::make_shared<UiScoreIndicator>());
 
@@ -123,7 +135,7 @@ void PlayerHud::Init(Player* playerRef)
 
 void PlayerHud::Update()
 {
-    text->text = "";// std::to_string((int)player->Health) + "\n" + to_string(player->stamina);
+    text->text = "HEALTH: " + std::to_string((int)player->Health) + "\n" + "Stamina: " + to_string(player->stamina);
 
     ammoText->text = "";
     if (player->currentWeapon)
@@ -138,7 +150,7 @@ void PlayerHud::Update()
 
     crosshair->visible = !useIndicator->visible;
 
-    healthBar->size = vec2(glm::max(0.0f, glm::min(1.0f, player->Health / player->MaxHealth)) * 302, 37);
+    healthBar->size = vec2(glm::max(0.0f, glm::min(1.0f, player->Health / player->MaxHealth)) * 282, 37);
 
 	float stamina = player->stamina;
 

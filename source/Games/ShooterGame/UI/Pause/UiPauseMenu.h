@@ -10,6 +10,9 @@
 
 #include "UiSettingsMenu.h"
 
+#include <UI/UiTextBox.hpp>
+#include <UI/UiSlider.hpp>
+
 class UiPauseMenu : public UiCanvas
 {
 public:
@@ -39,6 +42,16 @@ public:
 		optionsBox->AddChild(menuButton);
 
 		optionsBox->rotation = 30;
+
+		slider = std::make_shared<UiSlider>();
+		slider->size = vec2(300, 30);
+		slider->position = vec2(50);
+		AddChild(slider);
+
+		textBox = std::make_shared<UiTextBox>();
+		textBox->position = vec2(50, 150);
+		textBox->size = vec2(300, 30);
+		AddChild(textBox);
 
 		AddChild(optionsBox);
 
@@ -81,6 +94,9 @@ private:
 	std::shared_ptr<UiButton> menuButton;
 
 	std::shared_ptr<UiImage> background;
+
+	std::shared_ptr<UiSlider> slider;
+	std::shared_ptr<UiTextBox> textBox;
 
 	std::shared_ptr<UiButton> MakeButton(std::string text)
 	{

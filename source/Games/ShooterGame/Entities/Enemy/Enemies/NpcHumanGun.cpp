@@ -13,7 +13,13 @@ NpcHumanGun::NpcHumanGun()
     mesh->Scale = vec3(1.15f);
     Health = 90;
     MaxHealth = 90;
-    pathFollow.allowPartialPath = true;
+
+    // No partial paths, for chasing or repositioning alike. A partial path
+    // can route the NPC toward a ledge or gap it can't actually finish
+    // crossing and have it walk off the end once the navmesh runs out —
+    // every destination we send it to is expected to be fully, directly
+    // reachable; if it isn't, we simply don't move there.
+    pathFollow.allowPartialPath = false;
 
     // Prevent firing the instant the NPC spawns / gets ownership.
     cantAttackDelay.AddDelay(0.5f);
@@ -36,6 +42,13 @@ void NpcHumanGun::ProcessAnimationEvent(AnimationEvent& event)
 // Attack – fire a bullet toward the predicted target position.
 // Bullet spawning is owner-only (authoritative). The animation is broadcast
 // via RPC so all peers see the fire anim in sync.
+//
+// This only decides whether to keep firing or abandon the burst. It never
+// picks a new position itself — shotsPerBurst == 0 is the sole signal the
+// state machine in AsyncUpdate needs to know a burst isn't running, and it
+// takes it from there (after postBurstDelay, or immediately on abandon).
+// Keeping "what happens next" in one place is what makes it possible to
+// reason about the whole loop.
 // ---------------------------------------------------------------------------
 
 void NpcHumanGun::Attack()
@@ -49,9 +62,16 @@ void NpcHumanGun::Attack()
         vec3 bonePos = mesh->GetBoneMatrixWorld("weapon_muzzle")[3];
         vec3 predictedTargetPosition = resolvedTarget->Position;
 
-        if (!AttackDirectionCheck(bonePos, predictedTargetPosition, resolvedTarget))
+        // Only verify the actual bullet path on the first shot of a burst.
+        // Once that first shot is confirmed clear, the rest of the burst
+        // fires without re-checking — path/LOS only gates the start of a
+        // burst. If even the first shot can't get a clear path, abandon the
+        // burst; the state machine picks a new spot on its next pass.
+        if (shotsFired == 0 &&
+            !AttackDirectionCheck(bonePos, predictedTargetPosition, resolvedTarget))
         {
-            inAttackDelay.AddDelay(0.5f);
+            shotsPerBurst = 0;
+            cantAttackDelay.AddDelay(0.3f);
             return;
         }
 
@@ -89,29 +109,20 @@ void NpcHumanGun::Attack()
         bullet->Start();
 
         inAttackDelay.AddDelay(ModifyAnimationSpeed(0.5f));
-        afterAttackDelay.AddDelay(3.0f);
 
         shotsFired++;
         if (shotsFired >= shotsPerBurst)
         {
             shotsFired = 0;
             shotsPerBurst = 0;
-            afterAttackDelay.AddDelay(1.5f);
-            cantAttackDelay.AddDelay(0.5f);
 
-            // Only relocate if the spot we're already standing in has stopped
-            // being a good one to shoot from. Previously this fired on every
-            // burst regardless of whether the current position was still
-            // fine, so the NPC would abandon a perfectly good attack spot
-            // (in range, clear shot) and run off to find a new one for no
-            // reason.
-            bool stillInGoodSpot = CheckAttackLocation(Position, resolvedTarget->Position);
-            if (!pathFollow.reachedTarget && !stillInGoodSpot)
-            {
-                repositioning = true;
-                repositionElapsed = 0.0f;
-                repositionTarget = FindAttackLocation();
-            }
+            // Hold position for postBurstDelay so the fire animation has
+            // time to finish before AsyncUpdate's state machine moves on
+            // (see the "just finished a burst" branch there). This is a
+            // dedicated timer specifically so nothing else touching
+            // cantAttackDelay (the run/stun lock, the retry throttle
+            // below, the spawn delay) can shorten or extend it.
+            postBurstPauseDelay.AddDelay(postBurstDelay);
         }
 
         // Broadcast animation to others.
@@ -160,7 +171,7 @@ bool NpcHumanGun::CheckAttackLOS(vec3 location, vec3 targetLocation)
 
     auto hit = Physics::SphereTrace(
         attackPos, targetLocation + vec3(0, 0.65f, 0),
-        0.1f, BodyType::GroupHitTest, mesh->hitboxBodies);
+        0.3f, BodyType::GroupHitTest, {}, {this, resolvedTarget});
 
     if (hit.hasHit && hit.entity != resolvedTarget)
         return false;
@@ -170,11 +181,13 @@ bool NpcHumanGun::CheckAttackLOS(vec3 location, vec3 targetLocation)
 
 bool NpcHumanGun::CheckAttackLocation(vec3 location, vec3 targetLocation)
 {
-    if (glm::distance(location, targetLocation) > attackDesiredRange)
+    float dist = glm::distance(location, targetLocation);
+    if (dist < minEngageDistance || dist > maxEngageDistance)
         return false;
 
     return CheckAttackLOS(location, targetLocation);
 }
+
 
 // ---------------------------------------------------------------------------
 // Main update
@@ -243,15 +256,16 @@ void NpcHumanGun::AsyncUpdate()
     // ── Owner AI ──────────────────────────────────────────────────────────
     if (isOwned)
     {
-        // No target: hold aim and reset attack window.
+        // No target: hold aim, fully reset combat state.
         if (resolvedTarget == nullptr)
         {
             if (mesh->GetAnimationName() != "aim")
                 mesh->PlayAnimation("aim", true, 0.5f);
 
-            afterAttackDelay.AddDelay(-1);
-
             state = NpcState::Idle;
+            repositioning = false;
+            shotsFired = 0;
+            shotsPerBurst = 0;
 
             vec3 vel = controller.GetVelocity();
             controller.SetVelocity(vec3(0, vel.y, 0));
@@ -263,122 +277,121 @@ void NpcHumanGun::AsyncUpdate()
 
         auto animName = mesh->GetAnimationName();
 
-        // Running or stunned animations lock out attacking briefly.
+        // Running or stunned animations lock out attacking briefly, so a
+        // burst never starts mid-transition.
         if (animName == "run" || animName == "stun")
             cantAttackDelay.AddDelay(0.7f);
 
         desiredTargetLocation = resolvedTarget->Position;
-
         vec3 lookAtDir = MathHelper::FastNormalize(resolvedTarget->Position - Position);
 
-        bool hasLineOfSight = LineOfSightCheck(resolvedTarget);
+        // Upper bound only (no lower bound) — a target that's closer than
+        // minEngageDistance still counts as "has a shot" here. That's what
+        // sends it into a reposition search below rather than a "chase
+        // closer" that would just walk it into the player.
+        bool hasLineOfSight = LineOfSightCheck(resolvedTarget) &&
+            glm::distance2(resolvedTarget->Position, Position)
+                <= maxEngageDistance * maxEngageDistance;
 
-        if (glm::distance2(resolvedTarget->Position, Position)
-            > attackDesiredRange * attackDesiredRange)
-        {
-            hasLineOfSight = false;
-        }
+        bool chasing = false;
 
-        // ── Shoot-and-scoot state machine ──────────────────────────────────
+        // ── State machine ────────────────────────────────────────────────
+        // Priority order, evaluated fresh every frame:
+        //   1. Mid-reposition   — keep moving to repositionTarget, stop the
+        //                         instant we arrive.
+        //   2. Mid-burst        — keep firing until it's spent.
+        //   3. Post-burst pause — just finished (or about to start); hold
+        //                         still until postBurstPauseDelay clears.
+        //   4. Have a shot      — go find a spot nearby and move to it.
+        //   5. No shot          — close the distance directly until we do.
+        // Deliberately not "smart": no flanking, no threat evaluation, just
+        // a reachable, correctly-ranged, visible spot.
 
         if (repositioning)
         {
-            // REPOSITIONING phase: sprint to the chosen flank position.
             if (animName != "run" && !IsStunned())
                 mesh->PlayAnimation("run", true, 0.6f);
 
-            cantAttackDelay.AddDelay(0.5f);
-
+            desiredTargetLocation = repositionTarget;
             repositionElapsed += Time::DeltaTimeF;
 
-            // pathFollow.reachedTarget is only refreshed at the bottom of
-            // this function (pathFollow.TryPerform(), after this frame's
-            // movement has already been applied), so it always reports
-            // arrival one frame late. At a full sprint that's enough to
-            // overshoot a spot that sits close to a ledge. Checking our own
-            // fresh distance to repositionTarget catches arrival the same
-            // frame it happens, instead of one frame after the fact.
-            const float repositionArriveRadius = 0.5f;
-            bool arrivedAtRepositionTarget =
-                pathFollow.reachedTarget ||
-                glm::distance(Position, repositionTarget) < repositionArriveRadius;
+            
 
-            // Safety net: if relocating is taking too long (bad path, a
-            // moving obstacle, a target spot that was farther than it
-            // looked, etc.) stop sprinting and start shooting from wherever
-            // we currently are instead of continuing to run — this bounds
-            // exactly the "runs a long way past the player" failure mode.
-            const float maxRepositionTime = 3.5f;
-            bool repositionTimedOut = repositionElapsed > maxRepositionTime;
+            bool arrived = false;
+        
+            //DebugDraw::Point(desiredTargetLocation, 1.0f, 0.5f, DebugColor::Green);
 
-            if (arrivedAtRepositionTarget || repositionTimedOut)
+			if (glm::distance(Position, repositionTarget) < 3)
+			{
+
+
+
+				if (CheckAttackLocation(Position, resolvedTarget->Position))
+				{
+					arrived = glm::distance(Position, repositionTarget) < arrivalRadius || pathFollow.reachedTarget;
+				}
+				else
+				{
+                    arrived = pathFollow.reachedTarget;
+				}
+			}
+            bool timedOut = repositionElapsed > maxRepositionTime;
+
+            if (arrived || timedOut)
             {
-                // Arrived (or gave up) – switch to shooting phase.
                 repositioning = false;
-                shotsPerBurst = 3 + (RandomHelper::RandomInt() % 2);
+                shotsPerBurst = 3;
                 shotsFired = 0;
 
                 if (animName == "run")
                     mesh->PlayAnimation("aim", true, 0.3f);
             }
+        }
+        else if (shotsPerBurst > 0)
+        {
+            if (animName == "run")
+                mesh->PlayAnimation("aim", true, 0.3f);
             else
-            {
-                desiredTargetLocation = repositionTarget;
-            }
+                desiredDirection = lookAtDir;
+
+            // Fire it out to the end regardless of visibility — LOS/path
+            // were already confirmed before this burst started, either
+            // below or in Attack()'s first-shot check.
+            if (!cantAttackDelay.Wait())
+                Attack();
+        }
+        else if (postBurstPauseDelay.Wait())
+        {
+            // Just finished a burst. Hold still and let the fire animation
+            // finish before doing anything else.
+            desiredDirection = lookAtDir;
+        }
+        else if (hasLineOfSight)
+        {
+            // Have a shot and nothing else in progress — find a spot
+            // nearby (closer, farther, or about the same — see
+            // FindAttackLocation) and move to it.
+            repositioning = true;
+            repositionElapsed = 0.0f;
+            repositionTarget = FindAttackLocation();
+
+            desiredTargetLocation = repositionTarget;
+            pathFollow.reachedTarget = false;
         }
         else
         {
-            // SHOOTING phase: stand still and fire the burst.
+            // No shot available — close the distance directly until there
+            // is one. No search, no destination of its own: just walk at
+            // the target.
+            chasing = true;
 
-            // Roll burst size on first entry, but only after the inter-burst
-            // pause (afterAttackDelay) has elapsed so the NPC doesn't fire again
-            // immediately after exhausting a burst at its current position.
-            if (shotsPerBurst == 0 && !afterAttackDelay.Wait())
-            {
-                shotsPerBurst = 2 + (RandomHelper::RandomInt() % 3);
-                shotsFired = 0;
-            }
+            if (animName != "run" && !IsStunned())
+                mesh->PlayAnimation("run", true, 0.6f);
 
-            if (hasLineOfSight)
-                afterAttackDelay.AddDelay(3.0f);
-
-            if (hasLineOfSight || afterAttackDelay.Wait())
-            {
-                if (animName == "run")
-                    mesh->PlayAnimation("aim", true, 0.3f);
-                else
-                    desiredDirection = lookAtDir;
-
-                if (!cantAttackDelay.Wait())
-                    Attack();
-            }
-            else
-            {
-                // Lost LOS mid-burst. Only reposition if there is somewhere to go;
-                // if reachedTarget is true we are already at the closest navmesh
-                // point — repositioning would just loop back here immediately.
-                if (!pathFollow.reachedTarget)
-                {
-                    if (animName != "run" && !IsStunned())
-                        mesh->PlayAnimation("run", true, 0.6f);
-
-                    cantAttackDelay.AddDelay(0.5f);
-                    repositioning = true;
-                    repositionElapsed = 0.0f;
-                    repositionTarget = FindAttackLocation();
-                    shotsFired = 0;
-                    shotsPerBurst = 0;
-                }
-                else
-                {
-                    // Stuck at closest possible position with no LOS — hold aim.
-                    if (animName == "run")
-                        mesh->PlayAnimation("aim", true, 0.3f);
-                }
-            }
+            desiredDirection = lookAtDir;
         }
 
-        // ── End state machine ──────────────────────────────────────────────
+        // ── End state machine ────────────────────────────────────────────
 
         if (IsFleeing())
         {
@@ -397,26 +410,21 @@ void NpcHumanGun::AsyncUpdate()
                 MathHelper::XZ(pathFollow.CalculatedTargetLocation - Position));
         }
 
-        speed += Time::DeltaTimeF * 6.5f;
+        speed += Time::DeltaTimeF * 4.5f;
         speed = glm::clamp(speed, 0.0f, ModifyMovementSpeed(maxSpeed));
 
-        // repositioning is the only path in this state machine that's meant
-        // to move the NPC (it's what drives the "run" animation above). Any
-        // time we're not repositioning we must be fully stationary — that
-        // includes holding aim with LOS, the after-attack grace window, and
-        // the "stuck at closest reachable spot, no LOS" case above.
-        //
-        // Previously this only zeroed speed when hasLineOfSight or
-        // afterAttackDelay was true. The "stuck" case has neither (that's
-        // exactly how it's reached), so speed kept ramping up every frame
-        // with nothing to stop it, and the NPC would drift/slide while the
-        // aim animation played.
-        if (!repositioning)
+        // Repositioning and chasing are the only phases meant to move the
+        // NPC (that's what drives the "run" animation above). Every other
+        // phase — holding aim, mid-burst, the post-burst pause — is fully
+        // stationary.
+        if (!repositioning && !chasing)
             speed = 0.0f;
 
         movingDirection = glm::mix(movingDirection, desiredDirection,
             (double)Time::DeltaTime * 10.0);
         movingDirection = MathHelper::FastNormalize(movingDirection);
+
+
 
         vec3 vel = controller.GetVelocity();
         controller.SetVelocity(vec3(movingDirection.x * speed, vel.y,
@@ -487,6 +495,7 @@ void NpcHumanGun::Serialize(json& target)
     NpcHumanBase::Serialize(target);
 
     SERIALIZE_FIELD(target, cantAttackDelay);
+    SERIALIZE_FIELD(target, postBurstPauseDelay);
     SERIALIZE_FIELD(target, desiredTargetLocation);
     SERIALIZE_FIELD(target, accuracyModifier);
     SERIALIZE_FIELD(target, repositioning);
@@ -501,6 +510,7 @@ void NpcHumanGun::Deserialize(json& source)
     NpcHumanBase::Deserialize(source);
 
     DESERIALIZE_FIELD(source, cantAttackDelay);
+    DESERIALIZE_FIELD(source, postBurstPauseDelay);
     DESERIALIZE_FIELD(source, desiredTargetLocation);
     DESERIALIZE_FIELD(source, accuracyModifier);
     DESERIALIZE_FIELD(source, repositioning);
@@ -528,349 +538,135 @@ void NpcHumanGun::LoadAssets()
     mesh->SetLooped(true);
 }
 
-// ---------------------------------------------------------------------------
-// FindAttackLocation – tactical positioning for shoot-and-scoot.
-// Unchanged logic; only reference to `target` replaced with `resolvedTarget`.
-// ---------------------------------------------------------------------------
+
+
+namespace
+{
+    struct Candidate
+    {
+        vec3  position; // navmesh-projected, walkable position
+        float score = 0.0f;
+    };
+}
 
 vec3 NpcHumanGun::FindAttackLocation()
 {
-    // Detection parameters
-    const float tooCloseThreshold = 2.0f;
+    if (resolvedTarget == nullptr)
+        return Position;
 
-    // Candidate generation parameters
-    const int   maxIterations = 100;
-    const int   normalTargetCandidates = 20;
-    const int   tooCloseTargetCandidates = 30;
-    const float preferredMaxMove = 5.0f;
-    const float absoluteMaxMove = 8.0f;
+    const vec3 currentPos = Position;
+    const vec3 targetPos = resolvedTarget->Position;
 
-    // Ring multipliers
-    struct Ring { float minMult; float maxMult; };
-    const std::vector<Ring> rings = {
-        {0.85f, 1.15f},  // Primary: optimal range
-        {0.65f, 0.85f},  // Secondary: closer
-        {0.40f, 0.65f},  // Tertiary: evasive close
-    };
+    const int   maxAttempts = 32;
+    const float minRadiusFrac = 0.6f;   // always move a noticeable amount, not 2 inches
+    const float acceptanceRadius = 0.1f;
+    const float pathEndTolerance = acceptanceRadius * 2.0f;
+    const float maxDetourRatio = 1.75f;  // allowed path length vs straight line
+    const float maxStepDelta = 0.5f;   // heuristic jump/drop link detector
+    const float navSnapTolerance = 0.75f;  // how far a raw sample may be from walkable navmesh
+    const float outOfRangeWeight = 1000.0f; // in-range candidates always outrank out-of-range ones
 
-    // Normal mode angle biases (cumulative probabilities)
-    const float normalLeftFlankProb = 0.35f;
-    const float normalRightFlankProb = 0.35f;
-    const float normalBackProb = 0.20f;
-    const float normalLeftFlankAngleBase = -90.0f;
-    const float normalLeftFlankAngleVar = 80.0f;
-    const float normalRightFlankAngleBase = 90.0f;
-    const float normalRightFlankAngleVar = 80.0f;
-    const float normalBackAngleBase = 180.0f;
-    const float normalBackAngleVar = 120.0f;
-    const float normalFrontAngleBase = 0.0f;
-    const float normalFrontAngleVar = 40.0f;
+    std::vector<Candidate> candidates;
+    candidates.reserve(maxAttempts);
 
-    // Too-close mode angle biases
-    const float tooCloseDirectAwayProb = 0.60f;
-    const float tooCloseLeftFlankProb = 0.20f;
-    const float tooCloseDirectAwayAngleBase = 0.0f;
-    const float tooCloseDirectAwayAngleVar = 20.0f;
-    const float tooCloseLeftFlankAngleBase = 60.0f;
-    const float tooCloseLeftFlankAngleVar = 60.0f;
-    const float tooCloseRightFlankAngleBase = -60.0f;
-    const float tooCloseRightFlankAngleVar = 60.0f;
-
-    // Path checking parameters
-    const float segmentDivisor = 2.5f;
-    const int   maxSegments = 10;
-
-    // Fallback parameters
-    const float fallbackDist = 4.0f;
-    const float fallbackDistMult = 0.8f;
-
-    // Scoring parameters - common
-    const float distSigma = 0.15f;
-    const float randomScoreMult = 0.25f;
-    const float moveScoreWeight = 1.8f;
-    const float circleScoreWeight = 1.1f;
-
-    // Scoring parameters - normal
-    const float normalMovePeak = 0.3f;
-    const float normalMoveSigma = 0.25f;
-    const float normalFlankWeight = 3.2f;
-    const float normalDistWeight = 2.1f;
-
-    // Scoring parameters - too close
-    const float tooCloseMovePeak = 0.7f;
-    const float tooCloseMoveSigma = 0.35f;
-    const float tooCloseFlankWeight = 1.8f;
-    const float tooCloseDistWeight = 3.2f;
-
-    // Clustering penalty
-    const float clusterSigma = 2.0f;
-    const float clusterWeight = 2.5f;
-
-    // Scatter to break perfect circle
-    const float scatterRadiusMult = 0.15f;
-
-    const vec3& currentPos = Position;
-    const vec3& targetPos = resolvedTarget->Position;
-    const vec3& targetRot = resolvedTarget->Rotation;
-    vec3 targetForward = MathHelper::GetForwardVector(targetRot);
-    targetForward.y = 0.0f;
-    targetForward = MathHelper::Normalized(targetForward);
-    vec3 targetRight = MathHelper::Normalized(
-        glm::cross(targetForward, vec3(0.0f, 1.0f, 0.0f)));
-
-    float currentDistXZ = glm::length(MathHelper::XZ(currentPos - targetPos));
-    bool  isTooClose = currentDistXZ < tooCloseThreshold;
-
-    vec3 referenceForward = targetForward;
-    vec3 referenceRight = targetRight;
-
-    int targetCandidatesLocal = normalTargetCandidates;
-    if (isTooClose)
+    // --- PHASE 1: GENERATE + SCORE ---------------------------------------------------
+    for (int i = 0; i < maxAttempts; ++i)
     {
-        referenceForward = MathHelper::Normalized(MathHelper::XZ(currentPos - targetPos));
-        referenceRight = MathHelper::Normalized(
-            glm::cross(referenceForward, vec3(0.0f, 1.0f, 0.0f)));
-        targetCandidatesLocal = tooCloseTargetCandidates;
-    }
+        float angleRad = MathHelper::ToRadians(RandomHelper::RandomFloat() * 360.0f);
+        float radius = glm::mix(repositionSearchRadius * minRadiusFrac,
+            repositionSearchRadius,
+            RandomHelper::RandomFloat());
 
-    std::vector<vec3> otherNpcPositions;
-    std::vector<vec3> candidates;
+        vec3 sample = currentPos + vec3(std::cos(angleRad) * radius, 0.0f, std::sin(angleRad) * radius);
+        sample.y = currentPos.y;
 
-    int   iter = 0;
-    const float desired = attackDesiredRange;
-    bool  relaxedMoveConstraint = false;
 
-    for (const auto& ring : rings)
-    {
-        while (candidates.size() < static_cast<size_t>(targetCandidatesLocal)
-            && iter < maxIterations)
-        {
-            ++iter;
-
-            float r = RandomHelper::RandomFloat();
-            float relAngleDeg;
-
-            if (isTooClose)
-            {
-                if (r < tooCloseDirectAwayProb)
-                    relAngleDeg = tooCloseDirectAwayAngleBase
-                    + (RandomHelper::RandomFloat() - 0.5f) * tooCloseDirectAwayAngleVar;
-                else if (r < tooCloseDirectAwayProb + tooCloseLeftFlankProb)
-                    relAngleDeg = tooCloseLeftFlankAngleBase
-                    + (RandomHelper::RandomFloat() - 0.5f) * tooCloseLeftFlankAngleVar;
-                else
-                    relAngleDeg = tooCloseRightFlankAngleBase
-                    + (RandomHelper::RandomFloat() - 0.5f) * tooCloseRightFlankAngleVar;
-            }
-            else
-            {
-                if (r < normalLeftFlankProb)
-                    relAngleDeg = normalLeftFlankAngleBase
-                    + (RandomHelper::RandomFloat() - 0.5f) * normalLeftFlankAngleVar;
-                else if (r < normalLeftFlankProb + normalRightFlankProb)
-                    relAngleDeg = normalRightFlankAngleBase
-                    + (RandomHelper::RandomFloat() - 0.5f) * normalRightFlankAngleVar;
-                else if (r < normalLeftFlankProb + normalRightFlankProb + normalBackProb)
-                    relAngleDeg = normalBackAngleBase
-                    + (RandomHelper::RandomFloat() - 0.5f) * normalBackAngleVar;
-                else
-                    relAngleDeg = normalFrontAngleBase
-                    + (RandomHelper::RandomFloat() - 0.5f) * normalFrontAngleVar;
-            }
-
-            float relAngleRad = MathHelper::ToRadians(relAngleDeg);
-            vec3 dirToPos = MathHelper::Normalized(
-                std::cos(relAngleRad) * referenceForward +
-                std::sin(relAngleRad) * referenceRight);
-
-            float distMult = ring.minMult
-                + RandomHelper::RandomFloat() * (ring.maxMult - ring.minMult);
-            float dist = std::min(desired * distMult, desired);
-            vec3 newPos = targetPos + dirToPos * dist;
-
-            // Keep candidates at the NPC's own current elevation rather than
-            // the target's. dirToPos is purely horizontal (it's built from
-            // referenceForward/referenceRight, both flattened to the XZ
-            // plane), so without this line every candidate silently lands
-            // at the target's height. For an NPC perched above the target —
-            // a rooftop, a ledge — that means every generated spot is
-            // effectively "go down to their level", which is what was
-            // dragging gunners off their vantage points. It also meant
-            // moveDist below was inflated by the height gap for every
-            // candidate, frequently emptying the candidate list and falling
-            // through to the "walk straight to the target" fallback further
-            // down. Actual walkability is still confirmed by the
-            // CylinderTrace/LOS checks below and, for the final pick, by the
-            // real navmesh pathfind added earlier in this function.
-            newPos.y = currentPos.y;
-
-            float scatterRadius = desired * scatterRadiusMult;
-            vec3 scatter = RandomHelper::RandomPosition(scatterRadius);
-            scatter.y = 0.0f;
-            newPos += scatter;
-
-            if (glm::length(MathHelper::XZ(newPos - targetPos)) > desired) continue;
-
-            float moveDist = glm::distance(newPos, currentPos);
-            float maxMove = relaxedMoveConstraint ? absoluteMaxMove : preferredMaxMove;
-            if (moveDist > maxMove) continue;
-
-            auto pathHit = Physics::CylinderTrace(
-                currentPos, newPos, 0.5f, 0.8f,
-                BodyType::World | BodyType::MainBody);
-            if (pathHit.hasHit) continue;
-
-            bool pathLOSClear = true;
-            vec3 diff = newPos - currentPos;
-            float pathLen = glm::length(diff);
-            int segments = std::min(maxSegments,
-                1 + static_cast<int>(pathLen / segmentDivisor));
-            for (int s = 1; s < segments; ++s)
-            {
-                float t = static_cast<float>(s) / static_cast<float>(segments);
-                vec3  midPos = currentPos + diff * t;
-                if (!CheckAttackLocation(midPos, targetPos))
-                {
-                    pathLOSClear = false;
-                    break;
-                }
-            }
-            if (!pathLOSClear) continue;
-
-            if (!CheckAttackLocation(newPos, targetPos)) continue;
-
-            candidates.push_back(newPos);
-        }
-
-        if (candidates.size() < static_cast<size_t>(targetCandidatesLocal / 2))
-            relaxedMoveConstraint = true;
-        if (candidates.size() >= static_cast<size_t>(targetCandidatesLocal / 2))
-            break;
-    }
-
-    // Ultimate fallback
-    if (candidates.empty())
-    {
-        if (isTooClose)
-        {
-            vec3 radialDir = MathHelper::Normalized(MathHelper::XZ(currentPos - targetPos));
-            vec3 perpRight = MathHelper::Normalized(
-                glm::cross(radialDir, vec3(0.0f, 1.0f, 0.0f)));
-            vec3 fallbackDirs[2] = { perpRight, -perpRight };
-            float fallbackDistLocal = std::min(fallbackDist, desired * fallbackDistMult);
-            for (int i = 0; i < 2; ++i)
-            {
-                vec3 fallbackPos = currentPos + fallbackDirs[i] * fallbackDistLocal;
-                auto h = Physics::CylinderTrace(currentPos, fallbackPos, 0.5f, 0.8f,
-                    BodyType::World | BodyType::MainBody);
-                if (!h.hasHit && CheckAttackLocation(fallbackPos, targetPos))
-                    return fallbackPos;
-            }
-            return currentPos;
-        }
-        else
-        {
-            // Don't fall through to the target's exact position — for an
-            // elevated NPC (a rooftop gunner, anything on a ledge) that
-            // means walking straight down to the target's level. Holding
-            // the current spot is the safe choice when nothing better can
-            // be found; the state machine will simply re-evaluate next
-            // cycle (hold aim, or try again once something changes).
-            return currentPos;
-        }
-    }
-
-    // Advanced scoring
-    struct ScoredCandidate { float score; vec3 pos; };
-    std::vector<ScoredCandidate> scoredCandidates;
-    scoredCandidates.reserve(candidates.size());
-
-    vec3 currRelDir = MathHelper::Normalized(MathHelper::XZ(currentPos - targetPos));
-
-    float movePeak = isTooClose ? tooCloseMovePeak : normalMovePeak;
-    float moveSigma = isTooClose ? tooCloseMoveSigma : normalMoveSigma;
-    float flankWeight = isTooClose ? tooCloseFlankWeight : normalFlankWeight;
-    float distWeight = isTooClose ? tooCloseDistWeight : normalDistWeight;
-
-    for (const vec3& cand : candidates)
-    {
-        vec3  toTarget = MathHelper::XZ(cand - targetPos);
-        float cDist = glm::length(toTarget);
-        vec3  attackDir = (cDist > 0.001f) ? toTarget / cDist : vec3(0.0f, 0.0f, 1.0f);
-
-        float tacticalScore = -glm::dot(attackDir, referenceForward);
-
-        float distDiff = (cDist - desired) / desired;
-        float distScore = std::exp(-distDiff * distDiff / (2.0f * distSigma * distSigma));
-
-        float moveDistScore = glm::distance(cand, currentPos);
-        float moveNorm = moveDistScore / desired;
-        float moveScore = std::exp(-(moveNorm - movePeak) * (moveNorm - movePeak)
-            / (2.0f * moveSigma * moveSigma));
-
-        vec3  moveDir = MathHelper::Normalized(MathHelper::XZ(cand - currentPos));
-        float circleScore = 1.0f - std::abs(glm::dot(moveDir, currRelDir));
-
-        float randScore = RandomHelper::RandomFloat() * randomScoreMult;
-
-        float clusterPenalty = 0.0f;
-        for (const vec3& otherPos : otherNpcPositions)
-        {
-            float d = glm::distance(cand, otherPos);
-            if (d < 0.001f) continue;
-            clusterPenalty += std::exp(-(d * d) / (2.0f * clusterSigma * clusterSigma));
-        }
-
-        float score = tacticalScore * flankWeight
-            + distScore * distWeight
-            + moveScore * moveScoreWeight
-            + circleScore * circleScoreWeight
-            + randScore
-            - clusterPenalty * clusterWeight;
-
-        scoredCandidates.push_back({ score, cand });
-    }
-
-    std::sort(scoredCandidates.begin(), scoredCandidates.end(),
-        [](const ScoredCandidate& a, const ScoredCandidate& b) { return a.score > b.score; });
-
-    // ------------------------------------------------------------------
-    // Real-path validation.
-    //
-    // Every check above (moveDist <= maxMove, the CylinderTrace, the LOS
-    // segment walk) only looks at the straight line between currentPos and
-    // a candidate. A candidate can look close as the crow flies while the
-    // actual navmesh route around some obstacle is much longer — that
-    // mismatch is what let the NPC commit to a "reposition" that turned
-    // into a long sprint, carrying it past the player and, if the route
-    // passed near a drop, off a ledge it never would have crossed on a
-    // short, direct path.
-    //
-    // Walk the candidates best-score-first and take the first one whose
-    // real path is fully reachable and short enough. In the common case
-    // this costs a single extra pathfinding call, on the top candidate.
-    // ------------------------------------------------------------------
-    const float maxRepositionPathLength = absoluteMaxMove * 1.5f;
-
-    for (const auto& sc : scoredCandidates)
-    {
-        bool navReached = false;
-        std::vector<vec3> navPath = NavigationSystem::FindSimplePath(
-            currentPos, sc.pos, 0.3f, &navReached, false);
-
-        if (!navReached || navPath.size() < 2)
+        // Snap to the walkable navmesh now, cheaply, rather than finding out during the
+        // expensive pathfind that the raw sample wasn't usable at all.
+        vec3 navPos;
+        if (!NavigationSystem::ProjectPointToNavMesh(sample, glm::vec3(navSnapTolerance), navPos))
             continue;
 
-        float navPathLength = 0.0f;
-        for (size_t i = 1; i < navPath.size(); ++i)
-            navPathLength += glm::distance(navPath[i - 1], navPath[i]);
+        //DebugDraw::Point(navPos, 3);
 
-        if (navPathLength <= maxRepositionPathLength)
-            return sc.pos;
+        vec3 flatCandidate = vec3(navPos.x, 0.0f, navPos.z);
+        vec3 flatTarget = vec3(targetPos.x, 0.0f, targetPos.z);
+        float distToTarget = glm::distance(flatCandidate, flatTarget);
+
+        // To make being in-range a hard requirement again (reject anything outside the
+        // band instead of treating it as a fallback), uncomment:
+        // if (distToTarget < minEngageDistance || distToTarget > maxEngageDistance) continue;
+
+        float rangePenalty = 0.0f;
+        if (distToTarget < minEngageDistance)
+            rangePenalty = minEngageDistance - distToTarget;
+        else if (distToTarget > maxEngageDistance)
+            rangePenalty = distToTarget - maxEngageDistance;
+
+        float distFromIdeal = std::abs(distToTarget - idealEngageDistance);
+        float score = -(rangePenalty * outOfRangeWeight + distFromIdeal);
+
+        candidates.push_back({ navPos, score });
     }
 
-    // Nothing scored well AND had a short, fully-reachable path. Staying put
-    // is safer than committing to a long, exposed run to a spot we can't
-    // actually confirm is close.
+    // --- PHASE 2: SORT (best first) ---------------------------------------------------
+    std::sort(candidates.begin(), candidates.end(),
+        [](const Candidate& a, const Candidate& b) { return a.score > b.score; });
+
+    // --- PHASE 3: PATHFIND, BEST CANDIDATE FIRST --------------------------------------
+    for (auto candidate : candidates)
+    {
+        bool reached = false;
+        std::vector<vec3> path = NavigationSystem::FindSimplePath(
+            currentPos, candidate.position, acceptanceRadius, &reached, /*allowPartialPath=*/false);
+
+
+		if (glm::distance(candidate.position, currentPos) < 4.0f)
+		{
+			// Don't reposition to a spot that's too close to the current position.
+			continue;
+		}
+
+
+
+        //if (glm::distance(path.back(), candidate.position) > pathEndTolerance)
+            //continue;
+
+        // Reject a path that used a jump/drop/ladder/teleport link.
+        bool usedSpecialLink = false;
+        for (size_t p = 1; p < path.size() && !usedSpecialLink; ++p)
+        {
+            float verticalDelta = std::abs(path[p].y - path[p - 1].y);
+            float horizontalDelta = glm::distance(vec3(path[p].x, 0, path[p].z), vec3(path[p - 1].x, 0, path[p - 1].z));
+            if (verticalDelta > maxStepDelta && verticalDelta > horizontalDelta)
+                usedSpecialLink = true;
+        }
+
+
+
+        if (usedSpecialLink)
+            continue;
+
+        float pathLength = 0.0f;
+        for (size_t p = 1; p < path.size(); ++p)
+            pathLength += glm::distance(path[p - 1], path[p]);
+
+        if (!CheckAttackLocation(path.back() + vec3(0, 1.2f, 0), targetPos))
+        {
+            continue;
+        }
+
+        float straightLineDist = glm::distance(currentPos, candidate.position);
+        if (pathLength > straightLineDist * maxDetourRatio)
+            continue;
+
+        //DebugDraw::Point(path.back(), 3, 0.6f, DebugColor::Blue);
+
+        // Best-scoring reachable candidate - done.
+        return path.back() + vec3(0, 0.3f, 0);
+    }
+
+    // Fallback: nothing at all was reachable (fully cornered, or no navmesh nearby) - hold.
+    //DebugDraw::Point(currentPos, 3, 0.6f);
     return currentPos;
 }

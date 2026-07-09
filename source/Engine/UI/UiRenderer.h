@@ -30,10 +30,7 @@ namespace UiRenderer {
     void DrawTexturedRectShader(const glm::vec2& pos, const glm::vec2& size, float rotation, glm::vec2 pivot, bgfx::TextureHandle texture, const glm::vec4& color, const string& shader);
     void DrawTexturedRectShaderParams(const glm::vec2& pos, const glm::vec2& size, float rotation, glm::vec2 pivot, std::unordered_map<std::string, bgfx::TextureHandle>& textures, std::unordered_map<std::string, float>& scalars, std::unordered_map<std::string, vec4>& vec4s, const glm::vec4& color, const string& shader);
     void DrawBorderRect(const glm::vec2& pos, const glm::vec2& size, const glm::vec4& color);
-    void DrawText(std::string text, FontHandle font,
-                  const glm::vec2& pos, float rotation, vec2 pivot,
-                  const glm::vec4& color, const glm::vec2& scale,
-                  const string& shader = "");
+
     glm::vec2 MeasureText(const std::string& text, FontHandle font);
 
     // ── Draw calls — matrix-based ──────────────────────────────────────────────
@@ -76,7 +73,7 @@ namespace UiRenderer {
     void DrawText(std::string text, FontHandle font,
                   const glm::mat3& transform,
                   const glm::vec4& color, const glm::vec2& scale,
-                  const string& shader = "");
+                  const string& shader = "", std::unordered_map<std::string, vec4> shaderUniforms = {}, float effectPadding = 0.f);
 
     // ── Stencil mask ──────────────────────────────────────────────────────────
     // Legacy overload (kept for compatibility).

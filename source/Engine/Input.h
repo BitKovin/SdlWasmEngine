@@ -152,6 +152,9 @@ public:
     static bool rmbHeld;
     static bool mmbHeld;
 
+	static inline bool TextInputActive = false;
+	static inline std::string TextInputBuffer;
+
     // Joystick buttons currently held (by raw SDL button index).
     static std::unordered_set<int> activeJoystickButtons;
 

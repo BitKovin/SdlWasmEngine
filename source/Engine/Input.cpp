@@ -212,6 +212,8 @@ void Input::StartEventsFrame()
 
     MouseScrollDelta = 0;
 
+    TextInputBuffer = "";
+
     for (auto& action : TouchActions)
     {
 
@@ -275,7 +277,18 @@ void Input::ReceiveSdlEvent(SDL_Event event)
             // First physical press — mark as held.
             activeKeys.insert(event.key.keysym.scancode);
         }
-        // repeat != 0 → key-repeat spam, ignore entirely.
+        // repeat != 0 → key-repeat spam, ignore entirely (for nav purposes).
+
+        // Text-erase keys ride along in TextInputBuffer, using the same
+        // control-byte convention UiTextBox::DrainTextInput() already parses.
+        // Deliberately NOT gated behind repeat==0 — unlike nav keys, holding
+        // Backspace/Delete should keep deleting, at whatever rate SDL gives us.
+        switch (event.key.keysym.scancode)
+        {
+        case SDL_SCANCODE_BACKSPACE: TextInputBuffer += '\b';   break; // 0x08
+        case SDL_SCANCODE_DELETE:    TextInputBuffer += '\x7F'; break;
+        default: break;
+        }
     }
     else if (event.type == SDL_KEYUP)
     {
@@ -286,6 +299,10 @@ void Input::ReceiveSdlEvent(SDL_Event event)
         MousePos.x = static_cast<float>(event.motion.x);
         MousePos.y = static_cast<float>(event.motion.y);
 
+    }
+	else if (event.type == SDL_TEXTINPUT)
+    {
+        TextInputBuffer += event.text.text;
     }
 
     // ------------------------------------------------------------------

@@ -830,6 +830,20 @@ void Shader::UseProgram()
     for (auto& e : m_uniformBuffer) e.set = false;
     for (auto& e : m_textureBuffer) e.set = false;
 
+	//reset all uniforms to 0
+	for (const auto& u : m_uniformList)
+	{
+
+		auto& e = m_uniformBuffer[u.index];
+
+        for (int i = 0; i < 16; ++i)
+        {
+            e.inlineData[i] = 0.0f;
+        }
+
+
+	}
+
     // Apply pre-resolved defaults (no map lookups, no string hashing).
     for (const auto& def : m_resolvedDefaults)
     {

@@ -569,8 +569,7 @@ static bool IsPointReallyOnPoly(dtNavMeshQuery* navQuery,
     return (dx * dx + dz * dz) <= horizTolSq;
 }
 
-std::vector<glm::vec3> NavigationSystem::FindSimplePath(glm::vec3 start, glm::vec3 target, float acceptanceRadius, bool* outReached, bool allowPartialPath)
-{
+std::vector<glm::vec3> NavigationSystem::FindSimplePath(glm::vec3 start, glm::vec3 target, float acceptanceRadius, bool* outReached, bool allowPartialPath) {
     if (outReached) *outReached = false;
 
     std::vector<glm::vec3> outPath;
@@ -590,9 +589,9 @@ std::vector<glm::vec3> NavigationSystem::FindSimplePath(glm::vec3 start, glm::ve
     if (hit.hasHit)
         start = hit.position + vec3(0, 0.3f, 0);
 
-	vec3 targetInitial = target;
+    vec3 targetInitial = target;
 
-    hit = Physics::SphereTrace(target, target - vec3(0, 5, 0),0.2, BodyType::World);
+    hit = Physics::SphereTrace(target, target - vec3(0, 5, 0), 0.2, BodyType::World);
     if (hit.hasHit)
         target = hit.position + vec3(0, 0.3f, 0);
 
@@ -629,13 +628,13 @@ std::vector<glm::vec3> NavigationSystem::FindSimplePath(glm::vec3 start, glm::ve
     if (!findOnPoly(gPos, gRef, gNearest))
     {
         gPos[0] = targetInitial.x;
-		gPos[1] = targetInitial.y;
+        gPos[1] = targetInitial.y;
         gPos[2] = targetInitial.z;
         if (!findOnPoly(gPos, gRef, gNearest))
         {
             dtFreeNavMeshQuery(navQuery);
             return outPath; // failed to localize goal
-		}
+        }
     }
 
     // attempt to pick start & goal polys
@@ -673,6 +672,9 @@ std::vector<glm::vec3> NavigationSystem::FindSimplePath(glm::vec3 start, glm::ve
 
     // --- 3) Clamp goal if partial ---
     bool reached = (polyPath[polyCount - 1] == gRef);
+
+    if (outReached) *outReached = reached;
+
     if (!reached)
     {
         navQuery->closestPointOnPoly(polyPath[polyCount - 1], gPos, gNearest, nullptr);
@@ -724,22 +726,71 @@ std::vector<glm::vec3> NavigationSystem::FindSimplePath(glm::vec3 start, glm::ve
             straight[i * 3 + 2]
         );
     }
-    // final target or clamped point
-    outPath.emplace_back(
-        reached ? target : glm::vec3(gNearest[0], gNearest[1], gNearest[2])
-    );
+
+    // The duplicate manual push is removed. 'straight' already 
+    // contains the final exact coordinate at index (strCount - 1).
 
     dtFreeNavMeshQuery(navQuery);
 
-    //   // --- 6) Collision sanity check ---
-    //   if (!CollisionCheckPath(start, outPath))
-    //   {
-    //   	outPath.clear();
-    //   }
-    //       
-
     return outPath;
 }
+
+bool NavigationSystem::ProjectPointToNavMesh(const glm::vec3 & sample, const glm::vec3 & navSnapTolerance, glm::vec3 & navPos)
+{
+    if (!navMesh)
+        return false;
+
+	vec3 adjustedSample = sample;
+
+	auto hit = Physics::LineTrace(adjustedSample, adjustedSample - vec3(0, 10, 0), BodyType::World);
+
+    if(hit.hasHit)
+    {
+        adjustedSample = hit.position + vec3(0, 0.2, 0);
+    }
+
+    // Ensure thread safety exactly as done in FindSimplePath
+    std::lock_guard<std::recursive_mutex> _lock(mainLock);
+
+    // Allocate & init query
+    dtNavMeshQuery* navQuery = dtAllocNavMeshQuery();
+    if (!navQuery)
+        return false;
+
+    if (dtStatusFailed(navQuery->init(navMesh, 2048)))
+    {
+        dtFreeNavMeshQuery(navQuery);
+        return false;
+    }
+
+    CustomFilter filter;
+    filter.setIncludeFlags(0xffff);
+    filter.setExcludeFlags(0);
+
+    dtPolyRef polyRef = 0;
+    float nearest[3];
+
+    float pos[3] = { adjustedSample.x, adjustedSample.y, adjustedSample.z };
+    float extents[3] = { navSnapTolerance.x, navSnapTolerance.y, navSnapTolerance.z };
+
+    bool bSuccess = false;
+
+    // Query the navmesh
+    if (dtStatusSucceed(navQuery->findNearestPoly(pos, extents, &filter, &polyRef, nearest)) && polyRef > 0)
+    {
+        // Optional: Re-apply the strict distance check from your original findOnPoly lambda
+        // if (dtVdist(pos, nearest) <= navSnapTolerance.x)
+
+        navPos = glm::vec3(nearest[0], nearest[1], nearest[2]);
+        bSuccess = true;
+    }
+
+    // Cleanup
+    dtFreeNavMeshQuery(navQuery);
+
+    return bSuccess;
+}
+
 // Returns a path (list of waypoints) that attempts to make the NPC run AWAY from player.
 // npcPos: NPC world position. playerPos: Player world position.
 // maxSearchRadius: how far we search for flee points (tuneable).

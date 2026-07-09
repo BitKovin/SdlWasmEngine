@@ -327,7 +327,7 @@ int main(int argc, char* args[])
         _chdir(workingDirOverride->second[0].c_str());
     }
 
-	bgfx::RendererType::Enum renderApi = bgfx::RendererType::Vulkan;   // default to Direct3D11 on Windows
+	bgfx::RendererType::Enum renderApi = bgfx::RendererType::Direct3D11;   // default to Direct3D11 on Windows
 
 	auto renderApiOverride = args_m.find("renderapi");
     if (renderApiOverride != args_m.end())

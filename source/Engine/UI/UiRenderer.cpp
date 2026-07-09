@@ -70,24 +70,31 @@ struct FontAtlas {
     int    lineGap = 0;
 
     // ── Atlas bitmap ─────────────────────────────────────────────────────────
-    static constexpr int ATLAS_W = 1024;
-    static constexpr int ATLAS_H = 1024;
+    static constexpr int ATLAS_W = 4096;
+    static constexpr int ATLAS_H = 4096;
     std::vector<uint8_t> pixels;         // ATLAS_W * ATLAS_H * 4 (RGBA8)
     bgfx::TextureHandle  texture = BGFX_INVALID_HANDLE;
     bool textureDirty = false;
 
-    // ── Packing cursor ────────────────────────────────────────────────────────
-    int packX = 1;  // current pen X (1-px left margin)
-    int packY = 1;  // current row top Y
-    int rowH = 0;  // tallest glyph in the current row
+    // ── Packing & Padding configuration ──────────────────────────────────────
+    int padding = 10;
+    int packX = 2; // Initialized dynamically in Init() based on padding
+    int packY = 2;
+    int rowH = 0; // tallest glyph in the current row
 
     // ── Glyph cache ───────────────────────────────────────────────────────────
     std::unordered_map<int, GlyphInfo> glyphs;
 
     // ── Init / Destroy ────────────────────────────────────────────────────────
 
-    bool Init(const char* path, float height)
+    
+    bool Init(const char* path, float height, int paddingSize = 5)
     {
+        padding = height / 2 + paddingSize;
+        packX = padding;
+        packY = padding;
+        rowH = 0;
+
         // Read the entire .ttf file into memory
         FILE* f = std::fopen(path, "rb");
         if (!f) {
@@ -111,9 +118,7 @@ struct FontAtlas {
         scale = stbtt_ScaleForPixelHeight(&fontInfo, height);
         stbtt_GetFontVMetrics(&fontInfo, &ascent, &descent, &lineGap);
 
-        // White-transparent background: alpha=0 pixels are invisible but their
-        // RGB participates in bilinear filtering. Black here causes dark fringe
-        // artifacts where the sampler interpolates toward the empty background.
+        // White-transparent background
         const size_t atlasPixels = static_cast<size_t>(ATLAS_W) * ATLAS_H;
         pixels.resize(atlasPixels * 4);
         for (size_t i = 0; i < atlasPixels; ++i)
@@ -149,8 +154,6 @@ struct FontAtlas {
     }
 
     // ── EnsureGlyph ───────────────────────────────────────────────────────────
-    // Rasterizes `codepoint` and packs it into the atlas if not already present.
-    // Returns false only on hard failure (atlas full, bad codepoint).
 
     bool EnsureGlyph(int codepoint)
     {
@@ -174,17 +177,15 @@ struct FontAtlas {
             return true;
         }
 
-        constexpr int PAD = 1; // 1-px gap between glyphs
-
-        // Start a new row if the glyph doesn't fit horizontally
-        if (packX + w + PAD > ATLAS_W) {
-            packX = PAD;
-            packY += rowH + PAD;
+        // Start a new row if the glyph doesn't fit horizontally (accounting for padding)
+        if (packX + w + padding > ATLAS_W) {
+            packX = padding;
+            packY += rowH + padding;
             rowH = 0;
         }
 
-        // Atlas exhausted – warn and record as invisible rather than crashing
-        if (packY + h + PAD > ATLAS_H) {
+        // Atlas exhausted – accounting for bottom padding boundary
+        if (packY + h + padding > ATLAS_H) {
             std::cerr << "[UiRenderer] Font atlas full – codepoint "
                 << codepoint << " will not render.\n";
             stbtt_FreeBitmap(bm, nullptr);
@@ -194,7 +195,7 @@ struct FontAtlas {
             return false;
         }
 
-        // Blit grayscale coverage into the RGBA atlas (white RGB, coverage → alpha)
+        // Blit grayscale coverage into the RGBA atlas
         for (int row = 0; row < h; ++row) {
             for (int col = 0; col < w; ++col) {
                 const uint8_t alpha = bm[row * w + col];
@@ -224,8 +225,8 @@ struct FontAtlas {
 
         glyphs[codepoint] = g;
 
-        // Advance packing cursor
-        packX += w + PAD;
+        // Advance packing cursor by the width of the glyph plus the padding space
+        packX += w + padding;
         if (h > rowH) rowH = h;
 
         stbtt_FreeBitmap(bm, nullptr);
@@ -552,6 +553,7 @@ namespace UiRenderer {
         sp->SetUniform("u_Model", BuildQuadModel(pos, size, rotation, pivot));
         sp->SetUniform("u_Color", color);
         sp->SetTexture("u_Texture", texture);
+        sp->SetUniform("u_TextureSize", size);
 
         SubmitQuad(sp);
     }
@@ -595,177 +597,6 @@ namespace UiRenderer {
         s_flatColorShader->Submit(ViewIdManager::GetCurrentId());
     }
 
-    // ── DrawText ──────────────────────────────────────────────────────────────────
-    //
-    // Strategy
-    // ─────────
-    // 1. Ensure every codepoint in `text` is in the atlas (rasterize on demand).
-    // 2. Perform a dry-run layout to measure total text bounds (multi-line aware).
-    // 3. Allocate a TransientVertexBuffer with 6 vertices per visible glyph.
-    // 4. Fill the TVB with per-character quads in [0,1]² space (normalized by the
-    //    text bounding box) so that the standard BuildQuadModel transform applies
-    //    to the whole text block without any shader changes.
-    // 5. Submit one draw call with the atlas texture.
-
-    void DrawText(std::string text, FontHandle fontHandle,
-        const glm::vec2& pos, float rotation, glm::vec2 pivot,
-        const glm::vec4& color, const glm::vec2& scale,
-        const std::string& shader)
-    {
-        if (text.empty() || fontHandle == INVALID_FONT) return;
-
-        FontAtlas* atlas = nullptr;
-        {
-            std::lock_guard<std::mutex> lock(s_fontMutex);
-            auto it = s_fontRegistry.find(fontHandle);
-            if (it == s_fontRegistry.end()) return;
-            atlas = it->second;
-        }
-
-        // ── Pass 1: ensure all glyphs are in the atlas ────────────────────────
-        {
-            const char* p = text.c_str();
-            while (*p) {
-                const int cp = NextCodepoint(p);
-                if (cp > 0 && cp != '\n')
-                    atlas->EnsureGlyph(cp);
-            }
-        }
-
-        // ── Pass 2: measure text bounds (multi-line) ──────────────────────────
-        const float lineH = atlas->LineHeight();
-        const float baseline = atlas->BaselineOff();
-
-        float maxLineW = 0.f;
-        float lineW = 0.f;
-        int   numLines = 1;
-        int   numGlyphs = 0; // visible quads needed
-
-        {
-            const char* p = text.c_str();
-            int prevCp = 0;
-            while (*p) {
-                const int cp = NextCodepoint(p);
-                if (cp <= 0) continue;
-
-                if (cp == '\n') {
-                    if (lineW > maxLineW) maxLineW = lineW;
-                    lineW = 0.f;
-                    prevCp = 0;
-                    ++numLines;
-                    continue;
-                }
-
-                const auto it = atlas->glyphs.find(cp);
-                if (it == atlas->glyphs.end()) continue;
-                const GlyphInfo& g = it->second;
-
-                // Kerning
-                if (prevCp != 0)
-                    lineW += stbtt_GetCodepointKernAdvance(&atlas->fontInfo, prevCp, cp) * atlas->scale;
-
-                lineW += g.advanceX;
-                prevCp = cp;
-
-                if (!g.invisible) ++numGlyphs;
-            }
-            if (lineW > maxLineW) maxLineW = lineW;
-        }
-
-        if (maxLineW <= 0.f || numGlyphs == 0) return;
-
-        const float textW = maxLineW;
-        const float textH = static_cast<float>(numLines) * lineH;
-
-        // ── Pass 3: build TransientVertexBuffer ───────────────────────────────
-        // allocTransientVertexBuffer returns void; check availability first.
-        const uint32_t vertexCount = static_cast<uint32_t>(numGlyphs * 6);
-        if (bgfx::getAvailTransientVertexBuffer(vertexCount, s_quadLayout) < vertexCount)
-        {
-            std::cerr << "[UiRenderer] DrawText: not enough transient VB space\n";
-            return;
-        }
-        bgfx::TransientVertexBuffer tvb;
-        bgfx::allocTransientVertexBuffer(&tvb, vertexCount, s_quadLayout);
-
-        auto* v = reinterpret_cast<QuadVertex*>(tvb.data);
-
-        float penX = 0.f;
-        float penY = 0.f;  // top of the current line (in text-local pixels)
-        int   prevCp = 0;
-
-        const char* p = text.c_str();
-        while (*p) {
-            const int cp = NextCodepoint(p);
-            if (cp <= 0) continue;
-
-            if (cp == '\n') {
-                penX = 0.f;
-                penY += lineH;
-                prevCp = 0;
-                continue;
-            }
-
-            const auto it = atlas->glyphs.find(cp);
-            if (it == atlas->glyphs.end()) continue;
-            const GlyphInfo& g = it->second;
-
-            // Kerning
-            if (prevCp != 0)
-                penX += stbtt_GetCodepointKernAdvance(&atlas->fontInfo, prevCp, cp) * atlas->scale;
-
-            if (!g.invisible) {
-                // Top-left of this glyph bitmap in text-local pixel space
-                const float lx = penX + static_cast<float>(g.xoff);
-                const float ly = penY + baseline + static_cast<float>(g.yoff);
-                const float rw = static_cast<float>(g.bitmapW);
-                const float rh = static_cast<float>(g.bitmapH);
-
-                // Normalize to [0,1]² so the model matrix can scale/rotate the
-                // entire text block uniformly.
-                const float nx = lx / textW;
-                const float ny = ly / textH;
-                const float nrw = rw / textW;
-                const float nrh = rh / textH;
-
-                // Two CCW triangles (y-down)
-                v[0] = { nx,        ny + nrh,  g.u0, g.v1 };
-                v[1] = { nx + nrw,  ny,        g.u1, g.v0 };
-                v[2] = { nx,        ny,        g.u0, g.v0 };
-                v[3] = { nx,        ny + nrh,  g.u0, g.v1 };
-                v[4] = { nx + nrw,  ny + nrh,  g.u1, g.v1 };
-                v[5] = { nx + nrw,  ny,        g.u1, g.v0 };
-                v += 6;
-            }
-
-            penX += g.advanceX;
-            prevCp = cp;
-        }
-
-        // ── Pass 4: submit ────────────────────────────────────────────────────
-        const glm::vec2 drawSize(scale.x * textW, scale.y * textH);
-        const glm::mat4 model = BuildQuadModel(pos, drawSize, rotation, pivot);
-
-        Shader* sp = shader.empty()
-            ? s_texturedShader
-            : ShaderManager::GetShaderProgram("ui", shader);
-
-        sp->UseProgram();
-        SetShaderProjection(sp);
-        sp->SetUniform("u_Model", model);
-        sp->SetUniform("u_Color", color);
-        sp->SetTexture("u_Texture", atlas->texture);
-
-        BgfxStateManager::Reset();
-        BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Always);
-        BgfxStateManager::SetBlend(BgfxStateManager::Blend::Alpha);
-        BgfxStateManager::Apply();
-
-        ApplyStencilTest();
-
-        bgfx::setVertexBuffer(0, &tvb);
-        sp->Submit(ViewIdManager::GetCurrentId());
-    }
 
     // ── MeasureText ───────────────────────────────────────────────────────────────
     // Returns the bounding box of the rendered text in atlas pixels.
@@ -946,9 +777,9 @@ namespace UiRenderer {
     }
 
     void DrawText(std::string text, FontHandle fontHandle,
-        const glm::mat3& transform,
-        const glm::vec4& color, const glm::vec2& scale,
-        const std::string& shader)
+                  const glm::mat3& transform,
+                  const glm::vec4& color, const glm::vec2& scale,
+                  const string& shader, std::unordered_map<std::string, vec4> shaderUniforms, float effectPadding)   // extra bleed, in atlas texels, needed by outline/glow/shadow
     {
         if (text.empty() || fontHandle == INVALID_FONT) return;
 
@@ -960,6 +791,12 @@ namespace UiRenderer {
             atlas = it->second;
         }
 
+        // atlas pixel size — needed to convert padding into UV space, and to
+        // feed u_TextureSize to the effects shader. Adjust field names if your
+        // FontAtlas stores them differently.
+        const float atlasW = static_cast<float>(FontAtlas::ATLAS_W);
+        const float atlasH = static_cast<float>(FontAtlas::ATLAS_H);
+
         // Pass 1: ensure all glyphs
         {
             const char* p = text.c_str();
@@ -969,7 +806,7 @@ namespace UiRenderer {
             }
         }
 
-        // Pass 2: measure
+        // Pass 2: measure (unaffected by padding — layout must stay identical)
         const float lineH = atlas->LineHeight();
         const float baseline = atlas->BaselineOff();
         float maxLineW = 0.f, lineW = 0.f;
@@ -1003,11 +840,14 @@ namespace UiRenderer {
         const uint32_t vertexCount = static_cast<uint32_t>(numGlyphs * 6);
         if (bgfx::getAvailTransientVertexBuffer(vertexCount, s_quadLayout) < vertexCount) {
             std::cerr << "[UiRenderer] DrawText(mat3): not enough transient VB\n";
-                return;
+            return;
         }
         bgfx::TransientVertexBuffer tvb;
         bgfx::allocTransientVertexBuffer(&tvb, vertexCount, s_quadLayout);
         auto* v = reinterpret_cast<QuadVertex*>(tvb.data);
+
+        const float padU = effectPadding / atlasW;
+        const float padV = effectPadding / atlasH;
 
         float penX = 0.f, penY = 0.f;
         int   prevCp = 0;
@@ -1022,33 +862,47 @@ namespace UiRenderer {
             if (prevCp != 0)
                 penX += stbtt_GetCodepointKernAdvance(&atlas->fontInfo, prevCp, cp) * atlas->scale;
             if (!g.invisible) {
-                const float lx = penX + static_cast<float>(g.xoff);
-                const float ly = penY + baseline + static_cast<float>(g.yoff);
-                const float rw = static_cast<float>(g.bitmapW);
-                const float rh = static_cast<float>(g.bitmapH);
+                // geometry: inflate the quad around the glyph's ink, pen position untouched
+                const float lx = penX + static_cast<float>(g.xoff) - effectPadding;
+                const float ly = penY + baseline + static_cast<float>(g.yoff) - effectPadding;
+                const float rw = static_cast<float>(g.bitmapW) + effectPadding * 2.f;
+                const float rh = static_cast<float>(g.bitmapH) + effectPadding * 2.f;
                 const float nx = lx / textW, ny = ly / textH;
                 const float nrw = rw / textW, nrh = rh / textH;
-                v[0] = { nx,       ny + nrh, g.u0, g.v1 };
-                v[1] = { nx + nrw, ny,       g.u1, g.v0 };
-                v[2] = { nx,       ny,       g.u0, g.v0 };
-                v[3] = { nx,       ny + nrh, g.u0, g.v1 };
-                v[4] = { nx + nrw, ny + nrh, g.u1, g.v1 };
-                v[5] = { nx + nrw, ny,       g.u1, g.v0 };
+
+                // UV: inflate to match, so the shader has real atlas pixels to sample for the halo
+                const float u0 = g.u0 - padU, u1 = g.u1 + padU;
+                const float v0 = g.v0 - padV, v1 = g.v1 + padV;
+
+                v[0] = { nx,       ny + nrh, u0, v1 };
+                v[1] = { nx + nrw, ny,       u1, v0 };
+                v[2] = { nx,       ny,       u0, v0 };
+                v[3] = { nx,       ny + nrh, u0, v1 };
+                v[4] = { nx + nrw, ny + nrh, u1, v1 };
+                v[5] = { nx + nrw, ny,       u1, v0 };
                 v += 6;
             }
             penX += g.advanceX; prevCp = cp;
         }
 
-        // Pass 4: submit — set state directly, never via BgfxStateManager
+        // Pass 4: submit
         const glm::vec2 drawSize(scale.x * textW, scale.y * textH);
         Shader* sp = shader.empty()
             ? s_texturedShader
-            : ShaderManager::GetShaderProgram("ui", shader);
+            : ShaderManager::GetShaderProgram("vs_ui", shader);
         sp->UseProgram();
         SetShaderProjection(sp);
         sp->SetUniform("u_Model", BuildQuadModelFromMat3(transform, drawSize));
         sp->SetUniform("u_Color", color);
         sp->SetTexture("u_Texture", atlas->texture);
+
+        if (!shader.empty())
+            sp->SetUniform("u_TextureSize", glm::vec4(atlasW, atlasH, 0.f, 0.f));
+
+        for (const auto& pair : shaderUniforms)
+        {
+            sp->SetUniform(pair.first, pair.second);
+        }
 
         bgfx::setState(
             BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A |

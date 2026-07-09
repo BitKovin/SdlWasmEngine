@@ -722,7 +722,9 @@
     <ClInclude Include="UI\UiNavigation.h" />
     <ClInclude Include="UI\UiRenderer.h" />
     <ClInclude Include="UI\UiScrollRegion.hpp" />
+    <ClInclude Include="UI\UiSlider.hpp" />
     <ClInclude Include="UI\UiText.hpp" />
+    <ClInclude Include="UI\UiTextBox.hpp" />
     <ClInclude Include="UI\UiVerticalBox.hpp" />
     <ClInclude Include="UI\UiViewport.hpp" />
     <ClInclude Include="UI\WorldSpace\UiBilboard.h" />

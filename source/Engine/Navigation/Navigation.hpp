@@ -95,5 +95,8 @@ public:
         float npcSpeed = 4.0f,
         float playerSpeed = 5.0f);
 
+    static bool ProjectPointToNavMesh(const glm::vec3& sample, const glm::vec3& navSnapTolerance, glm::vec3& navPos);
+
+
 };
 
