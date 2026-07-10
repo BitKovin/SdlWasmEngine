@@ -185,7 +185,7 @@ bool NpcHumanGun::CheckAttackLOS(vec3 location, vec3 targetLocation)
 
     auto hit = Physics::SphereTrace(
         attackPos, targetLocation + vec3(0, 0.65f, 0),
-        0.3f, BodyType::GroupHitTest, {}, {this, resolvedTarget});
+        0.3f, BodyType::GroupHitTest, {}, { this, resolvedTarget });
 
     if (hit.hasHit && hit.entity != resolvedTarget)
         return false;
@@ -310,7 +310,7 @@ void NpcHumanGun::AsyncUpdate()
         // maxAttackDistance at all, no matter how clear the sightline.
         bool hasLineOfSight = LineOfSightCheck(resolvedTarget) &&
             glm::distance2(resolvedTarget->Position, Position)
-                <= maxAttackDistance * maxAttackDistance;
+            <= maxAttackDistance * maxAttackDistance;
 
         // A direct chase is only worth taking if the target isn't too far
         // to bother walking to at all, and there's a sane, fully-connected
@@ -356,26 +356,26 @@ void NpcHumanGun::AsyncUpdate()
             desiredTargetLocation = repositionTarget;
             repositionElapsed += Time::DeltaTimeF;
 
-            
+
 
             bool arrived = false;
-        
+
             //DebugDraw::Point(desiredTargetLocation, 1.0f, 0.5f, DebugColor::Green);
 
-			if (glm::distance(Position, repositionTarget) < 3)
-			{
+            if (glm::distance(Position, repositionTarget) < 3)
+            {
 
 
 
-				if (CheckAttackLocation(Position, resolvedTarget->Position))
-				{
-					arrived = glm::distance(Position, repositionTarget) < arrivalRadius || pathFollow.reachedTarget;
-				}
-				else
-				{
+                if (CheckAttackLocation(Position, resolvedTarget->Position))
+                {
+                    arrived = glm::distance(Position, repositionTarget) < arrivalRadius || pathFollow.reachedTarget;
+                }
+                else
+                {
                     arrived = pathFollow.reachedTarget;
-				}
-			}
+                }
+            }
             bool timedOut = repositionElapsed > maxRepositionTime;
 
             if (arrived || timedOut)
@@ -559,15 +559,52 @@ void NpcHumanGun::NetSerialize(NetPacket& packet)
     NpcHumanBase::NetSerialize(packet);
     packet.WriteBool(repositioning);
     packet.WriteFloat(accuracyModifier);
-    // repositionTarget and desiredTargetLocation are owner-only movement state;
-    // non-owners just follow the replicated position/direction from the base.
+
+    // repositionTarget and the burst counters are read directly by the
+    // owner's AI decision branch every frame. A target switch can hand
+    // ownership to any peer at any time -- not just on burst/reposition
+    // boundaries, since NpcHumanGun never enters NpcState::Attacking and
+    // TrySetTarget's state check therefore never blocks a switch mid-burst
+    // or mid-reposition -- so whichever peer becomes the new owner needs
+    // this already cached locally the instant it takes over. These used to
+    // be treated as "owner-only movement state" and only went into the
+    // save-game Serialize, so a freshly-owning peer fell back to defaults:
+    // reposition toward (0,0,0), and any in-progress burst silently
+    // treated as already finished. desiredTargetLocation itself still
+    // doesn't need to be sent -- it's recomputed every frame from either
+    // resolvedTarget->Position or repositionTarget, both of which are now
+    // covered.
+    packet.WriteVector3(repositionTarget);
+    packet.WriteFloat(repositionElapsed);
+    packet.WriteUInt8(static_cast<uint8_t>(shotsFired));
+    packet.WriteUInt8(static_cast<uint8_t>(shotsPerBurst));
 }
 
 void NpcHumanGun::NetDeserialize(NetPacket& packet)
 {
     NpcHumanBase::NetDeserialize(packet);
-    repositioning = packet.ReadBool();
-    accuracyModifier = packet.ReadFloat();
+
+    bool    remoteRepositioning = packet.ReadBool();
+    float   remoteAccuracyMod = packet.ReadFloat();
+    vec3    remoteRepoTarget = packet.ReadVector3();
+    float   remoteRepoElapsed = packet.ReadFloat();
+    uint8_t remoteShotsFired = packet.ReadUInt8();
+    uint8_t remoteShotsPerBurst = packet.ReadUInt8();
+
+    // Same rule as the base class: discard snapshots that were still in
+    // flight from the previous owner and arrive after this peer has
+    // already taken ownership -- otherwise a stale mid-reposition/
+    // mid-burst snapshot could stomp the state this peer is now
+    // authoritatively driving. (The old code applied repositioning/
+    // accuracyModifier unconditionally here, ignoring that guard.)
+    if (isOwned) return;
+
+    repositioning = remoteRepositioning;
+    accuracyModifier = remoteAccuracyMod;
+    repositionTarget = remoteRepoTarget;
+    repositionElapsed = remoteRepoElapsed;
+    shotsFired = remoteShotsFired;
+    shotsPerBurst = remoteShotsPerBurst;
 }
 
 // ---------------------------------------------------------------------------

@@ -3008,7 +3008,6 @@ void Player::EnterLadder(float inputY)
 	if (IsMantling()) return;
 	if (IsOnLadder()) return;
 
-	// Mirror the exact movement formula from UpdateStateLadder.
 	float pitch = cameraRotation.x;
 	float climbVel = 0.0f;
 
@@ -3017,41 +3016,34 @@ void Player::EnterLadder(float inputY)
 	else if (pitch > LadderLookDeadZone)
 		climbVel = -inputY * LadderClimbSpeed;       // looking down: W=down, S=up
 
-	// No vertical movement would result — don't grab.
-	if (climbVel == 0.0f)
+	// FIX 1: Only reject 0 velocity if the player is grounded.
+	// If they are airborne and holding W towards the ladder, let them grab it 
+	// even if they are looking horizontally! They will just hang in place.
+	if (climbVel == 0.0f && controller.onGround)
 		return;
 
 	// Backing into the ladder (inputY < 0) only makes sense when already falling.
 	if (inputY < 0.0f && velocity.y > -0.6f)
 		return;
 
-	// Grounded + looking down + pressing forward: the player is walking on flat
-	// ground (or standing at the top of a platform).  Don't grab yet — let them
-	// walk away freely.  TryGrabLadderDeferred() will re-evaluate the moment
-	// they step off the edge and leave the ground, which is the intended signal
-	// for a top-of-ladder descent.
+	// Grounded top-descent guard
 	if (pitch > LadderLookDeadZone && inputY > 0.0f && controller.onGround)
-		return;
+	{
+		// FIX 2: If your physics engine has grounded delays, you might need 
+		// to ensure they aren't actually falling before returning here.
+		// If controller.GetVelocity().y is negative, they've stepped off.
+		if (controller.GetVelocity().y >= -0.1f)
+			return;
+	}
 
-	// Clean up any slide state before switching.
 	StopSlide();
 	controller.UnCrouch();
 
-	// Kill all velocity: player should "snap" to the ladder feel.
 	controller.SetVelocity(vec3(0));
 	velocity = vec3(0);
 
 	moveState = MoveState::OnLadder;
-
-	// Rebuild the physics body with stepHeight = 0 and suppress gravity.
-	// Must come AFTER UnCrouch() (which restores stepHeight to 0.4) and
-	// AFTER zeroing velocity (SetLadderMode preserves whatever velocity it
-	// finds, so zero it first).
 	controller.SetLadderMode(true);
-
-	// Weapon suppression is automatic: CanHoldWeapon() returns false for
-	// OnLadder, and UpdateWeaponSuppression() handles destroy/restore each
-	// frame without any extra work here.
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -3073,6 +3065,7 @@ void Player::TryGrabLadderDeferred(float inputY)
 {
 	if (IsOnLadder()) return;
 	if (numTouchingLadders <= 0) return;
+	if (jumpDelay.Wait()) return;
 	if (controller.onGround) return;          // still grounded — too early
 	if (controller.GetVelocity().y > 0.0f) return; // rising (jump) — don't grab
 

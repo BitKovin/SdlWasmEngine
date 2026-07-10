@@ -113,6 +113,17 @@ void NpcHumanBase::UpdatePerception()
     if (targetSwitchTimer > 0.0f)
         targetSwitchTimer = std::max(0.0f, targetSwitchTimer - Time::DeltaTimeF);
 
+    // Everything from here down decides/changes the current target and can
+    // transfer ownership, so it has to stay owner-only, matching this
+    // function's contract (see comment above). A non-owner's resolved
+    // state can legitimately lag a frame behind (e.g. right after a
+    // target/ownership RPC lands, before the referenced entity's own
+    // snapshot has arrived), and letting every peer independently clear
+    // the target or call TrySetTarget would mean multiple clients racing
+    // to ApplyTarget/SetOwner for the same NPC instead of staying
+    // consistent with whichever peer is actually authoritative.
+    if (!isOwned) return;
+
     // If the current target no longer resolves (player disconnected / entity
     // destroyed), clear it and return the NPC to server ownership.
     if (currentTarget.IsValid() && resolvedTarget == nullptr)
@@ -145,26 +156,23 @@ void NpcHumanBase::UpdatePerception()
         candidates.push_back({ h, pos, fromSight });
     };
 
-    if (isOwned)
+    // Visible targets. (Owner-only is already enforced by the early return
+    // at the top of this function.)
+    for (auto& pt : observer->visibleTargets)
     {
+        if (!pt->HasTag("player")) continue;
 
-        // Visible targets
-        for (auto& pt : observer->visibleTargets)
-        {
-            if (!pt->HasTag("player")) continue;
+        // Find the entity that registered this perception target.
+        // pt->ownerId is a string entity Id.
+        Entity* e = Level::Current->FindEntityWithId(pt->ownerId);
 
-            // Find the entity that registered this perception target.
-            // pt->ownerId is a string entity Id.
-            Entity* e = Level::Current->FindEntityWithId(pt->ownerId);
+        if (!e) continue;
 
-            if (!e) continue;
-
-            auto* ne = dynamic_cast<NetworkedEntity*>(e);
-            if (ne)
-                findOrAdd(EntityHandle::FromNetworked(ne->networkId), e->Position, true);
-            else
-                findOrAdd(EntityHandle::FromEntity(e), e->Position, true);
-        }
+        auto* ne = dynamic_cast<NetworkedEntity*>(e);
+        if (ne)
+            findOrAdd(EntityHandle::FromNetworked(ne->networkId), e->Position, true);
+        else
+            findOrAdd(EntityHandle::FromEntity(e), e->Position, true);
     }
 
 
@@ -206,6 +214,11 @@ void NpcHumanBase::UpdatePerception()
 
 void NpcHumanBase::TrySetTarget(const EntityHandle& candidate, const vec3& candidatePos)
 {
+    // Defense in depth: only the owner may retarget / transfer ownership.
+    // UpdatePerception (the only current caller) already gates on this,
+    // but this function shouldn't rely on that alone.
+    if (!isOwned) return;
+
     if (candidate == currentTarget) return;
 
     // Only switch in interruptible states.

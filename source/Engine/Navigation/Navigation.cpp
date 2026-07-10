@@ -673,7 +673,9 @@ std::vector<glm::vec3> NavigationSystem::FindSimplePath(glm::vec3 start, glm::ve
     // --- 3) Clamp goal if partial ---
     bool reached = (polyPath[polyCount - 1] == gRef);
 
-    if (outReached) *outReached = reached;
+    if(allowPartialPath == false)
+    if (outReached) 
+        *outReached = reached;
 
     if (!reached)
     {
