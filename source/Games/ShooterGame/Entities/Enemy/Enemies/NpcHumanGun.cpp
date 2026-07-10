@@ -46,7 +46,7 @@ void NpcHumanGun::ProcessAnimationEvent(AnimationEvent& event)
 // This only decides whether to keep firing or abandon the burst. It never
 // picks a new position itself — shotsPerBurst == 0 is the sole signal the
 // state machine in AsyncUpdate needs to know a burst isn't running, and it
-// takes it from there (after postBurstDelay, or immediately on abandon).
+// takes it from there (after minBurstInterval, or immediately on abandon).
 // Keeping "what happens next" in one place is what makes it possible to
 // reason about the whole loop.
 // ---------------------------------------------------------------------------
@@ -58,6 +58,14 @@ void NpcHumanGun::Attack()
         if (cantAttackDelay.Wait()) return;
         if (inAttackDelay.Wait())   return;
         if (resolvedTarget == nullptr) return;
+
+        // Enforce the minBurstInterval floor. If we got here (reposition
+        // finished, or wasn't needed) faster than the window since the
+        // last shot, just wait — shotsPerBurst is already > 0 so
+        // AsyncUpdate's mid-burst branch keeps us standing in "aim" and
+        // keeps calling Attack() each frame — rather than opening the next
+        // burst the instant we arrive.
+        if (shotsFired == 0 && burstIntervalDelay.Wait()) return;
 
         vec3 bonePos = mesh->GetBoneMatrixWorld("weapon_muzzle")[3];
         vec3 predictedTargetPosition = resolvedTarget->Position;
@@ -116,13 +124,19 @@ void NpcHumanGun::Attack()
             shotsFired = 0;
             shotsPerBurst = 0;
 
-            // Hold position for postBurstDelay so the fire animation has
-            // time to finish before AsyncUpdate's state machine moves on
-            // (see the "just finished a burst" branch there). This is a
-            // dedicated timer specifically so nothing else touching
-            // cantAttackDelay (the run/stun lock, the retry throttle
-            // below, the spawn delay) can shorten or extend it.
-            postBurstPauseDelay.AddDelay(postBurstDelay);
+            // Two independent timers start here:
+            //  - postBurstPauseDelay (short) just lets the fire animation
+            //    finish before AsyncUpdate's state machine considers moving
+            //    on to a reposition (see the "just finished a burst" branch
+            //    there).
+            //  - burstIntervalDelay (minBurstInterval) is the actual
+            //    inter-burst floor, checked back at the top of this
+            //    function on the next burst's first shot — so a quick
+            //    reposition just means standing in "aim" for whatever's
+            //    left of the window, and a slow one has already cleared it
+            //    by the time the NPC arrives.
+            postBurstPauseDelay.AddDelay(postBurstHoldTime);
+            burstIntervalDelay.AddDelay(minBurstInterval);
         }
 
         // Broadcast animation to others.
@@ -285,13 +299,26 @@ void NpcHumanGun::AsyncUpdate()
         desiredTargetLocation = resolvedTarget->Position;
         vec3 lookAtDir = MathHelper::FastNormalize(resolvedTarget->Position - Position);
 
-        // Upper bound only (no lower bound) — a target that's closer than
-        // minEngageDistance still counts as "has a shot" here. That's what
+        // Upper bound only (no lower bound) — a target closer than
+        // minEngageDistance still counts as "has a shot" here; that's what
         // sends it into a reposition search below rather than a "chase
-        // closer" that would just walk it into the player.
+        // closer" that would just walk it into the player. The bound is
+        // maxAttackDistance, not maxEngageDistance: the NPC will fire from
+        // farther than its preferred band (holding and shooting from the
+        // current spot if nothing closer is reachable — see
+        // FindAttackLocation's fallback), it just won't fire past
+        // maxAttackDistance at all, no matter how clear the sightline.
         bool hasLineOfSight = LineOfSightCheck(resolvedTarget) &&
             glm::distance2(resolvedTarget->Position, Position)
-                <= maxEngageDistance * maxEngageDistance;
+                <= maxAttackDistance * maxAttackDistance;
+
+        // A direct chase is only worth taking if the target isn't too far
+        // to bother walking to at all, and there's a sane, fully-connected
+        // route — no ledge/drop link, no absurd detour. CanReachDirectly is
+        // only evaluated when it can actually matter (short-circuited by
+        // the distance check) since it costs a pathfind.
+        bool withinTravelRange = glm::distance2(resolvedTarget->Position, Position)
+            <= maxTravelDistance * maxTravelDistance;
 
         bool chasing = false;
 
@@ -299,11 +326,25 @@ void NpcHumanGun::AsyncUpdate()
         // Priority order, evaluated fresh every frame:
         //   1. Mid-reposition   — keep moving to repositionTarget, stop the
         //                         instant we arrive.
-        //   2. Mid-burst        — keep firing until it's spent.
-        //   3. Post-burst pause — just finished (or about to start); hold
-        //                         still until postBurstPauseDelay clears.
-        //   4. Have a shot      — go find a spot nearby and move to it.
-        //   5. No shot          — close the distance directly until we do.
+        //   2. Mid-burst        — keep firing until it's spent (Attack()
+        //                         itself still withholds the very first
+        //                         shot until burstIntervalDelay clears).
+        //   3. Post-burst pause — just finished; hold still just long
+        //                         enough for the fire animation to finish
+        //                         (postBurstPauseDelay / postBurstHoldTime)
+        //                         before considering a reposition.
+        //   4. Have a shot      — go find a spot nearby and move to it (or
+        //                         hold and shoot from here if nothing
+        //                         nearby qualifies — see FindAttackLocation).
+        //   5. No shot          — try FindAttackLocation anyway: it
+        //                         validates LOS and path/detour per
+        //                         candidate on its own, so it can still
+        //                         find a spot that clears LOS even though
+        //                         we don't have one right now. If that
+        //                         comes up empty:
+        //   5a.  reachable        — close the distance directly until we do.
+        //   5b.  unreachable      — hold and face the target instead of
+        //                           blindly running at it.
         // Deliberately not "smart": no flanking, no threat evaluation, just
         // a reachable, correctly-ranged, visible spot.
 
@@ -380,15 +421,58 @@ void NpcHumanGun::AsyncUpdate()
         }
         else
         {
-            // No shot available — close the distance directly until there
-            // is one. No search, no destination of its own: just walk at
-            // the target.
-            chasing = true;
+            // No shot from here — either LOS is blocked outright, or the
+            // only route out would be an unreasonable detour (see
+            // CanReachDirectly / FindAttackLocation's shared
+            // maxDetourRatio check). Before falling back to a blind chase
+            // or just holding, check whether some other spot within
+            // repositionSearchRadius would actually give us a shot.
+            // FindAttackLocation validates LOS and path/detour on each
+            // candidate itself, so it works fine here without current
+            // LOS — this is the same search branch 4 above uses, just
+            // reached from "no shot" instead of "have a shot".
+            vec3 vantagePoint = FindAttackLocation();
+            bool foundVantagePoint = glm::distance(vantagePoint, Position) > arrivalRadius;
 
-            if (animName != "run" && !IsStunned())
-                mesh->PlayAnimation("run", true, 0.6f);
+            if (foundVantagePoint)
+            {
+                // Found a reachable, validated spot — reposition there like
+                // any other. Once repositioning is true, branch 1 takes
+                // over next frame, so this search is paid for once per
+                // "lost the shot" event, not every single frame.
+                repositioning = true;
+                repositionElapsed = 0.0f;
+                repositionTarget = vantagePoint;
 
-            desiredDirection = lookAtDir;
+                desiredTargetLocation = repositionTarget;
+                pathFollow.reachedTarget = false;
+            }
+            else if (withinTravelRange && CanReachDirectly(resolvedTarget->Position))
+            {
+                // No vantage point found nearby, but the target is close
+                // enough to be worth closing the distance on, and there's a
+                // normal, fully-connected route there. No search, no
+                // destination of its own: just walk at the target.
+                chasing = true;
+
+                if (animName != "run" && !IsStunned())
+                    mesh->PlayAnimation("run", true, 0.6f);
+
+                desiredDirection = lookAtDir;
+            }
+            else
+            {
+                // Nothing worked — the target is too far to be worth the
+                // trip, there's no sane direct route, and no reachable spot
+                // nearby clears LOS either. Hold position and face the
+                // target rather than running blindly at it — a real path
+                // may open up later, or LOS may arrive and send us into a
+                // proper reposition next pass.
+                if (animName != "aim")
+                    mesh->PlayAnimation("aim", true, 0.3f);
+
+                desiredDirection = lookAtDir;
+            }
         }
 
         // ── End state machine ────────────────────────────────────────────
@@ -496,6 +580,7 @@ void NpcHumanGun::Serialize(json& target)
 
     SERIALIZE_FIELD(target, cantAttackDelay);
     SERIALIZE_FIELD(target, postBurstPauseDelay);
+    SERIALIZE_FIELD(target, burstIntervalDelay);
     SERIALIZE_FIELD(target, desiredTargetLocation);
     SERIALIZE_FIELD(target, accuracyModifier);
     SERIALIZE_FIELD(target, repositioning);
@@ -511,6 +596,7 @@ void NpcHumanGun::Deserialize(json& source)
 
     DESERIALIZE_FIELD(source, cantAttackDelay);
     DESERIALIZE_FIELD(source, postBurstPauseDelay);
+    DESERIALIZE_FIELD(source, burstIntervalDelay);
     DESERIALIZE_FIELD(source, desiredTargetLocation);
     DESERIALIZE_FIELD(source, accuracyModifier);
     DESERIALIZE_FIELD(source, repositioning);
@@ -549,22 +635,21 @@ namespace
     };
 }
 
-vec3 NpcHumanGun::FindAttackLocation()
-{
+vec3 NpcHumanGun::FindAttackLocation() {
     if (resolvedTarget == nullptr)
         return Position;
 
     const vec3 currentPos = Position;
     const vec3 targetPos = resolvedTarget->Position;
 
+    if (glm::distance(currentPos, targetPos) - repositionSearchRadius > maxEngageDistance)
+        return currentPos;
+
     const int   maxAttempts = 32;
-    const float minRadiusFrac = 0.6f;   // always move a noticeable amount, not 2 inches
+    const float minRadiusFrac = 0.2f;
     const float acceptanceRadius = 0.1f;
-    const float pathEndTolerance = acceptanceRadius * 2.0f;
-    const float maxDetourRatio = 1.75f;  // allowed path length vs straight line
-    const float maxStepDelta = 0.5f;   // heuristic jump/drop link detector
-    const float navSnapTolerance = 0.75f;  // how far a raw sample may be from walkable navmesh
-    const float outOfRangeWeight = 1000.0f; // in-range candidates always outrank out-of-range ones
+    const float navSnapTolerance = 0.75f;
+    const float outOfRangeWeight = 1000.0f;
 
     std::vector<Candidate> candidates;
     candidates.reserve(maxAttempts);
@@ -580,22 +665,13 @@ vec3 NpcHumanGun::FindAttackLocation()
         vec3 sample = currentPos + vec3(std::cos(angleRad) * radius, 0.0f, std::sin(angleRad) * radius);
         sample.y = currentPos.y;
 
-
-        // Snap to the walkable navmesh now, cheaply, rather than finding out during the
-        // expensive pathfind that the raw sample wasn't usable at all.
         vec3 navPos;
         if (!NavigationSystem::ProjectPointToNavMesh(sample, glm::vec3(navSnapTolerance), navPos))
             continue;
 
-        //DebugDraw::Point(navPos, 3);
-
         vec3 flatCandidate = vec3(navPos.x, 0.0f, navPos.z);
         vec3 flatTarget = vec3(targetPos.x, 0.0f, targetPos.z);
         float distToTarget = glm::distance(flatCandidate, flatTarget);
-
-        // To make being in-range a hard requirement again (reject anything outside the
-        // band instead of treating it as a fallback), uncomment:
-        // if (distToTarget < minEngageDistance || distToTarget > maxEngageDistance) continue;
 
         float rangePenalty = 0.0f;
         if (distToTarget < minEngageDistance)
@@ -609,64 +685,116 @@ vec3 NpcHumanGun::FindAttackLocation()
         candidates.push_back({ navPos, score });
     }
 
-    // --- PHASE 2: SORT (best first) ---------------------------------------------------
+    // --- PHASE 2: SORT (best first based on initial engagement distance) -------------
     std::sort(candidates.begin(), candidates.end(),
         [](const Candidate& a, const Candidate& b) { return a.score > b.score; });
 
-    // --- PHASE 3: PATHFIND, BEST CANDIDATE FIRST --------------------------------------
+    // --- PHASE 3: PATHFIND AND EVALUATE ALL VIABLE CANDIDATES ------------------------
+    bool foundViableCandidate = false;
+    vec3 bestCandidatePos = currentPos;
+    float bestPathScore = std::numeric_limits<float>::max(); // Lower delta from 6m is better
+    const float targetPathLength = 6.0f;
+
     for (auto candidate : candidates)
     {
         bool reached = false;
         std::vector<vec3> path = NavigationSystem::FindSimplePath(
             currentPos, candidate.position, acceptanceRadius, &reached, /*allowPartialPath=*/false);
 
+        // Not actually reachable — skip
+        if (!reached || path.empty())
+            continue;
 
-		if (glm::distance(candidate.position, currentPos) < 4.0f)
-		{
-			// Don't reposition to a spot that's too close to the current position.
-			continue;
-		}
+        // Don't reposition to a spot that's too close to the current position
+        if (glm::distance(candidate.position, currentPos) < 3.0f)
+            continue;
 
-
-
-        //if (glm::distance(path.back(), candidate.position) > pathEndTolerance)
-            //continue;
-
-        // Reject a path that used a jump/drop/ladder/teleport link.
+        // Reject a path that used a jump/drop/ladder/teleport link 
         bool usedSpecialLink = false;
         for (size_t p = 1; p < path.size() && !usedSpecialLink; ++p)
         {
             float verticalDelta = std::abs(path[p].y - path[p - 1].y);
             float horizontalDelta = glm::distance(vec3(path[p].x, 0, path[p].z), vec3(path[p - 1].x, 0, path[p - 1].z));
-            if (verticalDelta > maxStepDelta && verticalDelta > horizontalDelta)
+            if (verticalDelta > maxLedgeStepDelta && verticalDelta > horizontalDelta)
                 usedSpecialLink = true;
         }
-
-
 
         if (usedSpecialLink)
             continue;
 
+        // Calculate actual path length
         float pathLength = 0.0f;
         for (size_t p = 1; p < path.size(); ++p)
             pathLength += glm::distance(path[p - 1], path[p]);
 
+        // Check line of sight / attack validity
         if (!CheckAttackLocation(path.back() + vec3(0, 1.2f, 0), targetPos))
-        {
             continue;
-        }
 
+        // Check detour constraints
         float straightLineDist = glm::distance(currentPos, candidate.position);
         if (pathLength > straightLineDist * maxDetourRatio)
             continue;
 
-        //DebugDraw::Point(path.back(), 3, 0.6f, DebugColor::Blue);
-
-        // Best-scoring reachable candidate - done.
-        return path.back() + vec3(0, 0.3f, 0);
+        // --- NEW LOGIC: Track the candidate closest to 6 meters ---
+        float currentDeltaFrom6m = std::abs(pathLength - targetPathLength);
+        if (!foundViableCandidate || currentDeltaFrom6m < bestPathScore)
+        {
+            foundViableCandidate = true;
+            bestPathScore = currentDeltaFrom6m;
+            bestCandidatePos = path.back() + vec3(0, 0.3f, 0);
+        }
     }
 
-    // Fallback: nothing at all was reachable (fully cornered, or no navmesh nearby) - hold.
-    //DebugDraw::Point(currentPos, 3, 0.6f);
+    // If we found at least one viable candidate, return the one closest to 6m path length
+    if (foundViableCandidate)
+        return bestCandidatePos;
+
+    // Fallback: hold position
     return currentPos;
+}
+
+// ---------------------------------------------------------------------------
+// Direct-chase reachability check
+// ---------------------------------------------------------------------------
+// Used only by the "no shot yet, close the distance" branch in AsyncUpdate.
+// Holds a direct chase to the same standard FindAttackLocation holds a
+// reposition to: fully connected (no partial path), no jump/drop/ladder
+// link, and not an unreasonable detour versus the straight-line distance.
+// If any of that fails, the caller holds position instead of walking
+// blindly at the target's raw position — which is what used to send the NPC
+// running down ledges it had no real path down to.
+// ---------------------------------------------------------------------------
+
+bool NpcHumanGun::CanReachDirectly(vec3 destination)
+{
+    const float acceptanceRadius = 0.1f;
+
+    bool reached = false;
+    std::vector<vec3> path = NavigationSystem::FindSimplePath(
+        Position, destination, acceptanceRadius, &reached, /*allowPartialPath=*/false);
+
+    if (!reached || path.empty())
+        return false;
+
+    // Reject a path that used a jump/drop/ladder/teleport link — same
+    // heuristic FindAttackLocation uses.
+    for (size_t p = 1; p < path.size(); ++p)
+    {
+        float verticalDelta = std::abs(path[p].y - path[p - 1].y);
+        float horizontalDelta = glm::distance(
+            vec3(path[p].x, 0, path[p].z), vec3(path[p - 1].x, 0, path[p - 1].z));
+        if (verticalDelta > maxLedgeStepDelta && verticalDelta > horizontalDelta)
+            return false;
+    }
+
+    float pathLength = 0.0f;
+    for (size_t p = 1; p < path.size(); ++p)
+        pathLength += glm::distance(path[p - 1], path[p]);
+
+    float straightLineDist = glm::distance(Position, destination);
+    if (pathLength > straightLineDist * maxDetourRatio)
+        return false;
+
+    return true;
 }
