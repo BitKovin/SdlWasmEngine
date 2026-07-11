@@ -262,7 +262,7 @@ public:
         else if (IsFocused)                          tint = FocusColor;
         else if (IsHovered || !TouchEvents.empty())  tint = HoverColor;
 
-        UiRenderer::DrawTexturedRect(finalizedMatrix, finalizedSize, tex->getHandle(), tint * GetFinalColor());
+        DrawSelfTextured(tex->getHandle(), tint * GetFinalColor(), static_cast<float>(tex->width), static_cast<float>(tex->height));
 
         UiRenderer::PushMask(finalizedMatrix, finalizedSize);
 

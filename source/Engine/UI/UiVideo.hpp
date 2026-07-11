@@ -42,12 +42,7 @@ public:
             tex = std::make_unique<Texture>(frame.data(), w, h, bgfx::TextureFormat::RGB8, false);
 
         if (tex)
-        {
-            if (PixelShader.empty())
-                UiRenderer::DrawTexturedRect(finalizedMatrix, finalizedSize, tex->getHandle(), GetFinalColor());
-            else
-                UiRenderer::DrawTexturedRectShader(finalizedMatrix, finalizedSize, tex->getHandle(), GetFinalColor(), PixelShader, tex->height, tex->width);
-        }
+            DrawSelfTextured(tex->getHandle(), GetFinalColor(), static_cast<float>(tex->width), static_cast<float>(tex->height));
 
         UiElement::Draw();
     }

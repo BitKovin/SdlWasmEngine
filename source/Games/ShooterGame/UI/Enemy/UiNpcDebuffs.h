@@ -18,8 +18,8 @@ public:
 		size = glm::vec2(128.f, 128.f);
 
 		Textures["u_Texture"] = AssetRegistry::GetTextureFromFile(debuff.iconPath)->getHandle();
-		Scalars["u_progress"] = debuff.GetProgress();
-		Scalars["u_timeRel"] = debuff.GetTimeRel();
+		Vector4s["u_progress"] = glm::vec4(debuff.GetProgress(), 0.0f, 0.0f, 0.0f);
+		Vector4s["u_timeRel"] = glm::vec4(debuff.GetTimeRel(), 0.0f, 0.0f, 0.0f);
 		color = glm::vec4(debuff.uiColor, 1.0f);
 		PixelShader = "game/fs_debuff";
 

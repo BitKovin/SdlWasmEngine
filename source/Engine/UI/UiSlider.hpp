@@ -42,10 +42,15 @@
 //    spatial navigation so the slider behaves like a normal form control.
 //    Vertical sliders: same, but on Up/Down, with Left/Right falling through.
 //
+//  DIRECTION
+//    Update() keeps UiProgressBar::Direction synced to Vertical each frame
+//    (BottomToTop when vertical, LeftToRight when horizontal), so the fill
+//    always grows toward higher value the same way the handle moves.
+//
 //  NOTE ON COLOR INHERITANCE
 //    UiProgressBar repurposes the inherited `color` field as the fill tint
-//    (see UiProgressBar::Draw — vec4Final["u_Color"] = color). The handle
-//    therefore opts out of inheritParentColor so it isn't tinted by the fill.
+//    (see UiProgressBar::Draw). The handle opts out of inheritParentColor so
+//    it isn't tinted by the fill.
 // ---------------------------------------------------------------------------
 
 class UiSlider : public UiProgressBar
@@ -132,6 +137,11 @@ public:
             m_drag = {};
             if (onDragEnd) onDragEnd(Value);
         }
+
+        // Keep the inherited fill direction matching this slider's own axis
+        // — "up"/"right" both mean higher value, same convention as
+        // SetValueFromPointer below.
+        Direction = Vertical ? UiProgressDirection::BottomToTop : UiProgressDirection::LeftToRight;
 
         Progress = (MaxValue > MinValue) ? (Value - MinValue) / (MaxValue - MinValue) : 0.f;
 

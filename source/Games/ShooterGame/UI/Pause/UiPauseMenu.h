@@ -112,6 +112,12 @@ private:
 		txt->origin = vec2(0.5f);
 
 		btn->AddChild(txt);
+		btn->outlineEnabled = true;
+		btn->NineSliceEnabled = true;
+		btn->NineSlice = UiRenderer::NineSliceMargins(16, 16, 16, 16);
+		btn->ImagePath = "GameData/textures/ui/test_button.png";
+		btn->shadowEnabled = true;
+		btn->shadowOffset = vec2(2, 4);
 
 		return btn;
 	}

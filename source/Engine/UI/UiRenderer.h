@@ -11,6 +11,12 @@ using namespace std;
 
 class Texture;
 
+// The UI canvas is always exactly the render target's resolution — 1 UI unit
+// == 1 output pixel, no separate DPI/UI-scale factor anywhere in this system.
+// Worth knowing if you're writing a fragment shader that wants to reason
+// about on-screen pixel size: element->size (and finalizedSize) already *is*
+// that, no conversion needed.
+
 namespace UiRenderer {
 
     // Opaque handle returned by LoadFont. Pass to DrawText and UnloadFont.
@@ -28,7 +34,7 @@ namespace UiRenderer {
     // These remain for any code that hasn't been ported to matrix calls yet.
     void DrawTexturedRect(const glm::vec2& pos, const glm::vec2& size, float rotation, vec2 pivot, bgfx::TextureHandle texture, const glm::vec4& color = glm::vec4(1.0f));
     void DrawTexturedRectShader(const glm::vec2& pos, const glm::vec2& size, float rotation, glm::vec2 pivot, bgfx::TextureHandle texture, const glm::vec4& color, const string& shader);
-    void DrawTexturedRectShaderParams(const glm::vec2& pos, const glm::vec2& size, float rotation, glm::vec2 pivot, std::unordered_map<std::string, bgfx::TextureHandle>& textures, std::unordered_map<std::string, float>& scalars, std::unordered_map<std::string, vec4>& vec4s, const glm::vec4& color, const string& shader);
+    void DrawTexturedRectShaderParams(const glm::vec2& pos, const glm::vec2& size, float rotation, glm::vec2 pivot, std::unordered_map<std::string, bgfx::TextureHandle>& textures, std::unordered_map<std::string, vec4>& vec4s, const glm::vec4& color, const string& shader);
     void DrawBorderRect(const glm::vec2& pos, const glm::vec2& size, const glm::vec4& color);
 
     glm::vec2 MeasureText(const std::string& text, FontHandle font);
@@ -56,9 +62,10 @@ namespace UiRenderer {
                                 const string& shader, float textureHeight, float textureWidth);
 
     // Textured rectangle with a custom pixel shader (multiple parameter maps).
+    // No separate float/"scalar" map — bgfx uniforms are vec4-sized no matter
+    // what you conceptually pass, so a scalar just goes in as vec4(v,0,0,0).
     void DrawTexturedRectShaderParams(const glm::mat3& transform, const glm::vec2& size,
                                       std::unordered_map<std::string, bgfx::TextureHandle>& textures,
-                                      std::unordered_map<std::string, float>& scalars,
                                       std::unordered_map<std::string, vec4>& vec4s,
                                       const glm::vec4& color,
                                       const string& shader);
@@ -74,6 +81,47 @@ namespace UiRenderer {
                   const glm::mat3& transform,
                   const glm::vec4& color, const glm::vec2& scale,
                   const string& shader = "", std::unordered_map<std::string, vec4> shaderUniforms = {}, float effectPadding = 0.f);
+
+    // ── Draw calls — transient vertex buffer ───────────────────────────────────
+    //
+    // Everything above submits the same static unit quad (s_quadVB) — cheap,
+    // but fixed to exactly [0,size], so it can't draw a partial rect and can't
+    // give shadow/outline/glow room to bleed past the element's own edges.
+    // These two build a fresh transient VB per call instead, which costs more
+    // but can do both. Prefer the plain calls above for the common case
+    // (full rect, no effects); reach for these when you actually need a
+    // partial rect, effect padding, or 9-slicing.
+    //
+    // effectPadding is in source-texture texels, same meaning as DrawText's —
+    // both position and UV are inflated by effectPadding/textureWidth (or
+    // height), so the extra geometry samples real texels just past the
+    // requested rect rather than stretching or repeating the edge. Pass 0 (or
+    // textureWidth/Height = 0) for no padding.
+
+    // Sub-rectangle of this element (rectPos/rectSize in local [0,1] space —
+    // (0,0)/(1,1) draws the whole element, same as DrawTexturedRect) mapped
+    // 1:1 onto the same range of `texture`'s UV space. This is the geometry-
+    // masking primitive: only the requested fraction is actually submitted as
+    // geometry, so unlike a fragment-shader discard/mix, nothing is drawn (or
+    // sampled) outside the requested rect at all.
+    void DrawTexturedRectRegion(const glm::mat3& transform, const glm::vec2& size,
+                                const glm::vec2& rectPos, const glm::vec2& rectSize,
+                                bgfx::TextureHandle texture, const glm::vec4& color,
+                                const string& shader = "", std::unordered_map<std::string, vec4> shaderUniforms = {},
+                                float effectPadding = 0.f, float textureWidth = 0.f, float textureHeight = 0.f);
+
+    // Margins in source-texture texels. Corners render at their native texel
+    // size in screen pixels regardless of how much the element is stretched;
+    // edges stretch along one axis; the center stretches both. Not currently
+    // combinable with a partial rect (DrawTexturedRectRegion) in one call —
+    // this always draws the full element.
+    struct NineSliceMargins { float left = 0.f, top = 0.f, right = 0.f, bottom = 0.f; };
+
+    void DrawTexturedRect9Slice(const glm::mat3& transform, const glm::vec2& size,
+                                const NineSliceMargins& margins,
+                                bgfx::TextureHandle texture, const glm::vec4& color,
+                                const string& shader = "", std::unordered_map<std::string, vec4> shaderUniforms = {},
+                                float effectPadding = 0.f, float textureWidth = 0.f, float textureHeight = 0.f);
 
     // ── Stencil mask ──────────────────────────────────────────────────────────
     // Legacy overload (kept for compatibility).

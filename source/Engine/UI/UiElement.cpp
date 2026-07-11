@@ -1,6 +1,7 @@
 #include "UiElement.h"
 #include "../glm.h"
 #include <stdexcept>
+#include <algorithm>
 #include "../Camera.h"
 #include "../Input.h"
 #include "UiRenderer.h"
@@ -122,9 +123,135 @@ void UiElement::FinalizeChildren()
     finalizedSize = GetSize();
     finalizedMatrix = worldMatrix;    // ← snapshot for Draw()
 
+    FinalizeEffects();
+
     finalizedChildren = children;
     for (auto& child : finalizedChildren)
         child->FinalizeChildren();
+}
+
+// ---------------------------------------------------------------------------
+// Shader effects (shadow / outline / glow) — shared by every UiElement.
+// ---------------------------------------------------------------------------
+void UiElement::FinalizeEffects()
+{
+    finalizedShadowEnabled = shadowEnabled;
+    finalizedShadowColor = shadowColor;
+    finalizedShadowOffset = shadowOffset;
+    finalizedShadowSoftness = shadowSoftness;
+    finalizedShadowSpread = shadowSpread;
+
+    finalizedOutlineEnabled = outlineEnabled;
+    finalizedOutlineColor = outlineColor;
+    finalizedOutlineWidth = outlineWidth;
+
+    finalizedGlowEnabled = glowEnabled;
+    finalizedGlowColor = glowColor;
+    finalizedGlowRadius = glowRadius;
+    finalizedGlowIntensity = glowIntensity;
+
+    finalizedHasEffects = HasActiveEffects();
+}
+
+std::unordered_map<std::string, glm::vec4> UiElement::GetEffectsUniforms() const
+{
+    std::unordered_map<std::string, glm::vec4> uniforms;
+
+    uniforms["u_ShadowColor"] = finalizedShadowColor;
+    uniforms["u_ShadowParams"] = glm::vec4(finalizedShadowOffset.x, finalizedShadowOffset.y,
+        finalizedShadowSpread, finalizedShadowEnabled ? 1.f : 0.f);
+    uniforms["u_ShadowParams2"] = glm::vec4(finalizedShadowSoftness, 0.f, 0.f, 0.f);
+
+    uniforms["u_OutlineColor"] = finalizedOutlineColor;
+    uniforms["u_OutlineParams"] = glm::vec4(finalizedOutlineWidth, finalizedOutlineEnabled ? 1.f : 0.f, 0.f, 0.f);
+
+    uniforms["u_GlowColor"] = finalizedGlowColor;
+    uniforms["u_GlowParams"] = glm::vec4(finalizedGlowRadius, finalizedGlowIntensity,
+        finalizedGlowEnabled ? 1.f : 0.f, 0.f);
+
+    return uniforms;
+}
+
+float UiElement::GetEffectsPadding() const
+{
+    const float shadowReach  = finalizedShadowEnabled  ? (glm::length(finalizedShadowOffset) + finalizedShadowSoftness) : 0.f;
+    const float outlineReach = finalizedOutlineEnabled ? finalizedOutlineWidth : 0.f;
+    const float glowReach    = finalizedGlowEnabled    ? finalizedGlowRadius   : 0.f;
+    return std::max({ shadowReach, outlineReach, glowReach });
+}
+
+// ---------------------------------------------------------------------------
+// DrawSelfTextured / DrawSelfTexturedParams
+//
+// The shared dispatch every leaf Draw() calls: effects shader → PixelShader
+// → plain draw, and (for DrawSelfTextured) the cheap static-quad path vs. the
+// transient-VB path (RectPosition/RectSize, NineSliceEnabled, or effect
+// padding — any of those forces the transient-VB path).
+// ---------------------------------------------------------------------------
+
+void UiElement::DrawSelfTextured(bgfx::TextureHandle texture, const glm::vec4& color,
+    float textureWidth, float textureHeight, bool useEffects)
+{
+    const std::string effectsShader = useEffects ? GetEffectsShaderName() : std::string();
+    const bool usingEffects = !effectsShader.empty();
+    const std::string& shader = usingEffects ? effectsShader : PixelShader;
+    const float padding = usingEffects ? GetEffectsPadding() : 0.f;
+
+    std::unordered_map<std::string, glm::vec4> uniforms;
+    if (usingEffects)
+    {
+        uniforms = GetEffectsUniforms();
+        uniforms["u_TextureSize"] = glm::vec4(textureWidth, textureHeight, 0.f, 0.f);
+    }
+
+    if (NineSliceEnabled)
+    {
+        UiRenderer::DrawTexturedRect9Slice(finalizedMatrix, finalizedSize, NineSlice,
+            texture, color, shader, uniforms, padding, textureWidth, textureHeight);
+        return;
+    }
+
+    const bool isFullRect = (RectPosition == glm::vec2(0.f) && RectSize == glm::vec2(1.f));
+
+    if (isFullRect && padding <= 0.f)
+    {
+        // Cheap path: static quad, no transient VB allocation.
+        if (usingEffects)
+        {
+            std::unordered_map<std::string, bgfx::TextureHandle> textures{ { "u_Texture", texture } };
+            UiRenderer::DrawTexturedRectShaderParams(finalizedMatrix, finalizedSize, textures, uniforms, color, shader);
+        }
+        else if (!shader.empty())
+        {
+            UiRenderer::DrawTexturedRectShader(finalizedMatrix, finalizedSize, texture, color, shader, textureHeight, textureWidth);
+        }
+        else
+        {
+            UiRenderer::DrawTexturedRect(finalizedMatrix, finalizedSize, texture, color);
+        }
+        return;
+    }
+
+    // Advanced path: partial rect and/or effect padding → transient VB.
+    UiRenderer::DrawTexturedRectRegion(finalizedMatrix, finalizedSize, RectPosition, RectSize,
+        texture, color, shader, uniforms, padding, textureWidth, textureHeight);
+}
+
+void UiElement::DrawSelfTexturedParams(std::unordered_map<std::string, bgfx::TextureHandle>& textures,
+    std::unordered_map<std::string, glm::vec4>& vec4s,
+    const glm::vec4& color, const std::string& shader)
+{
+    const std::string effectsShader = GetEffectsShaderName();
+
+    if (!effectsShader.empty())
+    {
+        std::unordered_map<std::string, glm::vec4> uniforms = GetEffectsUniforms();
+        UiRenderer::DrawTexturedRectShaderParams(finalizedMatrix, finalizedSize, textures, uniforms, color, effectsShader);
+    }
+    else if (!shader.empty())
+    {
+        UiRenderer::DrawTexturedRectShaderParams(finalizedMatrix, finalizedSize, textures, vec4s, color, shader);
+    }
 }
 
 // ---------------------------------------------------------------------------

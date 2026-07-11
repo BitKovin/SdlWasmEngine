@@ -30,10 +30,10 @@ public:
             }
         }
 
-        if (PixelShader.empty())
-            UiRenderer::DrawTexturedRect(finalizedMatrix, finalizedSize, tex->getHandle(), GetFinalColor());
-        else
-            UiRenderer::DrawTexturedRectShader(finalizedMatrix, finalizedSize, tex->getHandle(), GetFinalColor(), PixelShader, tex->height, tex->width);
+        // Effects vs PixelShader vs plain, partial-rect vs 9-slice vs full —
+        // all handled by UiElement; see UiElement.h for what RectPosition/
+        // RectSize/NineSliceEnabled do.
+        DrawSelfTextured(tex->getHandle(), GetFinalColor(), static_cast<float>(tex->width), static_cast<float>(tex->height));
 
         UiElement::Draw();
     }

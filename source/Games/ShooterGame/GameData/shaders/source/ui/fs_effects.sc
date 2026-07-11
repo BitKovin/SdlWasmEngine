@@ -37,6 +37,23 @@ vec4 over(vec4 src, vec4 dst)
     return vec4(src.rgb + dst.rgb * (1.0 - src.a), src.a + dst.a * (1.0 - src.a));
 }
 
+// Every effect sample goes through here instead of calling texture2D
+// directly. Outside [0,1] returns fully transparent rather than whatever the
+// sampler's wrap mode would give (clamp = repeated edge pixels, repeat =
+// actually tiling) — that's what lets the C++ side hand this shader padded
+// geometry/UVs (see UiRenderer::DrawTexturedRectRegion/DrawTexturedRect9Slice)
+// for ANY texture and have shadow/outline/glow correctly fade to nothing in
+// the padding, without the source texture needing any blank border baked in.
+// The font atlas happens to already have real blank texels there (so this
+// is a no-op for text), but a plain image, video frame, or 9-slice edge does
+// not, and would otherwise smear/repeat its own edge pixels into the halo.
+vec4 sampleTexClamped(vec2 uv)
+{
+    if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0)
+        return vec4_splat(0.0);
+    return texture2D(u_Texture, uv);
+}
+
 // Max alpha found in a ring around uv - dilates the shape, used for the outline
 float ringMaxAlpha(vec2 uv, float radiusTexels)
 {
@@ -46,7 +63,7 @@ float ringMaxAlpha(vec2 uv, float radiusTexels)
     {
         float angle = PI2 * float(i) / float(OUTLINE_SAMPLES);
         vec2 offset = vec2(cos(angle), sin(angle)) * texelSize * radiusTexels;
-        result = max(result, texture2D(u_Texture, uv + offset).a);
+        result = max(result, sampleTexClamped(uv + offset).a);
     }
     return result;
 }
@@ -65,7 +82,7 @@ float glowAlpha(vec2 uv, float radiusTexels)
         {
             float angle = PI2 * float(i) / float(GLOW_RING_SAMPLES);
             vec2 offset = vec2(cos(angle), sin(angle)) * texelSize * ringRadius;
-            total += texture2D(u_Texture, uv + offset).a * weight;
+            total += sampleTexClamped(uv + offset).a * weight;
             weightSum += weight;
         }
     }
@@ -78,14 +95,14 @@ float glowAlpha(vec2 uv, float radiusTexels)
 float shadowSpreadAlpha(vec2 p, float spreadTexels)
 {
     vec2 texelSize = 1.0 / u_TextureSize.xy;
-    float result = texture2D(u_Texture, p).a;
+    float result = sampleTexClamped(p).a;
     if (spreadTexels > 0.0)
     {
         for (int i = 0; i < SHADOW_SPREAD_SAMPLES; i++)
         {
             float angle = PI2 * float(i) / float(SHADOW_SPREAD_SAMPLES);
             vec2 offset = vec2(cos(angle), sin(angle)) * texelSize * spreadTexels;
-            result = max(result, texture2D(u_Texture, p + offset).a);
+            result = max(result, sampleTexClamped(p + offset).a);
         }
     }
     return result;
@@ -123,7 +140,7 @@ float shadowAlpha(vec2 uv, vec2 offsetTexels, float spreadTexels, float smoothne
 
 void main()
 {
-    vec4 texColor = texture2D(u_Texture, v_texcoord0);
+    vec4 texColor = sampleTexClamped(v_texcoord0);
 
     // ---- base sprite (original behaviour) ----
     vec4 baseColor = texColor * u_Color;

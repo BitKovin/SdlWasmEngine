@@ -91,10 +91,7 @@ public:
         const bool hovered = IsHovered || !TouchEvents.empty() || IsFocused;
         const vec4 tint = hovered ? HoverColor : Color;
 
-        if (PixelShader.empty())
-            UiRenderer::DrawTexturedRect(finalizedMatrix, finalizedSize, tex->getHandle(), tint * GetFinalColor());
-        else
-            UiRenderer::DrawTexturedRectShader(finalizedMatrix, finalizedSize, tex->getHandle(), tint * GetFinalColor(), PixelShader, tex->height, tex->width);
+        DrawSelfTextured(tex->getHandle(), tint * GetFinalColor(), static_cast<float>(tex->width), static_cast<float>(tex->height));
 
         UiElement::Draw();
     }

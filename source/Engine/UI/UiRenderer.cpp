@@ -563,7 +563,6 @@ namespace UiRenderer {
     void DrawTexturedRectShaderParams(const glm::vec2& pos, const glm::vec2& size,
         float rotation, glm::vec2 pivot,
         std::unordered_map<std::string, bgfx::TextureHandle>& textures,
-        std::unordered_map<std::string, float>& scalars,
         std::unordered_map<std::string, vec4>& vec4s,
         const glm::vec4& color, const string& shader)
     {
@@ -575,7 +574,6 @@ namespace UiRenderer {
         sp->SetUniform("u_Color", color);
 
         for (auto& [name, tex] : textures) sp->SetTexture(name, tex);
-        for (auto& [name, scalar] : scalars)  sp->SetUniform(name, scalar);
         for (auto& [name, v4] : vec4s)    sp->SetUniform(name, v4);
 
         SubmitQuad(sp);
@@ -749,7 +747,6 @@ namespace UiRenderer {
 
     void DrawTexturedRectShaderParams(const glm::mat3& transform, const glm::vec2& size,
         std::unordered_map<std::string, bgfx::TextureHandle>& textures,
-        std::unordered_map<std::string, float>& scalars,
         std::unordered_map<std::string, vec4>& vec4s,
         const glm::vec4& color, const string& shader)
     {
@@ -759,7 +756,6 @@ namespace UiRenderer {
         sp->SetUniform("u_Model", BuildQuadModelFromMat3(transform, size));
         sp->SetUniform("u_Color", color);
         for (auto& [name, tex] : textures) sp->SetTexture(name, tex);
-        for (auto& [name, scalar] : scalars)  sp->SetUniform(name, scalar);
         for (auto& [name, v4] : vec4s)    sp->SetUniform(name, v4);
         SubmitQuad(sp);
     }
@@ -910,6 +906,154 @@ namespace UiRenderer {
             BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA,
                 BGFX_STATE_BLEND_INV_SRC_ALPHA)
         );
+        ApplyStencilTest();
+        bgfx::setVertexBuffer(0, &tvb);
+        sp->Submit(ViewIdManager::GetCurrentId());
+    }
+
+    // ── DrawTexturedRectRegion ────────────────────────────────────────────────
+    // See UiRenderer.h for the full explanation. Geometry and UV both span
+    // [rectPos, rectPos+rectSize], optionally extended by effectPadding — the
+    // same trick DrawText's Pass 3 uses per-glyph, generalized to one rect.
+    void DrawTexturedRectRegion(const glm::mat3& transform, const glm::vec2& size,
+        const glm::vec2& rectPos, const glm::vec2& rectSize,
+        bgfx::TextureHandle texture, const glm::vec4& color,
+        const string& shader, std::unordered_map<std::string, vec4> shaderUniforms,
+        float effectPadding, float textureWidth, float textureHeight)
+    {
+        if (rectSize.x <= 0.f || rectSize.y <= 0.f) return;
+
+        const float padU = (textureWidth  > 0.f) ? effectPadding / textureWidth  : 0.f;
+        const float padV = (textureHeight > 0.f) ? effectPadding / textureHeight : 0.f;
+
+        const float x0 = rectPos.x - padU, x1 = rectPos.x + rectSize.x + padU;
+        const float y0 = rectPos.y - padV, y1 = rectPos.y + rectSize.y + padV;
+
+        Shader* sp = shader.empty() ? s_texturedShader : ShaderManager::GetShaderProgram("vs_ui", shader);
+        sp->UseProgram();
+        SetShaderProjection(sp);
+        sp->SetUniform("u_Model", BuildQuadModelFromMat3(transform, size));
+        sp->SetUniform("u_Color", color);
+        sp->SetTexture("u_Texture", texture);
+
+        if (!shader.empty() && textureWidth > 0.f && textureHeight > 0.f)
+            sp->SetUniform("u_TextureSize", glm::vec4(textureWidth, textureHeight, 0.f, 0.f));
+
+        for (const auto& pair : shaderUniforms)
+            sp->SetUniform(pair.first, pair.second);
+
+        if (bgfx::getAvailTransientVertexBuffer(6, s_quadLayout) < 6) {
+            std::cerr << "[UiRenderer] DrawTexturedRectRegion: not enough transient VB\n";
+            return;
+        }
+        bgfx::TransientVertexBuffer tvb;
+        bgfx::allocTransientVertexBuffer(&tvb, 6, s_quadLayout);
+        auto* v = reinterpret_cast<QuadVertex*>(tvb.data);
+
+        // u_Model already maps this element's local [0,1] space to its full
+        // screen-space rect, so submitting geometry for a sub-range (here,
+        // optionally extended past [0,1] for padding) draws exactly that
+        // fraction, sampling the matching fraction (or bleed) of the texture.
+        v[0] = { x0, y1, x0, y1 };
+        v[1] = { x1, y0, x1, y0 };
+        v[2] = { x0, y0, x0, y0 };
+        v[3] = { x0, y1, x0, y1 };
+        v[4] = { x1, y1, x1, y1 };
+        v[5] = { x1, y0, x1, y0 };
+
+        BgfxStateManager::Reset();
+        BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Always);
+        BgfxStateManager::SetBlend(BgfxStateManager::Blend::Alpha);
+        BgfxStateManager::Apply();
+
+        ApplyStencilTest();
+        bgfx::setVertexBuffer(0, &tvb);
+        sp->Submit(ViewIdManager::GetCurrentId());
+    }
+
+    // ── DrawTexturedRect9Slice ────────────────────────────────────────────────
+    void DrawTexturedRect9Slice(const glm::mat3& transform, const glm::vec2& size,
+        const NineSliceMargins& margins,
+        bgfx::TextureHandle texture, const glm::vec4& color,
+        const string& shader, std::unordered_map<std::string, vec4> shaderUniforms,
+        float effectPadding, float textureWidth, float textureHeight)
+    {
+        if (size.x <= 0.f || size.y <= 0.f) return;
+
+        const float padU = (textureWidth  > 0.f) ? effectPadding / textureWidth  : 0.f;
+        const float padV = (textureHeight > 0.f) ? effectPadding / textureHeight : 0.f;
+
+        // Geometry breakpoints, local [0,1] space relative to `size` — corners
+        // come out `margin` SCREEN pixels regardless of how `size` is
+        // stretched (that's the entire point of 9-slicing). Clamped so two
+        // opposite margins can't cross on a too-small element.
+        float gx1 = (size.x > 0.f) ? margins.left   / size.x : 0.f;
+        float gx2 = (size.x > 0.f) ? 1.f - margins.right  / size.x : 1.f;
+        float gy1 = (size.y > 0.f) ? margins.top    / size.y : 0.f;
+        float gy2 = (size.y > 0.f) ? 1.f - margins.bottom / size.y : 1.f;
+        if (gx1 > gx2) { const float m = (gx1 + gx2) * 0.5f; gx1 = gx2 = m; }
+        if (gy1 > gy2) { const float m = (gy1 + gy2) * 0.5f; gy1 = gy2 = m; }
+
+        // UV breakpoints, texture-space fraction — independent of `size`,
+        // purely margins-in-texels over textureWidth/Height.
+        const float ux1 = (textureWidth  > 0.f) ? margins.left   / textureWidth  : 0.f;
+        const float ux2 = (textureWidth  > 0.f) ? 1.f - margins.right  / textureWidth  : 1.f;
+        const float uy1 = (textureHeight > 0.f) ? margins.top    / textureHeight : 0.f;
+        const float uy2 = (textureHeight > 0.f) ? 1.f - margins.bottom / textureHeight : 1.f;
+
+        // Padding only extends the OUTER boundary — the 9-slice's own inner
+        // breakpoints (corners/edges/center) are untouched.
+        const float gx[4] = { -padU, gx1, gx2, 1.f + padU };
+        const float gy[4] = { -padV, gy1, gy2, 1.f + padV };
+        const float ux[4] = { -padU, ux1, ux2, 1.f + padU };
+        const float uy[4] = { -padV, uy1, uy2, 1.f + padV };
+
+        Shader* sp = shader.empty() ? s_texturedShader : ShaderManager::GetShaderProgram("vs_ui", shader);
+        sp->UseProgram();
+        SetShaderProjection(sp);
+        sp->SetUniform("u_Model", BuildQuadModelFromMat3(transform, size));
+        sp->SetUniform("u_Color", color);
+        sp->SetTexture("u_Texture", texture);
+
+        if (!shader.empty() && textureWidth > 0.f && textureHeight > 0.f)
+            sp->SetUniform("u_TextureSize", glm::vec4(textureWidth, textureHeight, 0.f, 0.f));
+
+        for (const auto& pair : shaderUniforms)
+            sp->SetUniform(pair.first, pair.second);
+
+        constexpr uint32_t vertexCount = 9 * 6;
+        if (bgfx::getAvailTransientVertexBuffer(vertexCount, s_quadLayout) < vertexCount) {
+            std::cerr << "[UiRenderer] DrawTexturedRect9Slice: not enough transient VB\n";
+            return;
+        }
+        bgfx::TransientVertexBuffer tvb;
+        bgfx::allocTransientVertexBuffer(&tvb, vertexCount, s_quadLayout);
+        auto* v = reinterpret_cast<QuadVertex*>(tvb.data);
+
+        for (int cy = 0; cy < 3; ++cy)
+        {
+            for (int cx = 0; cx < 3; ++cx)
+            {
+                const float x0 = gx[cx], x1 = gx[cx + 1];
+                const float y0 = gy[cy], y1 = gy[cy + 1];
+                const float u0 = ux[cx], u1 = ux[cx + 1];
+                const float t0 = uy[cy], t1 = uy[cy + 1];
+
+                v[0] = { x0, y1, u0, t1 };
+                v[1] = { x1, y0, u1, t0 };
+                v[2] = { x0, y0, u0, t0 };
+                v[3] = { x0, y1, u0, t1 };
+                v[4] = { x1, y1, u1, t1 };
+                v[5] = { x1, y0, u1, t0 };
+                v += 6;
+            }
+        }
+
+        BgfxStateManager::Reset();
+        BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Always);
+        BgfxStateManager::SetBlend(BgfxStateManager::Blend::Alpha);
+        BgfxStateManager::Apply();
+
         ApplyStencilTest();
         bgfx::setVertexBuffer(0, &tvb);
         sp->Submit(ViewIdManager::GetCurrentId());
