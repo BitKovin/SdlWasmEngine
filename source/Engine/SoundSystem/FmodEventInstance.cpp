@@ -81,6 +81,8 @@ FmodEventInstance::FmodEventInstance(FMOD::Studio::EventInstance* instance)
 
 FmodEventInstance::~FmodEventInstance()
 {
+    SoundManager::ReleaseSpatialAudio(this);
+
     // Stop event and prevent further callbacks
     if (eventInstance)
     {
@@ -116,6 +118,8 @@ void FmodEventInstance::Play()
 
 void FmodEventInstance::Stop()
 {
+    SoundManager::ReleaseSpatialAudio(this);
+
     if (eventInstance) {
         eventInstance->stop(FMOD_STUDIO_STOP_IMMEDIATE);
     }
@@ -134,6 +138,13 @@ void FmodEventInstance::Update(float deltaTime)
     if (!Is2D) {
         Apply3D();
     }
+
+    // Occlusion + environment reverb, applied through a per-instance DSP
+    // (see SoundManager.cpp — the only place besides SpatialSoundManager.cpp
+    // that knows anything about the spatial audio backend). Skipped entirely
+    // for UI sounds / DisableSpatial instances (SoundManager re-checks both).
+    if (!IsUISound && !DisableSpatial)
+        SoundManager::ApplySpatialAudio(this, eventInstance, Position, EnvironmentalSound, DisableSpatial, IsUISound);
 }
 
 void FmodEventInstance::Apply3D()

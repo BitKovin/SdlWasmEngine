@@ -13,6 +13,7 @@
 
 #include "SoundBufferData.h"
 #include "../Camera.h"
+#include "../glm.h"
 #include "SoundInstance.hpp"
 
 class SoundManager
@@ -59,6 +60,67 @@ public:
 
     static float GetVolumeForSoundType(SoundType type);
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // Spatial audio (vaudio) integration.
+    //
+    // This — together with SpatialSound/SpatialSoundManager.cpp — is the ONLY
+    // place in the engine that's aware of the spatial audio backend.
+    // SoundInstance and FmodEventInstance never reference it directly; they
+    // only ever call the plain functions below with their own native handles.
+    // This keeps the licensed vaudio dependency confined to two files instead
+    // of leaking into every sound-playing class in the engine.
+    //
+    // All effects here are per sound instance — every SoundInstance/
+    // FmodEventInstance gets its own independent filter/DSP state, never a
+    // shared master-bus effect, so simultaneous sounds never fight over (or
+    // smear together) each other's occlusion/reverb.
+    // ─────────────────────────────────────────────────────────────────────────
+
+    // Called every frame a spatial-audio-eligible OpenAL sound is updating
+    // (see SoundInstance::UpdateSourceParams()). Creates/updates this sound's
+    // internal spatial state (keyed by `key` — pass the SoundInstance's own
+    // `this`) and writes fresh occlusion/ambient + environment reverb values
+    // directly onto the AL objects the caller already owns and passes in.
+    //
+    //   key                - stable per-instance identity for this sound's whole lifetime
+    //   source             - the AL source this sound is currently playing on
+    //   filter             - an AL_FILTER_LOWPASS object the caller owns; combined occlusion/ambient
+    //                        gain (+ the caller's own artist filter, if enabled) is written into it
+    //                        and bound to AL_DIRECT_FILTER
+    //   envReverbEffect/envReverbSlot - effect + aux slot objects the caller owns; filled from the
+    //                        listener's reverb and routed to auxiliary send slot 2 (kept clear of the
+    //                        artist-authored EnableEcho [slot 0] / EnableReverb [slot 1])
+    //   position           - world-space position (ignored when `environmental` is true)
+    //   environmental      - see SoundInstanceBase::EnvironmentalSound
+    //   disableSpatial     - see SoundInstanceBase::DisableSpatial
+    //   isUISound          - see SoundInstanceBase::IsUISound
+    //   artistFilterEnabled/artistLowPassGain/artistLowPassGainHF - the caller's own
+    //                        EnableFilter/LowPassGain/LowPassGainHF, multiplied into the occlusion
+    //                        result (ignored for `environmental` sounds)
+    static void ApplySpatialAudio(
+        const void* key,
+        ALuint source, ALuint filter,
+        ALuint envReverbEffect, ALuint envReverbSlot,
+        const glm::vec3& position,
+        bool environmental, bool disableSpatial, bool isUISound,
+        bool artistFilterEnabled, float artistLowPassGain, float artistLowPassGainHF);
+
+    // Called every frame a spatial-audio-eligible FMOD event instance is
+    // updating (see FmodEventInstance::Update()). Attaches a private
+    // "VaudioSpatialFilter" occlusion/ambient DSP + a private reverb DSP to
+    // this instance's own channel group on first use (retrying lazily until
+    // Studio actually creates one for it), and refreshes both every call.
+    static void ApplySpatialAudio(
+        const void* key, FMOD::Studio::EventInstance* instance,
+        const glm::vec3& position,
+        bool environmental, bool disableSpatial, bool isUISound);
+
+    // Releases whatever spatial-audio state (vaudio emitter + FMOD DSPs, if
+    // any) is associated with `key`. Safe to call unconditionally, including
+    // for sounds that never had any (UI sounds, DisableSpatial, or a key that
+    // was never registered) — always a no-op in that case.
+    static void ReleaseSpatialAudio(const void* key);
+
 private:
     static ALCdevice* device;
 
@@ -73,4 +135,9 @@ private:
     static void InitFmod();
     static void UpdateContext(ALCcontext* context);
     static void UpdateFmod();
+
+    // Registers the custom "VaudioSpatialFilter" DSP plugin description with
+    // coreSystem. Called once from InitFmod(). See SoundManager.cpp for the
+    // plugin implementation.
+    static void RegisterSpatialAudioDSPPlugin();
 };

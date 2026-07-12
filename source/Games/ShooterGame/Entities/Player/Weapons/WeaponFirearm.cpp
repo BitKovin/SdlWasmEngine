@@ -213,7 +213,7 @@ void WeaponFirearm::PerformAttack()
 		Player::Instance->violanceCrimeActiveDelay.AddDelay(params.violenceCrimeDelay);
 
 	if (params.useOneshotSound)
-		SoundPlayer::PlayOneshot(params.fireSoundEvent, params.pitchModifier, params.fireVolume);
+		SoundPlayer::PlayOneshot(params.fireSoundEvent, params.pitchModifier, params.fireVolume, false, Position + MathHelper::GetForwardVector(Rotation));
 	else
 	{
 		fireSoundPlayer->Pitch = params.pitchModifier;
