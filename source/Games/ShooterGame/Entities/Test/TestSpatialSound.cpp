@@ -16,7 +16,13 @@ public:
         MaxDistance = 70;
 	}
 
+	void Update() override
+	{
 
+
+	}
+
+    void LateUpdate() override{}
 
 private:
 

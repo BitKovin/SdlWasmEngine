@@ -2,8 +2,6 @@
 #include "SoundManager.hpp"
 #include "../EngineMain.h"
 #include <Logger.hpp>
-#include <algorithm>
-#include <cmath>
 
 // =============================================================================
 // SourcePool
@@ -18,8 +16,8 @@ void SoundInstance::SourcePool::Init(ALCcontext* mono, ALCcontext* stereo)
 {
     std::lock_guard<std::recursive_mutex> lock(SoundManager::audioMutex);
     if (initialized) return;
-    initialized = true;
-    monoContext = mono;
+    initialized   = true;
+    monoContext   = mono;
     stereoContext = stereo;
 
     // Query advertised source counts from the mono context's device.
@@ -30,7 +28,7 @@ void SoundInstance::SourcePool::Init(ALCcontext* mono, ALCcontext* stereo)
 
     ALCint qMono = 0, qStereo = 0;
     if (dev) {
-        alcGetIntegerv(dev, ALC_MONO_SOURCES, 1, &qMono);
+        alcGetIntegerv(dev, ALC_MONO_SOURCES,   1, &qMono);
         alcGetIntegerv(dev, ALC_STEREO_SOURCES, 1, &qStereo);
     }
 
@@ -38,8 +36,8 @@ void SoundInstance::SourcePool::Init(ALCcontext* mono, ALCcontext* stereo)
     auto safeClamp = [](ALCint v, size_t lo, size_t hi) -> size_t {
         if (v <= 0 || static_cast<size_t>(v) > hi) return lo;
         return static_cast<size_t>(v);
-        };
-    maxMono = safeClamp(qMono, 8, 512);
+    };
+    maxMono   = safeClamp(qMono,   8, 512);
     maxStereo = safeClamp(qStereo, 4, 128);
 
     Logger::Info("[SourcePool] Initialized — maxMono=%zu, maxStereo=%zu", maxMono, maxStereo);
@@ -51,10 +49,9 @@ void SoundInstance::SourcePool::ResetSourceState(ALuint src)
     alSourceStop(src);
     alSourcei(src, AL_BUFFER, 0);
 #ifndef DISABLE_EFX
-    alSourcei(src, AL_DIRECT_FILTER, AL_FILTER_NULL);
+    alSourcei (src, AL_DIRECT_FILTER,         AL_FILTER_NULL);
     alSource3i(src, AL_AUXILIARY_SEND_FILTER, AL_EFFECTSLOT_NULL, 0, AL_FILTER_NULL);
     alSource3i(src, AL_AUXILIARY_SEND_FILTER, AL_EFFECTSLOT_NULL, 1, AL_FILTER_NULL);
-    alSource3i(src, AL_AUXILIARY_SEND_FILTER, AL_EFFECTSLOT_NULL, 2, AL_FILTER_NULL); // spatial-audio environment reverb (see SoundManager)
 #endif
 }
 
@@ -66,10 +63,10 @@ ALuint SoundInstance::SourcePool::Acquire(bool stereo, SoundInstance* requester)
     alcMakeContextCurrent(ctx);
     alGetError();
 
-    auto& freePool = stereo ? freeStereo : freeMono;
-    auto& allocated = stereo ? allocatedStereo : allocatedMono;
-    const size_t limit = stereo ? maxStereo : maxMono;
-    const size_t inUse = allocated - freePool.size();
+    auto&        freePool  = stereo ? freeStereo  : freeMono;
+    auto&        allocated = stereo ? allocatedStereo : allocatedMono;
+    const size_t limit     = stereo ? maxStereo   : maxMono;
+    const size_t inUse     = allocated - freePool.size();
 
     // ── 1. Reuse a previously released source ────────────────────────────────
     if (!freePool.empty()) {
@@ -89,7 +86,7 @@ ALuint SoundInstance::SourcePool::Acquire(bool stereo, SoundInstance* requester)
             return s;
         }
         Logger::Warning("[SourcePool] alGenSources failed despite inUse=%zu < limit=%zu",
-            inUse, limit);
+                        inUse, limit);
     }
 
     // Stereo sources are never stolen: they are few and used for music / UI.
@@ -106,7 +103,7 @@ ALuint SoundInstance::SourcePool::Acquire(bool stereo, SoundInstance* requester)
     //     Update() tick sees _source==0 and enters the virtual-playhead path
     //     instead of calling AL on a source it no longer owns.
 
-    ALuint   victimSrc = 0;
+    ALuint   victimSrc  = 0;
     float    victimPrio = requester->Priority; // steal threshold
     uint64_t victimTime = std::numeric_limits<uint64_t>::max();
 
@@ -131,7 +128,7 @@ ALuint SoundInstance::SourcePool::Acquire(bool stereo, SoundInstance* requester)
         if (pr < victimPrio || (pr == victimPrio && ts < victimTime)) {
             victimPrio = pr;
             victimTime = ts;
-            victimSrc = src;
+            victimSrc  = src;
         }
     }
 
@@ -145,7 +142,7 @@ ALuint SoundInstance::SourcePool::Acquire(bool stereo, SoundInstance* requester)
         liveOwners[victimSrc] = { requester, ++globalTimestamp };
 
         Logger::Info("[SourcePool] Stole src=%u (prio=%.1f) for requester prio=%.1f",
-            victimSrc, victimPrio, requester->Priority);
+                     victimSrc, victimPrio, requester->Priority);
         return victimSrc;
     }
 
@@ -169,7 +166,8 @@ SoundInstance::SoundInstance(SoundBufferData buffer)
     : _bufferData(buffer)
     , _isStereo(buffer.stereo)
     , _duration(buffer.duration)
-{}
+{
+}
 
 SoundInstance::~SoundInstance()
 {
@@ -282,10 +280,10 @@ float SoundInstance::GetDistanceFade(float distance) const
 
 float SoundInstance::CurrentDistanceToListener() const
 {
-    if (_isStereo || Is2D || IsUISound)
-        return 0.0f;
-    const glm::vec3 listenerPos = Camera::finalizedPosition;
-    return glm::distance(Position, listenerPos);
+	if (_isStereo || Is2D || IsUISound)
+		return 0.0f;
+	const glm::vec3 listenerPos = Camera::finalizedPosition;
+	return glm::distance(Position, listenerPos);
 }
 
 void SoundInstance::UpdateSourceParams()
@@ -295,15 +293,15 @@ void SoundInstance::UpdateSourceParams()
     alcMakeContextCurrent(GetContext());
 
     alSourcei(_source, AL_LOOPING, Loop ? AL_TRUE : AL_FALSE);
-    alSourcef(_source, AL_PITCH, Pitch * GetPitchScale());
+    alSourcef(_source, AL_PITCH,   Pitch * GetPitchScale());
 
     if (_isStereo || Is2D || IsUISound) {
         // ── Non-spatial: head-relative, constant gain ────────────────────────
-        alSourcei(_source, AL_SOURCE_RELATIVE, AL_TRUE);
-        alSourcef(_source, AL_ROLLOFF_FACTOR, 0.0f);
-        alSourcef(_source, AL_GAIN, GetFinalVolume());
-        alSource3f(_source, AL_POSITION, 0.0f, 0.0f, 0.0f);
-        alSource3f(_source, AL_VELOCITY, 0.0f, 0.0f, 0.0f);
+        alSourcei (_source, AL_SOURCE_RELATIVE, AL_TRUE);
+        alSourcef (_source, AL_ROLLOFF_FACTOR,  0.0f);
+        alSourcef (_source, AL_GAIN,            GetFinalVolume());
+        alSource3f(_source, AL_POSITION,        0.0f, 0.0f, 0.0f);
+        alSource3f(_source, AL_VELOCITY,        0.0f, 0.0f, 0.0f);
     }
     else {
         // ── 3D spatial ───────────────────────────────────────────────────────
@@ -312,58 +310,30 @@ void SoundInstance::UpdateSourceParams()
         // exactly 0 at AL_MAX_DISTANCE, matching FMOD's default behaviour.
         // AL_GAIN is the base volume at AL_REFERENCE_DISTANCE (MinDistance);
         // OpenAL scales it down linearly from there.
-        alSourcei(_source, AL_SOURCE_RELATIVE, AL_FALSE);
-        alSource3f(_source, AL_POSITION, Position.x, Position.y, Position.z);
-        alSource3f(_source, AL_VELOCITY, Velocity.x, Velocity.y, Velocity.z);
-        alSource3f(_source, AL_DIRECTION, Direction.x, Direction.y, Direction.z);
-        alSourcef(_source, AL_CONE_INNER_ANGLE, ConeInnerAngle);
-        alSourcef(_source, AL_CONE_OUTER_ANGLE, ConeOuterAngle);
-        alSourcef(_source, AL_CONE_OUTER_GAIN, ConeOuterGain);
+        alSourcei (_source, AL_SOURCE_RELATIVE,    AL_FALSE);
+        alSource3f(_source, AL_POSITION,           Position.x,  Position.y,  Position.z);
+        alSource3f(_source, AL_VELOCITY,           Velocity.x,  Velocity.y,  Velocity.z);
+        alSource3f(_source, AL_DIRECTION,          Direction.x, Direction.y, Direction.z);
+        alSourcef (_source, AL_CONE_INNER_ANGLE,   ConeInnerAngle);
+        alSourcef (_source, AL_CONE_OUTER_ANGLE,   ConeOuterAngle);
+        alSourcef (_source, AL_CONE_OUTER_GAIN,    ConeOuterGain);
 
         const float distanceFade = GetDistanceFade(CurrentDistanceToListener());
         alSourcef(_source, AL_GAIN, GetFinalVolume() * distanceFade);
 
-        alSourcef(_source, AL_REFERENCE_DISTANCE, MinDistance);
-        alSourcef(_source, AL_MAX_DISTANCE, MaxDistance);
-        alSourcef(_source, AL_ROLLOFF_FACTOR, 1.0f);
+        alSourcef (_source, AL_REFERENCE_DISTANCE, MinDistance);
+        alSourcef (_source, AL_MAX_DISTANCE,       MaxDistance);
+        alSourcef (_source, AL_ROLLOFF_FACTOR,     1.0f);
     }
 
 #ifndef DISABLE_EFX
     EnsureEFX();
-
-    const bool wantsSpatial = WantsSpatialAudio();
-
-    // When this instance qualifies for spatial audio, SoundManager owns
-    // _filter (it combines its own occlusion/ambient data with EnableFilter
-    // itself — see SoundManager::ApplySpatialAudio()). Otherwise fall back to
-    // the artist's plain filter, unmodified.
-    if (!wantsSpatial) {
-        // Only reachable when SoundManager::ApplySpatialAudio() won't run
-        // below and overwrite AL_DIRECT_FILTER itself — so this instance
-        // must own the direct-filter binding, in both directions (on AND off).
-        if (_filter) {
-            if (EnableFilter) ApplyFilter();
-            else              alSourcei(_source, AL_DIRECT_FILTER, AL_FILTER_NULL);
-        }
-    }
-    // Echo/Reverb sends are always ours to own, spatial or not — re-issue the
-    // binding every frame in both directions so toggling Enable* off actually
-    // disconnects the slot instead of leaving the previous frame's routing intact.
-    if (_slotEcho)
-        alSource3i(_source, AL_AUXILIARY_SEND_FILTER,
-            EnableEcho ? _slotEcho : AL_EFFECTSLOT_NULL, 0, AL_FILTER_NULL);
-    if (_slotReverb)
-        alSource3i(_source, AL_AUXILIARY_SEND_FILTER,
-            EnableReverb ? _slotReverb : AL_EFFECTSLOT_NULL, 1, AL_FILTER_NULL);
-
-    // Everything spatial-audio-specific — including whether anything is even
-    // listening on the other end — lives in SoundManager. SoundInstance only
-    // ever hands over its own native AL handles and a few plain flags.
-    if (wantsSpatial)
-        SoundManager::ApplySpatialAudio(
-            this, _source, _filter, _effectEnvReverb, _slotEnvReverb,
-            Position, EnvironmentalSound, DisableSpatial, IsUISound,
-            EnableFilter, LowPassGain, LowPassGainHF);
+    if (EnableFilter && _filter)
+        ApplyFilter();
+    if (EnableEcho   && _slotEcho)
+        alSource3i(_source, AL_AUXILIARY_SEND_FILTER, _slotEcho,   0, AL_FILTER_NULL);
+    if (EnableReverb && _slotReverb)
+        alSource3i(_source, AL_AUXILIARY_SEND_FILTER, _slotReverb, 1, AL_FILTER_NULL);
 #endif
 }
 
@@ -373,59 +343,40 @@ void SoundInstance::EnsureEFX()
     ALCdevice* dev = alcGetContextsDevice(alcGetCurrentContext());
     if (!dev || !alcIsExtensionPresent(dev, "ALC_EXT_EFX")) return;
 
-    // _filter is needed either for the artist's own EnableFilter, or to carry
-    // SoundManager's spatial-audio occlusion/ambient low-pass once this
-    // instance qualifies for it.
-    if ((EnableFilter || WantsSpatialAudio()) && !_filter) {
+    if (EnableFilter && !_filter) {
         alGenFilters(1, &_filter);
         alFilteri(_filter, AL_FILTER_TYPE, AL_FILTER_LOWPASS);
     }
     if (EnableEcho && !_effectEcho) {
         alGenEffects(1, &_effectEcho);
-        alEffecti(_effectEcho, AL_EFFECT_TYPE, AL_EFFECT_ECHO);
-        alEffectf(_effectEcho, AL_ECHO_DELAY, EchoDelay);
-        alEffectf(_effectEcho, AL_ECHO_LRDELAY, EchoLRDelay);
-        alEffectf(_effectEcho, AL_ECHO_DAMPING, EchoDamping);
-        alEffectf(_effectEcho, AL_ECHO_FEEDBACK, EchoFeedback);
-        alEffectf(_effectEcho, AL_ECHO_SPREAD, EchoSpread);
+        alEffecti(_effectEcho, AL_EFFECT_TYPE,    AL_EFFECT_ECHO);
+        alEffectf(_effectEcho, AL_ECHO_DELAY,     EchoDelay);
+        alEffectf(_effectEcho, AL_ECHO_LRDELAY,   EchoLRDelay);
+        alEffectf(_effectEcho, AL_ECHO_DAMPING,   EchoDamping);
+        alEffectf(_effectEcho, AL_ECHO_FEEDBACK,  EchoFeedback);
+        alEffectf(_effectEcho, AL_ECHO_SPREAD,    EchoSpread);
         alGenAuxiliaryEffectSlots(1, &_slotEcho);
         alAuxiliaryEffectSloti(_slotEcho, AL_EFFECTSLOT_EFFECT, _effectEcho);
     }
     if (EnableReverb && !_effectReverb) {
         alGenEffects(1, &_effectReverb);
-        alEffecti(_effectReverb, AL_EFFECT_TYPE, AL_EFFECT_REVERB);
-        alEffectf(_effectReverb, AL_REVERB_DENSITY, ReverbDensity);
-        alEffectf(_effectReverb, AL_REVERB_GAIN, ReverbGain);
-        alEffectf(_effectReverb, AL_REVERB_GAINHF, ReverbGainHF);
-        alEffectf(_effectReverb, AL_REVERB_DECAY_TIME, ReverbDecayTime);
+        alEffecti(_effectReverb, AL_EFFECT_TYPE,        AL_EFFECT_REVERB);
+        alEffectf(_effectReverb, AL_REVERB_DENSITY,     ReverbDensity);
+        alEffectf(_effectReverb, AL_REVERB_GAIN,        ReverbGain);
+        alEffectf(_effectReverb, AL_REVERB_GAINHF,      ReverbGainHF);
+        alEffectf(_effectReverb, AL_REVERB_DECAY_TIME,  ReverbDecayTime);
         alGenAuxiliaryEffectSlots(1, &_slotReverb);
         alAuxiliaryEffectSloti(_slotReverb, AL_EFFECTSLOT_EFFECT, _effectReverb);
-    }
-    if (WantsSpatialAudio() && !_effectEnvReverb) {
-        // Type + parameters for these are filled in by
-        // SoundManager::ApplySpatialAudio() every frame, from the listener's
-        // current reverb data — we only own the empty AL objects here.
-        alGenEffects(1, &_effectEnvReverb);
-        alGenAuxiliaryEffectSlots(1, &_slotEnvReverb);
     }
 }
 
 void SoundInstance::ApplyFilter()
 {
-    alFilterf(_filter, AL_LOWPASS_GAIN, LowPassGain);
-    alFilterf(_filter, AL_LOWPASS_GAINHF, LowPassGainHF);
-    alSourcei(_source, AL_DIRECT_FILTER, _filter);
+    alFilterf(_filter,  AL_LOWPASS_GAIN,   LowPassGain);
+    alFilterf(_filter,  AL_LOWPASS_GAINHF, LowPassGainHF);
+    alSourcei (_source, AL_DIRECT_FILTER,  _filter);
 }
-#endif // DISABLE_EFX
-
-// True for sounds SoundManager's spatial-audio pass should touch. This is
-// pure bookkeeping over this instance's own public flags — SoundInstance has
-// no idea what (if anything) actually implements spatial audio; that's
-// entirely SoundManager's concern (see SoundManager.hpp for why).
-bool SoundInstance::WantsSpatialAudio() const
-{
-    return !IsUISound && !DisableSpatial;
-}
+#endif
 
 // =============================================================================
 // SoundInstance — public API
@@ -444,8 +395,8 @@ void SoundInstance::Play()
     // No-op if already playing with a live source.
     if (_active && _source != 0) return;
 
-    Paused = false;
-    _active = true;
+    Paused         = false;
+    _active        = true;
     _virtualOffset = 0.0f;
 
     TryAcquire();
@@ -459,8 +410,6 @@ void SoundInstance::Stop()
 {
     std::lock_guard<std::recursive_mutex> lock(SoundManager::audioMutex);
 
-    SoundManager::ReleaseSpatialAudio(this);
-
     if (_source) {
         alcMakeContextCurrent(GetContext());
         alSourceStop(_source);
@@ -468,7 +417,7 @@ void SoundInstance::Stop()
     }
 
     _virtualOffset = 0.0f;
-    _active = false;
+    _active        = false;
 }
 
 void SoundInstance::Update(float deltaTime)
@@ -534,7 +483,6 @@ void SoundInstance::Update(float deltaTime)
         // AL_STOPPED: source finished naturally (or stolen and already zeroed).
         ReleaseSource();
         if (!Loop) {
-            SoundManager::ReleaseSpatialAudio(this);
             _active = false;
             return;
         }
@@ -547,9 +495,7 @@ void SoundInstance::Update(float deltaTime)
         if (Loop) {
             const float d = _duration > 0.0f ? _duration : 1.0f;
             _virtualOffset = std::fmod(_virtualOffset, d);
-        }
-        else {
-            SoundManager::ReleaseSpatialAudio(this);
+        } else {
             _active = false;
             return;
         }

@@ -483,7 +483,6 @@
     <ClCompile Include="SoundSystem\FmodEventInstance.cpp" />
     <ClCompile Include="SoundSystem\SoundInstance.cpp" />
     <ClCompile Include="SoundSystem\SoundManager.cpp" />
-    <ClCompile Include="SpatialSound\MaterialFromTexture.cpp" />
     <ClCompile Include="SpatialSound\SpatialSoundManager.cpp" />
     <ClCompile Include="StaticMesh.cpp" />
     <ClCompile Include="ThreadPool.cpp" />
@@ -687,8 +686,6 @@
     <ClInclude Include="SoundSystem\SoundInstance.hpp" />
     <ClInclude Include="SoundSystem\SoundInstanceBase.h" />
     <ClInclude Include="SoundSystem\SoundManager.hpp" />
-    <ClInclude Include="SpatialSound\MaterialFromTexture.h" />
-    <ClInclude Include="SpatialSound\SpatialMaterial.h" />
     <ClInclude Include="SpatialSound\SpatialSoundManager.h" />
     <ClInclude Include="StaticMesh.h" />
     <ClInclude Include="Texture.hpp" />

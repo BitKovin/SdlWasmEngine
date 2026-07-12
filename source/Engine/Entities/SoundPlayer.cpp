@@ -45,7 +45,7 @@ void SoundPlayer::Play()
 	if (Sound.get())
 	{
 		LateUpdate();
-		//Sound->Stop();
+		Sound->Stop();
 		Sound->Play();
 	}
 }

@@ -81,21 +81,7 @@ private:
     ALuint _filter       = 0;
     ALuint _effectEcho   = 0, _slotEcho   = 0;
     ALuint _effectReverb = 0, _slotReverb = 0;
-
-    // Ambient/environment reverb — driven by SoundManager::ApplySpatialAudio()
-    // (see UpdateSourceParams below). Kept on its own auxiliary send slot
-    // (index 2) so it never fights with the artist-authored EnableEcho
-    // (slot 0) / EnableReverb (slot 1) above. SoundInstance only owns the AL
-    // object handles here; SoundManager fills in the actual parameters — see
-    // SoundManager.hpp for why (this system is not aware of the spatial
-    // audio backend at all, by design).
-    ALuint _effectEnvReverb = 0, _slotEnvReverb = 0;
 #endif
-
-    // True for sounds SoundManager should apply its spatial-audio pass to —
-    // pure engine-level bookkeeping over this instance's own public flags,
-    // not specific to any particular spatial audio backend.
-    bool WantsSpatialAudio() const;
 
     // ── Internal helpers ─────────────────────────────────────────────────────
     // All assume SoundManager::audioMutex is already held by the caller.

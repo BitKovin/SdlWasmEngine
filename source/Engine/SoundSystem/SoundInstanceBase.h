@@ -42,24 +42,6 @@ public:
 
 	SoundType Type = SoundType::SFX;
 
-    // ── Spatial audio (vaudio) flags ─────────────────────────────────────────
-    // These only ever affect the additional occlusion + environment reverb
-    // layered on by SpatialSoundManager (see SpatialSound/SpatialSoundManager.h).
-    // Any effects authored directly on this instance (EnableFilter/EnableEcho/
-    // EnableReverb on SoundInstance, or hand-placed DSPs elsewhere) are never
-    // touched by either flag. UI sounds (IsUISound) never get spatial
-    // treatment regardless of these flags.
-
-    /// Opts this instance out of vaudio spatial audio entirely.
-    bool DisableSpatial = false;
-
-    /// True for ambience/room-tone beds that don't represent a real emitter
-    /// position (e.g. wind, distant traffic, a music bed). Skips per-position
-    /// occlusion + emitter tracking entirely, but still receives the
-    /// listener's ambient reverb — "how it's heard" is controlled by the
-    /// spatial audio manager rather than by where this sound is placed.
-    bool EnvironmentalSound = false;
-
 protected:
     virtual bool  IsGamePaused()   const { return false; }
     virtual float GetPitchScale()  const { return 1.0f;  }
