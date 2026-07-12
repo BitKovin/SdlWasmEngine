@@ -35,14 +35,13 @@
 // buffer) rather than drawing the full quad and masking it in the fragment
 // shader.
 //
-// NOTE ON COLOR: this fixes a pre-existing bug rather than preserving it —
-// the old shader path set the fill's "u_Color" uniform from the raw `color`
-// field AFTER the outer GetFinalColor()-based "u_Color" was already set,
-// silently overwriting it, so parent-color inheritance never actually
-// applied to the fill or background despite `inheritParentColor` existing.
-// Both passes now correctly multiply by GetFinalColor(), same as every
-// other element. If you were relying on the old (arguably accidental)
-// behaviour, multiply inheritParentColor = false on affected instances.
+// NOTE ON COLOR: BackgroundColor and `color` (the fill tint) are independent
+// — this was broken in an earlier pass of this rewrite, where both passes
+// multiplied by GetFinalColor(), which itself bakes in this element's own
+// `color` field. That meant the background silently picked up the fill
+// tint too. Both passes now multiply by the PARENT chain only
+// (parent->GetFinalColor() when inheritParentColor is set), never by each
+// other's own color field — see the parentTint variable in Draw() below.
 //
 // NOTE ON 9-SLICE: UiElement::NineSliceEnabled is not supported here — see
 // UiElement.h, 9-slice and a partial rect (which is what the fill/background
@@ -79,14 +78,21 @@ public:
         vec2 bgMin, bgSize, fillMin, fillSize;
         ComputeFillRects(bgMin, bgSize, fillMin, fillSize);
 
+        // `color` (inherited from UiElement) is repurposed as the FILL tint
+        // only — GetFinalColor() bakes `color` into itself, so using it for
+        // the background pass too would tint the background by the fill
+        // color as a side effect. Parent-chain tinting should still apply to
+        // both passes; just not each other's own field.
+        const vec4 parentTint = (inheritParentColor && parent) ? parent->GetFinalColor() : vec4(1.f);
+
         RectPosition = bgMin;
         RectSize = bgSize;
-        DrawSelfTextured(bgTex->getHandle(), BackgroundColor * GetFinalColor(),
+        DrawSelfTextured(bgTex->getHandle(), BackgroundColor * parentTint,
             static_cast<float>(bgTex->width), static_cast<float>(bgTex->height));
 
         RectPosition = fillMin;
         RectSize = fillSize;
-        DrawSelfTextured(fgTex->getHandle(), color * GetFinalColor(),
+        DrawSelfTextured(fgTex->getHandle(), color * parentTint,
             static_cast<float>(fgTex->width), static_cast<float>(fgTex->height),
             /*useEffects=*/false);
 

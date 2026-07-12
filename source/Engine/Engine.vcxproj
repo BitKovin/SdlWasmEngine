@@ -483,11 +483,7 @@
     <ClCompile Include="SoundSystem\FmodEventInstance.cpp" />
     <ClCompile Include="SoundSystem\SoundInstance.cpp" />
     <ClCompile Include="SoundSystem\SoundManager.cpp" />
-    <ClCompile Include="SpatialSound\BspVoxelWorldBuilder.cpp" />
     <ClCompile Include="SpatialSound\SpatialSoundManager.cpp" />
-    <ClCompile Include="SpatialSound\VoxelWorld\FixedVoxelWorld.cpp" />
-    <ClCompile Include="SpatialSound\Helpers.cpp" />
-    <ClCompile Include="SpatialSound\VoxelWorld\Raycast.cpp" />
     <ClCompile Include="StaticMesh.cpp" />
     <ClCompile Include="ThreadPool.cpp" />
     <ClCompile Include="Time.cpp" />
@@ -690,13 +686,7 @@
     <ClInclude Include="SoundSystem\SoundInstance.hpp" />
     <ClInclude Include="SoundSystem\SoundInstanceBase.h" />
     <ClInclude Include="SoundSystem\SoundManager.hpp" />
-    <ClInclude Include="SpatialSound\BspVoxelWorldBuilder.h" />
     <ClInclude Include="SpatialSound\SpatialSoundManager.h" />
-    <ClInclude Include="SpatialSound\VoxelWorld\FixedVoxelWorld.h" />
-    <ClInclude Include="SpatialSound\Helpers.h" />
-    <ClInclude Include="SpatialSound\VoxelWorld\MaterialProps.h" />
-    <ClInclude Include="SpatialSound\VoxelWorld\Raycast.h" />
-    <ClInclude Include="SpatialSound\VoxelWorld\VoxelWorldBuilder.h" />
     <ClInclude Include="StaticMesh.h" />
     <ClInclude Include="Texture.hpp" />
     <ClInclude Include="TextureCube.hpp" />

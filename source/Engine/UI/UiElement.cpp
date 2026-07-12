@@ -169,6 +169,12 @@ std::unordered_map<std::string, glm::vec4> UiElement::GetEffectsUniforms() const
     uniforms["u_GlowParams"] = glm::vec4(finalizedGlowRadius, finalizedGlowIntensity,
         finalizedGlowEnabled ? 1.f : 0.f, 0.f);
 
+    // Default: the whole texture is valid to sample. DrawSelfTextured
+    // narrows this to the requested sub-rect when RectPosition/RectSize
+    // isn't the default full rect; DrawText sets it per glyph, since many
+    // glyphs share one atlas (see fs_effects.sc for why this matters).
+    uniforms["u_ClampRect"] = glm::vec4(0.f, 0.f, 1.f, 1.f);
+
     return uniforms;
 }
 
@@ -233,6 +239,15 @@ void UiElement::DrawSelfTextured(bgfx::TextureHandle texture, const glm::vec4& c
     }
 
     // Advanced path: partial rect and/or effect padding → transient VB.
+    if (usingEffects && !isFullRect)
+    {
+        // A genuine partial-rect request (not just a full-rect draw with
+        // padding) — narrow the valid sampling region to what was actually
+        // asked for, so e.g. a UiProgressBar's background pass can't bleed
+        // its glow into the texture region the fill pass is sampling from.
+        uniforms["u_ClampRect"] = glm::vec4(RectPosition.x, RectPosition.y,
+            RectPosition.x + RectSize.x, RectPosition.y + RectSize.y);
+    }
     UiRenderer::DrawTexturedRectRegion(finalizedMatrix, finalizedSize, RectPosition, RectSize,
         texture, color, shader, uniforms, padding, textureWidth, textureHeight);
 }

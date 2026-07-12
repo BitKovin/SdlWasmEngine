@@ -8,6 +8,14 @@ uniform vec4 u_Color;         // base tint: rgb = color, a = opacity
 
 uniform vec4 u_TextureSize;   // xy = texture width, height in pixels (set from script)
 
+// The valid sampling sub-rect for THIS draw, in [0,1] texture-UV space:
+// xy = min corner, zw = max corner. Defaults to (0,0,1,1) — the whole
+// texture — but text sets this per-glyph to that glyph's own (padded) UV
+// box, since many glyphs share one atlas texture and a shadow/glow/outline
+// on one glyph must not bleed into the pixels of the glyph packed next to
+// it. See sampleTexClamped below.
+uniform vec4 u_ClampRect;
+
 uniform vec4 u_ShadowColor;   // rgb = shadow color, a = shadow opacity
 uniform vec4 u_ShadowParams;  // x,y = offset in texels, z = spread (shadow radius/thickness) in texels, w = enable (0/1)
 uniform vec4 u_ShadowParams2; // x = smoothness (blur radius) in texels, y,z,w = reserved
@@ -38,18 +46,23 @@ vec4 over(vec4 src, vec4 dst)
 }
 
 // Every effect sample goes through here instead of calling texture2D
-// directly. Outside [0,1] returns fully transparent rather than whatever the
-// sampler's wrap mode would give (clamp = repeated edge pixels, repeat =
-// actually tiling) — that's what lets the C++ side hand this shader padded
-// geometry/UVs (see UiRenderer::DrawTexturedRectRegion/DrawTexturedRect9Slice)
-// for ANY texture and have shadow/outline/glow correctly fade to nothing in
-// the padding, without the source texture needing any blank border baked in.
-// The font atlas happens to already have real blank texels there (so this
-// is a no-op for text), but a plain image, video frame, or 9-slice edge does
-// not, and would otherwise smear/repeat its own edge pixels into the halo.
+// directly. Outside u_ClampRect returns fully transparent rather than
+// whatever the sampler's wrap mode would give (clamp = repeated edge pixels,
+// repeat = actually tiling) — that's what lets the C++ side hand this shader
+// padded geometry/UVs (see UiRenderer::DrawTexturedRectRegion,
+// DrawTexturedRect9Slice, DrawText) for ANY texture and have shadow/outline/
+// glow correctly fade to nothing in the padding, without the source texture
+// needing any blank border baked in.
+//
+// For a plain image/video/9-slice, u_ClampRect is (0,0,1,1) — the padding
+// bleeds past the requested rect but never past the texture's own edges.
+// For text, it's set per glyph to that glyph's own padded UV box, because
+// many glyphs share one atlas: without this, a large glow/shadow radius
+// could sample past a tightly-packed glyph's own cell and pick up pixels
+// from whatever's packed next to it in the atlas.
 vec4 sampleTexClamped(vec2 uv)
 {
-    if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0)
+    if (uv.x < u_ClampRect.x || uv.x > u_ClampRect.z || uv.y < u_ClampRect.y || uv.y > u_ClampRect.w)
         return vec4_splat(0.0);
     return texture2D(u_Texture, uv);
 }

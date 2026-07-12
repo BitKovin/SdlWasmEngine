@@ -115,6 +115,12 @@ namespace UiRenderer {
     // edges stretch along one axis; the center stretches both. Not currently
     // combinable with a partial rect (DrawTexturedRectRegion) in one call —
     // this always draws the full element.
+    //
+    // Unlike DrawTexturedRectRegion/DrawText, effectPadding does NOT expand
+    // the geometry here — total size is always exactly `size`, regardless of
+    // effectPadding. Shadow/outline/glow on a 9-sliced element render
+    // clipped to its own box instead of bleeding past it; a stable,
+    // predictable footprint is the point of 9-slicing in the first place.
     struct NineSliceMargins { float left = 0.f, top = 0.f, right = 0.f, bottom = 0.f; };
 
     void DrawTexturedRect9Slice(const glm::mat3& transform, const glm::vec2& size,

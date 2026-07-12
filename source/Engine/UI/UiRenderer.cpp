@@ -845,6 +845,13 @@ namespace UiRenderer {
         const float padU = effectPadding / atlasW;
         const float padV = effectPadding / atlasH;
 
+        // One entry per emitted (visible) glyph, same order they're written
+        // to the VB — Pass 4 uses this as each glyph's own u_ClampRect when
+        // effects are active, so one glyph's shadow/glow/outline can't
+        // sample into whatever's packed next to it in the shared atlas.
+        std::vector<glm::vec4> glyphClampRects;
+        glyphClampRects.reserve(numGlyphs);
+
         float penX = 0.f, penY = 0.f;
         int   prevCp = 0;
         const char* p = text.c_str();
@@ -877,6 +884,8 @@ namespace UiRenderer {
                 v[4] = { nx + nrw, ny + nrh, u1, v1 };
                 v[5] = { nx + nrw, ny,       u1, v0 };
                 v += 6;
+
+                glyphClampRects.emplace_back(u0, v0, u1, v1);
             }
             penX += g.advanceX; prevCp = cp;
         }
@@ -886,29 +895,66 @@ namespace UiRenderer {
         Shader* sp = shader.empty()
             ? s_texturedShader
             : ShaderManager::GetShaderProgram("vs_ui", shader);
-        sp->UseProgram();
-        SetShaderProjection(sp);
-        sp->SetUniform("u_Model", BuildQuadModelFromMat3(transform, drawSize));
-        sp->SetUniform("u_Color", color);
-        sp->SetTexture("u_Texture", atlas->texture);
+        const glm::mat4 model = BuildQuadModelFromMat3(transform, drawSize);
 
-        if (!shader.empty())
-            sp->SetUniform("u_TextureSize", glm::vec4(atlasW, atlasH, 0.f, 0.f));
-
-        for (const auto& pair : shaderUniforms)
+        if (shader.empty())
         {
-            sp->SetUniform(pair.first, pair.second);
+            // No effects: exactly the original single-draw-call path, whole
+            // string in one submit. u_ClampRect doesn't exist in the plain
+            // textured shader, so there's nothing to set per glyph here.
+            sp->UseProgram();
+            SetShaderProjection(sp);
+            sp->SetUniform("u_Model", model);
+            sp->SetUniform("u_Color", color);
+            sp->SetTexture("u_Texture", atlas->texture);
+
+            bgfx::setState(
+                BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A |
+                BGFX_STATE_DEPTH_TEST_ALWAYS |
+                BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA,
+                    BGFX_STATE_BLEND_INV_SRC_ALPHA)
+            );
+            ApplyStencilTest();
+            bgfx::setVertexBuffer(0, &tvb);
+            sp->Submit(ViewIdManager::GetCurrentId());
+            return;
         }
 
-        bgfx::setState(
-            BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A |
-            BGFX_STATE_DEPTH_TEST_ALWAYS |
-            BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA,
-                BGFX_STATE_BLEND_INV_SRC_ALPHA)
-        );
-        ApplyStencilTest();
-        bgfx::setVertexBuffer(0, &tvb);
-        sp->Submit(ViewIdManager::GetCurrentId());
+        // Effects active: one draw call per glyph, each with its own
+        // u_ClampRect (see fs_effects.sc) so a glow/shadow/outline radius
+        // large enough to reach past a tightly-packed glyph's own cell
+        // still can't pick up a neighboring glyph's pixels. Costs
+        // numGlyphs draw calls instead of 1 — text with effects enabled is
+        // usually short (labels, buttons, headers), so this is a reasonable
+        // trade for correctness, but it's worth knowing about for very long
+        // shadowed/glowing strings.
+        for (int i = 0; i < numGlyphs; ++i)
+        {
+            sp->UseProgram();
+            SetShaderProjection(sp);
+            sp->SetUniform("u_Model", model);
+            sp->SetUniform("u_Color", color);
+            sp->SetTexture("u_Texture", atlas->texture);
+            sp->SetUniform("u_TextureSize", glm::vec4(atlasW, atlasH, 0.f, 0.f));
+
+            for (const auto& pair : shaderUniforms)
+                sp->SetUniform(pair.first, pair.second);
+
+            // Overrides the u_ClampRect that came in via shaderUniforms
+            // (GetEffectsUniforms()'s default is (0,0,1,1), the whole
+            // atlas — wrong for text specifically) with this glyph's own.
+            sp->SetUniform("u_ClampRect", glyphClampRects[i]);
+
+            bgfx::setState(
+                BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A |
+                BGFX_STATE_DEPTH_TEST_ALWAYS |
+                BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA,
+                    BGFX_STATE_BLEND_INV_SRC_ALPHA)
+            );
+            ApplyStencilTest();
+            bgfx::setVertexBuffer(0, &tvb, i * 6, 6);
+            sp->Submit(ViewIdManager::GetCurrentId());
+        }
     }
 
     // ── DrawTexturedRectRegion ────────────────────────────────────────────────
@@ -980,8 +1026,23 @@ namespace UiRenderer {
     {
         if (size.x <= 0.f || size.y <= 0.f) return;
 
-        const float padU = (textureWidth  > 0.f) ? effectPadding / textureWidth  : 0.f;
-        const float padV = (textureHeight > 0.f) ? effectPadding / textureHeight : 0.f;
+        // Unlike DrawTexturedRectRegion/DrawText, 9-slice geometry NEVER
+        // extends past [0,size] — corners/edges/center always add up to
+        // exactly `size`, full stop, whether or not effectPadding is > 0.
+        // That means shadow/outline/glow on a 9-sliced element render
+        // clipped to its own box rather than bleeding past it, which is a
+        // real limitation compared to a plain UiImage — but a 9-slice's
+        // whole point is a stable, predictable footprint (borders, panels,
+        // buttons sized to fit content), and letting effects silently grow
+        // that footprint undermines exactly what 9-slicing is for.
+        //
+        // No UV padding either, and deliberately not just "no geometry
+        // padding" — padding only the UV while geometry stays fixed would
+        // cram extra texture range into the same corner size, shrinking
+        // the apparent content instead of leaving it at native scale. The
+        // shader's own internal ring-sampling still reads slightly outside
+        // each cell during blur/glow (clamped by u_ClampRect, see
+        // fs_effects.sc); it just doesn't get a *dedicated* margin for it.
 
         // Geometry breakpoints, local [0,1] space relative to `size` — corners
         // come out `margin` SCREEN pixels regardless of how `size` is
@@ -1001,12 +1062,16 @@ namespace UiRenderer {
         const float uy1 = (textureHeight > 0.f) ? margins.top    / textureHeight : 0.f;
         const float uy2 = (textureHeight > 0.f) ? 1.f - margins.bottom / textureHeight : 1.f;
 
-        // Padding only extends the OUTER boundary — the 9-slice's own inner
-        // breakpoints (corners/edges/center) are untouched.
-        const float gx[4] = { -padU, gx1, gx2, 1.f + padU };
-        const float gy[4] = { -padV, gy1, gy2, 1.f + padV };
-        const float ux[4] = { -padU, ux1, ux2, 1.f + padU };
-        const float uy[4] = { -padV, uy1, uy2, 1.f + padV };
+        // Both outer bounds are exactly 0 / 1 — see comment above.
+        const float gx[4] = { 0.f, gx1, gx2, 1.f };
+        const float gy[4] = { 0.f, gy1, gy2, 1.f };
+        const float ux[4] = { 0.f, ux1, ux2, 1.f };
+        const float uy[4] = { 0.f, uy1, uy2, 1.f };
+
+        // effectPadding is intentionally unused — kept in the signature to
+        // match DrawTexturedRectRegion/DrawText's shape, but see the big
+        // comment above for why 9-slice doesn't apply it.
+        (void)effectPadding;
 
         Shader* sp = shader.empty() ? s_texturedShader : ShaderManager::GetShaderProgram("vs_ui", shader);
         sp->UseProgram();
