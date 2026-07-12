@@ -347,20 +347,15 @@ void SpatialSoundManager::BuildWorld()
     CQuake3BSP& bsp = Level::Current->BspData;
     if (!bsp.models.empty())
     {
-        tBSPModel& worldModel = bsp.models[0]; // worldspawn — spans the whole level
 
-        vec3 mn = vec3(worldModel.mins[0], worldModel.mins[1], worldModel.mins[2]) / MAP_SCALE;
-        vec3 mx = vec3(worldModel.maxs[0], worldModel.maxs[1], worldModel.maxs[2]) / MAP_SCALE;
+        vec3 mn = NavigationSystem::WorldMin;
+        vec3 mx = NavigationSystem::WorldMax;
 
-        const float margin = 64.0f; // keep emitters near the level's edge raytraced
-        mn -= vec3(margin);
-        mx += vec3(margin);
 
+        vaWorldSetPosition(g_world, ToVAVector(mn));
+        vaWorldSetSize(g_world, ToVAVector(mx - mn));
 
     }
-
-    vaWorldSetPosition(g_world, ToVAVector(vec3(-500)));
-    vaWorldSetSize(g_world, ToVAVector(vec3(2000)));
 
     Logger::Info("[SpatialSoundManager] world bounds: pos=(%f,%f,%f) size=(%f,%f,%f), bsp models=%zu",
         vaWorldGetPosition(g_world).x, vaWorldGetPosition(g_world).y, vaWorldGetPosition(g_world).z,
@@ -379,10 +374,31 @@ void SpatialSoundManager::BuildWorld()
 
     // Regular occlusion/permeation/reverb rays — used for positional sounds
     // via GetOcclusionFilter()/GetListenerReverb().
-    vaEmitterSetOcclusionRayCount(g_listener, 32);
-    vaEmitterSetOcclusionBounceCount(g_listener, 4);
-    vaEmitterSetPermeationRayCount(g_listener, 32);
-    vaEmitterSetPermeationBounceCount(g_listener, 3);
+    //
+    // NOTE: ray/bounce counts here used to be 32/4 (occlusion) and 32/3
+    // (permeation) — far below every value used in vaudio's own docs and
+    // reference examples (128-1024 rays, 8-64 bounces for a listener). This
+    // single ray budget is shared across EVERY currently-playing positional
+    // sound simultaneously (each is a separate AddTarget() on this same
+    // listener, not a separate ray allocation) — on each bounce the rays
+    // check LOS against every target at once. With only 32 rays / 4 bounces,
+    // it becomes statistically unlikely for many/most rays to find LOS to a
+    // given target within their bounce budget at all in a large or
+    // geometrically complex room, or simply once several sounds are playing
+    // at once — which biases that target's occlusion energy toward zero (=
+    // "fully occluded") even with a completely clear line of sight. That
+    // reads as "this sound never gets less muffled no matter how open the
+    // room is". These starting values are far more in line with the docs'
+    // own examples; profile via vaWorldGetRaytracingTime()/
+    // vaWorldGetMainThreadTime()/vaWorldGetRayCachePercent() and tune down
+    // if needed for performance — but start high and cut back, not the
+    // other way around.
+    vaEmitterSetOcclusionRayCount(g_listener, 256);
+    vaEmitterSetOcclusionBounceCount(g_listener, 8);
+    vaEmitterSetOcclusionEnergyCap(g_listener, 0.15f); // was implicit default (15% of ray count) — now explicit and tunable, matching the ambient caps below
+    vaEmitterSetPermeationRayCount(g_listener, 128);
+    vaEmitterSetPermeationBounceCount(g_listener, 4);
+    vaEmitterSetPermeationEnergyCap(g_listener, 0.15f); // was implicit default — see above
     vaEmitterSetReverbRayCount(g_listener, 128);
     vaEmitterSetReverbBounceCount(g_listener, 16);
     vaEmitterSetReverbEnergyCap(g_listener, 0.05f);
@@ -499,15 +515,46 @@ namespace
 {
     std::vector<VAEmitter*> g_pendingAddTargets;
     std::vector<VAEmitter*> g_pendingRemoveTargets;
+
+    // Primitives whose vaMeshPrimitiveDestroy() call returned VA_ERROR_IN_USE
+    // and need retrying on a later Update() — see the entity-cleanup loop and
+    // the top of Update() below.
+    std::vector<VAMeshPrimitive*> g_pendingPrimitiveDestroy;
 }
 
 void SpatialSoundManager::Update()
 {
     if (!g_world) return;
 
-    vaWorldWait(g_world);
+    // NOTE: previously this called vaWorldWait(g_world) here, which blocks the
+    // calling thread until background raytracing fully completes. That is not
+    // what any vaudio example does in a per-frame loop (see both reference
+    // Scene.cs Update() methods, and the docs' own Full Code Example) - they
+    // call vaWorldUpdate() alone, every frame, and let it be a no-op on frames
+    // where raytracing hasn't finished yet. vaWorldUpdate() already handles
+    // the previous batch of results (if any) and resubmits new work, so no
+    // separate blocking wait is needed - and blocking every frame defeats the
+    // purpose of background raytracing entirely. The cost is proportional to
+    // scene complexity, so it gets dramatically worse in large/complex rooms,
+    // which manifests as stalls and stale/neutral occlusion data lingering
+    // for longer than necessary. vaWorldWait() is still the right call for
+    // one-off synchronous needs (e.g. forcing a full raytrace to finish
+    // during a loading screen, or draining work during Shutdown()) - just not
+    // here, every frame.
 
     vaEmitterSetPosition(g_listener, ToVAVector(Camera::position));
+
+    // Retry any primitive destroys that vaMeshPrimitiveDestroy() previously
+    // declined (VA_ERROR_IN_USE) because they were still referenced by an
+    // in-flight raytrace — see the loop below for why this is checked at all.
+    if (!g_pendingPrimitiveDestroy.empty())
+    {
+        std::vector<VAMeshPrimitive*> stillPending;
+        for (VAMeshPrimitive* prim : g_pendingPrimitiveDestroy)
+            if (vaMeshPrimitiveDestroy(prim) == VA_ERROR_IN_USE)
+                stillPending.push_back(prim);
+        g_pendingPrimitiveDestroy = std::move(stillPending);
+    }
 
     for (size_t i = 0; i < g_trackedEntities.size(); )
     {
@@ -523,7 +570,20 @@ void SpatialSoundManager::Update()
             for (VAMeshPrimitive* prim : geo.primitives)
             {
                 RemovePrimitiveFromWorld(g_world, prim);
-                vaMeshPrimitiveDestroy(prim);
+
+                // vaMeshPrimitiveDestroy() returns a VAResult for the same
+                // reason vaEmitterDestroy() does (see the emitter flush loop
+                // below) — it can legitimately decline with VA_ERROR_IN_USE
+                // if this primitive is still referenced by raytracing that
+                // was in flight when RemovePrimitiveFromWorld() was called
+                // just above. The previous code discarded this return value
+                // unconditionally, which — for a large/complex room where
+                // raytracing routinely takes longer than one frame — risked
+                // leaking the primitive (or worse) exactly when entities
+                // holding audio geometry are destroyed mid-raytrace. Defer
+                // and retry instead, same as emitters.
+                if (vaMeshPrimitiveDestroy(prim) == VA_ERROR_IN_USE)
+                    g_pendingPrimitiveDestroy.push_back(prim);
             }
 
             g_trackedEntities[i] = std::move(g_trackedEntities.back());
@@ -541,17 +601,48 @@ void SpatialSoundManager::Update()
         ++i;
     }
 
+    vaWorldWait(g_world);
+
     if (!vaWorldGetThreadsRunning(g_world))
     {
-        for (VAEmitter* e : g_pendingAddTargets)    vaEmitterAddTarget(g_listener, e);
+        for (VAEmitter* e : g_pendingAddTargets)
+            vaEmitterAddTarget(g_listener, e);
+
+        // Emitters whose destroy is still blocked (VA_ERROR_IN_USE) stay
+        // queued for another pass rather than being dropped — see below.
+        std::vector<VAEmitter*> stillPending;
+
         for (VAEmitter* e : g_pendingRemoveTargets)
         {
-            vaEmitterRemoveTarget(g_listener, e);
-            vaEmitterDestroy(e); // deferred from ReleaseSoundEmitter() - only safe now that
-            // the listener has actually stopped targeting it
+            // e may never have actually become a target - ReleaseSoundEmitter()
+            // defers here even for emitters whose AddTarget was cancelled
+            // before it was ever flushed (see its comment). Only call
+            // RemoveTarget for emitters the listener actually has.
+            if (vaEmitterHasTarget(g_listener, e))
+                vaEmitterRemoveTarget(g_listener, e);
+
+            // vaEmitterDestroy() is documented to return VA_ERROR_IN_USE "if
+            // the emitter is still added to a world" — i.e. it's a real,
+            // checkable failure mode, not just a formality. Because
+            // vaWorldRemoveEmitter() (called back in ReleaseSoundEmitter(),
+            // possibly several frames ago in a busy/large room) is not
+            // documented to take effect synchronously, that removal may
+            // simply not have been processed internally yet on this exact
+            // pass even though our own !vaWorldGetThreadsRunning() gate has
+            // opened — in which case destroy legitimately declines to free
+            // anything. The previous code discarded this return value and
+            // dropped the pointer regardless, which either leaked the
+            // emitter outright or, worse, left it dangling for vaudio to
+            // touch later. Check it, and simply retry next pass if so —
+            // exactly the pattern the docs spell out for vaMeshDestroy()
+            // ("Returns VA_ERROR_IN_USE if it's still being used... retry
+            // the destroy later").
+            if (vaEmitterDestroy(e) == VA_ERROR_IN_USE)
+                stillPending.push_back(e);
         }
+
         g_pendingAddTargets.clear();
-        g_pendingRemoveTargets.clear();
+        g_pendingRemoveTargets = std::move(stillPending);
     }
 
     vaWorldUpdate(g_world);
@@ -572,9 +663,47 @@ void SpatialSoundManager::Shutdown()
     if (!g_world)
     {
         g_trackedEntities.clear();
+        g_pendingAddTargets.clear();
+        g_pendingRemoveTargets.clear();
+        g_pendingPrimitiveDestroy.clear();
         g_listener = nullptr;
         return;
     }
+
+    // Teardown, not a per-frame hot path — this is exactly the kind of
+    // one-off synchronous need vaWorldWait() is for (see the comment in
+    // Update()). Waiting here guarantees background threads are idle, so
+    // every vaEmitterDestroy()/vaMeshPrimitiveDestroy() call below is
+    // guaranteed to succeed immediately rather than possibly returning
+    // VA_ERROR_IN_USE.
+    vaWorldWait(g_world);
+
+    // Finish anything still mid-flight in the pending queues — a sound
+    // that had already called Stop() (or an entity whose audio geometry
+    // was already being torn down) but hadn't been fully flushed yet at
+    // the moment the level closed. The queues are otherwise only ever
+    // drained by Update(), which won't run again after this point.
+    for (VAEmitter* e : g_pendingRemoveTargets)
+    {
+        if (vaEmitterHasTarget(g_listener, e))
+            vaEmitterRemoveTarget(g_listener, e);
+        vaEmitterDestroy(e);
+    }
+    g_pendingRemoveTargets.clear();
+
+    // Entries in g_pendingAddTargets were vaWorldAddEmitter()'d (in
+    // CreateSoundEmitter()) but never got as far as vaEmitterAddTarget() -
+    // still owned, still need vaWorldRemoveEmitter() + vaEmitterDestroy().
+    for (VAEmitter* e : g_pendingAddTargets)
+    {
+        vaWorldRemoveEmitter(g_world, e);
+        vaEmitterDestroy(e);
+    }
+    g_pendingAddTargets.clear();
+
+    for (VAMeshPrimitive* prim : g_pendingPrimitiveDestroy)
+        vaMeshPrimitiveDestroy(prim);
+    g_pendingPrimitiveDestroy.clear();
 
     for (EntityAudioGeometry& geo : g_trackedEntities)
         for (VAMeshPrimitive* prim : geo.primitives)
@@ -643,24 +772,38 @@ void SpatialSoundManager::ReleaseSoundEmitter(SpatialSoundEmitter* emitter)
     if (g_world) vaWorldRemoveEmitter(g_world, e); // safe anytime - documented thread-safe
 
     // If this emitter's AddTarget from CreateSoundEmitter() hasn't been
-    // flushed yet (world threads have been busy since it was created), it
-    // was never actually registered as a listener target. Cancel the
-    // pending add and destroy it now — safe, since Update() will never see
-    // this pointer. This is the common case for short-lived one-shot sounds
-    // that spawn and finish faster than vaudio drains the pending queue.
+    // flushed yet (world threads have been busy since it was created), cancel
+    // it so Update() never calls vaEmitterAddTarget() for an emitter that's
+    // about to be destroyed.
+    //
+    // NOTE: this used to also call vaEmitterDestroy(e) immediately in this
+    // branch, on the theory that "AddTarget was never flushed" made it safe.
+    // It isn't: vaWorldAddEmitter()/vaWorldRemoveEmitter() are documented as
+    // thread-safe and callable anytime, but nothing documents them as taking
+    // effect *synchronously* - the far more likely (and only self-consistent)
+    // reading is that they queue the request internally for vaudio to drain
+    // during vaWorldUpdate(), the same way primitive add/remove is described
+    // as being processed "when threads are idle". Freeing the emitter here
+    // could race that internal queue - e.g. a sound created and stopped
+    // within the same frame, before a single vaWorldUpdate() has run at all -
+    // and use-after-free inside vaudio itself the next time it drains that
+    // queue. This is what "same sound can call Stop() then Play() during the
+    // same frame" was actually hitting.
+    //
+    // The fix is simple: never destroy synchronously here, in either case.
+    // Every release now goes through the exact same deferred path below,
+    // which only calls vaEmitterDestroy() from Update(), at the point we've
+    // already confirmed (via !vaWorldGetThreadsRunning()) that a full update
+    // cycle has run and vaudio has had a chance to process whatever
+    // add/remove-from-world work was pending for this emitter. Because
+    // nothing is ever freed early, a rapid Stop()+Play() (or several, spread
+    // across frames while a large room's raytrace is still in flight) can
+    // never cause a new emitter to be allocated at a just-freed old emitter's
+    // address either - eliminating that hazard as a side effect.
     auto it = std::find(g_pendingAddTargets.begin(), g_pendingAddTargets.end(), e);
     if (it != g_pendingAddTargets.end())
-    {
         g_pendingAddTargets.erase(it);
-        vaEmitterDestroy(e);
-        return;
-    }
 
-    // Otherwise the add is already flushed (or in flight) and vaudio may
-    // still be treating this pointer as a live raytrace target. Destroying
-    // it here would race Update()'s next AddTarget/RemoveTarget flush and
-    // use-after-free inside vaudio. Defer the destroy until after Update()
-    // has actually called RemoveTarget for it.
     g_pendingRemoveTargets.push_back(e);
 }
 

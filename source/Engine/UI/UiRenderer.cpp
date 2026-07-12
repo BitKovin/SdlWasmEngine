@@ -70,8 +70,8 @@ struct FontAtlas {
     int    lineGap = 0;
 
     // ── Atlas bitmap ─────────────────────────────────────────────────────────
-    static constexpr int ATLAS_W = 4096;
-    static constexpr int ATLAS_H = 4096;
+    static constexpr int ATLAS_W = 2048;
+    static constexpr int ATLAS_H = 2048;
     std::vector<uint8_t> pixels;         // ATLAS_W * ATLAS_H * 4 (RGBA8)
     bgfx::TextureHandle  texture = BGFX_INVALID_HANDLE;
     bool textureDirty = false;

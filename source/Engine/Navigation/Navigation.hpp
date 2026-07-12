@@ -47,6 +47,9 @@ private:
 
 public:
 
+	static inline vec3 WorldMin = vec3(0, 0, 0);
+	static inline vec3 WorldMax = vec3(0, 0, 0);
+
     static inline dtNavMesh* navMesh = nullptr;
     static inline dtCrowd* g_crowd = nullptr;
 

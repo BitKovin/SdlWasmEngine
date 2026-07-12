@@ -3,6 +3,7 @@
 #include <Input.h>
 #include <Camera.h>
 #include <SoundSystem/SoundInstance.hpp>
+#include <SoundSystem/FmodEventInstance.h>
 
 class TestSpatialSoundPlayer : public SoundPlayer
 {
@@ -10,9 +11,10 @@ public:
 	
 	void Start() override 
 	{
-		SetSound(SoundManager::GetSoundFromPath("GameData/sounds/mew.wav"));
+		SetSound(FmodEventInstance::Create("event:/Ambience/Forest"));
         Play();
 		Sound->Loop = true;
+		Sound->EnvironmentalSound = true;
         MaxDistance = 70;
 	}
 
