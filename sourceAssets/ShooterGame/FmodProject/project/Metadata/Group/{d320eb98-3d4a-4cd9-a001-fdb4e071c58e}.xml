@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<objects serializationModel="Studio.02.03.00">
+<objects serializationModel="Studio.02.02.00">
 	<object class="MixerGroup" id="{d320eb98-3d4a-4cd9-a001-fdb4e071c58e}">
 		<property name="name">
 			<value>SFX</value>
@@ -17,6 +17,7 @@
 	<object class="MixerBusEffectChain" id="{fd2b0385-e5e7-4c14-8348-7ada37283192}">
 		<relationship name="effects">
 			<destination>{2e67e80b-b643-46e1-afd3-dd01d9b938eb}</destination>
+			<destination>{0e820b92-ce0a-49b8-9864-8a3c8233cd15}</destination>
 			<destination>{a7a9dc9e-2051-44f7-8925-0ddb318ebacb}</destination>
 			<destination>{14730547-569d-4f6f-8348-b9db65f87eb1}</destination>
 		</relationship>
@@ -30,6 +31,7 @@
 			<value>2</value>
 		</property>
 	</object>
+	<object class="DelayEffect" id="{0e820b92-ce0a-49b8-9864-8a3c8233cd15}" />
 	<object class="MixerBusFader" id="{a7a9dc9e-2051-44f7-8925-0ddb318ebacb}" />
 	<object class="SFXReverbEffect" id="{14730547-569d-4f6f-8348-b9db65f87eb1}">
 		<property name="decayTime">

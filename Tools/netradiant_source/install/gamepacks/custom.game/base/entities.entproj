@@ -1996,6 +1996,15 @@
           "description": "Path to the metashader used to assign textures to the terrain entity. Note: Omit the \u0022textures/\u0022 prefix.",
           "bitIndex": 0,
           "isBuiltIn": false
+        },
+        {
+          "key": "reverbSnapshot",
+          "displayName": "Reverb Snapshot Path",
+          "type": "String",
+          "defaultValue": "",
+          "description": "",
+          "bitIndex": 0,
+          "isBuiltIn": false
         }
       ]
     },
@@ -2971,6 +2980,45 @@
           "description": "Targetname of entity to activate/target.",
           "bitIndex": 0,
           "isBuiltIn": true
+        }
+      ]
+    },
+    {
+      "name": "snd_reverb_zone",
+      "entityType": "group",
+      "color": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "box": [
+        -16,
+        -16,
+        -16,
+        16,
+        16,
+        16
+      ],
+      "description": "Plays fmod snapshop when entering. Can override each other.",
+      "inherits": [],
+      "properties": [
+        {
+          "key": "snapshot",
+          "displayName": "Snapshot Path",
+          "type": "String",
+          "defaultValue": "snapshot:/Reverb/Cave Reverb",
+          "description": "path to snapshot",
+          "bitIndex": 0,
+          "isBuiltIn": false
+        },
+        {
+          "key": "priority",
+          "displayName": "Priority",
+          "type": "Integer",
+          "defaultValue": "1",
+          "description": "0 for world default",
+          "bitIndex": 0,
+          "isBuiltIn": false
         }
       ]
     }

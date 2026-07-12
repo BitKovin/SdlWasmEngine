@@ -3,6 +3,8 @@
 #include "../Entity.h"
 #include "../BSP/Quake3Bsp.h"
 
+#include "Brushes/Sound/FmodReverbZone.h"
+
 class WorldSpawn : public Entity
 {
 public:
@@ -24,6 +26,8 @@ public:
 		CQuake3BSP::lightVolGridSize = data.GetPropertyVector("gridsize", vec3(32, 32, 64));
 
 		Instance = this;
+
+		FmodReverbZone::DefaultSnapshotPath = data.GetPropertyString("reverbSnapshot", "");
 
 	}
 

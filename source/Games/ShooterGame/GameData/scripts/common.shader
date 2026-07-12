@@ -12,6 +12,8 @@ textures/common/trigger
     surfaceparm nolightmap
     q3map_nolightmap
 
+    qer_trans 0.5
+
     // disable the ambient-occlusion (-dirty) pass
     q3map_noDirty
 
