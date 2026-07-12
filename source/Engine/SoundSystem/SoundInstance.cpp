@@ -323,17 +323,6 @@ void SoundInstance::UpdateSourceParams()
         const float distanceFade = GetDistanceFade(CurrentDistanceToListener());
         alSourcef(_source, AL_GAIN, GetFinalVolume() * distanceFade);
 
-        // AL_REFERENCE_DISTANCE / AL_MAX_DISTANCE / AL_ROLLOFF_FACTOR are inert
-        // with the active distance model: SoundManager::InitContext() sets
-        // alDistanceModel(AL_NONE), specifically so that AL_GAIN above (which
-        // already carries the correct, symmetric distanceFade) is the only
-        // distance-based attenuation applied — to both the direct path and any
-        // aux reverb send. Left set here in case the distance model is revisited
-        // later, but do not reach for AL_LINEAR_DISTANCE_CLAMPED (or similar) to
-        // "make these do something" without also setting AL_ROOM_ROLLOFF_FACTOR
-        // explicitly — see the comment in SoundManager::InitContext() for why
-        // leaving it at its 0.0 default silently breaks reverb-send distance
-        // attenuation while the direct path still gets it.
         alSourcef(_source, AL_REFERENCE_DISTANCE, MinDistance);
         alSourcef(_source, AL_MAX_DISTANCE, MaxDistance);
         alSourcef(_source, AL_ROLLOFF_FACTOR, 1.0f);

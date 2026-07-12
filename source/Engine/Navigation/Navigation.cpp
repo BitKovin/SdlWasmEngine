@@ -130,19 +130,6 @@ void NavigationSystem::GenerateNavData()
 
     bool loaded = NavigationFileHelper::Load(navmeshFilePath.c_str(), navMesh, tileCache, mapVersion);
 
-    auto mesh = Level::Current->GetStaticNavObstaclesMesh();
-
-    std::vector<glm::vec3> vertices = mesh.vertices;
-    std::vector<uint32_t> indices = mesh.indices;
-    if (vertices.size() < 3) return;
-
-    glm::vec3 bmin = vertices[0], bmax = vertices[0];
-    for (const auto& v : vertices) { bmin = glm::min(bmin, v); bmax = glm::max(bmax, v); }
-    bmin -= glm::vec3(0.2); bmax += glm::vec3(0.2);
-
-    WorldMin = bmin;
-    WorldMax = bmax;
-
     if (loaded)
     {
         InitCrowd(512);
@@ -153,10 +140,17 @@ void NavigationSystem::GenerateNavData()
         Logger::Log("rebuilding navmesh to file");
     }
 
-
+    auto mesh = Level::Current->GetStaticNavObstaclesMesh();
 
     std::lock_guard<std::recursive_mutex> lock(mainLock);
 
+    std::vector<glm::vec3> vertices = mesh.vertices;
+    std::vector<uint32_t> indices = mesh.indices;
+    if (vertices.size() < 3) return;
+
+    glm::vec3 bmin = vertices[0], bmax = vertices[0];
+    for (const auto& v : vertices) { bmin = glm::min(bmin, v); bmax = glm::max(bmax, v); }
+    bmin -= glm::vec3(0.2); bmax += glm::vec3(0.2);
 
 
     // ---- Recast config (similar to yours)

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<objects serializationModel="Studio.02.02.00">
+<objects serializationModel="Studio.02.03.00">
 	<object class="ParameterPreset" id="{1fe5453b-62b3-49fa-a1a6-c02483b4c369}">
 		<property name="name">
 			<value>Wind</value>
@@ -13,10 +13,21 @@
 	</object>
 	<object class="GameParameter" id="{aa37dcda-6161-459d-bdf5-9400828f7ed3}">
 		<property name="initialValue">
-			<value>0.5</value>
+			<value>0</value>
 		</property>
 		<relationship name="modulators">
 			<destination>{f8b4151f-41f4-4441-924a-f9b67f96844e}</destination>
 		</relationship>
+	</object>
+	<object class="SeekModulator" id="{f8b4151f-41f4-4441-924a-f9b67f96844e}">
+		<property name="nameOfPropertyBeingModulated">
+			<value>cursorPosition</value>
+		</property>
+		<property name="clockSource">
+			<value>1</value>
+		</property>
+		<property name="speedAscending">
+			<value>0.15000000596046448</value>
+		</property>
 	</object>
 </objects>

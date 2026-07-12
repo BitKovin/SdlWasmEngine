@@ -147,26 +147,9 @@ void SoundManager::InitContext(ALCcontext* context, const char* label, bool expe
         Logger::Warning("[OpenAL] (%s) ALC_SOFT_HRTF extension not present on this device", label);
     }
 
-    // Disable OpenAL's built-in distance attenuation. SoundInstance::GetDistanceFade()
-    // (applied via AL_GAIN in UpdateSourceParams()) handles falloff manually, so AL_NONE
-    // is required here to prevent double-attenuation.
-    //
-    // NOTE: this previously passed AL_LINEAR_DISTANCE_CLAMPED, which is an ACTIVE
-    // distance model, not "no attenuation" - despite what the comment above always
-    // claimed. With that model: the DIRECT path gets an extra distance-based cut on
-    // top of the manual fade (scaled by AL_ROLLOFF_FACTOR, explicitly set to 1.0 in
-    // UpdateSourceParams()), while each source's reverb aux SEND gets scaled by
-    // AL_ROOM_ROLLOFF_FACTOR instead - which is never set anywhere in this codebase,
-    // so it sat at OpenAL's own default of 0.0 (i.e. the send was never distance-
-    // attenuated by the model at all). Net effect: the direct signal was attenuated
-    // twice (manual fade x distance-model rolloff) while the reverb send was only
-    // attenuated once, so as distance grows the direct path collapses toward silence
-    // much faster than the reverb send — audible as "large room: the sound is far too
-    // quiet, only its reverb is audible". AL_NONE turns off the distance model's own
-    // attenuation entirely, so AL_GAIN (already carrying the correct, symmetric manual
-    // fade for both the direct path and the aux send) is the only distance-based gain
-    // applied to either path.
-    alDistanceModel(AL_NONE);
+    // Disable OpenAL's built-in distance attenuation. SoundInstance::ComputeDistanceGain()
+    // handles falloff manually, so setting AL_NONE once here prevents double-attenuation.
+    alDistanceModel(AL_LINEAR_DISTANCE_CLAMPED);
 }
 
 // =============================================================================
