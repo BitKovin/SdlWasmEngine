@@ -19,6 +19,7 @@ public:
     // SoundInstanceBase overrides
     void Play() override;
     void Stop() override;
+    void StopImmediate();
     void Update(float deltaTime) override;
 
     // Custom methods

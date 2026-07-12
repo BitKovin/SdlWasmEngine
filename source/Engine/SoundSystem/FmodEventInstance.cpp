@@ -117,6 +117,13 @@ void FmodEventInstance::Play()
 void FmodEventInstance::Stop()
 {
     if (eventInstance) {
+        eventInstance->stop(FMOD_STUDIO_STOP_ALLOWFADEOUT);
+    }
+}
+
+void FmodEventInstance::StopImmediate()
+{
+    if (eventInstance) {
         eventInstance->stop(FMOD_STUDIO_STOP_IMMEDIATE);
     }
 }

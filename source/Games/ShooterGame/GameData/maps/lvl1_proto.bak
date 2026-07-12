@@ -1662,6 +1662,15 @@ delvenPack/dlv_wood1b
 )
 }
 }
+// brush 183
+{
+( -240 -5312 192 ) ( -240 -5840 192 ) ( -688 -5312 192 ) NULL 0 0 0 1 1 0 0 0
+( -240 -5312 32 ) ( -688 -5312 32 ) ( -240 -5312 16 ) NULL 0 0 0 1 1 0 0 0
+( -208 -5312 32 ) ( -208 -5312 16 ) ( -208 -5840 32 ) NULL 0 0 0 1 1 0 0 0
+( -688 -5840 16 ) ( -240 -5840 16 ) ( -688 -5312 16 ) NULL 0 0 0 1 1 0 0 0
+( -688 -5840 16 ) ( -688 -5840 32 ) ( -240 -5840 16 ) NULL 0 0 0 1 1 0 0 0
+( -688 -5840 16 ) ( -688 -5312 16 ) ( -688 -5840 32 ) NULL 0 0 0 1 1 0 0 0
+}
 }
 // entity 1
 {
@@ -1670,11 +1679,20 @@ delvenPack/dlv_wood1b
 }
 // entity 2
 {
+"classname" "light"
+"origin" "-80 -640 176"
+"light" "30"
+"target" "sun_target"
+"_sun" "1"
+"_color" "0.34902 0.34902 1"
+}
+// entity 3
+{
 "classname" "transformPoint"
 "origin" "-80 -640 80"
 "targetname" "sun_target"
 }
-// entity 3
+// entity 4
 {
 "classname" "light"
 "origin" "-608 -2992 64"
@@ -1683,7 +1701,7 @@ delvenPack/dlv_wood1b
 "scale" "1"
 "_color" "0.486275 0.239216 0.0941176"
 }
-// entity 4
+// entity 5
 {
 "classname" "spawner"
 "origin" "-1128 -3176 48"
@@ -1692,7 +1710,7 @@ delvenPack/dlv_wood1b
 "targetname" "sp_g_1_1"
 "autoTrigger" "1"
 }
-// entity 5
+// entity 6
 {
 "classname" "spawner"
 "origin" "-920 -2440 48"
@@ -1700,7 +1718,7 @@ delvenPack/dlv_wood1b
 "className" "npc_human_axe"
 "targetname" "sp_g_1_1"
 }
-// entity 6
+// entity 7
 {
 "classname" "spawner"
 "origin" "-768 -4504 52"
@@ -1708,7 +1726,7 @@ delvenPack/dlv_wood1b
 "className" "npc_human_axe"
 "targetname" "sp_g_1_2"
 }
-// entity 7
+// entity 8
 {
 "classname" "spawner"
 "origin" "-1064 -4216 52"
@@ -1716,7 +1734,7 @@ delvenPack/dlv_wood1b
 "className" "npc_human_axe"
 "targetname" "sp_g_1_2"
 }
-// entity 8
+// entity 9
 {
 "classname" "spawner"
 "origin" "-960 -3960 52"
@@ -1724,7 +1742,7 @@ delvenPack/dlv_wood1b
 "className" "npc_human_axe"
 "targetname" "sp_g_1_2"
 }
-// entity 9
+// entity 10
 {
 "classname" "spawner"
 "origin" "-1080 -3696 52"
@@ -1732,7 +1750,7 @@ delvenPack/dlv_wood1b
 "className" "npc_human_axe"
 "targetname" "sp_g_1_2"
 }
-// entity 10
+// entity 11
 {
 "classname" "spawner"
 "origin" "-840 -3104 52"
@@ -1740,7 +1758,7 @@ delvenPack/dlv_wood1b
 "targetname" "sp_g_1_1"
 "angle" "112.112"
 }
-// entity 11
+// entity 12
 {
 "classname" "triggerOnce"
 "target" "sp_g_1_1"
@@ -1754,7 +1772,7 @@ delvenPack/dlv_wood1b
 ( -428.7628760028 -1852.0527550069 148 ) ( -508.7628760028 -1990.6168196125 20 ) ( -508.7628760028 -1990.6168196125 148 ) lq_dev/trigger 26.5662841797 0 0 0.8660253882 1 0 0 0
 }
 }
-// entity 12
+// entity 13
 {
 "classname" "triggerOnce"
 "target" "sp_g_1_2"
@@ -1768,7 +1786,7 @@ delvenPack/dlv_wood1b
 ( -655.1091989575 -2900.7915060063 148 ) ( -655.1091940164 -3060.7915050829 20 ) ( -655.1091940164 -3060.7915050829 148 ) lq_dev/trigger -2.9774169922 0 0 0.9659258127 1 0 0 0
 }
 }
-// entity 13
+// entity 14
 {
 "classname" "spawner"
 "origin" "-904 -2896 52"
@@ -1776,7 +1794,7 @@ delvenPack/dlv_wood1b
 "className" "npc_human_axe"
 "targetname" "sp_g_1_1"
 }
-// entity 14
+// entity 15
 {
 "classname" "spawner"
 "origin" "-976 -4664 52"
@@ -1784,21 +1802,21 @@ delvenPack/dlv_wood1b
 "className" "npc_human_axe"
 "targetname" "sp_g_1_2"
 }
-// entity 15
+// entity 16
 {
 "classname" "spawner"
 "origin" "-784 -3280 64"
 "className" "testnpc"
 "targetname" "sp_g_1_1"
 }
-// entity 16
+// entity 17
 {
 "classname" "spawner"
 "origin" "-1040 -4496 64"
 "className" "testnpc"
 "targetname" "sp_g_1_1"
 }
-// entity 17
+// entity 18
 {
 "classname" "spawner"
 "origin" "-624 -4864 48"
@@ -1807,7 +1825,7 @@ delvenPack/dlv_wood1b
 "targetname" "sp_g_1_2"
 "autoTrigger" "1"
 }
-// entity 18
+// entity 19
 {
 "classname" "spawner"
 "origin" "-816 -3760 48"
@@ -1815,7 +1833,7 @@ delvenPack/dlv_wood1b
 "targetname" "sp_g_1_2"
 "angle" "83.4638"
 }
-// entity 19
+// entity 20
 {
 "classname" "spawner"
 "origin" "-720 -4656 48"
@@ -1823,7 +1841,7 @@ delvenPack/dlv_wood1b
 "targetname" "sp_g_1_2"
 "angle" "85.2966"
 }
-// entity 20
+// entity 21
 {
 "classname" "spawner"
 "origin" "-1000 -2888 144"
@@ -1832,7 +1850,7 @@ delvenPack/dlv_wood1b
 "targetname" "sp_g_1_1"
 "autoTrigger" "1"
 }
-// entity 21
+// entity 22
 {
 "classname" "func_door"
 // brush 0
@@ -1998,7 +2016,7 @@ delvenPack/dlv_wood1b
 ( 232 -5849 108 ) ( 232 -5852 -32 ) ( 232 -5852 108 ) building_1/b1_f1 -665.9995117188 12 180 1.2000000477 -1.1000000238 0 0 0
 }
 }
-// entity 22
+// entity 23
 {
 "classname" "func_group"
 // brush 0
@@ -2488,7 +2506,7 @@ delvenPack/dlv_wood1b
 ( 232 -5850 111 ) ( 232 -5849 111 ) ( 232 -5850 -32 ) building_1/b1_f1 -665.9990234375 12 180 1.2000000477 -1.1000000238 0 0 0
 }
 }
-// entity 23
+// entity 24
 {
 "classname" "func_door"
 "targetname" "d1_b1_1"
@@ -2657,7 +2675,7 @@ delvenPack/dlv_wood1b
 ( -1172 -5870 108 ) ( -1172 -5873 -32 ) ( -1172 -5873 108 ) building_1/b1_f1 702.3334960938 12 0 1.2000000477 1.1000000238 0 0 0
 }
 }
-// entity 24
+// entity 25
 {
 "classname" "func_group"
 // brush 0
@@ -3111,14 +3129,14 @@ delvenPack/dlv_wood1b
 ( -1172 -5872 -32 ) ( -1172 -5873 -32 ) ( -1172 -5872 111 ) building_1/b1_f1 0 20 0 1 1.2000000477 0 0 0
 }
 }
-// entity 25
+// entity 26
 {
 "classname" "transformPoint"
 "origin" "-1172 -5850 114"
 "angles" "0 -90 0"
 "targetname" "d1_b1_tp_1"
 }
-// entity 26
+// entity 27
 {
 "classname" "trigger"
 "target" "d1_b1_1"
@@ -3134,7 +3152,7 @@ delvenPack/dlv_wood1b
 ( -992 -5728 52 ) ( -992 -5984 20 ) ( -992 -5984 52 ) lq_dev/trigger 0 0 0 1 1 0 0 0
 }
 }
-// entity 27
+// entity 28
 {
 "classname" "light"
 "origin" "-1563 -5872 115"
@@ -3144,7 +3162,7 @@ delvenPack/dlv_wood1b
 "scale" "1"
 "fade" "0.5"
 }
-// entity 28
+// entity 29
 {
 "classname" "light"
 "origin" "-2020 -5872 115"
@@ -3154,7 +3172,7 @@ delvenPack/dlv_wood1b
 "scale" "1"
 "fade" "0.055"
 }
-// entity 29
+// entity 30
 {
 "classname" "light"
 "origin" "-2020 -5472 115"
@@ -3164,7 +3182,7 @@ delvenPack/dlv_wood1b
 "scale" "1"
 "fade" "0.2"
 }
-// entity 30
+// entity 31
 {
 "classname" "light"
 "origin" "-1563 -5872 115"
@@ -3174,7 +3192,7 @@ delvenPack/dlv_wood1b
 "fade" "0.2"
 "scale" "1"
 }
-// entity 31
+// entity 32
 {
 "classname" "light"
 "origin" "-2020 -5872 115"
@@ -3184,7 +3202,7 @@ delvenPack/dlv_wood1b
 "fade" "0.2"
 "scale" "0.3"
 }
-// entity 32
+// entity 33
 {
 "classname" "light"
 "origin" "-2020 -5472 115"
@@ -3194,7 +3212,7 @@ delvenPack/dlv_wood1b
 "fade" "0.3"
 "scale" "1"
 }
-// entity 33
+// entity 34
 {
 "classname" "light"
 "origin" "-1203 -5872 147"
@@ -3204,7 +3222,7 @@ delvenPack/dlv_wood1b
 "scale" "1"
 "fade" "0.2"
 }
-// entity 34
+// entity 35
 {
 "classname" "light"
 "origin" "-2020 -5142 115"
@@ -3214,7 +3232,7 @@ delvenPack/dlv_wood1b
 "scale" "1"
 "fade" "0.4"
 }
-// entity 35
+// entity 36
 {
 "classname" "light"
 "origin" "-2020 -4764 115"
@@ -3224,14 +3242,14 @@ delvenPack/dlv_wood1b
 "scale" "1"
 "fade" "0.2"
 }
-// entity 36
+// entity 37
 {
 "classname" "light"
 "origin" "-1762 -5074 120"
 "light" "100"
 "_color" "1 0.690196 0.545098"
 }
-// entity 37
+// entity 38
 {
 "classname" "light"
 "origin" "-2380 -4750 115"
@@ -3241,7 +3259,7 @@ delvenPack/dlv_wood1b
 "scale" "1"
 "fade" "0.2"
 }
-// entity 38
+// entity 39
 {
 "classname" "func_group"
 // brush 0
@@ -3695,7 +3713,7 @@ delvenPack/dlv_wood1b
 ( -2696 -4752 160 ) ( -2696 -4752 134 ) ( -2696 -4772 160 ) delvenPack/dlv_metalpip2a 12 0 180 1 1 0 0 0
 }
 }
-// entity 39
+// entity 40
 {
 "classname" "light"
 "origin" "-2684 -4750 131"
@@ -3705,7 +3723,7 @@ delvenPack/dlv_wood1b
 "scale" "1"
 "fade" "0.6"
 }
-// entity 40
+// entity 41
 {
 "classname" "light"
 "origin" "-2844 -4430 125"
@@ -3715,7 +3733,7 @@ delvenPack/dlv_wood1b
 "fade" "0.36"
 "spawnflags" "1"
 }
-// entity 41
+// entity 42
 {
 "classname" "light"
 "origin" "-2758 -4894 97"
@@ -3725,7 +3743,7 @@ delvenPack/dlv_wood1b
 "fade" "0.36"
 "spawnflags" "1"
 }
-// entity 42
+// entity 43
 {
 "classname" "light"
 "origin" "-3814 -4430 161"
@@ -3735,7 +3753,7 @@ delvenPack/dlv_wood1b
 "fade" "0.36"
 "spawnflags" "1"
 }
-// entity 43
+// entity 44
 {
 "classname" "light"
 "origin" "-3366 -5070 161"
@@ -3745,7 +3763,7 @@ delvenPack/dlv_wood1b
 "fade" "0.36"
 "spawnflags" "1"
 }
-// entity 44
+// entity 45
 {
 "classname" "light"
 "origin" "-4172 -4654 157"
@@ -3755,7 +3773,7 @@ delvenPack/dlv_wood1b
 "fade" "0.36"
 "spawnflags" "1"
 }
-// entity 45
+// entity 46
 {
 "classname" "light"
 "origin" "-4076 -5070 157"
@@ -3765,7 +3783,7 @@ delvenPack/dlv_wood1b
 "fade" "0.36"
 "spawnflags" "1"
 }
-// entity 46
+// entity 47
 {
 "classname" "light"
 "origin" "-3426 -4501 163"
@@ -3775,7 +3793,7 @@ delvenPack/dlv_wood1b
 "fade" "0.36"
 "spawnflags" "1"
 }
-// entity 47
+// entity 48
 {
 "classname" "func_door"
 "targetLocation" "-12 0 0"
@@ -3792,7 +3810,7 @@ delvenPack/dlv_wood1b
 ( -1618 -4969 72 ) ( -1618 -4975 50 ) ( -1618 -4975 72 ) lq_props/med_book_red 0 0 0 1 1 0 0 0
 }
 }
-// entity 48
+// entity 49
 {
 "classname" "triggerOnce"
 "target" "b1_of1_book_hid"
@@ -3807,7 +3825,7 @@ delvenPack/dlv_wood1b
 ( -1640 -4944 24 ) ( -1640 -4944 16 ) ( -1640 -5000 24 ) lq_utility/trigger 56 0 0 1 1 0 0 0
 }
 }
-// entity 49
+// entity 50
 {
 "classname" "transformPoint"
 "origin" "-1776 -5312 96"
@@ -3815,7 +3833,7 @@ delvenPack/dlv_wood1b
 "targetname" "b1_o1_sd_1_tp"
 "angles" "0 160 0"
 }
-// entity 50
+// entity 51
 {
 "classname" "func_door"
 "targetname" "b1_of1_book_hid"
@@ -3832,7 +3850,7 @@ delvenPack/dlv_wood1b
 ( -1712 -5312 48 ) ( -1712 -5288 48 ) ( -1712 -5312 24 ) psx_textures_2/wallpaper_wall_pt_1 0 32 0 0.5 0.5 0 0 0
 }
 }
-// entity 51
+// entity 52
 {
 "classname" "func_group"
 // brush 0
@@ -3874,7 +3892,7 @@ delvenPack/dlv_wood1b
 ( -2972 -4644 72 ) ( -2972 -4644 216 ) ( -2972 -4500 72 ) common/caulk 20 0.0011940002 180 1 -1 0 0 0
 }
 }
-// entity 52
+// entity 53
 {
 "classname" "func_group"
 // brush 0
@@ -3916,7 +3934,7 @@ delvenPack/dlv_wood1b
 ( -2972 -4996 72 ) ( -2972 -4996 216 ) ( -2972 -4852 72 ) common/caulk 52 0.001625061 180 1 -1 0 0 0
 }
 }
-// entity 53
+// entity 54
 {
 "classname" "func_group"
 // brush 0
@@ -3958,7 +3976,7 @@ delvenPack/dlv_wood1b
 ( -3260 -4644 72 ) ( -3260 -4644 216 ) ( -3260 -4500 72 ) common/caulk 20 0.0023956299 180 1 -1 0 0 0
 }
 }
-// entity 54
+// entity 55
 {
 "classname" "func_group"
 // brush 0
@@ -4000,7 +4018,7 @@ delvenPack/dlv_wood1b
 ( -3260 -4996 72 ) ( -3260 -4996 216 ) ( -3260 -4852 72 ) common/caulk 52 0.0029182434 180 1 -1 0 0 0
 }
 }
-// entity 55
+// entity 56
 {
 "classname" "func_group"
 // brush 0
@@ -4042,7 +4060,7 @@ delvenPack/dlv_wood1b
 ( -3388 -4644 72 ) ( -3388 -4644 216 ) ( -3388 -4500 72 ) common/caulk 20 0.0027961731 180 1 -1 0 0 0
 }
 }
-// entity 56
+// entity 57
 {
 "classname" "func_group"
 // brush 0
@@ -4084,7 +4102,7 @@ delvenPack/dlv_wood1b
 ( -3388 -4996 72 ) ( -3388 -4996 216 ) ( -3388 -4852 72 ) common/caulk 52 0.0033493042 180 1 -1 0 0 0
 }
 }
-// entity 57
+// entity 58
 {
 "classname" "func_group"
 // brush 0
@@ -4126,7 +4144,7 @@ delvenPack/dlv_wood1b
 ( -3516 -4644 72 ) ( -3516 -4644 216 ) ( -3516 -4500 72 ) common/caulk 20 0.0031967163 180 1 -1 0 0 0
 }
 }
-// entity 58
+// entity 59
 {
 "classname" "func_group"
 // brush 0
@@ -4168,7 +4186,7 @@ delvenPack/dlv_wood1b
 ( -3516 -4996 72 ) ( -3516 -4996 216 ) ( -3516 -4852 72 ) common/caulk 52 0.003780365 180 1 -1 0 0 0
 }
 }
-// entity 59
+// entity 60
 {
 "classname" "func_group"
 // brush 0
@@ -4210,7 +4228,7 @@ delvenPack/dlv_wood1b
 ( -3772 -4644 72 ) ( -3772 -4644 216 ) ( -3772 -4500 72 ) common/caulk 20 0.0035972595 180 1 -1 0 0 0
 }
 }
-// entity 60
+// entity 61
 {
 "classname" "func_group"
 // brush 0
@@ -4252,7 +4270,7 @@ delvenPack/dlv_wood1b
 ( -3772 -4996 72 ) ( -3772 -4996 216 ) ( -3772 -4852 72 ) common/caulk 52 0.0042114258 180 1 -1 0 0 0
 }
 }
-// entity 61
+// entity 62
 {
 "classname" "func_group"
 // brush 0
@@ -4294,7 +4312,7 @@ delvenPack/dlv_wood1b
 ( -3964 -4644 72 ) ( -3964 -4644 216 ) ( -3964 -4500 72 ) common/caulk 20 0.0039978027 180 1 -1 0 0 0
 }
 }
-// entity 62
+// entity 63
 {
 "classname" "func_group"
 // brush 0
@@ -4336,7 +4354,7 @@ delvenPack/dlv_wood1b
 ( -3964 -4996 72 ) ( -3964 -4996 216 ) ( -3964 -4852 72 ) common/caulk 52 0.0046424866 180 1 -1 0 0 0
 }
 }
-// entity 63
+// entity 64
 {
 "classname" "vis_through"
 // brush 0
@@ -4412,7 +4430,7 @@ delvenPack/dlv_wood1b
 ( -2824 -4984 144 ) ( -2824 -4984 136 ) ( -2824 -5104 144 ) FPSTextures/Wall_79 0 24 0 1 1 0 0 0
 }
 }
-// entity 64
+// entity 65
 {
 "classname" "light"
 "origin" "-2844 -5473 193"
@@ -4420,7 +4438,7 @@ delvenPack/dlv_wood1b
 "spawnflags" "1"
 "_color" "1 0.972549 0.662745"
 }
-// entity 65
+// entity 66
 {
 "classname" "func_group"
 // brush 0
@@ -4460,7 +4478,7 @@ delvenPack/dlv_wood1b
 ( -271.6774262066 -655.4285858787 211.9999923706 ) ( -271.6774262066 -666.5714438687 211.9999923706 ) ( -274.8387164818 -666.5714438687 195.8297804189 ) lq_conc/conc1_1 78.923034668 116.8842163086 0 1.8571430445 2.021276474 0 0 0
 }
 }
-// entity 66
+// entity 67
 {
 "classname" "light"
 "origin" "-160 -658 156"
@@ -4469,7 +4487,7 @@ delvenPack/dlv_wood1b
 "fade" "0.8"
 "_color" "1 0.960784 0.529412"
 }
-// entity 67
+// entity 68
 {
 "classname" "func_group"
 // brush 0
@@ -4509,7 +4527,7 @@ delvenPack/dlv_wood1b
 ( -693.4512480822 -1553.6156929128 211.9999923706 ) ( -700.2115304886 -1562.4735631007 211.9999923706 ) ( -702.7245571205 -1560.5556336927 195.8297804189 ) lq_conc/conc1_1 9.7144775391 116.2615585327 0 1.4763101339 2.0338292122 0 0 0
 }
 }
-// entity 68
+// entity 69
 {
 "classname" "light"
 "origin" "-610.954 -1621.71 148"
@@ -4519,7 +4537,7 @@ delvenPack/dlv_wood1b
 "_color" "1 0.960784 0.529412"
 "style" "10"
 }
-// entity 69
+// entity 70
 {
 "classname" "func_group"
 // brush 0
@@ -4559,7 +4577,7 @@ delvenPack/dlv_wood1b
 ( -1064.6558276183 -2459.7727158564 211.9999923706 ) ( -1064.733109378 -2470.9153054923 211.9999923706 ) ( -1067.8943235197 -2470.8933802309 195.8297804189 ) lq_conc/conc1_1 26.5217285156 115.1834335327 0 1.8570941687 2.0559370518 0 0 0
 }
 }
-// entity 70
+// entity 71
 {
 "classname" "light"
 "origin" "-952.99 -2463.01 156"
@@ -4569,7 +4587,7 @@ delvenPack/dlv_wood1b
 "_color" "1 0.960784 0.529412"
 "style" "1"
 }
-// entity 71
+// entity 72
 {
 "classname" "func_group"
 // brush 0
@@ -4609,7 +4627,7 @@ delvenPack/dlv_wood1b
 ( -1065.1682642297 -3425.9939616418 207.008558354 ) ( -1066.4571418163 -3436.9850319286 205.7053191165 ) ( -1069.3898026742 -3434.7372512829 189.6486544264 ) lq_conc/conc1_1 21.0164794922 51.4918823242 6.762134552 1.8446669579 2.0613493919 0 0 0
 }
 }
-// entity 72
+// entity 73
 {
 "classname" "light"
 "origin" "-953.918 -3435.02 150.904"
@@ -4619,7 +4637,7 @@ delvenPack/dlv_wood1b
 "_color" "1 0.960784 0.529412"
 "style" "5"
 }
-// entity 73
+// entity 74
 {
 "classname" "func_group"
 // brush 0
@@ -4659,7 +4677,7 @@ delvenPack/dlv_wood1b
 ( -1160.6558276183 -6027.7727158564 211.9999923706 ) ( -1160.733109378 -6038.9153054923 211.9999923706 ) ( -1163.8943235197 -6038.8933802309 195.8297804189 ) lq_conc/conc1_1 27.802734375 115.1834335327 0 1.8570941687 2.0559370518 0 0 0
 }
 }
-// entity 74
+// entity 75
 {
 "classname" "light"
 "origin" "-1048.99 -6031.01 156"
@@ -4669,43 +4687,43 @@ delvenPack/dlv_wood1b
 "_color" "1 0.960784 0.529412"
 "style" "10"
 }
-// entity 75
+// entity 76
 {
 "classname" "item_ammo_shotgun"
 "origin" "104 212 20"
 }
-// entity 76
+// entity 77
 {
 "classname" "item_ammo_pistol"
 "origin" "100.898 167.102 20"
 "angle" "90"
 }
-// entity 77
+// entity 78
 {
 "classname" "item_ammo_cannon"
 "origin" "96.0998 312.1 20"
 "angle" "90"
 }
-// entity 78
+// entity 79
 {
 "classname" "item_ammo_cannon"
 "origin" "96.0998 288.1 20"
 "angle" "90"
 }
-// entity 79
+// entity 80
 {
 "classname" "item_ammo_shotgun"
 "origin" "104 232 36"
 "model" "models/weapons/glock.glb"
 "modelscale" "32"
 }
-// entity 80
+// entity 81
 {
 "classname" "item_ammo_pistol"
 "origin" "100.898 139.102 20"
 "angle" "90"
 }
-// entity 81
+// entity 82
 {
 "classname" "triggerOnce"
 "target" "level_end"
@@ -4719,26 +4737,26 @@ delvenPack/dlv_wood1b
 ( -2752 -4832 16 ) ( -2752 -4672 16 ) ( -2752 -4832 32 ) lq_dev/trigger 0 0 0 1 1 0 0 0
 }
 }
-// entity 82
+// entity 83
 {
 "classname" "transformPoint"
 "origin" "-992 -5200 336"
 "targetname" "level_end_camera_start"
 }
-// entity 83
+// entity 84
 {
 "classname" "transformPoint"
 "origin" "-864 -4288 112"
 "targetname" "level_end_camera_target"
 }
-// entity 84
+// entity 85
 {
 "classname" "logic_level_end"
 "origin" "-2832 -4736 64"
 "nextLevel" "test"
 "targetname" "level_end"
 }
-// entity 85
+// entity 86
 {
 "classname" "light"
 "origin" "-1664 -5248 64"
@@ -4748,7 +4766,7 @@ delvenPack/dlv_wood1b
 "radius" "64"
 "style" "10"
 }
-// entity 86
+// entity 87
 {
 "classname" "func_group"
 // brush 0
@@ -4779,14 +4797,14 @@ delvenPack/dlv_wood1b
 ( -496 -1580 16 ) ( -496 -1580 48 ) ( -496 -1612 16 ) common/caulk 0 0 0 1 1 0 0 0
 }
 }
-// entity 87
+// entity 88
 {
 "classname" "item_key_red"
 "origin" "-1856 -4992 48"
 "model" "models/pickups/key.obj"
 "angle" "0"
 }
-// entity 88
+// entity 89
 {
 "classname" "trigger_key_once"
 "target" "b1_of1_book_hid"
@@ -4803,13 +4821,13 @@ delvenPack/dlv_wood1b
 ( -1704 -5264 24 ) ( -1704 -5264 16 ) ( -1704 -5320 24 ) common/trigger 56 0 0 1 1 0 0 0
 }
 }
-// entity 89
+// entity 90
 {
 "classname" "item_key_blue"
 "origin" "-1808 -4992 48"
 "model" "models/pickups/key.obj"
 }
-// entity 90
+// entity 91
 {
 "classname" "misc_model"
 "origin" "-591.727 -5719.03 112"
@@ -4819,7 +4837,7 @@ delvenPack/dlv_wood1b
 "_lightmapscale" "0.5"
 "spawnflags" "12"
 }
-// entity 91
+// entity 92
 {
 "classname" "misc_model"
 "origin" "-591.727 -5438.03 112"
@@ -4829,7 +4847,7 @@ delvenPack/dlv_wood1b
 "_lightmapscale" "0.5"
 "spawnflags" "12"
 }
-// entity 92
+// entity 93
 {
 "classname" "misc_model"
 "origin" "-308.897 -5718.82 112"
@@ -4839,7 +4857,7 @@ delvenPack/dlv_wood1b
 "_lightmapscale" "0.5"
 "spawnflags" "12"
 }
-// entity 93
+// entity 94
 {
 "classname" "misc_model"
 "origin" "-309.107 -5437.99 112"
@@ -4848,13 +4866,13 @@ delvenPack/dlv_wood1b
 "_lightmapscale" "0.5"
 "spawnflags" "12"
 }
-// entity 94
+// entity 95
 {
 "classname" "light"
 "origin" "-443 -5679 152"
 "light" "200"
 }
-// entity 95
+// entity 96
 {
 "classname" "misc_model"
 "origin" "-248.897 -5778.82 47"
@@ -4863,7 +4881,7 @@ delvenPack/dlv_wood1b
 "angle" "-90"
 "_lightmapscale" "0.5"
 }
-// entity 96
+// entity 97
 {
 "classname" "misc_model"
 "origin" "-398.754 -5798.24 47"
@@ -4872,7 +4890,7 @@ delvenPack/dlv_wood1b
 "angle" "14.8097"
 "_lightmapscale" "0.5"
 }
-// entity 97
+// entity 98
 {
 "classname" "misc_model"
 "origin" "-589.897 -5696.82 21"
@@ -4881,7 +4899,7 @@ delvenPack/dlv_wood1b
 "angle" "-90"
 "_lightmapscale" "0.5"
 }
-// entity 98
+// entity 99
 {
 "classname" "misc_model"
 "origin" "-589.897 -5391.82 21"
@@ -4890,7 +4908,7 @@ delvenPack/dlv_wood1b
 "angle" "-90"
 "_lightmapscale" "0.5"
 }
-// entity 99
+// entity 100
 {
 "classname" "misc_model"
 "origin" "-374.897 -5437.82 21"
@@ -4899,7 +4917,7 @@ delvenPack/dlv_wood1b
 "angle" "-90"
 "_lightmapscale" "0.5"
 }
-// entity 100
+// entity 101
 {
 "classname" "func_physics_dynamic"
 "angle" "0"
@@ -4932,7 +4950,7 @@ delvenPack/dlv_wood1b
 ( -16 -320 96 ) ( -16 -272 96 ) ( -16 -320 112 ) lq_props/radiowood 0 0 0 1 1 0 0 0
 }
 }
-// entity 101
+// entity 102
 {
 "classname" "trigger_ladder"
 "angle" "0"
@@ -4947,7 +4965,7 @@ delvenPack/dlv_wood1b
 ( -288 180 20 ) ( -288 252 20 ) ( -288 180 22 ) common/trigger 0 0 0 1 1 0 0 0
 }
 }
-// entity 102
+// entity 103
 {
 "classname" "func_group"
 // brush 0
@@ -4960,7 +4978,7 @@ delvenPack/dlv_wood1b
 ( 128 64 16 ) ( 128 64 17 ) ( 128 65 16 ) lq_conc/conc1_1 0 0 0 0.5 0.5 0 0 0
 }
 }
-// entity 103
+// entity 104
 {
 "classname" "func_group"
 // brush 0
@@ -4973,7 +4991,7 @@ delvenPack/dlv_wood1b
 ( -1024 -3712 16 ) ( -896 -3712 16 ) ( -1024 -3712 144 ) common/caulk 0 0 0 1 1 0 0 0
 }
 }
-// entity 104
+// entity 105
 {
 "classname" "func_door"
 "targetname" "dh1"
@@ -4989,14 +5007,14 @@ delvenPack/dlv_wood1b
 ( -1936.5 -5180.5 16.0000009537 ) ( -1912.5 -5180.5 16.0000009537 ) ( -1936.5 -5180.5 23.2098775788 ) psx_mega_pack/door_1 70 32 -0 0.5 0.5 0 0 0
 }
 }
-// entity 105
+// entity 106
 {
 "classname" "transformPoint"
 "origin" "-1915 -5181 90"
 "angle" "250"
 "targetname" "dhrp1"
 }
-// entity 106
+// entity 107
 {
 "classname" "trigger"
 "target" "dh1"
@@ -5012,177 +5030,177 @@ delvenPack/dlv_wood1b
 ( -1968 -5232 16 ) ( -1968 -5152 16 ) ( -1968 -5232 32 ) common/trigger 496 0 0 1 1 0 0 0
 }
 }
-// entity 107
+// entity 108
 {
 "classname" "misc_model"
 "origin" "-32 -5536 160"
 "model" "models/cube.obj"
 }
-// entity 108
+// entity 109
 {
 "classname" "misc_model"
 "origin" "-48 -5536 160"
 "model" "models/cube.obj"
 }
-// entity 109
+// entity 110
 {
 "classname" "nav_point"
 "origin" "32 -752 16"
 "targetname" "test_walk_1"
 "target" "test_walk_2"
 }
-// entity 110
+// entity 111
 {
 "classname" "nav_point"
 "origin" "32 -816 16"
 "targetname" "test_walk_2"
 "target" "test_walk_3"
 }
-// entity 111
+// entity 112
 {
 "classname" "nav_point"
 "origin" "-80 -896 16"
 "targetname" "test_walk_3"
 "target" "test_walk_4"
 }
-// entity 112
+// entity 113
 {
 "classname" "nav_point"
 "origin" "-96 -944 16"
 "targetname" "test_walk_4"
 "target" "test_walk_5"
 }
-// entity 113
+// entity 114
 {
 "classname" "nav_point"
 "origin" "-80 -1024 16"
 "targetname" "test_walk_5"
 "target" "test_walk_6"
 }
-// entity 114
+// entity 115
 {
 "classname" "nav_point"
 "origin" "32 -1024 16"
 "targetname" "test_walk_6"
 "target" "test_walk_7"
 }
-// entity 115
+// entity 116
 {
 "classname" "nav_point"
 "origin" "16 -1104 16"
 "targetname" "test_walk_7"
 "target" "test_walk_8"
 }
-// entity 116
+// entity 117
 {
 "classname" "nav_point"
 "origin" "-160 -1120 16"
 "targetname" "test_walk_8"
 "target" "test_walk_9"
 }
-// entity 117
+// entity 118
 {
 "classname" "nav_point"
 "origin" "-160 -912 16"
 "targetname" "test_walk_9"
 "target" "test_walk_10"
 }
-// entity 118
+// entity 119
 {
 "classname" "nav_point"
 "origin" "-64 -704 16"
 "targetname" "test_walk_10"
 "target" "test_walk_11"
 }
-// entity 119
+// entity 120
 {
 "classname" "nav_point"
 "origin" "32 -704 16"
 "targetname" "test_walk_11"
 "target" "test_walk_12"
 }
-// entity 120
+// entity 121
 {
 "classname" "npc_guard"
 "origin" "-80 -576 128"
 "target" "test_walk_1"
 }
-// entity 121
+// entity 122
 {
 "classname" "nav_point"
 "origin" "32 -672 16"
 "targetname" "test_walk_12"
 "target" "test_walk_13"
 }
-// entity 122
+// entity 123
 {
 "classname" "nav_point"
 "origin" "32 -608 16"
 "targetname" "test_walk_13"
 "target" "test_walk_14"
 }
-// entity 123
+// entity 124
 {
 "classname" "nav_point"
 "origin" "0 -576 16"
 "targetname" "test_walk_14"
 "target" "test_walk_15"
 }
-// entity 124
+// entity 125
 {
 "classname" "nav_point"
 "origin" "-144 -592 16"
 "targetname" "test_walk_15"
 "target" "test_walk_16"
 }
-// entity 125
+// entity 126
 {
 "classname" "nav_point"
 "origin" "-144 -656 16"
 "targetname" "test_walk_16"
 "target" "test_walk_17"
 }
-// entity 126
+// entity 127
 {
 "classname" "nav_point"
 "origin" "-144 -688 16"
 "targetname" "test_walk_17"
 "target" "test_walk_18"
 }
-// entity 127
+// entity 128
 {
 "classname" "nav_point"
 "origin" "-112 -704 16"
 "targetname" "test_walk_18"
 "target" "test_walk_19"
 }
-// entity 128
+// entity 129
 {
 "classname" "nav_point"
 "origin" "-80 -752 16"
 "targetname" "test_walk_19"
 "target" "test_walk_20"
 }
-// entity 129
+// entity 130
 {
 "classname" "nav_point"
 "origin" "-48 -784 16"
 "targetname" "test_walk_20"
 "target" "test_walk_21"
 }
-// entity 130
+// entity 131
 {
 "classname" "nav_point"
 "origin" "-16 -752 16"
 "targetname" "test_walk_21"
 "target" "test_walk_1"
 }
-// entity 131
+// entity 132
 {
 "classname" "networkTestCube"
 "origin" "-80 -48 64"
 }
-// entity 132
+// entity 133
 {
 "classname" "func_door"
 "targetname" "test_move_1"
@@ -5198,7 +5216,7 @@ delvenPack/dlv_wood1b
 ( -384 -16 16 ) ( -384 80 16 ) ( -384 -16 32 ) delvenPack/dlv_metalpip2a -0 0 0 1 1 0 0 0
 }
 }
-// entity 133
+// entity 134
 {
 "classname" "trigger"
 "onEnterAction" "open"
@@ -5214,37 +5232,37 @@ delvenPack/dlv_wood1b
 ( -384 -16 32 ) ( -384 80 32 ) ( -384 -16 48 ) common/trigger 0 16 0 1 1 0 0 0
 }
 }
-// entity 134
+// entity 135
 {
 "classname" "item_weapon_cane"
 "origin" "80 416 64"
 "modelscale" "48"
 }
-// entity 135
+// entity 136
 {
 "classname" "item_weapon_pistol"
 "origin" "80 384 64"
 "modelscale" "48"
 }
-// entity 136
+// entity 137
 {
 "classname" "item_weapon_shotgun"
 "origin" "96 352 48"
 "modelscale" "48"
 }
-// entity 137
+// entity 138
 {
 "classname" "item_weapon_smg"
 "origin" "128 320 64"
 "modelscale" "48"
 }
-// entity 138
+// entity 139
 {
 "classname" "item_weapon_twinswords"
 "origin" "64 352 48"
 "modelscale" "48"
 }
-// entity 139
+// entity 140
 {
 "classname" "item_weapon_cannon"
 "origin" "128 384 48"

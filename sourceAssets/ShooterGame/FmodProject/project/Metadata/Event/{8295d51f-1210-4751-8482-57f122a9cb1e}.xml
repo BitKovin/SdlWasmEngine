@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<objects serializationModel="Studio.02.03.00">
+<objects serializationModel="Studio.02.02.00">
 	<object class="Event" id="{8295d51f-1210-4751-8482-57f122a9cb1e}">
 		<property name="name">
 			<value>take control</value>
@@ -76,7 +76,7 @@
 			<destination>{920bb3be-fc94-416a-895a-1cefa2968ae0}</destination>
 		</relationship>
 		<relationship name="output">
-			<destination>{af9d027a-3a1f-49a8-a9ef-4cbe20673632}</destination>
+			<destination>{7e33a2b3-db05-4b7a-ba1e-e862f2bfde36}</destination>
 		</relationship>
 	</object>
 	<object class="EventAutomatableProperties" id="{02014d34-abb1-402b-a37d-c28bcb2f0e68}">
@@ -325,9 +325,6 @@
 		</relationship>
 	</object>
 	<object class="TransitionDestinationSound" id="{97ef42f5-680d-4751-92d9-675cf1e91364}">
-		<property name="length">
-			<value>1.0000000000000004</value>
-		</property>
 		<relationship name="fadeInCurve">
 			<destination>{aee37c7e-72e5-46a5-b09c-09e09b0f93eb}</destination>
 		</relationship>

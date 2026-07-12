@@ -7975,3 +7975,51 @@ default
 	sampleSize 0
 }
 
+1118 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/trigger
+	entity 141
+	castShadows 0
+	sampleSize 0
+}
+
+1119 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/trigger
+	entity 141
+	castShadows 0
+	sampleSize 0
+}
+
+1120 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/trigger
+	entity 141
+	castShadows 0
+	sampleSize 0
+}
+
+1121 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/trigger
+	entity 141
+	castShadows 0
+	sampleSize 0
+}
+
+1122 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/trigger
+	entity 141
+	castShadows 0
+	sampleSize 0
+}
+
+1123 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/trigger
+	entity 141
+	castShadows 0
+	sampleSize 0
+}
+

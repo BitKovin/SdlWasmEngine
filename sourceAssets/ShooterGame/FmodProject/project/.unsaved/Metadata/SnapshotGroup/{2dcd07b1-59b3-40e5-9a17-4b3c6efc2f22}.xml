@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.02.00">
+	<object class="SnapshotGroup" id="{2dcd07b1-59b3-40e5-9a17-4b3c6efc2f22}">
+		<property name="name">
+			<value>Reverb</value>
+		</property>
+		<relationship name="items">
+			<destination>{b695eec0-fe78-4755-b806-9690c06dfc0b}</destination>
+			<destination>{c107e28e-873b-4caa-9492-68fe72210c48}</destination>
+			<destination>{611d2758-9a7a-4ab7-94c2-de31539a44d7}</destination>
+		</relationship>
+	</object>
+</objects>
