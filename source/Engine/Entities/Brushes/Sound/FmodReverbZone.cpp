@@ -44,9 +44,22 @@ FmodReverbZone::~FmodReverbZone()
 	}
 }
 
+void FmodReverbZone::Update()
+{
+
+	AreaBase::Update();
+
+	UpdatedThisFrame = false;
+
+}
+
 void FmodReverbZone::LateUpdate()
 {
 	AreaBase::LateUpdate();
+
+	if (UpdatedThisFrame) return;
+
+	UpdatedThisFrame = true;
 
 	// Guard against updates running during teardown
 	if (InstanceCount <= 0) return;

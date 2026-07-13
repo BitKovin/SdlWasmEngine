@@ -11,6 +11,8 @@ public:
 	FmodReverbZone();
 	~FmodReverbZone();
 
+	void Update() override;
+
 	void LateUpdate();
 	void FromData(EntityData data) override;
 
@@ -29,4 +31,7 @@ private:
 	// Track instances to safely clean up the static event and handle updates
 	static int InstanceCount;
 	static FmodReverbZone* FallbackUpdater;
+
+	static inline bool UpdatedThisFrame = false;
+
 };
