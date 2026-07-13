@@ -4,9 +4,6 @@
 		<property name="name">
 			<value>Outdoor Reverb</value>
 		</property>
-		<property name="behavior">
-			<value>1</value>
-		</property>
 		<relationship name="mixer">
 			<destination>{204ed808-83ea-42f4-b502-9b293dd2b6ba}</destination>
 		</relationship>
@@ -34,6 +31,7 @@
 			<destination>{2007c9f5-1622-4826-b86a-a41e276b929f}</destination>
 			<destination>{24631412-5fef-4eeb-a75c-a8b70ca3c2a0}</destination>
 			<destination>{94332299-a5e7-4976-ade9-64344ec062cc}</destination>
+			<destination>{dbb82b78-3ddc-46bd-af88-d5ae2eb0fa4a}</destination>
 		</relationship>
 		<relationship name="snapshotTracks">
 			<destination>{18df3eb9-c331-469d-8e3f-cf157723fe60}</destination>
@@ -64,7 +62,7 @@
 			<value>decayTime</value>
 		</property>
 		<property name="value">
-			<value>2500</value>
+			<value>4000</value>
 		</property>
 		<relationship name="automatableObject">
 			<destination>{14730547-569d-4f6f-8348-b9db65f87eb1}</destination>
@@ -75,7 +73,7 @@
 			<value>feedback</value>
 		</property>
 		<property name="value">
-			<value>0</value>
+			<value>11.5</value>
 		</property>
 		<relationship name="automatableObject">
 			<destination>{0e820b92-ce0a-49b8-9864-8a3c8233cd15}</destination>
@@ -86,7 +84,7 @@
 			<value>level</value>
 		</property>
 		<property name="value">
-			<value>-80</value>
+			<value>-32</value>
 		</property>
 		<relationship name="automatableObject">
 			<destination>{0e820b92-ce0a-49b8-9864-8a3c8233cd15}</destination>
@@ -97,7 +95,7 @@
 			<value>earlyDelay</value>
 		</property>
 		<property name="value">
-			<value>16</value>
+			<value>16.5</value>
 		</property>
 		<relationship name="automatableObject">
 			<destination>{14730547-569d-4f6f-8348-b9db65f87eb1}</destination>
@@ -108,7 +106,7 @@
 			<value>lateDelay</value>
 		</property>
 		<property name="value">
-			<value>17</value>
+			<value>15</value>
 		</property>
 		<relationship name="automatableObject">
 			<destination>{14730547-569d-4f6f-8348-b9db65f87eb1}</destination>
@@ -119,7 +117,7 @@
 			<value>HFDecayRatio</value>
 		</property>
 		<property name="value">
-			<value>48.5</value>
+			<value>33</value>
 		</property>
 		<relationship name="automatableObject">
 			<destination>{14730547-569d-4f6f-8348-b9db65f87eb1}</destination>
@@ -130,7 +128,7 @@
 			<value>HFReference</value>
 		</property>
 		<property name="value">
-			<value>3000</value>
+			<value>2800</value>
 		</property>
 		<relationship name="automatableObject">
 			<destination>{14730547-569d-4f6f-8348-b9db65f87eb1}</destination>
@@ -141,7 +139,7 @@
 			<value>diffusion</value>
 		</property>
 		<property name="value">
-			<value>58</value>
+			<value>73.5</value>
 		</property>
 		<relationship name="automatableObject">
 			<destination>{14730547-569d-4f6f-8348-b9db65f87eb1}</destination>
@@ -152,7 +150,7 @@
 			<value>wetLevel</value>
 		</property>
 		<property name="value">
-			<value>-17</value>
+			<value>-27</value>
 		</property>
 		<relationship name="automatableObject">
 			<destination>{14730547-569d-4f6f-8348-b9db65f87eb1}</destination>
@@ -163,10 +161,21 @@
 			<value>delay</value>
 		</property>
 		<property name="value">
-			<value>2000</value>
+			<value>500</value>
 		</property>
 		<relationship name="automatableObject">
 			<destination>{0e820b92-ce0a-49b8-9864-8a3c8233cd15}</destination>
+		</relationship>
+	</object>
+	<object class="SnapshotProperty" id="{dbb82b78-3ddc-46bd-af88-d5ae2eb0fa4a}">
+		<property name="propertyName">
+			<value>density</value>
+		</property>
+		<property name="value">
+			<value>70</value>
+		</property>
+		<relationship name="automatableObject">
+			<destination>{14730547-569d-4f6f-8348-b9db65f87eb1}</destination>
 		</relationship>
 	</object>
 	<object class="SnapshotTrack" id="{18df3eb9-c331-469d-8e3f-cf157723fe60}">
@@ -183,9 +192,6 @@
 		<property name="nameOfPropertyBeingModulated">
 			<value>snapshotIntensity</value>
 		</property>
-		<property name="attackTime">
-			<value>0</value>
-		</property>
 		<property name="peakValue">
 			<value>100</value>
 		</property>
@@ -197,9 +203,6 @@
 		</property>
 		<property name="sustainValue">
 			<value>100</value>
-		</property>
-		<property name="releaseTime">
-			<value>0</value>
 		</property>
 	</object>
 </objects>

@@ -4,9 +4,6 @@
 		<property name="name">
 			<value>Castle Reverb</value>
 		</property>
-		<property name="behavior">
-			<value>1</value>
-		</property>
 		<relationship name="mixer">
 			<destination>{204ed808-83ea-42f4-b502-9b293dd2b6ba}</destination>
 		</relationship>
@@ -35,6 +32,7 @@
 			<destination>{3a46608a-2817-4be1-9233-188b04f1ab7b}</destination>
 			<destination>{c97215ca-6b45-416e-ab8c-5b910798d989}</destination>
 			<destination>{29b416e4-9649-42ea-a36e-527556b34f9c}</destination>
+			<destination>{46c9c86c-a2d3-4771-8de6-72132b152eed}</destination>
 		</relationship>
 		<relationship name="snapshotTracks">
 			<destination>{b1ff59f6-f5d2-43f5-b70b-cd6aab17c9c3}</destination>
@@ -65,7 +63,7 @@
 			<value>decayTime</value>
 		</property>
 		<property name="value">
-			<value>4700</value>
+			<value>5500</value>
 		</property>
 		<relationship name="automatableObject">
 			<destination>{14730547-569d-4f6f-8348-b9db65f87eb1}</destination>
@@ -76,7 +74,7 @@
 			<value>delay</value>
 		</property>
 		<property name="value">
-			<value>360</value>
+			<value>400</value>
 		</property>
 		<relationship name="automatableObject">
 			<destination>{0e820b92-ce0a-49b8-9864-8a3c8233cd15}</destination>
@@ -87,7 +85,7 @@
 			<value>feedback</value>
 		</property>
 		<property name="value">
-			<value>22</value>
+			<value>28.5</value>
 		</property>
 		<relationship name="automatableObject">
 			<destination>{0e820b92-ce0a-49b8-9864-8a3c8233cd15}</destination>
@@ -98,7 +96,7 @@
 			<value>level</value>
 		</property>
 		<property name="value">
-			<value>-20</value>
+			<value>-24.5</value>
 		</property>
 		<relationship name="automatableObject">
 			<destination>{0e820b92-ce0a-49b8-9864-8a3c8233cd15}</destination>
@@ -142,7 +140,7 @@
 			<value>HFDecayRatio</value>
 		</property>
 		<property name="value">
-			<value>48.5</value>
+			<value>49.5</value>
 		</property>
 		<relationship name="automatableObject">
 			<destination>{14730547-569d-4f6f-8348-b9db65f87eb1}</destination>
@@ -164,7 +162,7 @@
 			<value>diffusion</value>
 		</property>
 		<property name="value">
-			<value>58</value>
+			<value>0</value>
 		</property>
 		<relationship name="automatableObject">
 			<destination>{14730547-569d-4f6f-8348-b9db65f87eb1}</destination>
@@ -175,7 +173,18 @@
 			<value>wetLevel</value>
 		</property>
 		<property name="value">
-			<value>-1</value>
+			<value>-5</value>
+		</property>
+		<relationship name="automatableObject">
+			<destination>{14730547-569d-4f6f-8348-b9db65f87eb1}</destination>
+		</relationship>
+	</object>
+	<object class="SnapshotProperty" id="{46c9c86c-a2d3-4771-8de6-72132b152eed}">
+		<property name="propertyName">
+			<value>density</value>
+		</property>
+		<property name="value">
+			<value>100</value>
 		</property>
 		<relationship name="automatableObject">
 			<destination>{14730547-569d-4f6f-8348-b9db65f87eb1}</destination>
@@ -195,9 +204,6 @@
 		<property name="nameOfPropertyBeingModulated">
 			<value>snapshotIntensity</value>
 		</property>
-		<property name="attackTime">
-			<value>0</value>
-		</property>
 		<property name="peakValue">
 			<value>100</value>
 		</property>
@@ -209,9 +215,6 @@
 		</property>
 		<property name="sustainValue">
 			<value>100</value>
-		</property>
-		<property name="releaseTime">
-			<value>2000</value>
 		</property>
 	</object>
 </objects>

@@ -33,21 +33,21 @@
 <command>[q3map2] -meta &quot;[MapFile]&quot;</command>
 <command></command>
 <command>[q3map2] -vis -saveprt &quot;[MapFile]&quot;</command>
-<command>[q3map2] -light -fast -patchshadows -samples 2 -filter -bounce 2 -shade -bouncegrid -gamma 1.7 -compensate 1.3 -threads 24 -dirty -dirtscale 2.0 -dirtdepth 64 -dirtgain 2.0 -lightmapsize 256 &quot;[MapFile]&quot;</command>
+<command>[q3map2] -light -fast -patchshadows -samples 2 -filter -bounce 2 -shade -bouncegrid -gamma 1.7 -compensate 1.0 -threads 24 -dirty -dirtscale 2.0 -dirtdepth 64 -dirtgain 2.0 -lightmapsize 256 &quot;[MapFile]&quot;</command>
 <command>[bspzip] &quot;[BspFile]&quot;</command>
 </build>
 <build name="(Final) Normal">
 <command>[q3map2] -meta &quot;[MapFile]&quot;</command>
 <command></command>
 <command>[q3map2] -vis -saveprt &quot;[MapFile]&quot;</command>
-<command>[q3map2] -light -fast -patchshadows -samples 4 -super 2 -shade -samplesize 2 -bouncegrid -filter -filterwindow 2 -dirty -dirtscale 2.0 -dirtdepth 64 -dirtgain 2.0 -bounce 5 -gamma 1.7 -compensate 1.3 -threads 24 -lightmapsize 1024 &quot;[MapFile]&quot;</command>
+<command>[q3map2] -light -fast -patchshadows -samples 4 -super 2 -shade -samplesize 2 -bouncegrid -filter -filterwindow 2 -dirty -dirtscale 2.0 -dirtdepth 64 -dirtgain 2.0 -bounce 5 -gamma 1.7 -compensate 1.0 -threads 24 -lightmapsize 1024 &quot;[MapFile]&quot;</command>
 <command>[bspzip] &quot;[BspFile]&quot;</command>
 </build>
 <build name="(Final) Best (very long. No practical needd)">
 <command>[q3map2] -meta &quot;[MapFile]&quot;</command>
 <command></command>
 <command>[q3map2] -vis -saveprt &quot;[MapFile]&quot;</command>
-<command>[q3map2] -light -patchshadows -samples 4 -super 2 -shade -samplesize 2 -bouncegrid -filter -filterwindow 2 -dirty -dirtscale 2.0 -dirtdepth 64 -dirtgain 2.0 -bounce 5 -gamma 1.7 -compensate 1.3 -threads 24 -lightmapsize 512 &quot;[MapFile]&quot;</command>
+<command>[q3map2] -light -patchshadows -samples 4 -super 2 -shade -samplesize 2 -bouncegrid -filter -filterwindow 2 -dirty -dirtscale 2.0 -dirtdepth 64 -dirtgain 2.0 -bounce 5 -gamma 1.7 -compensate 1.0 -threads 24 -lightmapsize 512 &quot;[MapFile]&quot;</command>
 <command>[bspzip] &quot;[BspFile]&quot;</command>
 </build>
 <separator/>

@@ -5,8 +5,6 @@
 			<value>Reverb</value>
 		</property>
 		<relationship name="items">
-			<destination>{b695eec0-fe78-4755-b806-9690c06dfc0b}</destination>
-			<destination>{c107e28e-873b-4caa-9492-68fe72210c48}</destination>
 			<destination>{cc302f09-3be4-4da0-8223-d84ed0df93dc}</destination>
 			<destination>{fddfd1d5-c48b-4742-bb66-abdb87bf0064}</destination>
 		</relationship>
