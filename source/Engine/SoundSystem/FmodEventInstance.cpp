@@ -81,17 +81,29 @@ FmodEventInstance::FmodEventInstance(FMOD::Studio::EventInstance* instance)
 
 FmodEventInstance::~FmodEventInstance()
 {
-    // Stop event and prevent further callbacks
     if (eventInstance)
     {
-        eventInstance->stop(FMOD_STUDIO_STOP_IMMEDIATE);
+        // Check if the event is already stopped or stopping. 
+        // If not, allow it to fade out naturally rather than cutting it off.
+        FMOD_STUDIO_PLAYBACK_STATE state;
+        eventInstance->getPlaybackState(&state);
+
+        if (state != FMOD_STUDIO_PLAYBACK_STOPPED && state != FMOD_STUDIO_PLAYBACK_STOPPING)
+        {
+            eventInstance->stop(FMOD_STUDIO_STOP_ALLOWFADEOUT);
+        }
+
         eventInstance->setUserData(nullptr);
         eventInstance->setCallback(nullptr);
+
+        // This tells FMOD's internal system to free the memory ONLY AFTER 
+        // the event fully finishes its AHDSR release fade.
         eventInstance->release();
+
         eventInstance = nullptr;
     }
 
-    // Release any remaining owned sounds
+    // Release any remaining owned sounds (for programmer sounds)
     std::lock_guard<std::mutex> lock(ownedSoundsMutex);
     for (auto* sound : ownedSounds) {
         sound->release();
@@ -107,7 +119,7 @@ void FmodEventInstance::Play()
     eventInstance->getPlaybackState(&state);
 
     if (state == FMOD_STUDIO_PLAYBACK_PLAYING) {
-        eventInstance->stop(FMOD_STUDIO_STOP_IMMEDIATE);
+        eventInstance->stop(FMOD_STUDIO_STOP_ALLOWFADEOUT);
     }
 
     eventInstance->start();

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.02.00">
+	<object class="SnapshotGroup" id="{c90d5dd6-094a-4132-9c94-137562e14a09}">
+		<property name="name">
+			<value>New Group</value>
+		</property>
+		<relationship name="items">
+			<destination>{5df38727-3aa5-47de-a379-575ad41a1142}</destination>
+		</relationship>
+	</object>
+</objects>

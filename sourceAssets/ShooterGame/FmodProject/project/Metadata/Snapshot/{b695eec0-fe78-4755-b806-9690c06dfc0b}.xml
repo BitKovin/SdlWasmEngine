@@ -25,6 +25,9 @@
 		<relationship name="snapshotProperties">
 			<destination>{469aa081-86d7-4f46-b3fb-d9eb48fc3698}</destination>
 			<destination>{8ea59954-5621-4f43-a3a8-0a61ac36397d}</destination>
+			<destination>{5a0b0bb5-f3b5-4838-9952-f109b6cbcc47}</destination>
+			<destination>{08c72623-f4d2-46f1-a558-9494e87609c9}</destination>
+			<destination>{4d119cd4-d641-4a65-a113-10f1238cfe89}</destination>
 		</relationship>
 		<relationship name="snapshotTracks">
 			<destination>{b4d37818-6771-43bd-b1ab-9744ef7ea508}</destination>
@@ -61,6 +64,39 @@
 			<destination>{14730547-569d-4f6f-8348-b9db65f87eb1}</destination>
 		</relationship>
 	</object>
+	<object class="SnapshotProperty" id="{5a0b0bb5-f3b5-4838-9952-f109b6cbcc47}">
+		<property name="propertyName">
+			<value>level</value>
+		</property>
+		<property name="value">
+			<value>-80</value>
+		</property>
+		<relationship name="automatableObject">
+			<destination>{0e820b92-ce0a-49b8-9864-8a3c8233cd15}</destination>
+		</relationship>
+	</object>
+	<object class="SnapshotProperty" id="{08c72623-f4d2-46f1-a558-9494e87609c9}">
+		<property name="propertyName">
+			<value>delay</value>
+		</property>
+		<property name="value">
+			<value>1</value>
+		</property>
+		<relationship name="automatableObject">
+			<destination>{0e820b92-ce0a-49b8-9864-8a3c8233cd15}</destination>
+		</relationship>
+	</object>
+	<object class="SnapshotProperty" id="{4d119cd4-d641-4a65-a113-10f1238cfe89}">
+		<property name="propertyName">
+			<value>feedback</value>
+		</property>
+		<property name="value">
+			<value>0</value>
+		</property>
+		<relationship name="automatableObject">
+			<destination>{0e820b92-ce0a-49b8-9864-8a3c8233cd15}</destination>
+		</relationship>
+	</object>
 	<object class="SnapshotTrack" id="{b4d37818-6771-43bd-b1ab-9744ef7ea508}">
 		<relationship name="mixerStrip">
 			<destination>{d320eb98-3d4a-4cd9-a001-fdb4e071c58e}</destination>
@@ -75,11 +111,20 @@
 		<property name="nameOfPropertyBeingModulated">
 			<value>snapshotIntensity</value>
 		</property>
+		<property name="attackTime">
+			<value>1</value>
+		</property>
 		<property name="peakValue">
 			<value>100</value>
 		</property>
+		<property name="decayTime">
+			<value>60000</value>
+		</property>
 		<property name="sustainValue">
 			<value>100</value>
+		</property>
+		<property name="releaseShape">
+			<value>0.389520258</value>
 		</property>
 	</object>
 </objects>

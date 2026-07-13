@@ -76,7 +76,7 @@
 			<value>delay</value>
 		</property>
 		<property name="value">
-			<value>420</value>
+			<value>360</value>
 		</property>
 		<relationship name="automatableObject">
 			<destination>{0e820b92-ce0a-49b8-9864-8a3c8233cd15}</destination>
@@ -98,7 +98,7 @@
 			<value>level</value>
 		</property>
 		<property name="value">
-			<value>-22.5</value>
+			<value>-20</value>
 		</property>
 		<relationship name="automatableObject">
 			<destination>{0e820b92-ce0a-49b8-9864-8a3c8233cd15}</destination>
@@ -195,11 +195,23 @@
 		<property name="nameOfPropertyBeingModulated">
 			<value>snapshotIntensity</value>
 		</property>
+		<property name="attackTime">
+			<value>0</value>
+		</property>
 		<property name="peakValue">
 			<value>100</value>
 		</property>
+		<property name="holdTime">
+			<value>0</value>
+		</property>
+		<property name="decayTime">
+			<value>0</value>
+		</property>
 		<property name="sustainValue">
 			<value>100</value>
+		</property>
+		<property name="releaseTime">
+			<value>2000</value>
 		</property>
 	</object>
 </objects>

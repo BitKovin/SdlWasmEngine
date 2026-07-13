@@ -7,6 +7,7 @@
 "gridsize" "32 32 32"
 "_tb_mod" "textures"
 "_lightmapscale" "0.5"
+"reverbSnapshot" "snapshot:/Reverb/Outdoor Reverb"
 // brush 0
 {
 ( -1184 -1024 -32 ) ( -1184 -1023 -32 ) ( -1184 -1024 -31 ) building_1/b1_f1 -20 20 0 1 1 0 0 0

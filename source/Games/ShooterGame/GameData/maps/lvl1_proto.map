@@ -5250,6 +5250,7 @@ delvenPack/dlv_wood1b
 // entity 141
 {
 "classname" "snd_reverb_zone"
+"snapshot" "snapshot:/Reverb/Castle Reverb"
 // brush 0
 {
 ( -240 -5312 208 ) ( -240 -5840 208 ) ( -688 -5312 208 ) common/trigger 0 0 0 1 1 0 0 0
