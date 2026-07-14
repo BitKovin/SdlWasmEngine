@@ -36,6 +36,7 @@ std::unordered_set<SDL_Scancode> Input::activeKeys;
 bool Input::lmbHeld        = false;
 bool Input::rmbHeld        = false;
 bool Input::mmbHeld        = false;
+std::unordered_set<uint8_t> Input::activeMouseButtons;
 std::unordered_set<int> Input::activeJoystickButtons;
 float Input::leftTriggerAxis  = 0.f;
 float Input::rightTriggerAxis = 0.f;
@@ -46,6 +47,21 @@ InputAction InputAction::NullAction = InputAction();
 static float Distance(const glm::vec2& a, const glm::vec2& b) {
     glm::vec2 diff = a - b;
     return std::sqrt(diff.x * diff.x + diff.y * diff.y);
+}
+
+// Maps a raw SDL mouse button code to the engine's custom index scheme
+// (see the MouseButton namespace in Input.h). X1/X2 and any further side
+// buttons pack in sequentially starting at MouseButton::Side1.
+static uint8_t SdlButtonToIndex(Uint8 sdlButton)
+{
+    switch (sdlButton)
+    {
+    case SDL_BUTTON_LEFT:   return MouseButton::Left;
+    case SDL_BUTTON_RIGHT:  return MouseButton::Right;
+    case SDL_BUTTON_MIDDLE: return MouseButton::Middle;
+    default:
+        return static_cast<uint8_t>(MouseButton::Side1 + (sdlButton - SDL_BUTTON_X1));
+    }
 }
 
 void Input::Update() {
@@ -314,12 +330,16 @@ void Input::ReceiveSdlEvent(SDL_Event event)
         if (event.button.button == SDL_BUTTON_LEFT)   lmbHeld = true;
         if (event.button.button == SDL_BUTTON_RIGHT)  rmbHeld = true;
         if (event.button.button == SDL_BUTTON_MIDDLE) mmbHeld = true;
+
+        activeMouseButtons.insert(SdlButtonToIndex(event.button.button));
     }
     else if (event.type == SDL_MOUSEBUTTONUP)
     {
         if (event.button.button == SDL_BUTTON_LEFT)   lmbHeld = false;
         if (event.button.button == SDL_BUTTON_RIGHT)  rmbHeld = false;
         if (event.button.button == SDL_BUTTON_MIDDLE) mmbHeld = false;
+
+        activeMouseButtons.erase(SdlButtonToIndex(event.button.button));
     }
 
     // ------------------------------------------------------------------
@@ -361,6 +381,7 @@ void Input::ReceiveSdlEvent(SDL_Event event)
             lmbHeld = false;
             rmbHeld = false;
             mmbHeld = false;
+            activeMouseButtons.clear();
             activeJoystickButtons.clear();
             leftTriggerAxis  = 0.f;
             rightTriggerAxis = 0.f;
@@ -573,6 +594,7 @@ void Input::ReleaseAllActions()
     lmbHeld = false;
     rmbHeld = false;
     mmbHeld = false;
+    activeMouseButtons.clear();
     activeJoystickButtons.clear();
     leftTriggerAxis  = 0.f;
     rightTriggerAxis = 0.f;
@@ -631,6 +653,16 @@ InputAction* InputAction::RemoveButton(GamepadButton button) {
     return this;
 }
 
+InputAction* InputAction::AddMouseButton(uint8_t button) {
+    mouseButtons.push_back(button);
+    return this;
+}
+
+InputAction* InputAction::RemoveMouseButton(uint8_t button) {
+    mouseButtons.erase(std::remove(mouseButtons.begin(), mouseButtons.end(), button), mouseButtons.end());
+    return this;
+}
+
 void InputAction::SimulatePressed()
 {
     pressed = true;
@@ -685,21 +717,16 @@ void InputAction::Update() {
 
     // ------------------------------------------------------------------
     // Mouse buttons — read from event-driven state, not SDL_GetMouseState.
+    // Screen-touch suppresses mouse buttons entirely, same as before.
     // ------------------------------------------------------------------
-    bool newLmb = Input::lmbHeld;
-    bool newRmb = Input::rmbHeld;
-    bool newMmb = Input::mmbHeld;
-
-    if (Input::IsScrenTouched)
+    if (!Input::IsScrenTouched)
     {
-        newLmb = false;
-        newRmb = false;
-        newMmb = false;
+        for (uint8_t mouseButton : mouseButtons)
+        {
+            if (Input::activeMouseButtons.count(mouseButton))
+                pressing = true;
+        }
     }
-
-    if (LMB && newLmb) pressing = true;
-    if (RMB && newRmb) pressing = true;
-    if (MMB && newMmb) pressing = true;
 
     // ------------------------------------------------------------------
     // Keyboard — read from event-driven activeKeys set.

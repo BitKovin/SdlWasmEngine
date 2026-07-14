@@ -9,6 +9,7 @@
 #include <PauseGameManager.hpp>
 
 #include "UiVideoSettings.h"
+#include "UiInputSettings.h"
 
 class UiSettingsMenu : public UiCanvas
 {
@@ -50,6 +51,14 @@ public:
 				visible = false;
 
 				EngineMain::MainInstance->Viewport.AddChild(std::make_shared<UiVideoSettings>(shared_from_this()));
+
+			};
+
+		inputButton->onClick = [&]()
+			{
+				visible = false;
+
+				EngineMain::MainInstance->Viewport.AddChild(std::make_shared<UiInputSettings>(shared_from_this()));
 
 			};
 

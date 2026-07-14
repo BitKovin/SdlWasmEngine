@@ -488,6 +488,10 @@
     <ClCompile Include="ParticleSystems\Fog.cpp" />
     <ClCompile Include="ParticleSystems\HitBlood.cpp" />
     <ClCompile Include="ParticleSystems\WeaponSmoke.cpp" />
+    <ClCompile Include="Settings\GameSettings.cpp" />
+    <ClCompile Include="Settings\InputActionRegistry.cpp" />
+    <ClCompile Include="Settings\InputSettingsData.cpp" />
+    <ClCompile Include="Settings\VideoSettingsData.cpp" />
     <ClCompile Include="Systems\ScoreSystem\ScoreSystem.cpp" />
     <ClCompile Include="UI\General\UiLocationTileDrop.cpp" />
     <ClCompile Include="UI\LoadingScreen\UiDefaultLoadingScreen.cpp" />
@@ -561,6 +565,12 @@
     <ClInclude Include="ItemsDataBase.h" />
     <ClInclude Include="ParticleSystems\particle_system_meleeTrail.hpp" />
     <ClInclude Include="PauseGameManager.hpp" />
+    <ClInclude Include="Settings\AudioSettingsData.h" />
+    <ClInclude Include="Settings\GameSettings.h" />
+    <ClInclude Include="Settings\InputActionRegistry.h" />
+    <ClInclude Include="Settings\InputBindingTypes.h" />
+    <ClInclude Include="Settings\InputSettingsData.h" />
+    <ClInclude Include="Settings\VideoSettingsData.h" />
     <ClInclude Include="Systems\ScoreSystem\ScoreSystem.h" />
     <ClInclude Include="UI\Enemy\UiNpcDebuffs.h" />
     <ClInclude Include="UI\General\UiLocationTileDrop.h" />
@@ -568,8 +578,13 @@
     <ClInclude Include="UI\MobileControls\UiJoystick.h" />
     <ClInclude Include="UI\MobileControls\UiTouchMoveArea.h" />
     <ClInclude Include="UI\Pause\Settings\VideoSettings.h" />
+    <ClInclude Include="UI\Pause\UiInputSettings.h" />
     <ClInclude Include="UI\Pause\UiPauseMenu.h" />
     <ClInclude Include="UI\Pause\UiSettingsMenu.h" />
+    <ClInclude Include="UI\Pause\UI\InputIconLibrary.h" />
+    <ClInclude Include="UI\Pause\UI\UiBindSlotButton.hpp" />
+    <ClInclude Include="UI\Pause\UI\UiConfirmDialog.hpp" />
+    <ClInclude Include="UI\Pause\UI\UiRebindCaptureModal.hpp" />
     <ClInclude Include="UI\Player\Crosshair.h" />
     <ClInclude Include="UI\Player\PlayerHud.hpp" />
     <ClInclude Include="UI\Player\ScoreIndicator.hpp" />

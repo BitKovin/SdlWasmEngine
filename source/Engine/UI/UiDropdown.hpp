@@ -89,6 +89,8 @@ public:
         m_panel->visible = false;
         m_panel->useLateDraw = true;
 
+        LimitHitTestToBounds = false;
+
         // ui_cancel while panel trap is active → close and return focus to header
         m_panel->onNavCancel = [this]() { SetOpen(false); };
 

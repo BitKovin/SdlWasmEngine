@@ -326,15 +326,35 @@ GameStart::GameStart()
 
     Input::AddAction("jump")->AddKeyboardKey(SDL_KeyCode::SDLK_SPACE)->AddButton(GamepadButton::A);
 
-    Input::AddAction("attack")->AddButton(GamepadButton::RightTrigger)->LMB = true;
-    Input::AddAction("attack2")->AddButton(GamepadButton::LeftTrigger)->RMB = true;
+    Input::AddAction("dash")->AddKeyboardKey(SDL_KeyCode::SDLK_LSHIFT)->AddButton(GamepadButton::LeftShoulder);
+
+    InputActionRegistry::Register("forward", "Move Forward", "Movement");
+	InputActionRegistry::Register("backward", "Move Backward", "Movement");
+	InputActionRegistry::Register("left", "Move Left", "Movement");
+	InputActionRegistry::Register("right", "Move Right", "Movement");
+	InputActionRegistry::Register("crouch", "Crouch", "Movement");
+	InputActionRegistry::Register("jump", "Jump", "Movement");
+	InputActionRegistry::Register("dash", "Dash", "Movement");
+
+    Input::AddAction("attack")->AddButton(GamepadButton::RightTrigger)->AddMouseButton(0);
+    Input::AddAction("attack2")->AddButton(GamepadButton::LeftTrigger)->AddMouseButton(1);
+
+	InputActionRegistry::Register("attack", "Attack", "Combat");
+	InputActionRegistry::Register("attack2", "Secondary Attack", "Combat");
 
     Input::AddAction("qSave")->AddKeyboardKey(SDL_KeyCode::SDLK_F6);
     Input::AddAction("qLoad")->AddKeyboardKey(SDL_KeyCode::SDLK_F7);
 
+    Input::AddAction("interact")->AddKeyboardKey(SDL_KeyCode::SDLK_f);
+
+	InputActionRegistry::Register("interact", "Interact", "General");
+	InputActionRegistry::Register("qSave", "Quick Save", "General");
+	InputActionRegistry::Register("qLoad", "Quick Load", "General");
+
+
     Input::AddAction("cameraView")->AddKeyboardKey(SDL_KeyCode::SDLK_v);
 
-    Input::AddAction("dash")->AddKeyboardKey(SDL_KeyCode::SDLK_LSHIFT)->AddButton(GamepadButton::LeftShoulder);
+
 
 #if __EMSCRIPTEN__
 
@@ -352,6 +372,14 @@ GameStart::GameStart()
     Input::AddAction("slot6")->AddKeyboardKey(SDL_KeyCode::SDLK_6);
     Input::AddAction("lastSlot")->AddKeyboardKey(SDL_KeyCode::SDLK_q);
 
+	InputActionRegistry::Register("slot1", "Select Slot 1", "Inventory");
+	InputActionRegistry::Register("slot2", "Select Slot 2", "Inventory");
+	InputActionRegistry::Register("slot3", "Select Slot 3", "Inventory");
+	InputActionRegistry::Register("slot4", "Select Slot 4", "Inventory");
+	InputActionRegistry::Register("slot5", "Select Slot 5", "Inventory");
+	InputActionRegistry::Register("slot6", "Select Slot 6", "Inventory");
+	InputActionRegistry::Register("lastSlot", "Select Last Slot", "Inventory");
+
     Input::AddAction("inventory")->AddKeyboardKey(SDL_KeyCode::SDLK_TAB)->AddButton(GamepadButton::DPadUp);
 
     Input::AddAction("slotTest")->AddKeyboardKey(SDL_KeyCode::SDLK_t);
@@ -361,7 +389,7 @@ GameStart::GameStart()
     Input::AddAction("block")->AddKeyboardKey(SDL_KeyCode::SDLK_LCTRL);
 
     Input::AddAction("slotMelee");// ->AddKeyboardKey(SDL_KeyCode::SDLK_f);
-    Input::AddAction("interact")->AddKeyboardKey(SDL_KeyCode::SDLK_f);
+
 
     Input::AddAction("debug_ui_toggle")->AddKeyboardKey(SDL_KeyCode::SDLK_F2);
 
@@ -371,6 +399,8 @@ GameStart::GameStart()
 	Input::AddAction("ui_up")->AddKeyboardKey(SDL_KeyCode::SDLK_UP)->AddButton(GamepadButton::DPadUp);
     Input::AddAction("ui_left")->AddKeyboardKey(SDL_KeyCode::SDLK_LEFT)->AddButton(GamepadButton::DPadLeft);
 	Input::AddAction("ui_right")->AddKeyboardKey(SDL_KeyCode::SDLK_RIGHT)->AddButton(GamepadButton::DPadRight);
+
+
 
 
     //Input::AddAction("dbg_simulate")->AddKeyboardKey(SDL_KeyCode::SDLK_j);

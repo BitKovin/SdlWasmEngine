@@ -6,6 +6,7 @@
 #include <unordered_set>
 #include <vector>
 #include <string>
+#include <cstdint>
 #include <SDL2/SDL_scancode.h>
 #include <SDL2/SDL_video.h>
 #include "glm.h"
@@ -105,6 +106,19 @@ struct TouchEvent
 
 };
 
+// Custom mouse button indices used by InputAction/Input, decoupled from raw
+// SDL button codes so they serialize/display cleanly and extend naturally to
+// arbitrary side buttons.
+//   0 = Left, 1 = Right, 2 = Middle, 3 = Side1, 4 = Side2, 5+ = further side buttons.
+namespace MouseButton
+{
+    constexpr uint8_t Left   = 0;
+    constexpr uint8_t Right  = 1;
+    constexpr uint8_t Middle = 2;
+    constexpr uint8_t Side1  = 3;
+    constexpr uint8_t Side2  = 4;
+}
+
 class Input 
 {
 public:
@@ -151,6 +165,13 @@ public:
     static bool lmbHeld;
     static bool rmbHeld;
     static bool mmbHeld;
+
+    // Generalized event-driven mouse button state, keyed by the custom
+    // indices in the MouseButton namespace above (covers side buttons that
+    // lmbHeld/rmbHeld/mmbHeld can't represent). This is what InputAction
+    // actually reads from — lmbHeld/rmbHeld/mmbHeld are kept in sync purely
+    // for existing code that reads them directly.
+    static std::unordered_set<uint8_t> activeMouseButtons;
 
 	static inline bool TextInputActive = false;
 	static inline std::string TextInputBuffer;
@@ -224,9 +245,9 @@ public:
     std::vector<SDL_Scancode> keys;
     // For joystick buttons, we simply use int indices.
     std::vector<GamepadButton> buttons;
-    bool LMB = false;
-    bool RMB = false;
-    bool MMB = false;
+    // Mouse buttons this action responds to, by custom index — see the
+    // MouseButton namespace (0=Left, 1=Right, 2=Middle, 3=Side1, 4=Side2, ...).
+    std::vector<uint8_t> mouseButtons;
 
     double pressedTime = -10000.0;
 
@@ -240,6 +261,9 @@ public:
 
     InputAction* AddButton(GamepadButton button);
     InputAction* RemoveButton(GamepadButton button);
+
+    InputAction* AddMouseButton(uint8_t button);
+    InputAction* RemoveMouseButton(uint8_t button);
 
     void SimulatePressed();
     void SimulateHolding();

@@ -48,6 +48,8 @@ public:
     bool DisableFocus = false;
     bool useLateDraw = false;
 
+	bool LimitHitTestToBounds = false;
+
     glm::vec4 color = vec4(1);
     bool inheritParentColor = true;
 

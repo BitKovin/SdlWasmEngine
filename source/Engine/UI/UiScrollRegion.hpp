@@ -41,6 +41,7 @@ public:
         m_content = std::make_shared<UiVerticalBox>();
         m_content->origin = vec2(0.f);
         m_content->pivot = vec2(0.f);
+        LimitHitTestToBounds = true;
         UiElement::AddChild(m_content);
 
         m_track = std::make_shared<UiImage>();
@@ -296,13 +297,24 @@ private:
         UiElement* focused = UiNavigation::Focused;
         if (!focused) return;
 
+        // Walk up the UI tree to find which direct child of m_content owns the focus
+        UiElement* directChildOfContent = focused;
+        while (directChildOfContent && directChildOfContent->parent != m_content.get())
+        {
+            directChildOfContent = directChildOfContent->parent;
+        }
+
+        // If the focused element is not a descendant of m_content at all, exit
+        if (!directChildOfContent) return;
+
         float itemTop = 0.f;
         for (const auto& child : m_content->children)
         {
             const float itemH = child->GetSize().y;
             const float itemBot = itemTop + itemH;
 
-            if (child.get() == focused)
+            // Now we just look for our resolved direct child
+            if (child.get() == directChildOfContent)
             {
                 if (itemTop < m_scrollOffset)
                     m_scrollOffset = itemTop;

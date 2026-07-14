@@ -41,6 +41,9 @@ public:
     // ── Focus control ─────────────────────────────────────────────────────────
     static void SetFocus(UiElement* element)
     {
+        if (element && (!element->IsVisible() || !element->HitCheck || element->DisableFocus))
+            element = nullptr; // refuse to focus anything invalid, regardless of caller
+
         if (Focused == element) return;
 
         if (Focused)
@@ -119,7 +122,7 @@ private:
 
         for (UiElement* el : candidates)
         {
-            if (!el->TouchEvents.empty())
+            if (!el->TouchEvents.empty() && el->DisableFocus == false)
             {
                 SetFocus(el);
                 return;
@@ -279,7 +282,8 @@ private:
         }
         if (!field) return nullptr;
         auto locked = field->lock();
-        return (locked && locked->visible && locked->HitCheck) ? locked.get() : nullptr;
+        return (locked && locked->visible && locked->HitCheck && !locked->DisableFocus)
+            ? locked.get() : nullptr;
     }
 
     // Returns the world-space centre of an element using its worldMatrix.

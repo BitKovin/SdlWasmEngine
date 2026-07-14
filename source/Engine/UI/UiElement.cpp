@@ -289,21 +289,25 @@ std::shared_ptr<UiElement> UiElement::GetHitElementUnderPosition(vec2 hitPositio
     if (hovering && HitCheck)
         hit = shared_from_this();
 
-    for (auto& child : children)
-    {
-        if (!child->visible) continue;
+	if (hovering && LimitHitTestToBounds || LimitHitTestToBounds == false)
+	{
 
-        auto childHit = child->GetHitElementUnderPosition(hitPosition);
+		for (auto& child : children)
+		{
+			if (!child->visible) continue;
 
-        if (childHit != nullptr)
-        {
-            if (hit)
-            {
-                if (hit->HasLateDrawInTree() && !childHit->HasLateDrawInTree()) continue;
-            }
-            hit = childHit;
-        }
-    }
+			auto childHit = child->GetHitElementUnderPosition(hitPosition);
+
+			if (childHit != nullptr)
+			{
+				if (hit)
+				{
+					if (hit->HasLateDrawInTree() && !childHit->HasLateDrawInTree()) continue;
+				}
+				hit = childHit;
+			}
+		}
+	}
 
     return hit;
 }
@@ -383,9 +387,6 @@ void UiElement::Draw()
             child->Draw();
         }
     }
-
-    if (drawBorder || drawAllBorders)
-        UiRenderer::DrawBorderRect(finalizedMatrix, finalizedSize, glm::vec4(1.f, 0.f, 0.f, 0.3f));
 }
 
 bool UiElement::HasLateDrawInTree()

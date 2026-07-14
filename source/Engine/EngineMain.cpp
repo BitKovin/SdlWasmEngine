@@ -161,7 +161,7 @@ void EngineMain::initGame()
 void EngineMain::InitInputs()
 {
 
-    Input::AddAction("click")->LMB = true;
+    Input::AddAction("click")->AddMouseButton(0);
 
 
 }
