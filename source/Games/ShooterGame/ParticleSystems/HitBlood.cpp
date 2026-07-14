@@ -31,7 +31,13 @@ public:
         // Use glm::mix to linearly interpolate between 1 and 0.1.
         float lerpVal = glm::mix(1.0f, 0.1f, incScale * incScale);
         float maxVal = (lerpVal > 0.0f) ? lerpVal : 0.0f;
-        particle.Size += deltaTime * maxVal * 0.15f;
+
+        if (particle.lifeTime < 15)
+        {
+            particle.Size += deltaTime * maxVal * 0.15f;
+        }
+
+
 
         const float despawnTime = 4.0f;
         if ((particle.deathTime - particle.lifeTime - 0.1f) < despawnTime)
@@ -64,7 +70,7 @@ public:
 
         // Generate a random deathTime in the range [0, 90] approximately.
         float randomVal = static_cast<float>(rand()) / (float)RAND_MAX;
-        particle.deathTime = 30.0f * randomVal * 3.0f;
+        particle.deathTime = 60 * 30 + 30.0f * randomVal * 3.0f;
 
         // Set the color to a semi-transparent red.
         particle.Color = glm::vec4(bloodColor, 0.7f);
