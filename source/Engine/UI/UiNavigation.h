@@ -38,6 +38,8 @@ class UiNavigation
 public:
     static inline UiElement* Focused = nullptr;
 
+    static inline bool MouseNavigation = false;
+
     // ── Focus control ─────────────────────────────────────────────────────────
     static void SetFocus(UiElement* element)
     {
@@ -83,7 +85,15 @@ public:
         if (Focused && (!Focused->IsVisible() || !Focused->HitCheck || Focused->DisableFocus))
             SetFocus(nullptr);
 
-        UpdateHoverFocus();
+        if (Input::IsScrenTouched || length(Input::MouseDelta) > 0)
+        {
+            UpdateHoverFocus();
+
+            if(Focused)
+                MouseNavigation = true;
+
+        }
+
 
         if (!Focused)
             FocusFirst(root);
@@ -134,6 +144,8 @@ private:
     static void Navigate(UiNavDir dir)
     {
         if (!Focused) return;
+
+        MouseNavigation = false;
 
         if (Focused->OnNav(dir)) return;
 

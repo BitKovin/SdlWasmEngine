@@ -77,12 +77,18 @@ public:
 
         resetButton = MakeButton("Reset to Defaults");
         backButton = MakeButton("Back");
+        resetButton->NavRight = backButton;
+        backButton->NavLeft = resetButton;
         buttonsRow->AddChild(resetButton);
         buttonsRow->AddChild(backButton);
+
+        std::shared_ptr<UiElement> spacing = make_shared<UiElement>();
+        spacing->size = vec2(50);
 
         rootBox->AddChild(titleText);
         rootBox->AddChild(sensitivityBox);
         rootBox->AddChild(scrollRegion);
+        rootBox->AddChild(spacing);
         rootBox->AddChild(buttonsRow);
 
         AddChild(rootBox);
@@ -95,6 +101,7 @@ public:
 
         resetButton->onClick = [this]() { ConfirmResetAll(); };
 
+        UpdateChildrenOffsetRecursive();
         UpdateChildrenOffsetRecursive();
     }
 
@@ -253,11 +260,11 @@ private:
                                                    std::shared_ptr<UiElement> secondaryControl)
     {
         auto labelCell = std::make_shared<UiElement>();
-        labelCell->size = vec2(320.f, 40.f);
+        labelCell->size = vec2(400.f, 40.f);
 
         auto txt = std::make_shared<UiText>();
         txt->text = label;
-        //txt->fontSize = 24.f;
+        txt->fontSize = 55;
         txt->pivot = vec2(0.f, 0.5f);
         txt->origin = vec2(0.f, 0.5f);
         labelCell->AddChild(txt);
@@ -310,7 +317,7 @@ private:
 
         auto labelTxt = std::make_shared<UiText>();
         labelTxt->text = DisplayNameFor(action);
-        labelTxt->fontSize = 30.f;
+        labelTxt->fontSize = 40.f;
         labelTxt->pivot = vec2(0.f, 0.5f);
         labelTxt->origin = vec2(0.f, 0.5f);
         labelCell->AddChild(labelTxt);

@@ -58,9 +58,9 @@ public:
             return;
         }
 
-        visible = !Input::LockCursor;
+        visible = !Input::LockCursor && UiNavigation::MouseNavigation == false;
 
-        if (!visible)
+        if (Input::LockCursor)
         {
             UiNavigation::ClearFocus();
             UiElement::Update();

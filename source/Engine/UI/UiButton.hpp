@@ -7,6 +7,8 @@
 #include "../EngineMain.h"
 #include "../Input.h"
 
+#include "UiNavigation.h"
+
 class UiButton : public UiElement
 {
 private:
@@ -23,7 +25,6 @@ public:
     vec4 Color = vec4(.15f, 0.15f, 0.15f, 1);
     vec4 HoverColor = vec4(.2f, 0.2f, 0.2f, 1);
 
-    bool IsHovered = false;
 
     std::function<void()> onClick = nullptr;
     std::function<void()> onNavConfirm = nullptr;
@@ -88,7 +89,17 @@ public:
             }
         }
 
-        const bool hovered = IsHovered || !TouchEvents.empty() || IsFocused;
+        bool hovered = false;
+        
+        if (UiNavigation::MouseNavigation)
+        {
+            hovered = !TouchEvents.empty();
+        }
+        else
+        {
+            hovered = IsFocused || UiNavigation::Focused == this;
+        }
+
         const vec4 tint = hovered ? HoverColor : Color;
 
         DrawSelfTextured(tex->getHandle(), tint * GetFinalColor(), static_cast<float>(tex->width), static_cast<float>(tex->height));
