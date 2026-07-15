@@ -50,7 +50,7 @@ public:
         background = std::make_shared<UiImage>();
         background->color = vec4(0.f, 0.f, 0.f, 0.6f);
         background->HitCheck = true;
-        background->DisableFocus = false;
+        background->DisableFocus = true;
         AddChild(background);
 
         panel = std::make_shared<UiVerticalBox>();

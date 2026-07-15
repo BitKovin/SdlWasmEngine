@@ -662,5 +662,11 @@
     <ClInclude Include="Settings\VideoSettings.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="UI\Pause\UiGameSettings.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\Pause\UiSoundSettings.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

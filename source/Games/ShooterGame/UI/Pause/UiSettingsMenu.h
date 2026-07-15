@@ -10,6 +10,8 @@
 
 #include "UiVideoSettings.h"
 #include "UiInputSettings.h"
+#include "UiGameSettings.h"
+#include "UiSoundSettings.h"
 
 class UiSettingsMenu : public UiCanvas
 {
@@ -46,6 +48,14 @@ public:
 
 		AddChild(optionsBox);
 
+		gameButton->onClick = [&]()
+			{
+				visible = false;
+
+				EngineMain::MainInstance->Viewport.AddChild(std::make_shared<UiGameSettings>(shared_from_this()));
+
+			};
+
 		videoButton->onClick = [&]()
 			{
 				visible = false;
@@ -59,6 +69,14 @@ public:
 				visible = false;
 
 				EngineMain::MainInstance->Viewport.AddChild(std::make_shared<UiInputSettings>(shared_from_this()));
+
+			};
+
+		soundButton->onClick = [&]()
+			{
+				visible = false;
+
+				EngineMain::MainInstance->Viewport.AddChild(std::make_shared<UiSoundSettings>(shared_from_this()));
 
 			};
 

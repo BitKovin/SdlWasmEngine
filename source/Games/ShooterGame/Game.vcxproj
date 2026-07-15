@@ -578,10 +578,12 @@
     <ClInclude Include="UI\LoadingScreen\UiDefaultLoadingScreen.h" />
     <ClInclude Include="UI\MobileControls\UiJoystick.h" />
     <ClInclude Include="UI\MobileControls\UiTouchMoveArea.h" />
+    <ClInclude Include="UI\Pause\UiGameSettings.h" />
     <ClInclude Include="UI\Pause\UiInputSettings.h" />
     <ClInclude Include="UI\Pause\UiPauseMenu.h" />
     <ClInclude Include="UI\Pause\UiSettingsMenu.h" />
     <ClInclude Include="UI\Pause\UiSettingsStyle.hpp" />
+    <ClInclude Include="UI\Pause\UiSoundSettings.h" />
     <ClInclude Include="UI\Pause\UI\InputIconLibrary.h" />
     <ClInclude Include="UI\Pause\UI\UiBindSlotButton.hpp" />
     <ClInclude Include="UI\Pause\UI\UiConfirmDialog.hpp" />

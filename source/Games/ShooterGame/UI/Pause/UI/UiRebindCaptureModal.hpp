@@ -8,11 +8,9 @@
 #include "UiCanvas.hpp"
 #include "UiNavigation.h"
 #include "../UiSettingsStyle.hpp"
-
 #include <functional>
 #include <string>
 #include <unordered_set>
-
 #include <Settings/InputBindingTypes.h>
 
 enum class RebindDevice { Keyboard, Gamepad };
@@ -128,6 +126,8 @@ public:
         m_baselineJoy = Input::activeJoystickButtons;
         m_baselineLT = Input::leftTriggerAxis > kTriggerThreshold;
         m_baselineRT = Input::rightTriggerAxis > kTriggerThreshold;
+
+        UiNavigation::SetFocus(nullptr);
     }
 
     void OnNavCancel() override { Cancel(); }
@@ -161,8 +161,26 @@ public:
         UiCanvas::Update();
         if (m_resolved) return;
 
-        if (m_device == RebindDevice::Keyboard) PollKeyboard();
-        else                                    PollGamepad();
+        if (m_device == RebindDevice::Keyboard)
+        {
+            // Cancel if gamepad input is registered instead
+            if (HasGamepadInput())
+            {
+                Cancel();
+                return;
+            }
+            PollKeyboard();
+        }
+        else
+        {
+            // Cancel if keyboard or mouse input is registered instead
+            if (HasKeyboardMouseInput())
+            {
+                Cancel();
+                return;
+            }
+            PollGamepad();
+        }
     }
 
 private:
@@ -235,6 +253,30 @@ private:
 
         panel->AddChild(buttonsRow);
         UiNavigation::SetFocus(cancelButton.get());
+    }
+
+    bool HasGamepadInput() const
+    {
+        for (int btn : Input::activeJoystickButtons)
+        {
+            if (m_baselineJoy.count(btn) == 0) return true;
+        }
+        if (Input::leftTriggerAxis > kTriggerThreshold && !m_baselineLT) return true;
+        if (Input::rightTriggerAxis > kTriggerThreshold && !m_baselineRT) return true;
+        return false;
+    }
+
+    bool HasKeyboardMouseInput() const
+    {
+        for (SDL_Scancode sc : Input::activeKeys)
+        {
+            if (m_baselineKeys.count(sc) == 0) return true;
+        }
+        for (uint8_t button : Input::activeMouseButtons)
+        {
+            if (m_baselineMouseButtons.count(button) == 0) return true;
+        }
+        return false;
     }
 
     void PollKeyboard()
