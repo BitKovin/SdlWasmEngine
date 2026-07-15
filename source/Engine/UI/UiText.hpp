@@ -101,6 +101,9 @@ public:
     {
         const glm::vec2 scale(fontSize / StaticFontSize);
 
+        // Calculate the conversion ratio from screen-space to atlas-space
+        const float toAtlas = StaticFontSize / fontSize;
+
         std::string shader = "";
         std::unordered_map<std::string, glm::vec4> uniforms;
         float effectPadding = 0.f;
@@ -109,21 +112,29 @@ public:
         {
             shader = "ui/fs_effects";
 
+            // Convert all screen-space effect parameters into atlas-space
+            glm::vec2 atlasShadowOffset = finalizedShadowOffset * toAtlas;
+            float     atlasShadowSpread = finalizedShadowSpread * toAtlas;
+            float     atlasShadowSoftness = finalizedShadowSoftness * toAtlas;
+            float     atlasOutlineWidth = finalizedOutlineWidth * toAtlas;
+            float     atlasGlowRadius = finalizedGlowRadius * toAtlas;
+
             uniforms["u_ShadowColor"] = finalizedShadowColor;
-            uniforms["u_ShadowParams"] = glm::vec4(finalizedShadowOffset.x, finalizedShadowOffset.y,
-                finalizedShadowSpread, finalizedShadowEnabled ? 1.f : 0.f);
-			uniforms["u_ShadowParams2"] = glm::vec4(finalizedShadowSoftness, 0.f, 0.f, 0.f);
+            uniforms["u_ShadowParams"] = glm::vec4(atlasShadowOffset.x, atlasShadowOffset.y,
+                atlasShadowSpread, finalizedShadowEnabled ? 1.f : 0.f);
+            uniforms["u_ShadowParams2"] = glm::vec4(atlasShadowSoftness, 0.f, 0.f, 0.f);
 
             uniforms["u_OutlineColor"] = finalizedOutlineColor;
-            uniforms["u_OutlineParams"] = glm::vec4(finalizedOutlineWidth, finalizedOutlineEnabled ? 1.f : 0.f, 0.f, 0.f);
+            uniforms["u_OutlineParams"] = glm::vec4(atlasOutlineWidth, finalizedOutlineEnabled ? 1.f : 0.f, 0.f, 0.f);
 
             uniforms["u_GlowColor"] = finalizedGlowColor;
-            uniforms["u_GlowParams"] = glm::vec4(finalizedGlowRadius, finalizedGlowIntensity,
+            uniforms["u_GlowParams"] = glm::vec4(atlasGlowRadius, finalizedGlowIntensity,
                 finalizedGlowEnabled ? 1.f : 0.f, 0.f);
 
-            const float shadowReach = finalizedShadowEnabled ? (glm::length(finalizedShadowOffset) + finalizedShadowSoftness) : 0.f;
-            const float outlineReach = finalizedOutlineEnabled ? finalizedOutlineWidth : 0.f;
-            const float glowReach = finalizedGlowEnabled ? finalizedGlowRadius : 0.f;
+            // Calculate effect padding in ATLAS PIXELS
+            const float shadowReach = finalizedShadowEnabled ? (glm::length(atlasShadowOffset) + atlasShadowSoftness) : 0.f;
+            const float outlineReach = finalizedOutlineEnabled ? atlasOutlineWidth : 0.f;
+            const float glowReach = finalizedGlowEnabled ? atlasGlowRadius : 0.f;
             effectPadding = std::max({ shadowReach, outlineReach, glowReach });
         }
 

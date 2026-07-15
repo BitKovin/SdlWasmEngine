@@ -7,6 +7,7 @@
 #include "UiImage.hpp"
 #include "UiCanvas.hpp"
 #include "UiNavigation.h"
+#include "../UiSettingsStyle.hpp"
 
 #include <functional>
 #include <string>
@@ -15,12 +16,23 @@
 // UiConfirmDialog
 //
 // Small Yes/No modal used for rebind-conflict confirmation ("X is already
-// bound to <action> — reassign it here?"), but generic enough to reuse
-// anywhere a confirm/cancel prompt is needed.
+// bound to <action> — reassign it here?") and the "reset everything"
+// prompt, but generic enough to reuse anywhere a confirm/cancel prompt is
+// needed.
 //
 // FocusTrap=true + OnNavCancel routes gamepad/keyboard "cancel" (ui_cancel)
 // straight to the No button, same idiom as every other modal in this UI
 // (see UiSettingsMenu::OnNavCancel / UiVideoSettings::OnNavCancel).
+//
+// Shape/color is deliberately different from UiRebindCaptureModal: wide and
+// short, amber-bordered, so the two modal types read as distinct even
+// before you read the text on them.
+//
+// The card is sized generously (see kCardWidth) for the longest realistic
+// rebind-conflict sentence this UI actually produces. If action/binding
+// display names can run unusually long, this is the one place that could
+// still overflow — worth adding real text wrapping to UiText if that turns
+// out to matter in practice.
 // ---------------------------------------------------------------------------
 
 class UiConfirmDialog : public UiCanvas
@@ -37,11 +49,11 @@ public:
 
         background = std::make_shared<UiImage>();
         background->color = vec4(0.f, 0.f, 0.f, 0.6f);
+        background->HitCheck = true;
+        background->DisableFocus = false;
         AddChild(background);
 
         panel = std::make_shared<UiVerticalBox>();
-        panel->origin = vec2(0.5f);
-        panel->pivot = vec2(0.5f);
         panel->ContentDistance = 16.f;
 
         messageText = std::make_shared<UiText>();
@@ -62,9 +74,14 @@ public:
         buttonsRow->AddChild(noButton);
 
         panel->AddChild(messageText);
+        panel->AddChild(MakeDivider(kCardWidth - SettingsStyle::PanelPadding * 2.f, SettingsStyle::ConfirmAccent, 2.f));
         panel->AddChild(buttonsRow);
 
-        AddChild(panel);
+        auto card = std::make_shared<UiCardPanel>(vec2(kCardWidth, 200.f), panel,
+                                                    SettingsStyle::ConfirmFill, SettingsStyle::ConfirmBorder);
+        card->origin = vec2(0.5f);
+        card->pivot = vec2(0.5f);
+        AddChild(card);
 
         yesButton->onClick = [this]() { if (m_onYes) m_onYes(); RemoveFromParent(); };
         noButton->onClick  = [this]() { if (m_onNo) m_onNo(); RemoveFromParent(); };
@@ -84,6 +101,8 @@ public:
     }
 
 private:
+    static constexpr float kCardWidth = 720.f;
+
     std::function<void()> m_onYes;
     std::function<void()> m_onNo;
 
@@ -101,6 +120,7 @@ private:
 
         btn->size = vec2(160, 56);
         txt->text = text;
+        txt->fontSize = SettingsStyle::ButtonLabelSize;
         txt->pivot = vec2(0.5f);
         txt->origin = vec2(0.5f);
         btn->AddChild(txt);

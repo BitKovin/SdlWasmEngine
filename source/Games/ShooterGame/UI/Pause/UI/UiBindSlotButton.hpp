@@ -15,29 +15,33 @@
 //
 // One rebindable slot inside a keybind row: an icon (with a small text
 // caption as a readable fallback for icons that haven't been art-directed
-// yet) plus a tiny "x" clear button in the corner.
+// yet).
 //
-// Both the main slot button and the clear button are ordinary HitCheck=true
-// UiButtons, so UiNavigation picks them up automatically — no custom nav
-// code needed here, same as every other control in this UI.
+// The main slot button is an ordinary HitCheck=true UiButton, so
+// UiNavigation picks it up automatically — no custom nav code needed here,
+// same as every other control in this UI.
 //
-//   Click / Confirm on the slot  -> onActivate()  (caller opens the capture
-//                                    modal for this slot)
-//   Click / Confirm on the "x"   -> onClear()      (only visible/focusable
-//                                    once the slot is actually bound)
+//   Click / Confirm on the slot -> onActivate() (caller opens the capture
+//                                   modal for this slot). Unbinding no
+//                                   longer lives here as a separate "x"
+//                                   button glued to the corner — it's now a
+//                                   deliberate "Unbind" action inside that
+//                                   same capture modal (see
+//                                   UiRebindCaptureModal), so there's no
+//                                   destructive control sitting on screen
+//                                   at all times.
 // ---------------------------------------------------------------------------
 
 class UiBindSlotButton : public UiElement
 {
 public:
-    vec2 SlotSize = vec2(72.f, 72.f);
+    vec2 SlotSize = vec2(85.f, 85.f);
 
     std::function<void()> onActivate = nullptr;
-    std::function<void()> onClear = nullptr;
 
     UiBindSlotButton()
     {
-        HitCheck = false; // this container itself isn't a nav target — its children are
+        HitCheck = false; // this container itself isn't a nav target — its child is
 
         mainButton = std::make_shared<UiButton>();
         mainButton->origin = vec2(0.f);
@@ -66,39 +70,32 @@ public:
         caption->fontSize = 15.f;
         caption->textColor = vec4(1.f);
         //mainButton->AddChild(caption);
-
-        clearButton = std::make_shared<UiButton>();
-        clearButton->origin = vec2(1.f, 0.f);
-        clearButton->pivot = vec2(1.f, 0.f);
-        clearButton->size = vec2(20.f, 20.f);
-        clearButton->Color = vec4(0.45f, 0.10f, 0.10f, 1.f);
-        clearButton->HoverColor = vec4(0.65f, 0.15f, 0.15f, 1.f);
-        clearButton->ImagePath = "GameData/textures/generic/white.png";
-        clearButton->onClick = [this]() { if (onClear) onClear(); };
-        UiElement::AddChild(clearButton);
-
-        clearLabel = std::make_shared<UiText>();
-        clearLabel->text = "x";
-        clearLabel->fontSize = 18.f;
-        clearLabel->pivot = vec2(0.5f);
-        clearLabel->origin = vec2(0.5f);
-        clearButton->AddChild(clearLabel);
     }
 
     // Call after resolving the icon path + fallback label for the current
-    // effective binding (see UiInputSettings::BuildRow).
+    // effective binding (see UiInputSettings::BuildActionRow).
     void SetContent(const std::string& iconPath, const std::string& labelText, bool bound, bool listening)
     {
+        // BUG FIX: rebinding an action left the old icon (or a blank/white
+        // image) on screen until the whole menu was torn down and rebuilt.
+        // Mutating ImagePath on the *existing* UiImage instance doesn't pick
+        // up the change — whatever texture cache UiImage keeps internally
+        // only seems to get populated on construction. Recreating the icon
+        // element each time sidesteps that: a brand-new UiImage always loads
+        // fresh from iconPath, the same way it already does correctly the
+        // first time this row is ever built.
+        icon->RemoveFromParent();
+        icon = std::make_shared<UiImage>();
+        icon->origin = vec2(0.5f);
+        icon->pivot = vec2(0.5f);
         icon->ImagePath = iconPath;
         icon->size = SlotSize * 0.72f;
         icon->color = bound ? vec4(1.f) : vec4(1.f, 1.f, 1.f, 0.35f);
+        mainButton->AddChild(icon);
 
         caption->text = bound ? labelText : "Unbound";
         caption->position = vec2(SlotSize.x * 0.5f, SlotSize.y - 2.f);
         captionBg->size = vec2(SlotSize.x, 18.f);
-
-        clearButton->visible = bound;
-        clearButton->HitCheck = bound;
 
         mainButton->Color = listening
             ? vec4(0.30f, 0.45f, 0.65f, 1.f)
@@ -118,6 +115,4 @@ private:
     std::shared_ptr<UiImage> icon;
     std::shared_ptr<UiImage> captionBg;
     std::shared_ptr<UiText> caption;
-    std::shared_ptr<UiButton> clearButton;
-    std::shared_ptr<UiText> clearLabel;
 };

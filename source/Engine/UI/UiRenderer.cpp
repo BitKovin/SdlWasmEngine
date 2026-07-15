@@ -90,7 +90,7 @@ struct FontAtlas {
     
     bool Init(const char* path, float height, int paddingSize = 5)
     {
-        padding = height / 2 + paddingSize;
+        padding = static_cast<int>(height / 2) + paddingSize;
         packX = padding;
         packY = padding;
         rowH = 0;
@@ -115,8 +115,12 @@ struct FontAtlas {
         }
 
         pixelHeight = height;
-        scale = stbtt_ScaleForPixelHeight(&fontInfo, height);
+
+        // Fetch metrics FIRST so we can use them to define the exact scale
         stbtt_GetFontVMetrics(&fontInfo, &ascent, &descent, &lineGap);
+
+        // Calculate scale manually: The exact total line height maps perfectly to requested height.
+        scale = height / static_cast<float>(ascent - descent + lineGap);
 
         // White-transparent background
         const size_t atlasPixels = static_cast<size_t>(ATLAS_W) * ATLAS_H;

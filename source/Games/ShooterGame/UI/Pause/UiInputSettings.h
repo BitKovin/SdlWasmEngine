@@ -17,6 +17,7 @@
 #include "UI/UiConfirmDialog.hpp"
 #include "UI/UiBindSlotButton.hpp"
 #include "UI/UiRebindCaptureModal.hpp"
+#include "UiSettingsStyle.hpp"
 
 #include <sstream>
 #include <iomanip>
@@ -39,6 +40,22 @@
 // screen owns no settings state of its own. Every mutation immediately
 // calls ApplyToEngine() (so it's live right away) and SaveToFile() (so it
 // survives a crash/relaunch without needing an explicit "Apply" step).
+//
+// VISUAL PASS (this revision):
+//   - Two real card panels (Sensitivity / Key Bindings), plus a shared type
+//     scale, a grouped/captioned kb+gamepad layout, zebra-striped rows, and
+//     a properly sized state-colored Invert Y toggle. See UiSettingsStyle.hpp
+//     for the shared constants/panel classes -- pulled into their own
+//     header since UiConfirmDialog and UiRebindCaptureModal need the same
+//     palette for their own card treatment now.
+//   - Two real bugs fixed along the way (see BuildSensitivitySection):
+//       1. gpSensText never had a size set, so it was invisible.
+//       2. Gamepad sensitivity changes never called ApplyToEngine(), so
+//          they didn't take effect until the next save/load.
+//   - The per-slot "clear" ("x") affordance is gone from UiBindSlotButton.
+//     Unbinding now happens from inside the rebind-capture popup (see
+//     BeginKeyboardCapture / BeginGamepadCapture and UiRebindCaptureModal's
+//     new isCurrentlyBound/onUnbind parameters).
 // ---------------------------------------------------------------------------
 
 class UiInputSettings : public UiCanvas
@@ -53,17 +70,17 @@ public:
         this->parentMenu = parentMenu_;
 
         background = std::make_shared<UiImage>();
-        background->color = vec4(0.5f, 0.0f, 0.0f, 0.5f);
+        background->color = SettingsStyle::Scrim;
         AddChild(background);
 
         rootBox = std::make_shared<UiVerticalBox>();
         rootBox->origin = vec2(0.5f);
         rootBox->pivot = vec2(0.5f);
-        rootBox->ContentDistance = 18.f;
+        rootBox->ContentDistance = 20.f;
 
         titleText = std::make_shared<UiText>();
         titleText->text = "Input Settings";
-        //titleText->fontSize = 40.f;
+        titleText->fontSize = SettingsStyle::TitleSize;
         titleText->pivot = vec2(0.5f, 0.f);
         titleText->origin = vec2(0.5f, 0.f);
 
@@ -82,13 +99,10 @@ public:
         buttonsRow->AddChild(resetButton);
         buttonsRow->AddChild(backButton);
 
-        std::shared_ptr<UiElement> spacing = make_shared<UiElement>();
-        spacing->size = vec2(50);
-
         rootBox->AddChild(titleText);
-        rootBox->AddChild(sensitivityBox);
-        rootBox->AddChild(scrollRegion);
-        rootBox->AddChild(spacing);
+        rootBox->AddChild(sensitivityPanel);
+        rootBox->AddChild(bindingsPanel);
+        rootBox->AddChild(MakeDivider(SettingsStyle::ContentWidth * 0.6f, vec4(1.f, 1.f, 1.f, 0.10f)));
         rootBox->AddChild(buttonsRow);
 
         AddChild(rootBox);
@@ -120,15 +134,17 @@ private:
     std::shared_ptr<UiText> titleText;
 
     // ── Sensitivity ──────────────────────────────────────────────────────────
-    std::shared_ptr<UiVerticalBox> sensitivityBox;
+    std::shared_ptr<UiElement> sensitivityPanel;
     std::shared_ptr<UiSlider> mouseSensSlider;
     std::shared_ptr<UiTextBox> mouseSensText;
     std::shared_ptr<UiSlider> gpSensSlider;
     std::shared_ptr<UiTextBox> gpSensText;
     std::shared_ptr<UiButton> invertYButton;
+    std::shared_ptr<UiImage> invertYToggleBg;
     std::shared_ptr<UiText> invertYLabel;
 
     // ── Bindings ─────────────────────────────────────────────────────────────
+    std::shared_ptr<UiElement> bindingsPanel;
     std::shared_ptr<UiScrollRegion> scrollRegion;
 
     struct RowWidgets
@@ -148,10 +164,18 @@ private:
 
     void BuildSensitivitySection()
     {
-        sensitivityBox = std::make_shared<UiVerticalBox>();
-        sensitivityBox->origin = vec2(0.5f,0);
-        sensitivityBox->pivot = vec2(0.5f,0);
-        sensitivityBox->ContentDistance = 10.f;
+        using namespace SettingsStyle;
+
+        auto content = std::make_shared<UiVerticalBox>();
+        content->ContentDistance = 14.f;
+
+        auto header = std::make_shared<UiText>();
+        header->text = "Sensitivity";
+        header->fontSize = PanelHeaderSize;
+        header->pivot = vec2(0.f, 0.0f);
+        header->origin = vec2(0.f, 0.0f);
+        content->AddChild(header);
+        content->AddChild(MakeDivider(ContentWidth - PanelPadding * 2.f));
 
         InputSensitivitySettings& sens = GameSettings::Instance().Input.Sensitivity;
 
@@ -186,7 +210,7 @@ private:
             GameSettings::Instance().SaveToFile();
         };
 
-        sensitivityBox->AddChild(GetSliderRow("Mouse Sensitivity", mouseSensSlider, mouseSensText));
+        content->AddChild(GetSliderRow("Mouse Sensitivity", mouseSensSlider, mouseSensText));
 
         // ── Gamepad look sensitivity ─────────────────────────────────────────
         gpSensSlider = std::make_shared<UiSlider>();
@@ -199,11 +223,12 @@ private:
         gpSensText = std::make_shared<UiTextBox>();
         gpSensText->NumericOnly = true;
         gpSensText->SetText(FormatFloat(sens.GamepadLookSensitivity));
-        //gpSensText->size = vec2(90.f, 40.f);
+        gpSensText->size = vec2(90.f, 40.f); // BUG FIX: was never sized before -> invisible
 
         gpSensSlider->onValueChanged = [this](float v)
         {
             GameSettings::Instance().Input.Sensitivity.GamepadLookSensitivity = v;
+            GameSettings::Instance().Input.Sensitivity.ApplyToEngine(); // BUG FIX: wasn't applied live before
             gpSensText->SetText(FormatFloat(v));
         };
         gpSensSlider->onDragEnd = [this](float) { GameSettings::Instance().SaveToFile(); };
@@ -212,18 +237,24 @@ private:
         {
             float v = ParseFloatClamped(text, InputSensitivitySettings::MinGamepadSensitivity, InputSensitivitySettings::MaxGamepadSensitivity);
             GameSettings::Instance().Input.Sensitivity.GamepadLookSensitivity = v;
+            GameSettings::Instance().Input.Sensitivity.ApplyToEngine(); // BUG FIX
             gpSensSlider->Value = v;
             gpSensText->SetText(FormatFloat(v));
             GameSettings::Instance().SaveToFile();
         };
 
-        sensitivityBox->AddChild(GetSliderRow("Gamepad Sensitivity", gpSensSlider, gpSensText));
+        content->AddChild(GetSliderRow("Gamepad Sensitivity", gpSensSlider, gpSensText));
 
         // ── Invert Y ─────────────────────────────────────────────────────────
         invertYButton = std::make_shared<UiButton>();
-        invertYButton->size = vec2(200.f, 44.f);
+        invertYButton->size = vec2(120.f, 40.f);
+
+        invertYToggleBg = std::make_shared<UiImage>();
+        invertYToggleBg->size = invertYButton->size;
+        invertYButton->AddChild(invertYToggleBg);
 
         invertYLabel = std::make_shared<UiText>();
+        invertYLabel->fontSize = 24.f;
         invertYLabel->pivot = vec2(0.5f);
         invertYLabel->origin = vec2(0.5f);
         invertYButton->AddChild(invertYLabel);
@@ -237,12 +268,16 @@ private:
             GameSettings::Instance().SaveToFile();
         };
 
-        sensitivityBox->AddChild(GetSliderRow("Invert Look Y", invertYButton, nullptr));
+        content->AddChild(GetSliderRow("Invert Look Y", invertYButton, nullptr));
+
+        sensitivityPanel = std::make_shared<UiCardPanel>(vec2(ContentWidth, 264.f), content);
     }
 
     void RefreshInvertYLabel()
     {
-        invertYLabel->text = GameSettings::Instance().Input.Sensitivity.InvertY ? "On" : "Off";
+        bool on = GameSettings::Instance().Input.Sensitivity.InvertY;
+        invertYLabel->text = on ? "On" : "Off";
+        invertYToggleBg->color = on ? SettingsStyle::ToggleOn : SettingsStyle::ToggleOff;
     }
 
     void RefreshSensitivityWidgets()
@@ -260,11 +295,11 @@ private:
                                                    std::shared_ptr<UiElement> secondaryControl)
     {
         auto labelCell = std::make_shared<UiElement>();
-        labelCell->size = vec2(400.f, 40.f);
+        labelCell->size = vec2(320.f, 44.f);
 
         auto txt = std::make_shared<UiText>();
         txt->text = label;
-        txt->fontSize = 55;
+        txt->fontSize = SettingsStyle::RowLabelSize;
         txt->pivot = vec2(0.f, 0.5f);
         txt->origin = vec2(0.f, 0.5f);
         labelCell->AddChild(txt);
@@ -285,39 +320,132 @@ private:
 
     void BuildBindingsSection()
     {
-        scrollRegion = std::make_shared<UiScrollRegion>();
-        scrollRegion->size = vec2(900.f, 600.f);
+        using namespace SettingsStyle;
 
-        scrollRegion->ContentDistance = 10.f;
+        auto content = std::make_shared<UiVerticalBox>();
+        content->ContentDistance = 10.f;
+
+        auto header = std::make_shared<UiText>();
+        header->text = "Key Bindings";
+        header->fontSize = PanelHeaderSize;
+        header->pivot = vec2(0.f, 0.0f);
+        header->origin = vec2(0.f, 0.0f);
+        content->AddChild(header);
+        content->AddChild(MakeDivider(ContentWidth - PanelPadding * 2.f));
+        content->AddChild(MakeSpacer(vec2(1.f, 4.f)));
+        content->AddChild(BuildColumnCaptionRow());
+
+        scrollRegion = std::make_shared<UiScrollRegion>();
+        scrollRegion->size = vec2(ContentWidth - PanelPadding * 2.f, 450.f);
+        scrollRegion->ContentDistance = 8.f;
         scrollRegion->onNavCancel = [this]() { backButton->onClick(); };
 
+        bool firstCategory = true;
         for (const std::string& category : InputActionRegistry::GetOrderedCategories())
         {
-            auto header = std::make_shared<UiText>();
-            header->text = category;
-            //header->fontSize = 26.f;
-            header->textColor = vec4(0.75f, 0.85f, 1.f, 1.f);
-			header->DisableFocus = true;
-            header->HitCheck = false;
-            header->DisableFocus = true;
-            scrollRegion->AddChild(header);
+            if (!firstCategory)
+                scrollRegion->AddChild(MakeSpacer(vec2(1.f, 18.f)));
+            firstCategory = false;
 
+            scrollRegion->AddChild(BuildCategoryHeader(category));
+
+            bool alternate = false;
             for (const std::string& action : InputActionRegistry::GetActionsInCategory(category))
-                scrollRegion->AddChild(BuildActionRow(action));
+            {
+                scrollRegion->AddChild(BuildActionRow(action, alternate));
+                alternate = !alternate;
+            }
         }
+
+        content->AddChild(scrollRegion);
+
+        bindingsPanel = std::make_shared<UiCardPanel>(vec2(ContentWidth, 600.f), content);
     }
 
-    std::shared_ptr<UiHorizontalBox> BuildActionRow(const std::string& action)
+    std::shared_ptr<UiElement> BuildColumnCaptionRow()
     {
+        using namespace SettingsStyle;
+
+        auto row = std::make_shared<UiHorizontalBox>();
+        row->ContentDistance = 14.f;
+
+        // Lines up with the action-label column in BuildActionRow.
+        row->AddChild(MakeSpacer(vec2(340.f, 1.f)));
+
+        float kbGroupWidth = SlotButtonSize.x * 2.f + SlotGroupGap;
+        auto kbCaption = std::make_shared<UiElement>();
+        kbCaption->size = vec2(kbGroupWidth, CaptionSize + 6.f);
+        auto kbTxt = std::make_shared<UiText>();
+        kbTxt->text = "KEYBOARD / MOUSE";
+        kbTxt->fontSize = CaptionSize;
+        kbTxt->textColor = CaptionColor;
+        kbTxt->pivot = vec2(0.5f);
+        kbTxt->origin = vec2(0.5f);
+        kbCaption->AddChild(kbTxt);
+        row->AddChild(kbCaption);
+
+        row->AddChild(MakeSpacer(vec2(SlotGroupSep, 1.f)));
+
+        float gpGroupWidth = SlotButtonSize.x * 2.f + SlotGroupGap;
+        auto gpCaption = std::make_shared<UiElement>();
+        gpCaption->size = vec2(gpGroupWidth, CaptionSize + 6.f);
+        auto gpTxt = std::make_shared<UiText>();
+        gpTxt->text = "GAMEPAD";
+        gpTxt->fontSize = CaptionSize;
+        gpTxt->position = vec2(5, 0);
+        gpTxt->textColor = CaptionColor;
+        gpTxt->pivot = vec2(0.5f);
+        gpTxt->origin = vec2(0.5f);
+        gpCaption->AddChild(gpTxt);
+        row->AddChild(gpCaption);
+
+        return row;
+    }
+
+    std::shared_ptr<UiElement> BuildCategoryHeader(const std::string& category)
+    {
+        using namespace SettingsStyle;
+
         auto row = std::make_shared<UiHorizontalBox>();
         row->ContentDistance = 10.f;
 
+        auto accent = std::make_shared<UiImage>();
+        accent->color = CategoryAccent;
+        accent->size = vec2(4.f, 26.f);
+        row->AddChild(accent);
+
+        auto header = std::make_shared<UiText>();
+        header->text = category;
+        header->fontSize = CategorySize;
+        header->textColor = CategoryAccent;
+        header->DisableFocus = true;
+        header->HitCheck = false;
+        header->pivot = vec2(0.f, 0.5f);
+        header->origin = vec2(0.f, 0.5f);
+        row->AddChild(header);
+
+        auto wrapper = std::make_shared<UiVerticalBox>();
+        wrapper->ContentDistance = 6.f;
+        wrapper->AddChild(row);
+        wrapper->AddChild(MakeDivider(ContentWidth - PanelPadding * 2.f - 40.f,
+                                       vec4(Divider.x, Divider.y, Divider.z, Divider.w * 0.6f)));
+
+        return wrapper;
+    }
+
+    std::shared_ptr<UiElement> BuildActionRow(const std::string& action, bool alternate)
+    {
+        using namespace SettingsStyle;
+
+        auto row = std::make_shared<UiHorizontalBox>();
+        row->ContentDistance = 14.f;
+
         auto labelCell = std::make_shared<UiElement>();
-        labelCell->size = vec2(340.f, 72.f);
+        labelCell->size = vec2(310.f, RowHeight);
 
         auto labelTxt = std::make_shared<UiText>();
         labelTxt->text = DisplayNameFor(action);
-        labelTxt->fontSize = 40.f;
+        labelTxt->fontSize = ActionLabelSize;
         labelTxt->pivot = vec2(0.f, 0.5f);
         labelTxt->origin = vec2(0.f, 0.5f);
         labelCell->AddChild(labelTxt);
@@ -325,30 +453,44 @@ private:
 
         RowWidgets rw;
 
+        // Keyboard/mouse pair, grouped tightly together.
+        auto kbGroup = std::make_shared<UiHorizontalBox>();
+        kbGroup->ContentDistance = SlotGroupGap;
         for (int i = 0; i < 2; ++i)
         {
             auto slot = std::make_shared<UiBindSlotButton>();
             slot->onActivate = [this, action, i]() { BeginKeyboardCapture(action, i); };
-            slot->onClear = [this, action, i]() { ClearKeyboardSlot(action, i); };
-            row->AddChild(slot);
+            // No onClear here on purpose -- unbinding now happens from inside
+            // the rebind-capture popup (see BeginKeyboardCapture), not from a
+            // small "x" badge glued to the slot itself.
+            kbGroup->AddChild(slot);
             rw.kb[i] = slot;
         }
+        row->AddChild(kbGroup);
 
+        // Wider gap between the two device groups than within a group.
+        row->AddChild(MakeSpacer(vec2(SlotGroupSep - SlotGroupGap, 1.f)));
+
+        // Gamepad pair, grouped tightly together.
+        auto gpGroup = std::make_shared<UiHorizontalBox>();
+        gpGroup->ContentDistance = SlotGroupGap;
         for (int i = 0; i < 2; ++i)
         {
             auto slot = std::make_shared<UiBindSlotButton>();
             slot->onActivate = [this, action, i]() { BeginGamepadCapture(action, i); };
-            slot->onClear = [this, action, i]() { ClearGamepadSlot(action, i); };
-            row->AddChild(slot);
+            gpGroup->AddChild(slot);
             rw.gp[i] = slot;
         }
+        row->AddChild(gpGroup);
 
         auto resetRowButton = std::make_shared<UiButton>();
         resetRowButton->size = vec2(84.f, 40.f);
+        resetRowButton->origin = vec2(0.5f);
+        resetRowButton->pivot = vec2(0.5f);
 
         auto resetLabel = std::make_shared<UiText>();
         resetLabel->text = "Reset";
-        //resetLabel->fontSize = 16.f;
+        resetLabel->fontSize = 18.f;
         resetLabel->pivot = vec2(0.5f);
         resetLabel->origin = vec2(0.5f);
         resetRowButton->AddChild(resetLabel);
@@ -360,12 +502,25 @@ private:
             GameSettings::Instance().SaveToFile();
             RefreshRow(action);
         };
-        row->AddChild(resetRowButton);
+
+        // Wrap in a fixed-height cell so the smaller reset button still
+        // vertically centers against the taller row instead of top-aligning.
+        auto resetCell = std::make_shared<UiElement>();
+        resetCell->size = vec2(84.f, RowHeight);
+        resetCell->AddChild(resetRowButton);
+        row->AddChild(resetCell);
 
         rowWidgets[action] = rw;
         RefreshRow(action);
 
-        return row;
+        // Small leading inset so content doesn't touch the row card's edge.
+        auto inset = std::make_shared<UiHorizontalBox>();
+        inset->ContentDistance = 0.f;
+        inset->AddChild(MakeSpacer(vec2(16.f, 1.f)));
+        inset->AddChild(row);
+
+        return std::make_shared<UiRowCard>(vec2(ContentWidth - PanelPadding * 2.f, RowHeight),
+                                            alternate ? RowAlt : RowBase, inset);
     }
 
     std::string DisplayNameFor(const std::string& action)
@@ -429,6 +584,8 @@ private:
     {
         MarkListening(action, true, slotIndex, true);
 
+        bool isBound = GameSettings::Instance().Input.GetEffectiveBinding(action).kb[slotIndex].IsBound();
+
         auto modal = std::make_shared<UiRebindCaptureModal>(
             RebindDevice::Keyboard, DisplayNameFor(action), slotIndex,
             [this, action, slotIndex](InputBindingSlotKB value)
@@ -437,7 +594,13 @@ private:
                 TryCommitKeyboard(action, slotIndex, value);
             },
             nullptr,
-            [this, action, slotIndex]() { MarkListening(action, true, slotIndex, false); });
+            [this, action, slotIndex]() { MarkListening(action, true, slotIndex, false); },
+            isBound,
+            [this, action, slotIndex]()
+            {
+                MarkListening(action, true, slotIndex, false);
+                ClearKeyboardSlot(action, slotIndex);
+            });
 
         EngineMain::MainInstance->Viewport.AddChild(modal);
     }
@@ -445,6 +608,8 @@ private:
     void BeginGamepadCapture(const std::string& action, int slotIndex)
     {
         MarkListening(action, false, slotIndex, true);
+
+        bool isBound = GameSettings::Instance().Input.GetEffectiveBinding(action).gp[slotIndex].IsBound();
 
         auto modal = std::make_shared<UiRebindCaptureModal>(
             RebindDevice::Gamepad, DisplayNameFor(action), slotIndex,
@@ -454,7 +619,13 @@ private:
                 MarkListening(action, false, slotIndex, false);
                 TryCommitGamepad(action, slotIndex, value);
             },
-            [this, action, slotIndex]() { MarkListening(action, false, slotIndex, false); });
+            [this, action, slotIndex]() { MarkListening(action, false, slotIndex, false); },
+            isBound,
+            [this, action, slotIndex]()
+            {
+                MarkListening(action, false, slotIndex, false);
+                ClearGamepadSlot(action, slotIndex);
+            });
 
         EngineMain::MainInstance->Viewport.AddChild(modal);
     }
@@ -554,6 +725,7 @@ private:
 
         btn->size = vec2(400, 70);
         txt->text = text;
+        txt->fontSize = SettingsStyle::ButtonLabelSize;
         txt->pivot = vec2(0.5f);
         txt->origin = vec2(0.5f);
         btn->AddChild(txt);

@@ -387,6 +387,25 @@ void UiElement::Draw()
             child->Draw();
         }
     }
+
+    return;
+
+    auto hitPosition = Input::MousePos;
+
+    const glm::vec2 sz = GetSize();
+
+    const glm::vec2 local = TransformPoint(glm::inverse(worldMatrix), hitPosition);
+
+    const bool hovering = (local.x >= 0.f && local.x <= sz.x &&
+        local.y >= 0.f && local.y <= sz.y);
+
+
+    if (hovering || true)
+    {
+        UiRenderer::DrawTexturedRect(worldMatrix, finalizedSize, AssetRegistry::GetTextureFromFile("GameData/textures/ui/border.png")->getTextureHandle());
+    }
+
+
 }
 
 bool UiElement::HasLateDrawInTree()

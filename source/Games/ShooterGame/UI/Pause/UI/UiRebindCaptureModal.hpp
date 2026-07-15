@@ -2,10 +2,12 @@
 
 #include "UiButton.hpp"
 #include "UiVerticalBox.hpp"
+#include "UiHorizontalBox.hpp"
 #include "UiText.hpp"
 #include "UiImage.hpp"
 #include "UiCanvas.hpp"
 #include "UiNavigation.h"
+#include "../UiSettingsStyle.hpp"
 
 #include <functional>
 #include <string>
@@ -29,7 +31,18 @@ enum class RebindDevice { Keyboard, Gamepad };
 // don't immediately "capture". Whatever is currently bound to the
 // "ui_cancel" action is reserved and skipped by the poll, so opening this
 // modal and immediately pressing Escape/B always cancels rather than binding
-// Escape/B to the action being rebound.
+// Escape/B to the action being rebound. That polling logic is untouched
+// below — only the panel contents changed.
+//
+// If isCurrentlyBound is true, an "Unbind" button appears next to Cancel.
+// This replaces the old always-visible per-slot "x" button on
+// UiBindSlotButton: clearing a binding is now a deliberate action taken
+// from inside this popup rather than a small destructive control sitting
+// on the row at all times.
+//
+// Shape/color is deliberately different from UiConfirmDialog: narrow and
+// tall, blue-bordered, so the two modal types read as distinct even before
+// you read the text on them.
 // ---------------------------------------------------------------------------
 
 class UiRebindCaptureModal : public UiCanvas
@@ -40,26 +53,29 @@ public:
                           int slotIndex,
                           std::function<void(InputBindingSlotKB)> onKeyboardCaptured,
                           std::function<void(InputBindingSlotGP)> onGamepadCaptured,
-                          std::function<void()> onCancelled)
+                          std::function<void()> onCancelled,
+                          bool isCurrentlyBound = false,
+                          std::function<void()> onUnbind = nullptr)
         : m_device(device)
         , m_onKB(std::move(onKeyboardCaptured))
         , m_onGP(std::move(onGamepadCaptured))
         , m_onCancel(std::move(onCancelled))
+        , m_onUnbind(std::move(onUnbind))
+        , m_isBound(isCurrentlyBound)
     {
         FocusTrap = true;
 
         background = std::make_shared<UiImage>();
         background->color = vec4(0.f, 0.f, 0.f, 0.7f);
+        background->HitCheck = true;
         AddChild(background);
 
         panel = std::make_shared<UiVerticalBox>();
-        panel->origin = vec2(0.5f);
-        panel->pivot = vec2(0.5f);
         panel->ContentDistance = 14.f;
 
         title = std::make_shared<UiText>();
         title->text = "Rebind " + actionDisplayName + " — Slot " + std::to_string(slotIndex + 1);
-        title->fontSize = 32.f;
+        title->fontSize = 30.f;
         title->pivot = vec2(0.5f, 0.f);
         title->origin = vec2(0.5f, 0.f);
 
@@ -67,25 +83,56 @@ public:
         hint->text = (device == RebindDevice::Keyboard)
             ? "Press a key or mouse button..."
             : "Press a gamepad button or trigger...";
-        hint->fontSize = 22.f;
+        hint->fontSize = 20.f;
         hint->textColor = vec4(0.8f, 0.8f, 0.8f, 1.f);
         hint->pivot = vec2(0.5f, 0.f);
         hint->origin = vec2(0.5f, 0.f);
 
+        buttonsRow = std::make_shared<UiHorizontalBox>();
+        buttonsRow->origin = vec2(0.5f);
+        buttonsRow->pivot = vec2(0.5f);
+        buttonsRow->ContentDistance = 12.f;
+
         cancelButton = std::make_shared<UiButton>();
-        cancelButton->size = vec2(160.f, 52.f);
+        cancelButton->size = vec2(150.f, 50.f);
         auto cancelLabel = std::make_shared<UiText>();
         cancelLabel->text = "Cancel";
+        cancelLabel->fontSize = SettingsStyle::ButtonLabelSize;
         cancelLabel->pivot = vec2(0.5f);
         cancelLabel->origin = vec2(0.5f);
         cancelButton->AddChild(cancelLabel);
         cancelButton->onClick = [this]() { Cancel(); };
+        buttonsRow->AddChild(cancelButton);
+
+        if (m_isBound)
+        {
+            unbindButton = std::make_shared<UiButton>();
+            unbindButton->size = vec2(150.f, 50.f);
+            unbindButton->Color = SettingsStyle::DangerFill;
+            unbindButton->HoverColor = SettingsStyle::DangerHover;
+            auto unbindLabel = std::make_shared<UiText>();
+            unbindLabel->text = "Unbind";
+            unbindLabel->fontSize = SettingsStyle::ButtonLabelSize;
+            unbindLabel->pivot = vec2(0.5f);
+            unbindLabel->origin = vec2(0.5f);
+            unbindButton->AddChild(unbindLabel);
+            unbindButton->onClick = [this]() { Unbind(); };
+            buttonsRow->AddChild(unbindButton);
+
+            cancelButton->NavRight = unbindButton;
+            unbindButton->NavLeft = cancelButton;
+        }
 
         panel->AddChild(title);
+        panel->AddChild(MakeDivider(360.f, SettingsStyle::CaptureAccent, 2.f));
         panel->AddChild(hint);
-        panel->AddChild(cancelButton);
+        panel->AddChild(buttonsRow);
 
-        AddChild(panel);
+        auto card = std::make_shared<UiCardPanel>(vec2(460.f, m_isBound ? 260.f : 220.f), panel,
+                                                    SettingsStyle::CaptureFill, SettingsStyle::CaptureBorder);
+        card->origin = vec2(0.5f);
+        card->pivot = vec2(0.5f);
+        AddChild(card);
 
         // ── Baseline snapshot ────────────────────────────────────────────────
         m_baselineKeys         = Input::activeKeys;
@@ -94,6 +141,7 @@ public:
         m_baselineLT            = Input::leftTriggerAxis  > kTriggerThreshold;
         m_baselineRT            = Input::rightTriggerAxis > kTriggerThreshold;
 
+        // Default focus stays on the safe option even when Unbind is present.
         UiNavigation::SetFocus(cancelButton.get());
     }
 
@@ -130,6 +178,8 @@ private:
     std::function<void(InputBindingSlotKB)> m_onKB;
     std::function<void(InputBindingSlotGP)> m_onGP;
     std::function<void()> m_onCancel;
+    std::function<void()> m_onUnbind;
+    bool m_isBound = false;
     bool m_resolved = false;
 
     std::unordered_set<SDL_Scancode> m_baselineKeys;
@@ -141,13 +191,23 @@ private:
     std::shared_ptr<UiVerticalBox> panel;
     std::shared_ptr<UiText> title;
     std::shared_ptr<UiText> hint;
+    std::shared_ptr<UiHorizontalBox> buttonsRow;
     std::shared_ptr<UiButton> cancelButton;
+    std::shared_ptr<UiButton> unbindButton;
 
     void Cancel()
     {
         if (m_resolved) return;
         m_resolved = true;
         if (m_onCancel) m_onCancel();
+        RemoveFromParent();
+    }
+
+    void Unbind()
+    {
+        if (m_resolved) return;
+        m_resolved = true;
+        if (m_onUnbind) m_onUnbind();
         RemoveFromParent();
     }
 
