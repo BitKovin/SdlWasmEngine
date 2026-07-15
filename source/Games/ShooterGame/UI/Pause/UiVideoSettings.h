@@ -10,7 +10,7 @@
 
 #include <PauseGameManager.hpp>
 
-#include "Settings/VideoSettings.h"
+#include <Settings/VideoSettings.h>
 
 class UiVideoSettings : public UiCanvas
 {

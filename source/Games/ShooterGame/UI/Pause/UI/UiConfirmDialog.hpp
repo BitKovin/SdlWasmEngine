@@ -39,10 +39,10 @@ class UiConfirmDialog : public UiCanvas
 {
 public:
     UiConfirmDialog(const std::string& message,
-                     std::function<void()> onYes,
-                     std::function<void()> onNo,
-                     const std::string& yesLabel = "Yes",
-                     const std::string& noLabel = "No")
+        std::function<void()> onYes,
+        std::function<void()> onNo,
+        const std::string& yesLabel = "Yes",
+        const std::string& noLabel = "No")
         : m_onYes(std::move(onYes)), m_onNo(std::move(onNo))
     {
         FocusTrap = true;
@@ -54,17 +54,19 @@ public:
         AddChild(background);
 
         panel = std::make_shared<UiVerticalBox>();
+        panel->origin = vec2(0.5f);
+        panel->pivot = vec2(0.5f);
         panel->ContentDistance = 16.f;
 
         messageText = std::make_shared<UiText>();
         messageText->text = message;
-        messageText->fontSize = 30.f;
+        messageText->fontSize = 40.f;
         messageText->pivot = vec2(0.5f, 0.f);
         messageText->origin = vec2(0.5f, 0.f);
 
         buttonsRow = std::make_shared<UiHorizontalBox>();
-        buttonsRow->origin = vec2(0.5f);
-        buttonsRow->pivot = vec2(0.5f);
+        buttonsRow->origin = vec2(0.5f, 0.f);
+        buttonsRow->pivot = vec2(0.5f, 0.f);
         buttonsRow->ContentDistance = 12.f;
 
         yesButton = MakeButton(yesLabel);
@@ -74,21 +76,25 @@ public:
         buttonsRow->AddChild(noButton);
 
         panel->AddChild(messageText);
-        panel->AddChild(MakeDivider(kCardWidth - SettingsStyle::PanelPadding * 2.f, SettingsStyle::ConfirmAccent, 2.f));
+
+        // FIX: Capture the divider and apply horizontal centering (0.5f)
+        auto divider = MakeDivider(kCardWidth - SettingsStyle::PanelPadding * 2.f, SettingsStyle::ConfirmAccent, 2.f);
+        divider->origin = vec2(0.5f, 0.f);
+        divider->pivot = vec2(0.5f, 0.f);
+        panel->AddChild(divider);
+
         panel->AddChild(buttonsRow);
 
         auto card = std::make_shared<UiCardPanel>(vec2(kCardWidth, 200.f), panel,
-                                                    SettingsStyle::ConfirmFill, SettingsStyle::ConfirmBorder);
+            SettingsStyle::ConfirmFill, SettingsStyle::ConfirmBorder);
         card->origin = vec2(0.5f);
         card->pivot = vec2(0.5f);
         AddChild(card);
 
         yesButton->onClick = [this]() { if (m_onYes) m_onYes(); RemoveFromParent(); };
-        noButton->onClick  = [this]() { if (m_onNo) m_onNo(); RemoveFromParent(); };
+        noButton->onClick = [this]() { if (m_onNo) m_onNo(); RemoveFromParent(); };
 
-        // Default focus lands on the safe/cancel option — matches the
-        // "require an explicit extra step to do the destructive thing"
-        // convention the rebind-conflict flow relies on.
+        // Default focus lands on the safe/cancel option
         UiNavigation::SetFocus(noButton.get());
     }
 

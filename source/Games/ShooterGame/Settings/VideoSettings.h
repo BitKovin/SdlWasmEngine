@@ -1,5 +1,7 @@
 #pragma once
 
+#include <EngineMain.h>
+
 #include <UI/RmlUi/UiModel.h>
 
 #include <SDL2/SDL.h>

@@ -265,6 +265,7 @@ private:
             InputSensitivitySettings& s = GameSettings::Instance().Input.Sensitivity;
             s.InvertY = !s.InvertY;
             RefreshInvertYLabel();
+            GameSettings::Instance().Input.Sensitivity.ApplyToEngine();
             GameSettings::Instance().SaveToFile();
         };
 
@@ -579,25 +580,30 @@ private:
     }
 
     // ── Capture flow ─────────────────────────────────────────────────────────
-
     void BeginKeyboardCapture(const std::string& action, int slotIndex)
     {
         MarkListening(action, true, slotIndex, true);
 
-        bool isBound = GameSettings::Instance().Input.GetEffectiveBinding(action).kb[slotIndex].IsBound();
+        const auto& effectiveBinding = GameSettings::Instance().Input.GetEffectiveBinding(action);
+        InputBindingSlotKB currentKB = effectiveBinding.kb[slotIndex];
+        InputBindingSlotGP currentGP; // Empty placeholder
+
+        bool isBound = currentKB.IsBound();
 
         auto modal = std::make_shared<UiRebindCaptureModal>(
-            RebindDevice::Keyboard, DisplayNameFor(action), slotIndex,
-            [this, action, slotIndex](InputBindingSlotKB value)
-            {
+            RebindDevice::Keyboard,
+            DisplayNameFor(action),
+            slotIndex,
+            currentKB, // 4th: KB Slot
+            currentGP, // 5th: GP Slot
+            [this, action, slotIndex](InputBindingSlotKB value) { // 6th: func KB
                 MarkListening(action, true, slotIndex, false);
                 TryCommitKeyboard(action, slotIndex, value);
             },
-            nullptr,
-            [this, action, slotIndex]() { MarkListening(action, true, slotIndex, false); },
-            isBound,
-            [this, action, slotIndex]()
-            {
+            [](InputBindingSlotGP) {}, // 7th: func GP (empty lambda)
+            [this, action, slotIndex]() { MarkListening(action, true, slotIndex, false); }, // 8th: func Cancel
+            isBound, // 9th: bool
+            [this, action, slotIndex]() { // 10th: func Unbind
                 MarkListening(action, true, slotIndex, false);
                 ClearKeyboardSlot(action, slotIndex);
             });
@@ -609,20 +615,26 @@ private:
     {
         MarkListening(action, false, slotIndex, true);
 
-        bool isBound = GameSettings::Instance().Input.GetEffectiveBinding(action).gp[slotIndex].IsBound();
+        const auto& effectiveBinding = GameSettings::Instance().Input.GetEffectiveBinding(action);
+        InputBindingSlotKB currentKB; // Empty placeholder
+        InputBindingSlotGP currentGP = effectiveBinding.gp[slotIndex];
+
+        bool isBound = currentGP.IsBound();
 
         auto modal = std::make_shared<UiRebindCaptureModal>(
-            RebindDevice::Gamepad, DisplayNameFor(action), slotIndex,
-            nullptr,
-            [this, action, slotIndex](InputBindingSlotGP value)
-            {
+            RebindDevice::Gamepad,
+            DisplayNameFor(action),
+            slotIndex,
+            currentKB, // 4th: KB Slot
+            currentGP, // 5th: GP Slot
+            [](InputBindingSlotKB) {}, // 6th: func KB (empty lambda)
+            [this, action, slotIndex](InputBindingSlotGP value) { // 7th: func GP
                 MarkListening(action, false, slotIndex, false);
                 TryCommitGamepad(action, slotIndex, value);
             },
-            [this, action, slotIndex]() { MarkListening(action, false, slotIndex, false); },
-            isBound,
-            [this, action, slotIndex]()
-            {
+            [this, action, slotIndex]() { MarkListening(action, false, slotIndex, false); }, // 8th: func Cancel
+            isBound, // 9th: bool
+            [this, action, slotIndex]() { // 10th: func Unbind
                 MarkListening(action, false, slotIndex, false);
                 ClearGamepadSlot(action, slotIndex);
             });

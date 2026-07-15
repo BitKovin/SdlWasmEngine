@@ -17,6 +17,7 @@ void InputSensitivitySettings::ResetToDefaults()
 void InputSensitivitySettings::ApplyToEngine() const
 {
     Input::sensitivity = std::clamp(MouseSensitivity, MinMouseSensitivity, MaxMouseSensitivity);
+    Input::FlipMouseY = InvertY;
 }
 
 std::string InputSensitivitySettings::Serialize() const

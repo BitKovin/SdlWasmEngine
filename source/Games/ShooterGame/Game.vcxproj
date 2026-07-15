@@ -497,10 +497,6 @@
     <ClCompile Include="UI\LoadingScreen\UiDefaultLoadingScreen.cpp" />
     <ClCompile Include="UI\MobileControls\UiJoystick.cpp" />
     <ClCompile Include="UI\MobileControls\UiTouchMoveArea.cpp" />
-    <ClCompile Include="UI\Pause\Settings\GameSettings.cpp" />
-    <ClCompile Include="UI\Pause\Settings\InputActionRegistry.cpp" />
-    <ClCompile Include="UI\Pause\Settings\InputSettingsData.cpp" />
-    <ClCompile Include="UI\Pause\Settings\VideoSettingsData.cpp" />
     <ClCompile Include="UI\Pause\UiVideoSettings.h" />
     <ClCompile Include="UI\Player\Crosshair.cpp" />
     <ClCompile Include="UI\Player\PlayerHud.cpp" />
@@ -574,6 +570,7 @@
     <ClInclude Include="Settings\InputActionRegistry.h" />
     <ClInclude Include="Settings\InputBindingTypes.h" />
     <ClInclude Include="Settings\InputSettingsData.h" />
+    <ClInclude Include="Settings\VideoSettings.h" />
     <ClInclude Include="Settings\VideoSettingsData.h" />
     <ClInclude Include="Systems\ScoreSystem\ScoreSystem.h" />
     <ClInclude Include="UI\Enemy\UiNpcDebuffs.h" />
@@ -581,13 +578,6 @@
     <ClInclude Include="UI\LoadingScreen\UiDefaultLoadingScreen.h" />
     <ClInclude Include="UI\MobileControls\UiJoystick.h" />
     <ClInclude Include="UI\MobileControls\UiTouchMoveArea.h" />
-    <ClInclude Include="UI\Pause\Settings\AudioSettingsData.h" />
-    <ClInclude Include="UI\Pause\Settings\GameSettings.h" />
-    <ClInclude Include="UI\Pause\Settings\InputActionRegistry.h" />
-    <ClInclude Include="UI\Pause\Settings\InputBindingTypes.h" />
-    <ClInclude Include="UI\Pause\Settings\InputSettingsData.h" />
-    <ClInclude Include="UI\Pause\Settings\VideoSettings.h" />
-    <ClInclude Include="UI\Pause\Settings\VideoSettingsData.h" />
     <ClInclude Include="UI\Pause\UiInputSettings.h" />
     <ClInclude Include="UI\Pause\UiPauseMenu.h" />
     <ClInclude Include="UI\Pause\UiSettingsMenu.h" />

@@ -137,6 +137,9 @@ public:
     // Cursor locking and sensitivity
     static bool LockCursor;
     static float sensitivity;
+
+    static inline bool FlipMouseY = false;
+
     static glm::vec2 windowCenter;
     static bool PendingCenterCursor;
 

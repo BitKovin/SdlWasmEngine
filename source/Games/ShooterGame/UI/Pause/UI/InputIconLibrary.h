@@ -23,7 +23,7 @@
 #include <algorithm>
 #include <cctype>
 
-#include "../Settings/InputBindingTypes.h"
+#include <Settings/InputBindingTypes.h>
 
 #if defined(SDL_VERSION_ATLEAST)
 #define INPUTICON_HAS_GAMECONTROLLER_TYPE SDL_VERSION_ATLEAST(2, 0, 12)

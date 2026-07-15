@@ -396,18 +396,6 @@
     <ClCompile Include="Settings\VideoSettingsData.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="UI\Pause\Settings\GameSettings.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="UI\Pause\Settings\InputActionRegistry.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="UI\Pause\Settings\InputSettingsData.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="UI\Pause\Settings\VideoSettingsData.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Entities\Player\Player.hpp">
@@ -545,9 +533,6 @@
     <ClInclude Include="Entities\Enemy\Enemies\NpcHumanBase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="UI\Pause\Settings\VideoSettings.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Systems\ScoreSystem\ScoreSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -671,25 +656,10 @@
     <ClInclude Include="UI\Pause\UI\UiRebindCaptureModal.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="UI\Pause\Settings\AudioSettingsData.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="UI\Pause\Settings\GameSettings.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="UI\Pause\Settings\InputActionRegistry.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="UI\Pause\Settings\InputBindingTypes.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="UI\Pause\Settings\InputSettingsData.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="UI\Pause\Settings\VideoSettingsData.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="UI\Pause\UiSettingsStyle.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Settings\VideoSettings.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -13,50 +13,26 @@
 #include <string>
 #include <unordered_set>
 
-#include "../Settings/InputBindingTypes.h"
+#include <Settings/InputBindingTypes.h>
 
 enum class RebindDevice { Keyboard, Gamepad };
-
-// ---------------------------------------------------------------------------
-// UiRebindCaptureModal
-//
-// "Press a key or button..." prompt. Fully nav-capable like every other
-// screen in this UI: FocusTrap=true, a focusable Cancel button, and
-// OnNavCancel wired the same way UiSettingsMenu/UiVideoSettings/
-// UiConfirmDialog all do it.
-//
-// The actual capture is raw-input polling (it has to be — we're listening
-// for an arbitrary key/button, not a named action), diffed against a
-// baseline snapshot taken the instant the modal opens so already-held keys
-// don't immediately "capture". Whatever is currently bound to the
-// "ui_cancel" action is reserved and skipped by the poll, so opening this
-// modal and immediately pressing Escape/B always cancels rather than binding
-// Escape/B to the action being rebound. That polling logic is untouched
-// below — only the panel contents changed.
-//
-// If isCurrentlyBound is true, an "Unbind" button appears next to Cancel.
-// This replaces the old always-visible per-slot "x" button on
-// UiBindSlotButton: clearing a binding is now a deliberate action taken
-// from inside this popup rather than a small destructive control sitting
-// on the row at all times.
-//
-// Shape/color is deliberately different from UiConfirmDialog: narrow and
-// tall, blue-bordered, so the two modal types read as distinct even before
-// you read the text on them.
-// ---------------------------------------------------------------------------
 
 class UiRebindCaptureModal : public UiCanvas
 {
 public:
     UiRebindCaptureModal(RebindDevice device,
-                          const std::string& actionDisplayName,
-                          int slotIndex,
-                          std::function<void(InputBindingSlotKB)> onKeyboardCaptured,
-                          std::function<void(InputBindingSlotGP)> onGamepadCaptured,
-                          std::function<void()> onCancelled,
-                          bool isCurrentlyBound = false,
-                          std::function<void()> onUnbind = nullptr)
+        const std::string& actionDisplayName,
+        int slotIndex,
+        InputBindingSlotKB currentKB,
+        InputBindingSlotGP currentGP,
+        std::function<void(InputBindingSlotKB)> onKeyboardCaptured,
+        std::function<void(InputBindingSlotGP)> onGamepadCaptured,
+        std::function<void()> onCancelled,
+        bool isCurrentlyBound = false,
+        std::function<void()> onUnbind = nullptr)
         : m_device(device)
+        , m_currentKB(currentKB)
+        , m_currentGP(currentGP)
         , m_onKB(std::move(onKeyboardCaptured))
         , m_onGP(std::move(onGamepadCaptured))
         , m_onCancel(std::move(onCancelled))
@@ -66,16 +42,20 @@ public:
         FocusTrap = true;
 
         background = std::make_shared<UiImage>();
-        background->color = vec4(0.f, 0.f, 0.f, 0.7f);
+        // MATCH COLOR: Adjusted alpha from 0.7f to 0.6f to match UiConfirmDialog
+        background->color = vec4(0.f, 0.f, 0.f, 0.6f);
         background->HitCheck = true;
         AddChild(background);
 
         panel = std::make_shared<UiVerticalBox>();
+        // FIX ALIGNMENT: Center the panel container itself within the card
+        panel->origin = vec2(0.5f);
+        panel->pivot = vec2(0.5f);
         panel->ContentDistance = 14.f;
 
         title = std::make_shared<UiText>();
         title->text = "Rebind " + actionDisplayName + " — Slot " + std::to_string(slotIndex + 1);
-        title->fontSize = 30.f;
+        title->fontSize = 42.f;
         title->pivot = vec2(0.5f, 0.f);
         title->origin = vec2(0.5f, 0.f);
 
@@ -83,14 +63,15 @@ public:
         hint->text = (device == RebindDevice::Keyboard)
             ? "Press a key or mouse button..."
             : "Press a gamepad button or trigger...";
-        hint->fontSize = 20.f;
+        hint->fontSize = 30.f;
         hint->textColor = vec4(0.8f, 0.8f, 0.8f, 1.f);
         hint->pivot = vec2(0.5f, 0.f);
         hint->origin = vec2(0.5f, 0.f);
 
         buttonsRow = std::make_shared<UiHorizontalBox>();
-        buttonsRow->origin = vec2(0.5f);
-        buttonsRow->pivot = vec2(0.5f);
+        // FIX ALIGNMENT: Keep the horizontal row top-aligned for proper vertical stacking
+        buttonsRow->origin = vec2(0.5f, 0.f);
+        buttonsRow->pivot = vec2(0.5f, 0.f);
         buttonsRow->ContentDistance = 12.f;
 
         cancelButton = std::make_shared<UiButton>();
@@ -108,7 +89,7 @@ public:
         {
             unbindButton = std::make_shared<UiButton>();
             unbindButton->size = vec2(150.f, 50.f);
-            unbindButton->Color = SettingsStyle::DangerFill;
+            unbindButton->Color = SettingsStyle::DangerFill; // Assuming you still want Unbind to be red
             unbindButton->HoverColor = SettingsStyle::DangerHover;
             auto unbindLabel = std::make_shared<UiText>();
             unbindLabel->text = "Unbind";
@@ -124,25 +105,29 @@ public:
         }
 
         panel->AddChild(title);
-        panel->AddChild(MakeDivider(360.f, SettingsStyle::CaptureAccent, 2.f));
-        panel->AddChild(hint);
-        panel->AddChild(buttonsRow);
 
-        auto card = std::make_shared<UiCardPanel>(vec2(460.f, m_isBound ? 260.f : 220.f), panel,
-                                                    SettingsStyle::CaptureFill, SettingsStyle::CaptureBorder);
+        // FIX ALIGNMENT & COLOR: Explicitly anchor the divider and use ConfirmAccent
+        auto divider = MakeDivider(360.f, SettingsStyle::ConfirmAccent, 2.f);
+        divider->origin = vec2(0.5f, 0.f);
+        divider->pivot = vec2(0.5f, 0.f);
+        panel->AddChild(divider);
+
+        panel->AddChild(hint);
+        // buttonsRow is purposefully NOT added yet. It is revealed only if they press the currently bound key.
+
+        // MATCH COLOR: Swapped CaptureFill and CaptureBorder for ConfirmFill and ConfirmBorder
+        auto card = std::make_shared<UiCardPanel>(vec2(460.f, 260.f), panel,
+            SettingsStyle::ConfirmFill, SettingsStyle::ConfirmBorder);
         card->origin = vec2(0.5f);
         card->pivot = vec2(0.5f);
         AddChild(card);
 
         // ── Baseline snapshot ────────────────────────────────────────────────
-        m_baselineKeys         = Input::activeKeys;
+        m_baselineKeys = Input::activeKeys;
         m_baselineMouseButtons = Input::activeMouseButtons;
-        m_baselineJoy           = Input::activeJoystickButtons;
-        m_baselineLT            = Input::leftTriggerAxis  > kTriggerThreshold;
-        m_baselineRT            = Input::rightTriggerAxis > kTriggerThreshold;
-
-        // Default focus stays on the safe option even when Unbind is present.
-        UiNavigation::SetFocus(cancelButton.get());
+        m_baselineJoy = Input::activeJoystickButtons;
+        m_baselineLT = Input::leftTriggerAxis > kTriggerThreshold;
+        m_baselineRT = Input::rightTriggerAxis > kTriggerThreshold;
     }
 
     void OnNavCancel() override { Cancel(); }
@@ -155,32 +140,45 @@ public:
 
     void Update() override
     {
-        // The reliable, always-safe way out — whatever key/button currently
-        // means "cancel" anywhere else in the UI means it here too.
+        // If we are showing the prompt, we wait for UI interaction.
+        if (m_askingUnbind)
+        {
+            UiCanvas::Update();
+            if (Input::GetAction("ui_cancel")->Pressed())
+            {
+                Cancel();
+            }
+            return;
+        }
+
+        // The reliable, always-safe way out 
         if (Input::GetAction("ui_cancel")->Pressed())
         {
             Cancel();
             return;
         }
 
-        if (m_device == RebindDevice::Keyboard) PollKeyboard();
-        else                                    PollGamepad();
-
+        UiCanvas::Update();
         if (m_resolved) return;
 
-        UiCanvas::Update();
+        if (m_device == RebindDevice::Keyboard) PollKeyboard();
+        else                                    PollGamepad();
     }
 
 private:
     static constexpr float kTriggerThreshold = 0.5f;
 
     RebindDevice m_device;
+    InputBindingSlotKB m_currentKB;
+    InputBindingSlotGP m_currentGP;
+
     std::function<void(InputBindingSlotKB)> m_onKB;
     std::function<void(InputBindingSlotGP)> m_onGP;
     std::function<void()> m_onCancel;
     std::function<void()> m_onUnbind;
     bool m_isBound = false;
     bool m_resolved = false;
+    bool m_askingUnbind = false;
 
     std::unordered_set<SDL_Scancode> m_baselineKeys;
     std::unordered_set<uint8_t> m_baselineMouseButtons;
@@ -227,30 +225,16 @@ private:
         RemoveFromParent();
     }
 
-    // Whatever is presently bound to "ui_cancel" is off-limits to capture —
-    // otherwise pressing Escape/B to back out would instead rebind Escape/B.
-    bool IsReservedKey(SDL_Scancode sc) const
+    void ShowPrompt()
     {
-        InputAction* cancelAction = Input::GetAction("ui_cancel");
-        for (SDL_Scancode k : cancelAction->keys)
-            if (k == sc) return true;
-        return false;
-    }
+        if (m_askingUnbind) return;
+        m_askingUnbind = true;
 
-    bool IsReservedMouseButton(uint8_t button) const
-    {
-        InputAction* cancelAction = Input::GetAction("ui_cancel");
-        for (uint8_t b : cancelAction->mouseButtons)
-            if (b == button) return true;
-        return false;
-    }
+        hint->text = "Already bound to this slot. Unbind or Cancel?";
+        hint->textColor = vec4(1.0f, 0.8f, 0.2f, 1.0f); // Warning color
 
-    bool IsReservedButton(GamepadButton btn) const
-    {
-        InputAction* cancelAction = Input::GetAction("ui_cancel");
-        for (GamepadButton b : cancelAction->buttons)
-            if (b == btn) return true;
-        return false;
+        panel->AddChild(buttonsRow);
+        UiNavigation::SetFocus(cancelButton.get());
     }
 
     void PollKeyboard()
@@ -258,15 +242,27 @@ private:
         for (SDL_Scancode sc : Input::activeKeys)
         {
             if (m_baselineKeys.count(sc)) continue;
-            if (IsReservedKey(sc)) continue;
-            ResolveKB(InputBindingSlotKB::FromKey(sc));
+            InputBindingSlotKB slot = InputBindingSlotKB::FromKey(sc);
+
+            if (m_isBound && slot == m_currentKB) {
+                ShowPrompt();
+                return;
+            }
+
+            ResolveKB(slot);
             return;
         }
         for (uint8_t button : Input::activeMouseButtons)
         {
             if (m_baselineMouseButtons.count(button)) continue;
-            if (IsReservedMouseButton(button)) continue;
-            ResolveKB(InputBindingSlotKB::FromMouseButton(button));
+            InputBindingSlotKB slot = InputBindingSlotKB::FromMouseButton(button);
+
+            if (m_isBound && slot == m_currentKB) {
+                ShowPrompt();
+                return;
+            }
+
+            ResolveKB(slot);
             return;
         }
     }
@@ -277,18 +273,28 @@ private:
         {
             if (m_baselineJoy.count(btn)) continue;
             GamepadButton gb = static_cast<GamepadButton>(btn);
-            if (IsReservedButton(gb)) continue;
-            ResolveGP(InputBindingSlotGP::FromButton(gb));
+            InputBindingSlotGP slot = InputBindingSlotGP::FromButton(gb);
+
+            if (m_isBound && slot == m_currentGP) {
+                ShowPrompt();
+                return;
+            }
+
+            ResolveGP(slot);
             return;
         }
-        if (Input::leftTriggerAxis > kTriggerThreshold && !m_baselineLT && !IsReservedButton(GamepadButton::LeftTrigger))
+        if (Input::leftTriggerAxis > kTriggerThreshold && !m_baselineLT)
         {
-            ResolveGP(InputBindingSlotGP::FromButton(GamepadButton::LeftTrigger));
+            InputBindingSlotGP slot = InputBindingSlotGP::FromButton(GamepadButton::LeftTrigger);
+            if (m_isBound && slot == m_currentGP) { ShowPrompt(); return; }
+            ResolveGP(slot);
             return;
         }
-        if (Input::rightTriggerAxis > kTriggerThreshold && !m_baselineRT && !IsReservedButton(GamepadButton::RightTrigger))
+        if (Input::rightTriggerAxis > kTriggerThreshold && !m_baselineRT)
         {
-            ResolveGP(InputBindingSlotGP::FromButton(GamepadButton::RightTrigger));
+            InputBindingSlotGP slot = InputBindingSlotGP::FromButton(GamepadButton::RightTrigger);
+            if (m_isBound && slot == m_currentGP) { ShowPrompt(); return; }
+            ResolveGP(slot);
             return;
         }
     }

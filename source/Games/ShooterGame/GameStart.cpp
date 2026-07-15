@@ -10,7 +10,7 @@
 #include <UI/RmlUi/RmlUiEvents.h>
 #include <EngineMain.h>
 
-#include <UI/Pause/Settings/VideoSettings.h>
+#include <Settings/VideoSettings.h>
 
 #include <PauseGameManager.hpp>
 
