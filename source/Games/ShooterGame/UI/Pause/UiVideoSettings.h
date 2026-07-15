@@ -12,6 +12,8 @@
 
 #include <Settings/VideoSettings.h>
 
+#include <Settings/GameSettings.h>
+
 #include "UiSettingsStyle.hpp"
 
 #include <algorithm>
@@ -49,8 +51,9 @@
 //     fxaaButton/fxaaToggleBg/fxaaLabel here). Functionally a checkbox
 //     either way -- just this codebase's established look for one.
 // Both apply immediately on change, same as every other control on this
-// screen; there's no persisted VideoSettingsData-style save step evident in
-// the given API for either, so none is called here.
+// screen, and are also written into GameSettings::Instance().Video (MSAA,
+// FXAA) alongside Resolution and Window Mode, so all four round-trip through
+// Serialize()/Deserialize() the next time the game saves/loads settings.
 // ---------------------------------------------------------------------------
 
 class UiVideoSettings : public UiCanvas
@@ -251,6 +254,7 @@ private:
         {
             bool enabled = !EngineMain::MainInstance->MainRenderer->FXAAEnabled;
             EngineMain::MainInstance->MainRenderer->FXAAEnabled = enabled;
+            GameSettings::Instance().Video.FXAA = enabled;
             RefreshFXAALabel(enabled);
         };
 
@@ -334,21 +338,32 @@ private:
             // Windowed mode: just set the size
             SDL_SetWindowSize(gWindow, width, height);
         }
+
+        GameSettings::Instance().Video.Width = width;
+        GameSettings::Instance().Video.Height = height;
     }
 
     static inline void UpdateWindowMode(int index, const std::string& value)
     {
+        // Dropdown options are {"windowed"=0, "fullscreen"=1, "borderless"=2} --
+        // the string stored here must match that same order, since it's what
+        // VideoSettingsData::ApplyToEngine() reads back on next load. Previously
+        // index 1/2 stored the opposite label from what the SDL call actually did.
+
         if (index == 0)
         {
             SDL_SetWindowFullscreen(EngineMain::MainInstance->Window, 0);
+            GameSettings::Instance().Video.WindowMode = "windowed";
         }
-        else if (index == 2)
-        {
-            SDL_SetWindowFullscreen(EngineMain::MainInstance->Window, SDL_WINDOW_FULLSCREEN_DESKTOP);
-        }
-        else
+        else if (index == 1)
         {
             SDL_SetWindowFullscreen(EngineMain::MainInstance->Window, SDL_WINDOW_FULLSCREEN);
+            GameSettings::Instance().Video.WindowMode = "fullscreen";
+        }
+        else // index == 2
+        {
+            SDL_SetWindowFullscreen(EngineMain::MainInstance->Window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+            GameSettings::Instance().Video.WindowMode = "borderless";
         }
     }
 
@@ -366,6 +381,7 @@ private:
         }
 
         EngineMain::MainInstance->MainRenderer->MultiSampleCount = msaaLevel;
+        GameSettings::Instance().Video.MSAA = msaaLevel;
     }
 
 };

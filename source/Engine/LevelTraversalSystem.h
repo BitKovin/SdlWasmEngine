@@ -18,7 +18,7 @@ public:
 
 	static inline std::unordered_map<std::string, LevelSaveData> LevelMemory;
 
-	static void TravelToLevel(std::string LevelPath, Entity* playerEntity, std::string desiredSpawnPointName);
+	static void TravelToLevel(std::string LevelPath, Entity* playerEntity, std::string desiredSpawnPointName, std::string levelIdentifier = "");
 
 	static inline bool Traveling = false;
 

@@ -3,17 +3,22 @@
 #include "json.hpp"
 #include "SaveSystem/LevelSaveSystem.h"
 
-void LevelTraversalSystem::TravelToLevel(std::string LevelPath, Entity* playerEntity, std::string desiredSpawnPointName)
+void LevelTraversalSystem::TravelToLevel(std::string LevelPath, Entity* playerEntity, std::string desiredSpawnPointName, std::string levelIdentifier)
 {
 
 	Traveling = true;
 	bool oldSaveGame = playerEntity->SaveGame;
 
+	if (levelIdentifier.empty())
+		levelIdentifier = LevelPath;
+
 	playerEntity->SaveGame = false;
 
 	LevelSaveData currentLevelData = LevelSaveSystem::SaveLevelToData();
 
-	LevelMemory[currentLevelData.name] = currentLevelData;
+	std::string currentIdentifier = currentLevelData.identifier.empty() ? currentLevelData.name : currentLevelData.identifier;
+
+	LevelMemory[currentIdentifier] = currentLevelData;
 
 	playerEntity->SaveGame = oldSaveGame;
 
@@ -24,10 +29,9 @@ void LevelTraversalSystem::TravelToLevel(std::string LevelPath, Entity* playerEn
 
 	LevelSaveData levelData = LevelSaveData();
 
-	if (LevelMemory.count(LevelPath))
+	if (LevelMemory.count(levelIdentifier))
 	{
-
-		levelData = LevelMemory[LevelPath];
+		levelData = LevelMemory[levelIdentifier];
 	}
 	
 	float timeToSimulate = Time::GameTime - levelData.GameTime;
@@ -43,7 +47,6 @@ void LevelTraversalSystem::TravelToLevel(std::string LevelPath, Entity* playerEn
 	levelData.GameTime = Time::GameTime - timeToSimulate;
 
 	LevelSaveSystem::pendingSave = levelData;
-
 
 
 	TimeSkip = timeToSimulate;

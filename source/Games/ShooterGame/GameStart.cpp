@@ -315,6 +315,9 @@ GameStart::GameStart()
 
     if (startedGame) return;
 
+    GameSettings::Instance().LoadFromFile();
+    GameSettings::Instance().ApplyAll();
+
     startedGame = true;
 
     Input::AddAction("forward")->AddKeyboardKey(SDL_KeyCode::SDLK_w);

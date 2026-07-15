@@ -29,6 +29,8 @@ LevelSaveData LevelSaveSystem::SaveLevelToData()
 
     levelData.GameTime = Time::GameTime;
 
+    levelData.identifier = level->Identifier.empty() ? level->filePath : level->Identifier;
+
     vector<EntitySaveData> entities;
 
     for (auto levelObject : level->LevelObjects)

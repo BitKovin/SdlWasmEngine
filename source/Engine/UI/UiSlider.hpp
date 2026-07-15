@@ -67,11 +67,11 @@ public:
 
     // ── Handle ───────────────────────────────────────────────────────────────
     bool        ShowHandle = true;
-    vec2        HandleSize = vec2(20.f, 20.f);
+    vec2        HandleSize = vec2(17.f, 30.f);
     std::string HandleImage = "GameData/textures/generic/white.png";
-    vec4        HandleColor       = vec4(0.90f, 0.90f, 0.90f, 1.f);
-    vec4        HandleHoverColor  = vec4(1.00f, 1.00f, 1.00f, 1.f);
-    vec4        HandleActiveColor = vec4(1.00f, 0.80f, 0.30f, 1.f);
+    vec4        HandleColor       = vec4(0.561f, 0.251f, 0.129f, 1.f);
+    vec4        HandleHoverColor  = vec4(0.561f * 1.1f, 0.251f * 1.1f, 0.129f * 1.1f, 1.f);
+    vec4        HandleActiveColor = vec4(0.561f * 1.2f, 0.251f * 1.2f, 0.129f * 1.2f, 1.f);
 
     // ── Callbacks ────────────────────────────────────────────────────────────
     std::function<void(float)> onValueChanged = nullptr; // fires as the value moves
@@ -83,7 +83,7 @@ public:
         BackgroundImage = "GameData/textures/generic/white.png";
         ProgressImage   = "GameData/textures/generic/white.png";
         BackgroundColor = vec4(0.15f, 0.15f, 0.15f, 1.f);
-        color           = vec4(0.40f, 0.65f, 1.00f, 1.f); // fill tint (see class comment)
+        color           = vec4(0.45f, 0.2f, 0.1f, 1.f); // fill tint (see class comment)
 
         HitCheck = true;
 

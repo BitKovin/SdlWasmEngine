@@ -4,6 +4,8 @@
 #include <sstream>
 #include <Logger.hpp>
 
+#include <FileSystem/FileSystem.h>
+
 std::string GameSettings::DefaultSavePath = "Save/GameSettings.cfg";
 
 GameSettings& GameSettings::Instance()
@@ -78,25 +80,16 @@ void GameSettings::Deserialize(const std::string& text)
 
 bool GameSettings::SaveToFile(const std::string& path) const
 {
-    std::ofstream file(path, std::ios::out | std::ios::trunc);
-    if (!file.is_open())
-    {
-        Logger::Log("GameSettings::SaveToFile: could not open '" + path + "' for writing.");
-        return false;
-    }
-
-    file << Serialize();
-    return true;
+    auto txt = Serialize();
+    return FileSystemEngine::WriteFile(path, txt);
 }
 
 bool GameSettings::LoadFromFile(const std::string& path)
 {
-    std::ifstream file(path, std::ios::in);
-    if (!file.is_open())
-        return false; // not an error — first run, or player never saved custom settings
+    std::string txt = FileSystemEngine::ReadFile(path);
 
-    std::ostringstream ss;
-    ss << file.rdbuf();
-    Deserialize(ss.str());
+    if (txt.empty()) return false;
+
+    Deserialize(txt);
     return true;
 }

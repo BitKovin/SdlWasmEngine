@@ -52,6 +52,8 @@ private:
 
 public:
 
+	std::string Identifier = ""; //used for level traversal memory to keep in memory same file, but under different keys for save game. Keep empty to use file path instead.
+
 	ThreadPool* asyncUpdateThreadPool;
 
 	static Level* Current;

@@ -23,10 +23,13 @@ struct VideoSettingsData
     int Height = 1080;
     std::string WindowMode = "windowed"; // "windowed" | "fullscreen" | "borderless"
     bool VSync = true;
+    int MSAA = 0;      // sample count: 0 / 2 / 4 / 8
+    bool FXAA = false;
 
     void ResetToDefaults() { *this = VideoSettingsData(); }
 
     void ApplyToEngine() const; // implemented in VideoSettingsData.cpp
+    void FromCurrentState();    // implemented in VideoSettingsData.cpp -- reads live engine/window state back into this struct
 
     std::string Serialize() const
     {
@@ -35,6 +38,8 @@ struct VideoSettingsData
         ss << "Height=" << Height << "\n";
         ss << "WindowMode=" << WindowMode << "\n";
         ss << "VSync=" << (VSync ? 1 : 0) << "\n";
+        ss << "MSAA=" << MSAA << "\n";
+        ss << "FXAA=" << (FXAA ? 1 : 0) << "\n";
         return ss.str();
     }
 
@@ -46,6 +51,8 @@ struct VideoSettingsData
             else if (key == "Height")     Height = std::stoi(value);
             else if (key == "WindowMode") WindowMode = value;
             else if (key == "VSync")      VSync = (value == "1" || value == "true");
+            else if (key == "MSAA")       MSAA = std::stoi(value);
+            else if (key == "FXAA")       FXAA = (value == "1" || value == "true");
         }
         catch (...) { /* malformed line — keep current value */ }
     }

@@ -83,6 +83,9 @@ public:
 		backButton->onClick = [&]()
 			{
 				parentMenu->visible = true;
+				GameSettings::Instance().Video.FromCurrentState();
+				GameSettings::Instance().ApplyAll();
+				GameSettings::Instance().SaveToFile();
 				RemoveFromParent();
 			};
 
