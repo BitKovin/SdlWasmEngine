@@ -809,7 +809,7 @@ void EngineMain::Render()
         BgfxStateManager::Reset();
         BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Always);
         BgfxStateManager::SetWriteDepth(false);
-        BgfxStateManager::SetBlend(BgfxStateManager::Blend::Alpha);
+        BgfxStateManager::SetBlend(BgfxStateManager::Blend::Premultiplied);
 
         bgfx::touch(ViewIdManager::GetCurrentId());
         {

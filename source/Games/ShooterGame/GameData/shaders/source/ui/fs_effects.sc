@@ -190,5 +190,5 @@ void main()
     result = over(outlineLayer, result);
     result = over(baseLayer, result);
 
-    gl_FragColor = result;
+    gl_FragColor = vec4(result.rgb* result.a, result.a);
 }

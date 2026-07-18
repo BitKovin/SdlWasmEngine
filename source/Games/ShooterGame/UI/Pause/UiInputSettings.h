@@ -491,7 +491,7 @@ private:
 
         auto resetLabel = std::make_shared<UiText>();
         resetLabel->text = "Reset";
-        resetLabel->fontSize = 18.f;
+        resetLabel->fontSize = 25.f;
         resetLabel->pivot = vec2(0.5f);
         resetLabel->origin = vec2(0.5f);
         resetRowButton->AddChild(resetLabel);

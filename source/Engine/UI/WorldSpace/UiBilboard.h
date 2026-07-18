@@ -67,6 +67,9 @@ public:
 		ContentBox->pivot = vec2(0.5f, 0.5f);
 		ContentBox->origin = vec2(0.5f, 0.5f);
 		Canvas.AddChild(ContentBox);
+
+		blendMode = BgfxStateManager::Blend::Premultiplied;
+
 	}
 	~UiBilboard();
 

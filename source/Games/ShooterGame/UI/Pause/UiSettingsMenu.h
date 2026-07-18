@@ -27,7 +27,7 @@ public:
 		this->parentMenu = parentMenu_;
 
 		background = make_shared<UiImage>();
-		background->color = vec4(0.5f, 0.0f, 0.0f, 0.5f);
+		background->color = vec4(0.2f, 0.0f, 0.0f, 0.5f);
 		AddChild(background);
 
 		optionsBox = std::make_shared<UiVerticalBox>();

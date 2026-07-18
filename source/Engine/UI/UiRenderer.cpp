@@ -517,7 +517,7 @@ namespace UiRenderer {
     {
         BgfxStateManager::Reset();
         BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Always);
-        BgfxStateManager::SetBlend(BgfxStateManager::Blend::Alpha);
+        BgfxStateManager::SetBlend(BgfxStateManager::Blend::Premultiplied);
         BgfxStateManager::Apply();
 
         ApplyStencilTest();
