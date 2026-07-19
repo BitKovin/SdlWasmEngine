@@ -8,6 +8,7 @@ class PickupBase : public NetworkedEntity
 {
 public:
 	
+	vec3 areaSize = vec3(0.5f);
 
 	bool NetworkReplicated = false;
 

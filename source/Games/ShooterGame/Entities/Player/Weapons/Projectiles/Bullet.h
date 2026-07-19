@@ -14,9 +14,14 @@ protected:
 	vec3 oldPos;
 	float traveledDistance = 0;
 
+	// Result of the trace fired in AsyncUpdate, consumed in LateUpdate.
+	Physics::HitResult asyncHit;
+
 public:
 
 	Entity* damageCauser = nullptr;
+
+	std::string trailTypeName = "bullet_trail";
 
 	std::string OwnerTag = "player";
 
@@ -37,12 +42,14 @@ public:
 	void LoadAssets()
 	{
 
-		PreloadEntityType("bullet_trail");
+		PreloadEntityType(trailTypeName);
 	}
 
 	void Start();
 
 	void Update();
+	void AsyncUpdate();
+	void LateUpdate();
 
 	virtual void TargetHit(Physics::HitResult hit);
 

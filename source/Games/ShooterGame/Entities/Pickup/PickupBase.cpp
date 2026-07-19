@@ -7,7 +7,7 @@
 void PickupBase::Start()
 {
 
-	triggerBody = Physics::CreateBoxBody(this, Position + vec3(0,0.0f,0), vec3(0.5f), 0, true, BodyType::MainBody, BodyType::CharacterCapsule);
+	triggerBody = Physics::CreateBoxBody(this, Position + vec3(0,0.0f,0), areaSize, 0, true, BodyType::MainBody, BodyType::CharacterCapsule);
 	triggerBody->SetIsSensor(true);
 	LeadBody = triggerBody;
 

@@ -17,7 +17,7 @@ public:
         params.switchDelayOnAttack = 0.2f;
         params.weaponOffset = vec3(0.013, 0.013, -0.096);
         params.bulletSpeed = 200.0f; // Assumed same
-        params.bulletDamage = 60.0f / 21.0f;
+        params.bulletDamage = 65.0f / 21.0f;
         params.range = 70.0f;
         params.fireAnimation = "attack";
         params.fireAnimInterpInTime = 0.15f; // No speed specified, assume default

@@ -9,6 +9,11 @@ public:
 
 	vector<Entity*> hitEntities;
 
+	CannonBullet() : Bullet()
+	{
+		trailTypeName = "cannon_bullet_trail";
+	}
+
 	void Start() override
 	{
 		Bullet::Start();
@@ -26,25 +31,33 @@ public:
 		Position += MathHelper::GetForwardVector(Rotation) * travelDistance;
 
 		trail->Position = Position;
+	}
 
-		auto hit = Physics::LineTrace(oldPos, Position, BodyType::GroupHitTest, {}, hitEntities);
+	void AsyncUpdate() override
+	{
+		// Only the physics trace happens here. This runs in parallel across all
+		// entities, so nothing below may read/write other entities' state.
 
+		asyncHit = Physics::LineTrace(oldPos, Position, BodyType::GroupHitTest, {}, hitEntities);
+	}
 
-		if (hit.hasHit)
+	void LateUpdate() override
+	{
+		if (asyncHit.hasHit)
 		{
 
-			hitEntities.push_back(hit.entity);
+			hitEntities.push_back(asyncHit.entity);
 
-			if (hit.entity == owner)
+			if (asyncHit.entity == owner)
 			{
 				oldPos = Position;
 				return;
 			}
 
-			if (hit.entity->HasTag(OwnerTag) == false)
+			if (asyncHit.entity->HasTag(OwnerTag) == false)
 			{
 
-				TargetHit(hit);
+				TargetHit(asyncHit);
 
 			}
 
@@ -55,10 +68,10 @@ public:
 			//GlobalParticleSystem::SpawnParticleAt("hit_flesh", hit.position, MathHelper::FindLookAtRotation(vec3(0), MathHelper::FastNormalize(Position - oldPos)), vec3(2.0f));
 
 
-			if (Physics::GetBodyData(hit.hitbody)->group & BodyType::World)
+			if (Physics::GetBodyData(asyncHit.hitbody)->group & BodyType::World)
 			{
 				Explosion* explosion = new Explosion();
-				explosion->Position = hit.position + hit.normal * 0.5f;
+				explosion->Position = asyncHit.position + asyncHit.normal * 0.5f;
 				explosion->Radius = 3.0f;
 				explosion->minDamage = Damage * 0.5f;
 				explosion->MaxDamage = Damage;
@@ -73,7 +86,7 @@ public:
 				explosion->Start();
 
 				Destroy();
-				trail->Position = hit.position;
+				trail->Position = asyncHit.position;
 				trail->StopAll();
 				trail = nullptr;
 
@@ -86,7 +99,7 @@ public:
 		if (traveledDistance > MaxDistance)
 		{
 			Destroy();
-			trail->Position = hit.position;
+			trail->Position = asyncHit.position;
 			trail->StopAll();
 			trail = nullptr;
 		}

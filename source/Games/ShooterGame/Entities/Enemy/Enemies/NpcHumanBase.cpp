@@ -321,6 +321,7 @@ void NpcHumanBase::OnPointDamage(float Damage, vec3 Point, vec3 Direction,
 
     OnDamage(Damage, DamageCauser, Weapon);
 
+
     // Broadcast to others – post-multiplier damage, bone for ragdoll check.
     NetPacket args(PacketType::RPC);
     args.WriteFloat(Damage);
@@ -345,6 +346,11 @@ void NpcHumanBase::OnDamage(float Damage, Entity* DamageCauser, Entity* Weapon)
         ScoreSystem::Instance().addScore(std::min(Damage, Health));
 
     Health -= Damage;
+
+    if (Health < 2)
+    {
+        Health = 0;
+    }
 
     if (DamageCauser != nullptr)
     {

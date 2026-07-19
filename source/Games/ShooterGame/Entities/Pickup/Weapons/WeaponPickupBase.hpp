@@ -11,6 +11,11 @@ public:
 	std::string weaponName = "";
 	std::string modelPath = "";
 
+	WeaponPickupBase() : PickupBase()
+	{
+		areaSize = vec3(1.0f);
+	}
+
 	void OnPickup(Player* player) override
 	{
 

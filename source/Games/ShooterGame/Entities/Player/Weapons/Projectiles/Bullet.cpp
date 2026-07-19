@@ -25,7 +25,7 @@ void Bullet::Start()
 
 	oldPos = Position;
 
-	trail = (ParticleSystem*)Spawn("bullet_trail");
+	trail = (ParticleSystem*)Spawn(trailTypeName);
 	trail->Position = Position;
 	trail->Rotation = Rotation;
 	trail->Start();
@@ -51,24 +51,42 @@ void Bullet::Update()
 
 	trail->Position = Position;
 
+}
+
+void Bullet::AsyncUpdate()
+{
+	// Only the physics trace happens here. This runs in parallel across all
+	// entities, so nothing below may read/write other entities' state.
+
+	if (isOwned)
+	{
+		asyncHit = Physics::SphereTrace(oldPos, Position, 0.07f, BodyType::GroupHitTest, {}, { owner });
+	}
+	else
+	{
+		asyncHit = Physics::SphereTrace(oldPos, Position, 0.1f, BodyType::World);
+	}
+}
+
+void Bullet::LateUpdate()
+{
+
 	if (isOwned)
 	{
 
-		Physics::HitResult hit = Physics::SphereTrace(oldPos, Position, 0.07f, BodyType::GroupHitTest, {}, { owner });
-
-		if (hit.hasHit)
+		if (asyncHit.hasHit)
 		{
 
-			if (hit.entity == owner)
+			if (asyncHit.entity == owner)
 			{
 				oldPos = Position;
 				return;
 			}
 
-			if (hit.entity->HasTag(OwnerTag) == false)
+			if (asyncHit.entity->HasTag(OwnerTag) == false)
 			{
 
-				TargetHit(hit);
+				TargetHit(asyncHit);
 
 			}
 
@@ -80,8 +98,8 @@ void Bullet::Update()
 
 
 
-			Position = hit.position;
-			trail->Position = hit.position;
+			Position = asyncHit.position;
+			trail->Position = asyncHit.position;
 			trail->StopAll();
 			trail->DestroyWithDelay(0.5f);
 			trail = nullptr;
@@ -93,14 +111,12 @@ void Bullet::Update()
 	}
 	else
 	{
-		Physics::HitResult hit = Physics::SphereTrace(oldPos, Position, 0.1f, BodyType::World);
-
-		if (hit.hasHit)
+		if (asyncHit.hasHit)
 		{
 			UpdateEnabled = false;
 			Visible = false;
-			Position = hit.position;
-			trail->Position = hit.position;
+			Position = asyncHit.position;
+			trail->Position = asyncHit.position;
 			trail->StopAll();
 			trail->DestroyWithDelay(0.5f);
 			return;

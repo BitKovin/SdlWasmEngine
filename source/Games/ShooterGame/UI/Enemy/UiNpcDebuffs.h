@@ -94,6 +94,7 @@ public:
 
 	std::shared_ptr<UiImage> healthBar = nullptr;
 	std::shared_ptr<UiImage> healthBarBg = nullptr;
+	std::shared_ptr<UiText> text = nullptr;
 
 	UiNpcStatus(IEnemy* target)
 	{
@@ -122,6 +123,8 @@ public:
 
 		healthBarBg->AddChild(healthBar);
 
+		text = std::make_shared<UiText>();
+		AddChild(text);
 
 		Owner = dynamic_cast<Entity*>(target);
 
@@ -136,6 +139,8 @@ public:
 		UiVerticalBox::Update();
 
 		healthBar->size.x = 600.0f * (Owner->Health / Owner->MaxHealth);
+
+		text->text = to_string(Owner->Health);
 
 	}
 

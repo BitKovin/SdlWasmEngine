@@ -381,11 +381,7 @@ void EngineMain::MainLoop()
 
     BgfxResetManager::ApplyIfNeeded();
 
-    if (frame == 5) //some platforms require it
-    {
-        ForceUpdateScreenSize(); //hack to fix some rendering issues that happen on some platforms
-        initGame();
-    }
+
 
 
     if (DebugUiEnabled)
@@ -403,6 +399,12 @@ void EngineMain::MainLoop()
         pointer->PointerSize = vec2(24.f, 24.f);
         pointer->PointerOffset = 10.f;
         Viewport.AddChild(pointer);
+    }
+
+    if (frame == 5) //some platforms require it
+    {
+        ForceUpdateScreenSize(); //hack to fix some rendering issues that happen on some platforms
+        initGame();
     }
 
     Viewport.ResetTouchInputs();
