@@ -104,7 +104,15 @@ void PlayerRepresentation::AsyncUpdate()
 
     UpdateWeaponMeshes();
 
-    animator->movementSpeed = length(MathHelper::XZ(currentState.velocity));
+    vec2 relativeMovement = vec2();
+    relativeMovement.x = glm::dot(currentState.velocity, MathHelper::GetRightVector(mesh->Rotation));
+    relativeMovement.y = glm::dot(currentState.velocity, MathHelper::GetForwardVector(mesh->Rotation));
+
+    if (isMirrored)
+        relativeMovement.x *= -1.0f;
+
+    animator->relativeMovement = relativeMovement;
+    animator->crouched = currentState.crouching;
     animator->Update();
 
     std::string desiredAnimationName = "weapon_rl";

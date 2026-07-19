@@ -15,6 +15,8 @@ PlayerState PlayerState::FromPlayerPtr(Player* player)
         ? player->controller.crouchHeight
         : player->controller.height;
 
+    state.crouching = player->controller.isCrouched;
+
     if (player->currentWeapon)
     {
         WeaponFirearm* fw = dynamic_cast<WeaponFirearm*>(player->currentWeapon);

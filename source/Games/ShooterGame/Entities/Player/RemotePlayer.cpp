@@ -101,6 +101,7 @@ void RemotePlayer::LateUpdate()
         state.weaponRHandlingType = weaponRHandlingType;
         state.weaponRModelPath    = weaponRModelPath;
         state.weaponLModelPath    = weaponLModelPath;
+        state.crouching           = crouched;
         return state;
     };
 
@@ -124,6 +125,7 @@ void RemotePlayer::LateUpdate()
             predictedVelocity   = state.velocity;
             cameraRotation      = state.cameraRotation;
             weaponRHandlingType = state.weaponRHandlingType;
+            crouched = state.crouching;
 
             // Weapon indices aren't part of PlayerState -- it intentionally
             // stays decoupled from the weapon registry -- so they still have
@@ -210,6 +212,7 @@ void RemotePlayer::NetSerialize(NetPacket& packet)
     packet.WriteFloat(playerHeight);
     packet.WriteVector3(predictedVelocity);
     packet.WriteVector3(cameraRotation);
+    packet.WriteBool(crouched);
 
     packet.WriteUInt16(weaponRIndex);
     packet.WriteUInt16(weaponLIndex);
@@ -231,6 +234,8 @@ void RemotePlayer::NetDeserialize(NetPacket& packet)
     timeSinceNetUpdate = 0.0f;
 
     cameraRotation = packet.ReadVector3();
+
+    crouched = packet.ReadBool();
 
     const uint16_t newWeaponR = packet.ReadUInt16();
     const uint16_t newWeaponL = packet.ReadUInt16();

@@ -15,6 +15,8 @@ struct PlayerState
     vec3  cameraRotation{};
     vec3  velocity{};
 
+    bool crouching = false;
+
     float playerHeight  = 0.0f;
 
     uint8_t weaponRHandlingType = 0; //0 default with left hand holding, 1 for left hand resting, 2 for 2 separate hands holding 2 copies of weapon

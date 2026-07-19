@@ -45,6 +45,8 @@ public:
     vec3  lastNetPosition{};
     vec3  predictedVelocity{};
 
+    bool crouched = false;
+
     float timeSinceNetUpdate = 0.0f;
     float playerHeight       = 0.0f;
 

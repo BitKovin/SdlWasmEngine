@@ -2549,7 +2549,12 @@ void Player::UpdateBody()
 
 	if (EngineMain::MainInstance->SimulatingGameTicks) return;
 
-	bodyAnimator.movementSpeed = length(MathHelper::XZ(velocity));
+	vec2 relativeMovement = vec2();
+	relativeMovement.x = glm::dot(velocity, MathHelper::GetRightVector(bodyMesh->Rotation));
+	relativeMovement.y = glm::dot(velocity, MathHelper::GetForwardVector(bodyMesh->Rotation));
+
+	bodyAnimator.relativeMovement = relativeMovement;
+	bodyAnimator.crouched = controller.isCrouched;
 
 	vec3 playerForward = MathHelper::GetForwardVector(vec3(0, cameraRotation.y, 0));
 
@@ -2571,6 +2576,9 @@ void Player::UpdateBody()
 		pose.SetBoneTransform("neck_01", scale0);
 		pose.SetBoneTransform("upperarm_r", scale0);
 		pose.SetBoneTransform("upperarm_l", scale0);
+
+		if(cameraRotation.x < 0)
+		pose.SetBoneTransform("spine_03", scale0);
 	}
 
 
