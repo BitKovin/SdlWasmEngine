@@ -55,6 +55,7 @@ void PlayerRepresentation::LoadAssets()
     mesh->CastDetailShadows = true;
     mesh->PreloadAssets();
     mesh->TwoSided = true;
+    mesh->PlayAnimation("rest");
 
     animator = new PlayerBodyAnimator(this);
     animator->LoadAssetsIfNeeded();
