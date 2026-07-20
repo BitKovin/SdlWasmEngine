@@ -2833,6 +2833,7 @@ void Player::Deserialize(json& source)
 	if (weaponSystemMode == WeaponSystemMode::Slots)
 	{
 		SwitchToSlot(currentSlot, true);
+		SwitchWeaponOffhand(offhandWeapons[offhandWeapon]);
 	}
 	else if (weaponSystemMode == WeaponSystemMode::Inventory)
 	{

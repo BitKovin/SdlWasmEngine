@@ -342,8 +342,11 @@ GameStart::GameStart()
     Input::AddAction("attack")->AddButton(GamepadButton::RightTrigger)->AddMouseButton(0);
     Input::AddAction("attack2")->AddButton(GamepadButton::LeftTrigger)->AddMouseButton(1);
 
+    Input::AddAction("attack3")->AddButton(GamepadButton::Y)->AddKeyboardKey(SDL_KeyCode::SDLK_r);
+
 	InputActionRegistry::Register("attack", "Attack", "Combat");
-	InputActionRegistry::Register("attack2", "Secondary Attack", "Combat");
+	InputActionRegistry::Register("attack2", "Offhand Attack", "Combat");
+    InputActionRegistry::Register("attack3", "Secondary Offhand Attack", "Combat");
 
     Input::AddAction("qSave")->AddKeyboardKey(SDL_KeyCode::SDLK_F6);
     Input::AddAction("qLoad")->AddKeyboardKey(SDL_KeyCode::SDLK_F7);

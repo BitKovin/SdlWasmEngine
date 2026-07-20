@@ -67,6 +67,20 @@ public:
 
 	}
 
+	bool CanChangeSlot() override
+	{
+
+		if (viewmodel->GetAnimationName() == "throw")
+			return false;
+
+		if (viewmodel->GetAnimationName() == "grab" && viewmodel->IsAnimationPlaying())
+			return false;
+		if (viewmodel->GetAnimationName() == "take" && viewmodel->IsAnimationPlaying())
+			return false;
+
+		return true;
+	}
+
 	void SetViewmodelScaleFactor(float factor)
 	{
 		viewmodel->ViewmodelScaleFactor = factor;
@@ -163,7 +177,7 @@ public:
 
 
 
-		auto hit = Physics::SphereTrace(safePosition, safePosition - vec3(0, 1, 0), 0.001f, BodyType::World | BodyType::MainBody);
+		auto hit = Physics::SphereTrace(safePosition, safePosition - vec3(0, 1, 0), 0.01f, BodyType::World | BodyType::MainBody);
 
 
 
@@ -191,7 +205,7 @@ public:
 		grabing = true;
 		thrown = false;
 
-		grabDelay.AddDelay(0.12f);
+		grabDelay.AddDelay(0.2f);
 
 		attackDelay.AddDelay(1);
 
@@ -352,40 +366,60 @@ public:
 			PerformMeleeAttack();
 		}
 
+		if (Input::GetAction("attack3")->Pressed() && CanAttack())
+		{
+
+			if (attackDelay.Wait() == false)
+			{
+				if (thrown)
+				{
+
+					if (projectile->inEnemy)
+					{
+						StartGrab();
+					}
+					else
+					{
+						ReturnCane();
+					}
+
+
+				}
+				else
+				{
+					Attack();
+				}
+
+			}
+		}
+
 		if (Input::GetAction("attack2")->Pressed() && CanAttack())
 		{
 			if (attackDelay.Wait() == false)
 			{
 
-				if (true)
+				if (thrown)
 				{
 
-					PerformParry();
+					if (projectile->inEnemy)
+					{
+						StartGrab();
+					}
+					else
+					{
+						ReturnCane();
+					}
+
 
 				}
 				else
 				{
-
-					if (thrown)
-					{
-
-						if (projectile->inEnemy)
-						{
-							StartGrab();
-						}
-						else
-						{
-							ReturnCane();
-						}
-
-
-					}
-					else
-					{
-						Attack();
-					}
-
+					PerformParry();
 				}
+
+
+
+				
 
 			}
 		}
@@ -557,6 +591,29 @@ public:
 		viewmodel->Visible = !thrown;
 	}
 
+	void Serialize(json& target)
+	{
+		SERIALIZE_FIELD(target, attackDelay);
+		SERIALIZE_FIELD(target, SwitchDelay);
+
+		auto viewmodelData = viewmodel->GetAnimationState();
+		SERIALIZE_FIELD(target, viewmodelData);
+
+
+	}
+
+	void Deserialize(json& source)
+	{
+		DESERIALIZE_FIELD(source, attackDelay);
+		DESERIALIZE_FIELD(source, SwitchDelay);
+
+
+		AnimationState viewmodelData;
+		DESERIALIZE_FIELD(source, viewmodelData);
+		viewmodel->SetAnimationState(viewmodelData);
+
+
+	}
 
 	WeaponSlotData GetDefaultData() override
 	{

@@ -381,8 +381,7 @@ public:
 
 			if (isEnemy)
 			{
-				Player::Instance->Heal(damangeToDeal * 0.20f
-				* IsUltimateMode() ? 1.5f : 1.0f);
+				Player::Instance->Heal(damangeToDeal * 0.10f);
 			}
 
 			hit.entity->OnPointDamage(
