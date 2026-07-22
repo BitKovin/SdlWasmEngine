@@ -11,12 +11,14 @@ public:
         SpawnRate = 0;
         Emitting = true;
 
-        MaxParticles = 1500;
-        InitialSpawnCount = 1500;
+        MaxParticles = 2500;
+        InitialSpawnCount = 2500;
 
         Duration = 1000000;
 
-        PixelShader = "fog_particle";
+        BlendMode = BgfxStateManager::Blend::Alpha;
+
+        //PixelShader = "fog_particle";
 
     }
 
@@ -27,12 +29,12 @@ public:
 
         float yDist = distance(Camera::position.y, particle.position.y);
 
-        if (yDist > 12)
+        if (yDist > 23)
         {
             particle.position.y = Camera::position.y + (RandomFloat() * 2 - 0.8f) * 5.0f;
         }
 
-        if (distanceToCamera > 40)
+        if (distanceToCamera > 50)
         {
             vec3 oldPos = particle.position;
             particle = GetNewParticle();
@@ -60,7 +62,7 @@ public:
         particle.Transparency = MathHelper::MapRange(distanceToCamera, 1, 20, 0.07, 0.1f) * fadeIn * fadeOut 
             * MathHelper::MapRange(distanceToCamera, 2, 7, 0.5, 1) * 0.6f;
 
-        particle.Size = MathHelper::MapRange(distanceToCamera, 3, 30, 8, 12);
+        particle.Size = MathHelper::MapRange(distanceToCamera, 1, 30, 8, 10);
 
         return particle;
     }
@@ -129,7 +131,7 @@ public:
     VolumetricFogSystem()
     {
 
-        FogManager::Opacity = 1;
+        //FogManager::Opacity = 1;
 
         particle_fog = new particle_volumetricFogEmitter();
 

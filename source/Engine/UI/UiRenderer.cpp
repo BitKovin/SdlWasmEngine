@@ -167,7 +167,7 @@ struct FontAtlas {
         // Rasterize the glyph into a temporary 1-channel bitmap
         int w = 0, h = 0, xoff = 0, yoff = 0;
         uint8_t* bm = stbtt_GetCodepointBitmap(
-            &fontInfo, 0.f, scale, codepoint, &w, &h, &xoff, &yoff);
+            &fontInfo, scale, scale, codepoint, &w, &h, &xoff, &yoff);
 
         if (!bm || w <= 0 || h <= 0) {
             // Invisible / missing glyph (e.g. space, tab) – record metrics only
@@ -900,6 +900,10 @@ namespace UiRenderer {
             ? s_texturedShader
             : ShaderManager::GetShaderProgram("vs_ui", shader);
         const glm::mat4 model = BuildQuadModelFromMat3(transform, drawSize);
+
+        if (atlas->textureDirty) {
+            atlas->FlushToGPU();
+        }
 
         if (shader.empty())
         {
