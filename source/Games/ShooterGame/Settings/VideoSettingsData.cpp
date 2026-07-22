@@ -1,7 +1,7 @@
 #include "VideoSettingsData.h"
 
 #include <SDL2/SDL.h>
-#include "../EngineMain.h"
+#include <EngineMain.h>
 
 void VideoSettingsData::ApplyToEngine() const
 {

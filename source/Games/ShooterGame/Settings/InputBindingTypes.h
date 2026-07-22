@@ -25,7 +25,7 @@
 #include <algorithm>
 #include <cctype>
 
-#include "../Input.h"
+#include <Input.h>
 
 // ── Keyboard / mouse slot ───────────────────────────────────────────────────
 

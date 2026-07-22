@@ -1,0 +1,9 @@
+libdir=C:/Program Files (x86)/MyProject/lib
+includedir=C:/Program Files (x86)/MyProject/include
+
+Name: MyProject
+Description: Import various well-known 3D model formats in an uniform manner.
+Version: 6.0.2
+Libs: -L${libdir} -lassimp
+Libs.private:  
+Cflags: -I${includedir}

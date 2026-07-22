@@ -1,7 +1,7 @@
 #pragma once
 
-#include "UiElement.h"
-#include "UiImage.hpp"
+#include <UI/UiElement.h>
+#include <UI/UiImage.hpp>
 
 #include <memory>
 

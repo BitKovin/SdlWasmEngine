@@ -1,12 +1,12 @@
 #pragma once
 
-#include "UiButton.hpp"
-#include "UiVerticalBox.hpp"
-#include "UiHorizontalBox.hpp"
-#include "UiText.hpp"
-#include "UiImage.hpp"
-#include "UiCanvas.hpp"
-#include "UiNavigation.h"
+#include <UI/UiButton.hpp>
+#include <UI/UiVerticalBox.hpp>
+#include <UI/UiHorizontalBox.hpp>
+#include <UI/UiText.hpp>
+#include <UI/UiImage.hpp>
+#include <UI/UiCanvas.hpp>
+#include <UI/UiNavigation.h>
 #include "../UiSettingsStyle.hpp"
 
 #include <functional>

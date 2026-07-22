@@ -15,7 +15,7 @@
 // on the PauseGameManager.hpp convention (manager classes living at the
 // include root, not under Settings/ like VideoSettings/GameSettings). Point
 // this at wherever SoundManager actually lives if it differs.
-#include <SoundManager.hpp>
+#include <SoundSystem/SoundManager.hpp>
 
 #include "UiSettingsStyle.hpp"
 

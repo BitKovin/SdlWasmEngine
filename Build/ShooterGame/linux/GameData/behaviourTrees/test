@@ -1,0 +1,38 @@
+{
+    "blackboard": null,
+    "isRunning": false,
+    "root": {
+        "children": [
+            {
+                "children": [
+                    {
+                        "children": [],
+                        "name": "Wait",
+                        "type": "WaitNode",
+                        "waitTime": {
+                            "sourceType": 0,
+                            "value": 1.0
+                        }
+                    },
+                    {
+                        "children": [],
+                        "message": {
+                            "sourceType": 0,
+                            "value": "Hello"
+                        },
+                        "name": "PrintMessage",
+                        "type": "PrintMessageNode"
+                    }
+                ],
+                "name": "Sequence",
+                "type": "SequenceNode"
+            }
+        ],
+        "name": "Repeat",
+        "repeatCount": {
+            "sourceType": 0,
+            "value": -1
+        },
+        "type": "RepeatDecorator"
+    }
+}

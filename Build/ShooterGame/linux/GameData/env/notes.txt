@@ -1,0 +1,8 @@
+up and down should be rotated by -90 degrees
+
+px lf
+nx rt
+py up
+ny dn
+pz ft
+nz bk

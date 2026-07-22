@@ -269,13 +269,15 @@ set(LINKER_FLAGS_DEBUG )
 set(LINKER_FLAGS_RELEASE )
 set(EXTRA_LIBS )
 
-if((CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang"
+if(HAVE_LIBCXX)
+    if((CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang"
         AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 17.0)
     OR (CMAKE_CXX_COMPILER_ID STREQUAL "Clang"
         AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 20.0))
-    check_cxx_compiler_flag(-Wfunction-effects HAVE_WFUNCTION_EFFECTS)
-    if(HAVE_WFUNCTION_EFFECTS)
-        list(APPEND C_FLAGS $<$<COMPILE_LANGUAGE:CXX>:-Wfunction-effects>)
+        check_cxx_compiler_flag(-Wfunction-effects HAVE_WFUNCTION_EFFECTS)
+        if(HAVE_WFUNCTION_EFFECTS)
+            list(APPEND C_FLAGS $<$<COMPILE_LANGUAGE:CXX>:-Wfunction-effects>)
+        endif()
     endif()
 endif()
 
@@ -408,7 +410,6 @@ else()
             $<$<COMPILE_LANGUAGE:C>:-Werror=implicit -Werror=incompatible-pointer-types
                 -Werror=int-conversion>)
         if(HAVE_WFUNCTION_EFFECTS)
-            list(APPEND C_FLAGS $<$<COMPILE_LANGUAGE:CXX>:-Werror=function-effects>)
         endif()
     endif()
 

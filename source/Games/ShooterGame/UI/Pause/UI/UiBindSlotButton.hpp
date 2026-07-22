@@ -1,9 +1,9 @@
 #pragma once
 
-#include "UiElement.h"
-#include "UiButton.hpp"
-#include "UiImage.hpp"
-#include "UiText.hpp"
+#include <UI/UiElement.h>
+#include <UI/UiButton.hpp>
+#include <UI/UiImage.hpp>
+#include <UI/UiText.hpp>
 
 #include <functional>
 #include <string>

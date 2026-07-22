@@ -1,0 +1,101 @@
+{
+  "RepoRoot": ".",
+  "GameName": "Game",
+  "LogDirectory": "BuildLogs",
+  "Parallel": false,
+  "MaxParallelism": 2,
+  "Targets": [
+    {
+      "Name": "windows",
+      "Kind": "Windows",
+      "Enabled": true,
+      "BuildDir": "build/windows",
+      "ToolchainFile": "cmake/toolchains/msvc.cmake",
+      "Generator": "Ninja",
+      "GameName": null,
+      "ExtraCMakeArgs": [],
+      "ExtraEnvCommands": [],
+      "Configuration": "Release",
+      "Windows": {
+        "VcVarsAllPath": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Auxiliary\\Build\\vcvarsall.bat",
+        "Arch": "x64"
+      },
+      "Wsl": null,
+      "Emscripten": null
+    },
+    {
+      "Name": "linux",
+      "Kind": "Linux",
+      "Enabled": true,
+      "BuildDir": "build/linux",
+      "ToolchainFile": "cmake/toolchains/clang.cmake",
+      "Generator": "Ninja",
+      "GameName": null,
+      "ExtraCMakeArgs": [],
+      "ExtraEnvCommands": [],
+      "Configuration": "Release",
+      "Windows": null,
+      "Wsl": {
+        "Distro": "Ubuntu"
+      },
+      "Emscripten": null
+    },
+    {
+      "Name": "emscripten",
+      "Kind": "Emscripten",
+      "Enabled": true,
+      "BuildDir": "build/emscripten",
+      "ToolchainFile": null,
+      "Generator": "Ninja",
+      "GameName": null,
+      "ExtraCMakeArgs": [],
+      "ExtraEnvCommands": [],
+      "Configuration": "Release",
+      "Windows": null,
+      "Wsl": null,
+      "Emscripten": {
+        "EmsdkEnvScript": "C:\\emsdk\\emsdk_env.bat"
+      }
+    },
+    {
+      "Name": "xbox-gdk",
+      "Kind": "XboxGdk",
+      "Enabled": false,
+      "BuildDir": "build/xbox_gdk",
+      "ToolchainFile": "cmake/toolchains/msvc.cmake",
+      "Generator": "Ninja",
+      "GameName": null,
+      "ExtraCMakeArgs": [
+        "-DXBOX_GDK=1"
+      ],
+      "ExtraEnvCommands": [],
+      "Configuration": "Release",
+      "Windows": {
+        "VcVarsAllPath": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Auxiliary\\Build\\vcvarsall.bat",
+        "Arch": "amd64"
+      },
+      "Wsl": null,
+      "Emscripten": null
+    },
+    {
+      "Name": "windows-gdk",
+      "Kind": "WindowsGdk",
+      "Enabled": false,
+      "BuildDir": "build/windows_gdk",
+      "ToolchainFile": "cmake/toolchains/msvc.cmake",
+      "Generator": "Ninja",
+      "GameName": null,
+      "ExtraCMakeArgs": [
+        "-DWINDOWS_GDK=1"
+      ],
+      "ExtraEnvCommands": [],
+      "Configuration": "Release",
+      "Windows": {
+        "VcVarsAllPath": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Auxiliary\\Build\\vcvarsall.bat",
+        "Arch": "amd64"
+      },
+      "Wsl": null,
+      "Emscripten": null
+    }
+  ]
+}

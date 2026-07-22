@@ -1,0 +1,7 @@
+wsl --install Ubuntu
+
+wsl -d Ubuntu -- sudo apt update
+wsl -d Ubuntu -- sudo apt install -y cmake
+wsl -d Ubuntu -- sudo apt install -y clang lld
+wsl -d Ubuntu -- sudo apt install -y libx11-dev libgl1-mesa-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxext-dev
+wsl -d Ubuntu -- sudo apt install -y libasound2-dev libpulse-dev libudev-dev libwayland-dev libxkbcommon-dev

@@ -1,0 +1,958 @@
+{
+    "blackboard": {
+        "attackPosition": [
+            -0.9602737426757813,
+            1.4305051565170288,
+            10.480264663696289
+        ],
+        "closestGuard": "",
+        "flee_target": [
+            0.0,
+            0.0,
+            0.0
+        ],
+        "found_guard": false,
+        "has_navpoint": true,
+        "investigation": false,
+        "investigation_target": [
+            -4.491583824157715,
+            2.132084608078003,
+            29.176246643066406
+        ],
+        "investigation_wait_time": 1.0,
+        "isGuard": true,
+        "navpoint_acceptance_radius": 0.0,
+        "navpoint_has_wait_time": false,
+        "navpoint_name": "np_0_0",
+        "navpoint_wait_time": 0.0,
+        "report_to_guard": false,
+        "stunned": false,
+        "target": "$player_0",
+        "target_attack": true,
+        "target_attackInRange": true,
+        "target_follow": true,
+        "target_id": "$player_0",
+        "target_knowsLocation": true,
+        "target_lastSeenPosition": [
+            -0.9602737426757813,
+            1.4305051565170288,
+            10.480264663696289
+        ],
+        "target_sees": true,
+        "target_underArrest": true,
+        "task_acceptanceRadius": 0.30000001192092896,
+        "task_acceptance_radius": 0.30000001192092896,
+        "task_canBeCanceled": true,
+        "task_doingJob": false,
+        "task_move": true,
+        "task_moveLocation": [
+            -2.5,
+            0.5,
+            32.0
+        ],
+        "task_setOrientation": false
+    },
+    "isRunning": true,
+    "root": {
+        "children": [
+            {
+                "children": [
+                    {
+                        "children": [
+                            {
+                                "children": [
+                                    {
+                                        "children": [
+                                            {
+                                                "children": [
+                                                    {
+                                                        "children": [
+                                                            {
+                                                                "children": [
+                                                                    {
+                                                                        "children": [
+                                                                            {
+                                                                                "children": [
+                                                                                    {
+                                                                                        "children": [
+                                                                                            {
+                                                                                                "children": [],
+                                                                                                "id": "node_58a31d44c33dec35",
+                                                                                                "name": "Task Not Doing",
+                                                                                                "type": "Task_NotDoing"
+                                                                                            },
+                                                                                            {
+                                                                                                "acceptance radius": {
+                                                                                                    "sourceType": 0,
+                                                                                                    "value": 2.0
+                                                                                                },
+                                                                                                "children": [],
+                                                                                                "id": "node_171471d36e416754",
+                                                                                                "name": "Move To Entity",
+                                                                                                "pretty path": {
+                                                                                                    "sourceType": 0,
+                                                                                                    "value": false
+                                                                                                },
+                                                                                                "target": {
+                                                                                                    "blackboardKey": "closestGuard",
+                                                                                                    "sourceType": 1
+                                                                                                },
+                                                                                                "type": "MoveToEntity"
+                                                                                            },
+                                                                                            {
+                                                                                                "children": [],
+                                                                                                "id": "node_db060fcb1e9350bc",
+                                                                                                "name": "Finish Investigation",
+                                                                                                "type": "FinishInvestigation"
+                                                                                            }
+                                                                                        ],
+                                                                                        "id": "node_2a73062b31a00983",
+                                                                                        "name": "Sequence",
+                                                                                        "type": "SequenceNode"
+                                                                                    }
+                                                                                ],
+                                                                                "id": "node_343486388b30f6ee",
+                                                                                "name": "Selector",
+                                                                                "type": "SelectorNode"
+                                                                            }
+                                                                        ],
+                                                                        "condition": {
+                                                                            "blackboardKey": "found_guard",
+                                                                            "sourceType": 1
+                                                                        },
+                                                                        "finish before stop": {
+                                                                            "sourceType": 0,
+                                                                            "value": false
+                                                                        },
+                                                                        "id": "node_2cba831cf6916205",
+                                                                        "inverse": false,
+                                                                        "inverse finish before stop": false,
+                                                                        "name": "found_guard",
+                                                                        "type": "ConditionalDecorator"
+                                                                    },
+                                                                    {
+                                                                        "children": [
+                                                                            {
+                                                                                "children": [],
+                                                                                "id": "node_2877a126d7013ba7",
+                                                                                "name": "Task Not Doing",
+                                                                                "type": "Task_NotDoing"
+                                                                            },
+                                                                            {
+                                                                                "acceptance radius": {
+                                                                                    "sourceType": 0,
+                                                                                    "value": 1.0
+                                                                                },
+                                                                                "children": [],
+                                                                                "id": "node_551b27efc53a07e6",
+                                                                                "name": "Move To Position",
+                                                                                "pretty path": {
+                                                                                    "sourceType": 0,
+                                                                                    "value": false
+                                                                                },
+                                                                                "target": {
+                                                                                    "blackboardKey": "flee_target",
+                                                                                    "sourceType": 1
+                                                                                },
+                                                                                "type": "MoveToPosition"
+                                                                            },
+                                                                            {
+                                                                                "children": [],
+                                                                                "id": "node_eb6d813decc89950",
+                                                                                "name": "Wait",
+                                                                                "type": "WaitNode",
+                                                                                "waitTime": {
+                                                                                    "sourceType": 0,
+                                                                                    "value": 1.0
+                                                                                }
+                                                                            },
+                                                                            {
+                                                                                "children": [],
+                                                                                "id": "node_7e43fbeb9a857a82",
+                                                                                "name": "Finish Investigation",
+                                                                                "type": "FinishInvestigation"
+                                                                            }
+                                                                        ],
+                                                                        "id": "node_70c1c50a438140f8",
+                                                                        "name": "panic",
+                                                                        "type": "SequenceNode"
+                                                                    }
+                                                                ],
+                                                                "id": "node_3e6201454ae797bb",
+                                                                "name": "should we go to guard or panic",
+                                                                "type": "SelectorNode"
+                                                            }
+                                                        ],
+                                                        "condition": {
+                                                            "blackboardKey": "report_to_guard",
+                                                            "sourceType": 1
+                                                        },
+                                                        "finish before stop": {
+                                                            "sourceType": 0,
+                                                            "value": false
+                                                        },
+                                                        "id": "node_1e30017e92142086",
+                                                        "inverse": false,
+                                                        "inverse finish before stop": false,
+                                                        "name": "report_to_guard",
+                                                        "type": "ConditionalDecorator"
+                                                    },
+                                                    {
+                                                        "children": [
+                                                            {
+                                                                "children": [
+                                                                    {
+                                                                        "children": [
+                                                                            {
+                                                                                "children": [],
+                                                                                "id": "node_6bc26f40c41e3419",
+                                                                                "name": "Task Not Doing",
+                                                                                "type": "Task_NotDoing"
+                                                                            },
+                                                                            {
+                                                                                "children": [
+                                                                                    {
+                                                                                        "children": [
+                                                                                            {
+                                                                                                "children": [
+                                                                                                    {
+                                                                                                        "children": [],
+                                                                                                        "id": "node_d8bed9830c601b15",
+                                                                                                        "name": "Wait",
+                                                                                                        "type": "WaitNode",
+                                                                                                        "waitTime": {
+                                                                                                            "sourceType": 0,
+                                                                                                            "value": 5.0
+                                                                                                        }
+                                                                                                    },
+                                                                                                    {
+                                                                                                        "children": [
+                                                                                                            {
+                                                                                                                "children": [
+                                                                                                                    {
+                                                                                                                        "children": [],
+                                                                                                                        "id": "node_7fded2c51e2c2b79",
+                                                                                                                        "name": "Stop Target Follow",
+                                                                                                                        "type": "StopTargetFollow"
+                                                                                                                    }
+                                                                                                                ],
+                                                                                                                "condition": {
+                                                                                                                    "blackboardKey": "stunned",
+                                                                                                                    "sourceType": 1
+                                                                                                                },
+                                                                                                                "finish before stop": {
+                                                                                                                    "sourceType": 0,
+                                                                                                                    "value": false
+                                                                                                                },
+                                                                                                                "id": "node_d1830f110f1a80c4",
+                                                                                                                "inverse": true,
+                                                                                                                "inverse finish before stop": false,
+                                                                                                                "name": "if not stunned",
+                                                                                                                "type": "ConditionalDecorator"
+                                                                                                            }
+                                                                                                        ],
+                                                                                                        "condition": {
+                                                                                                            "blackboardKey": "target_sees",
+                                                                                                            "sourceType": 1
+                                                                                                        },
+                                                                                                        "finish before stop": {
+                                                                                                            "sourceType": 0,
+                                                                                                            "value": false
+                                                                                                        },
+                                                                                                        "id": "node_8f579e5fa9367108",
+                                                                                                        "inverse": true,
+                                                                                                        "inverse finish before stop": false,
+                                                                                                        "name": "if doen't see target",
+                                                                                                        "type": "ConditionalDecorator"
+                                                                                                    }
+                                                                                                ],
+                                                                                                "id": "node_97a46a1af6fc24a8",
+                                                                                                "name": "Sequence",
+                                                                                                "type": "SequenceNode"
+                                                                                            }
+                                                                                        ],
+                                                                                        "condition": {
+                                                                                            "blackboardKey": "target_knowsLocation",
+                                                                                            "sourceType": 1
+                                                                                        },
+                                                                                        "finish before stop": {
+                                                                                            "sourceType": 0,
+                                                                                            "value": false
+                                                                                        },
+                                                                                        "id": "node_336be8edb753ef7d",
+                                                                                        "inverse": true,
+                                                                                        "inverse finish before stop": false,
+                                                                                        "name": "if don't see",
+                                                                                        "type": "ConditionalDecorator"
+                                                                                    },
+                                                                                    {
+                                                                                        "acceptance radius": {
+                                                                                            "sourceType": 0,
+                                                                                            "value": 1.0
+                                                                                        },
+                                                                                        "children": [],
+                                                                                        "id": "node_6dee6f0c4a3d2534",
+                                                                                        "name": "Move To Position",
+                                                                                        "pretty path": {
+                                                                                            "sourceType": 0,
+                                                                                            "value": false
+                                                                                        },
+                                                                                        "target": {
+                                                                                            "blackboardKey": "flee_target",
+                                                                                            "sourceType": 1
+                                                                                        },
+                                                                                        "type": "MoveToPosition"
+                                                                                    }
+                                                                                ],
+                                                                                "id": "node_1dcd4a92d971febe",
+                                                                                "name": "Selector",
+                                                                                "type": "SelectorNode"
+                                                                            }
+                                                                        ],
+                                                                        "id": "node_608442f5bdb2c45f",
+                                                                        "name": "Sequence",
+                                                                        "type": "SequenceNode"
+                                                                    }
+                                                                ],
+                                                                "condition": {
+                                                                    "blackboardKey": "target_underArrest",
+                                                                    "sourceType": 1
+                                                                },
+                                                                "finish before stop": {
+                                                                    "sourceType": 0,
+                                                                    "value": false
+                                                                },
+                                                                "id": "node_649f86027b3d2bc0",
+                                                                "inverse": false,
+                                                                "inverse finish before stop": false,
+                                                                "name": "Conditional",
+                                                                "type": "ConditionalDecorator"
+                                                            }
+                                                        ],
+                                                        "condition": {
+                                                            "blackboardKey": "target_follow",
+                                                            "sourceType": 1
+                                                        },
+                                                        "finish before stop": {
+                                                            "sourceType": 0,
+                                                            "value": false
+                                                        },
+                                                        "id": "node_687dfb9e9390cdc7",
+                                                        "inverse": false,
+                                                        "inverse finish before stop": false,
+                                                        "name": "triggeredByTarget",
+                                                        "type": "ConditionalDecorator"
+                                                    }
+                                                ],
+                                                "id": "node_4b6f510414a860e0",
+                                                "name": "Selector",
+                                                "type": "SelectorNode"
+                                            }
+                                        ],
+                                        "condition": {
+                                            "blackboardKey": "isGuard",
+                                            "sourceType": 1
+                                        },
+                                        "finish before stop": {
+                                            "sourceType": 0,
+                                            "value": false
+                                        },
+                                        "id": "node_95f2310a84067999",
+                                        "inverse": true,
+                                        "inverse finish before stop": false,
+                                        "name": "isCivilian",
+                                        "type": "ConditionalDecorator"
+                                    },
+                                    {
+                                        "children": [
+                                            {
+                                                "children": [
+                                                    {
+                                                        "children": [
+                                                            {
+                                                                "children": [
+                                                                    {
+                                                                        "children": [
+                                                                            {
+                                                                                "children": [
+                                                                                    {
+                                                                                        "children": [
+                                                                                            {
+                                                                                                "children": [
+                                                                                                    {
+                                                                                                        "children": [
+                                                                                                            {
+                                                                                                                "children": [],
+                                                                                                                "id": "node_4fa93ca0a54023dd",
+                                                                                                                "name": "Task Not Doing",
+                                                                                                                "type": "Task_NotDoing"
+                                                                                                            },
+                                                                                                            {
+                                                                                                                "children": [
+                                                                                                                    {
+                                                                                                                        "acceptance radius": {
+                                                                                                                            "sourceType": 0,
+                                                                                                                            "value": 3.0
+                                                                                                                        },
+                                                                                                                        "children": [],
+                                                                                                                        "id": "node_a7ed1a08d5a764f5",
+                                                                                                                        "name": "Move To Position",
+                                                                                                                        "pretty path": {
+                                                                                                                            "sourceType": 0,
+                                                                                                                            "value": false
+                                                                                                                        },
+                                                                                                                        "target": {
+                                                                                                                            "blackboardKey": "target_lastSeenPosition",
+                                                                                                                            "sourceType": 1
+                                                                                                                        },
+                                                                                                                        "type": "MoveToPosition"
+                                                                                                                    }
+                                                                                                                ],
+                                                                                                                "condition": {
+                                                                                                                    "blackboardKey": "target_attackInRange",
+                                                                                                                    "sourceType": 1
+                                                                                                                },
+                                                                                                                "finish before stop": {
+                                                                                                                    "sourceType": 0,
+                                                                                                                    "value": false
+                                                                                                                },
+                                                                                                                "id": "node_efc268c1d250d6c7",
+                                                                                                                "inverse": true,
+                                                                                                                "inverse finish before stop": false,
+                                                                                                                "name": "Conditional",
+                                                                                                                "type": "ConditionalDecorator"
+                                                                                                            },
+                                                                                                            {
+                                                                                                                "acceptance radius": {
+                                                                                                                    "sourceType": 0,
+                                                                                                                    "value": 1.0
+                                                                                                                },
+                                                                                                                "children": [],
+                                                                                                                "id": "node_65f6a3829f57ce0c",
+                                                                                                                "name": "Move To Position",
+                                                                                                                "pretty path": {
+                                                                                                                    "sourceType": 0,
+                                                                                                                    "value": false
+                                                                                                                },
+                                                                                                                "target": {
+                                                                                                                    "blackboardKey": "attackPosition",
+                                                                                                                    "sourceType": 1
+                                                                                                                },
+                                                                                                                "type": "MoveToPosition"
+                                                                                                            }
+                                                                                                        ],
+                                                                                                        "id": "node_71e995df9b24471b",
+                                                                                                        "name": "Sequence",
+                                                                                                        "type": "SequenceNode"
+                                                                                                    }
+                                                                                                ],
+                                                                                                "condition": {
+                                                                                                    "blackboardKey": "target_sees",
+                                                                                                    "sourceType": 1
+                                                                                                },
+                                                                                                "finish before stop": {
+                                                                                                    "sourceType": 0,
+                                                                                                    "value": false
+                                                                                                },
+                                                                                                "id": "node_aba6e30a9dc49396",
+                                                                                                "inverse": false,
+                                                                                                "inverse finish before stop": false,
+                                                                                                "name": "move for ranged attack",
+                                                                                                "type": "ConditionalDecorator"
+                                                                                            },
+                                                                                            {
+                                                                                                "children": [
+                                                                                                    {
+                                                                                                        "children": [],
+                                                                                                        "id": "node_46307bf447fb94b8",
+                                                                                                        "name": "Task Not Doing",
+                                                                                                        "type": "Task_NotDoing"
+                                                                                                    },
+                                                                                                    {
+                                                                                                        "acceptance radius": {
+                                                                                                            "sourceType": 0,
+                                                                                                            "value": 1.0
+                                                                                                        },
+                                                                                                        "children": [],
+                                                                                                        "id": "node_9b535788e7b590b",
+                                                                                                        "name": "Move To Position",
+                                                                                                        "pretty path": {
+                                                                                                            "sourceType": 0,
+                                                                                                            "value": false
+                                                                                                        },
+                                                                                                        "target": {
+                                                                                                            "blackboardKey": "target_lastSeenPosition",
+                                                                                                            "sourceType": 1
+                                                                                                        },
+                                                                                                        "type": "MoveToPosition"
+                                                                                                    },
+                                                                                                    {
+                                                                                                        "children": [
+                                                                                                            {
+                                                                                                                "children": [
+                                                                                                                    {
+                                                                                                                        "children": [
+                                                                                                                            {
+                                                                                                                                "children": [],
+                                                                                                                                "id": "node_e99c90f3b34a8af5",
+                                                                                                                                "name": "Wait",
+                                                                                                                                "type": "WaitNode",
+                                                                                                                                "waitTime": {
+                                                                                                                                    "sourceType": 0,
+                                                                                                                                    "value": 5.0
+                                                                                                                                }
+                                                                                                                            },
+                                                                                                                            {
+                                                                                                                                "children": [],
+                                                                                                                                "id": "node_8c679c3735e76fe5",
+                                                                                                                                "name": "Target Lost Investigation",
+                                                                                                                                "type": "TargetLostInvestigation"
+                                                                                                                            }
+                                                                                                                        ],
+                                                                                                                        "id": "node_c870c7d9b794a3c8",
+                                                                                                                        "name": "Sequence",
+                                                                                                                        "type": "SequenceNode"
+                                                                                                                    }
+                                                                                                                ],
+                                                                                                                "condition": {
+                                                                                                                    "blackboardKey": "stunned",
+                                                                                                                    "sourceType": 1
+                                                                                                                },
+                                                                                                                "finish before stop": {
+                                                                                                                    "sourceType": 0,
+                                                                                                                    "value": false
+                                                                                                                },
+                                                                                                                "id": "node_1edc03786a009fdd",
+                                                                                                                "inverse": true,
+                                                                                                                "inverse finish before stop": false,
+                                                                                                                "name": "if not stunned",
+                                                                                                                "type": "ConditionalDecorator"
+                                                                                                            }
+                                                                                                        ],
+                                                                                                        "condition": {
+                                                                                                            "blackboardKey": "target_knowsLocation",
+                                                                                                            "sourceType": 1
+                                                                                                        },
+                                                                                                        "finish before stop": {
+                                                                                                            "sourceType": 0,
+                                                                                                            "value": false
+                                                                                                        },
+                                                                                                        "id": "node_cc866896901c30c2",
+                                                                                                        "inverse": true,
+                                                                                                        "inverse finish before stop": false,
+                                                                                                        "name": "if don't see",
+                                                                                                        "type": "ConditionalDecorator"
+                                                                                                    }
+                                                                                                ],
+                                                                                                "id": "node_19df2545b743fd09",
+                                                                                                "name": "move to get LOS",
+                                                                                                "type": "SequenceNode"
+                                                                                            }
+                                                                                        ],
+                                                                                        "id": "node_a9e0b7c0d61e30d",
+                                                                                        "name": "Selector",
+                                                                                        "type": "SelectorNode"
+                                                                                    }
+                                                                                ],
+                                                                                "id": "node_b317329492972580",
+                                                                                "name": "aproach target",
+                                                                                "type": "SequenceNode"
+                                                                            }
+                                                                        ],
+                                                                        "condition": {
+                                                                            "blackboardKey": "target_attack",
+                                                                            "sourceType": 1
+                                                                        },
+                                                                        "finish before stop": {
+                                                                            "sourceType": 0,
+                                                                            "value": false
+                                                                        },
+                                                                        "id": "node_a6da279d3b1eaa5d",
+                                                                        "inverse": false,
+                                                                        "inverse finish before stop": false,
+                                                                        "name": "attack target",
+                                                                        "type": "ConditionalDecorator"
+                                                                    },
+                                                                    {
+                                                                        "children": [
+                                                                            {
+                                                                                "children": [],
+                                                                                "id": "node_5f0c40a61fe258c",
+                                                                                "name": "Task Not Doing",
+                                                                                "type": "Task_NotDoing"
+                                                                            },
+                                                                            {
+                                                                                "children": [
+                                                                                    {
+                                                                                        "children": [
+                                                                                            {
+                                                                                                "acceptance radius": {
+                                                                                                    "sourceType": 0,
+                                                                                                    "value": 0.5
+                                                                                                },
+                                                                                                "children": [],
+                                                                                                "id": "node_fe379289ec8212c3",
+                                                                                                "name": "Move To Position",
+                                                                                                "pretty path": {
+                                                                                                    "sourceType": 0,
+                                                                                                    "value": false
+                                                                                                },
+                                                                                                "target": {
+                                                                                                    "blackboardKey": "target_lastSeenPosition",
+                                                                                                    "sourceType": 1
+                                                                                                },
+                                                                                                "type": "MoveToPosition"
+                                                                                            }
+                                                                                        ],
+                                                                                        "condition": {
+                                                                                            "blackboardKey": "target_sees",
+                                                                                            "sourceType": 1
+                                                                                        },
+                                                                                        "finish before stop": {
+                                                                                            "sourceType": 0,
+                                                                                            "value": false
+                                                                                        },
+                                                                                        "id": "node_de4efdb08929357e",
+                                                                                        "inverse": true,
+                                                                                        "inverse finish before stop": false,
+                                                                                        "name": "Conditional",
+                                                                                        "type": "ConditionalDecorator"
+                                                                                    },
+                                                                                    {
+                                                                                        "acceptance radius": {
+                                                                                            "sourceType": 0,
+                                                                                            "value": 1.0
+                                                                                        },
+                                                                                        "children": [],
+                                                                                        "id": "node_2bb45f24562df117",
+                                                                                        "name": "Move To Position",
+                                                                                        "pretty path": {
+                                                                                            "sourceType": 0,
+                                                                                            "value": false
+                                                                                        },
+                                                                                        "target": {
+                                                                                            "blackboardKey": "target_lastSeenPosition",
+                                                                                            "sourceType": 1
+                                                                                        },
+                                                                                        "type": "MoveToPosition"
+                                                                                    }
+                                                                                ],
+                                                                                "id": "node_3f64db8c7d309745",
+                                                                                "name": "Selector",
+                                                                                "type": "SelectorNode"
+                                                                            },
+                                                                            {
+                                                                                "children": [
+                                                                                    {
+                                                                                        "children": [
+                                                                                            {
+                                                                                                "children": [
+                                                                                                    {
+                                                                                                        "acceptance radius": {
+                                                                                                            "sourceType": 0,
+                                                                                                            "value": 1.0
+                                                                                                        },
+                                                                                                        "children": [],
+                                                                                                        "id": "node_4e4d5b152a4d640b",
+                                                                                                        "name": "Move To Position",
+                                                                                                        "pretty path": {
+                                                                                                            "sourceType": 0,
+                                                                                                            "value": false
+                                                                                                        },
+                                                                                                        "target": {
+                                                                                                            "blackboardKey": "target_lastSeenPosition",
+                                                                                                            "sourceType": 1
+                                                                                                        },
+                                                                                                        "type": "MoveToPosition"
+                                                                                                    },
+                                                                                                    {
+                                                                                                        "children": [],
+                                                                                                        "id": "node_e544ad63105b8151",
+                                                                                                        "name": "Wait",
+                                                                                                        "type": "WaitNode",
+                                                                                                        "waitTime": {
+                                                                                                            "sourceType": 0,
+                                                                                                            "value": 0.5
+                                                                                                        }
+                                                                                                    },
+                                                                                                    {
+                                                                                                        "children": [],
+                                                                                                        "id": "node_d31f266ca25b7cbd",
+                                                                                                        "name": "Stop Target Follow",
+                                                                                                        "type": "StopTargetFollow"
+                                                                                                    }
+                                                                                                ],
+                                                                                                "id": "node_6b9dc7fbe9929a9c",
+                                                                                                "name": "Sequence",
+                                                                                                "type": "SequenceNode"
+                                                                                            }
+                                                                                        ],
+                                                                                        "condition": {
+                                                                                            "blackboardKey": "target_knowsLocation",
+                                                                                            "sourceType": 1
+                                                                                        },
+                                                                                        "finish before stop": {
+                                                                                            "sourceType": 0,
+                                                                                            "value": false
+                                                                                        },
+                                                                                        "id": "node_bacd21b1be551477",
+                                                                                        "inverse": true,
+                                                                                        "inverse finish before stop": false,
+                                                                                        "name": "Conditional",
+                                                                                        "type": "ConditionalDecorator"
+                                                                                    }
+                                                                                ],
+                                                                                "id": "node_3f64db8c7d309745",
+                                                                                "name": "Selector",
+                                                                                "type": "SelectorNode"
+                                                                            }
+                                                                        ],
+                                                                        "id": "node_37dfb00f92751621",
+                                                                        "name": "aproach target",
+                                                                        "type": "SequenceNode"
+                                                                    }
+                                                                ],
+                                                                "id": "node_e358dddc3b2aee2",
+                                                                "name": "Selector",
+                                                                "type": "SelectorNode"
+                                                            }
+                                                        ],
+                                                        "condition": {
+                                                            "blackboardKey": "target_follow",
+                                                            "sourceType": 1
+                                                        },
+                                                        "finish before stop": {
+                                                            "sourceType": 0,
+                                                            "value": false
+                                                        },
+                                                        "id": "node_c9f3200300c85c5d",
+                                                        "inverse": false,
+                                                        "inverse finish before stop": false,
+                                                        "name": "follow target",
+                                                        "type": "ConditionalDecorator"
+                                                    }
+                                                ],
+                                                "id": "node_31ca0cba93d258ff",
+                                                "name": "Selector",
+                                                "type": "SelectorNode"
+                                            }
+                                        ],
+                                        "condition": {
+                                            "blackboardKey": "isGuard",
+                                            "sourceType": 1
+                                        },
+                                        "finish before stop": {
+                                            "sourceType": 0,
+                                            "value": false
+                                        },
+                                        "id": "node_8bcef631c2c03e3f",
+                                        "inverse": false,
+                                        "inverse finish before stop": false,
+                                        "name": "isGuard",
+                                        "type": "ConditionalDecorator"
+                                    }
+                                ],
+                                "id": "node_23f5b9f5edb4e7cc",
+                                "name": "civilian/guard",
+                                "type": "SelectorNode"
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "children": [
+                                            {
+                                                "children": [],
+                                                "id": "node_263592a0a4e20367",
+                                                "name": "Task Not Doing",
+                                                "type": "Task_NotDoing"
+                                            },
+                                            {
+                                                "acceptance radius": {
+                                                    "sourceType": 0,
+                                                    "value": 2.0
+                                                },
+                                                "children": [],
+                                                "id": "node_9f912af2afc709a6",
+                                                "name": "Move To Position",
+                                                "pretty path": {
+                                                    "sourceType": 0,
+                                                    "value": false
+                                                },
+                                                "target": {
+                                                    "blackboardKey": "investigation_target",
+                                                    "sourceType": 1
+                                                },
+                                                "type": "MoveToPosition"
+                                            },
+                                            {
+                                                "children": [],
+                                                "id": "node_f4403944f9f7e110",
+                                                "name": "Wait",
+                                                "type": "WaitNode",
+                                                "waitTime": {
+                                                    "blackboardKey": "investigation_wait_time",
+                                                    "sourceType": 1
+                                                }
+                                            },
+                                            {
+                                                "children": [],
+                                                "id": "node_c839e09befbf42c2",
+                                                "name": "Finish Investigation",
+                                                "type": "FinishInvestigation"
+                                            }
+                                        ],
+                                        "id": "node_78b1104589d79e59",
+                                        "name": "Sequence",
+                                        "type": "SequenceNode"
+                                    }
+                                ],
+                                "condition": {
+                                    "blackboardKey": "investigation",
+                                    "sourceType": 1
+                                },
+                                "finish before stop": {
+                                    "sourceType": 0,
+                                    "value": false
+                                },
+                                "id": "node_911fb048029cb0c5",
+                                "inverse": false,
+                                "inverse finish before stop": false,
+                                "name": "investigation",
+                                "type": "ConditionalDecorator"
+                            },
+                            {
+                                "children": [
+                                    {
+                                        "children": [
+                                            {
+                                                "children": [],
+                                                "id": "node_4752b56fac9cdc04",
+                                                "name": "Task Doing",
+                                                "type": "Task_Doing"
+                                            },
+                                            {
+                                                "children": [
+                                                    {
+                                                        "children": [
+                                                            {
+                                                                "children": [
+                                                                    {
+                                                                        "children": [
+                                                                            {
+                                                                                "acceptance radius": {
+                                                                                    "blackboardKey": "task_acceptanceRadius",
+                                                                                    "sourceType": 1
+                                                                                },
+                                                                                "children": [],
+                                                                                "id": "node_9d2aac5d8ccedda0",
+                                                                                "name": "Move To Position",
+                                                                                "pretty path": {
+                                                                                    "sourceType": 0,
+                                                                                    "value": false
+                                                                                },
+                                                                                "target": {
+                                                                                    "blackboardKey": "task_moveLocation",
+                                                                                    "sourceType": 1
+                                                                                },
+                                                                                "type": "MoveToPosition"
+                                                                            },
+                                                                            {
+                                                                                "children": [],
+                                                                                "id": "node_1c4176fa2ea6feb4",
+                                                                                "name": "Set Look Target From Current NavPoint",
+                                                                                "type": "SetLookTargetFromCurrentNavPoint"
+                                                                            },
+                                                                            {
+                                                                                "children": [],
+                                                                                "id": "node_45bc938b7c7311aa",
+                                                                                "name": "Task Destination Reached",
+                                                                                "type": "TaskDestinationReached"
+                                                                            }
+                                                                        ],
+                                                                        "id": "node_7797996621461697",
+                                                                        "name": "Sequence",
+                                                                        "type": "SequenceNode"
+                                                                    }
+                                                                ],
+                                                                "condition": {
+                                                                    "blackboardKey": "task_move",
+                                                                    "sourceType": 1
+                                                                },
+                                                                "finish before stop": {
+                                                                    "sourceType": 0,
+                                                                    "value": false
+                                                                },
+                                                                "id": "node_d6067ec967f882f6",
+                                                                "inverse": false,
+                                                                "inverse finish before stop": false,
+                                                                "name": "should move?",
+                                                                "type": "ConditionalDecorator"
+                                                            }
+                                                        ],
+                                                        "id": "node_7f930ae62041f7bb",
+                                                        "inverse": {
+                                                            "sourceType": 0,
+                                                            "value": false
+                                                        },
+                                                        "lock": {
+                                                            "blackboardKey": "task_doingJob",
+                                                            "sourceType": 1
+                                                        },
+                                                        "name": "Lock",
+                                                        "type": "LockTask"
+                                                    }
+                                                ],
+                                                "condition": {
+                                                    "sourceType": 0,
+                                                    "value": true
+                                                },
+                                                "finish before stop": {
+                                                    "blackboardKey": "task_canBeCanceled",
+                                                    "sourceType": 1
+                                                },
+                                                "id": "node_cf97f38ac8fc71d8",
+                                                "inverse": false,
+                                                "inverse finish before stop": true,
+                                                "name": "Conditional",
+                                                "type": "ConditionalDecorator"
+                                            }
+                                        ],
+                                        "id": "node_c4b83225f03bf65e",
+                                        "name": "Sequence",
+                                        "type": "SequenceNode"
+                                    }
+                                ],
+                                "condition": {
+                                    "blackboardKey": "has_navpoint",
+                                    "sourceType": 1
+                                },
+                                "finish before stop": {
+                                    "sourceType": 0,
+                                    "value": false
+                                },
+                                "id": "node_d7ce56e9b2d90da5",
+                                "inverse": false,
+                                "inverse finish before stop": false,
+                                "name": "patrol",
+                                "type": "ConditionalDecorator"
+                            }
+                        ],
+                        "id": "node_d28e3d00a79cbacf",
+                        "name": "Selector",
+                        "type": "SelectorNode"
+                    }
+                ],
+                "id": "node_24a4ece1183f296",
+                "name": "Sequence",
+                "type": "SequenceNode"
+            }
+        ],
+        "id": "",
+        "name": "Repeat",
+        "repeatCount": {
+            "sourceType": 0,
+            "value": -1
+        },
+        "type": "RepeatDecorator"
+    }
+}

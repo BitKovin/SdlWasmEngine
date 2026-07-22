@@ -470,8 +470,7 @@ Build/ShooterGame/windows/*
 
 *engine.a
 *.libengine.a
-BuildWindows/sourceLibraries/openAlSoft/OpenAL32.lib
-BuildWindows/sourceLibraries/openAlSoft/OpenAL32.lib
-BuildWindows/sourceLibraries/bgfx/bgfx.cmake/cmake/bgfx/spirv-opt.lib
-BuildWindows/sourceLibraries/bgfx/bgfx.cmake/cmake/bgfx/spirv-cross.lib
-BuildWindows/sourceLibraries/bgfx/bgfx.cmake/cmake/bgfx/tint.lib
+*OpenAL32.lib
+*spirv-opt.lib
+*spirv-cross.lib
+*tint.lib

@@ -90,7 +90,7 @@ public:
 			return;
 
 		locomotionPhase += (Time::DeltaTime * Speed) / cycleDuration;
-		locomotionPhase -= std::floor(locomotionPhase);
+		locomotionPhase = std::fmodf(locomotionPhase,1.0f);
 
 		bool forwardIsSlide = (forwardAxisAnim->GetAnimationName() == "slide");
 		if (!forwardIsSlide)
@@ -104,6 +104,11 @@ public:
 		crouchDwellTime = crouched ? (crouchDwellTime + Time::DeltaTime) : 0.0f;
 
 		bool isSliding = ComputeIsSliding();
+
+		if (isSliding || length(relativeMovement) < kMoveThreshold)
+		{
+			locomotionPhase = 0; //reset animation time when not moving. Helps solve issue where animation on shadow mesh doesn't match with visible mesh
+		}
 
 		UpdateMoveClipNames(relativeMovement.x, relativeMovement.y, isSliding);
 		SyncMoveClipPhase();

@@ -1,5 +1,5 @@
 #include "InputSettingsData.h"
-#include "../Input.h"
+#include <Input.h>
 
 #include <sstream>
 #include <algorithm>

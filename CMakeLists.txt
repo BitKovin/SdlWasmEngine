@@ -270,7 +270,7 @@ endif()
 
 # --- FMOD ---
 add_subdirectory(${LIB_DIR}/fmod)
-target_link_libraries(engine PUBLIC fmod)
+fmod_link_and_stage(engine)
 
 # --- JoltPhysics ---
 # Shared Jolt shipping configuration (platform file may have set USE_WASM_SIMD)
@@ -414,6 +414,7 @@ if(NOT ENGINE_AS_LIBRARY)
     )
 
     target_link_libraries(${GAME_TARGET_NAME} PRIVATE engine)
+    
 
     set_target_properties(${GAME_TARGET_NAME} PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${OUTPUT_BASE_DIR}/bin"

@@ -1,5 +1,5 @@
 #include "InputActionRegistry.h"
-#include "../Input.h"
+#include <Input.h>
 #include <Logger.hpp>
 #include <algorithm>
 

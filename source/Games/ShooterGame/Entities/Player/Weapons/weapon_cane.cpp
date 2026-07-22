@@ -31,6 +31,10 @@ public:
 	bool grabing = false;
 
 	vec3 grabStartPos = vec3();
+	float grabCollisionRadius = 0.35f;         // should match the player's actual collision capsule radius
+	bool grabSpaceClearApplied = false;        // ensures the "make room" nudge only fires once per grab
+	const float grabCrowdedTolerance = 0.15f;  // how far short of target counts as "not enough room"
+	const float grabClearPushForce = 6.0f;     // impulse for the one-time nudge — tune against your existing knockback values
 
 	bool thrown = false;
 
@@ -104,7 +108,7 @@ public:
 		viewmodel->LoadFromFile("GameData/models/player/weapons/cane/cane.glb");
 		//viewmodel->ColorTexture = AssetRegistry::GetTextureFromFile("GameData/textures/cat.png");
 		viewmodel->TexturesLocation = "GameData/models/player/weapons/cane/cane.glb/"; // to search in file:   
-		viewmodel->PlayAnimation("draw",false);
+		viewmodel->PlayAnimation("draw", false);
 		viewmodel->PreloadAssets();
 
 		viewmodel->IsViewmodel = true;
@@ -169,7 +173,7 @@ public:
 
 		}
 
-		vec3 safePosition = projectileTransform.Position + MathHelper::GetForwardVector(projectileTransform.Rotation) * - 0.3f;
+		vec3 safePosition = projectileTransform.Position + MathHelper::GetForwardVector(projectileTransform.Rotation) * -0.3f;
 
 		vec3 directionToPlayer = normalize(MathHelper::XZ((MathHelper::GetForwardVector(projectileTransform.Rotation) * -1.0f)));
 
@@ -186,8 +190,8 @@ public:
 			safePosition = hit.shapePosition + hit.normal;
 		}
 
-		Player::Instance->MoveTo(safePosition + directionToPlayer - playerToCameraDif + vec3(0, 0.1f, 0));
-
+		vec3 finalTarget = safePosition + directionToPlayer - playerToCameraDif + vec3(0, 0.1f, 0);
+		Player::Instance->MoveTo(SweepAndSlide(Player::Instance->Position, finalTarget, grabCollisionRadius));
 
 
 		SetViewmodelScaleFactor(0.5);
@@ -212,7 +216,7 @@ public:
 		viewmodel->PlayAnimation("take", false, 0);
 
 		grabStartPos = Player::Instance->Position;
-
+		grabSpaceClearApplied = false;
 
 		SoundPlayer::PlayOneshot("event:/General/BassDrop", 3, 1, true);
 
@@ -224,48 +228,36 @@ public:
 
 		if (grabDelay.GetProgress() >= 1)
 		{
-
 			grabing = false;
-
 			GrabCane();
-
 			return;
 		}
 
-		viewmodel->SetAnimationTime(viewmodel->GetAnimationDuration()*grabDelay.GetProgress());
+		viewmodel->SetAnimationTime(viewmodel->GetAnimationDuration() * grabDelay.GetProgress());
 
 		auto projectiles = Level::Current->FindAllEntitiesWithName("caneProjectile");
 
 		MathHelper::Transform projectileTransform;
+		const Body* grabTargetBody = nullptr;
 
 		for (auto p : projectiles)
 		{
-
 			CaneProjectile* proj = (CaneProjectile*)p;
 
 			if (proj != nullptr)
 			{
-
 				projectileTransform.Position = proj->Position;
 				projectileTransform.Rotation = proj->Rotation;
 				proj->movingTo = true;
-
-
+				grabTargetBody = proj->bodyToPush;
 			}
-
 		}
 
 		vec3 safePosition = projectileTransform.Position + MathHelper::GetForwardVector(projectileTransform.Rotation) * -0.3f;
-
 		vec3 directionToPlayer = normalize(MathHelper::XZ((MathHelper::GetForwardVector(projectileTransform.Rotation) * -1.0f)));
-
 		vec3 playerToCameraDif = Camera::position - Player::Instance->Position;
 
-
-
 		auto hit = Physics::SphereTrace(safePosition, safePosition - vec3(0, 1, 0), 0.001f, BodyType::World | BodyType::MainBody);
-
-
 
 		if (hit.hasHit)
 		{
@@ -273,17 +265,25 @@ public:
 		}
 
 		vec3 destinationPos = safePosition + directionToPlayer - playerToCameraDif + vec3(0, 0.1f, 0);
+		vec3 idealPos = lerp(grabStartPos, destinationPos, grabDelay.GetProgress());
 
-		Logger::Info("%f", grabDelay.GetProgress());
+		// Move from where the player actually is, sliding along anything it hits, instead of
+		// teleporting along a straight line that ignores geometry.
+		vec3 resolvedPos = SweepAndSlide(Player::Instance->Position, idealPos, grabCollisionRadius);
 
-		Player::Instance->MoveTo(lerp(grabStartPos, destinationPos, grabDelay.GetProgress()));
+		// Still well short of where we should be? There isn't enough room next to the target —
+		// nudge it clear once (not every frame, to keep it controlled) instead of stalling or clipping.
+		if (!grabSpaceClearApplied && grabTargetBody != nullptr && length(idealPos - resolvedPos) > grabCrowdedTolerance)
+		{
+			vec3 pushDir = normalize(idealPos - Player::Instance->Position);
+			Physics::AddImpulse(grabTargetBody, pushDir * grabClearPushForce);
+			grabSpaceClearApplied = true;
+		}
 
-
-
-
+		Player::Instance->MoveTo(resolvedPos);
 	}
 
-	void OnParried() 
+	void OnParried()
 	{
 
 		Time::AddTimeScaleEffect(0.3, 0.1, true, "parry", 0.02f, 0.1f);
@@ -322,7 +322,7 @@ public:
 		pendingMeleeAttack = false;
 
 
-		auto hit = Physics::SphereTrace(Camera::position, Camera::position + MathHelper::GetForwardVector(Camera::rotation) * 1.2f, 0.4f, BodyType::GroupHitTest, {Player::Instance->LeadBody}, {Player::Instance});
+		auto hit = Physics::SphereTrace(Camera::position, Camera::position + MathHelper::GetForwardVector(Camera::rotation) * 1.2f, 0.4f, BodyType::GroupHitTest, { Player::Instance->LeadBody }, { Player::Instance });
 		if (hit.hasHit)
 		{
 
@@ -355,7 +355,7 @@ public:
 	void Update()
 	{
 
-		auto projectile = (CaneProjectile*) Level::Current->FindEntityWithName("caneProjectile");
+		auto projectile = (CaneProjectile*)Level::Current->FindEntityWithName("caneProjectile");
 
 		thrown = projectile != nullptr;
 
@@ -419,7 +419,7 @@ public:
 
 
 
-				
+
 
 			}
 		}
@@ -433,12 +433,12 @@ public:
 
 			if (bodyToPush != nullptr)
 			{
-				
+
 				auto hitMesh = Physics::GetBodyData(bodyToPush)->OwnerSkeletalMesh;
 
 				if (hitMesh)
 				{
-					hitMesh->ApplyImpulseToAllHitboxes(impulseToApply*0.01f, true);
+					hitMesh->ApplyImpulseToAllHitboxes(impulseToApply * 0.01f, true);
 					Physics::AddImpulse(bodyToPush, impulseToApply * 0.25f);
 				}
 				else
@@ -456,7 +456,7 @@ public:
 		if (attackDelay.Wait() == false)
 		{
 
-			projectile = (CaneProjectile*) Level::Current->FindEntityWithName("caneProjectile");
+			projectile = (CaneProjectile*)Level::Current->FindEntityWithName("caneProjectile");
 
 			if (projectile == nullptr && viewmodel->currentAnimationData->animationName == "throw")
 			{
@@ -481,7 +481,7 @@ public:
 			}
 
 		}
-		
+
 
 		auto events = viewmodel->PullAnimationEvents();
 
@@ -509,13 +509,13 @@ public:
 
 		viewmodel->PlayAnimation("throw", false, 0);
 		Camera::AddCameraShake(CameraShake(
-			0.13f,                            // interpIn
-			0.0f,                            // duration
-			vec3(0.0f, 0.0f, -0.1f),         // positionAmplitude
-			vec3(0.0f, 0.0f, 3.4f),          // positionFrequency
-			vec3(-4, 0.15f, 0.0f),        // rotationAmplitude
-			vec3(-2.0f, 18.8f, 0.0f),        // rotationFrequency
-			0.5f,                            // falloff
+			0.13f,                             // interpIn
+			0.0f,                              // duration
+			vec3(0.0f, 0.0f, -0.1f),           // positionAmplitude
+			vec3(0.0f, 0.0f, 3.4f),            // positionFrequency
+			vec3(-4, 0.15f, 0.0f),             // rotationAmplitude
+			vec3(-2.0f, 18.8f, 0.0f),          // rotationFrequency
+			0.5f,                              // falloff
 			CameraShake::ShakeType::SingleWave // shakeType
 		));
 
@@ -628,6 +628,42 @@ public:
 
 
 private:
+
+	// Sweeps the player's collision volume from `from` toward `to`, sliding along any surface it
+	// hits instead of stopping dead, and returns the furthest position reachable without
+	// penetrating world geometry. A few iterations let it slide around corners in one call.
+	vec3 SweepAndSlide(vec3 from, vec3 to, float radius)
+	{
+		const int maxIterations = 3;
+		const float skin = 0.02f; // stay a hair off the surface so we don't re-hit the same plane next iteration
+
+		vec3 currentPos = from;
+		vec3 remaining = to - from;
+
+		for (int i = 0; i < maxIterations; i++)
+		{
+			if (length(remaining) < 0.0001f)
+				break;
+
+			vec3 target = currentPos + remaining;
+
+			auto hit = Physics::SphereTrace(currentPos, target, radius, BodyType::World | BodyType::MainBody, {}, { Player::Instance });
+
+			if (!hit.hasHit)
+			{
+				currentPos = target;
+				break;
+			}
+
+			vec3 traveled = hit.shapePosition - currentPos;
+			currentPos = hit.shapePosition + hit.normal * skin;
+
+			vec3 leftover = remaining - traveled;
+			remaining = leftover - hit.normal * dot(leftover, hit.normal);
+		}
+
+		return currentPos;
+	}
 
 };
 

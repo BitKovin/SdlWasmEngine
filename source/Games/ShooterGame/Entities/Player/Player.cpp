@@ -2051,7 +2051,7 @@ void Player::Update()
 	}
 
 
-	if (teleported == false && freeFly == false)
+	if (teleported == false && freeFly == false && false)
 	{
 
 		vec3 dif = controller.GetPosition() - oldPos;
