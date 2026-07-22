@@ -157,7 +157,7 @@ private:
 
 	Delay coyoteTime;
 
-	PlayerBodyAnimator bodyAnimator = PlayerBodyAnimator(this);
+
 
 	bool teleported = false;
 
@@ -410,6 +410,7 @@ private:
 
 public:
 
+	PlayerBodyAnimator bodyAnimator = PlayerBodyAnimator(this);
 
 	std::set<DoorKey> keysInventory;
 

@@ -175,6 +175,16 @@ void PlayerRepresentation::AsyncUpdate()
 
 }
 
+void PlayerRepresentation::SetPlayerWalkPhase(float phase)
+{
+    animator->locomotionPhase = phase;
+}
+
+float PlayerRepresentation::GetPlayerWalkPhase()
+{
+    return animator->locomotionPhase;
+}
+
 
 // ─── Transform modifier ───────────────────────────────────────────────────────
 

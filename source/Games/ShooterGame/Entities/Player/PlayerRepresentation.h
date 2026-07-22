@@ -55,6 +55,8 @@ public:
     void Update()     override;
     void AsyncUpdate() override;
 
+    void SetPlayerWalkPhase(float phase);
+    float GetPlayerWalkPhase();
 
     bool OnlyShadows = false;
 

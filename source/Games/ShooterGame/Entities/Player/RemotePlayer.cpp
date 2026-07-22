@@ -133,10 +133,12 @@ void RemotePlayer::LateUpdate()
             weaponRIndex = GetWeaponIndexFromRef(referencePlayer->currentWeapon);
             weaponLIndex = GetWeaponIndexFromRef(referencePlayer->currentOffhandWeapon);
 
+            
+
             if (representation)
             {
                 representation->ApplyState(state);
-
+                representation->SetPlayerWalkPhase(referencePlayer->bodyAnimator.locomotionPhase);
                 // Owned players don't render their own body, so the only
                 // place their pose shows up is in a clone area (mirror).
                 UpdatePlayerClone(state);
@@ -322,6 +324,7 @@ void RemotePlayer::UpdatePlayerClone(const PlayerState& state)
     mirrorCloneRepresentation->transformModifier = cloneArea->GetTransformation();
     mirrorCloneRepresentation->Visible = true;
     mirrorCloneRepresentation->ApplyState(state);
+    mirrorCloneRepresentation->SetPlayerWalkPhase(representation->GetPlayerWalkPhase());
 }
 
 // ─── Weapon registry cache ────────────────────────────────────────────────────
