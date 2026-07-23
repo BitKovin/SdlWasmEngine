@@ -70,8 +70,8 @@ struct FontAtlas {
     int    lineGap = 0;
 
     // ── Atlas bitmap ─────────────────────────────────────────────────────────
-    static constexpr int ATLAS_W = 4096;
-    static constexpr int ATLAS_H = 4096;
+    static constexpr int ATLAS_W = 2048;
+    static constexpr int ATLAS_H = 2048;
     std::vector<uint8_t> pixels;         // ATLAS_W * ATLAS_H * 4 (RGBA8)
     bgfx::TextureHandle  texture = BGFX_INVALID_HANDLE;
     bool textureDirty = false;
@@ -84,6 +84,19 @@ struct FontAtlas {
 
     // ── Glyph cache ───────────────────────────────────────────────────────────
     std::unordered_map<int, GlyphInfo> glyphs;
+
+    int dirtyX0 = ATLAS_W, dirtyY0 = ATLAS_H;
+    int dirtyX1 = 0, dirtyY1 = 0;
+
+    void MarkDirty(int x0, int y0, int x1, int y1)
+    {
+        dirtyX0 = std::min(dirtyX0, x0);
+        dirtyY0 = std::min(dirtyY0, y0);
+        dirtyX1 = std::max(dirtyX1, x1);
+        dirtyY1 = std::max(dirtyY1, y1);
+        textureDirty = true;
+    }
+
 
     // ── Init / Destroy ────────────────────────────────────────────────────────
 
@@ -211,6 +224,8 @@ struct FontAtlas {
             }
         }
 
+        MarkDirty(packX, packY, packX + w, packY + h);
+
         // Record glyph metadata
         GlyphInfo g;
         g.u0 = static_cast<float>(packX) / ATLAS_W;
@@ -243,11 +258,26 @@ struct FontAtlas {
         if (!textureDirty || !bgfx::isValid(texture))
             return;
 
-        const uint32_t byteCount = static_cast<uint32_t>(ATLAS_W) * ATLAS_H * 4;
-        bgfx::updateTexture2D(texture, 0, 0, 0, 0,
-            static_cast<uint16_t>(ATLAS_W),
-            static_cast<uint16_t>(ATLAS_H),
-            bgfx::copy(pixels.data(), byteCount));
+        const int x = dirtyX0, y = dirtyY0;
+        const int w = dirtyX1 - dirtyX0;
+        const int h = dirtyY1 - dirtyY0;
+        if (w <= 0 || h <= 0) { textureDirty = false; return; }
+
+        // bgfx::copy needs contiguous memory, but our atlas rows are strided
+        // by ATLAS_W, so pack just the dirty rect into a small temp buffer.
+        std::vector<uint8_t> region(static_cast<size_t>(w) * h * 4);
+        for (int row = 0; row < h; ++row) {
+            const uint8_t* src = &pixels[((y + row) * ATLAS_W + x) * 4];
+            std::memcpy(&region[row * w * 4], src, static_cast<size_t>(w) * 4);
+        }
+
+        bgfx::updateTexture2D(texture, 0, 0,
+            static_cast<uint16_t>(x), static_cast<uint16_t>(y),
+            static_cast<uint16_t>(w), static_cast<uint16_t>(h),
+            bgfx::copy(region.data(), static_cast<uint32_t>(region.size())));
+
+        dirtyX0 = ATLAS_W; dirtyY0 = ATLAS_H;
+        dirtyX1 = 0;       dirtyY1 = 0;
         textureDirty = false;
     }
 

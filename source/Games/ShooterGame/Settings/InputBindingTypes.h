@@ -159,12 +159,19 @@ namespace InputBindingSerialization
         case GamepadButton::DPadDown:      return "DPadDown";
         case GamepadButton::DPadLeft:      return "DPadLeft";
         case GamepadButton::DPadRight:     return "DPadRight";
+
+            //colliding on emscripten. Just not including  
+#ifdef __EMSCRIPTEN
+
         case GamepadButton::Misc1:         return "Misc1";
         case GamepadButton::Paddle1:       return "Paddle1";
         case GamepadButton::Paddle2:       return "Paddle2";
         case GamepadButton::Paddle3:       return "Paddle3";
         case GamepadButton::Paddle4:       return "Paddle4";
         case GamepadButton::Touchpad:      return "Touchpad";
+
+#endif // __EMSCRIPTEN
+
         case GamepadButton::LeftTrigger:   return "LeftTrigger";
         case GamepadButton::RightTrigger:  return "RightTrigger";
         default:                          return "";

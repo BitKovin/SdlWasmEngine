@@ -2,13 +2,21 @@
 
 import sys
 import shutil
+import subprocess
 from pathlib import Path
 import zipfile
 
 
-SIZE_THRESHOLD = 20 * 1024 * 1024      # 20 MB
-SAVE_THRESHOLD = 10 * 1024 * 1024      # 10 MB
+SIZE_THRESHOLD = 10 * 1024 * 1024      # 10 MB
+SAVE_THRESHOLD = 5 * 1024 * 1024      # 5 MB
 MAX_UNPACK_ITERATIONS = 10
+
+GLBCOMPRESS_ARGS = [
+    "--max-texture-size", "2048",
+    "--jpeg-quality", "50",
+    "--png-to-jpeg-if-opaque",
+    "--remove-unused",
+]
 
 
 def read_ignore_file(path):
@@ -157,6 +165,88 @@ def unpack_all_zips(root):
             break
 
 
+def find_glbcompress_exe():
+    exe_path = Path(__file__).resolve().parent / "glbcompress.exe"
+
+    if not exe_path.exists():
+        print(f"Warning: glbcompress.exe not found at {exe_path}")
+        print("Skipping GLB optimization.")
+        return None
+
+    return exe_path
+
+
+def optimize_glb_file(glb_path, exe_path):
+    # Unlikely-to-collide temp name, written alongside the original,
+    # then swapped in on success.
+    tmp_output = glb_path.with_name(glb_path.stem + ".__glbcompress_tmp__.glb")
+
+    cmd = [
+        str(exe_path),
+        "compress",
+        str(glb_path),
+        "-o", str(tmp_output),
+    ] + GLBCOMPRESS_ARGS
+
+    try:
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+        )
+
+    except Exception as e:
+        print(f"Failed to run glbcompress on {glb_path}: {e}")
+        return
+
+    if result.returncode != 0:
+        print(f"glbcompress failed on {glb_path}:")
+        print(result.stderr.strip() or result.stdout.strip())
+
+        if tmp_output.exists():
+            tmp_output.unlink()
+
+        return
+
+    if not tmp_output.exists():
+        print(
+            f"glbcompress reported success but produced no output "
+            f"for {glb_path}"
+        )
+        return
+
+    size_before = glb_path.stat().st_size
+    size_after = tmp_output.stat().st_size
+
+    # Replace the original with the optimized version
+    tmp_output.replace(glb_path)
+
+    saved = size_before - size_after
+
+    print(
+        f"Optimized: {glb_path} "
+        f"({size_before // 1024} KB -> {size_after // 1024} KB, "
+        f"saved {saved // 1024} KB)"
+    )
+
+
+def optimize_all_glb_files(root):
+    exe_path = find_glbcompress_exe()
+
+    if exe_path is None:
+        return
+
+    glb_files = list(root.rglob("*.glb"))
+
+    if not glb_files:
+        return
+
+    print(f"Optimizing {len(glb_files)} .glb file(s)...")
+
+    for glb_file in glb_files:
+        optimize_glb_file(glb_file, exe_path)
+
+
 def compress_top_level_dirs(output_root):
     for item in output_root.iterdir():
         if item.is_dir():
@@ -182,10 +272,14 @@ def main():
     # Step 1: copy everything
     process_directory(src, dst)
 
-    # Step 2: unpack nested zip files
+    # Step 2: unpack nested zip files (so any .glb inside an archive
+    # becomes a plain file we can reach)
     unpack_all_zips(dst)
 
-    # Step 3: compress resulting folders
+    # Step 3: optimize every .glb file in place, in or out of archives
+    optimize_all_glb_files(dst)
+
+    # Step 4: compress resulting folders
     compress_top_level_dirs(dst)
 
     print(f"Done: {dst}")

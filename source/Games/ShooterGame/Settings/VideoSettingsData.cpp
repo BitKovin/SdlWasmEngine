@@ -8,6 +8,11 @@ void VideoSettingsData::ApplyToEngine() const
     SDL_Window* gWindow = EngineMain::MainInstance->Window;
     if (!gWindow) return;
 
+#ifndef __EMSCRIPTEN__
+
+
+
+
     // Window mode first, same three-way switch UiVideoSettings::UpdateWindowMode uses.
     if (WindowMode == "fullscreen")
         SDL_SetWindowFullscreen(gWindow, SDL_WINDOW_FULLSCREEN);
@@ -31,7 +36,7 @@ void VideoSettingsData::ApplyToEngine() const
     {
         SDL_SetWindowSize(gWindow, Width, Height);
     }
-
+#endif // !__EMSCRIPTEN
     if (EngineMain::MainInstance->MainRenderer)
     {
         EngineMain::MainInstance->MainRenderer->MultiSampleCount = MSAA;
