@@ -9,11 +9,13 @@
 #include "allpass_iir.hpp"
 #include "altypes.hpp"
 #include "bufferline.h"
-#include "decoderbase.hpp"
 #include "encoderbase.hpp"
 
 
-enum class UhjQualityType : u8::value_t {
+inline constexpr auto UhjLength256 = 256_uz;
+inline constexpr auto UhjLength512 = 512_uz;
+
+enum class UhjQualityType : u8 {
     IIR = 0,
     FIR256,
     FIR512,
@@ -24,7 +26,7 @@ inline auto UhjDecodeQuality = UhjQualityType::Default;
 inline auto UhjEncodeQuality = UhjQualityType::Default;
 
 
-template<std::size_t N>
+template<usize N>
 struct UhjEncoder final : EncoderBase {
     struct Tag { using encoder_t = UhjEncoder; };
 
@@ -50,7 +52,7 @@ struct UhjEncoder final : EncoderBase {
     alignas(16) std::array<float,BufferLineSize> mD{};
 
     /* History and temp storage for the convolution filter. */
-    std::size_t mFifoPos{}, mCurrentSegment{};
+    usize mFifoPos{}, mCurrentSegment{};
     alignas(16) std::array<float,sFftLength> mWXInOut{};
     alignas(16) std::array<float,sFftLength> mFftBuffer{};
     alignas(16) std::array<float,sFftLength> mWorkData{};
@@ -58,7 +60,7 @@ struct UhjEncoder final : EncoderBase {
 
     alignas(16) std::array<std::array<float,sFilterDelay>,2> mDirectDelay{};
 
-    auto getDelay() noexcept -> std::size_t final { return sFilterDelay; }
+    auto getDelay() noexcept -> usize final { return sFilterDelay; }
 
     /**
      * Encodes a 2-channel UHJ (stereo-compatible) signal from a B-Format input
@@ -67,8 +69,6 @@ struct UhjEncoder final : EncoderBase {
     auto encode(std::span<float> LeftOut, std::span<float> RightOut,
         std::span<const std::span<const float>> InSamples) -> void final;
 };
-using UhjEncoder256 = UhjEncoder<256>;
-using UhjEncoder512 = UhjEncoder<512>;
 
 struct UhjEncoderIIR final : EncoderBase {
     struct Tag { using encoder_t = UhjEncoderIIR; };
@@ -92,7 +92,7 @@ struct UhjEncoderIIR final : EncoderBase {
     std::array<AllPassFilter,2> mFilter1Direct;
     std::array<float,2> mDirectDelay{};
 
-    auto getDelay() noexcept -> std::size_t final { return sFilterDelay; }
+    auto getDelay() noexcept -> usize final { return sFilterDelay; }
 
     /**
      * Encodes a 2-channel UHJ (stereo-compatible) signal from a B-Format input
@@ -103,7 +103,37 @@ struct UhjEncoderIIR final : EncoderBase {
 };
 
 
-template<std::size_t N>
+struct DecoderBase {
+    static constexpr auto sMaxPadding = 256_uz;
+
+    /* For 2-channel UHJ, shelf filters should use these LF responses. */
+    static constexpr auto sWLFScale = 0.661f;
+    static constexpr auto sXYLFScale = 1.293f;
+
+    DecoderBase() = default;
+    DecoderBase(const DecoderBase&) = delete;
+    DecoderBase(DecoderBase&&) = delete;
+    virtual ~DecoderBase() = default;
+
+    void operator=(const DecoderBase&) = delete;
+    void operator=(DecoderBase&&) = delete;
+
+    virtual void decode(std::span<std::span<float>> samples, bool updateState) = 0;
+
+    /**
+     * The width factor for Super Stereo processing. Can be changed in between
+     * calls to decode, with valid values being between 0...0.7.
+     *
+     * 0.46 seems to produce the least amount of channel bleed when the output
+     * is subsequently UHJ encoded (given a stereo sound with a noise on the
+     * left buffer channel, for instance, when decoded with UhjStereoDecoder
+     * and then encoded with UhjEncoder, the right output channel was at its
+     * quietest).
+     */
+    float mWidthControl{0.46f};
+};
+
+template<usize N>
 struct UhjDecoder final : DecoderBase {
     struct Tag { using decoder_t = UhjDecoder; };
 
@@ -129,8 +159,6 @@ struct UhjDecoder final : DecoderBase {
      */
     void decode(std::span<std::span<float>> samples, bool updateState) final;
 };
-using UhjDecoder256 = UhjDecoder<256>;
-using UhjDecoder512 = UhjDecoder<512>;
 
 struct UhjDecoderIIR final : DecoderBase {
     struct Tag { using decoder_t = UhjDecoderIIR; };
@@ -157,7 +185,7 @@ struct UhjDecoderIIR final : DecoderBase {
     void decode(std::span<std::span<float>> samples, bool updateState) final;
 };
 
-template<std::size_t N>
+template<usize N>
 struct UhjStereoDecoder final : DecoderBase {
     struct Tag { using decoder_t = UhjStereoDecoder; };
 
@@ -181,8 +209,6 @@ struct UhjStereoDecoder final : DecoderBase {
      */
     void decode(std::span<std::span<float>> samples, bool updateState) final;
 };
-using UhjStereoDecoder256 = UhjStereoDecoder<256>;
-using UhjStereoDecoder512 = UhjStereoDecoder<512>;
 
 struct UhjStereoDecoderIIR final : DecoderBase {
     struct Tag { using decoder_t = UhjStereoDecoderIIR; };

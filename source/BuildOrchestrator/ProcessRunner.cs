@@ -15,7 +15,7 @@ public static class ProcessRunner
 {
     public static async Task<ProcessResult> RunAsync(
         string fileName,
-        string arguments,
+        IReadOnlyList<string> arguments,
         string workingDirectory,
         string logFilePath,
         string targetName,
@@ -29,13 +29,17 @@ public static class ProcessRunner
         var psi = new ProcessStartInfo
         {
             FileName = fileName,
-            Arguments = arguments,
             WorkingDirectory = workingDirectory,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
             CreateNoWindow = true,
         };
+        // ArgumentList (rather than a single pre-joined Arguments string) lets .NET handle
+        // quoting/escaping per-argument, so paths with spaces or drive-letter colons (Windows
+        // volume mounts like C:\Users\...:/repo) don't need manual quote-wrangling here.
+        foreach (var arg in arguments)
+            psi.ArgumentList.Add(arg);
 
         using var process = new Process { StartInfo = psi, EnableRaisingEvents = true };
         var sync = new object();

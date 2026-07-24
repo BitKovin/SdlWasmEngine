@@ -7,12 +7,14 @@
 #include <atomic>
 #include <bitset>
 #include <concepts>
+#include <cstdint>
 #include <functional>
 #include <string_view>
+#include <utility>
 
 #include "AL/al.h"
 
-#include "altypes.hpp"
+#include "alnumeric.h"
 #include "core/effects/base.h"
 #include "core/effectslot.h"
 #include "gsl/gsl"
@@ -49,8 +51,8 @@ struct Context;
 struct Buffer;
 
 struct EffectSlot {
-    ALuint mEffectId{};
-    float mGain{1.0f};
+    u32 mEffectId{};
+    f32 mGain{1.0f};
     bool mAuxSendAuto{true};
     al::intrusive_ptr<EffectSlot> mTarget;
     al::intrusive_ptr<al::Buffer> mBuffer;
@@ -72,7 +74,7 @@ struct EffectSlot {
     gsl::not_null<EffectSlotBase*> mSlot;
 
     /* Self ID */
-    ALuint mId{};
+    u32 mId{};
 
     explicit EffectSlot(gsl::not_null<al::Context*> context);
     EffectSlot(const EffectSlot&) = delete;
@@ -87,11 +89,11 @@ struct EffectSlot {
         return al::intrusive_ptr{this};
     }
 
-    auto initEffect(ALuint effectId, ALenum effectType, const EffectProps &effectProps,
+    auto initEffect(u32 effectId, ALenum effectType, const EffectProps &effectProps,
         gsl::not_null<Context*> context) -> void;
     void updateProps(gsl::not_null<Context*> context) const;
 
-    static void SetName(gsl::not_null<Context*> context, ALuint id, std::string_view name);
+    static void SetName(gsl::not_null<Context*> context, u32 id, std::string_view name);
 
 #if ALSOFT_EAX
     void eax_initialize(EaxFxSlotIndexValue index);
@@ -138,7 +140,7 @@ private:
     };
 
     struct Eax4GuidLoadEffectValidator {
-        void operator()(AL_GUID const& guidLoadEffect) const
+        void operator()(const GUID& guidLoadEffect) const
         {
             if (guidLoadEffect != EAX_NULL_GUID &&
                 guidLoadEffect != EAX_REVERB_EFFECT &&
@@ -294,8 +296,8 @@ private:
 
     void eax4_fx_slot_ensure_unlocked() const;
 
-    [[nodiscard]] static auto eax_get_efx_effect_type(AL_GUID const& guid) -> ALenum;
-    [[nodiscard]] auto eax_get_eax_default_effect_guid() const noexcept -> AL_GUID const&;
+    [[nodiscard]] static auto eax_get_efx_effect_type(const GUID& guid) -> ALenum;
+    [[nodiscard]] auto eax_get_eax_default_effect_guid() const noexcept -> const GUID&;
     [[nodiscard]] auto eax_get_eax_default_lock() const noexcept -> eax_long;
 
     void eax4_fx_slot_set_defaults(EAX40FXSLOTPROPERTIES& props) const noexcept;
@@ -348,7 +350,7 @@ private:
     void eax_set_efx_slot_send_auto(bool is_send_auto);
 
     // `alAuxiliaryEffectSlotf(effect_slot, AL_EFFECTSLOT_GAIN, gain)`
-    void eax_set_efx_slot_gain(float gain);
+    void eax_set_efx_slot_gain(f32 gain);
 
 public:
     class EaxDeleter {
@@ -369,7 +371,7 @@ auto eax_create_al_effect_slot(gsl::not_null<al::Context*> context) -> EaxAlEffe
 #endif // ALSOFT_EAX
 
 struct EffectSlotSubList {
-    u64 mFreeMask{~0_u64};
+    uint64_t mFreeMask{~0_u64};
     gsl::owner<std::array<al::EffectSlot,64>*> mEffectSlots{nullptr};
 
     EffectSlotSubList() noexcept = default;

@@ -37,11 +37,12 @@
 #include <thread>
 #include <functional>
 
-#include "altypes.hpp"
+#include "alnumeric.h"
 #include "alstring.h"
 #include "althrd_setname.h"
 #include "core/device.h"
 #include "core/helpers.h"
+#include "core/logging.h"
 #include "dynload.h"
 #include "gsl/gsl"
 #include "opthelpers.h"
@@ -50,12 +51,6 @@
 #include <SLES/OpenSLES.h>
 #include <SLES/OpenSLES_Android.h>
 #include <SLES/OpenSLES_AndroidConfiguration.h>
-
-#if HAVE_CXXMODULES
-import logging;
-#else
-#include "core/logging.h"
-#endif
 
 
 namespace {
@@ -224,7 +219,7 @@ struct OpenSLPlayback final : public BackendBase {
 
     std::mutex mMutex;
 
-    unsigned mFrameSize{0};
+    u32 mFrameSize{0};
 
     std::atomic<bool> mKillNow{true};
     std::thread mThread;
@@ -280,7 +275,7 @@ void OpenSLPlayback::mixerProc()
         PrintErr(result, "bufferQueue->GetInterface SL_IID_PLAY");
     }
 
-    const auto frame_step = std::size_t{mDevice->channelsFromFmt()};
+    const auto frame_step = usize{mDevice->channelsFromFmt()};
 
     if(SL_RESULT_SUCCESS != result)
         mDevice->handleDisconnect("Failed to get playback buffer: {:#08x}", result);
@@ -315,18 +310,18 @@ void OpenSLPlayback::mixerProc()
 
         auto dlock = std::unique_lock{mMutex};
         auto data = mRing->getWriteVector();
-        mDevice->renderSamples(data[0].data(),
-            gsl::narrow_cast<unsigned>(data[0].size()/mFrameSize), frame_step);
+        mDevice->renderSamples(data[0].data(), gsl::narrow_cast<u32>(data[0].size()/mFrameSize),
+            frame_step);
         if(!data[1].empty())
             mDevice->renderSamples(data[1].data(),
-                gsl::narrow_cast<unsigned>(data[1].size()/mFrameSize), frame_step);
+                gsl::narrow_cast<u32>(data[1].size()/mFrameSize), frame_step);
 
         const auto updatebytes = mRing->getElemSize();
-        const auto todo = std::size_t{data[0].size() + data[1].size()} / updatebytes;
+        const auto todo = usize{data[0].size() + data[1].size()} / updatebytes;
         mRing->writeAdvance(todo);
         dlock.unlock();
 
-        for(auto i=0_uz;i < todo;++i)
+        for(usize i{0};i < todo;++i)
         {
             if(data[0].empty())
             {
@@ -620,7 +615,7 @@ struct OpenSLCapture final : public BackendBase {
     void start() override;
     void stop() override;
     void captureSamples(std::span<std::byte> outbuffer) override;
-    auto availableSamples() -> std::size_t override;
+    auto availableSamples() -> usize override;
 
     /* engine interfaces */
     SLObjectItf mEngineObj{nullptr};
@@ -630,9 +625,9 @@ struct OpenSLCapture final : public BackendBase {
     SLObjectItf mRecordObj{nullptr};
 
     RingBufferPtr<std::byte> mRing;
-    unsigned mByteOffset{0u};
+    u32 mByteOffset{0u};
 
-    unsigned mFrameSize{0u};
+    u32 mFrameSize{0u};
 };
 
 OpenSLCapture::~OpenSLCapture()
@@ -688,7 +683,7 @@ void OpenSLCapture::open(std::string_view name)
         mRing = RingBuffer<std::byte>::Create(num_updates, update_len*mFrameSize, false);
 
         mDevice->mUpdateSize = update_len;
-        mDevice->mBufferSize = gsl::narrow_cast<unsigned>(mRing->writeSpace() * update_len);
+        mDevice->mBufferSize = gsl::narrow_cast<u32>(mRing->writeSpace() * update_len);
     }
     if(SL_RESULT_SUCCESS == result)
     {
@@ -797,12 +792,12 @@ void OpenSLCapture::open(std::string_view name)
         auto data = mRing->getWriteVector();
         std::ranges::fill(data[0], silence);
         std::ranges::fill(data[1], silence);
-        for(auto i=0_uz;i < data[0].size() && SL_RESULT_SUCCESS == result;i+=chunk_size)
+        for(usize i{0u};i < data[0].size() && SL_RESULT_SUCCESS == result;i+=chunk_size)
         {
             result = VCALL(bufferQueue,Enqueue)(data[0].data() + i, chunk_size);
             PrintErr(result, "bufferQueue->Enqueue");
         }
-        for(auto i=0_uz;i < data[1].size() && SL_RESULT_SUCCESS == result;i+=chunk_size)
+        for(usize i{0u};i < data[1].size() && SL_RESULT_SUCCESS == result;i+=chunk_size)
         {
             result = VCALL(bufferQueue,Enqueue)(data[1].data() + i, chunk_size);
             PrintErr(result, "bufferQueue->Enqueue");
@@ -858,7 +853,7 @@ void OpenSLCapture::stop()
 
 void OpenSLCapture::captureSamples(std::span<std::byte> outbuffer)
 {
-    const auto update_size = std::size_t{mDevice->mUpdateSize};
+    const auto update_size = usize{mDevice->mUpdateSize};
     const auto chunk_size = update_size * mFrameSize;
 
     auto bufferQueue = SLAndroidSimpleBufferQueueItf{};
@@ -880,7 +875,7 @@ void OpenSLCapture::captureSamples(std::span<std::byte> outbuffer)
     auto rdata = mRing->getReadVector();
     while(!outbuffer.empty())
     {
-        auto const rem = std::min(outbuffer.size(), std::size_t{chunk_size}-mByteOffset);
+        auto const rem = std::min(outbuffer.size(), usize{chunk_size}-mByteOffset);
         auto const oiter = std::ranges::copy(rdata[0].subspan(mByteOffset, rem),
             outbuffer.begin()).out;
         outbuffer = {oiter, outbuffer.end()};
@@ -910,7 +905,7 @@ void OpenSLCapture::captureSamples(std::span<std::byte> outbuffer)
     }
 }
 
-auto OpenSLCapture::availableSamples() -> std::size_t
+auto OpenSLCapture::availableSamples() -> usize
 {
     return mRing->readSpace()*mDevice->mUpdateSize - mByteOffset/mFrameSize;
 }

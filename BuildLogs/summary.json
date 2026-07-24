@@ -2,22 +2,22 @@
   {
     "Name": "windows",
     "Success": true,
-    "DurationSeconds": 4.6488514,
+    "DurationSeconds": 9.0400936,
     "LogFilePath": "F:\\Git\\SdlWasmEngine\\BuildLogs\\windows.log",
     "ErrorMessage": null
   },
   {
     "Name": "linux",
-    "Success": true,
-    "DurationSeconds": 647.9651701,
+    "Success": false,
+    "DurationSeconds": 521.1678255,
     "LogFilePath": "F:\\Git\\SdlWasmEngine\\BuildLogs\\linux.log",
-    "ErrorMessage": null
+    "ErrorMessage": "Exit code -1 \u2014 see F:\\Git\\SdlWasmEngine\\BuildLogs\\linux.log"
   },
   {
     "Name": "emscripten",
-    "Success": true,
-    "DurationSeconds": 6.6575071,
-    "LogFilePath": "F:\\Git\\SdlWasmEngine\\BuildLogs\\emscripten.log",
-    "ErrorMessage": null
+    "Success": false,
+    "DurationSeconds": 0,
+    "LogFilePath": "",
+    "ErrorMessage": "Skipped (cancelled)"
   }
 ]

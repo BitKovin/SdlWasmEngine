@@ -1,6 +1,6 @@
 /* Define to the library version */
-#define ALSOFT_VERSION "1.25.2"
-#define ALSOFT_VERSION_NUM 1,25,2,0
+#define ALSOFT_VERSION ""
+#define ALSOFT_VERSION_NUM 1,25,1,0
 
 /* Define the branch being built */
 #define ALSOFT_GIT_BRANCH ""

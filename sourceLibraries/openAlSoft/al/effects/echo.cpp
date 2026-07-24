@@ -4,6 +4,7 @@
 #include "AL/al.h"
 #include "AL/efx.h"
 
+#include "alc/context.h"
 #include "alnumeric.h"
 #include "effects.h"
 
@@ -12,12 +13,6 @@
 #include "al/eax/exception.h"
 #include "al/eax/utils.h"
 #endif // ALSOFT_EAX
-
-#if HAVE_CXXMODULES
-import alc.context;
-#else
-#include "alc/context.hpp"
-#endif
 
 
 namespace {
@@ -112,7 +107,7 @@ namespace {
 using EchoCommitter = EaxCommitter<EaxEchoCommitter>;
 
 struct DelayValidator {
-    void operator()(float const flDelay) const
+    void operator()(f32 const flDelay) const
     {
         eax_validate_range<EchoCommitter::Exception>(
             "Delay",
@@ -123,7 +118,7 @@ struct DelayValidator {
 }; // DelayValidator
 
 struct LrDelayValidator {
-    void operator()(float const flLRDelay) const
+    void operator()(f32 const flLRDelay) const
     {
         eax_validate_range<EchoCommitter::Exception>(
             "LR Delay",
@@ -134,7 +129,7 @@ struct LrDelayValidator {
 }; // LrDelayValidator
 
 struct DampingValidator {
-    void operator()(float const flDamping) const
+    void operator()(f32 const flDamping) const
     {
         eax_validate_range<EchoCommitter::Exception>(
             "Damping",
@@ -145,7 +140,7 @@ struct DampingValidator {
 }; // DampingValidator
 
 struct FeedbackValidator {
-    void operator()(float const flFeedback) const
+    void operator()(f32 const flFeedback) const
     {
         eax_validate_range<EchoCommitter::Exception>(
             "Feedback",
@@ -156,7 +151,7 @@ struct FeedbackValidator {
 }; // FeedbackValidator
 
 struct SpreadValidator {
-    void operator()(float const flSpread) const
+    void operator()(f32 const flSpread) const
     {
         eax_validate_range<EchoCommitter::Exception>(
             "Spread",

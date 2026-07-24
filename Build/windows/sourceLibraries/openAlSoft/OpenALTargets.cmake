@@ -50,30 +50,10 @@ unset(_cmake_expected_targets)
 add_library(OpenAL::OpenAL STATIC IMPORTED)
 
 set_target_properties(OpenAL::OpenAL PROPERTIES
-  CXX_MODULE_STD ""
-  IMPORTED_CXX_MODULES_COMPILE_DEFINITIONS "AL_LIBTYPE_STATIC;AL_BUILD_LIBRARY;AL_ALEXT_PROTOTYPES;ALC_API=;AL_API=;_WIN32;NOMINMAX;WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_WARNINGS;_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR;NDEBUG;_MSVC_STL_HARDENING=1"
-  IMPORTED_CXX_MODULES_COMPILE_OPTIONS "/O2;/Zi;/FS;/EHsc;/MP;\$<\$<COMPILE_LANGUAGE:CXX>:/permissive->;/W4;/wd4127;/wd4324;/wd4373;/utf-8;\$<\$<COMPILE_LANGUAGE:CXX>:/EHsc>"
-  IMPORTED_CXX_MODULES_INCLUDE_DIRECTORIES "F:/Git/SdlWasmEngine/sourceLibraries/openAlSoft;F:/Git/SdlWasmEngine/sourceLibraries/openAlSoft/include;F:/Git/SdlWasmEngine/sourceLibraries/openAlSoft/gsl/include;F:/Git/SdlWasmEngine/sourceLibraries/openAlSoft/include;F:/Git/SdlWasmEngine/Build/windows/sourceLibraries/openAlSoft;F:/Git/SdlWasmEngine/sourceLibraries/openAlSoft;F:/Git/SdlWasmEngine/sourceLibraries/openAlSoft/common"
-  IMPORTED_CXX_MODULES_LINK_LIBRARIES "Threads::Threads;avrt;winmm"
   INTERFACE_COMPILE_DEFINITIONS "AL_LIBTYPE_STATIC"
-  INTERFACE_INCLUDE_DIRECTORIES "F:/Git/SdlWasmEngine/sourceLibraries/openAlSoft/include;F:/Git/SdlWasmEngine/sourceLibraries/openAlSoft/include;F:/Git/SdlWasmEngine/sourceLibraries/openAlSoft/include/AL"
-  INTERFACE_LINK_LIBRARIES "\$<LINK_ONLY:Threads::Threads>;\$<LINK_ONLY:avrt>;\$<LINK_ONLY:winmm>;\$<LINK_ONLY:>"
+  INTERFACE_INCLUDE_DIRECTORIES "F:/Git/SdlWasmEngine/sourceLibraries/openAlSoft/include;F:/Git/SdlWasmEngine/sourceLibraries/openAlSoft/include/AL"
+  INTERFACE_LINK_LIBRARIES "\$<LINK_ONLY:winmm>;\$<LINK_ONLY:avrt>;\$<LINK_ONLY:>"
 )
-
-if(NOT CMAKE_VERSION VERSION_LESS "3.23.0")
-  target_sources(OpenAL::OpenAL
-    INTERFACE
-      FILE_SET "public_headers"
-      TYPE "HEADERS"
-      BASE_DIRS "F:/Git/SdlWasmEngine/sourceLibraries/openAlSoft/include"
-      FILES "F:/Git/SdlWasmEngine/sourceLibraries/openAlSoft/include/AL/al.h" "F:/Git/SdlWasmEngine/sourceLibraries/openAlSoft/include/AL/alc.h" "F:/Git/SdlWasmEngine/sourceLibraries/openAlSoft/include/AL/alext.h" "F:/Git/SdlWasmEngine/sourceLibraries/openAlSoft/include/AL/efx.h" "F:/Git/SdlWasmEngine/sourceLibraries/openAlSoft/include/AL/efx-presets.h"
-  )
-else()
-  set_property(TARGET OpenAL::OpenAL
-    APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES
-      "F:/Git/SdlWasmEngine/sourceLibraries/openAlSoft/include"
-  )
-endif()
 
 # Import target "OpenAL::OpenAL" for configuration "Release"
 set_property(TARGET OpenAL::OpenAL APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)

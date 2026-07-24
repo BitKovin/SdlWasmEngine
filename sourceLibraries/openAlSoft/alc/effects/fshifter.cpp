@@ -43,51 +43,38 @@
 #include "core/mixer/defs.h"
 #include "intrusive_ptr.h"
 
-#if HAVE_CXXMODULES
-import window.hann;
-#else
-#include "hann_window.hpp"
-#endif
 
 struct BufferStorage;
 
 namespace {
 
-constexpr auto NumLines = 4_uz;
-
-/* The B-Format to A-Format conversion matrix. This produces a tetrahedral
- * array of discrete signals. Note that A0 and A1 are left responses while A2
- * and A3 are right responses.
- */
-constexpr auto DecodeCoeff = static_cast<float>(0.25 / std::numbers::sqrt3);
-alignas(16) constexpr std::array<std::array<float, NumLines>, NumLines> B2A{{
-    /*   W          Y             Z             X      */
-    {{ 0.25f,  DecodeCoeff,  DecodeCoeff,  DecodeCoeff }}, /* A0 */
-    {{ 0.25f,  DecodeCoeff, -DecodeCoeff, -DecodeCoeff }}, /* A1 */
-    {{ 0.25f, -DecodeCoeff, -DecodeCoeff,  DecodeCoeff }}, /* A2 */
-    {{ 0.25f, -DecodeCoeff,  DecodeCoeff, -DecodeCoeff }}  /* A3 */
-}};
-
-/* Converts A-Format to B-Format for output. */
-constexpr auto EncodeCoeff = static_cast<float>(0.5 * std::numbers::sqrt3);
-alignas(16) constexpr std::array<std::array<float, NumLines>, NumLines> A2B{{
-    /*     A0            A1            A2            A3      */
-    {{        1.0f,         1.0f,         1.0f,         1.0f }}, /* W */
-    {{ EncodeCoeff,  EncodeCoeff, -EncodeCoeff, -EncodeCoeff }}, /* Y */
-    {{ EncodeCoeff, -EncodeCoeff, -EncodeCoeff,  EncodeCoeff }}, /* Z */
-    {{ EncodeCoeff, -EncodeCoeff,  EncodeCoeff, -EncodeCoeff }}  /* X */
-}};
-
-
 using complex_d = std::complex<double>;
 
-constexpr auto HilSize = 1024u;
-constexpr auto OversampleFactor = 4u;
+constexpr auto HilSize = 1024_uz;
+constexpr auto HilHalfSize = HilSize >> 1;
+constexpr auto OversampleFactor = 4_uz;
 
 static_assert(HilSize%OversampleFactor == 0, "Factor must be a clean divisor of the size");
-constexpr auto HilStep = HilSize / OversampleFactor;
+constexpr auto HilStep{HilSize / OversampleFactor};
 
-auto &gWindow = gHannWindow<HilSize>;
+/* Define a Hann window, used to filter the HIL input and output. */
+struct Windower {
+    alignas(16) std::array<double,HilSize> mData{};
+
+    Windower() noexcept
+    {
+        static constexpr auto scale = std::numbers::pi / double{HilSize};
+        /* Create lookup table of the Hann window for the desired size. */
+        std::ranges::transform(std::views::iota(0_u32, u32{HilHalfSize}), mData.begin(),
+            [](u32 const i) -> float
+        {
+            const auto val = std::sin((i+0.5) * scale);
+            return static_cast<float>(val * val);
+        });
+        std::ranges::copy(mData | std::views::take(HilHalfSize), mData.rbegin());
+    }
+};
+const Windower gWindow{};
 
 
 struct FshifterState final : public EffectState {
@@ -95,41 +82,25 @@ struct FshifterState final : public EffectState {
     size_t mCount{};
     size_t mPos{};
 
-    struct ProcessParams {
-        /* Effects buffers */
-        std::array<double, HilSize> mInFIFO{};
-        std::array<complex_d, HilStep> mOutFIFO{};
-        std::array<complex_d, HilSize> mOutputAccum{};
-        std::array<complex_d, BufferLineSize> mOutdata{};
+    /* Effects buffers */
+    std::array<double,HilSize> mInFIFO{};
+    std::array<complex_d,HilStep> mOutFIFO{};
+    std::array<complex_d,HilSize> mOutputAccum{};
+    std::array<complex_d,HilSize> mAnalytic{};
+    std::array<complex_d,BufferLineSize> mOutdata{};
 
-        unsigned mPhaseStep{};
-        unsigned mPhase{};
-        double mSign{1.0};
+    alignas(16) FloatBufferLine mBufferOut{};
 
-        unsigned mTargetChannel{InvalidChannelIndex.c_val};
-
-        /* Current and target gain for this channel. */
-        float mCurrentGain{};
-        float mTargetGain{};
+    /* Effect gains for each output channel */
+    struct OutParams {
+        u32 mPhaseStep{};
+        u32 mPhase{};
+        double mSign{};
+        std::array<float,MaxAmbiChannels> Current{};
+        std::array<float,MaxAmbiChannels> Target{};
     };
-    std::array<ProcessParams, NumLines> mChans;
+    std::array<OutParams,2> mChans;
 
-    std::array<complex_d, HilSize> mAnalytic{};
-
-    alignas(16) FloatBufferLine mTempLine{};
-    alignas(16) std::array<FloatBufferLine, NumLines> mBBuffer{};
-
-    /* When the device is mixing to higher-order B-Format, the output needs
-     * high-frequency adjustment and (potentially) mixing into higher order
-     * channels to compensate.
-     */
-    struct UpsampleParams {
-        float mHfScale{1.0f};
-        BandSplitter mSplitter;
-        std::array<float, MaxAmbiChannels> mCurrentGains{};
-        std::array<float, MaxAmbiChannels> mTargetGains{};
-    };
-    std::optional<std::array<UpsampleParams, NumLines>> mUpsampler;
 
     void deviceUpdate(const DeviceBase *device, const BufferStorage *buffer) override;
     void update(const ContextBase *context, const EffectSlotBase *slot, const EffectProps *props,
@@ -138,33 +109,19 @@ struct FshifterState final : public EffectState {
         const std::span<FloatBufferLine> samplesOut) override;
 };
 
-void FshifterState::deviceUpdate(DeviceBase const *device, BufferStorage const*)
+void FshifterState::deviceUpdate(const DeviceBase*, const BufferStorage*)
 {
     /* (Re-)initializing parameters and clear the buffers. */
     mCount = 0;
     mPos = HilSize - HilStep;
 
-    mChans.fill(ProcessParams{});
-    mUpsampler.reset();
+    mInFIFO.fill(0.0);
+    mOutFIFO.fill(complex_d{});
+    mOutputAccum.fill(complex_d{});
+    mAnalytic.fill(complex_d{});
 
-    if(device->mAmbiOrder > 1)
-    {
-        auto const hfscales = AmbiScale::GetHFOrderScales(1, device->mAmbiOrder,
-            device->m2DMixing);
-        auto idx = 0_uz;
-
-        auto const splitter = BandSplitter{device->mXOverFreq
-            / static_cast<float>(device->mSampleRate)};
-
-        auto &upsampler = mUpsampler.emplace();
-        for(auto &chandata : upsampler)
-        {
-            chandata.mHfScale = hfscales[idx];
-            idx = 1;
-
-            chandata.mSplitter = splitter;
-        }
-    }
+    mBufferOut.fill(0.0f);
+    mChans.fill(OutParams{});
 }
 
 void FshifterState::update(const ContextBase *context, const EffectSlotBase *slot,
@@ -174,94 +131,54 @@ void FshifterState::update(const ContextBase *context, const EffectSlotBase *slo
     auto const device = al::get_not_null(context->mDevice);
 
     const auto step = props.Frequency / static_cast<float>(device->mSampleRate);
-    std::ranges::fill(mChans | std::views::transform(&ProcessParams::mPhaseStep),
+    std::ranges::fill(mChans | std::views::transform(&OutParams::mPhaseStep),
         fastf2u(std::min(step, 1.0f) * MixerFracOne));
 
-    auto const lchans = std::span{mChans}.first(2);
     switch(props.LeftDirection)
     {
-    case FShifterDirection::Down:
-        std::ranges::fill(lchans | std::views::transform(&ProcessParams::mSign), -1.0);
-        break;
-    case FShifterDirection::Up:
-        std::ranges::fill(lchans | std::views::transform(&ProcessParams::mSign), 1.0);
-        break;
+    case FShifterDirection::Down: mChans[0].mSign = -1.0; break;
+    case FShifterDirection::Up: mChans[0].mSign = 1.0; break;
     case FShifterDirection::Off:
-        std::ranges::fill(lchans | std::views::transform(&ProcessParams::mPhase), 0);
-        std::ranges::fill(lchans | std::views::transform(&ProcessParams::mPhaseStep), 0);
+        mChans[0].mPhase     = 0;
+        mChans[0].mPhaseStep = 0;
         break;
     }
 
-    auto const rchans = std::span{mChans}.last(2);
     switch(props.RightDirection)
     {
-    case FShifterDirection::Down:
-        std::ranges::fill(rchans | std::views::transform(&ProcessParams::mSign), -1.0);
-        break;
-    case FShifterDirection::Up:
-        std::ranges::fill(rchans | std::views::transform(&ProcessParams::mSign), 1.0);
-        break;
+    case FShifterDirection::Down: mChans[1].mSign = -1.0; break;
+    case FShifterDirection::Up: mChans[1].mSign = 1.0; break;
     case FShifterDirection::Off:
-        std::ranges::fill(rchans | std::views::transform(&ProcessParams::mPhase), 0);
-        std::ranges::fill(rchans | std::views::transform(&ProcessParams::mPhaseStep), 0);
+        mChans[1].mPhase     = 0;
+        mChans[1].mPhaseStep = 0;
         break;
     }
+
+    static constexpr auto inv_sqrt2 = static_cast<float>(1.0 / std::numbers::sqrt2);
+    static constexpr auto lcoeffs_pw = CalcDirectionCoeffs(std::array{-1.0f, 0.0f, 0.0f});
+    static constexpr auto rcoeffs_pw = CalcDirectionCoeffs(std::array{ 1.0f, 0.0f, 0.0f});
+    static constexpr auto lcoeffs_nrml = CalcDirectionCoeffs(std::array{-inv_sqrt2, 0.0f, inv_sqrt2});
+    static constexpr auto rcoeffs_nrml = CalcDirectionCoeffs(std::array{ inv_sqrt2, 0.0f, inv_sqrt2});
+    auto &lcoeffs = (device->mRenderMode != RenderMode::Pairwise) ? lcoeffs_nrml : lcoeffs_pw;
+    auto &rcoeffs = (device->mRenderMode != RenderMode::Pairwise) ? rcoeffs_nrml : rcoeffs_pw;
 
     mOutTarget = target.Main->Buffer;
-    target.Main->setAmbiMixParams(slot->Wet, slot->Gain,
-        [this](std::size_t const idx, u8 const outchan, float const outgain)
-    {
-        if(idx < mChans.size())
-        {
-            mChans[idx].mTargetChannel = outchan.c_val;
-            mChans[idx].mTargetGain = outgain;
-        }
-    });
-
-    if(mUpsampler.has_value())
-    {
-        auto &upsampler = mUpsampler.value();
-        const auto upmatrix = std::span{AmbiScale::FirstOrderUp};
-
-        auto const outgain = slot->Gain;
-        for(auto const idx : std::views::iota(0_uz, mChans.size()))
-        {
-            if(mChans[idx].mTargetChannel != InvalidChannelIndex)
-                ComputePanGains(target.Main, upmatrix[idx], outgain, upsampler[idx].mTargetGains);
-        }
-    }
+    ComputePanGains(target.Main, lcoeffs, slot->Gain, mChans[0].Target);
+    ComputePanGains(target.Main, rcoeffs, slot->Gain, mChans[1].Target);
 }
 
 void FshifterState::process(const size_t samplesToDo,
     const std::span<const FloatBufferLine> samplesIn, const std::span<FloatBufferLine> samplesOut)
 {
-    /* Clear the B-Format buffer that accumulates the result. */
-    for(auto &outbuf : mBBuffer)
-        std::ranges::fill(outbuf | std::views::take(samplesToDo), 0.0f);
-
-    auto const numInput = std::min(samplesIn.size(), NumLines);
     for(auto base=0_uz;base < samplesToDo;)
     {
         const auto todo = std::min(HilStep-mCount, samplesToDo-base);
 
         /* Fill FIFO buffer with samples data */
-        for(const auto c : std::views::iota(0_uz, NumLines))
-        {
-            auto infifo = std::span{mChans[c].mInFIFO}.subspan(mPos+mCount, todo);
-            /* Convert B-Format input to FIFO A-Format. */
-            std::ranges::fill(infifo, 0.0);
-            for(const auto i : std::views::iota(0_uz, numInput))
-            {
-                auto const input = std::span{samplesIn[i]}.subspan(base, todo);
-                std::ranges::transform(infifo, input, infifo.begin(),
-                    [gain=B2A[c][i]](double const sample, double const in) noexcept -> double
-                { return sample + in*gain; });
-            }
-
-            /* Copy FIFO A-Format to output. */
-            std::ranges::copy(std::span{mChans[c].mOutFIFO}.subspan(mCount, todo),
-                std::span{mChans[c].mOutdata}.subspan(base).begin());
-        }
+        std::ranges::copy(samplesIn[0] | std::views::drop(base) | std::views::take(todo),
+            (mInFIFO | std::views::drop(mPos+mCount)).begin());
+        std::ranges::copy(mOutFIFO | std::views::drop(mCount) | std::views::take(todo),
+            (mOutdata | std::views::drop(base)).begin());
         mCount += todo;
         base += todo;
 
@@ -270,44 +187,37 @@ void FshifterState::process(const size_t samplesToDo,
         mCount = 0;
         mPos = (mPos+HilStep) & (HilSize-1);
 
-        for(auto &chandata : mChans)
-        {
-            /* Real signal windowing and store in Analytic buffer */
-            const auto [_, windowiter, analyticiter] = std::ranges::transform(
-                chandata.mInFIFO | std::views::drop(mPos), gWindow, mAnalytic.begin(),
-                std::multiplies{});
-            std::ranges::transform(chandata.mInFIFO.begin(), chandata.mInFIFO.end(), windowiter,
-                gWindow.end(), analyticiter, std::multiplies{});
+        /* Real signal windowing and store in Analytic buffer */
+        const auto [_, windowiter, analyticiter] = std::ranges::transform(
+            mInFIFO | std::views::drop(mPos), gWindow.mData, mAnalytic.begin(), std::multiplies{});
+        std::ranges::transform(mInFIFO.begin(), mInFIFO.end(), windowiter, gWindow.mData.end(),
+            analyticiter, std::multiplies{});
 
-            /* Processing signal by Discrete Hilbert Transform (analytical signal). */
-            complex_hilbert(mAnalytic);
+        /* Processing signal by Discrete Hilbert Transform (analytical signal). */
+        complex_hilbert(mAnalytic);
 
-            /* Windowing and add to output accumulator */
-            std::ranges::transform(mAnalytic, gWindow, mAnalytic.begin(),
-                [](const complex_d &a, const double w)  { return 2.0/OversampleFactor*w*a; });
+        /* Windowing and add to output accumulator */
+        std::ranges::transform(mAnalytic, gWindow.mData, mAnalytic.begin(),
+            [](const complex_d &a, const double w) noexcept { return 2.0/OversampleFactor*w*a; });
 
-            const auto accumrange = chandata.mOutputAccum | std::views::drop(mPos);
-            std::ranges::transform(accumrange, mAnalytic, accumrange.begin(), std::plus{});
-            std::ranges::transform(chandata.mOutputAccum, std::span{mAnalytic}.last(mPos),
-                chandata.mOutputAccum.begin(), std::plus{});
+        const auto accumrange = mOutputAccum | std::views::drop(mPos);
+        std::ranges::transform(accumrange, mAnalytic, accumrange.begin(), std::plus{});
+        std::ranges::transform(mOutputAccum, mAnalytic | std::views::drop(HilSize-mPos),
+            mOutputAccum.begin(), std::plus{});
 
-            /* Copy out the accumulated result, then clear for the next iteration. */
-            const auto outrange = accumrange | std::views::take(HilStep);
-            std::ranges::copy(outrange, chandata.mOutFIFO.begin());
-            std::ranges::fill(outrange, 0.0f);
-        }
+        /* Copy out the accumulated result, then clear for the next iteration. */
+        const auto outrange = accumrange | std::views::take(HilStep);
+        std::ranges::copy(outrange, mOutFIFO.begin());
+        std::ranges::fill(outrange, 0.0f);
     }
 
-    /* Process frequency shifter using the analytic signal obtained and store
-     * in the B-Format buffer.
-     */
-    for(const auto c : std::views::iota(0_uz, NumLines))
+    /* Process frequency shifter using the analytic signal obtained. */
+    std::ranges::for_each(mChans, [&,this](OutParams &params)
     {
-        auto &params = mChans[c];
         const auto sign = params.mSign;
         const auto phase_step = params.mPhaseStep;
         auto phase_idx = params.mPhase;
-        std::ranges::transform(params.mOutdata | std::views::take(samplesToDo), mTempLine.begin(),
+        std::ranges::transform(mOutdata | std::views::take(samplesToDo), mBufferOut.begin(),
             [&phase_idx,phase_step,sign](const complex_d &in) -> float
         {
             const auto phase = phase_idx * (std::numbers::pi*2.0 / MixerFracOne);
@@ -320,44 +230,10 @@ void FshifterState::process(const size_t samplesToDo,
         });
         params.mPhase = phase_idx;
 
-        for(const auto i : std::views::iota(0_uz, NumLines))
-        {
-            const auto tmpspan = std::span{mBBuffer[i]}.first(samplesToDo);
-            std::ranges::transform(tmpspan, mTempLine, tmpspan.begin(),
-                [gain=A2B[i][c]](float const sample, float const in) noexcept -> float
-            { return sample + in*gain; });
-        }
-    }
-
-    /* Now, mix the processed sound data to the output. */
-    if(mUpsampler.has_value())
-    {
-        auto &upsampler = mUpsampler.value();
-        auto chandata = mChans.begin();
-        for(const auto c : std::views::iota(0_uz, NumLines))
-        {
-            auto &upchan = upsampler[c];
-            if(chandata->mTargetChannel != InvalidChannelIndex)
-            {
-                auto src = std::span{mBBuffer[c]}.first(samplesToDo);
-                upchan.mSplitter.processHfScale(src, src, upchan.mHfScale);
-                MixSamples(src, samplesOut, upchan.mCurrentGains, upchan.mTargetGains, samplesToDo,
-                    0);
-            }
-            ++chandata;
-        }
-    }
-    else
-    {
-        auto chandata = mChans.begin();
-        for(const auto c : std::views::iota(0_uz, NumLines))
-        {
-            if(auto const outidx = chandata->mTargetChannel; outidx != InvalidChannelIndex)
-                MixSamples(std::span{mBBuffer[c]}.first(samplesToDo), samplesOut[outidx],
-                    chandata->mCurrentGain, chandata->mTargetGain, samplesToDo);
-            ++chandata;
-        }
-    }
+        /* Now, mix the processed sound data to the output. */
+        MixSamples(std::span{mBufferOut}.first(samplesToDo), samplesOut, params.Current,
+            params.Target, std::max(samplesToDo, 512_uz), 0);
+    });
 }
 
 

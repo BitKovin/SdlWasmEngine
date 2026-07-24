@@ -6,6 +6,11 @@
 #include "alformat.hpp"
 
 
+struct EaxAlLowPassParam {
+    float gain;
+    float gain_hf;
+};
+
 void eax_log_exception(std::string_view message) noexcept;
 
 template<typename TException, typename TValue>

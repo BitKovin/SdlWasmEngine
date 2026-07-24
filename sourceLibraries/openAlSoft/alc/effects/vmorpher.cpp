@@ -60,32 +60,32 @@ namespace {
 constexpr auto MaxUpdateSamples = 256_uz;
 constexpr auto NumFormants = 4_uz;
 constexpr auto RcpQFactor = 1.0f / 5.0f;
-enum : std::size_t {
+enum : size_t {
     VowelAIndex,
     VowelBIndex,
     NumFilters
 };
 
-constexpr auto WaveformFracBits = 24_uz;
-constexpr auto WaveformFracOne = 1_uz << WaveformFracBits;
-constexpr auto WaveformFracMask = WaveformFracOne - 1;
+constexpr auto WaveformFracBits{24_uz};
+constexpr auto WaveformFracOne{1_uz<<WaveformFracBits};
+constexpr auto WaveformFracMask{WaveformFracOne-1};
 
-inline auto Sin(unsigned const index) -> float
+inline auto Sin(u32 const index) -> float
 {
     static constexpr auto scale = std::numbers::pi_v<float>*2.0f / float{WaveformFracOne};
     return std::sin(static_cast<float>(index) * scale)*0.5f + 0.5f;
 }
 
-inline auto Saw(unsigned const index) -> float
+inline auto Saw(u32 const index) -> float
 { return static_cast<float>(index) / float{WaveformFracOne}; }
 
-inline auto Triangle(unsigned const index) -> float
+inline auto Triangle(u32 const index) -> float
 { return std::fabs(static_cast<float>(index)*(2.0f/WaveformFracOne) - 1.0f); }
 
-inline auto Half(unsigned) -> float { return 0.5f; }
+inline auto Half(u32) -> float { return 0.5f; }
 
-template<float(&func)(unsigned)>
-void Oscillate(std::span<float> const dst, unsigned index, unsigned const step)
+template<float(&func)(u32)>
+void Oscillate(std::span<float> const dst, u32 index, u32 const step)
 {
     std::ranges::generate(dst, [&index,step]
     {
@@ -147,7 +147,7 @@ struct FormantFilter {
 
 struct VmorpherState final : public EffectState {
     struct OutParams {
-        unsigned mTargetChannel{InvalidChannelIndex.c_val};
+        u32 mTargetChannel{InvalidChannelIndex};
 
         /* Effect parameters */
         std::array<std::array<FormantFilter,NumFormants>,NumFilters> mFormants;
@@ -158,10 +158,10 @@ struct VmorpherState final : public EffectState {
     };
     std::array<OutParams,MaxAmbiChannels> mChans;
 
-    void (*mGetSamples)(std::span<float> dst, unsigned index, unsigned step){};
+    void (*mGetSamples)(std::span<float> dst, u32 const index, u32 step){};
 
-    unsigned mIndex{0};
-    unsigned mStep{1};
+    u32 mIndex{0};
+    u32 mStep{1};
 
     /* Effects buffers */
     alignas(16) std::array<float,MaxUpdateSamples> mSampleBufferA{};
@@ -268,9 +268,9 @@ void VmorpherState::update(const ContextBase *context, const EffectSlotBase *slo
 
     mOutTarget = target.Main->Buffer;
     target.Main->setAmbiMixParams(slot->Wet, slot->Gain,
-        [this](std::size_t const idx, u8 const outchan, float const outgain)
+        [this](usize const idx, u32 const outchan, f32 const outgain)
     {
-        mChans[idx].mTargetChannel = outchan.c_val;
+        mChans[idx].mTargetChannel = outchan;
         mChans[idx].mTargetGain = outgain;
     });
 }
@@ -288,7 +288,7 @@ void VmorpherState::process(const size_t samplesToDo,
         const auto td = std::min(MaxUpdateSamples, samplesToDo-base);
 
         mGetSamples(std::span{mLfo}.first(td), mIndex, mStep);
-        mIndex += static_cast<unsigned>(mStep * td);
+        mIndex += static_cast<u32>(mStep * td);
         mIndex &= WaveformFracMask;
 
         auto chandata = mChans.begin();

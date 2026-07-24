@@ -118,7 +118,7 @@ int main(int argc, char* args[]) {
 
     }
 
-    bgfx::RendererType::Enum renderApi = bgfx::RendererType::Direct3D12;
+    bgfx::RendererType::Enum renderApi = bgfx::RendererType::OpenGL;
 
     auto renderApiOverride = args_m.find("renderapi");
     if (renderApiOverride != args_m.end())

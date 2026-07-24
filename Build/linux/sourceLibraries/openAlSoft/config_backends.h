@@ -4,7 +4,7 @@
 
 #define HAVE_OSS 1
 
-#define HAVE_PIPEWIRE 0
+#define HAVE_PIPEWIRE 1
 
 #define HAVE_SOLARIS 0
 

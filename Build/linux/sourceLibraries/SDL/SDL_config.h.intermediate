@@ -220,9 +220,9 @@
 #endif /* HAVE_LIBC */
 
 /* #undef HAVE_ALTIVEC_H */
-/* #undef HAVE_DBUS_DBUS_H */
-/* #undef HAVE_FCITX */
-/* #undef HAVE_IBUS_IBUS_H */
+#define HAVE_DBUS_DBUS_H 1
+#define HAVE_FCITX 1
+#define HAVE_IBUS_IBUS_H 1
 #define HAVE_SYS_INOTIFY_H 1
 #define HAVE_INOTIFY_INIT 1
 #define HAVE_INOTIFY_INIT1 1
@@ -243,8 +243,8 @@
 #endif
 
 #define HAVE_LIBUDEV_H 1
-/* #undef HAVE_LIBSAMPLERATE_H */
-/* #undef HAVE_LIBDECOR_H */
+#define HAVE_LIBSAMPLERATE_H 1
+#define HAVE_LIBDECOR_H 1
 
 /* #undef HAVE_D3D_H */
 /* #undef HAVE_D3D11_H */
@@ -315,8 +315,8 @@
 /* #undef SDL_AUDIO_DRIVER_NETBSD */
 #define SDL_AUDIO_DRIVER_OSS 1
 /* #undef SDL_AUDIO_DRIVER_PAUDIO */
-/* #undef SDL_AUDIO_DRIVER_PIPEWIRE */
-/* #undef SDL_AUDIO_DRIVER_PIPEWIRE_DYNAMIC */
+#define SDL_AUDIO_DRIVER_PIPEWIRE 1
+#define SDL_AUDIO_DRIVER_PIPEWIRE_DYNAMIC "libpipewire-0.3.so.0"
 #define SDL_AUDIO_DRIVER_PULSEAUDIO 1
 #define SDL_AUDIO_DRIVER_PULSEAUDIO_DYNAMIC "libpulse.so.0"
 /* #undef SDL_AUDIO_DRIVER_QSA */
@@ -425,16 +425,16 @@
 /* #undef SDL_VIDEO_DRIVER_PSP */
 /* #undef SDL_VIDEO_DRIVER_PS2 */
 
-/* #undef SDL_VIDEO_DRIVER_KMSDRM */
-/* #undef SDL_VIDEO_DRIVER_KMSDRM_DYNAMIC */
-/* #undef SDL_VIDEO_DRIVER_KMSDRM_DYNAMIC_GBM */
+#define SDL_VIDEO_DRIVER_KMSDRM 1
+#define SDL_VIDEO_DRIVER_KMSDRM_DYNAMIC "libdrm.so.2"
+#define SDL_VIDEO_DRIVER_KMSDRM_DYNAMIC_GBM "libgbm.so.1"
 
 #define SDL_VIDEO_DRIVER_WAYLAND_QT_TOUCH 1
 #define SDL_VIDEO_DRIVER_WAYLAND_DYNAMIC "libwayland-client.so.0"
 #define SDL_VIDEO_DRIVER_WAYLAND_DYNAMIC_EGL "libwayland-egl.so.1"
 #define SDL_VIDEO_DRIVER_WAYLAND_DYNAMIC_CURSOR "libwayland-cursor.so.0"
 #define SDL_VIDEO_DRIVER_WAYLAND_DYNAMIC_XKBCOMMON "libxkbcommon.so.0"
-/* #undef SDL_VIDEO_DRIVER_WAYLAND_DYNAMIC_LIBDECOR */
+#define SDL_VIDEO_DRIVER_WAYLAND_DYNAMIC_LIBDECOR "libdecor-0.so.0"
 
 #define SDL_VIDEO_DRIVER_X11 1
 #define SDL_VIDEO_DRIVER_X11_DYNAMIC "libX11.so.6"
@@ -443,14 +443,14 @@
 #define SDL_VIDEO_DRIVER_X11_DYNAMIC_XINPUT2 "libXi.so.6"
 #define SDL_VIDEO_DRIVER_X11_DYNAMIC_XFIXES "libXfixes.so.3"
 #define SDL_VIDEO_DRIVER_X11_DYNAMIC_XRANDR "libXrandr.so.2"
-/* #undef SDL_VIDEO_DRIVER_X11_DYNAMIC_XSS */
+#define SDL_VIDEO_DRIVER_X11_DYNAMIC_XSS "libXss.so.1"
 #define SDL_VIDEO_DRIVER_X11_XCURSOR 1
 #define SDL_VIDEO_DRIVER_X11_XDBE 1
 #define SDL_VIDEO_DRIVER_X11_XINPUT2 1
 #define SDL_VIDEO_DRIVER_X11_XINPUT2_SUPPORTS_MULTITOUCH 1
 #define SDL_VIDEO_DRIVER_X11_XFIXES 1
 #define SDL_VIDEO_DRIVER_X11_XRANDR 1
-/* #undef SDL_VIDEO_DRIVER_X11_XSCRNSAVER */
+#define SDL_VIDEO_DRIVER_X11_XSCRNSAVER 1
 #define SDL_VIDEO_DRIVER_X11_XSHAPE 1
 #define SDL_VIDEO_DRIVER_X11_SUPPORTS_GENERIC_EVENTS 1
 #define SDL_VIDEO_DRIVER_X11_HAS_XKBKEYCODETOKEYSYM 1
@@ -531,10 +531,10 @@
 #define DYNAPI_NEEDS_DLOPEN 1
 
 /* Enable dynamic libsamplerate support */
-/* #undef SDL_LIBSAMPLERATE_DYNAMIC */
+#define SDL_LIBSAMPLERATE_DYNAMIC "libsamplerate.so.0"
 
 /* Enable ime support */
-/* #undef SDL_USE_IME */
+#define SDL_USE_IME 1
 
 /* Platform specific definitions */
 /* #undef SDL_IPHONE_KEYBOARD */
@@ -544,7 +544,7 @@
 /* #undef SDL_VIDEO_VITA_PVR */
 /* #undef SDL_VIDEO_VITA_PVR_OGL */
 
-/* #undef SDL_HAVE_LIBDECOR_GET_MIN_MAX */
+#define SDL_HAVE_LIBDECOR_GET_MIN_MAX 1
 
 #if !defined(HAVE_STDINT_H) && !defined(_STDINT_H_)
 /* Most everything except Visual Studio 2008 and earlier has stdint.h now */

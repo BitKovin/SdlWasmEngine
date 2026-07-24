@@ -24,13 +24,8 @@
 #include "alstring.h"
 #include "filesystem.h"
 #include "gsl/gsl"
-#include "strutils.hpp"
-
-#if HAVE_CXXMODULES
-import logging;
-#else
 #include "logging.h"
-#endif
+#include "strutils.hpp"
 
 
 namespace {
@@ -350,7 +345,7 @@ auto SearchDataFiles(const std::string_view ext, const std::string_view subdir)
     const auto datadirs = std::string{al::getenv("XDG_DATA_DIRS")
         .value_or("/usr/local/share/:/usr/share/")};
 
-    auto curpos = std::size_t{0};
+    auto curpos = 0_uz;
     while(curpos < datadirs.size())
     {
         auto nextpos = datadirs.find(':', curpos);

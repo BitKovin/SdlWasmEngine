@@ -11,16 +11,15 @@
 struct EffectState;
 
 
-enum class AsyncEnableBits : u8::value_t {
+enum class AsyncEnableBits : u8 {
     SourceState,
     BufferCompleted,
     Disconnected,
-
-    MaxValue = Disconnected
+    Count
 };
 
 
-enum class AsyncSrcState : u8::value_t {
+enum class AsyncSrcState : u8 {
     Reset,
     Stop,
     Play,
@@ -30,13 +29,13 @@ enum class AsyncSrcState : u8::value_t {
 using AsyncKillThread = std::monostate;
 
 struct AsyncSourceStateEvent {
-    unsigned mId;
+    u32 mId;
     AsyncSrcState mState;
 };
 
 struct AsyncBufferCompleteEvent {
-    unsigned mId;
-    unsigned mCount;
+    u32 mId;
+    u32 mCount;
 };
 
 struct AsyncDisconnectEvent {

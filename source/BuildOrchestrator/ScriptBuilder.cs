@@ -64,14 +64,16 @@ public static class ScriptBuilder
         return sb.ToString();
     }
 
-    /// <summary>Linux runs as a generated .sh executed inside WSL. Content is built with
-    /// explicit '\n' line endings regardless of host OS — if this ran through AppendLine
-    /// on Windows (CRLF) bash would choke on stray '\r' characters at the end of each line.</summary>
+    /// <summary>Linux runs as a generated .sh executed inside the Steam Linux Runtime 3.0
+    /// "sniper" container via `docker run`. Paths passed in are already container-side paths
+    /// (RepoRoot bind-mounted at ContainerRepoPath), no runtime path translation needed.
+    /// Content is built with explicit '\n' line endings regardless of host OS — if this ran
+    /// through AppendLine on Windows (CRLF) bash would choke on stray '\r' at line ends.</summary>
     public static string BuildLinuxScript(
-        BuildConfig config, BuildTarget target, string repoRootWsl, string buildDirWsl, string? toolchainFileWsl)
+        BuildConfig config, BuildTarget target, string repoRootContainer, string buildDirContainer, string? toolchainFileContainer)
     {
         var gameName = target.GameName ?? config.GameName;
-        var toolchainArg = toolchainFileWsl is null ? "" : $" -DCMAKE_TOOLCHAIN_FILE=\"{toolchainFileWsl}\"";
+        var toolchainArg = toolchainFileContainer is null ? "" : $" -DCMAKE_TOOLCHAIN_FILE=\"{toolchainFileContainer}\"";
         var extraArgs = string.Join(' ', target.ExtraCMakeArgs);
 
         var sb = new StringBuilder();
@@ -84,13 +86,13 @@ public static class ScriptBuilder
         foreach (var line in target.ExtraEnvCommands)
             Line(line);
 
-        Line($"echo '=== Configuring [{target.Name}] ==='");
+        Line($"echo '=== Configuring [{target.Name}] (sniper container) ==='");
         Line(
-            $"cmake -S \"{repoRootWsl}\" -B \"{buildDirWsl}\" -G \"{target.Generator}\" " +
+            $"cmake -S \"{repoRootContainer}\" -B \"{buildDirContainer}\" -G \"{target.Generator}\" " +
             $"-DCMAKE_BUILD_TYPE={target.Configuration}{toolchainArg} -DGAME_NAME=\"{gameName}\" {extraArgs}");
         Line("");
         Line($"echo '=== Building [{target.Name}] ==='");
-        Line($"cmake --build \"{buildDirWsl}\" --config {target.Configuration}");
+        Line($"cmake --build \"{buildDirContainer}\" --config {target.Configuration}");
 
         return sb.ToString();
     }

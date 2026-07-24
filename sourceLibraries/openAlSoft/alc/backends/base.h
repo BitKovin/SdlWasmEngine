@@ -2,7 +2,6 @@
 #define ALC_BACKENDS_BASE_H
 
 #include <chrono>
-#include <cstddef>
 #include <memory>
 #include <span>
 #include <string>
@@ -11,6 +10,7 @@
 
 #include "alc/events.h"
 #include "alformat.hpp"
+#include "altypes.hpp"
 #include "core/device.h"
 #include "core/except.h"
 #include "gsl/gsl"
@@ -30,7 +30,7 @@ struct BackendBase {
     virtual void stop() = 0;
 
     virtual void captureSamples(std::span<std::byte> outbuffer);
-    virtual auto availableSamples() -> std::size_t;
+    virtual auto availableSamples() -> usize;
 
     virtual auto getClockLatency() -> ClockLatency;
 

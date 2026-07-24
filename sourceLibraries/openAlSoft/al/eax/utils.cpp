@@ -4,13 +4,8 @@
 
 #include <exception>
 
-#include "gsl/gsl"
-
-#if HAVE_CXXMODULES
-import logging;
-#else
 #include "core/logging.h"
-#endif
+#include "gsl/gsl"
 
 
 void eax_log_exception(std::string_view message) noexcept

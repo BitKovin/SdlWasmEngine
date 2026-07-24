@@ -8,16 +8,11 @@
 #include "alnumeric.h"
 #include "alstring.h"
 #include "core/device.h"
+#include "core/logging.h"
 #include "gsl/gsl"
 #include "ringbuffer.h"
 
 #include "oboe/Oboe.h"
-
-#if HAVE_CXXMODULES
-import logging;
-#else
-#include "core/logging.h"
-#endif
 
 
 namespace {
@@ -94,12 +89,12 @@ auto OboePlayback::reset() -> bool
     builder.setFormatConversionAllowed(false);
     builder.setCallback(this);
 
-    if(mDevice->mFlags.test(DeviceFlag::FrequencyRequest))
+    if(mDevice->Flags.test(FrequencyRequest))
     {
         builder.setSampleRateConversionQuality(oboe::SampleRateConversionQuality::High);
         builder.setSampleRate(gsl::narrow_cast<int32_t>(mDevice->mSampleRate));
     }
-    if(mDevice->mFlags.test(DeviceFlag::ChannelsRequest))
+    if(mDevice->Flags.test(ChannelsRequest))
     {
         /* Only use mono or stereo at user request. There's no telling what
          * other counts may be inferred as.
@@ -108,7 +103,7 @@ auto OboePlayback::reset() -> bool
             : (mDevice->FmtChans==DevFmtStereo) ? oboe::ChannelCount::Stereo
             : oboe::ChannelCount::Unspecified);
     }
-    if(mDevice->mFlags.test(DeviceFlag::SampleTypeRequest))
+    if(mDevice->Flags.test(SampleTypeRequest))
     {
         oboe::AudioFormat format{oboe::AudioFormat::Unspecified};
         switch(mDevice->FmtType)
@@ -187,7 +182,7 @@ auto OboePlayback::reset() -> bool
         throw al::backend_exception{al::backend_error::DeviceError,
             "Got unhandled sample type: {}", oboe::convertToText(mStream->getFormat())};
     }
-    mDevice->mSampleRate = gsl::narrow_cast<unsigned>(mStream->getSampleRate());
+    mDevice->mSampleRate = gsl::narrow_cast<u32>(mStream->getSampleRate());
 
     /* Ensure the period size is no less than 10ms. It's possible for FramesPerCallback to be 0
      * indicating variable updates, but OpenAL should have a reasonable minimum update size set.
@@ -195,9 +190,9 @@ auto OboePlayback::reset() -> bool
      * update size.
      */
     mDevice->mUpdateSize = std::max(mDevice->mSampleRate/100u,
-        gsl::narrow_cast<unsigned>(mStream->getFramesPerBurst()));
+        gsl::narrow_cast<u32>(mStream->getFramesPerBurst()));
     mDevice->mBufferSize = std::max(mDevice->mUpdateSize*2u,
-        gsl::narrow_cast<unsigned>(mStream->getBufferSizeInFrames()));
+        gsl::narrow_cast<u32>(mStream->getBufferSizeInFrames()));
 
     return true;
 }
@@ -230,7 +225,7 @@ struct OboeCapture final : BackendBase, oboe::AudioStreamCallback {
     void start() override;
     void stop() override;
     void captureSamples(std::span<std::byte> outbuffer) override;
-    auto availableSamples() -> std::size_t override;
+    auto availableSamples() -> usize override;
 };
 
 auto OboeCapture::onAudioReady(oboe::AudioStream*, void *const audioData, int32_t const numFrames)
@@ -314,7 +309,7 @@ void OboeCapture::open(std::string_view name)
     /* Ensure a minimum ringbuffer size of 100ms. */
     mRing = RingBuffer<std::byte>::Create(
         std::max(mDevice->mBufferSize, mDevice->mSampleRate/10u),
-        gsl::narrow_cast<unsigned>(mStream->getBytesPerFrame()), false);
+        gsl::narrow_cast<u32>(mStream->getBytesPerFrame()), false);
 
     mDeviceName = name;
 }
@@ -332,7 +327,7 @@ void OboeCapture::stop()
         ERR("Failed to stop stream: {}", oboe::convertToText(result));
 }
 
-auto OboeCapture::availableSamples() -> std::size_t
+auto OboeCapture::availableSamples() -> usize
 { return mRing->readSpace(); }
 
 void OboeCapture::captureSamples(std::span<std::byte> const outbuffer)

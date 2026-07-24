@@ -85,6 +85,7 @@
 #include <vector>
 
 #include "alcomplex.h"
+#include "alnumeric.h"
 #include "alstring.h"
 #include "filesystem.h"
 #include "fmt/base.h"
@@ -343,7 +344,7 @@ auto StoreMhr(const HrirDataT *hData, const std::string_view filename) -> bool
         {
             for(const auto &azd : evd.mAzs)
             {
-                std::array<double,MaxTruncSize*std::size_t{2}> out{};
+                std::array<double,MaxTruncSize*2_uz> out{};
 
                 TpdfDither(out, azd.mIrs[0].first(n), scale, 0, channels, &dither_seed);
                 if(hData->mChannelType == CT_STEREO)
@@ -840,7 +841,7 @@ struct HrirReconstructor {
     {
         auto h = std::vector<complex_d>(mFftSize);
         auto mags = std::vector<double>(mFftSize);
-        const auto m = std::size_t{mFftSize/2} + 1;
+        const auto m = (mFftSize/2_uz) + 1_uz;
 
         while(true)
         {
@@ -1287,7 +1288,7 @@ auto main(std::span<std::string_view> args) -> int
     const auto arg0 = args[0];
     args = args.subspan(1);
     auto optarg = std::string_view{};
-    auto argplace = std::size_t{0};
+    auto argplace = 0_uz;
 
     auto getarg = [&args,&argplace,&optarg,optlist]
     {

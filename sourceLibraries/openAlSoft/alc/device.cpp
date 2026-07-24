@@ -8,29 +8,23 @@
 #endif
 
 #include <algorithm>
+#include <bit>
 #include <csignal>
+#include <cstddef>
 #include <numeric>
 
 #include "al/buffer.h"
 #include "al/effect.h"
 #include "al/filter.h"
 #include "alnumeric.h"
-#include "altypes.hpp"
 #include "atomic.h"
 #include "backends/base.h"
 #include "core/devformat.h"
 #include "core/hrtf.h"
+#include "core/logging.h"
 #include "core/mastering.h"
 #include "flexarray.h"
 #include "gsl/gsl"
-
-#if HAVE_CXXMODULES
-import format.types;
-import logging;
-#else
-#include "alformattypes.hpp"
-#include "core/logging.h"
-#endif
 
 
 namespace {
@@ -56,21 +50,21 @@ Device::~Device()
 
     Backend = nullptr;
 
-    auto count = std::accumulate(BufferList.cbegin(), BufferList.cend(), 0_usize,
+    auto count = std::accumulate(BufferList.cbegin(), BufferList.cend(), 0_uz,
         [](usize const cur, const BufferSubList &sublist) noexcept -> usize
-        { return cur + (~sublist.mFreeMask).popcount(); });
+        { return cur + gsl::narrow_cast<unsigned>(std::popcount(~sublist.mFreeMask)); });
     if(count > 0)
         WARN("{} Buffer{} not deleted", count, (count==1)?"":"s");
 
-    count = std::accumulate(EffectList.cbegin(), EffectList.cend(), 0_usize,
+    count = std::accumulate(EffectList.cbegin(), EffectList.cend(), 0_uz,
         [](usize const cur, const EffectSubList &sublist) noexcept -> usize
-        { return cur + (~sublist.mFreeMask).popcount(); });
+        { return cur + gsl::narrow_cast<unsigned>(std::popcount(~sublist.mFreeMask)); });
     if(count > 0)
         WARN("{} Effect{} not deleted", count, (count==1)?"":"s");
 
-    count = std::accumulate(FilterList.cbegin(), FilterList.cend(), 0_usize,
+    count = std::accumulate(FilterList.cbegin(), FilterList.cend(), 0_uz,
         [](usize const cur, const FilterSubList &sublist) noexcept -> usize
-        { return cur + (~sublist.mFreeMask).popcount(); });
+        { return cur + gsl::narrow_cast<unsigned>(std::popcount(~sublist.mFreeMask)); });
     if(count > 0)
         WARN("{} Filter{} not deleted", count, (count==1)?"":"s");
 }

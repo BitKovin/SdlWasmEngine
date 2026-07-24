@@ -46,11 +46,8 @@
 /* Define to 1 if we have C++20 modules, else 0 */
 #define HAVE_CXXMODULES 0
 
-/* Define to 1 to enable dynamic loading of optional libs, else 0 */
-#define HAVE_DYNLOAD 1
-
 /* Define to 1 if we have DBus/RTKit, else 0 */
-#define HAVE_RTKIT 0
+#define HAVE_RTKIT 1
 
 /* Define to 1 if building for winuwp, else 0 */
 #define ALSOFT_UWP 0

@@ -8,16 +8,10 @@
 
 #include "AL/al.h"
 
+#include "alc/context.h"
 #include "alc/inprogext.h"
 #include "alnumeric.h"
-#include "altypes.hpp"
 #include "effects.h"
-
-#if HAVE_CXXMODULES
-import alc.context;
-#else
-#include "alc/context.hpp"
-#endif
 
 
 namespace {

@@ -3,6 +3,7 @@
 
 #include <atomic>
 
+#include "altypes.hpp"
 
 struct Voice;
 
@@ -17,7 +18,7 @@ enum class VChangeState {
 struct VoiceChange {
     Voice *mOldVoice{nullptr};
     Voice *mVoice{nullptr};
-    unsigned mSourceID{0};
+    u32 mSourceID{0};
     VChangeState mState{};
 
     std::atomic<VoiceChange*> mNext{nullptr};

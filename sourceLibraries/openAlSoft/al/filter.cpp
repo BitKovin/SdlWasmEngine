@@ -23,6 +23,9 @@
 #include "filter.h"
 
 #include <algorithm>
+#include <bit>
+#include <cstdarg>
+#include <cstdio>
 #include <iterator>
 #include <memory>
 #include <mutex>
@@ -35,59 +38,52 @@
 #include "AL/al.h"
 #include "AL/efx.h"
 
+#include "alc/context.h"
 #include "alc/device.h"
 #include "almalloc.h"
 #include "alnumeric.h"
 #include "core/except.h"
-#include "direct_defs.h"
-#include "opthelpers.h"
-
-#if HAVE_CXXMODULES
-import alc.context;
-import gsl;
-import logging;
-#else
-#include "alc/context.hpp"
 #include "core/logging.h"
+#include "direct_defs.h"
 #include "gsl/gsl"
-#endif
+#include "opthelpers.h"
 
 
 /* Null filter parameter handlers */
 template<>
-void FilterTable<NullFilterTable>::setParami(gsl::not_null<al::Context*> context, gsl::not_null<al::Filter*>, ALenum param, ALint)
+void FilterTable<NullFilterTable>::setParami(gsl::not_null<al::Context*> context, gsl::not_null<al::Filter*>, ALenum param, i32)
 { context->throw_error(AL_INVALID_ENUM, "Invalid null filter property {:#04x}", as_unsigned(param)); }
 template<>
-void FilterTable<NullFilterTable>::setParamiv(gsl::not_null<al::Context*> context, gsl::not_null<al::Filter*>, ALenum param, ALint const*)
+void FilterTable<NullFilterTable>::setParamiv(gsl::not_null<al::Context*> context, gsl::not_null<al::Filter*>, ALenum param, i32 const*)
 { context->throw_error(AL_INVALID_ENUM, "Invalid null filter property {:#04x}", as_unsigned(param)); }
 template<>
-void FilterTable<NullFilterTable>::setParamf(gsl::not_null<al::Context*> context, gsl::not_null<al::Filter*>, ALenum param, ALfloat)
+void FilterTable<NullFilterTable>::setParamf(gsl::not_null<al::Context*> context, gsl::not_null<al::Filter*>, ALenum param, f32)
 { context->throw_error(AL_INVALID_ENUM, "Invalid null filter property {:#04x}", as_unsigned(param)); }
 template<>
-void FilterTable<NullFilterTable>::setParamfv(gsl::not_null<al::Context*> context, gsl::not_null<al::Filter*>, ALenum param, ALfloat const*)
+void FilterTable<NullFilterTable>::setParamfv(gsl::not_null<al::Context*> context, gsl::not_null<al::Filter*>, ALenum param, f32 const*)
 { context->throw_error(AL_INVALID_ENUM, "Invalid null filter property {:#04x}", as_unsigned(param)); }
 template<>
-void FilterTable<NullFilterTable>::getParami(gsl::not_null<al::Context*> context, gsl::not_null<const al::Filter*>, ALenum param, ALint*)
+void FilterTable<NullFilterTable>::getParami(gsl::not_null<al::Context*> context, gsl::not_null<const al::Filter*>, ALenum param, i32*)
 { context->throw_error(AL_INVALID_ENUM, "Invalid null filter property {:#04x}", as_unsigned(param)); }
 template<>
-void FilterTable<NullFilterTable>::getParamiv(gsl::not_null<al::Context*> context, gsl::not_null<const al::Filter*>, ALenum param, ALint*)
+void FilterTable<NullFilterTable>::getParamiv(gsl::not_null<al::Context*> context, gsl::not_null<const al::Filter*>, ALenum param, i32*)
 { context->throw_error(AL_INVALID_ENUM, "Invalid null filter property {:#04x}", as_unsigned(param)); }
 template<>
-void FilterTable<NullFilterTable>::getParamf(gsl::not_null<al::Context*> context, gsl::not_null<const al::Filter*>, ALenum param, ALfloat*)
+void FilterTable<NullFilterTable>::getParamf(gsl::not_null<al::Context*> context, gsl::not_null<const al::Filter*>, ALenum param, f32*)
 { context->throw_error(AL_INVALID_ENUM, "Invalid null filter property {:#04x}", as_unsigned(param)); }
 template<>
-void FilterTable<NullFilterTable>::getParamfv(gsl::not_null<al::Context*> context, gsl::not_null<const al::Filter*>, ALenum param, ALfloat*)
+void FilterTable<NullFilterTable>::getParamfv(gsl::not_null<al::Context*> context, gsl::not_null<const al::Filter*>, ALenum param, f32*)
 { context->throw_error(AL_INVALID_ENUM, "Invalid null filter property {:#04x}", as_unsigned(param)); }
 
 /* Lowpass parameter handlers */
 template<>
-void FilterTable<LowpassFilterTable>::setParami(gsl::not_null<al::Context*> context, gsl::not_null<al::Filter*>, ALenum param, ALint)
+void FilterTable<LowpassFilterTable>::setParami(gsl::not_null<al::Context*> context, gsl::not_null<al::Filter*>, ALenum param, i32)
 { context->throw_error(AL_INVALID_ENUM, "Invalid low-pass integer property {:#04x}", as_unsigned(param)); }
 template<>
-void FilterTable<LowpassFilterTable>::setParamiv(gsl::not_null<al::Context*> context, gsl::not_null<al::Filter*> filter, ALenum param, ALint const *values)
+void FilterTable<LowpassFilterTable>::setParamiv(gsl::not_null<al::Context*> context, gsl::not_null<al::Filter*> filter, ALenum param, i32 const *values)
 { setParami(context, filter, param, *values); }
 template<>
-void FilterTable<LowpassFilterTable>::setParamf(gsl::not_null<al::Context*> context, gsl::not_null<al::Filter*> filter, ALenum param, ALfloat val)
+void FilterTable<LowpassFilterTable>::setParamf(gsl::not_null<al::Context*> context, gsl::not_null<al::Filter*> filter, ALenum param, f32 val)
 {
     switch(param)
     {
@@ -107,16 +103,16 @@ void FilterTable<LowpassFilterTable>::setParamf(gsl::not_null<al::Context*> cont
         as_unsigned(param));
 }
 template<>
-void FilterTable<LowpassFilterTable>::setParamfv(gsl::not_null<al::Context*> context, gsl::not_null<al::Filter*> filter, ALenum param, ALfloat const *vals)
+void FilterTable<LowpassFilterTable>::setParamfv(gsl::not_null<al::Context*> context, gsl::not_null<al::Filter*> filter, ALenum param, f32 const *vals)
 { setParamf(context, filter, param, *vals); }
 template<>
-void FilterTable<LowpassFilterTable>::getParami(gsl::not_null<al::Context*> context, gsl::not_null<const al::Filter*>, ALenum param, ALint*)
+void FilterTable<LowpassFilterTable>::getParami(gsl::not_null<al::Context*> context, gsl::not_null<const al::Filter*>, ALenum param, i32*)
 { context->throw_error(AL_INVALID_ENUM, "Invalid low-pass integer property {:#04x}", as_unsigned(param)); }
 template<>
-void FilterTable<LowpassFilterTable>::getParamiv(gsl::not_null<al::Context*> context, gsl::not_null<const al::Filter*> filter, ALenum param, ALint *values)
+void FilterTable<LowpassFilterTable>::getParamiv(gsl::not_null<al::Context*> context, gsl::not_null<const al::Filter*> filter, ALenum param, i32 *values)
 { getParami(context, filter, param, values); }
 template<>
-void FilterTable<LowpassFilterTable>::getParamf(gsl::not_null<al::Context*> context, gsl::not_null<const al::Filter*> filter, ALenum param, ALfloat *val)
+void FilterTable<LowpassFilterTable>::getParamf(gsl::not_null<al::Context*> context, gsl::not_null<const al::Filter*> filter, ALenum param, f32 *val)
 {
     switch(param)
     {
@@ -127,18 +123,18 @@ void FilterTable<LowpassFilterTable>::getParamf(gsl::not_null<al::Context*> cont
         as_unsigned(param));
 }
 template<>
-void FilterTable<LowpassFilterTable>::getParamfv(gsl::not_null<al::Context*> context, gsl::not_null<const al::Filter*> filter, ALenum param, ALfloat *vals)
+void FilterTable<LowpassFilterTable>::getParamfv(gsl::not_null<al::Context*> context, gsl::not_null<const al::Filter*> filter, ALenum param, f32 *vals)
 { getParamf(context, filter, param, vals); }
 
 /* Highpass parameter handlers */
 template<>
-void FilterTable<HighpassFilterTable>::setParami(gsl::not_null<al::Context*> context, gsl::not_null<al::Filter*>, ALenum param, ALint)
+void FilterTable<HighpassFilterTable>::setParami(gsl::not_null<al::Context*> context, gsl::not_null<al::Filter*>, ALenum param, i32)
 { context->throw_error(AL_INVALID_ENUM, "Invalid high-pass integer property {:#04x}", as_unsigned(param)); }
 template<>
-void FilterTable<HighpassFilterTable>::setParamiv(gsl::not_null<al::Context*> context, gsl::not_null<al::Filter*> filter, ALenum param, ALint const *values)
+void FilterTable<HighpassFilterTable>::setParamiv(gsl::not_null<al::Context*> context, gsl::not_null<al::Filter*> filter, ALenum param, i32 const *values)
 { setParami(context, filter, param, *values); }
 template<>
-void FilterTable<HighpassFilterTable>::setParamf(gsl::not_null<al::Context*> context, gsl::not_null<al::Filter*> filter, ALenum param, ALfloat val)
+void FilterTable<HighpassFilterTable>::setParamf(gsl::not_null<al::Context*> context, gsl::not_null<al::Filter*> filter, ALenum param, f32 val)
 {
     switch(param)
     {
@@ -158,16 +154,16 @@ void FilterTable<HighpassFilterTable>::setParamf(gsl::not_null<al::Context*> con
         as_unsigned(param));
 }
 template<>
-void FilterTable<HighpassFilterTable>::setParamfv(gsl::not_null<al::Context*> context, gsl::not_null<al::Filter*> filter, ALenum param, ALfloat const *vals)
+void FilterTable<HighpassFilterTable>::setParamfv(gsl::not_null<al::Context*> context, gsl::not_null<al::Filter*> filter, ALenum param, f32 const *vals)
 { setParamf(context, filter, param, *vals); }
 template<>
-void FilterTable<HighpassFilterTable>::getParami(gsl::not_null<al::Context*> context, gsl::not_null<const al::Filter*>, ALenum param, ALint*)
+void FilterTable<HighpassFilterTable>::getParami(gsl::not_null<al::Context*> context, gsl::not_null<const al::Filter*>, ALenum param, i32*)
 { context->throw_error(AL_INVALID_ENUM, "Invalid high-pass integer property {:#04x}", as_unsigned(param)); }
 template<>
-void FilterTable<HighpassFilterTable>::getParamiv(gsl::not_null<al::Context*> context, gsl::not_null<const al::Filter*> filter, ALenum param, ALint *values)
+void FilterTable<HighpassFilterTable>::getParamiv(gsl::not_null<al::Context*> context, gsl::not_null<const al::Filter*> filter, ALenum param, i32 *values)
 { getParami(context, filter, param, values); }
 template<>
-void FilterTable<HighpassFilterTable>::getParamf(gsl::not_null<al::Context*> context, gsl::not_null<const al::Filter*> filter, ALenum param, ALfloat *val)
+void FilterTable<HighpassFilterTable>::getParamf(gsl::not_null<al::Context*> context, gsl::not_null<const al::Filter*> filter, ALenum param, f32 *val)
 {
     switch(param)
     {
@@ -178,18 +174,18 @@ void FilterTable<HighpassFilterTable>::getParamf(gsl::not_null<al::Context*> con
         as_unsigned(param));
 }
 template<>
-void FilterTable<HighpassFilterTable>::getParamfv(gsl::not_null<al::Context*> context, gsl::not_null<const al::Filter*> filter, ALenum param, ALfloat *vals)
+void FilterTable<HighpassFilterTable>::getParamfv(gsl::not_null<al::Context*> context, gsl::not_null<const al::Filter*> filter, ALenum param, f32 *vals)
 { getParamf(context, filter, param, vals); }
 
 /* Bandpass parameter handlers */
 template<>
-void FilterTable<BandpassFilterTable>::setParami(gsl::not_null<al::Context*> context, gsl::not_null<al::Filter*>, ALenum param, ALint)
+void FilterTable<BandpassFilterTable>::setParami(gsl::not_null<al::Context*> context, gsl::not_null<al::Filter*>, ALenum param, i32)
 { context->throw_error(AL_INVALID_ENUM, "Invalid band-pass integer property {:#04x}", as_unsigned(param)); }
 template<>
-void FilterTable<BandpassFilterTable>::setParamiv(gsl::not_null<al::Context*> context, gsl::not_null<al::Filter*> filter, ALenum param, ALint const *values)
+void FilterTable<BandpassFilterTable>::setParamiv(gsl::not_null<al::Context*> context, gsl::not_null<al::Filter*> filter, ALenum param, i32 const *values)
 { setParami(context, filter, param, *values); }
 template<>
-void FilterTable<BandpassFilterTable>::setParamf(gsl::not_null<al::Context*> context, gsl::not_null<al::Filter*> filter, ALenum param, ALfloat val)
+void FilterTable<BandpassFilterTable>::setParamf(gsl::not_null<al::Context*> context, gsl::not_null<al::Filter*> filter, ALenum param, f32 val)
 {
     switch(param)
     {
@@ -215,16 +211,16 @@ void FilterTable<BandpassFilterTable>::setParamf(gsl::not_null<al::Context*> con
         as_unsigned(param));
 }
 template<>
-void FilterTable<BandpassFilterTable>::setParamfv(gsl::not_null<al::Context*> context, gsl::not_null<al::Filter*> filter, ALenum param, ALfloat const *vals)
+void FilterTable<BandpassFilterTable>::setParamfv(gsl::not_null<al::Context*> context, gsl::not_null<al::Filter*> filter, ALenum param, f32 const *vals)
 { setParamf(context, filter, param, *vals); }
 template<>
-void FilterTable<BandpassFilterTable>::getParami(gsl::not_null<al::Context*> context, gsl::not_null<const al::Filter*>, ALenum param, ALint*)
+void FilterTable<BandpassFilterTable>::getParami(gsl::not_null<al::Context*> context, gsl::not_null<const al::Filter*>, ALenum param, i32*)
 { context->throw_error(AL_INVALID_ENUM, "Invalid band-pass integer property {:#04x}", as_unsigned(param)); }
 template<>
-void FilterTable<BandpassFilterTable>::getParamiv(gsl::not_null<al::Context*> context, gsl::not_null<const al::Filter*> filter, ALenum param, ALint *values)
+void FilterTable<BandpassFilterTable>::getParamiv(gsl::not_null<al::Context*> context, gsl::not_null<const al::Filter*> filter, ALenum param, i32 *values)
 { getParami(context, filter, param, values); }
 template<>
-void FilterTable<BandpassFilterTable>::getParamf(gsl::not_null<al::Context*> context, gsl::not_null<const al::Filter*> filter, ALenum param, ALfloat *val)
+void FilterTable<BandpassFilterTable>::getParamf(gsl::not_null<al::Context*> context, gsl::not_null<const al::Filter*> filter, ALenum param, f32 *val)
 {
     switch(param)
     {
@@ -236,7 +232,7 @@ void FilterTable<BandpassFilterTable>::getParamf(gsl::not_null<al::Context*> con
         as_unsigned(param));
 }
 template<>
-void FilterTable<BandpassFilterTable>::getParamfv(gsl::not_null<al::Context*> context, gsl::not_null<al::Filter const*> filter, ALenum param, ALfloat *vals)
+void FilterTable<BandpassFilterTable>::getParamfv(gsl::not_null<al::Context*> context, gsl::not_null<al::Filter const*> filter, ALenum param, f32 *vals)
 { getParamf(context, filter, param, vals); }
 
 
@@ -289,9 +285,9 @@ void InitFilterParams(gsl::not_null<al::Filter*> const filter, ALenum const type
 [[nodiscard]]
 auto EnsureFilters(gsl::not_null<al::Device*> const device, usize const needed) noexcept -> bool
 try {
-    auto count = std::accumulate(device->FilterList.cbegin(), device->FilterList.cend(), 0_usize,
+    auto count = std::accumulate(device->FilterList.cbegin(), device->FilterList.cend(), 0_uz,
         [](usize const cur, const FilterSubList &sublist) noexcept -> usize
-        { return cur + sublist.mFreeMask.popcount(); });
+        { return cur + gsl::narrow_cast<unsigned>(std::popcount(sublist.mFreeMask)); });
 
     while(needed > count)
     {
@@ -314,14 +310,13 @@ catch(...) {
 [[nodiscard]]
 auto AllocFilter(gsl::not_null<al::Device*> const device) noexcept -> gsl::not_null<al::Filter*>
 {
-    auto const sublist = std::ranges::find_if(device->FilterList,
-        [](FilterSubList const &slist) { return slist.mFreeMask != 0; });
-    auto const lidx = gsl::narrow_cast<ALuint>(std::distance(device->FilterList.begin(), sublist));
-    auto const slidx = sublist->mFreeMask.countr_zero().c_val;
+    auto const sublist = std::ranges::find_if(device->FilterList, &FilterSubList::mFreeMask);
+    auto const lidx = gsl::narrow_cast<u32>(std::distance(device->FilterList.begin(), sublist));
+    auto const slidx = gsl::narrow_cast<u32>(std::countr_zero(sublist->mFreeMask));
     ASSUME(slidx < 64);
 
     auto filter = gsl::make_not_null(std::construct_at(
-        std::to_address(std::next(sublist->mFilters->begin(), as_signed(slidx)))));
+        std::to_address(std::next(sublist->mFilters->begin(), slidx))));
     InitFilterParams(filter, AL_FILTER_NULL);
 
     /* Add 1 to avoid filter ID 0. */
@@ -346,8 +341,8 @@ void FreeFilter(gsl::not_null<al::Device*> const device, gsl::not_null<al::Filte
 }
 
 [[nodiscard]]
-auto LookupFilter(std::nothrow_t, gsl::not_null<al::Device*> const device, ALuint const id)
-    noexcept -> al::Filter*
+auto LookupFilter(std::nothrow_t, gsl::not_null<al::Device*> const device, u32 const id) noexcept
+    -> al::Filter*
 {
     const auto lidx = (id-1) >> 6;
     const auto slidx = (id-1) & 0x3f;
@@ -355,13 +350,13 @@ auto LookupFilter(std::nothrow_t, gsl::not_null<al::Device*> const device, ALuin
     if(lidx >= device->FilterList.size()) [[unlikely]]
         return nullptr;
     auto &sublist = device->FilterList[lidx];
-    if((sublist.mFreeMask & (1_u64 << slidx)) != 0) [[unlikely]]
+    if(sublist.mFreeMask & (1_u64 << slidx)) [[unlikely]]
         return nullptr;
-    return std::to_address(std::next(sublist.mFilters->begin(), as_signed(slidx)));
+    return std::to_address(std::next(sublist.mFilters->begin(), slidx));
 }
 
 [[nodiscard]]
-auto LookupFilter(gsl::not_null<al::Context*> const context, ALuint const id)
+auto LookupFilter(gsl::not_null<al::Context*> const context, u32 const id)
     -> gsl::not_null<al::Filter*>
 {
     if(auto *const filter = LookupFilter(std::nothrow, al::get_not_null(context->mALDevice), id))
@@ -370,7 +365,7 @@ auto LookupFilter(gsl::not_null<al::Context*> const context, ALuint const id)
 }
 
 
-void alGenFilters_(gsl::not_null<al::Context*> context, ALsizei n, ALuint *filters) noexcept
+void alGenFilters(gsl::not_null<al::Context*> context, ALsizei n, ALuint *filters) noexcept
 try {
     if(n < 0)
         context->throw_error(AL_INVALID_VALUE, "Generating {} filters", n);
@@ -392,7 +387,7 @@ catch(std::exception &e) {
     ERR("Caught exception: {}", e.what());
 }
 
-void alDeleteFilters_(gsl::not_null<al::Context*> context, ALsizei n, const ALuint *filters)
+void alDeleteFilters(gsl::not_null<al::Context*> context, ALsizei n, const ALuint *filters)
     noexcept
 try {
     if(n < 0)
@@ -420,7 +415,7 @@ catch(std::exception &e) {
     ERR("Caught exception: {}", e.what());
 }
 
-auto alIsFilter_(gsl::not_null<al::Context*> context, ALuint filter) noexcept -> ALboolean
+auto alIsFilter(gsl::not_null<al::Context*> context, ALuint filter) noexcept -> ALboolean
 {
     auto const device = al::get_not_null(context->mALDevice);
     auto filterlock = std::lock_guard{device->FilterLock};
@@ -430,7 +425,7 @@ auto alIsFilter_(gsl::not_null<al::Context*> context, ALuint filter) noexcept ->
 }
 
 
-void alFilteri_(gsl::not_null<al::Context*> context, ALuint filter, ALenum param, ALint value)
+void alFilteri(gsl::not_null<al::Context*> context, ALuint filter, ALenum param, ALint value)
     noexcept
 try {
     auto const device = al::get_not_null(context->mALDevice);
@@ -458,13 +453,13 @@ catch(std::exception &e) {
     ERR("Caught exception: {}", e.what());
 }
 
-void alFilteriv_(gsl::not_null<al::Context*> context, ALuint filter, ALenum param,
+void alFilteriv(gsl::not_null<al::Context*> context, ALuint filter, ALenum param,
     const ALint *values) noexcept
 try {
     switch(param)
     {
     case AL_FILTER_TYPE:
-        alFilteri_(context, filter, param, *values);
+        alFilteri(context, filter, param, *values);
         return;
     }
 
@@ -483,7 +478,7 @@ catch(std::exception &e) {
     ERR("Caught exception: {}", e.what());
 }
 
-void alFilterf_(gsl::not_null<al::Context*> context, ALuint filter, ALenum param, ALfloat value)
+void alFilterf(gsl::not_null<al::Context*> context, ALuint filter, ALenum param, ALfloat value)
     noexcept
 try {
     auto const device = al::get_not_null(context->mALDevice);
@@ -501,7 +496,7 @@ catch(std::exception &e) {
     ERR("Caught exception: {}", e.what());
 }
 
-void alFilterfv_(gsl::not_null<al::Context*> context, ALuint filter, ALenum param,
+void alFilterfv(gsl::not_null<al::Context*> context, ALuint filter, ALenum param,
     const ALfloat *values) noexcept
 try {
     auto const device = al::get_not_null(context->mALDevice);
@@ -519,7 +514,7 @@ catch(std::exception &e) {
     ERR("Caught exception: {}", e.what());
 }
 
-void alGetFilteri_(gsl::not_null<al::Context*> context, ALuint filter, ALenum param, ALint *value)
+void alGetFilteri(gsl::not_null<al::Context*> context, ALuint filter, ALenum param, ALint *value)
     noexcept
 try {
     auto const device = al::get_not_null(context->mALDevice);
@@ -542,13 +537,13 @@ catch(std::exception &e) {
     ERR("Caught exception: {}", e.what());
 }
 
-void alGetFilteriv_(gsl::not_null<al::Context*> context, ALuint filter, ALenum param,
-    ALint *values) noexcept
+void alGetFilteriv(gsl::not_null<al::Context*> context, ALuint filter, ALenum param, ALint *values)
+    noexcept
 try {
     switch(param)
     {
     case AL_FILTER_TYPE:
-        alGetFilteri_(context, filter, param, values);
+        alGetFilteri(context, filter, param, values);
         return;
     }
 
@@ -567,8 +562,8 @@ catch(std::exception &e) {
     ERR("Caught exception: {}", e.what());
 }
 
-void alGetFilterf_(gsl::not_null<al::Context*> context, ALuint filter, ALenum param,
-    ALfloat *value) noexcept
+void alGetFilterf(gsl::not_null<al::Context*> context, ALuint filter, ALenum param, ALfloat *value)
+    noexcept
 try {
     auto const device = al::get_not_null(context->mALDevice);
     auto filterlock = std::lock_guard{device->FilterLock};
@@ -585,7 +580,7 @@ catch(std::exception &e) {
     ERR("Caught exception: {}", e.what());
 }
 
-void alGetFilterfv_(gsl::not_null<al::Context*> context, ALuint filter, ALenum param,
+void alGetFilterfv(gsl::not_null<al::Context*> context, ALuint filter, ALenum param,
     ALfloat *values) noexcept
 try {
     auto const device = al::get_not_null(context->mALDevice);
@@ -605,21 +600,21 @@ catch(std::exception &e) {
 
 } // namespace
 
-DECL_FUNC(AL_API, void, alGenFilters, ALsizei,n, ALuint*,filters)
-DECL_FUNC(AL_API, void, alDeleteFilters, ALsizei,n, const ALuint*,filters)
-DECL_FUNC(AL_API, ALboolean, alIsFilter, ALuint,filter)
+AL_API DECL_FUNC2(void, alGenFilters, ALsizei,n, ALuint*,filters)
+AL_API DECL_FUNC2(void, alDeleteFilters, ALsizei,n, const ALuint*,filters)
+AL_API DECL_FUNC1(ALboolean, alIsFilter, ALuint,filter)
 
-DECL_FUNC(AL_API, void, alFilteri, ALuint,filter, ALenum,param, ALint,value)
-DECL_FUNC(AL_API, void, alFilteriv, ALuint,filter, ALenum,param, const ALint*,values)
-DECL_FUNC(AL_API, void, alFilterf, ALuint,filter, ALenum,param, ALfloat,value)
-DECL_FUNC(AL_API, void, alFilterfv, ALuint,filter, ALenum,param, const ALfloat*,values)
-DECL_FUNC(AL_API, void, alGetFilteri, ALuint,filter, ALenum,param, ALint*,value)
-DECL_FUNC(AL_API, void, alGetFilteriv, ALuint,filter, ALenum,param, ALint*,values)
-DECL_FUNC(AL_API, void, alGetFilterf, ALuint,filter, ALenum,param, ALfloat*,value)
-DECL_FUNC(AL_API, void, alGetFilterfv, ALuint,filter, ALenum,param, ALfloat*,values)
+AL_API DECL_FUNC3(void, alFilteri, ALuint,filter, ALenum,param, ALint,value)
+AL_API DECL_FUNC3(void, alFilteriv, ALuint,filter, ALenum,param, const ALint*,values)
+AL_API DECL_FUNC3(void, alFilterf, ALuint,filter, ALenum,param, ALfloat,value)
+AL_API DECL_FUNC3(void, alFilterfv, ALuint,filter, ALenum,param, const ALfloat*,values)
+AL_API DECL_FUNC3(void, alGetFilteri, ALuint,filter, ALenum,param, ALint*,value)
+AL_API DECL_FUNC3(void, alGetFilteriv, ALuint,filter, ALenum,param, ALint*,values)
+AL_API DECL_FUNC3(void, alGetFilterf, ALuint,filter, ALenum,param, ALfloat*,value)
+AL_API DECL_FUNC3(void, alGetFilterfv, ALuint,filter, ALenum,param, ALfloat*,values)
 
 
-void al::Filter::SetName(gsl::not_null<al::Context*> const context, ALuint const id,
+void al::Filter::SetName(gsl::not_null<al::Context*> const context, u32 const id,
     std::string_view const name)
 {
     auto const device = get_not_null(context->mALDevice);
@@ -636,10 +631,10 @@ FilterSubList::~FilterSubList()
         return;
 
     auto usemask = ~mFreeMask;
-    while(usemask != 0)
+    while(usemask)
     {
-        auto const idx = usemask.countr_zero();
-        std::destroy_at(std::to_address(std::next(mFilters->begin(), as_signed(idx.c_val))));
+        auto const idx = std::countr_zero(usemask);
+        std::destroy_at(std::to_address(std::next(mFilters->begin(), idx)));
         usemask &= ~(1_u64 << idx);
     }
     mFreeMask = ~usemask;

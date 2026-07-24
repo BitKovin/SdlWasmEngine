@@ -461,10 +461,7 @@ def render_api(api: reg.Api, pfn: bool, registry: reg.Registry, header: bool) ->
         if len(api.parameters) == 0:
             params = "(void)" if header else "()"
         else:
-            if header:
-                params = f"({', '.join(x.repr.strip() for x in api.parameters)})"
-            else:
-                params = f"({', '.join(x.repr.replace(' struct ', ' ').strip() for x in api.parameters)})"
+            params = f"({', '.join(x.repr.strip() for x in api.parameters)})"
         if pfn:
             if header:
                 return (

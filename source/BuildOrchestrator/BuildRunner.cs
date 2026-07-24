@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using REngine.BuildOrchestrator.Models;
 
 namespace REngine.BuildOrchestrator.Execution;
@@ -49,24 +50,36 @@ public sealed class BuildRunner
             }
 
             string fileName;
-            string arguments;
+            List<string> arguments;
+            string scriptFileNameForDryRunPreview;
 
             if (target.Kind == TargetKind.Linux)
             {
-                var distro = target.Wsl!.Distro;
-                var repoWsl = await WslPathResolver.ToWslPathAsync(distro, _repoRootFull);
-                var buildWsl = await WslPathResolver.ToWslPathAsync(distro, buildDirFull);
-                var toolchainWsl = target.ToolchainFile is null
-                    ? null
-                    : await WslPathResolver.ToWslPathAsync(distro, Path.Combine(_repoRootFull, target.ToolchainFile));
+                var docker = target.Docker!;
+                var containerRoot = docker.ContainerRepoPath.TrimEnd('/');
 
-                var script = ScriptBuilder.BuildLinuxScript(_config, target, repoWsl, buildWsl, toolchainWsl);
+                // RepoRoot is bind-mounted to containerRoot, so container-side paths are just
+                // string concatenation with forward slashes — no runtime path translation needed
+                // (unlike WSL's wslpath, Docker Desktop accepts the raw Windows host path directly
+                // in the -v flag and does its own mapping).
+                var buildDirContainer = $"{containerRoot}/{ToContainerRelativePath(target.BuildDir)}";
+                var toolchainContainer = target.ToolchainFile is null
+                    ? null
+                    : $"{containerRoot}/{ToContainerRelativePath(target.ToolchainFile)}";
+
+                var script = ScriptBuilder.BuildLinuxScript(_config, target, containerRoot, buildDirContainer, toolchainContainer);
                 var scriptPath = Path.Combine(scratchDir, "build.sh");
                 await File.WriteAllTextAsync(scriptPath, script, cancellationToken);
 
-                var scriptWslPath = await WslPathResolver.ToWslPathAsync(distro, scriptPath);
-                fileName = "wsl.exe";
-                arguments = $"-d {distro} -- bash \"{scriptWslPath}\"";
+                var scriptContainerPath = $"{containerRoot}/.build-orchestrator/{target.Name}/build.sh";
+
+                fileName = "docker";
+                arguments = new List<string> { "run", "--rm", "-v", $"{_repoRootFull}:{containerRoot}", "-w", containerRoot };
+                arguments.AddRange(docker.ExtraDockerArgs);
+                arguments.Add(docker.Image);
+                arguments.Add("bash");
+                arguments.Add(scriptContainerPath);
+                scriptFileNameForDryRunPreview = "build.sh";
             }
             else
             {
@@ -79,16 +92,16 @@ public sealed class BuildRunner
                 await File.WriteAllTextAsync(scriptPath, script, cancellationToken);
 
                 fileName = "cmd.exe";
-                arguments = $"/d /c \"{scriptPath}\"";
+                arguments = new List<string> { "/d", "/c", scriptPath };
+                scriptFileNameForDryRunPreview = "build.bat";
             }
 
             if (_dryRun)
             {
-                Console.WriteLine($"[{target.Name}] DRY RUN — would execute: {fileName} {arguments}");
+                Console.WriteLine($"[{target.Name}] DRY RUN — would execute: {fileName} {string.Join(' ', arguments)}");
                 Console.WriteLine($"[{target.Name}] --- generated script ---");
                 var scriptContent = await File.ReadAllTextAsync(
-                    Path.Combine(scratchDir, target.Kind == TargetKind.Linux ? "build.sh" : "build.bat"),
-                    cancellationToken);
+                    Path.Combine(scratchDir, scriptFileNameForDryRunPreview), cancellationToken);
                 Console.WriteLine(scriptContent);
                 return new TargetResult
                 {
@@ -121,6 +134,12 @@ public sealed class BuildRunner
         }
     }
 
+    /// <summary>Normalizes a config-relative path (which may use Windows backslashes if a
+    /// user hand-edited the JSON) into a forward-slash path suitable for use inside the
+    /// Linux container.</summary>
+    private static string ToContainerRelativePath(string relativePath) =>
+        relativePath.Replace('\\', '/').TrimStart('/');
+
     private void PreflightCheck(BuildTarget target)
     {
         if (!Directory.Exists(_repoRootFull) || !File.Exists(Path.Combine(_repoRootFull, "CMakeLists.txt")))
@@ -142,6 +161,37 @@ public sealed class BuildRunner
                 if (!File.Exists(target.Emscripten!.EmsdkEnvScript))
                     throw new InvalidOperationException($"emsdk_env.bat not found: {target.Emscripten.EmsdkEnvScript}");
                 break;
+            case TargetKind.Linux:
+                if (target.Docker is null)
+                    throw new InvalidOperationException($"Target '{target.Name}' (Linux) has no 'docker' options.");
+                if (!IsDockerCliAvailable())
+                    throw new InvalidOperationException(
+                        "docker CLI not found on PATH. Install Docker Desktop (or Docker Engine) " +
+                        "and make sure it's running.");
+                break;
+        }
+    }
+
+    private static bool IsDockerCliAvailable()
+    {
+        try
+        {
+            var psi = new ProcessStartInfo("docker", "--version")
+            {
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+            };
+            using var process = Process.Start(psi);
+            if (process is null) return false;
+            process.WaitForExit(5000);
+            return process.HasExited && process.ExitCode == 0;
+        }
+        catch
+        {
+            // docker.exe not on PATH, or couldn't be launched.
+            return false;
         }
     }
 }

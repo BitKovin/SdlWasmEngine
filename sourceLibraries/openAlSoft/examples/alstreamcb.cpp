@@ -30,6 +30,8 @@
 #include <atomic>
 #include <chrono>
 #include <cstddef>
+#include <cstdlib>
+#include <cstring>
 #include <functional>
 #include <iostream>
 #include <memory>
@@ -45,7 +47,6 @@
 #include "sndfile.h"
 
 #include "alnumeric.h"
-#include "altypes.hpp"
 #include "common/alhelpers.h"
 #include "common/alhelpers.hpp"
 #include "fmt/base.h"
@@ -70,6 +71,8 @@ namespace {
 
 using std::chrono::seconds;
 using std::chrono::nanoseconds;
+
+auto alBufferCallbackSOFT = LPALBUFFERCALLBACKSOFT{};
 
 struct StreamPlayer {
     /* A buffer that can hold int16 or float samples, or raw (ADPCM) bytes. */
@@ -536,7 +539,9 @@ auto main(std::span<std::string_view> args) -> int
         return 1;
     }
 
-    LoadALExtensions();
+    /* NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast) */
+    alBufferCallbackSOFT = reinterpret_cast<LPALBUFFERCALLBACKSOFT>(
+        alGetProcAddress("alBufferCallbackSOFT"));
 
     auto refresh = ALCint{25};
     alcGetIntegerv(alcGetContextsDevice(alcGetCurrentContext()), ALC_REFRESH, 1, &refresh);

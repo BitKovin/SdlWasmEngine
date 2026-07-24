@@ -26,37 +26,31 @@
 
 #include <csignal>
 #include <cstdarg>
+#include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <optional>
 #include <string>
 #include <utility>
 
 #include "AL/al.h"
 #include "AL/alc.h"
-#include "AL/alext.h"
 
 #include "al/debug.h"
 #include "alc/alconfig.h"
+#include "alc/context.h"
 #include "alformat.hpp"
 #include "alnumeric.h"
 #include "core/except.h"
-#include "direct_defs.h"
-#include "strutils.hpp"
-
-#if HAVE_CXXMODULES
-import alc.context;
-import gsl;
-import logging;
-#else
-#include "alc/context.hpp"
 #include "core/logging.h"
+#include "direct_defs.h"
 #include "gsl/gsl"
-#endif
+#include "strutils.hpp"
 
 
 namespace {
 
-auto alGetError_(gsl::not_null<al::Context*> context) noexcept -> ALenum
+auto alGetError(gsl::not_null<al::Context*> context) noexcept -> ALenum
 {
     auto ret = context->mLastThreadError.get();
     if(ret != AL_NO_ERROR) [[unlikely]]
@@ -105,7 +99,7 @@ void al::Context::throw_error_impl(ALenum const errorCode, al::string_view const
 AL_API auto AL_APIENTRY alGetError() noexcept -> ALenum
 {
     if(auto context = GetContextRef()) [[likely]]
-        return alGetError_(gsl::make_not_null(context.get()));
+        return alGetError(gsl::make_not_null(context.get()));
 
     static constexpr auto get_value = [](gsl::czstring envname, std::string_view optname) -> ALenum
     {
@@ -139,10 +133,8 @@ AL_API auto AL_APIENTRY alGetError() noexcept -> ALenum
     }
     return deferror;
 }
-DefineFuncAlias(alGetError)
 
 FORCE_ALIGN auto AL_APIENTRY alGetErrorDirect(ALCcontext *context) noexcept -> ALenum
 {
-    return alGetError_(al::verify_context(context));
+    return alGetError(al::verify_context(context));
 }
-DefineFuncAlias(alGetErrorDirect)

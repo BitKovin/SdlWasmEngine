@@ -74,9 +74,9 @@ public static class ConfigLoader
                             $"Target '{target.Name}' ({target.Kind}) needs a 'windows.vcVarsAllPath'.");
                     break;
                 case TargetKind.Linux:
-                    if (target.Wsl is null || string.IsNullOrWhiteSpace(target.Wsl.Distro))
+                    if (target.Docker is null || string.IsNullOrWhiteSpace(target.Docker.Image))
                         throw new InvalidOperationException(
-                            $"Target '{target.Name}' (Linux) needs a 'wsl.distro'.");
+                            $"Target '{target.Name}' (Linux) needs a 'docker.image'.");
                     break;
                 case TargetKind.Emscripten:
                     if (target.Emscripten is null || string.IsNullOrWhiteSpace(target.Emscripten.EmsdkEnvScript))
@@ -123,7 +123,26 @@ public static class ConfigLoader
                 BuildDir = "build/linux",
                 ToolchainFile = "cmake/toolchains/clang.cmake",
                 Generator = "Ninja",
-                Wsl = new WslOptions { Distro = "Ubuntu" },
+                // sniper/sdk ships CMake 3.25, but openAL-soft (vendored under sourceLibraries)
+                // uses the $<BUILD_LOCAL_INTERFACE:...> generator expression, which needs 3.26+.
+                // Bootstrap a newer CMake at container start rather than relying on the image's own.
+                // Pinned to the latest CMake 3.x release rather than 4.x: CMake 4.0 dropped support
+                // for cmake_minimum_required() below 3.5, which risks breaking other older vendored
+                // dependencies that haven't bumped their own minimum version.
+                ExtraEnvCommands = new List<string>
+                {
+                    "CMAKE_VERSION=3.31.12",
+                    "curl -fsSL \"https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz\" -o /tmp/cmake.tar.gz",
+                    "mkdir -p /opt/cmake",
+                    "tar -xzf /tmp/cmake.tar.gz -C /opt/cmake --strip-components=1",
+                    "export PATH=/opt/cmake/bin:$PATH",
+                    "cmake --version",
+                },
+                Docker = new DockerOptions
+                {
+                    Image = "registry.gitlab.steamos.cloud/steamrt/sniper/sdk:latest",
+                    ContainerRepoPath = "/repo",
+                },
             },
             new()
             {

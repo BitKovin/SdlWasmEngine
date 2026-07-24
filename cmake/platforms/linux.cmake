@@ -37,6 +37,7 @@ endfunction()
 function(platform_pre_libraries)
     # BGFX — enable shader tooling on Linux desktop
     set(BGFX_BUILD_TOOLS ON CACHE BOOL "" FORCE)
+    set(SDL_JACK OFF CACHE BOOL "" FORCE)   # steamrt4 doesn't ship jack dev headers; not needed
 
     # No Jolt WASM SIMD on Linux (native x86/ARM SIMD is auto-detected)
     # No BGFX threading overrides needed — defaults are fine

@@ -60,7 +60,7 @@ public sealed class BuildTarget
     public string Configuration { get; set; } = "Release";
 
     public WindowsOptions? Windows { get; set; }
-    public WslOptions? Wsl { get; set; }
+    public DockerOptions? Docker { get; set; }
     public EmscriptenOptions? Emscripten { get; set; }
 }
 
@@ -74,10 +74,20 @@ public sealed class WindowsOptions
     public string Arch { get; set; } = "x64";
 }
 
-public sealed class WslOptions
+public sealed class DockerOptions
 {
-    /// <summary>WSL distro name the Linux build runs in, e.g. "Ubuntu". Run `wsl -l -v` to list yours.</summary>
-    public string Distro { get; set; } = "Ubuntu";
+    /// <summary>OCI image the Linux build runs inside. Defaults to the Steam Linux Runtime 3.0
+    /// "sniper" SDK — Debian 11 "bullseye", ships cmake/make/clang/gcc preinstalled, and building
+    /// against it gives you the same glibc/library baseline Valve recommends for shipping
+    /// broadly-compatible native Linux builds on Steam.</summary>
+    public string Image { get; set; } = "registry.gitlab.steamos.cloud/steamrt/sniper/sdk:latest";
+
+    /// <summary>Path inside the container that RepoRoot is bind-mounted to.</summary>
+    public string ContainerRepoPath { get; set; } = "/repo";
+
+    /// <summary>Extra raw arguments inserted into the `docker run` invocation
+    /// (e.g. "--platform", "linux/amd64", or "--memory", "8g").</summary>
+    public List<string> ExtraDockerArgs { get; set; } = new();
 }
 
 public sealed class EmscriptenOptions

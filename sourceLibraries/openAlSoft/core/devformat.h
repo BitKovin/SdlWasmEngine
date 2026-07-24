@@ -7,7 +7,7 @@
 
 #include "altypes.hpp"
 
-enum Channel : u8::value_t {
+enum Channel : u8 {
     FrontLeft = 0,
     FrontRight,
     FrontCenter,
@@ -53,7 +53,7 @@ enum Channel : u8::value_t {
 
 
 /* Device formats */
-enum DevFmtType : u8::value_t {
+enum DevFmtType : u8 {
     DevFmtByte,
     DevFmtUByte,
     DevFmtShort,
@@ -64,7 +64,7 @@ enum DevFmtType : u8::value_t {
 
     DevFmtTypeDefault = DevFmtFloat
 };
-enum DevFmtChannels : u8::value_t {
+enum DevFmtChannels : u8 {
     DevFmtMono,
     DevFmtStereo,
     DevFmtQuad,
@@ -100,16 +100,16 @@ template<>
 struct DevFmtTypeTraits<DevFmtFloat> { using Type = f32; };
 
 template<DevFmtType T>
-using DevFmtType_t = typename DevFmtTypeTraits<T>::Type;
+using DevFmtType_t = DevFmtTypeTraits<T>::Type;
 
 
 [[nodiscard]]
-auto BytesFromDevFmt(DevFmtType type) noexcept -> unsigned;
+auto BytesFromDevFmt(DevFmtType type) noexcept -> u32;
 [[nodiscard]]
-auto ChannelsFromDevFmt(DevFmtChannels chans, unsigned ambiorder) noexcept -> unsigned;
+auto ChannelsFromDevFmt(DevFmtChannels chans, u32 ambiorder) noexcept -> u32;
 [[nodiscard]]
 inline auto FrameSizeFromDevFmt(DevFmtChannels const chans, DevFmtType const type,
-    unsigned const ambiorder) noexcept -> unsigned
+    u32 const ambiorder) noexcept -> u32
 { return ChannelsFromDevFmt(chans, ambiorder) * BytesFromDevFmt(type); }
 
 [[nodiscard]]
@@ -124,7 +124,7 @@ enum class DevAmbiLayout : bool {
     Default = ACN
 };
 
-enum class DevAmbiScaling : u8::value_t {
+enum class DevAmbiScaling : u8 {
     FuMa,
     SN3D,
     N3D,

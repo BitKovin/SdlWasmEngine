@@ -12,10 +12,10 @@
 #include "gsl/gsl"
 
 
-void BandSplitter::init(float const f0norm) noexcept NONBLOCKING
+void BandSplitter::init(f32 const f0norm)
 {
-    auto const w = std::numbers::pi_v<float>*2.0f * std::min(f0norm, 0.49f);
-    if(auto const cw = std::cos(w); cw > std::numeric_limits<float>::epsilon())
+    auto const w = f0norm * (std::numbers::pi_v<f32>*2.0f);
+    if(auto const cw = std::cos(w); cw > std::numeric_limits<f32>::epsilon())
         mCoeff = (std::sin(w) - 1.0f) / cw;
     else
         mCoeff = cw * -0.5f;
@@ -25,8 +25,8 @@ void BandSplitter::init(float const f0norm) noexcept NONBLOCKING
     mApZ1 = 0.0f;
 }
 
-void BandSplitter::process(std::span<float const> const input, std::span<float> const hpout,
-    std::span<float> const lpout) noexcept NONBLOCKING
+void BandSplitter::process(std::span<f32 const> const input, std::span<f32> const hpout,
+    std::span<f32> const lpout)
 {
     auto const ap_coeff = mCoeff;
     auto const lp_coeff = mCoeff*0.5f + 0.5f;
@@ -37,7 +37,7 @@ void BandSplitter::process(std::span<float const> const input, std::span<float> 
     Expects(lpout.size() >= input.size());
     auto lpiter = lpout.begin();
     std::ranges::transform(input, hpout.begin(),
-        [ap_coeff,lp_coeff,&lp_z1,&lp_z2,&ap_z1,&lpiter](float const in) noexcept -> float
+        [ap_coeff,lp_coeff,&lp_z1,&lp_z2,&ap_z1,&lpiter](f32 const in) noexcept -> f32
     {
         /* Low-pass sample processing. */
         auto const d0 = (in - lp_z1) * lp_coeff;
@@ -62,8 +62,8 @@ void BandSplitter::process(std::span<float const> const input, std::span<float> 
     mApZ1 = ap_z1;
 }
 
-void BandSplitter::processHfScale(std::span<float const> const input, std::span<float> const output,
-    float const hfscale) noexcept NONBLOCKING
+void BandSplitter::processHfScale(std::span<f32 const> const input, std::span<f32> const output,
+    f32 const hfscale)
 {
     auto const ap_coeff = mCoeff;
     auto const lp_coeff = mCoeff*0.5f + 0.5f;
@@ -71,7 +71,7 @@ void BandSplitter::processHfScale(std::span<float const> const input, std::span<
     auto lp_z2 = mLpZ2;
     auto ap_z1 = mApZ1;
     std::ranges::transform(input, output.begin(),
-        [hfscale,ap_coeff,lp_coeff,&lp_z1,&lp_z2,&ap_z1](float const in) noexcept -> float
+        [hfscale,ap_coeff,lp_coeff,&lp_z1,&lp_z2,&ap_z1](f32 const in) noexcept -> f32
     {
         /* Low-pass sample processing. */
         auto const d0 = (in - lp_z1) * lp_coeff;
@@ -96,8 +96,7 @@ void BandSplitter::processHfScale(std::span<float const> const input, std::span<
     mApZ1 = ap_z1;
 }
 
-void BandSplitter::processHfScale(std::span<float> const samples, float const hfscale) noexcept
-    NONBLOCKING
+void BandSplitter::processHfScale(std::span<f32> const samples, f32 const hfscale)
 {
     auto const ap_coeff = mCoeff;
     auto const lp_coeff = mCoeff*0.5f + 0.5f;
@@ -105,7 +104,7 @@ void BandSplitter::processHfScale(std::span<float> const samples, float const hf
     auto lp_z2 = mLpZ2;
     auto ap_z1 = mApZ1;
     std::ranges::transform(samples, samples.begin(),
-        [hfscale,ap_coeff,lp_coeff,&lp_z1,&lp_z2,&ap_z1](float const in) noexcept -> float
+        [hfscale,ap_coeff,lp_coeff,&lp_z1,&lp_z2,&ap_z1](f32 const in) noexcept -> f32
     {
         /* Low-pass sample processing. */
         auto const d0 = (in - lp_z1) * lp_coeff;
@@ -130,8 +129,7 @@ void BandSplitter::processHfScale(std::span<float> const samples, float const hf
     mApZ1 = ap_z1;
 }
 
-void BandSplitter::processScale(std::span<float> const samples, float const hfscale,
-    float const lfscale) noexcept NONBLOCKING
+void BandSplitter::processScale(std::span<f32> const samples, f32 const hfscale, f32 const lfscale)
 {
     auto const ap_coeff = mCoeff;
     auto const lp_coeff = mCoeff*0.5f + 0.5f;
@@ -139,7 +137,7 @@ void BandSplitter::processScale(std::span<float> const samples, float const hfsc
     auto lp_z2 = mLpZ2;
     auto ap_z1 = mApZ1;
     std::ranges::transform(samples, samples.begin(),
-        [hfscale,lfscale,ap_coeff,lp_coeff,&lp_z1,&lp_z2,&ap_z1](float const in) noexcept -> float
+        [hfscale,lfscale,ap_coeff,lp_coeff,&lp_z1,&lp_z2,&ap_z1](f32 const in) noexcept -> f32
     {
         auto const d0 = (in - lp_z1) * lp_coeff;
         auto const lp_y0 = lp_z1 + d0;
@@ -160,11 +158,11 @@ void BandSplitter::processScale(std::span<float> const samples, float const hfsc
     mApZ1 = ap_z1;
 }
 
-void BandSplitter::processAllPass(std::span<float> const samples) noexcept NONBLOCKING
+void BandSplitter::processAllPass(std::span<f32> const samples)
 {
     auto const coeff = mCoeff;
     auto z1 = mApZ1;
-    std::ranges::transform(samples, samples.begin(), [coeff,&z1](float const x) noexcept -> float
+    std::ranges::transform(samples, samples.begin(), [coeff,&z1](f32 const x) noexcept -> f32
     {
         auto const y = x*coeff + z1;
         z1 = x - y*coeff;

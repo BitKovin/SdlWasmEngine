@@ -19,13 +19,13 @@
 
 
 struct HrtfStore {
-    alignas(16) std::atomic<unsigned> mRef;
+    alignas(16) std::atomic<u32> mRef;
 
-    unsigned mSampleRate : 24;
-    unsigned mIrSize : 8;
+    u32 mSampleRate : 24;
+    u32 mIrSize : 8;
 
     struct Field {
-        float distance;
+        f32 distance;
         u8 evCount;
     };
     /* NOTE: Fields are stored *backwards*. mFields.front() is the farthest
@@ -41,14 +41,14 @@ struct HrtfStore {
     std::span<HrirArray const> mCoeffs;
     std::span<u8x2 const> mDelays;
 
-    void getCoeffs(float elevation, float azimuth, float distance, float spread,
-        HrirSpan coeffs, std::span<unsigned, 2> delays) const;
+    void getCoeffs(f32 elevation, f32 azimuth, f32 distance, f32 spread,
+        HrirSpan coeffs, std::span<u32, 2> delays) const;
 
     void inc_ref() noexcept;
     void dec_ref() noexcept;
 
-    auto operator new(std::size_t) -> void* = delete;
-    auto operator new[](std::size_t) -> void* = delete;
+    auto operator new(usize) -> void* = delete;
+    auto operator new[](usize) -> void* = delete;
     void operator delete[](void*) noexcept = delete;
 
     void operator delete(gsl::owner<void*> block, void*) noexcept
@@ -61,20 +61,20 @@ using HrtfStorePtr = al::intrusive_ptr<HrtfStore>;
 /* Data set limits must be the same as or more flexible than those defined in
  * the makemhr utility.
  */
-constexpr inline auto MaxHrirDelay = unsigned{HrtfHistoryLength - 1};
+constexpr inline auto MaxHrirDelay = u32{HrtfHistoryLength - 1};
 
-constexpr inline auto HrirDelayFracBits = 2u;
-constexpr inline auto HrirDelayFracOne = 1u << HrirDelayFracBits;
-constexpr inline auto HrirDelayFracHalf = HrirDelayFracOne >> 1u;
+constexpr inline auto HrirDelayFracBits = 2_u32;
+constexpr inline auto HrirDelayFracOne = 1_u32 << HrirDelayFracBits;
+constexpr inline auto HrirDelayFracHalf = HrirDelayFracOne >> 1_u32;
 
 /* The sample rate is stored as a 24-bit integer, so 16MHz is the largest
  * supported.
  */
-constexpr inline auto MaxHrtfSampleRate = 0xff'ff'ffu;
+constexpr inline auto MaxHrtfSampleRate = 0xff'ff'ff_u32;
 
 
-struct EvRadians { float value; };
-struct AzRadians { float value; };
+struct EvRadians { f32 value; };
+struct AzRadians { f32 value; };
 struct AngularPoint {
     EvRadians Elev;
     AzRadians Azim;
@@ -82,13 +82,13 @@ struct AngularPoint {
 
 
 class DirectHrtfState {
-    explicit DirectHrtfState(std::size_t const numchans) : mChannels{numchans} { }
+    explicit DirectHrtfState(usize const numchans) : mChannels{numchans} { }
 
 public:
-    std::array<float, BufferLineSize> mTemp{};
+    std::array<f32, BufferLineSize> mTemp{};
 
     /* HRTF filter state for dry buffer content */
-    unsigned mIrSize{0};
+    u32 mIrSize{0};
     al::FlexArray<HrtfChannelState> mChannels;
 
     /**
@@ -97,18 +97,18 @@ public:
      * high-frequency gains for the decoder. The calculated impulse responses
      * are ordered and scaled according to the matrix input.
      */
-    void build(HrtfStore const *Hrtf, unsigned irSize, bool perHrirMin,
+    void build(HrtfStore const *Hrtf, u32 irSize, bool perHrirMin,
         std::span<AngularPoint const> AmbiPoints,
-        std::span<std::array<float, MaxAmbiChannels> const> AmbiMatrix, float XOverFreq,
-        std::span<float const, MaxAmbiOrder+1> AmbiOrderHFGain);
+        std::span<std::array<f32, MaxAmbiChannels> const> AmbiMatrix, f32 XOverFreq,
+        std::span<f32 const, MaxAmbiOrder+1> AmbiOrderHFGain);
 
-    static auto Create(std::size_t num_chans) -> std::unique_ptr<DirectHrtfState>;
+    static auto Create(usize num_chans) -> std::unique_ptr<DirectHrtfState>;
 
     DEF_FAM_NEWDEL(DirectHrtfState, mChannels)
 };
 
 
 auto EnumerateHrtf(std::optional<std::string> const &pathopt) -> std::vector<std::string>;
-auto GetLoadedHrtf(std::string_view name, unsigned devrate) -> HrtfStorePtr;
+auto GetLoadedHrtf(std::string_view name, u32 devrate) -> HrtfStorePtr;
 
 #endif /* CORE_HRTF_H */

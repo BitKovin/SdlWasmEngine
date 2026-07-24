@@ -20,7 +20,7 @@
         "VcVarsAllPath": "D:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Auxiliary\\Build\\vcvarsall.bat",
         "Arch": "x64"
       },
-      "Wsl": null,
+      "Docker": null,
       "Emscripten": null
     },
     {
@@ -35,8 +35,10 @@
       "ExtraEnvCommands": ["export CMAKE_BUILD_PARALLEL_LEVEL=18"],
       "Configuration": "Release",
       "Windows": null,
-      "Wsl": {
-        "Distro": "Ubuntu"
+      "Docker": {
+        "Image": "registry.gitlab.steamos.cloud/steamrt/steamrt4/sdk:latest",
+        "ContainerRepoPath": "/repo",
+        "ExtraDockerArgs": []
       },
       "Emscripten": null
     },
@@ -52,7 +54,7 @@
       "ExtraEnvCommands": [],
       "Configuration": "Release",
       "Windows": null,
-      "Wsl": null,
+      "Docker": null,
       "Emscripten": {
         "EmsdkEnvScript": "F:\\Tools\\emsdk\\emsdk_env.bat"
       }
@@ -74,7 +76,7 @@
         "VcVarsAllPath": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Auxiliary\\Build\\vcvarsall.bat",
         "Arch": "amd64"
       },
-      "Wsl": null,
+      "Docker": null,
       "Emscripten": null
     },
     {
@@ -94,7 +96,7 @@
         "VcVarsAllPath": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Auxiliary\\Build\\vcvarsall.bat",
         "Arch": "amd64"
       },
-      "Wsl": null,
+      "Docker": null,
       "Emscripten": null
     }
   ]

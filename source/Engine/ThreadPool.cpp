@@ -1,6 +1,6 @@
 #include "ThreadPool.h"
 
-#ifndef DISABLE_TREADPOOL
+
 #include <thread>
 #include <chrono>
 #include <atomic>
@@ -8,7 +8,6 @@
 #include <queue>
 #include <tracy/tracy/Tracy.hpp>
 using namespace std::chrono_literals;
-#endif
 
 void ThreadPool::Start(uint32_t num_threads) {
 #ifdef DISABLE_THREADPOOL
@@ -26,21 +25,21 @@ void ThreadPool::Start(uint32_t num_threads) {
     {
         threads_.emplace_back([this, i, nameOrder]()
             {
-				{
+                {
 
-					// Spin until it's our turn to register
-					while (nameOrder->load(std::memory_order_acquire) != i)
-						std::this_thread::yield();
+                    // Spin until it's our turn to register
+                    while (nameOrder->load(std::memory_order_acquire) != i)
+                        std::this_thread::yield();
 
-					std::string threadName = poolName_ + " Worker " + std::to_string(i);
-					tracy::SetThreadName(threadName.c_str());
+                    std::string threadName = poolName_ + " Worker " + std::to_string(i);
+                    tracy::SetThreadName(threadName.c_str());
                     ZoneScopedN("thread creation");
 
 
 
-					// Signal next thread to register
-					nameOrder->fetch_add(1, std::memory_order_release);
-				}
+                    // Signal next thread to register
+                    nameOrder->fetch_add(1, std::memory_order_release);
+                }
                 Worker();
             });
     }
@@ -106,18 +105,18 @@ void ThreadPool::Worker() {
 
             if (DisableWaitCooldown == false)
             {
-				// Increase wait time based on idle count to reduce spurious wakeups
-				if (idle_count < 10) {
-					cv_job_.wait(lk);
-				}
-				else if (idle_count < 50) {
-					cv_job_.wait_for(lk, 1ms);
-				}
-				else {
-					cv_job_.wait_for(lk, 2ms);
-				}
+                // Increase wait time based on idle count to reduce spurious wakeups
+                if (idle_count < 10) {
+                    cv_job_.wait(lk);
+                }
+                else if (idle_count < 50) {
+                    cv_job_.wait_for(lk, 1ms);
+                }
+                else {
+                    cv_job_.wait_for(lk, 2ms);
+                }
 
-			}
+            }
             idle_count++;
         }
 
@@ -221,10 +220,49 @@ auto ThreadPool::Enqueue(F&& f, Args&&... args)
 
 void ThreadPool::WaitForFinish() {
 #ifndef DISABLE_THREADPOOL
-    std::unique_lock<std::mutex> lk(mtx_);
-    cv_done_.wait(lk, [this] {
-        return work_count_.load(std::memory_order_acquire) == 0;
-        });
+    for (;;) {
+        std::function<void()> job;
+        bool has_job = false;
+
+        {
+            std::unique_lock<std::mutex> lk(mtx_);
+
+            if (work_count_.load(std::memory_order_acquire) == 0) {
+                return;
+            }
+
+            if (!jobs_.empty()) {
+                job = std::move(jobs_.front());
+                jobs_.pop();
+                has_job = true;
+            }
+            else {
+                // Nothing left to steal right now - the remaining work is
+                // already in flight on worker threads. Wait briefly rather
+                // than indefinitely: a short timeout lets us wake up either
+                // when the pool finishes (cv_done_ is notified), or on our
+                // own to re-check for newly queued jobs we could help with.
+                cv_done_.wait_for(lk, 1ms);
+            }
+        }
+
+        if (!has_job) {
+            continue;
+        }
+
+        // Run the stolen job on the calling thread instead of sitting idle.
+        performingJobs.fetch_add(1, std::memory_order_relaxed);
+        {
+            ZoneScopedN("job (waiter)");
+            job();
+        }
+        performingJobs.fetch_sub(1, std::memory_order_relaxed);
+
+        if (work_count_.fetch_sub(1, std::memory_order_acq_rel) == 1) {
+            std::lock_guard<std::mutex> lk(mtx_);
+            cv_done_.notify_all();
+        }
+    }
 #endif
 }
 

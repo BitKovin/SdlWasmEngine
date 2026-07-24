@@ -1,6 +1,7 @@
 
 #include "config.h"
 
+#include <cstddef>
 #include <span>
 
 #include "base.h"

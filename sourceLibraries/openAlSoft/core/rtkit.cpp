@@ -49,17 +49,12 @@
 
 #include "dynload.h"
 #include "gsl/gsl"
+#include "logging.h"
 
 
 #if HAVE_DYNLOAD
 
 #include <mutex>
-
-#if HAVE_CXXMODULES
-import logging;
-#else
-#include "logging.h"
-#endif
 
 namespace {
 
@@ -154,12 +149,6 @@ auto HasDBus() -> bool
 } /* namespace */
 
 #else
-
-#if HAVE_CXXMODULES
-import logging;
-#else
-#include "logging.h"
-#endif
 
 namespace {
 constexpr auto HasDBus() noexcept -> bool { return true; }

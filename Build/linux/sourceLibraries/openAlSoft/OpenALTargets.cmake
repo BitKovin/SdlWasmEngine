@@ -7,7 +7,7 @@ if(CMAKE_VERSION VERSION_LESS "2.8.3")
    message(FATAL_ERROR "CMake >= 2.8.3 required")
 endif()
 cmake_policy(PUSH)
-cmake_policy(VERSION 2.8.3...4.0)
+cmake_policy(VERSION 2.8.3...3.29)
 #----------------------------------------------------------------
 # Generated CMake target import file.
 #----------------------------------------------------------------
@@ -51,30 +51,15 @@ add_library(OpenAL::OpenAL STATIC IMPORTED)
 
 set_target_properties(OpenAL::OpenAL PROPERTIES
   INTERFACE_COMPILE_DEFINITIONS "AL_LIBTYPE_STATIC"
-  INTERFACE_INCLUDE_DIRECTORIES "/mnt/f/Git/SdlWasmEngine/sourceLibraries/openAlSoft/include;/mnt/f/Git/SdlWasmEngine/sourceLibraries/openAlSoft/include;/mnt/f/Git/SdlWasmEngine/sourceLibraries/openAlSoft/include/AL"
-  INTERFACE_LINK_LIBRARIES "\$<LINK_ONLY:Threads::Threads>;-Wl,-z,noexecstack;-Wl,-z,relro;-Wl,-z,now;-Wl,--as-needed,--no-copy-dt-needed-entries;\$<LINK_ONLY:atomic>;\$<LINK_ONLY:dl>;\$<LINK_ONLY:m>;\$<LINK_ONLY:>"
+  INTERFACE_INCLUDE_DIRECTORIES "/repo/sourceLibraries/openAlSoft/include;/repo/sourceLibraries/openAlSoft/include/AL"
+  INTERFACE_LINK_LIBRARIES "-Wl,-z,noexecstack;-Wl,-z,relro;-Wl,-z,now;-Wl,--as-needed,--no-copy-dt-needed-entries;\$<LINK_ONLY:-pthread>;\$<LINK_ONLY:dl>;\$<LINK_ONLY:atomic>;\$<LINK_ONLY:m>;\$<LINK_ONLY:>"
 )
-
-if(NOT CMAKE_VERSION VERSION_LESS "3.23.0")
-  target_sources(OpenAL::OpenAL
-    INTERFACE
-      FILE_SET "public_headers"
-      TYPE "HEADERS"
-      BASE_DIRS "/mnt/f/Git/SdlWasmEngine/sourceLibraries/openAlSoft/include"
-      FILES "/mnt/f/Git/SdlWasmEngine/sourceLibraries/openAlSoft/include/AL/al.h" "/mnt/f/Git/SdlWasmEngine/sourceLibraries/openAlSoft/include/AL/alc.h" "/mnt/f/Git/SdlWasmEngine/sourceLibraries/openAlSoft/include/AL/alext.h" "/mnt/f/Git/SdlWasmEngine/sourceLibraries/openAlSoft/include/AL/efx.h" "/mnt/f/Git/SdlWasmEngine/sourceLibraries/openAlSoft/include/AL/efx-presets.h"
-  )
-else()
-  set_property(TARGET OpenAL::OpenAL
-    APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES
-      "/mnt/f/Git/SdlWasmEngine/sourceLibraries/openAlSoft/include"
-  )
-endif()
 
 # Import target "OpenAL::OpenAL" for configuration "Release"
 set_property(TARGET OpenAL::OpenAL APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
 set_target_properties(OpenAL::OpenAL PROPERTIES
   IMPORTED_LINK_INTERFACE_LANGUAGES_RELEASE "CXX"
-  IMPORTED_LOCATION_RELEASE "/mnt/f/Git/SdlWasmEngine/build/linux/sourceLibraries/openAlSoft/libopenal.a"
+  IMPORTED_LOCATION_RELEASE "/repo/build/linux/sourceLibraries/openAlSoft/libopenal.a"
   )
 
 # This file does not depend on other imported targets which have

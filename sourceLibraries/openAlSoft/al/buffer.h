@@ -5,21 +5,23 @@
 
 #include <array>
 #include <atomic>
+#include <cstdint>
 #include <string_view>
+#include <utility>
 #include <variant>
 
 #include "AL/al.h"
 
 #include "alc/inprogext.h"
 #include "almalloc.h"
-#include "altypes.hpp"
+#include "alnumeric.h"
 #include "core/buffer_storage.h"
 #include "gsl/gsl"
 #include "intrusive_ptr.h"
 #include "vector.h"
 
 #if ALSOFT_EAX
-enum class EaxStorage : u8::value_t {
+enum class EaxStorage : u8 {
     Automatic,
     Accessible,
     Hardware
@@ -43,23 +45,23 @@ struct Buffer : BufferStorage {
         al::vector<IMA4Data, 16>,
         al::vector<MSADPCMData, 16>> mDataStorage;
 
-    ALuint mOriginalSize{0u};
+    u32 mOriginalSize{0_u32};
 
-    ALuint mUnpackAlign{0u};
-    ALuint mPackAlign{0u};
-    ALuint mUnpackAmbiOrder{1u};
+    u32 mUnpackAlign{0_u32};
+    u32 mPackAlign{0_u32};
+    u32 mUnpackAmbiOrder{1_u32};
 
-    ALuint mMappedAccess{0u};
-    ALint mMappedOffset{0};
-    ALint mMappedSize{0};
+    u32 mMappedAccess{0_u32};
+    i32 mMappedOffset{0_i32};
+    i32 mMappedSize{0_i32};
 
-    ALuint mLoopStart{0u};
-    ALuint mLoopEnd{0u};
+    u32 mLoopStart{0_u32};
+    u32 mLoopEnd{0_u32};
 
-    std::atomic<ALuint> mRef{0u};
+    std::atomic<u32> mRef{0_u32};
 
     /* Self ID */
-    ALuint mId{0u};
+    u32 mId{0_u32};
 
     auto inc_ref() noexcept { return mRef.fetch_add(1, std::memory_order_acq_rel)+1; }
     auto dec_ref() noexcept { return mRef.fetch_sub(1, std::memory_order_acq_rel)-1; }
@@ -69,7 +71,7 @@ struct Buffer : BufferStorage {
         return al::intrusive_ptr{this};
     }
 
-    static void SetName(gsl::not_null<al::Context*> context, ALuint id, std::string_view name);
+    static void SetName(gsl::not_null<al::Context*> context, u32 id, std::string_view name);
 
     DISABLE_ALLOC
 

@@ -82,7 +82,7 @@ void NullBackend::mixerProc() const
         while(avail-done >= mDevice->mUpdateSize)
         {
             mDevice->renderSamples(nullptr, mDevice->mUpdateSize, 0u);
-            done += i64{mDevice->mUpdateSize};
+            done += mDevice->mUpdateSize;
         }
 
         /* For every completed second, increment the start time and reduce the
@@ -92,9 +92,9 @@ void NullBackend::mixerProc() const
          */
         if(done >= mDevice->mSampleRate)
         {
-            const auto s = seconds{(done/i64{mDevice->mSampleRate}).c_val};
+            const auto s = seconds{done/mDevice->mSampleRate};
             start += s;
-            done -= i64{mDevice->mSampleRate*s.count()};
+            done -= mDevice->mSampleRate*s.count();
         }
     }
 }

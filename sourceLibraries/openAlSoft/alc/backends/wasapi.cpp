@@ -63,12 +63,14 @@
 #include <vector>
 
 #include "alc/alconfig.h"
+#include "alformat.hpp"
 #include "alnumeric.h"
 #include "alstring.h"
 #include "althrd_setname.h"
 #include "comptr.h"
 #include "core/converter.h"
 #include "core/device.h"
+#include "core/logging.h"
 #include "gsl/gsl"
 #include "opthelpers.h"
 #include "ringbuffer.h"
@@ -99,12 +101,6 @@ DEFINE_GUID(KSDATAFORMAT_SUBTYPE_IEEE_FLOAT, 0x00000003, 0x0000, 0x0010, 0x80, 0
 DEFINE_DEVPROPKEY(DEVPKEY_Device_FriendlyName, 0xa45c254e, 0xdf1c, 0x4efd, 0x80,0x20, 0x67,0xd1,0x46,0xa8,0x50,0xe0, 14);
 DEFINE_PROPERTYKEY(PKEY_AudioEndpoint_FormFactor, 0x1da5d803, 0xd492, 0x4edd, 0x8c,0x23, 0xe0,0xc0,0xff,0xee,0x7f,0x0e, 0);
 DEFINE_PROPERTYKEY(PKEY_AudioEndpoint_GUID, 0x1da5d803, 0xd492, 0x4edd, 0x8c, 0x23,0xe0, 0xc0,0xff,0xee,0x7f,0x0e, 4 );
-#endif
-
-#if HAVE_CXXMODULES
-import logging;
-#else
-#include "core/logging.h"
 #endif
 
 namespace {
@@ -195,10 +191,10 @@ using unique_coptr = std::unique_ptr<T, decltype([](T *const ptr) { CoTaskMemFre
 
 
 /* Scales the given reftime value, rounding the result. */
-constexpr auto RefTime2Samples(ReferenceTime const &val, DWORD const srate) noexcept -> unsigned
+constexpr auto RefTime2Samples(ReferenceTime const &val, DWORD const srate) noexcept -> u32
 {
     const auto retval = (val*srate + ReferenceTime{seconds{1}}/2) / seconds{1};
-    return al::saturate_cast<unsigned>(retval);
+    return al::saturate_cast<u32>(retval);
 }
 
 
@@ -251,7 +247,7 @@ public:
 
     void setBlob(const std::span<std::byte> data)
     {
-        if constexpr(sizeof(std::size_t) > sizeof(ULONG))
+        if constexpr(sizeof(usize) > sizeof(ULONG))
             Expects(data.size() <= std::numeric_limits<ULONG>::max());
         clear();
         mProp.vt = VT_BLOB;
@@ -369,7 +365,7 @@ auto GetDeviceNameAndGuid(const DeviceHandle &device) -> NameGUIDPair
         if(auto devIdStartEnd = wcschr(devIdStart, L'#'))
         {
             ret.mGuid = wstr_to_utf8(std::wstring_view{devIdStart,
-                gsl::narrow_cast<std::size_t>(devIdStartEnd - devIdStart)});
+                gsl::narrow_cast<usize>(devIdStartEnd - devIdStart)});
             std::transform(ret.mGuid.begin(), ret.mGuid.end(), ret.mGuid.begin(),
                 [](char ch) { return gsl::narrow_cast<char>(std::toupper(ch)); });
         }
@@ -1098,11 +1094,11 @@ void TraceFormat(const std::string_view msg, const WAVEFORMATEX *format)
 }
 
 
-template<typename T, std::size_t N, std::size_t ...I>
+template<typename T, usize N, usize ...I>
 constexpr auto span_to_array(const std::span<T,N> span, std::index_sequence<I...>)
 { return std::array<T,N>{{span[I]...}}; }
 
-template<typename T, std::size_t N> requires(N != std::dynamic_extent)
+template<typename T, usize N> requires(N != std::dynamic_extent)
 constexpr auto span_to_array(const std::span<T,N> span) -> std::array<T,N>
 { return span_to_array(span, std::make_index_sequence<N>{}); }
 
@@ -1110,7 +1106,7 @@ constexpr auto span_to_array(const std::span<T,N> span) -> std::array<T,N>
  * halving the volume. Essentially converting mono to stereo.
  */
 template<typename T>
-void DuplicateSamples(std::span<BYTE> insamples, std::size_t step)
+void DuplicateSamples(std::span<BYTE> insamples, usize step)
 {
     if constexpr(std::is_floating_point_v<T> || std::is_signed_v<T>)
     {
@@ -1144,7 +1140,7 @@ void DuplicateSamples(std::span<BYTE> insamples, std::size_t step)
 }
 
 void DuplicateSamples(std::span<BYTE> const insamples, DevFmtType const sampletype,
-    std::size_t const step)
+    usize const step)
 {
     switch(sampletype)
     {
@@ -1200,7 +1196,7 @@ struct WasapiPlayback final : BackendBase {
     std::condition_variable mProcCond;
     HRESULT mProcResult{E_FAIL};
 
-    enum class ThreadState : u8::value_t {
+    enum class ThreadState : u8 {
         Initializing,
         Waiting,
         Playing,
@@ -1208,7 +1204,7 @@ struct WasapiPlayback final : BackendBase {
     };
     ThreadState mState{ThreadState::Initializing};
 
-    enum class ThreadAction : u8::value_t {
+    enum class ThreadAction : u8 {
         Nothing,
         Configure,
         Play,
@@ -1223,7 +1219,7 @@ struct WasapiPlayback final : BackendBase {
 
     UINT32 mOutBufferSize{}, mOutUpdateSize{};
     std::vector<char> mResampleBuffer;
-    unsigned mBufferFilled{0};
+    u32 mBufferFilled{0};
     SampleConverterPtr mResampler;
     bool mMonoUpsample{false};
     bool mExclusiveMode{false};
@@ -1261,7 +1257,7 @@ FORCE_ALIGN void WasapiPlayback::mixerProc(PlainDevice const &audio)
     if(!SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_TIME_CRITICAL))
         ERR("Failed to set priority level for thread");
 
-    const auto frame_size = unsigned{mFormat.Format.nChannels}*mFormat.Format.wBitsPerSample/8u;
+    const auto frame_size = u32{mFormat.Format.nChannels} * mFormat.Format.wBitsPerSample / 8_u32;
     const auto buffer_len = mOutBufferSize;
     auto *resbufferptr = LPCVOID{};
 
@@ -1300,7 +1296,7 @@ FORCE_ALIGN void WasapiPlayback::mixerProc(PlainDevice const &audio)
             mPadding.store(written, std::memory_order_relaxed);
         }
 
-        if(const auto len = unsigned{buffer_len - written})
+        if(const auto len = u32{buffer_len - written})
         {
             auto *buffer = LPBYTE{};
             auto hr = audio.mRender->GetBuffer(len, &buffer);
@@ -1309,7 +1305,7 @@ FORCE_ALIGN void WasapiPlayback::mixerProc(PlainDevice const &audio)
                 if(mResampler)
                 {
                     auto dlock = std::lock_guard{mMutex};
-                    auto dst = std::span{buffer, std::size_t{len}*frame_size};
+                    auto dst = std::span{buffer, usize{len}*frame_size};
                     for(UINT32 done{0};done < len;)
                     {
                         if(mBufferFilled == 0)
@@ -1322,7 +1318,7 @@ FORCE_ALIGN void WasapiPlayback::mixerProc(PlainDevice const &audio)
 
                         const auto got = mResampler->convert(&resbufferptr, &mBufferFilled,
                             dst.data(), len-done);
-                        dst = dst.subspan(std::size_t{got}*frame_size);
+                        dst = dst.subspan(usize{got}*frame_size);
                         done += got;
                     }
                     mPadding.store(written + len, std::memory_order_relaxed);
@@ -1336,8 +1332,8 @@ FORCE_ALIGN void WasapiPlayback::mixerProc(PlainDevice const &audio)
 
                 if(mMonoUpsample)
                 {
-                    DuplicateSamples(std::span{buffer, std::size_t{len}*frame_size},
-                        mDevice->FmtType, mFormat.Format.nChannels);
+                    DuplicateSamples(std::span{buffer, usize{len}*frame_size}, mDevice->FmtType,
+                        mFormat.Format.nChannels);
                 }
 
                 hr = audio.mRender->ReleaseBuffer(len, 0);
@@ -1422,7 +1418,7 @@ FORCE_ALIGN void WasapiPlayback::mixerProc(SpatialDevice const &audio)
                     tmpbuffers.resize(buffers.size());
                     resbuffers.resize(buffers.size());
                     auto bufptr = mResampleBuffer.begin();
-                    for(auto i=0_uz;i < tmpbuffers.size();++i)
+                    for(usize i{0};i < tmpbuffers.size();++i)
                     {
                         resbuffers[i] = std::to_address(bufptr);
                         std::advance(bufptr, mDevice->mUpdateSize*sizeof(float));
@@ -1668,18 +1664,18 @@ auto WasapiPlayback::openProxy(std::string_view const name, DeviceHelper const &
 void WasapiPlayback::finalizeFormat(WAVEFORMATEXTENSIBLE &OutputType)
 {
     if(!GetConfigValueBool(mDevice->mDeviceName, "wasapi", "allow-resampler", true))
-        mDevice->mSampleRate = gsl::narrow_cast<unsigned>(OutputType.Format.nSamplesPerSec);
+        mDevice->mSampleRate = gsl::narrow_cast<u32>(OutputType.Format.nSamplesPerSec);
     else
         mDevice->mSampleRate = std::min(mDevice->mSampleRate,
-            gsl::narrow_cast<unsigned>(OutputType.Format.nSamplesPerSec));
+            gsl::narrow_cast<u32>(OutputType.Format.nSamplesPerSec));
 
-    const auto chancount = unsigned{OutputType.Format.nChannels};
+    const auto chancount = u32{OutputType.Format.nChannels};
     const auto chanmask = OutputType.dwChannelMask;
     /* Don't update the channel format if the requested format fits what's
      * supported.
      */
     auto chansok = false;
-    if(mDevice->mFlags.test(DeviceFlag::ChannelsRequest))
+    if(mDevice->Flags.test(ChannelsRequest))
     {
         /* When requesting a channel configuration, make sure it fits the
          * mask's lsb (to ensure no gaps in the output channels). If there's no
@@ -1870,10 +1866,10 @@ auto WasapiPlayback::initSpatial(DeviceHelper &helper, DeviceHandle &mmdev, Spat
     OutputType.SubFormat = KSDATAFORMAT_SUBTYPE_IEEE_FLOAT;
 
     /* Match the output rate if not requesting anything specific. */
-    if(!mDevice->mFlags.test(DeviceFlag::FrequencyRequest))
+    if(!mDevice->Flags.test(FrequencyRequest))
         mDevice->mSampleRate = OutputType.Format.nSamplesPerSec;
 
-    auto getTypeMask = [](DevFmtChannels const chans) noexcept
+    auto getTypeMask = [](DevFmtChannels chans) noexcept
     {
         switch(chans)
         {
@@ -1913,14 +1909,14 @@ auto WasapiPlayback::initSpatial(DeviceHelper &helper, DeviceHandle &mmdev, Spat
     mFormat = OutputType;
 
     mDevice->FmtType = DevFmtFloat;
-    mDevice->mFlags.reset(DeviceFlag::DirectEar).set(DeviceFlag::Virtualization);
+    mDevice->Flags.reset(DirectEar).set(Virtualization);
     if(streamParams.StaticObjectTypeMask == ChannelMask_Stereo)
         mDevice->FmtChans = DevFmtStereo;
     if(!GetConfigValueBool(mDevice->mDeviceName, "wasapi", "allow-resampler", true))
-        mDevice->mSampleRate = gsl::narrow_cast<unsigned>(OutputType.Format.nSamplesPerSec);
+        mDevice->mSampleRate = gsl::narrow_cast<u32>(OutputType.Format.nSamplesPerSec);
     else
         mDevice->mSampleRate = std::min(mDevice->mSampleRate,
-            gsl::narrow_cast<unsigned>(OutputType.Format.nSamplesPerSec));
+            gsl::narrow_cast<u32>(OutputType.Format.nSamplesPerSec));
 
     setDefaultWFXChannelOrder();
 
@@ -1934,9 +1930,8 @@ auto WasapiPlayback::initSpatial(DeviceHelper &helper, DeviceHandle &mmdev, Spat
     mOutUpdateSize = maxFrames;
     mOutBufferSize = mOutUpdateSize*2;
 
-    mDevice->mUpdateSize = gsl::narrow_cast<unsigned>((u64::value_t{mOutUpdateSize}
-        *mDevice->mSampleRate + (mFormat.Format.nSamplesPerSec-1))
-        / mFormat.Format.nSamplesPerSec);
+    mDevice->mUpdateSize = gsl::narrow_cast<u32>((u64{mOutUpdateSize}*mDevice->mSampleRate
+        + (mFormat.Format.nSamplesPerSec-1)) / mFormat.Format.nSamplesPerSec);
     mDevice->mBufferSize = mDevice->mUpdateSize*2;
 
     mResampler = nullptr;
@@ -1949,7 +1944,7 @@ auto WasapiPlayback::initSpatial(DeviceHelper &helper, DeviceHandle &mmdev, Spat
         const auto channelCount = as_unsigned(std::popcount(flags));
         mResampler = SampleConverter::Create(mDevice->FmtType, mDevice->FmtType, channelCount,
             mDevice->mSampleRate, mFormat.Format.nSamplesPerSec, Resampler::FastBSinc24);
-        mResampleBuffer.resize(std::size_t{mDevice->mUpdateSize} * channelCount *
+        mResampleBuffer.resize(usize{mDevice->mUpdateSize} * channelCount *
             mFormat.Format.wBitsPerSample / 8);
 
         TRACE("Created converter for {}/{} format, dst: {}hz ({}), src: {}hz ({})",
@@ -1987,7 +1982,7 @@ auto WasapiPlayback::resetProxy(DeviceHelper &helper, DeviceHandle &mmdev,
             return S_OK;
     }
 
-    mDevice->mFlags.reset(DeviceFlag::Virtualization);
+    mDevice->Flags.reset(Virtualization);
     mMonoUpsample = false;
     mExclusiveMode = false;
 
@@ -2022,9 +2017,9 @@ auto WasapiPlayback::resetProxy(DeviceHelper &helper, DeviceHandle &mmdev,
 
     /* Update the mDevice format for non-requested properties. */
     auto isRear51 = false;
-    if(!mDevice->mFlags.test(DeviceFlag::FrequencyRequest))
+    if(!mDevice->Flags.test(FrequencyRequest))
         mDevice->mSampleRate = OutputType.Format.nSamplesPerSec;
-    if(!mDevice->mFlags.test(DeviceFlag::ChannelsRequest))
+    if(!mDevice->Flags.test(ChannelsRequest))
     {
         /* If not requesting a channel configuration, auto-select given what
          * fits the mask's lsb (to ensure no gaps in the output channels). If
@@ -2194,9 +2189,9 @@ auto WasapiPlayback::resetProxy(DeviceHelper &helper, DeviceHandle &mmdev,
 
 #if !ALSOFT_UWP
     const auto formfactor = GetDeviceFormfactor(mmdev.get());
-    mDevice->mFlags.set(DeviceFlag::DirectEar, (formfactor==Headphones || formfactor==Headset));
+    mDevice->Flags.set(DirectEar, (formfactor == Headphones || formfactor == Headset));
 #else
-    mDevice->mFlags.set(DeviceFlag::DirectEar, false);
+    mDevice->Flags.set(DirectEar, false);
 #endif
     setDefaultWFXChannelOrder();
 
@@ -2283,16 +2278,16 @@ auto WasapiPlayback::resetProxy(DeviceHelper &helper, DeviceHandle &mmdev,
          * implicitly two update periods on the device.
          */
         mOutUpdateSize = buffer_len;
-        mDevice->mUpdateSize = gsl::narrow_cast<unsigned>(u64::value_t{buffer_len}
-            * mDevice->mSampleRate / mFormat.Format.nSamplesPerSec);
+        mDevice->mUpdateSize = gsl::narrow_cast<u32>(u64{buffer_len} * mDevice->mSampleRate /
+            mFormat.Format.nSamplesPerSec);
         mDevice->mBufferSize = mDevice->mUpdateSize * 2;
     }
     else
     {
         mOutUpdateSize = RefTime2Samples(period_time, mFormat.Format.nSamplesPerSec);
 
-        mDevice->mBufferSize = gsl::narrow_cast<unsigned>(u64::value_t{buffer_len}
-            * mDevice->mSampleRate / mFormat.Format.nSamplesPerSec);
+        mDevice->mBufferSize = gsl::narrow_cast<u32>(u64{buffer_len} * mDevice->mSampleRate /
+            mFormat.Format.nSamplesPerSec);
         mDevice->mUpdateSize = std::min(RefTime2Samples(period_time, mDevice->mSampleRate),
             mDevice->mBufferSize/2u);
     }
@@ -2306,7 +2301,7 @@ auto WasapiPlayback::resetProxy(DeviceHelper &helper, DeviceHandle &mmdev,
         mResampler = SampleConverter::Create(mDevice->FmtType, mDevice->FmtType,
             mFormat.Format.nChannels, mDevice->mSampleRate, mFormat.Format.nSamplesPerSec,
             Resampler::FastBSinc24);
-        mResampleBuffer.resize(std::size_t{mDevice->mUpdateSize} * mFormat.Format.nChannels *
+        mResampleBuffer.resize(usize{mDevice->mUpdateSize} * mFormat.Format.nChannels *
             mFormat.Format.wBitsPerSample / 8);
 
         TRACE("Created converter for {}/{} format, dst: {}hz ({}), src: {}hz ({})",
@@ -2382,7 +2377,7 @@ struct WasapiCapture final : BackendBase {
     void start() override;
     void stop() override;
     void captureSamples(std::span<std::byte> outbuffer) override;
-    auto availableSamples() -> std::size_t override;
+    auto availableSamples() -> usize override;
 
 
     std::thread mProcThread;
@@ -2390,7 +2385,7 @@ struct WasapiCapture final : BackendBase {
     std::condition_variable mProcCond;
     HRESULT mProcResult{E_FAIL};
 
-    enum class ThreadState : u8::value_t {
+    enum class ThreadState : u8 {
         Initializing,
         Waiting,
         Recording,
@@ -2398,7 +2393,7 @@ struct WasapiCapture final : BackendBase {
     };
     ThreadState mState{ThreadState::Initializing};
 
-    enum class ThreadAction : u8::value_t {
+    enum class ThreadAction : u8 {
         Nothing,
         Record,
         Quit
@@ -2472,16 +2467,16 @@ void WasapiCapture::recordProc(IAudioClient *client, IAudioCaptureClient *captur
 
                 auto data = mRing->getWriteVector();
 
-                auto dstframes = std::size_t{};
+                auto dstframes = usize{};
                 if(mSampleConv)
                 {
-                    static constexpr auto lenlimit = i32::max().as<usize>().c_val;
+                    static constexpr auto lenlimit = usize{std::numeric_limits<i32>::max()};
                     auto *srcdata = LPCVOID{rdata};
-                    auto srcframes = unsigned{numsamples};
+                    auto srcframes = u32{numsamples};
 
                     const auto len1 = data[0].size() / mRing->getElemSize();
                     dstframes = mSampleConv->convert(&srcdata, &srcframes, data[0].data(),
-                        gsl::narrow_cast<unsigned>(std::min(len1, lenlimit)));
+                        gsl::narrow_cast<u32>(std::min(len1, lenlimit)));
                     if(srcframes > 0 && dstframes == len1 && !data[1].empty())
                     {
                         /* If some source samples remain, all of the first dest
@@ -2490,16 +2485,16 @@ void WasapiCapture::recordProc(IAudioClient *client, IAudioCaptureClient *captur
                          */
                         const auto len2 = data[1].size() / mRing->getElemSize();
                         dstframes += mSampleConv->convert(&srcdata, &srcframes, data[1].data(),
-                            gsl::narrow_cast<unsigned>(std::min(len2, lenlimit)));
+                            gsl::narrow_cast<u32>(std::min(len2, lenlimit)));
                     }
                 }
                 else
                 {
                     const auto framesize = mDevice->frameSizeFromFmt();
-                    auto dst = std::span{rdata, std::size_t{numsamples}*framesize};
+                    auto dst = std::span{rdata, usize{numsamples}*framesize};
                     auto len1 = data[0].size() / mRing->getElemSize();
                     auto len2 = data[1].size() / mRing->getElemSize();
-                    len1 = std::min(len1, std::size_t{numsamples});
+                    len1 = std::min(len1, usize{numsamples});
                     len2 = std::min(len2, numsamples-len1);
 
                     memcpy(data[0].data(), dst.data(), std::min(data[0].size(), dst.size()));
@@ -2825,7 +2820,7 @@ auto WasapiCapture::resetProxy(DeviceHelper &helper, DeviceHandle &mmdev,
         wfx = nullptr;
 
         static constexpr auto validate_fmt = [](DeviceBase const *const device,
-            unsigned const chancount, unsigned const chanmask) noexcept -> bool
+            u32 const chancount, u32 const chanmask) noexcept -> bool
         {
             switch(device->FmtChans)
             {
@@ -3017,7 +3012,7 @@ void WasapiCapture::stop()
 void WasapiCapture::captureSamples(std::span<std::byte> const outbuffer)
 { std::ignore = mRing->read(outbuffer); }
 
-auto WasapiCapture::availableSamples() -> std::size_t
+auto WasapiCapture::availableSamples() -> usize
 { return mRing->readSpace(); }
 
 } // namespace
@@ -3118,9 +3113,10 @@ auto WasapiBackendFactory::queryEventSupport(alc::EventType const eventType, Bac
     case alc::EventType::DeviceRemoved:
 #if !ALSOFT_UWP
         return alc::EventSupport::FullSupport;
-#else
-        break;
 #endif
+
+    case alc::EventType::Count:
+        break;
     }
     return alc::EventSupport::NoSupport;
 }

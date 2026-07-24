@@ -1,8 +1,12 @@
 
 #include "config.h"
 
+#include "context.h"
+
 #include <algorithm>
 #include <array>
+#include <bit>
+#include <cstddef>
 #include <functional>
 #include <numeric>
 #include <optional>
@@ -20,39 +24,25 @@
 #include "alc/alu.h"
 #include "alc/backends/base.h"
 #include "alnumeric.h"
-#include "altypes.hpp"
 #include "atomic.h"
 #include "core/async_event.h"
 #include "core/devformat.h"
 #include "core/device.h"
 #include "core/effectslot.h"
+#include "core/logging.h"
 #include "core/voice_change.h"
 #include "device.h"
 #include "flexarray.h"
 #include "fmt/format.h"
 #include "fmt/ranges.h"
+#include "gsl/gsl"
 #include "ringbuffer.h"
 #include "vecmat.h"
 
 #if ALSOFT_EAX
-#include <compare>
-
-#include "al/eax/api.h"
 #include "al/eax/call.h"
 #include "al/eax/globals.h"
 #endif // ALSOFT_EAX
-
-#if HAVE_CXXMODULES
-import alc.context;
-import format.types;
-import gsl;
-import logging;
-#else
-#include "alc/context.hpp"
-#include "alformattypes.hpp"
-#include "core/logging.h"
-#include "gsl/gsl"
-#endif
 
 namespace {
 
@@ -109,35 +99,6 @@ auto getContextExtensions() noexcept -> std::vector<std::string_view>
     });
 }
 
-/* Thread-local context handling. This handles attempting to release the
- * context which may have been left current when the thread is destroyed.
- */
-class ThreadCtx {
-public:
-    ThreadCtx() = default;
-    ThreadCtx(const ThreadCtx&) = delete;
-    auto operator=(const ThreadCtx&) -> ThreadCtx& = delete;
-
-    ~ThreadCtx()
-    {
-        if(auto *ctx = std::exchange(al::Context::sLocalContext, nullptr))
-        {
-            const auto result = ctx->releaseIfNoDelete();
-            ERR("Context {} current for thread being destroyed{}!", voidp{ctx},
-                result ? "" : ", leak detected");
-        }
-    }
-    /* NOLINTBEGIN(readability-convert-member-functions-to-static)
-     * This should be non-static to invoke construction of the thread-local
-     * sThreadContext, so that it's destructor gets run at thread exit to
-     * clear sLocalContext (which isn't a member variable to make read
-     * access efficient).
-     */
-    void set(al::Context *ctx) const noexcept { al::Context::sLocalContext = ctx; }
-    /* NOLINTEND(readability-convert-member-functions-to-static) */
-};
-thread_local ThreadCtx sThreadContext;
-
 } // namespace
 
 
@@ -145,6 +106,17 @@ namespace al {
 
 std::atomic<bool> Context::sGlobalContextLock{false};
 std::atomic<Context*> Context::sGlobalContext{nullptr};
+
+Context::ThreadCtx::~ThreadCtx()
+{
+    if(auto *ctx = std::exchange(sLocalContext, nullptr))
+    {
+        const auto result = ctx->releaseIfNoDelete();
+        ERR("Context {} current for thread being destroyed{}!", voidp{ctx},
+            result ? "" : ", leak detected");
+    }
+}
+thread_local Context::ThreadCtx Context::sThreadContext;
 
 Effect Context::sDefaultEffect;
 
@@ -176,9 +148,9 @@ Context::~Context()
     TRACE("Freeing context {}", voidp{this});
     deinit();
 
-    auto count = std::accumulate(mSourceList.cbegin(), mSourceList.cend(), 0_usize,
-        [](usize const cur, SourceSubList const &sublist) noexcept -> usize
-    { return cur + (~sublist.mFreeMask).popcount(); });
+    auto count = std::accumulate(mSourceList.cbegin(), mSourceList.cend(), 0_uz,
+        [](usize const cur, SourceSubList const &sublist) noexcept -> size_t
+    { return cur + gsl::narrow_cast<unsigned>(std::popcount(~sublist.mFreeMask)); });
     if(count > 0)
         WARN("{} Source{} not deleted", count, (count==1)?"":"s");
     mSourceList.clear();
@@ -189,9 +161,9 @@ Context::~Context()
 #endif // ALSOFT_EAX
 
     mDefaultSlot = nullptr;
-    count = std::accumulate(mEffectSlotList.cbegin(), mEffectSlotList.cend(), 0_usize,
-        [](usize const cur, const EffectSlotSubList &sublist) noexcept -> usize
-    { return cur + (~sublist.mFreeMask).popcount(); });
+    count = std::accumulate(mEffectSlotList.cbegin(), mEffectSlotList.cend(), 0_uz,
+        [](size_t cur, const EffectSlotSubList &sublist) noexcept -> size_t
+    { return cur + gsl::narrow_cast<unsigned>(std::popcount(~sublist.mFreeMask)); });
     if(count > 0)
         WARN("{} AuxiliaryEffectSlot{} not deleted", count, (count==1)?"":"s");
     mEffectSlotList.clear();
@@ -326,34 +298,22 @@ void Context::applyAllUpdates()
     mHoldUpdates.store(false, std::memory_order_release);
 }
 
-void Context::setThreadContext(Context *context) noexcept
-{ sThreadContext.set(context); }
-
 } // namespace al
 
 #if ALSOFT_EAX
 namespace {
-
-[[nodiscard]] inline
-auto CompareGUID(AL_GUID const &lhs, AL_GUID const &rhs) noexcept -> std::strong_ordering
-{
-    auto const res = std::memcmp(&lhs, &rhs, sizeof(AL_GUID));
-    if(res > 0) return std::strong_ordering::greater;
-    if(res < 0) return std::strong_ordering::less;
-    return std::strong_ordering::equal;
-}
 
 void ForEachSource(al::Context *context, std::invocable<al::Source&> auto&& func)
 {
     std::ranges::for_each(context->mSourceList, [&func](SourceSubList &sublist)
     {
         auto usemask = ~sublist.mFreeMask;
-        while(usemask != 0)
+        while(usemask)
         {
-            const auto idx = usemask.countr_zero();
+            const auto idx = as_unsigned(std::countr_zero(usemask));
             usemask ^= 1_u64 << idx;
 
-            std::invoke(func, (*sublist.mSources)[idx.c_val]);
+            std::invoke(func, (*sublist.mSources)[idx]);
         }
     });
 }
@@ -377,7 +337,7 @@ void Context::eaxUninitialize() noexcept
     mEaxFxSlots.uninitialize();
 }
 
-auto Context::eax_eax_set(AL_GUID const *property_set_id, ALuint property_id,
+auto Context::eax_eax_set(const GUID *property_set_id, ALuint property_id,
     ALuint property_source_id, ALvoid *property_value, ALuint property_value_size) -> ALenum
 {
     const auto call = create_eax_call(EaxCallType::set, property_set_id, property_id,
@@ -412,7 +372,7 @@ auto Context::eax_eax_set(AL_GUID const *property_set_id, ALuint property_id,
     return AL_NO_ERROR;
 }
 
-auto Context::eax_eax_get(AL_GUID const *property_set_id, ALuint property_id,
+auto Context::eax_eax_get(const GUID* property_set_id, ALuint property_id,
     ALuint property_source_id, ALvoid *property_value, ALuint property_value_size) -> ALenum
 {
     const auto call = create_eax_call(EaxCallType::get, property_set_id, property_id,
@@ -536,7 +496,7 @@ auto Context::eax_detect_speaker_configuration() const -> eax_ulong
          */
         if(std::holds_alternative<UhjPostProcess>(mDevice->mPostProcess))
             return SPEAKERS_7;
-        if(mDevice->mFlags.test(DeviceFlag::DirectEar))
+        if(mDevice->Flags.test(DirectEar))
             return HEADPHONES;
         return SPEAKERS_2;
     case DevFmtQuad: return SPEAKERS_4;
@@ -771,7 +731,7 @@ void Context::eax4_defer_all(const EaxCall& call, Eax4State& state)
     auto &dst_d = state.d;
     dst_d = src;
 
-    if(std::is_neq(CompareGUID(dst_i.guidPrimaryFXSlotID, dst_d.guidPrimaryFXSlotID)))
+    if(dst_i.guidPrimaryFXSlotID != dst_d.guidPrimaryFXSlotID)
         mEaxDf.set(eax_primary_fx_slot_id_dirty_bit);
 
     if(dst_i.flDistanceFactor != dst_d.flDistanceFactor)
@@ -821,7 +781,7 @@ void Context::eax5_defer_all(const EaxCall& call, Eax5State& state)
     auto &dst_d = state.d;
     dst_d = src;
 
-    if(std::is_neq(CompareGUID(dst_i.guidPrimaryFXSlotID, dst_d.guidPrimaryFXSlotID)))
+    if(dst_i.guidPrimaryFXSlotID != dst_d.guidPrimaryFXSlotID)
         mEaxDf.set(eax_primary_fx_slot_id_dirty_bit);
 
     if(dst_i.flDistanceFactor != dst_d.flDistanceFactor)

@@ -26,14 +26,14 @@ auto BackendBase::reset() -> bool
 void BackendBase::captureSamples(std::span<std::byte> outbuffer [[maybe_unused]])
 { }
 
-auto BackendBase::availableSamples() -> std::size_t
+auto BackendBase::availableSamples() -> usize
 { return 0_uz; }
 
 auto BackendBase::getClockLatency() -> ClockLatency
 {
     auto ret = ClockLatency{};
 
-    auto refcount = unsigned{};
+    auto refcount = u32{};
     do {
         refcount = mDevice->waitForMix();
         ret.ClockTime = mDevice->getClockTime();

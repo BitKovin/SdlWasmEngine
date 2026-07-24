@@ -24,21 +24,15 @@
 
 #include "AL/al.h"
 #include "AL/alc.h"
-#include "AL/alext.h"
 
+#include "alc/context.h"
 #include "alstring.h"
 #include "direct_defs.h"
-
-#if HAVE_CXXMODULES
-import alc.context;
-#else
-#include "alc/context.hpp"
-#endif
 
 
 namespace {
 
-auto alIsExtensionPresent_(gsl::not_null<al::Context*> context, const ALchar *extName) noexcept
+auto alIsExtensionPresent(gsl::not_null<al::Context*> context, const ALchar *extName) noexcept
     -> ALboolean
 {
     if(!extName) [[unlikely]]
@@ -55,14 +49,13 @@ auto alIsExtensionPresent_(gsl::not_null<al::Context*> context, const ALchar *ex
 
 } // namespace
 
-DECL_FUNC(AL_API, ALboolean, alIsExtensionPresent, const ALchar*,extName)
+AL_API DECL_FUNC1(ALboolean, alIsExtensionPresent, const ALchar*,extName)
 
 AL_API auto AL_APIENTRY alGetProcAddress(const ALchar *funcName) noexcept -> ALvoid*
 {
     if(!funcName) return nullptr;
     return alcGetProcAddress(nullptr, funcName);
 }
-DefineFuncAlias(alGetProcAddress)
 
 FORCE_ALIGN auto AL_APIENTRY alGetProcAddressDirect(ALCcontext*, const ALchar *funcName) noexcept
     -> ALvoid*
@@ -70,14 +63,12 @@ FORCE_ALIGN auto AL_APIENTRY alGetProcAddressDirect(ALCcontext*, const ALchar *f
     if(!funcName) return nullptr;
     return alcGetProcAddress(nullptr, funcName);
 }
-DefineFuncAlias(alGetProcAddressDirect)
 
 AL_API auto AL_APIENTRY alGetEnumValue(const ALchar *enumName) noexcept -> ALenum
 {
     if(!enumName) return ALenum{0};
     return alcGetEnumValue(nullptr, enumName);
 }
-DefineFuncAlias(alGetEnumValue)
 
 FORCE_ALIGN auto AL_APIENTRY alGetEnumValueDirect(ALCcontext*, const ALchar *enumName) noexcept
     -> ALenum
@@ -85,4 +76,3 @@ FORCE_ALIGN auto AL_APIENTRY alGetEnumValueDirect(ALCcontext*, const ALchar *enu
     if(!enumName) return ALenum{0};
     return alcGetEnumValue(nullptr, enumName);
 }
-DefineFuncAlias(alGetEnumValueDirect)

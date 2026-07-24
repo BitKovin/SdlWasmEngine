@@ -7,7 +7,7 @@
 #include <numbers>
 #include <ranges>
 
-#include "altypes.hpp"
+#include "alnumeric.h"
 #include "cubic_defs.h"
 #include "gsl/gsl"
 

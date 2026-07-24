@@ -3,8 +3,6 @@
 
 #include "dynload.h"
 
-#if HAVE_DYNLOAD
-
 #ifdef _WIN32
 #include <windows.h>
 
@@ -78,6 +76,4 @@ auto GetSymbol(void *const handle, gsl::czstring const name) -> al::expected<voi
         return al::unexpected(err);
     return sym;
 }
-#endif
-
 #endif

@@ -1,8 +1,8 @@
-if (NOT EXISTS "/mnt/f/Git/SdlWasmEngine/build/linux/install_manifest.txt")
-    message(FATAL_ERROR "Cannot find install manifest: \"/mnt/f/Git/SdlWasmEngine/build/linux/install_manifest.txt\"")
-endif(NOT EXISTS "/mnt/f/Git/SdlWasmEngine/build/linux/install_manifest.txt")
+if (NOT EXISTS "/repo/build/linux/install_manifest.txt")
+    message(FATAL_ERROR "Cannot find install manifest: \"/repo/build/linux/install_manifest.txt\"")
+endif(NOT EXISTS "/repo/build/linux/install_manifest.txt")
 
-file(READ "/mnt/f/Git/SdlWasmEngine/build/linux/install_manifest.txt" files)
+file(READ "/repo/build/linux/install_manifest.txt" files)
 string(REGEX REPLACE "\n" ";" files "${files}")
 foreach (file ${files})
     message(STATUS "Uninstalling \"$ENV{DESTDIR}${file}\"")

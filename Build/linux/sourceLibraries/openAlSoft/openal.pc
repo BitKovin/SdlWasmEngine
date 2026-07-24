@@ -6,7 +6,7 @@ includedir=/usr/local/include
 Name: OpenAL
 Description: OpenAL is a cross-platform 3D audio API
 Requires: 
-Version: 1.25.2
+Version: 1.25.1
 Libs: -L${libdir} -lopenal 
-Libs.private: -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now -Wl,--as-needed,--no-copy-dt-needed-entries -latomic -ldl -lm
+Libs.private: -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now -Wl,--as-needed,--no-copy-dt-needed-entries -pthread -ldl -latomic -lm
 Cflags: -I${includedir} -I${includedir}/AL -DAL_LIBTYPE_STATIC

@@ -10,9 +10,11 @@
 #include "AL/al.h"
 #include "AL/efx.h"
 
+#include "alc/context.h"
 #include "alnumeric.h"
-#include "altypes.hpp"
+#include "core/logging.h"
 #include "effects.h"
+#include "gsl/gsl"
 
 #if ALSOFT_EAX
 #include "al/eax/api.h"
@@ -21,16 +23,6 @@
 #include "al/eax/exception.h"
 #include "al/eax/utils.h"
 #endif // ALSOFT_EAX
-
-#if HAVE_CXXMODULES
-import alc.context;
-import logging;
-import gsl;
-#else
-#include "alc/context.hpp"
-#include "core/logging.h"
-#include "gsl/gsl"
-#endif
 
 
 namespace {

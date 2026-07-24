@@ -16,10 +16,10 @@
 #include <span>
 #include <vector>
 
-#if HAVE_NEON
-#include <arm_neon.h>
-#elif HAVE_SSE_INTRINSICS
+#if HAVE_SSE_INTRINSICS
 #include <xmmintrin.h>
+#elif HAVE_NEON
+#include <arm_neon.h>
 #endif
 
 #include "alcomplex.h"
@@ -156,20 +156,7 @@ constexpr size_t ConvolveUpdateSamples{ConvolveUpdateSize / 2};
 void apply_fir(std::span<float> dst, std::span<const float> input,
     const std::span<const float,ConvolveUpdateSamples> filter)
 {
-#if HAVE_NEON
-    std::ranges::generate(dst, [&input,filter]
-    {
-        auto r4 = vdupq_n_f32(0.0f);
-        for(size_t j{0};j < ConvolveUpdateSamples;j+=4)
-            r4 = vmlaq_f32(r4, vld1q_f32(&input[j]), vld1q_f32(&filter[j]));
-        input = input.subspan(1);
-
-        r4 = vaddq_f32(r4, vrev64q_f32(r4));
-        return vget_lane_f32(vadd_f32(vget_low_f32(r4), vget_high_f32(r4)), 0);
-    });
-
-#elif HAVE_SSE_INTRINSICS
-
+#if HAVE_SSE_INTRINSICS
     std::ranges::generate(dst, [&input,filter]
     {
         auto r4 = _mm_setzero_ps();
@@ -185,6 +172,19 @@ void apply_fir(std::span<float> dst, std::span<const float> input,
         r4 = _mm_add_ps(r4, _mm_shuffle_ps(r4, r4, _MM_SHUFFLE(0, 1, 2, 3)));
         r4 = _mm_add_ps(r4, _mm_movehl_ps(r4, r4));
         return _mm_cvtss_f32(r4);
+    });
+
+#elif HAVE_NEON
+
+    std::ranges::generate(dst, [&input,filter]
+    {
+        auto r4 = vdupq_n_f32(0.0f);
+        for(size_t j{0};j < ConvolveUpdateSamples;j+=4)
+            r4 = vmlaq_f32(r4, vld1q_f32(&input[j]), vld1q_f32(&filter[j]));
+        input = input.subspan(1);
+
+        r4 = vaddq_f32(r4, vrev64q_f32(r4));
+        return vget_lane_f32(vadd_f32(vget_low_f32(r4), vget_high_f32(r4)), 0);
     });
 
 #else
@@ -205,7 +205,7 @@ struct ConvolutionState final : public EffectState {
     FmtChannels mChannels{};
     AmbiLayout mAmbiLayout{};
     AmbiScaling mAmbiScaling{};
-    unsigned mAmbiOrder{};
+    u32 mAmbiOrder{};
 
     size_t mFifoPos{0};
     alignas(16) std::array<float,ConvolveUpdateSamples*2> mInput{};
@@ -270,7 +270,7 @@ void ConvolutionState::deviceUpdate(const DeviceBase *device, const BufferStorag
     using UhjDecoderType = UhjDecoder<512>;
     static constexpr auto DecoderPadding = UhjDecoderType::sInputPadding;
 
-    static constexpr auto MaxConvolveAmbiOrder = 1u;
+    static constexpr auto MaxConvolveAmbiOrder = 1_u32;
 
     if(!mFft)
         mFft = PFFFTSetup{ConvolveUpdateSize, PFFFT_REAL};
@@ -309,8 +309,8 @@ void ConvolutionState::deviceUpdate(const DeviceBase *device, const BufferStorag
     auto resampler = PPhaseResampler{};
     if(device->mSampleRate != buffer->mSampleRate)
         resampler.init(buffer->mSampleRate, device->mSampleRate);
-    const auto resampledCount = static_cast<unsigned>(
-        (u64::value_t{buffer->mSampleLen}*device->mSampleRate+(buffer->mSampleRate-1)) /
+    const auto resampledCount = static_cast<u32>(
+        (u64{buffer->mSampleLen}*device->mSampleRate+(buffer->mSampleRate-1)) /
         buffer->mSampleRate);
 
     const auto splitter = BandSplitter{device->mXOverFreq/static_cast<float>(device->mSampleRate)};
@@ -532,8 +532,8 @@ void ConvolutionState::update(const ContextBase *context, const EffectSlotBase *
         std::array<float,MaxAmbiChannels> coeffs{};
         for(size_t c{0u};c < mChans.size();++c)
         {
-            auto const acn = std::size_t{index_map[c].c_val};
-            auto const scale = scales[acn];
+            const size_t acn{index_map[c]};
+            const float scale{scales[acn]};
 
             std::ranges::transform(mixmatrix[acn], coeffs.begin(), [scale](const float in) -> float
             { return in * scale; });

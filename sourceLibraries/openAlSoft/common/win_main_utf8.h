@@ -69,7 +69,7 @@ int my_main(int, char**);
 #include <string>
 #include <string_view>
 
-#include "altypes.hpp"
+#include "alnumeric.h"
 #include "fmt/base.h"
 #include "fmt/ostream.h"
 

@@ -4,48 +4,48 @@
 #include <array>
 #include <span>
 
-#include "opthelpers.h"
+#include "alnumeric.h"
 
 
 struct NfcFilter1 {
     struct Coefficients {
-        float a0{1.0f}, a1{}, b1{};
+        f32 a0{1.0f}, a1{}, b1{};
     };
-    float mBaseGain{1.0f};
+    f32 mBaseGain{1.0f};
     Coefficients mCoeffs;
-    std::array<float, 1> mZ{};
+    std::array<f32, 1> mZ{};
 
-    void process(std::span<float const> src, std::span<float> dst) noexcept NONBLOCKING;
+    void process(std::span<f32 const> src, std::span<f32> dst);
 };
 struct NfcFilter2 {
     struct Coefficients {
-        float a0{1.0f}, a1{}, a2{}, b1{}, b2{};
+        f32 a0{1.0f}, a1{}, a2{}, b1{}, b2{};
     };
-    float mBaseGain{1.0f};
+    f32 mBaseGain{1.0f};
     Coefficients mCoeffs;
-    std::array<float, 2> mZ{};
+    std::array<f32, 2> mZ{};
 
-    void process(std::span<float const> src, std::span<float> dst) noexcept NONBLOCKING;
+    void process(std::span<f32 const> src, std::span<f32> dst);
 };
 struct NfcFilter3 {
     struct Coefficients {
-        float a0{1.0f}, a1{}, a2{}, a3{}, b1{}, b2{}, b3{};
+        f32 a0{1.0f}, a1{}, a2{}, a3{}, b1{}, b2{}, b3{};
     };
-    float mBaseGain{1.0f};
+    f32 mBaseGain{1.0f};
     Coefficients mCoeffs;
-    std::array<float, 3> mZ{};
+    std::array<f32, 3> mZ{};
 
-    void process(std::span<float const> src, std::span<float> dst) noexcept NONBLOCKING;
+    void process(std::span<f32 const> src, std::span<f32> dst);
 };
 struct NfcFilter4 {
     struct Coefficients {
-        float a0{1.0f}, a1{}, a2{}, a3{}, a4{}, b1{}, b2{}, b3{}, b4{};
+        f32 a0{1.0f}, a1{}, a2{}, a3{}, a4{}, b1{}, b2{}, b3{}, b4{};
     };
-    float mBaseGain{1.0f};
+    f32 mBaseGain{1.0f};
     Coefficients mCoeffs;
-    std::array<float, 4> mZ{};
+    std::array<f32, 4> mZ{};
 
-    void process(std::span<float const> src, std::span<float> dst) noexcept NONBLOCKING;
+    void process(std::span<f32 const> src, std::span<f32> dst);
 };
 
 class NfcFilter {
@@ -65,27 +65,23 @@ public:
      * should not be too small relative to the control distance.
      */
 
-    void init(float w1) noexcept NONBLOCKING;
-    void adjust(float w0) noexcept NONBLOCKING;
+    void init(f32 w1) noexcept;
+    void adjust(f32 w0) noexcept;
 
     /* Near-field control filter for first-order ambisonic channels (1-3). */
-    void process1(std::span<float const> const src, std::span<float> const dst) noexcept
-        NONBLOCKING
+    void process1(std::span<f32 const> const src, std::span<f32> const dst)
     { first.process(src, dst); }
 
     /* Near-field control filter for second-order ambisonic channels (4-8). */
-    void process2(std::span<float const> const src, std::span<float> const dst) noexcept
-        NONBLOCKING
+    void process2(std::span<f32 const> const src, std::span<f32> const dst)
     { second.process(src, dst); }
 
     /* Near-field control filter for third-order ambisonic channels (9-15). */
-    void process3(std::span<float const> const src, std::span<float> const dst) noexcept
-        NONBLOCKING
+    void process3(std::span<f32 const> const src, std::span<f32> const dst)
     { third.process(src, dst); }
 
     /* Near-field control filter for fourth-order ambisonic channels (16-24). */
-    void process4(std::span<float const> const src, std::span<float> const dst) noexcept
-        NONBLOCKING
+    void process4(std::span<f32 const> const src, std::span<f32> const dst)
     { fourth.process(src, dst); }
 };
 

@@ -7,7 +7,6 @@
 #include <algorithm>
 #include <bit>
 #include <cmath>
-#include <cstddef>
 #include <numbers>
 #include <ranges>
 
@@ -30,12 +29,12 @@ constexpr auto InterpSteps = 8;
 constexpr auto SamplesPerStep = 32;
 constexpr auto SamplesPerStepMask = SamplesPerStep-1;
 
-static_assert(std::popcount(gsl::narrow<unsigned>(SamplesPerStep)) == 1,
+static_assert(std::popcount(gsl::narrow<u32>(SamplesPerStep)) == 1,
     "SamplesPerStep must be a power of 2");
 
 /* Sets dst to the given value, returns true if it's meaningfully different. */
 [[nodiscard]]
-auto check_set(float &dst, float const value) noexcept NONBLOCKING -> bool
+auto check_set(f32 &dst, f32 const value) noexcept -> bool
 {
     const auto is_diff = !(std::abs(value - dst) <= 0.015625f/* 1/64 */);
     dst = value;
@@ -45,8 +44,8 @@ auto check_set(float &dst, float const value) noexcept NONBLOCKING -> bool
 } // namespace
 
 
-auto BiquadFilter::SetParams(BiquadType const type, float const f0norm, float gain,
-    float const rcpQ, Coefficients &coeffs) noexcept NONBLOCKING -> bool
+auto BiquadFilter::SetParams(BiquadType const type, f32 const f0norm, f32 gain, f32 const rcpQ,
+    Coefficients &coeffs) -> bool
 {
     /* HACK: Limit gain to -100dB. This shouldn't ever happen, all callers
      * already clamp to minimum of 0.001, or have a limited range of values
@@ -55,14 +54,14 @@ auto BiquadFilter::SetParams(BiquadType const type, float const f0norm, float ga
      */
     gain = std::max(gain, 0.00001f);
 
-    auto const w0 = std::numbers::pi_v<float>*2.0f * std::min(f0norm, 0.49f);
+    auto const w0 = std::numbers::pi_v<f32>*2.0f * f0norm;
     auto const sin_w0 = std::sin(w0);
     auto const cos_w0 = std::cos(w0);
     auto const alpha = sin_w0/2.0f * rcpQ;
 
-    auto sqrtgain_alpha_2 = float{};
-    auto a = std::array<float, 3>{{1.0f, 0.0f, 0.0f}};
-    auto b = std::array<float, 3>{{1.0f, 0.0f, 0.0f}};
+    auto sqrtgain_alpha_2 = f32{};
+    auto a = std::array<f32, 3>{{1.0f, 0.0f, 0.0f}};
+    auto b = std::array<f32, 3>{{1.0f, 0.0f, 0.0f}};
 
     /* Calculate filter coefficients depending on filter type */
     switch(type)
@@ -128,8 +127,8 @@ auto BiquadFilter::SetParams(BiquadType const type, float const f0norm, float ga
     return is_diff;
 }
 
-void BiquadInterpFilter::setParams(BiquadType const type, float const f0norm, float const gain,
-    float const rcpQ) noexcept NONBLOCKING
+void BiquadInterpFilter::setParams(BiquadType const type, f32 const f0norm, f32 const gain,
+    f32 const rcpQ)
 {
     if(!SetParams(type, f0norm, gain, rcpQ, mTargetCoeffs))
     {
@@ -148,7 +147,7 @@ void BiquadInterpFilter::setParams(BiquadType const type, float const f0norm, fl
     }
 }
 
-void BiquadInterpFilter::copyParamsFrom(BiquadInterpFilter const &other) noexcept NONBLOCKING
+void BiquadInterpFilter::copyParamsFrom(BiquadInterpFilter const &other) noexcept
 {
     auto is_diff = check_set(mTargetCoeffs.mB0, other.mTargetCoeffs.mB0);
     is_diff |= check_set(mTargetCoeffs.mB1, other.mTargetCoeffs.mB1);
@@ -173,8 +172,7 @@ void BiquadInterpFilter::copyParamsFrom(BiquadInterpFilter const &other) noexcep
 }
 
 
-void BiquadFilter::process(std::span<float const> const src, std::span<float> const dst) noexcept
-    NONBLOCKING
+void BiquadFilter::process(std::span<f32 const> const src, std::span<f32> const dst)
 {
     auto z1 = mZ1;
     auto z2 = mZ2;
@@ -187,8 +185,7 @@ void BiquadFilter::process(std::span<float const> const src, std::span<float> co
      *
      * See: http://www.earlevel.com/main/2003/02/28/biquads/
      */
-    std::ranges::transform(src, dst.begin(), [coeffs=mCoeffs,&z1,&z2](float const x) noexcept
-        -> float
+    std::ranges::transform(src, dst.begin(), [coeffs=mCoeffs,&z1,&z2](f32 const x) noexcept -> f32
     {
         auto const y = x*coeffs.mB0 + z1;
         z1 = x*coeffs.mB1 - y*coeffs.mA1 + z2;
@@ -200,13 +197,12 @@ void BiquadFilter::process(std::span<float const> const src, std::span<float> co
     mZ2 = z2;
 }
 
-void BiquadInterpFilter::process(std::span<float const> src, std::span<float> dst) noexcept
-    NONBLOCKING
+void BiquadInterpFilter::process(std::span<f32 const> src, std::span<f32> dst)
 {
     if(mCounter > 0)
     {
         auto counter = mCounter / SamplesPerStep;
-        auto steprem = gsl::narrow_cast<std::size_t>(SamplesPerStep-(mCounter&SamplesPerStepMask));
+        auto steprem = gsl::narrow_cast<usize>(SamplesPerStep - (mCounter&SamplesPerStepMask));
         while(counter > 0)
         {
             auto const td = std::min(steprem, src.size());
@@ -216,7 +212,7 @@ void BiquadInterpFilter::process(std::span<float const> src, std::span<float> ds
             if(steprem)
             {
                 steprem = SamplesPerStep - steprem;
-                mCounter = (counter*SamplesPerStep) | gsl::narrow_cast<int>(steprem);
+                mCounter = (counter*SamplesPerStep) | gsl::narrow_cast<i32>(steprem);
                 return;
             }
 
@@ -232,7 +228,7 @@ void BiquadInterpFilter::process(std::span<float const> src, std::span<float> ds
                 break;
             }
 
-            auto const a = 1.0f / static_cast<float>(counter+1);
+            auto const a = 1.0f / static_cast<f32>(counter+1);
             mCoeffs.mB0 = lerpf(mCoeffs.mB0, mTargetCoeffs.mB0, a);
             mCoeffs.mB1 = lerpf(mCoeffs.mB1, mTargetCoeffs.mB1, a);
             mCoeffs.mB2 = lerpf(mCoeffs.mB2, mTargetCoeffs.mB2, a);
@@ -251,8 +247,8 @@ void BiquadInterpFilter::process(std::span<float const> src, std::span<float> ds
 }
 
 
-void BiquadFilter::dualProcess(BiquadFilter &other, std::span<float const> const src,
-    std::span<float> const dst) noexcept NONBLOCKING
+void BiquadFilter::dualProcess(BiquadFilter &other, std::span<f32 const> const src,
+    std::span<f32> const dst)
 {
     ASSUME(this != &other);
     auto z01 = mZ1;
@@ -261,8 +257,7 @@ void BiquadFilter::dualProcess(BiquadFilter &other, std::span<float const> const
     auto z12 = other.mZ2;
 
     std::ranges::transform(src, dst.begin(),
-        [coeffs0=mCoeffs,coeffs1=other.mCoeffs,&z01,&z02,&z11,&z12](float const x0) noexcept
-        -> float
+        [coeffs0=mCoeffs,coeffs1=other.mCoeffs,&z01,&z02,&z11,&z12](f32 const x0) noexcept -> f32
     {
         auto const y0 = x0*coeffs0.mB0 + z01;
         z01 = x0*coeffs0.mB1 - y0*coeffs0.mA1 + z02;
@@ -281,15 +276,14 @@ void BiquadFilter::dualProcess(BiquadFilter &other, std::span<float const> const
     other.mZ2 = z12;
 }
 
-void BiquadInterpFilter::dualProcess(BiquadInterpFilter &other, std::span<float const> src,
-    std::span<float> dst) noexcept NONBLOCKING
+void BiquadInterpFilter::dualProcess(BiquadInterpFilter &other, std::span<f32 const> src,
+    std::span<f32> dst)
 {
     ASSUME(this != &other);
     if(auto const maxcounter = std::max(mCounter, other.mCounter); maxcounter > 0)
     {
         auto counter = maxcounter / SamplesPerStep;
-        auto steprem = gsl::narrow_cast<std::size_t>(
-            SamplesPerStep - (maxcounter&SamplesPerStepMask));
+        auto steprem = gsl::narrow_cast<usize>(SamplesPerStep - (maxcounter&SamplesPerStepMask));
         while(counter > 0)
         {
             auto const td = std::min(steprem, src.size());
@@ -299,7 +293,7 @@ void BiquadInterpFilter::dualProcess(BiquadInterpFilter &other, std::span<float 
             if(steprem)
             {
                 steprem = SamplesPerStep - steprem;
-                mCounter = (counter*SamplesPerStep) | gsl::narrow_cast<int>(steprem);
+                mCounter = (counter*SamplesPerStep) | gsl::narrow_cast<i32>(steprem);
                 other.mCounter = mCounter;
                 return;
             }
@@ -318,7 +312,7 @@ void BiquadInterpFilter::dualProcess(BiquadInterpFilter &other, std::span<float 
                 break;
             }
 
-            auto const a = 1.0f / static_cast<float>(counter+1);
+            auto const a = 1.0f / static_cast<f32>(counter+1);
             mCoeffs.mB0 = lerpf(mCoeffs.mB0, mTargetCoeffs.mB0, a);
             mCoeffs.mB1 = lerpf(mCoeffs.mB1, mTargetCoeffs.mB1, a);
             mCoeffs.mB2 = lerpf(mCoeffs.mB2, mTargetCoeffs.mB2, a);

@@ -1,8 +1,9 @@
 #ifndef CORE_ENCODERBASE_HPP
 #define CORE_ENCODERBASE_HPP
 
-#include <cstddef>
 #include <span>
+
+#include "altypes.hpp"
 
 
 struct EncoderBase {
@@ -14,7 +15,7 @@ struct EncoderBase {
     auto operator=(const EncoderBase&) -> void = delete;
     auto operator=(EncoderBase&&) -> void = delete;
 
-    virtual auto getDelay() noexcept -> std::size_t = 0;
+    virtual auto getDelay() noexcept -> usize = 0;
 
     /** Encodes a 2-channel output signal from a B-Format input signal. */
     virtual auto encode(std::span<float> LeftOut, std::span<float> RightOut,

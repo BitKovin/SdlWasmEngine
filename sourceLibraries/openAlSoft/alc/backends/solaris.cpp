@@ -46,15 +46,10 @@
 #include "althrd_setname.h"
 #include "core/device.h"
 #include "core/helpers.h"
+#include "core/logging.h"
 #include "gsl/gsl"
 
 #include <sys/audioio.h>
-
-#if HAVE_CXXMODULES
-import logging;
-#else
-#include "core/logging.h"
-#endif
 
 
 namespace {
@@ -80,7 +75,7 @@ struct SolarisBackend final : BackendBase {
 
     int mFd{-1};
 
-    unsigned mFrameStep{};
+    u32 mFrameStep{};
     std::vector<std::byte> mBuffer;
 
     std::atomic<bool> mKillNow{true};
@@ -99,8 +94,8 @@ int SolarisBackend::mixerProc()
     SetRTPriority();
     althrd_setname(GetMixerThreadName());
 
-    auto const frame_step = std::size_t{mDevice->channelsFromFmt()};
-    auto const frame_size = std::size_t{mDevice->frameSizeFromFmt()};
+    auto const frame_step = usize{mDevice->channelsFromFmt()};
+    auto const frame_size = usize{mDevice->frameSizeFromFmt()};
 
     while(!mKillNow.load(std::memory_order_acquire)
         && mDevice->Connected.load(std::memory_order_acquire))
@@ -124,7 +119,7 @@ int SolarisBackend::mixerProc()
         }
 
         auto buffer = std::span{mBuffer};
-        mDevice->renderSamples(buffer.data(), gsl::narrow_cast<unsigned>(buffer.size()/frame_size),
+        mDevice->renderSamples(buffer.data(), gsl::narrow_cast<u32>(buffer.size()/frame_size),
             frame_step);
         while(!buffer.empty() && !mKillNow.load(std::memory_order_acquire))
         {
@@ -138,7 +133,7 @@ int SolarisBackend::mixerProc()
                 break;
             }
 
-            buffer = buffer.subspan(gsl::narrow<std::size_t>(wrote));
+            buffer = buffer.subspan(gsl::narrow<usize>(wrote));
         }
     }
 
@@ -227,7 +222,7 @@ bool SolarisBackend::reset()
         return false;
     }
 
-    auto const frame_size = unsigned{mDevice->bytesFromFmt() * info.play.channels};
+    auto const frame_size = u32{mDevice->bytesFromFmt() * info.play.channels};
     mFrameStep = info.play.channels;
     mDevice->mSampleRate = info.play.sample_rate;
     mDevice->mBufferSize = info.play.buffer_size / frame_size;
@@ -236,7 +231,7 @@ bool SolarisBackend::reset()
 
     setDefaultChannelOrder();
 
-    mBuffer.resize(mDevice->mUpdateSize * std::size_t{frame_size});
+    mBuffer.resize(mDevice->mUpdateSize * usize{frame_size});
     std::ranges::fill(mBuffer, std::byte{});
 
     return true;

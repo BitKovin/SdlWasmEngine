@@ -70,7 +70,7 @@ struct FontAtlas {
     int    lineGap = 0;
 
     // ── Atlas bitmap ─────────────────────────────────────────────────────────
-    static constexpr int ATLAS_W = 2048;
+    static constexpr int ATLAS_W = 2048*2;
     static constexpr int ATLAS_H = 2048;
     std::vector<uint8_t> pixels;         // ATLAS_W * ATLAS_H * 4 (RGBA8)
     bgfx::TextureHandle  texture = BGFX_INVALID_HANDLE;
@@ -101,9 +101,9 @@ struct FontAtlas {
     // ── Init / Destroy ────────────────────────────────────────────────────────
 
     
-    bool Init(const char* path, float height, int paddingSize = 5)
+    bool Init(const char* path, float height, int paddingSize = 3)
     {
-        padding = static_cast<int>(height / 2) + paddingSize;
+        padding = static_cast<int>(height / 3) + paddingSize;
         packX = padding;
         packY = padding;
         rowH = 0;

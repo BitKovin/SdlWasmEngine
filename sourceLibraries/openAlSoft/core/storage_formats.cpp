@@ -48,7 +48,7 @@ auto NameFromFormat(FmtChannels const channels) noexcept -> std::string_view
     return "<internal error>"sv;
 }
 
-auto BytesFromFmt(FmtType const type) noexcept -> unsigned
+auto BytesFromFmt(FmtType const type) noexcept -> u32
 {
     switch(type)
     {
@@ -65,7 +65,7 @@ auto BytesFromFmt(FmtType const type) noexcept -> unsigned
     return 0;
 }
 
-auto ChannelsFromFmt(FmtChannels const chans, unsigned const ambiorder) noexcept -> unsigned
+auto ChannelsFromFmt(FmtChannels const chans, u32 const ambiorder) noexcept -> u32
 {
     switch(chans)
     {
