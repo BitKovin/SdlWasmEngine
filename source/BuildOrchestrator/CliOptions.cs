@@ -2,7 +2,14 @@ namespace REngine.BuildOrchestrator;
 
 internal sealed class CliOptions
 {
+    /// <summary>Bumped whenever a meaningful behavior change ships, so `--version` can answer
+    /// "am I actually running the build I think I am" — the one question that would have made
+    /// this class of bug (stale exe, old activation logic) obvious immediately instead of
+    /// requiring a live debugging session.</summary>
+    public const string ToolVersion = "2026-07-25.2 (GDK vars-script activation, GameData caching, configure-skip)";
+
     public string ConfigPath { get; private set; } = "build-targets.json";
+    public bool ShowVersion { get; private set; }
     public bool DryRun { get; private set; }
     public bool Clean { get; private set; }
     public bool ForceGameData { get; private set; }
@@ -53,6 +60,9 @@ internal sealed class CliOptions
                 case "--help":
                     options.ShowHelp = true;
                     break;
+                case "--version":
+                    options.ShowVersion = true;
+                    break;
                 default:
                     throw new ArgumentException($"Unknown argument: {args[i]} (use --help)");
             }
@@ -87,6 +97,7 @@ internal sealed class CliOptions
           --parallel         Build independent targets concurrently (overrides config)
           --sequential       Build targets one at a time (overrides config)
           -h, --help         Show this help
+          --version          Print the tool version and exit
 
         Examples:
           rengine-build --init

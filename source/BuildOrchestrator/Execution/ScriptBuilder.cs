@@ -120,7 +120,7 @@ public static class ScriptBuilder
             var autoArgs = config.FinalizeGameDataOnce ? "-DSKIP_GAMEDATA_FINALIZE=1" : "";
             var extraArgs = string.Join(' ', new[] { autoArgs }.Concat(target.ExtraCMakeArgs).Where(a => a.Length > 0));
 
-            Line($"echo '=== Configuring [{target.Name}] (sniper container) ==='");
+            Line($"echo '=== Configuring [{target.Name}] (docker container) ==='");
             Line(
                 $"cmake -S \"{repoRootContainer}\" -B \"{buildDirContainer}\" -G \"{target.Generator}\" " +
                 $"-DCMAKE_BUILD_TYPE={target.Configuration}{toolchainArg} -DGAME_NAME=\"{gameName}\" {extraArgs}");

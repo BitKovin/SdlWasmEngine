@@ -2,7 +2,7 @@
   {
     "Name": "windows-gdk",
     "Success": true,
-    "DurationSeconds": 0,
+    "DurationSeconds": 100.4910888,
     "LogFilePath": "F:\\Git\\SdlWasmEngine\\BuildLogs\\windows-gdk.log",
     "ErrorMessage": null
   }

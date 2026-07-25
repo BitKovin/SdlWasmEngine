@@ -2266,7 +2266,7 @@ void Player::Update()
 				dashDir = playerForward;
 			}
 
-			dashVector = dashDir * 15.0f;
+			dashVector = dashDir * 25.0f;
 
 			dashProgress.AddDelay(0.25f);
 

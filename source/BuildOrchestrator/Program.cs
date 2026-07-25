@@ -25,6 +25,12 @@ internal static class Program
             return 0;
         }
 
+        if (options.ShowVersion)
+        {
+            Console.WriteLine(CliOptions.ToolVersion);
+            return 0;
+        }
+
         if (options.Init)
         {
             try

@@ -114,7 +114,6 @@ public:
 		SyncMoveClipPhase();
 
 		Speed = crouched ? kCrouchSpeedMultiplier : 1.0f;
-
 		Animator::Update();
 	}
 
@@ -181,8 +180,8 @@ public:
 			blendIn(sideAxisAnim, sideWeight);
 		}
 
-		pose = AnimationPose::LayeredLerp("spine_01", idleAnim->GetRootNode(), pose, upperBody->GetAnimationPose(), 0.5, 0.5);
-		pose = AnimationPose::LayeredLerp("spine_02", idleAnim->GetRootNode(), pose, upperBody->GetAnimationPose(), 1.0, 1.0);
+		pose = AnimationPose::LayeredLerp("spine_01", idleAnim->GetRootNode(), pose, idleAnim->GetAnimationPose(), 0.5, 0.5);
+		pose = AnimationPose::LayeredLerp("spine_02", idleAnim->GetRootNode(), pose, idleAnim->GetAnimationPose(), 1.0, 1.0);
 
 		return pose;
 	}

@@ -313,13 +313,6 @@ set(BGFX_INSTALL        OFF CACHE BOOL "" FORCE)
 add_subdirectory(${LIB_DIR}/bgfx/bgfx.cmake)
 target_link_libraries(engine PUBLIC bgfx bx)
 
-# --- bit7z ---
-set(BIT7Z_AUTO_FORMAT ON CACHE BOOL "enable auto format support" FORCE)
-add_subdirectory(${LIB_DIR}/bit7z)
-target_link_libraries(engine PUBLIC bit7z)
-
-add_subdirectory(${LIB_DIR}/vaudio)
-target_link_libraries(engine PUBLIC vaudio_native)
 
 # ——————————————————————————————————————————————————————————
 # Hook 3 — post-library platform fixups
@@ -407,7 +400,6 @@ if(NOT ENGINE_AS_LIBRARY)
 
     add_executable(${GAME_TARGET_NAME} ${GAME_SOURCES})
 
-    vaudio_copy_runtime(${GAME_TARGET_NAME})
 
     if(MSVC)
         target_compile_options(${GAME_TARGET_NAME} PRIVATE /EHsc)

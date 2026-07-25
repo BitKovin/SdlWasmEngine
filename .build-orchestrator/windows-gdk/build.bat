@@ -1,8 +1,8 @@
 @echo off
 setlocal enabledelayedexpansion
 
-echo === Activating Visual Studio environment ===
-call "D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
+echo === Activating GDK environment ===
+call "C:\Program Files (x86)\Microsoft GDK\Command Prompts\GamingDesktopVars.cmd" GamingDesktopVS2022
 if errorlevel 1 (
   echo Failed to activate build environment.
   exit /b 1

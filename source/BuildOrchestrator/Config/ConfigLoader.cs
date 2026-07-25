@@ -77,6 +77,11 @@ public static class ConfigLoader
                                             || string.IsNullOrWhiteSpace(target.Gdk.Flavor))
                         throw new InvalidOperationException(
                             $"Target '{target.Name}' ({target.Kind}) needs 'gdk.varsScriptPath' and 'gdk.flavor'.");
+                    if (target.Windows is not null)
+                        Console.Error.WriteLine(
+                            $"Warning: target '{target.Name}' ({target.Kind}) has a 'windows' block set, " +
+                            "but GDK targets activate via 'gdk' instead — 'windows' is ignored for this target. " +
+                            "Safe to remove.");
                     break;
                 case TargetKind.Linux:
                     if (target.Docker is null || string.IsNullOrWhiteSpace(target.Docker.Image))
