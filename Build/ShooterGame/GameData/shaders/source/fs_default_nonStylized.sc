@@ -235,6 +235,9 @@ void main()
     if(length(T) < 0.1)
         normal = N;
 
+    if (gl_FrontFacing)
+        normal = -normal;
+
     vec3 lightDir = normalize(direct_light_dir.xyz);
     vec3 viewDir  = normalize(cameraPosition.xyz - v_world.xyz);
 

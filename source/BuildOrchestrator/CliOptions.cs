@@ -5,6 +5,7 @@ internal sealed class CliOptions
     public string ConfigPath { get; private set; } = "build-targets.json";
     public bool DryRun { get; private set; }
     public bool Clean { get; private set; }
+    public bool ForceGameData { get; private set; }
     public bool Init { get; private set; }
     public bool List { get; private set; }
     public bool ShowHelp { get; private set; }
@@ -32,6 +33,9 @@ internal sealed class CliOptions
                     break;
                 case "--clean":
                     options.Clean = true;
+                    break;
+                case "--force-gamedata":
+                    options.ForceGameData = true;
                     break;
                 case "--init":
                     options.Init = true;
@@ -78,6 +82,7 @@ internal sealed class CliOptions
           --list             List configured targets (enabled/disabled) and exit
           --only a,b,c       Build only the named targets
           --clean            Delete each target's build directory before configuring
+          --force-gamedata   Bypass GameData's unchanged-skip check and reprocess it anyway
           --dry-run          Print the generated build script for each target without running it
           --parallel         Build independent targets concurrently (overrides config)
           --sequential       Build targets one at a time (overrides config)

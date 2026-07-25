@@ -133,6 +133,7 @@ void Renderer::RenderLevel(Level* level, bgfx::FrameBufferHandle targetFrameBuff
         bgfx::setViewClear(ViewIdManager::GetCurrentId(),
             BGFX_CLEAR_COLOR, kClearBlack, 1.0f, 0);
 
+        
         blurShader->UseProgram();
         blurShader->SetTexture("uAccumulated", BlurAccumulatedBuffer->textureHandle());
         blurShader->SetTexture("uCustomIdTex", customIdResolveBuffer->textureHandle());

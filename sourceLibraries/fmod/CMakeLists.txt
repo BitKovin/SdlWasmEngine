@@ -25,14 +25,33 @@ set(FMOD_LIB_DIR ${CMAKE_CURRENT_LIST_DIR}/lib/x86_64)
 
 # Copies a real fmod binary next to `target`'s output, under the
 # filename the dynamic loader expects (its SONAME).
+#
+# NOTE: this intentionally does NOT use add_custom_command(... POST_BUILD ...).
+# POST_BUILD steps only run when the target actually relinks. If the staged
+# .so is later deleted (e.g. a clean-output script, packaging step, or you
+# just rm it by hand) and you then do an incremental rebuild with no source
+# changes, the executable is already "up to date" and POST_BUILD never fires
+# -- so the file silently stays missing. Using an ALL custom_target instead
+# means this reruns (cheaply -- copy_if_different is a no-op when the file
+# already matches) on every single build invocation, guaranteeing the file
+# is always there after `cmake --build .`, regardless of relink state.
 function(fmod_stage_runtime_lib real_file soname_file target)
-    add_custom_command(TARGET ${target} POST_BUILD
+    if(NOT EXISTS "${real_file}")
+        message(WARNING "FMOD: expected runtime lib not found on disk: ${real_file}")
+    endif()
+
+    # Sanitize soname_file (e.g. "libfmod.so.13" -> "libfmod_so_13") for use
+    # as part of a target name.
+    string(MAKE_C_IDENTIFIER "${target}_stage_${soname_file}" _stage_target)
+
+    add_custom_target(${_stage_target} ALL
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${real_file}"
             "$<TARGET_FILE_DIR:${target}>/${soname_file}"
         COMMENT "Staging ${soname_file} next to $<TARGET_FILE_NAME:${target}>"
         VERBATIM
     )
+    add_dependencies(${_stage_target} ${target})
 endfunction()
 
 # --------------------------------------------------
@@ -81,6 +100,11 @@ elseif(UNIX)
     )
     set(FMOD_CORE_REAL_LIB ${FMOD_LIB_DIR}/libfmod.so.13.23 CACHE INTERNAL "")
     set(FMOD_CORE_SONAME   libfmod.so.13                    CACHE INTERNAL "")
+
+    if(NOT EXISTS "${FMOD_CORE_REAL_LIB}")
+        message(WARNING "FMOD: core runtime lib not found on disk: ${FMOD_CORE_REAL_LIB}")
+    endif()
+    message(STATUS "FMOD core: real=${FMOD_CORE_REAL_LIB} soname=${FMOD_CORE_SONAME}")
 endif()
 
 # --------------------------------------------------
@@ -106,6 +130,11 @@ elseif(UNIX)
     )
     set(FMOD_STUDIO_REAL_LIB ${FMOD_LIB_DIR}/libfmodstudio.so.13.23 CACHE INTERNAL "")
     set(FMOD_STUDIO_SONAME   libfmodstudio.so.13                    CACHE INTERNAL "")
+
+    if(NOT EXISTS "${FMOD_STUDIO_REAL_LIB}")
+        message(WARNING "FMOD: studio runtime lib not found on disk: ${FMOD_STUDIO_REAL_LIB}")
+    endif()
+    message(STATUS "FMOD studio: real=${FMOD_STUDIO_REAL_LIB} soname=${FMOD_STUDIO_SONAME}")
 endif()
 
 # CRITICAL: studio depends on core (this is what was missing for Linux shared libs)
@@ -130,6 +159,16 @@ function(fmod_link_and_stage target)
     target_link_libraries(${target} PUBLIC fmod)
 
     if(UNIX AND NOT EMSCRIPTEN)
+        if(NOT FMOD_CORE_REAL_LIB OR NOT FMOD_CORE_SONAME)
+            message(FATAL_ERROR "FMOD: FMOD_CORE_REAL_LIB/FMOD_CORE_SONAME are unset when staging '${target}' -- "
+                                 "the fmod_core UNIX branch above never ran in this scope. "
+                                 "Make sure this CMakeLists.txt is add_subdirectory()'d before fmod_link_and_stage() is called.")
+        endif()
+        if(NOT FMOD_STUDIO_REAL_LIB OR NOT FMOD_STUDIO_SONAME)
+            message(FATAL_ERROR "FMOD: FMOD_STUDIO_REAL_LIB/FMOD_STUDIO_SONAME are unset when staging '${target}'.")
+        endif()
+        message(STATUS "FMOD: staging for target '${target}': core=${FMOD_CORE_REAL_LIB} studio=${FMOD_STUDIO_REAL_LIB}")
+
         fmod_stage_runtime_lib(${FMOD_CORE_REAL_LIB}   ${FMOD_CORE_SONAME}   ${target})
         fmod_stage_runtime_lib(${FMOD_STUDIO_REAL_LIB} ${FMOD_STUDIO_SONAME} ${target})
         # Some code paths / dlopen() calls may ask for the unversioned name too.

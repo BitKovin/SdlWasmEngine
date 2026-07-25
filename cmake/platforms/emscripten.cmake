@@ -95,8 +95,21 @@ function(platform_configure_game_target game_target)
     message(STATUS "Emscripten: OUTPUT_NAME='main', SUFFIX='.html'")
 
     # ---- WASM linker flags ----
-    # OUTPUT_BASE_DIR is readable from the calling scope (CMake functions
-    # inherit parent-scope variables for reading).
+    # OUTPUT_BASE_DIR/ENGINE_ROOT/GAME_NAME/SKIP_GAMEDATA_FINALIZE are readable
+    # from the calling scope (CMake functions inherit parent-scope variables
+    # for reading). When GameData was finalized once, centrally, before any
+    # platform build started (SKIP_GAMEDATA_FINALIZE=1 — see
+    # BuildScripts/PrepareGameData.cmake), preload directly from that shared
+    # location instead of a per-platform copy. This also sidesteps a
+    # pre-existing ordering issue: --preload-file needs GameData to already
+    # exist AT LINK TIME, but a per-platform finalize only ran in POST_BUILD,
+    # i.e. strictly after linking already completed.
+    if(SKIP_GAMEDATA_FINALIZE)
+        set(_gamedata_preload_dir "${ENGINE_ROOT}/Build/${GAME_NAME}/GameData")
+    else()
+        set(_gamedata_preload_dir "${OUTPUT_BASE_DIR}/GameData")
+    endif()
+
     set(_link_opts
         "SHELL:-s USE_SDL=2"
         "SHELL:-s USE_WEBGL2=1"
@@ -109,7 +122,7 @@ function(platform_configure_game_target game_target)
         "SHELL:-s WASM=1"
         "SHELL:-s ASSERTIONS=1"
 
-        "SHELL:--preload-file ${OUTPUT_BASE_DIR}/GameData@/GameData"
+        "SHELL:--preload-file ${_gamedata_preload_dir}@/GameData"
 
         "SHELL:-s GL_SUPPORT_AUTOMATIC_ENABLE_EXTENSIONS=1"
         "SHELL:-lidbfs.js"

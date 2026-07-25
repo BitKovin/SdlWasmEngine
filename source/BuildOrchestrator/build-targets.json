@@ -4,6 +4,7 @@
   "LogDirectory": "BuildLogs",
   "Parallel": false,
   "MaxParallelism": 2,
+  "FinalizeGameDataOnce": true,
   "Targets": [
     {
       "Name": "windows",
@@ -21,7 +22,8 @@
         "Arch": "x64"
       },
       "Docker": null,
-      "Emscripten": null
+      "Emscripten": null,
+      "Gdk": null
     },
     {
       "Name": "linux",
@@ -32,15 +34,28 @@
       "Generator": "Ninja",
       "GameName": null,
       "ExtraCMakeArgs": [],
-      "ExtraEnvCommands": [],
+      "ExtraEnvCommands": [
+        "CMAKE_VERSION=3.31.12",
+        "if [ ! -x /cache/cmake/bin/cmake ]; then",
+        "  echo \u0027Bootstrapping CMake \u0027$CMAKE_VERSION\u0027 into cache volume (first run only)...\u0027",
+        "  curl -fsSL \u0022https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz\u0022 -o /tmp/cmake.tar.gz",
+        "  mkdir -p /cache/cmake",
+        "  tar -xzf /tmp/cmake.tar.gz -C /cache/cmake --strip-components=1",
+        "fi",
+        "export PATH=/cache/cmake/bin:$PATH",
+        "cmake --version"
+      ],
       "Configuration": "Release",
       "Windows": null,
       "Docker": {
         "Image": "registry.gitlab.steamos.cloud/steamrt/sniper/sdk:latest",
         "ContainerRepoPath": "/repo",
-        "ExtraDockerArgs": []
+        "ExtraDockerArgs": [],
+        "CacheVolumeName": "rengine-linux-build-cache",
+        "CacheMountPath": "/cache"
       },
-      "Emscripten": null
+      "Emscripten": null,
+      "Gdk": null
     },
     {
       "Name": "emscripten",
@@ -57,7 +72,8 @@
       "Docker": null,
       "Emscripten": {
         "EmsdkEnvScript": "C:\\emsdk\\emsdk_env.bat"
-      }
+      },
+      "Gdk": null
     },
     {
       "Name": "xbox-gdk",
@@ -72,12 +88,13 @@
       ],
       "ExtraEnvCommands": [],
       "Configuration": "Release",
-      "Windows": {
-        "VcVarsAllPath": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Auxiliary\\Build\\vcvarsall.bat",
-        "Arch": "amd64"
-      },
+      "Windows": null,
       "Docker": null,
-      "Emscripten": null
+      "Emscripten": null,
+      "Gdk": {
+        "VarsScriptPath": "C:\\Program Files (x86)\\Microsoft GDK\\Command Prompts\\GamingXboxVars.cmd",
+        "Flavor": "GamingXboxVS2022"
+      }
     },
     {
       "Name": "windows-gdk",
@@ -92,12 +109,13 @@
       ],
       "ExtraEnvCommands": [],
       "Configuration": "Release",
-      "Windows": {
-        "VcVarsAllPath": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Auxiliary\\Build\\vcvarsall.bat",
-        "Arch": "amd64"
-      },
+      "Windows": null,
       "Docker": null,
-      "Emscripten": null
+      "Emscripten": null,
+      "Gdk": {
+        "VarsScriptPath": "C:\\Program Files (x86)\\Microsoft GDK\\Command Prompts\\GamingDesktopVars.cmd",
+        "Flavor": "GamingDesktopVS2022"
+      }
     }
   ]
 }

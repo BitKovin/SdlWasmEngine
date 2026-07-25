@@ -1,0 +1,3 @@
+set_property(TARGET "OpenAL::OpenAL"
+  PROPERTY IMPORTED_CXX_MODULES_RELEASE
+)

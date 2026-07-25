@@ -9,7 +9,7 @@ if errorlevel 1 (
 )
 
 echo === Configuring [emscripten] ===
-emcmake cmake -S "F:\Git\SdlWasmEngine" -B "F:\Git\SdlWasmEngine\build\emscripten" -G "Ninja" -DCMAKE_BUILD_TYPE=Release -DGAME_NAME="ShooterGame" 
+emcmake cmake -S "F:\Git\SdlWasmEngine" -B "F:\Git\SdlWasmEngine\build\emscripten" -G "Ninja" -DCMAKE_BUILD_TYPE=Release -DGAME_NAME="ShooterGame" -DSKIP_GAMEDATA_FINALIZE=1
 if errorlevel 1 exit /b 1
 
 echo === Building [emscripten] ===

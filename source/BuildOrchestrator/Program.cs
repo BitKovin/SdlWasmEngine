@@ -95,7 +95,7 @@ internal static class Program
             cts.Cancel();
         };
 
-        var engine = new OrchestratorEngine(config, options.DryRun, options.Clean);
+        var engine = new OrchestratorEngine(config, options.DryRun, options.Clean, options.ForceGameData);
         var results = await engine.RunAsync(targets, cts.Token);
 
         return results.All(r => r.Success) ? 0 : 1;
