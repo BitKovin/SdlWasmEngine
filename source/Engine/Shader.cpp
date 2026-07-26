@@ -1059,3 +1059,19 @@ void Shader::EnsureMissingTexture()
             bgfx::setName(s_blackTexture, "default_black_texture");
     }
 }
+
+
+void Shader::ClearStaticResources()
+{
+    if (bgfx::isValid(s_missingTexture))
+    {
+        bgfx::destroy(s_missingTexture);
+        s_missingTexture = BGFX_INVALID_HANDLE;
+    }
+
+    if (bgfx::isValid(s_blackTexture))
+    {
+        bgfx::destroy(s_blackTexture);
+        s_blackTexture = BGFX_INVALID_HANDLE;
+    }
+}

@@ -2183,7 +2183,7 @@ bool CQuake3BSP::RenderMergedFace(int mergedIndex, bool lightmap,
     }
 
     Shader* shader = ShaderManager::GetShaderProgram(
-        "vs_bsp", data.isCube ? "bsp/fs_bsp_cube" : "bsp/fs_bsp");
+        "bsp/vs_bsp", data.isCube ? "bsp/fs_bsp_cube" : "bsp/fs_bsp");
     shader->UseProgram();
 
     shader->SetUniform("useVertexLight",

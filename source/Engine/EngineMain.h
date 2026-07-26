@@ -22,7 +22,7 @@
 #include "MapParser.h"
 
 #include "Renderer/Renderer.h"
-#include "SaveSystem/LevelSaveSystem.h"
+#include "SaveSystem/GameSaveSystem.h"
 
 #include <FileSystem/FileSystem.h>
 
@@ -35,6 +35,8 @@ private:
 
 
 public:
+
+    GameSaveData pendingRestoreSaveData;// for platforms like android we just save and reload game when minimized
 
 	std::shared_ptr<IFileSystem> FileSystem;
 

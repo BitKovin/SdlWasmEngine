@@ -1,0 +1,118 @@
+apply plugin: 'com.android.application'
+
+// Lets you override which game gets built without editing this file, e.g.
+//   ./gradlew assembleDebug -PgameName=MyGame
+// mirroring the desktop -DGAME_NAME=MyGame configure argument. Falls back
+// to the same "Game" default the root CMakeLists.txt uses.
+def gameName = project.hasProperty('gameName') ? project.property('gameName') : 'ShooterGame'
+
+// See the comment on the -DCMAKE_MAKE_PROGRAM argument below for why this
+// is here at all. Forward slashes because CMake wants them even on Windows.
+def ninjaOverride = file('jni/ninja.exe').absolutePath.replace('\\', '/')
+
+android {
+    // TODO rename — this becomes both the R class package and (since no
+    // applicationId is set below) the manifest package / app ID.
+    namespace "com.bitkovin.shootergame"
+
+    compileSdk 36
+    ndkVersion "28.2.13676358" // NDK r28c — first LTS-adjacent release that
+                                // 16 KB-aligns by default (Google Play has
+                                // required 16 KB page-size support since
+                                // Nov 2025). Update via SDK Manager if a
+                                // newer r28.x/r29.x is out; keep it pinned
+                                // rather than "whatever AGP defaults to" so
+                                // builds are reproducible.
+
+    defaultConfig {
+        applicationId "com.bitkovin.shootergame"
+        minSdk 24     // TODO adjust; NDK r28 supports down to API 21
+        targetSdk 36  // Google Play requires targeting API 36 for new
+                      // submissions/updates from Aug 31, 2026 — see
+                      // https://support.google.com/googleplay/android-developer/answer/11926878
+        versionCode 1
+        versionName "1.0"
+
+        externalNativeBuild {
+            cmake {
+                // -DANDROID_STL: Gradle's externalNativeBuild talks to the
+                // NDK's toolchain file directly (it does NOT go through
+                // cmake/toolchains/android.cmake — that wrapper is only
+                // used for a bare `cmake -DCMAKE_TOOLCHAIN_FILE=...`
+                // invocation outside Gradle), so the STL choice has to be
+                // repeated here to keep both paths in agreement. See the
+                // comment on ANDROID_STL in that file for why c++_shared.
+                // -DCMAKE_MAKE_PROGRAM: overrides the Ninja that ships
+                // bundled with the SDK Manager's "cmake;3.31.5" package
+                // (1.10.2 as of this writing). openal-soft declares C++20
+                // module targets (alsoft.modules etc.) whenever the CMake
+                // version/compiler support them, but doesn't itself check
+                // Ninja's version — and CMake's own module-scanning dyndep
+                // support needs Ninja >= 1.11, which 1.10.2 doesn't have.
+                // Drop a newer ninja.exe next to jni/CMakeLists.txt (or
+                // anywhere else) and point this at it. This line appears
+                // after AGP's own -DCMAKE_MAKE_PROGRAM= on the actual
+                // command line, so it wins.
+                arguments "-DANDROID_STL=c++_shared", "-DGAME_NAME=${gameName}", "-DCMAKE_MAKE_PROGRAM=${ninjaOverride}"
+            }
+        }
+
+        // Trim to what you actually ship; arm64-v8a covers effectively all
+        // current devices, x86_64 covers the emulator and Chromebooks.
+        // Add armeabi-v7a/x86 back only if you still need 32-bit reach.
+        ndk {
+            abiFilters "arm64-v8a", "x86_64"
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path "jni/CMakeLists.txt"
+            // Must be 3.26+: openal-soft's CMakeLists.txt uses the
+            // $<BUILD_LOCAL_INTERFACE:...> generator expression, which
+            // doesn't exist before CMake 3.26 and fails with "Expression
+            // did not evaluate to a known generator expression" on the
+            // SDK Manager's default 3.22.1. Install this exact version (or
+            // whatever's current) via SDK Manager -> SDK Tools -> CMake
+            // (check "Show Package Details" to see version choices).
+            version "3.31.5"
+        }
+    }
+
+    // Guarantees GameData (copied into src/main/assets/GameData by
+    // BuildScripts/PrepareGameData.cmake, via ANDROID_APP_ASSETS_DIR set in
+    // jni/CMakeLists.txt) exists before Gradle merges assets into the APK.
+    applicationVariants.all { variant ->
+        tasks["merge${variant.name.capitalize()}Assets"]
+            .dependsOn("externalNativeBuild${variant.name.capitalize()}")
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    // If profiling shows large GameData assets loading slowly, SDL's fast
+    // "File Descriptor" read path only works on UNCOMPRESSED assets — AAPT
+    // compresses some extensions by default. Uncomment and list whichever
+    // of your GameData extensions are large/hot (this repo's own
+    // finalize_gamedata.py already .zip's oversized folders itself, so
+    // start by checking whether that's colliding with this):
+    // androidResources {
+    //     noCompress += ['glb', 'bank', 'zip']
+    // }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    lint {
+        abortOnError false
+    }
+    dependencies {
+    implementation files('libs/fmod.jar')
+}
+}

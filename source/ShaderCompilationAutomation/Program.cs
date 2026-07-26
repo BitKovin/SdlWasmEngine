@@ -57,6 +57,11 @@ class ShaderCompiler
             // Linux
             ("linux/gl",      "linux",   "gl",    "140",    "140"),
             ("linux/spirv",   "linux",   "spirv", "spirv",  "spirv"),
+
+            // Android
+            ("android/gles",  "android", "glsl",  "300_es", "300_es"),
+            ("android/spirv", "android", "spirv", "spirv",  "spirv"),
+
             // Web
             ("web/gles",      "html5",   "glsl",  "300_es", "300_es"),
             ("web/spirv",     "html5",   "spirv", "spirv",  "spirv"),

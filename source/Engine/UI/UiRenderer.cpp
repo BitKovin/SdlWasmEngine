@@ -108,18 +108,15 @@ struct FontAtlas {
         packY = padding;
         rowH = 0;
 
-        // Read the entire .ttf file into memory
-        FILE* f = std::fopen(path, "rb");
-        if (!f) {
+
+
+        fileData = FileSystemEngine::ReadFileBinary(std::string(path));
+
+        if (fileData.size() == 0)
+        {
             std::cerr << "[UiRenderer] LoadFont: cannot open '" << path << "'\n";
             return false;
         }
-        std::fseek(f, 0, SEEK_END);
-        const long sz = std::ftell(f);
-        std::fseek(f, 0, SEEK_SET);
-        fileData.resize(static_cast<size_t>(sz));
-        std::fread(fileData.data(), 1, static_cast<size_t>(sz), f);
-        std::fclose(f);
 
         if (!stbtt_InitFont(&fontInfo, fileData.data(), 0)) {
             std::cerr << "[UiRenderer] LoadFont: stbtt_InitFont failed for '" << path << "'\n";

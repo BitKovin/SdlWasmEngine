@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- TODO rename to match your game -->
+    <string name="app_name">Indulgencia</string>
+</resources>

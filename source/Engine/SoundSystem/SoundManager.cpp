@@ -6,6 +6,12 @@
 #include "../FileSystem/FileSystem.h"
 #include <Logger.hpp>
 
+#if defined(__ANDROID__)
+#include <jni.h>
+#include <SDL_system.h>
+#include <fmod_android.h>
+#endif
+
 // ALC_SOFT_output_mode — define fallback values so the code compiles against
 // older alext.h headers while still working correctly at runtime when a newer
 // OpenAL Soft driver is present. These constants are stable across versions.
@@ -138,11 +144,35 @@ void SoundManager::InitContext(ALCcontext* context, const char* label, bool expe
 
 void SoundManager::InitFmod()
 {
+#if defined(__ANDROID__)
+    // Retrieve the JNI environment and Activity from SDL
+    JNIEnv* env = (JNIEnv*)SDL_AndroidGetJNIEnv();
+    jobject activity = (jobject)SDL_AndroidGetActivity();
+
+    if (env && activity) {
+        JavaVM* vm = nullptr;
+        env->GetJavaVM(&vm);
+
+        // Bind FMOD to the Android environment
+        FMOD_RESULT jniResult = FMOD_Android_JNI_Init(vm, activity);
+        if (jniResult != FMOD_OK) {
+            Logger::Error("[FMOD] FMOD_Android_JNI_Init failed: %d", jniResult);
+        }
+
+        // Clean up the local JNI reference provided by SDL
+        env->DeleteLocalRef(activity);
+    }
+    else {
+        Logger::Error("[FMOD] Failed to retrieve JNI Env or Activity from SDL.");
+    }
+#endif
+
+    // Proceed with standard FMOD initialization
     FMOD_CHECK(FMOD::Studio::System::create(&studioSystem));
     studioSystem->getCoreSystem(&coreSystem);
 
     unsigned int coreFlags = FMOD_STUDIO_INIT_ALLOW_MISSING_PLUGINS
-                           | FMOD_INIT_3D_RIGHTHANDED;
+        | FMOD_INIT_3D_RIGHTHANDED;
 
 #if __EMSCRIPTEN__
     coreFlags |= FMOD_INIT_STREAM_FROM_UPDATE | FMOD_INIT_MIX_FROM_UPDATE;
@@ -229,16 +259,42 @@ void SoundManager::Initialize()
 
 void SoundManager::Close()
 {
-    for (auto& [path, data] : loadedBuffers)
-        alDeleteBuffers(1, &data.buffer);
-    loadedBuffers.clear();
+    // 1. Unload all cached OpenAL buffers and FMOD banks
+    CleanAllData();
 
+    // 2. Shut down and release the FMOD system
+    if (studioSystem) {
+        FMOD_CHECK(studioSystem->release());
+        studioSystem = nullptr;
+        coreSystem = nullptr;
+    }
+
+#if defined(__ANDROID__)
+    // 3. Unbind FMOD from the Android JNI environment. 
+    // Without this, FMOD fails to re-attach to the new Android activity when maximized.
+    FMOD_Android_JNI_Close();
+#endif
+
+    // 4. Shut down OpenAL contexts and device
     alcMakeContextCurrent(nullptr);
 
-    // Destroy both contexts — the original code accidentally leaked contextStereo.
-    if (contextStereo) { alcDestroyContext(contextStereo); contextStereo = nullptr; }
-    if (contextMono)   { alcDestroyContext(contextMono);   contextMono   = nullptr; }
-    if (device)        { alcCloseDevice(device);           device        = nullptr; }
+    if (contextStereo) {
+        alcDestroyContext(contextStereo);
+        contextStereo = nullptr;
+    }
+    if (contextMono) {
+        alcDestroyContext(contextMono);
+        contextMono = nullptr;
+    }
+    if (device) {
+        alcCloseDevice(device);
+        device = nullptr;
+    }
+
+    // 5. CRITICAL FOR ANDROID: Destroy the SoundInstance Source Pool
+    // Since Initialize() calls SoundInstance::InitPool(), you MUST clear that pool here.
+    // Otherwise, it will hold onto dead OpenAL source handles (ALuint) from the destroyed context.
+    SoundInstance::DestroyPool();
 }
 
 void SoundManager::Update()

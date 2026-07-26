@@ -38,11 +38,17 @@ Level* Level::Current = nullptr;
 
 string Level::pendingLoadLevelPath = "";
 
+bool Level::HasPendingLevelLoad()
+{
+	return pendingLoadLevelPath.empty() == false;
+}
+
 void Level::CloseLevel()
 {
 
 	EngineMain::MainInstance->MainThreadPool->Stop();
 	delete(EngineMain::MainInstance->MainThreadPool);
+	EngineMain::MainInstance->MainThreadPool = nullptr;
 
 	Current->AddPendingLevelObjects();
 	for (LevelObject* obj : Current->LevelObjects)

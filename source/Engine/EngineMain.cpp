@@ -60,6 +60,8 @@ EM_JS(int, canvas_get_height, (), {
 
 EngineMain::~EngineMain()
 {
+    GameUpdateSingleThreadPool->Stop();
+
     NetworkManager::Shutdown();
     FileSystemEngine::Shutdown();
     Level::Current->CloseLevel();
@@ -67,6 +69,10 @@ EngineMain::~EngineMain()
     ParticleEmitter::DestroyBillboardVao();
     delete(RmlUiContext::Main);
     RmlUiContext::Main = nullptr;
+    ShaderManager::Shutdown();
+
+    delete GameUpdateSingleThreadPool;
+    GameUpdateSingleThreadPool = nullptr;
 }
 
 void EngineMain::UpdateScreenSize()
@@ -120,8 +126,6 @@ void EngineMain::ToggleFullscreen()
 
 void EngineMain::initGame()
 {
-
-
     Entity* ent = LevelObjectFactory::instance().create("gamestart");
 
     if (ent == nullptr)
@@ -133,7 +137,7 @@ void EngineMain::initGame()
     Level::Current->AddEntity(ent);
     ent->Start();
 
-    ShaderManager::CompilePSOsFromFile("GameData/PSOs/pso_cache.json");
+    //ShaderManager::CompilePSOsFromFile("GameData/PSOs/pso_cache.json");
 
     return;
 
@@ -403,8 +407,15 @@ void EngineMain::MainLoop()
 
     if (frame == 5) //some platforms require it
     {
+
         ForceUpdateScreenSize(); //hack to fix some rendering issues that happen on some platforms
         initGame();
+
+        if (pendingRestoreSaveData.LevelData.name.empty() == false)//android restore takes priority of level loading
+        {
+            GameSaveSystem::LoadGameFromData(pendingRestoreSaveData);
+        }
+
     }
 
     Viewport.ResetTouchInputs();

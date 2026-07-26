@@ -18,19 +18,13 @@ namespace FileSystemEngine
     }
 
     void Init() {
-        auto nativeFS = std::make_shared<NativeFileSystem>();
-        if (!nativeFS->Init()) {
-            Logger::Log("NativeFileSystem initialization failed");
-            throw std::runtime_error("NativeFileSystem initialization failed");
-        }
-        AddFileSystem(nativeFS);
+        std::lock_guard<std::mutex> lock(g_fsMutex);
 
-        auto zipFS = std::make_shared<ZipVFS>(nativeFS.get(), "GameData/");
-        if (!zipFS->Init()) {
-            Logger::Log("ZipVFS initialization failed");
-            throw std::runtime_error("ZipVFS initialization failed");
+        for (auto fs : g_fileSystems)
+        {
+            fs->Init();
         }
-        AddFileSystem(zipFS);
+
     }
 
     void Shutdown() {

@@ -1247,7 +1247,7 @@ void NetworkManager::BeginLevelLoad(Level* level) {
 }
 
 void NetworkManager::OnLevelLoaded() {
-    assert(s_isActive);
+    //assert(s_isActive);
 
     if (s_isServer) {
         NetPacket pkt(PacketType::LevelLoadComplete);

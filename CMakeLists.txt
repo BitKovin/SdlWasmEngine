@@ -18,11 +18,14 @@ set(ENGINE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}")
 #  Emscripten      cmake/toolchains/clang.cmake  (or skip — emcmake sets the compiler itself)
 #  Windows         cmake/toolchains/msvc.cmake
 #  Xbox GDK        cmake/toolchains/msvc.cmake   (activate GDK env first)
+#  Android         cmake/toolchains/android.cmake (wraps the NDK's own toolchain file)
 #
 # All targets build with Ninja:
-#   cmake -G Ninja -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/<clang|msvc>.cmake ..
+#   cmake -G Ninja -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/<clang|msvc|android>.cmake ..
 #
 # Windows / Xbox GDK: run from a VS Developer Command Prompt so cl.exe is on PATH.
+# Android: normally reached via Gradle (see android/app/build.gradle) rather than
+# configured directly — see cmake/toolchains/android.cmake for both paths.
 # ——————————————————————————————————————————————————————————
 
 # ——————————————————————————————————————————————————————————
@@ -43,6 +46,13 @@ if(NOT ENGINE_DISABLE_PLATFORM_DETECTION)
 
     if(CMAKE_SYSTEM_NAME MATCHES "Emscripten" OR DEFINED EMSCRIPTEN)
         include("${ENGINE_ROOT}/cmake/platforms/emscripten.cmake")
+
+    # The NDK toolchain file (cmake/toolchains/android.cmake) sets both
+    # CMAKE_SYSTEM_NAME=Android and ANDROID=1 before project() ever runs,
+    # so either is a reliable signal — checked before WIN32/Linux so an
+    # Android cross-compile never falls through to those branches.
+    elseif(CMAKE_SYSTEM_NAME MATCHES "Android" OR ANDROID)
+        include("${ENGINE_ROOT}/cmake/platforms/android.cmake")
 
     # 1. Check for EXPLICIT Windows GDK flag first
     elseif(DEFINED WINDOWS_GDK)
@@ -313,7 +323,6 @@ set(BGFX_INSTALL        OFF CACHE BOOL "" FORCE)
 add_subdirectory(${LIB_DIR}/bgfx/bgfx.cmake)
 target_link_libraries(engine PUBLIC bgfx bx)
 
-
 # ——————————————————————————————————————————————————————————
 # Hook 3 — post-library platform fixups
 # (e.g. bimg_encode SSE workaround on Emscripten)
@@ -352,6 +361,18 @@ if(NOT ENGINE_AS_LIBRARY)
     # Output directory layout:  Build/<GAME_NAME>/<PLATFORM_DIR>/
     # ——————————————————————————————————————————————————————————
     set(OUTPUT_BASE_DIR "${ENGINE_ROOT}/Build/${GAME_NAME}/${PLATFORM_DIR}")
+    if(ANDROID)
+        # Gradle builds every ABI listed in abiFilters as a fully separate
+        # CMake configure+build tree (its own .cxx/Debug/<hash>/<abi>/
+        # directory), but PLATFORM_DIR is just "android" regardless of ABI.
+        # Without this, every ABI's build redirects engine/game output to
+        # the exact same physical path and overwrites each other's .a/.so
+        # mid-build -- this is exactly what a linker error like
+        # "libengine.a ... is incompatible with aarch64linux" means: some
+        # other ABI's build clobbered this one's archive on disk after it
+        # was built but before this ABI's link step read it.
+        string(APPEND OUTPUT_BASE_DIR "/${ANDROID_ABI}")
+    endif()
     file(MAKE_DIRECTORY "${OUTPUT_BASE_DIR}")
     file(MAKE_DIRECTORY "${OUTPUT_BASE_DIR}/bin" "${OUTPUT_BASE_DIR}/lib" "${OUTPUT_BASE_DIR}/assets")
 
@@ -398,8 +419,18 @@ if(NOT ENGINE_AS_LIBRARY)
     # ——————————————————————————————————————————————————————————
     string(REGEX REPLACE "[^A-Za-z0-9_]" "_" GAME_TARGET_NAME "${GAME_NAME}")
 
-    add_executable(${GAME_TARGET_NAME} ${GAME_SOURCES})
-
+    # Every other platform here is a process SDL launches directly, so the
+    # game is a real executable. Android has no equivalent — SDLActivity
+    # (android/app/src/main/java/.../GameActivity.java) System.loadLibrary()s
+    # this target and calls into it over JNI — so it has to be a shared
+    # library instead. This is the one place platform_configure_game_target()
+    # can't paper over the difference, since add_executable() vs
+    # add_library(SHARED) has to be decided before the target exists.
+    if(ANDROID)
+        add_library(${GAME_TARGET_NAME} SHARED ${GAME_SOURCES})
+    else()
+        add_executable(${GAME_TARGET_NAME} ${GAME_SOURCES})
+    endif()
 
     if(MSVC)
         target_compile_options(${GAME_TARGET_NAME} PRIVATE /EHsc)

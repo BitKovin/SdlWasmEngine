@@ -8,6 +8,8 @@
 #include "PlatformMains/gdk_main.hpp"
 #elif defined(_WIN32) || defined(WIN32)
 #include "PlatformMains/windows_main.hpp"
+#elif defined(__ANDROID__)
+#include "PlatformMains/android_main.hpp"
 #elif defined(__linux__)
 #include "PlatformMains/linux_main.hpp"
 #else

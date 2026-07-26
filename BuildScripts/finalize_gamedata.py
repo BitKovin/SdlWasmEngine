@@ -3,6 +3,8 @@
 import sys
 import shutil
 import subprocess
+import time
+import json
 from pathlib import Path
 import zipfile
 
@@ -253,6 +255,117 @@ def compress_top_level_dirs(output_root):
             maybe_compress(item)
 
 
+def _zip_entry_mtime(date_time):
+    # ZipInfo.date_time is a naive (year, month, day, hour, min, sec) tuple
+    # in local time, written by zipfile.write() from time.localtime(mtime).
+    # mktime() is the matching inverse -- DOS-time granularity is 2 seconds,
+    # which is fine for staleness checks, not meant to be exact.
+    try:
+        return int(time.mktime((*date_time, 0, 0, -1)))
+    except (OverflowError, ValueError):
+        return 0
+
+
+def build_manifest(output_root):
+    """
+    Index every file and directory under output_root, INCLUDING files that
+    compress_top_level_dirs folded into a .zip and deleted from disk. Paths
+    are relative to output_root itself (no root-folder prefix) -- the same
+    convention zip_folder() already uses for arcnames, so a file's "path"
+    here is identical whether it's currently loose on disk or sitting inside
+    one of the .zip files, and callers only need to know the one prefix
+    (output_root's own name, e.g. "GameData/") to turn an entry into the
+    full runtime asset path.
+
+    This exists mainly for platforms whose native asset enumeration can't be
+    trusted -- e.g. Android's AAssetManager_openDir(), which doesn't
+    reliably report subdirectories on every NDK/API-level combination.
+    """
+    entries = []
+    seen_dirs = set()
+
+    def add_dir_chain(rel_path):
+        # Record every ancestor directory of rel_path so intermediate
+        # folders are listed even if nothing else in this pass touches them
+        # directly (e.g. a directory that's empty on disk, or one whose only
+        # contents came from expanding a .zip below).
+        parts = rel_path.split("/")[:-1]
+        cur = []
+        for part in parts:
+            cur.append(part)
+            d = "/".join(cur)
+            if d not in seen_dirs:
+                seen_dirs.add(d)
+                entries.append({"path": d, "type": "dir"})
+
+    # --- everything currently sitting on disk (loose files, directories,
+    #     and the .zip files themselves as ordinary files) ---
+    for p in output_root.rglob("*"):
+        rel = p.relative_to(output_root).as_posix()
+
+        if p.is_dir():
+            if rel not in seen_dirs:
+                seen_dirs.add(rel)
+                entries.append({"path": rel, "type": "dir"})
+            continue
+
+        add_dir_chain(rel)
+        st = p.stat()
+        entries.append({
+            "path": rel,
+            "type": "file",
+            "size": st.st_size,
+            "mtime": int(st.st_mtime),
+        })
+
+    # --- files packed inside top-level .zip archives (their originals were
+    #     deleted by maybe_compress, so this is the only place they still
+    #     show up) ---
+    for zip_path in output_root.rglob("*.zip"):
+        zip_rel = zip_path.relative_to(output_root).as_posix()
+
+        try:
+            with zipfile.ZipFile(zip_path, "r") as zf:
+                for info in zf.infolist():
+                    if info.is_dir():
+                        continue
+
+                    # arcnames were written relative to output_root by
+                    # zip_folder(), so this is already the exact same
+                    # logical path the file had before compression.
+                    rel = info.filename
+
+                    add_dir_chain(rel)
+                    entries.append({
+                        "path": rel,
+                        "type": "file",
+                        "size": info.file_size,
+                        "mtime": _zip_entry_mtime(info.date_time),
+                        "archive": zip_rel,
+                    })
+
+        except zipfile.BadZipFile:
+            print(f"Warning: couldn't index {zip_path} for manifest (bad zip)")
+
+    entries.sort(key=lambda e: e["path"])
+
+    return {
+        "generatedAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "root": output_root.name,
+        "entries": entries,
+    }
+
+
+def write_manifest(output_root):
+    manifest = build_manifest(output_root)
+    manifest_path = output_root / "manifest.json"
+
+    with open(manifest_path, "w", encoding="utf-8") as f:
+        json.dump(manifest, f, indent=2)
+
+    print(f"Wrote manifest: {manifest_path} ({len(manifest['entries'])} entries)")
+
+
 def main():
 
     if len(sys.argv) != 3:
@@ -281,6 +394,12 @@ def main():
 
     # Step 4: compress resulting folders
     compress_top_level_dirs(dst)
+
+    # Step 5: write a manifest describing every file and directory,
+    # including anything Step 4 folded into a .zip -- gives platforms with
+    # unreliable asset enumeration (Android) a build-time index to read
+    # instead of trying to list the package at runtime.
+    write_manifest(dst)
 
     print(f"Done: {dst}")
 

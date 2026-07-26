@@ -3,9 +3,18 @@
 #pragma once
 #define GLM_ENABLE_EXPERIMENTAL
 #define GLM_FORCE_CXX17
-#define GLM_FORCE_INTRINSICS
 
+// Check for x64 or x86 architecture (GCC/Clang and MSVC macros)
+#if defined(__x86_64__) || defined(_M_X64) || defined(__i386__) || defined(_M_IX86)
+#define GLM_FORCE_INTRINSICS
 #define GLM_FORCE_SSE2
+
+// Check for ARM64 or ARM32 architecture (Typical for Android)
+#elif defined(__aarch64__) || defined(__arm__) || defined(_M_ARM64) || defined(_M_ARM)
+#define GLM_FORCE_INTRINSICS
+#define GLM_FORCE_NEON // NEON is the ARM equivalent to SSE
+
+#endif
 
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>

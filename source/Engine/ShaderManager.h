@@ -92,7 +92,7 @@ private:
 public:
 
     // =========================
-    // 🔹 PROGRAM ACCESS
+    // PROGRAM ACCESS
     // =========================
 
     static Shader* GetShaderProgram(
@@ -124,6 +124,7 @@ public:
         return program;
     }
 
+    static void Shutdown();
 
     // =========================
     // 🔹 PROGRAM INDEX

@@ -159,8 +159,9 @@ bool ImGui_Implbgfx_CreateDeviceObjects()
 
 void ImGui_Implbgfx_InvalidateDeviceObjects()
 {
-    bgfx::destroy(g_AttribLocationTex);
-    bgfx::destroy(g_ShaderHandle);
+    //handled by shader manager
+    //bgfx::destroy(g_AttribLocationTex);
+    //bgfx::destroy(g_ShaderHandle);
 
     if (isValid(g_FontTexture)) {
         bgfx::destroy(g_FontTexture);

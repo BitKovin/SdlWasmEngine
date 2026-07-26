@@ -30,7 +30,7 @@ public:
 	MovebleBrush() : NetworkedEntity()
 	{
 		SaveGame = true;
-
+		ConvexCollision = true;
 		Static = false;
 
 	}

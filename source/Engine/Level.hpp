@@ -91,6 +91,8 @@ public:
 		delete(asyncUpdateThreadPool);
 	}
 
+	static bool HasPendingLevelLoad();
+
 	static void CloseLevel();
 
 	static Level* OpenLevel(string filePath);

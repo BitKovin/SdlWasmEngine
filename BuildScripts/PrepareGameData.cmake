@@ -19,7 +19,7 @@
 option(SKIP_GAMEDATA_FINALIZE
     "Skip running finalize_gamedata.py per-platform; assume Build/<GAME_NAME>/GameData was already finalized once, externally" OFF)
 
-set(GAMEDATA_SCRIPT "${CMAKE_SOURCE_DIR}/BuildScripts/finalize_gamedata.py")
+set(GAMEDATA_SCRIPT "${ENGINE_ROOT}/BuildScripts/finalize_gamedata.py")
 set(GAMEDATA_SOURCE "${GAME_DIR}/GameData")
 
 # Shared, once-finalized location (see RunGameDataFinalize.cmake). Deliberately
@@ -27,8 +27,19 @@ set(GAMEDATA_SOURCE "${GAME_DIR}/GameData")
 # from Build/<GAME_NAME>/<PLATFORM_DIR>/.
 set(GAMEDATA_SHARED_DIR "${ENGINE_ROOT}/Build/${GAME_NAME}/GameData")
 
-# Per-platform destination — unchanged from before.
-set(GAMEDATA_DEST "${OUTPUT_BASE_DIR}/GameData")
+# Per-platform destination — unchanged from before, EXCEPT Android, which has
+# no "next to the executable" — there is no executable. Assets only reach the
+# APK/AAB by sitting in the Gradle module's src/main/assets/ before its
+# merge*Assets task runs, so android/app/jni/CMakeLists.txt sets
+# ANDROID_APP_ASSETS_DIR (a cache var, visible here via add_subdirectory)
+# before handing off to this project, and app/build.gradle already makes
+# merge*Assets depend on the native build (see the comment there) so this
+# POST_BUILD copy is guaranteed to finish first.
+if(ANDROID AND DEFINED ANDROID_APP_ASSETS_DIR)
+    set(GAMEDATA_DEST "${ANDROID_APP_ASSETS_DIR}/GameData")
+else()
+    set(GAMEDATA_DEST "${OUTPUT_BASE_DIR}/GameData")
+endif()
 
 if(SKIP_GAMEDATA_FINALIZE)
 
@@ -48,7 +59,7 @@ if(SKIP_GAMEDATA_FINALIZE)
             COMMAND ${CMAKE_COMMAND} -E remove_directory "${GAMEDATA_DEST}"
             COMMAND ${CMAKE_COMMAND} -E copy_directory "${GAMEDATA_SHARED_DIR}" "${GAMEDATA_DEST}"
 
-            WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+            WORKING_DIRECTORY "${ENGINE_ROOT}"
             VERBATIM
         )
     endif()
@@ -69,7 +80,7 @@ else()
             "${GAMEDATA_SOURCE}"
             "${GAMEDATA_DEST}"
 
-        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+        WORKING_DIRECTORY "${ENGINE_ROOT}"
 
         VERBATIM
     )

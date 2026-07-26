@@ -1,0 +1,22 @@
+# Gradle build outputs and local caches
+.gradle/
+build/
+**/build/
+
+# Ignore Gradle GUI config
+gradle-app.setting
+
+# Project-specific cache
+.gradletasknamecache
+
+# Local configuration (e.g., SDK paths, keystores, or credentials)
+local.properties
+
+# --- DO NOT IGNORE THE WRAPPER ---
+# The wrapper ensures anyone can run your build without installing Gradle first
+!gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+
+app/.cxx
+
+*GameData*

@@ -379,6 +379,7 @@
     <ClCompile Include="Entities\PointLight.cpp" />
     <ClCompile Include="Entities\transformPoint.cpp" />
     <ClCompile Include="EntityHandle.cpp" />
+    <ClCompile Include="FileSystem\AndroidFileSystem.cpp" />
     <ClCompile Include="FileSystem\EmscriptenFileSystem.cpp" />
     <ClCompile Include="FileSystem\FileSystem.cpp" />
     <ClCompile Include="FileSystem\GDKFileSystem.cpp" />
@@ -549,6 +550,7 @@
     <ClInclude Include="Entities\transformPoint.h" />
     <ClInclude Include="Entities\WorldSpawn.h" />
     <ClInclude Include="EntityHandle.h" />
+    <ClInclude Include="FileSystem\AndroidFileSystem.h" />
     <ClInclude Include="FileSystem\EmscriptenFileSystem.h" />
     <ClInclude Include="FileSystem\FileSystem.h" />
     <ClInclude Include="FileSystem\GDKFileSystem.h" />
@@ -661,6 +663,7 @@
     <ClInclude Include="Particle\TrailEmitter.h" />
     <ClInclude Include="PhysicsConverter.h" />
     <ClInclude Include="PhysicsHelper.h" />
+    <ClInclude Include="PlatformMains\android_main.hpp" />
     <ClInclude Include="PlatformMains\emscripten_main.hpp" />
     <ClInclude Include="PlatformMains\gdk_main.hpp" />
     <ClInclude Include="PlatformMains\linux_main.hpp" />

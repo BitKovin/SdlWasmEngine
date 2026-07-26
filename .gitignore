@@ -467,6 +467,7 @@ BuildGDK/*
 Build/ShooterGame/xbox_gdk/*
 Build/ShooterGame/windows_gdk/*
 Build/ShooterGame/windows/*
+Build/ShooterGame/android/*
 
 *engine.a
 *.libengine.a

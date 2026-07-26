@@ -175,6 +175,8 @@ public:
 
     void ApplyTextureBindings();
 
+    static void ClearStaticResources();
+
 private:
     Shader() = default;
 

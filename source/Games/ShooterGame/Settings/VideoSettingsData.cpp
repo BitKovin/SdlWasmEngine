@@ -8,7 +8,7 @@ void VideoSettingsData::ApplyToEngine() const
     SDL_Window* gWindow = EngineMain::MainInstance->Window;
     if (!gWindow) return;
 
-#ifndef __EMSCRIPTEN__
+#if !defined(__EMSCRIPTEN__) && !defined(__ANDROID__)
 
 
 
@@ -36,7 +36,9 @@ void VideoSettingsData::ApplyToEngine() const
     {
         SDL_SetWindowSize(gWindow, Width, Height);
     }
-#endif // !__EMSCRIPTEN
+
+#endif // !__EMSCRIPTEN__ ! __ANDROID__
+
     if (EngineMain::MainInstance->MainRenderer)
     {
         EngineMain::MainInstance->MainRenderer->MultiSampleCount = MSAA;

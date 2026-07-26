@@ -1,0 +1,3 @@
+GameData gets copied here at build time by BuildScripts/PrepareGameData.cmake
+(see ANDROID_APP_ASSETS_DIR in ../../jni/CMakeLists.txt). Nothing to commit
+here besides this placeholder — git doesn't track empty directories.

@@ -320,6 +320,8 @@ void Physics::RemoveIgnorePair(const BodyID& bodyA, const BodyID& bodyB)
 
 void Physics::Init()
 {
+	gAdds.clear();
+	gRemovals.clear();
 
 	RegisterDefaultAllocator();
 	Factory::sInstance = new Factory();

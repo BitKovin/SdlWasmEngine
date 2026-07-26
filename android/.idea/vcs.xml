@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="VcsDirectoryMappings">
+    <mapping directory="$PROJECT_DIR$/.." vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../source/QtEditor/build/Desktop_Qt_6_11_1_MSVC2022_64bit-Release/_deps/7-zip-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../source/QtEditor/build/_deps/7-zip-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../sourceLibraries/bgfx/bgfx.cmake" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../sourceLibraries/bgfx/bgfx.cmake/bgfx" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../sourceLibraries/bgfx/bgfx.cmake/bimg" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../sourceLibraries/bgfx/bgfx.cmake/bx" vcs="Git" />
+  </component>
+</project>

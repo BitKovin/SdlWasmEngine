@@ -515,3 +515,37 @@ void SoundInstance::Update(float deltaTime)
     UpdateSourceParams();
     alSourcePlay(_source);
 }
+
+
+void SoundInstance::DestroyPool()
+{
+    SourcePool::Destroy();
+}
+
+void SoundInstance::SourcePool::Destroy()
+{
+    std::lock_guard<std::recursive_mutex> lock(SoundManager::audioMutex);
+
+    if (!initialized) return;
+
+    // Clear all tracked source handles. 
+    // Do NOT call alDeleteSources, as the OpenAL context is already dead or dying.
+    freeMono.clear();
+    freeStereo.clear();
+    liveOwners.clear();
+
+    // Reset all counters and limits
+    allocatedMono = 0;
+    allocatedStereo = 0;
+    maxMono = 0;
+    maxStereo = 0;
+    globalTimestamp = 0;
+
+    // Clear context pointers
+    monoContext = nullptr;
+    stereoContext = nullptr;
+
+    initialized = false;
+
+    Logger::Info("[SourcePool] Destroyed and reset to initial state");
+}

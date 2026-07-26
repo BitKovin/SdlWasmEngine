@@ -1,4 +1,5 @@
 #include "ZipVFS.h"
+#include <SDL2/SDL.h>
 #include <algorithm>
 #include <iostream>
 #include "../Compression/zip/zip.h"
@@ -34,21 +35,32 @@ bool ZipVFS::Init() {
     m_index.clear();
     m_zipFiles.clear();
 
-    if (!m_backend) return false;
+    if (!m_backend) {
+        SDL_Log("ZipVFS::Init: no backend filesystem set");
+        return false;
+    }
 
     std::vector<std::string> foundZips;
-    if (!scanForZips(foundZips)) return false;
+    if (!scanForZips(foundZips)) {
+        SDL_Log("ZipVFS::Init: scanForZips threw while walking '%s'", m_rootPath.c_str());
+        return false;
+    }
 
+    SDL_Log("ZipVFS::Init: found %zu archive(s) under '%s'", foundZips.size(), m_rootPath.c_str());
     std::sort(foundZips.begin(), foundZips.end());
-    m_zipFiles = foundZips;
 
-    for (const auto& zp : m_zipFiles) {
-        if (!indexSingleZip(zp, "", 0)) {
-            m_index.clear();
-            m_zipFiles.clear();
-            return false;
+    // Index each archive independently -- one corrupt or unreadable archive
+    // (or a single bad entry within it, see indexSingleZip) should not
+    // discard everything successfully indexed from the others.
+    for (const auto& zp : foundZips) {
+        if (indexSingleZip(zp, "", 0)) {
+            m_zipFiles.push_back(zp);
+        } else {
+            SDL_Log("ZipVFS::Init: failed to index '%s' -- skipping it, other archives unaffected", zp.c_str());
         }
     }
+
+    SDL_Log("ZipVFS::Init: indexed %zu archive(s), %zu virtual path(s) total", m_zipFiles.size(), m_index.size());
     return true;
 }
 
@@ -77,7 +89,14 @@ bool ZipVFS::scanForZips(std::vector<std::string>& outZipPaths) {
         }
         return true;
     }
-    catch (...) { return false; }
+    catch (const std::exception& e) {
+        SDL_Log("ZipVFS::scanForZips: exception while walking '%s': %s", m_rootPath.c_str(), e.what());
+        return false;
+    }
+    catch (...) {
+        SDL_Log("ZipVFS::scanForZips: unknown exception while walking '%s'", m_rootPath.c_str());
+        return false;
+    }
 }
 
 bool ZipVFS::isZipFile(const std::string& filename) {
@@ -94,22 +113,36 @@ ZipArchiveHandle ZipVFS::openZip(const std::string& zipPath) {
 
     if (!physical.empty()) {
         handle.archive = zip_open(physical.c_str(), 0, 'r');
+        if (!handle.archive) {
+            SDL_Log("ZipVFS::openZip: zip_open('%s') failed", physical.c_str());
+        }
     }
     else {
         auto dataOpt = m_backend->ReadFileBinary(zipPath);
-        if (dataOpt) {
+        if (!dataOpt) {
+            SDL_Log("ZipVFS::openZip: backend->ReadFileBinary('%s') failed", zipPath.c_str());
+        } else {
             handle.memoryBuffer = std::move(*dataOpt);
             handle.archive = zip_stream_open(reinterpret_cast<const char*>(handle.memoryBuffer.data()), handle.memoryBuffer.size(), 0, 'r');
+            if (!handle.archive) {
+                SDL_Log("ZipVFS::openZip: zip_stream_open('%s', %zu bytes) failed", zipPath.c_str(), handle.memoryBuffer.size());
+            }
         }
     }
     return handle;
 }
 
 bool ZipVFS::indexSingleZip(const std::string& zipPath, const std::string& virtualPrefix, int nestingDepth) {
-    if (nestingDepth > 10) return false;
+    if (nestingDepth > 10) {
+        SDL_Log("ZipVFS::indexSingleZip: '%s' exceeds max nesting depth (10) -- skipping", zipPath.c_str());
+        return false;
+    }
 
     ZipArchiveHandle handle = openZip(zipPath);
-    if (!handle.archive) return false;
+    if (!handle.archive) {
+        SDL_Log("ZipVFS::indexSingleZip: couldn't open '%s'", zipPath.c_str());
+        return false;
+    }
 
     std::string entryPrefix = virtualPrefix;
     if (nestingDepth == 0) {
@@ -126,10 +159,14 @@ bool ZipVFS::indexSingleZip(const std::string& zipPath, const std::string& virtu
 
     int total = zip_entries_total(handle.archive);
     if (total < 0) total = 0;
+    SDL_Log("ZipVFS::indexSingleZip: '%s' opened, %d entr%s", zipPath.c_str(), total, total == 1 ? "y" : "ies");
 
     std::vector<NestedZipEntry> nestedZips;
     for (int i = 0; i < total; ++i) {
-        if (zip_entry_openbyindex(handle.archive, i) < 0) return false;
+        if (zip_entry_openbyindex(handle.archive, i) < 0) {
+            SDL_Log("ZipVFS::indexSingleZip: '%s' entry %d failed to open -- skipping entry", zipPath.c_str(), i);
+            continue;
+        }
 
         const char* name = zip_entry_name(handle.archive);
         if (!name) { zip_entry_close(handle.archive); continue; }
@@ -160,28 +197,46 @@ bool ZipVFS::indexSingleZip(const std::string& zipPath, const std::string& virtu
     }
 
     for (const auto& nested : nestedZips) {
-        if (!extractAndIndexNestedZip(nested, nestingDepth + 1)) return false;
+        if (!extractAndIndexNestedZip(nested, nestingDepth + 1)) {
+            SDL_Log("ZipVFS::indexSingleZip: failed to index nested archive '%s' inside '%s' -- skipping",
+                    nested.virtualPath.c_str(), zipPath.c_str());
+        }
     }
     return true;
 }
 
 bool ZipVFS::extractAndIndexNestedZip(const NestedZipEntry& nested, int currentDepth) {
     ZipArchiveHandle parentHandle = openZip(nested.parentZipPath);
-    if (!parentHandle.archive) return false;
+    if (!parentHandle.archive) {
+        SDL_Log("ZipVFS::extractAndIndexNestedZip: couldn't reopen parent '%s' for nested '%s'",
+                nested.parentZipPath.c_str(), nested.virtualPath.c_str());
+        return false;
+    }
 
-    if (zip_entry_openbyindex(parentHandle.archive, nested.entryIndex) < 0) return false;
+    if (zip_entry_openbyindex(parentHandle.archive, nested.entryIndex) < 0) {
+        SDL_Log("ZipVFS::extractAndIndexNestedZip: couldn't reopen entry %d in '%s' for nested '%s'",
+                nested.entryIndex, nested.parentZipPath.c_str(), nested.virtualPath.c_str());
+        return false;
+    }
     void* buf = nullptr; size_t bufsize = 0;
     int r = zip_entry_read(parentHandle.archive, &buf, &bufsize);
     zip_entry_close(parentHandle.archive);
 
-    if (r < 0 || !buf) return false;
+    if (r < 0 || !buf) {
+        SDL_Log("ZipVFS::extractAndIndexNestedZip: couldn't read nested archive bytes for '%s'", nested.virtualPath.c_str());
+        return false;
+    }
 
     ZipArchiveHandle nestedHandle;
     nestedHandle.memoryBuffer.assign(static_cast<uint8_t*>(buf), static_cast<uint8_t*>(buf) + bufsize);
     free(buf);
 
     nestedHandle.archive = zip_stream_open(reinterpret_cast<const char*>(nestedHandle.memoryBuffer.data()), nestedHandle.memoryBuffer.size(), 0, 'r');
-    if (!nestedHandle.archive) return false;
+    if (!nestedHandle.archive) {
+        SDL_Log("ZipVFS::extractAndIndexNestedZip: zip_stream_open failed for nested '%s' (%zu bytes)",
+                nested.virtualPath.c_str(), nestedHandle.memoryBuffer.size());
+        return false;
+    }
 
     std::string nestedPrefix = nested.virtualPath;
     size_t lastSlash = nestedPrefix.rfind('/');
@@ -191,7 +246,11 @@ bool ZipVFS::extractAndIndexNestedZip(const NestedZipEntry& nested, int currentD
     if (total < 0) total = 0;
 
     for (int i = 0; i < total; ++i) {
-        if (zip_entry_openbyindex(nestedHandle.archive, i) < 0) return false;
+        if (zip_entry_openbyindex(nestedHandle.archive, i) < 0) {
+            SDL_Log("ZipVFS::extractAndIndexNestedZip: '%s' entry %d failed to open -- skipping entry",
+                    nested.virtualPath.c_str(), i);
+            continue;
+        }
 
         const char* name = zip_entry_name(nestedHandle.archive);
         if (!name) { zip_entry_close(nestedHandle.archive); continue; }

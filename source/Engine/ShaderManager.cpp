@@ -7,6 +7,18 @@
 
 #include <EngineMain.h>
 
+void ShaderManager::Shutdown()
+{
+
+    for (auto s : programCache)
+    {
+        delete s.second.program;
+    }
+
+    programCache.clear();
+    Shader::ClearStaticResources();
+}
+
 void ShaderManager::SavePSOsToFile(const std::string& filePath)
 {
     json root;

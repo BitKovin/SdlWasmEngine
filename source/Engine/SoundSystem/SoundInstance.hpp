@@ -61,6 +61,8 @@ public:
     /// Called once from SoundManager::Initialize() AFTER both AL contexts exist.
     static void InitPool(ALCcontext* monoCtx, ALCcontext* stereoCtx);
 
+    static void DestroyPool();
+
 protected:
     bool  IsGamePaused()   const override;
     float GetPitchScale()  const override;
@@ -129,6 +131,8 @@ private:
         static void   Init(ALCcontext* mono, ALCcontext* stereo);
         static ALuint Acquire(bool stereo, SoundInstance* requester);
         static void   Release(ALuint src, bool stereo);
+
+        static void Destroy();
 
     private:
         /// Stop src, detach its buffer, and clear all EFX sends.

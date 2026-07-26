@@ -9,7 +9,7 @@
 #include <cassert>
 #include <span>
 
-#ifdef __EMSCRIPTEN__
+#if defined(__EMSCRIPTEN__ )|| defined(__ANDROID__)
 
 #define SUPPORTED_FOR_EXECUTION 
 
