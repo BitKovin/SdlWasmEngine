@@ -2106,7 +2106,7 @@ void Player::Update()
 
 		vec2 touchMovement = Hud.ScreenControls->TouchArea->GetTouchMovement();
 
-		touchMovement /= -5.0;
+		touchMovement /= -2.0;
 
 		cameraRotation.y += touchMovement.x * fovScale;
 		cameraRotation.x -= touchMovement.y * fovScale;

@@ -103,6 +103,8 @@ bool InitBgfx(void* nwh, int width, int height) {
         return false;
     }
 
+    bgfx::setDebug(BGFX_DEBUG_STATS);
+
     bgfx::setViewClear(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x000000ff, 1.0f, 0);
     bgfx::setViewRect(0, 0, 0, width, height);
     bgfx::setViewRect(255, 0, 0, width, height);
@@ -180,7 +182,9 @@ void CreateAndInitEngine() {
     EngineMain::MainInstance = engine;
     EngineMain::MainInstance->FileSystem = std::make_shared<AndroidFileSystem>();
     engine->Init();
-
+    engine->MainRenderer->MultiSampleCount = 0;
+    engine->MainRenderer->ResolutionScale = 0.5f;
+    engine->MainRenderer->FXAAEnabled = true;
     engine->pendingRestoreSaveData = unfocusSaveGame;
 }
 
