@@ -177,6 +177,8 @@ void EngineMain::Init(std::vector<std::string> args)
     DebugUiEnabled = false;
 #endif // DISTRIBUTION
 
+    BgfxResetManager::Reset();
+
     tracy::SetThreadName("Main Thread");
 
     Arguments = ParseCommands(args);

@@ -169,64 +169,74 @@ void PlayerHud::Update()
 
 void WeaponSlots::Update()
 {
+    // 1. Gather the correct slot data FIRST based on the active mode
+    std::vector<WeaponSlotData> targetSlots = player->weaponSlots;
 
-    if (oldSlot == player->currentSlot && oldSlots == player->weaponSlots)
+    if (player->GetWeaponSystemMode() == WeaponSystemMode::Inventory)
     {
-        //UiHorizontalBox::Update();
-        //return;
-    }
-
-    children.clear();
-
-	std::vector<WeaponSlotData> slots = player->weaponSlots;
-
-	int currentSlot = player->currentSlot;
-
-	if (player->GetWeaponSystemMode() == WeaponSystemMode::Inventory)
-    {
-
-		//currentSlot = player->currentInventoryIndex;
-
-        slots.clear();
-
-		int index = 0;
+        targetSlots.clear();
+        int index = 0;
 
         for (auto item : player->GetInventory())
         {
             if (item.mainWeaponData.className != "")
             {
                 item.mainWeaponData.slot = index;
-                slots.push_back(item.mainWeaponData);
+                targetSlots.push_back(item.mainWeaponData);
             }
             else if (item.offhandWeaponData.className != "")
             {
-				item.offhandWeaponData.slot = index;
-                slots.push_back(item.offhandWeaponData);
+                item.offhandWeaponData.slot = index;
+                targetSlots.push_back(item.offhandWeaponData);
             }
-
             index++;
         }
     }
 
-    for (WeaponSlotData& data : slots)
+    // 2. Check if the active equipment changed based on mode
+    bool equipmentChanged = false;
+    if (player->GetWeaponSystemMode() == WeaponSystemMode::Inventory)
+    {
+        equipmentChanged = (oldMainUUID != player->currentMainWeaponUUID ||
+            oldOffhandUUID != player->currentOffhandWeaponUUID);
+    }
+    else
+    {
+        equipmentChanged = (oldSlot != player->currentSlot);
+    }
+
+    // 3. Early exit if neither the items nor the equipped weapons changed
+    // We check targetSlots instead of player->weaponSlots!
+    if (oldSlots == targetSlots && !equipmentChanged)
+    {
+        UiVerticalBox::Update();
+        return;
+    }
+
+    // --- Rebuild UI ---
+    children.clear();
+
+    for (WeaponSlotData& data : targetSlots)
     {
         if (data.className == "") continue;
 
         auto img = make_shared<UiButton>();
-        img->size = vec2(120,120);
+        img->size = vec2(120, 120);
 
-		bool equipped = (data.slot == currentSlot);
-
+        bool equipped = false;
         if (player->GetWeaponSystemMode() == WeaponSystemMode::Inventory)
         {
-
-            equipped = data.inventoryUUID == player->currentMainWeaponUUID || data.inventoryUUID == player->currentOffhandWeaponUUID;
-            
+            equipped = (data.inventoryUUID == player->currentMainWeaponUUID ||
+                data.inventoryUUID == player->currentOffhandWeaponUUID);
+        }
+        else
+        {
+            equipped = (data.slot == player->currentSlot);
         }
 
         if (equipped)
         {
-            img->color = vec4(1,0.5,0.5,1);
+            img->color = vec4(1, 0.5, 0.5, 1);
         }
         else
         {
@@ -240,25 +250,24 @@ void WeaponSlots::Update()
             player->SwitchToSlot(data.slot);
             };
 
-
         auto text = make_shared<UiText>();
-        text->origin = vec2(0,1);
+        text->origin = vec2(0, 1);
         text->pivot = vec2(0, 1);
         text->text = to_string(data.slot + 1);
         text->fontSize = 50;
-        text->position = vec2(5,-5);
+        text->position = vec2(5, -5);
 
         img->AddChild(text);
-
         AddChild(img);
-
     }
 
+    // 4. Update all cached states to match current frame
+    oldSlots = targetSlots;
     oldSlot = player->currentSlot;
-    oldSlots = player->weaponSlots;
+    oldMainUUID = player->currentMainWeaponUUID;
+    oldOffhandUUID = player->currentOffhandWeaponUUID;
 
     UiVerticalBox::Update();
-
 }
 
 void WeaponSlots::Draw()

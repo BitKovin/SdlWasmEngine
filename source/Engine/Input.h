@@ -155,7 +155,7 @@ public:
     // SDL window pointer (set in main)
     static SDL_Window* window;
     // SDL_Joystick pointer (if a joystick is connected)
-    static SDL_Joystick* joystick;
+    static SDL_GameController* controller;
 
     // -------------------------------------------------------
     // Event-driven input state (populated via ReceiveSdlEvent)

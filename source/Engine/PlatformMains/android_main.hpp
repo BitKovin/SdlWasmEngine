@@ -323,6 +323,7 @@ int main(int argc, char* args[]) {
 
     SDL_SetHint(SDL_HINT_VIDEO_EXTERNAL_CONTEXT, "1");
     SDL_SetHint(SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight");
+    SDL_SetHint(SDL_HINT_ANDROID_TRAP_BACK_BUTTON, "1");
 
     // No windowed mode on Android -- always fullscreen, sized by the OS.
     int flags = SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_FULLSCREEN | SDL_WINDOW_RESIZABLE;
@@ -378,7 +379,7 @@ int main(int argc, char* args[]) {
     // OpenGLES is the safe default on Android (bgfx's desktop "OpenGL"
     // renderer is not valid here). Vulkan is a solid option on newer
     // devices/drivers if you want to opt into it.
-    s_renderApi = bgfx::RendererType::OpenGLES;
+    s_renderApi = bgfx::RendererType::Vulkan;
 
     auto renderApiOverride = args_m.find("renderapi");
     if (renderApiOverride != args_m.end())

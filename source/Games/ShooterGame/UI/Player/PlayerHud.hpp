@@ -24,6 +24,9 @@ public:
 	int oldSlot = -1;
 	std::vector<WeaponSlotData> oldSlots;
 
+	std::string oldMainUUID;
+	std::string oldOffhandUUID;
+
 	Player* player = nullptr;
 
 	void Update();

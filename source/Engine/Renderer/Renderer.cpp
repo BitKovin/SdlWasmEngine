@@ -113,6 +113,11 @@ void Renderer::RenderLevel(Level* level, bgfx::FrameBufferHandle targetFrameBuff
 
     ivec2 screenResolution = GetScreenResolution();
     BlurAccumulatedBuffer->resize(screenResolution.x, screenResolution.y);
+
+    BlurAccumulatedBuffer->setAsRenderTarget();
+    bgfx::setViewClear(BlurAccumulatedBuffer->viewId(), BGFX_CLEAR_COLOR, 0x00000000, 1.0f, 0);
+    bgfx::touch(BlurAccumulatedBuffer->viewId());
+
     BlurResultBuffer->resize(screenResolution.x, screenResolution.y);
 
     auto colorTex = colorResolveBuffer->textureHandle();
@@ -291,7 +296,7 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
     ivec2 res = GetScreenResolution();
 
     // ---- MSAA bookkeeping ----
-#if defined(BGFX_PLATFORM_EMSCRIPTEN)
+#if defined(BGFX_PLATFORM_EMSCRIPTEN) || defined(__ANDROID__)
     MultiSampleCount = 0;
 #endif
 
@@ -765,6 +770,6 @@ void Renderer::InitResolveFrameBuffers()
 
     customIdFBO = new Framebuffer();
     customIdFBO->attachColor(customIdResolveBuffer, 0u);
-    customIdFBO->attachDepth(depthResolveBuffer);
+    //customIdFBO->attachDepth(depthResolveBuffer);
     bgfx::setName(customIdFBO->frameBufferHandle(), std::string("custom id").c_str());
 }

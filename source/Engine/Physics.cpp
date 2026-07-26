@@ -318,10 +318,21 @@ void Physics::RemoveIgnorePair(const BodyID& bodyA, const BodyID& bodyB)
 	contact_listener->removeIgnorePair(bodyA, bodyB);
 }
 
+bool initilizedPhysics = false;
+
 void Physics::Init()
 {
 	gAdds.clear();
 	gRemovals.clear();
+
+	if(initilizedPhysics == false)
+	{
+		initilizedPhysics = true;
+	}
+	else
+	{
+		return;
+	}
 
 	RegisterDefaultAllocator();
 	Factory::sInstance = new Factory();

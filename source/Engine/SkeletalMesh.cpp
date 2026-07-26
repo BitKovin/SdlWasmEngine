@@ -1412,8 +1412,13 @@ void SkeletalMesh::StartRagdoll()
 
 		if (EngineMain::MainInstance->SimulatingGameTicks == false)
 		{
-			Physics::SetLinearVelocity(hitbox, linearVel / 1.5f);
-			Physics::SetAngularVelocity(hitbox, angularVel / 1.5f);
+
+			if (JPH::isfinite(ToPhysics(linearVel).LengthSq()) && JPH::isfinite(ToPhysics(angularVel).LengthSq()))
+			{
+				Physics::SetLinearVelocity(hitbox, linearVel / 1.5f);
+				Physics::SetAngularVelocity(hitbox, angularVel / 1.5f);
+			}
+
 		}
 
 

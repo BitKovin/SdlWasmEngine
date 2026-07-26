@@ -29,7 +29,7 @@ bool Input::PendingCenterCursor = false;
 bool Input::PendingWindowStateReset = false;
 MouseMoveCalculator* Input::mouseMoveCalculator = nullptr;
 SDL_Window* Input::window = nullptr;
-SDL_Joystick* Input::joystick = nullptr;
+SDL_GameController* Input::controller = nullptr;
 
 // Event-driven state
 std::unordered_set<SDL_Scancode> Input::activeKeys;
@@ -108,33 +108,32 @@ void Input::UpdateMousePosition()
 
 
 void Input::JoystickCamera() {
-    // Initialize joystick if not already opened
-    if (joystick == nullptr) {
-        int joysticks = SDL_NumJoysticks();
-        if (joysticks > 0) {
-            joystick = SDL_JoystickOpen(0);
-            if (joystick == nullptr) {
-                SDL_Log("Error opening joystick 0: %s", SDL_GetError());
+    // Initialize controller if not already opened
+    if (controller == nullptr) {
+        for (int i = 0; i < SDL_NumJoysticks(); ++i) {
+            if (SDL_IsGameController(i)) {
+                controller = SDL_GameControllerOpen(i);
+                if (controller) {
+                    SDL_Log("Successfully opened Game Controller %d", i);
+                    break;
+                }
             }
         }
     }
 
-    // If joystick is open, check if it's still attached
-    if (joystick) {
-        if (!SDL_JoystickGetAttached(joystick)) {
-            // Joystick was disconnected; close and reset
-            SDL_JoystickClose(joystick);
-            joystick = nullptr;
+    // If controller is open, check if it's still attached
+    if (controller) {
+        if (!SDL_GameControllerGetAttached(controller)) {
+            SDL_GameControllerClose(controller);
+            controller = nullptr;
             activeJoystickButtons.clear();
-            leftTriggerAxis  = 0.f;
+            leftTriggerAxis = 0.f;
             rightTriggerAxis = 0.f;
-            SDL_Log("Joystick disconnected. Closed and reset reference.");
+            SDL_Log("Controller disconnected. Closed and reset reference.");
             return;
         }
 
-        // Read stick position (invert X and Y as needed)
         vec2 stickDelta = GetRightStickPosition() * vec2(-1, 1);
-        // Apply camera movement based on stick input
         MouseDelta += stickDelta * (static_cast<float>(Time::DeltaTime) * 200.0f);
     }
 }
@@ -347,29 +346,27 @@ void Input::ReceiveSdlEvent(SDL_Event event)
     }
 
     // ------------------------------------------------------------------
-    // Joystick buttons — event-driven.
+    // Controller buttons — event-driven.
     // ------------------------------------------------------------------
-    else if (event.type == SDL_JOYBUTTONDOWN)
+    else if (event.type == SDL_CONTROLLERBUTTONDOWN)
     {
-        activeJoystickButtons.insert(static_cast<int>(event.jbutton.button));
+        activeJoystickButtons.insert(static_cast<int>(event.cbutton.button));
     }
-    else if (event.type == SDL_JOYBUTTONUP)
+    else if (event.type == SDL_CONTROLLERBUTTONUP)
     {
-        activeJoystickButtons.erase(static_cast<int>(event.jbutton.button));
+        activeJoystickButtons.erase(static_cast<int>(event.cbutton.button));
     }
 
     // ------------------------------------------------------------------
-    // Joystick axes — track trigger axes for LeftTrigger / RightTrigger.
-    // On native SDL the triggers come through as axes; on Emscripten they
-    // are mapped to buttons 6/7, handled above via SDL_JOYBUTTONDOWN/UP.
+    // Controller axes — track trigger axes
     // ------------------------------------------------------------------
-    else if (event.type == SDL_JOYAXISMOTION)
+    else if (event.type == SDL_CONTROLLERAXISMOTION)
     {
 #ifndef __EMSCRIPTEN__
-        if (event.jaxis.axis == SDL_CONTROLLER_AXIS_TRIGGERLEFT)
-            leftTriggerAxis = event.jaxis.value / 32767.0f;
-        else if (event.jaxis.axis == SDL_CONTROLLER_AXIS_TRIGGERRIGHT)
-            rightTriggerAxis = event.jaxis.value / 32767.0f;
+        if (event.caxis.axis == SDL_CONTROLLER_AXIS_TRIGGERLEFT)
+            leftTriggerAxis = event.caxis.value / 32767.0f;
+        else if (event.caxis.axis == SDL_CONTROLLER_AXIS_TRIGGERRIGHT)
+            rightTriggerAxis = event.caxis.value / 32767.0f;
 #endif
     }
 
@@ -516,57 +513,37 @@ vec2 Input::GetTouchEventDelta(int id)
 
 vec2 Input::GetLeftStickPosition()
 {
-
     if (EngineMain::MainInstance->SimulatingGameTicks) return vec2(0);
 
-    if (joystick)
-    {
-        const int axisRightX = 0;
-        const int axisRightY = 1;
+    if (controller) {
+        // Use the standard GameController mapping!
+        float axisX = SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_LEFTX) / 32767.f;
+        float axisY = SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_LEFTY) / -32767.f;
 
-        // Get normalized axis values (range -1 to 1).
-        float axisX = SDL_JoystickGetAxis(joystick, axisRightX) / 32768.f;
-        float axisY = SDL_JoystickGetAxis(joystick, axisRightY) / -32768.f;
-
-        if (abs(axisX) < 0.1f)
-            axisX = 0;
-
-        if (abs(axisY) < 0.1f)
-            axisY = 0;
+        if (std::abs(axisX) < 0.1f) axisX = 0;
+        if (std::abs(axisY) < 0.1f) axisY = 0;
 
         return vec2(axisX, axisY);
-
     }
-
     return vec2();
 }
 
 vec2 Input::GetRightStickPosition()
 {
-
     if (EngineMain::MainInstance->SimulatingGameTicks) return vec2(0);
 
-    if (joystick)
-    {
-        const int axisRightX = 2;
-        const int axisRightY = 3;
+    if (controller) {
+        float axisX = SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_RIGHTX) / 32767.f;
+        float axisY = SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_RIGHTY) / -32767.f;
 
-        // Get normalized axis values (range -1 to 1).
-        float axisX = SDL_JoystickGetAxis(joystick, axisRightX) / 32768.f;
-        float axisY = SDL_JoystickGetAxis(joystick, axisRightY) / -32768.f;
-
-        if (abs(axisX) < 0.1f)
-            axisX = 0;
-
-        if (abs(axisY) < 0.1f)
-            axisY = 0;
+        if (std::abs(axisX) < 0.1f) axisX = 0;
+        if (std::abs(axisY) < 0.1f) axisY = 0;
 
         return vec2(axisX, axisY);
-
     }
-
     return vec2();
 }
+
 
 void Input::UpdateActions() {
     for (auto& pair : actions) {
@@ -672,12 +649,14 @@ void InputAction::SimulatePressed()
     pressed = true;
     pressing = true;
     released = false;
+    pressedTime = Time::GameTimeNoPause;
 }
 
 void InputAction::SimulateHolding()
 {
     pressing = true;
     released = false;
+    pressedTime = Time::GameTimeNoPause;
 }
 
 void InputAction::SimulateRelease()
@@ -746,7 +725,7 @@ void InputAction::Update() {
     // ------------------------------------------------------------------
     // Joystick buttons — read from event-driven activeJoystickButtons set.
     // ------------------------------------------------------------------
-    if (Input::joystick)
+    if (Input::controller)
     {
         for (auto button : buttons)
         {

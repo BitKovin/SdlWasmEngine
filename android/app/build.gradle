@@ -53,7 +53,7 @@ android {
                 // anywhere else) and point this at it. This line appears
                 // after AGP's own -DCMAKE_MAKE_PROGRAM= on the actual
                 // command line, so it wins.
-                arguments "-DANDROID_STL=c++_shared", "-DGAME_NAME=${gameName}", "-DCMAKE_MAKE_PROGRAM=${ninjaOverride}"
+                arguments "-DANDROID_STL=c++_shared", "-DGAME_NAME=${gameName}", "-DCMAKE_MAKE_PROGRAM=${ninjaOverride}", "-DCMAKE_BUILD_TYPE=Release"
             }
         }
 

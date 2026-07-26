@@ -93,7 +93,7 @@ public:
         
         if (UiNavigation::MouseNavigation)
         {
-            hovered = !TouchEvents.empty();
+            hovered = !TouchEvents.empty() && OnlyTouch == false;
         }
         else
         {
