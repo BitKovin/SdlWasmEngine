@@ -92,14 +92,14 @@ void Door::LoadAssets()
 	doorMesh->LoadFromFile("GameData/models/enviroment/door.glb");
 	doorMesh->TexturesLocation = "GameData/models/enviroment/door.glb/";
 	doorMesh->MeshHideList.insert("frame");
-    doorMesh->Brightness = 2;
+    doorMesh->Brightness = 1;
 	Drawables.push_back(doorMesh);
 
 	doorFrameMesh = new StaticMesh(this);
 	doorFrameMesh->LoadFromFile("GameData/models/enviroment/door.glb");
 	doorFrameMesh->TexturesLocation = "GameData/models/enviroment/door.glb/";
 	doorFrameMesh->MeshHideList.insert("door");
-    doorFrameMesh->Brightness = 2;
+    doorFrameMesh->Brightness = 1;
 	Drawables.push_back(doorFrameMesh);
 
 }

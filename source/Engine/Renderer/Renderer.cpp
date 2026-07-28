@@ -770,6 +770,6 @@ void Renderer::InitResolveFrameBuffers()
 
     customIdFBO = new Framebuffer();
     customIdFBO->attachColor(customIdResolveBuffer, 0u);
-    //customIdFBO->attachDepth(depthResolveBuffer);
+    customIdFBO->attachDepth(depthResolveBuffer);
     bgfx::setName(customIdFBO->frameBufferHandle(), std::string("custom id").c_str());
 }

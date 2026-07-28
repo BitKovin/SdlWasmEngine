@@ -7,6 +7,11 @@ class DestructibleBrush : public Entity
 {
 public:
 
+	DestructibleBrush() : Entity()
+	{
+		Static = false;
+	}
+
 	void OnDamage(float Damage, Entity* DamageCauser = nullptr, Entity* Weapon = nullptr) override
 	{
 		Destroy();
@@ -20,7 +25,7 @@ public:
 
 			if (m)
 			{
-				m->Static = true;
+				m->Static = false;
 			}
 
 		}

@@ -57,6 +57,25 @@ struct GlyphInfo {
 //   - Maintains a CPU-side RGBA8 bitmap (white pixels, alpha = coverage).
 //   - Glyphs are packed left-to-right / top-to-bottom on demand.
 //   - Uploads to a bgfx texture once per frame when dirty.
+//
+//   THREADING CONTRACT:
+//   - `mutex` guards the CPU-side packing state: packX/packY/rowH, pixels,
+//     glyphs, and the dirty rect. Any caller of EnsureGlyph() or
+//     FlushToGPU() must hold `mutex` for the full duration of the call —
+//     see DrawText() and MeasureText() for the pattern. This protects
+//     against e.g. MeasureText (possibly called from a layout/worker
+//     thread) racing DrawText (render thread) on the same atlas's glyph
+//     cache. Do not lock inside EnsureGlyph/FlushToGPU themselves, or
+//     callers that already hold the lock will deadlock.
+//   - `texture` (the bgfx handle) and CreateGpuResources() are NOT
+//     protected by `mutex`, and don't need to be, on one condition: every
+//     bgfx call this atlas ever makes (CreateGpuResources, FlushToGPU,
+//     Destroy) must happen on the same single thread — whichever thread
+//     drives DrawText/EndFrame/bgfx::frame. bgfx does not support being
+//     called concurrently from multiple threads outside of its own
+//     multithreading API, so this is a hard requirement, not a suggestion.
+//     LoadCpuData() is the one exception: it makes no bgfx calls at all,
+//     so it's safe to run on a background loading thread.
 // ─────────────────────────────────────────────────────────────────────────────
 
 struct FontAtlas {
@@ -70,7 +89,7 @@ struct FontAtlas {
     int    lineGap = 0;
 
     // ── Atlas bitmap ─────────────────────────────────────────────────────────
-    static constexpr int ATLAS_W = 2048*2;
+    static constexpr int ATLAS_W = 2048 * 2;
     static constexpr int ATLAS_H = 2048;
     std::vector<uint8_t> pixels;         // ATLAS_W * ATLAS_H * 4 (RGBA8)
     bgfx::TextureHandle  texture = BGFX_INVALID_HANDLE;
@@ -78,7 +97,7 @@ struct FontAtlas {
 
     // ── Packing & Padding configuration ──────────────────────────────────────
     int padding = 10;
-    int packX = 2; // Initialized dynamically in Init() based on padding
+    int packX = 2; // Initialized dynamically in LoadCpuData() based on padding
     int packY = 2;
     int rowH = 0; // tallest glyph in the current row
 
@@ -87,6 +106,11 @@ struct FontAtlas {
 
     int dirtyX0 = ATLAS_W, dirtyY0 = ATLAS_H;
     int dirtyX1 = 0, dirtyY1 = 0;
+
+    // ── Concurrency ───────────────────────────────────────────────────────────
+    // Guards packX/packY/rowH, pixels, glyphs, and the dirty rect above.
+    // See the class-level comment for the full locking contract.
+    std::mutex mutex;
 
     void MarkDirty(int x0, int y0, int x1, int y1)
     {
@@ -98,17 +122,19 @@ struct FontAtlas {
     }
 
 
-    // ── Init / Destroy ────────────────────────────────────────────────────────
+    // ── Load / Init / Destroy ────────────────────────────────────────────────
 
-    
-    bool Init(const char* path, float height, int paddingSize = 3)
+    // CPU-only: reads the .ttf file, parses it with stb_truetype, computes
+    // metrics, and allocates + clears the CPU-side pixel buffer. Makes NO
+    // bgfx calls, so this is safe to call from any thread — including a
+    // background font-loading thread running concurrently with DrawText on
+    // the render thread for a different (already-loaded) font atlas.
+    bool LoadCpuData(const char* path, float height, int paddingSize = 3)
     {
         padding = static_cast<int>(height / 3) + paddingSize;
         packX = padding;
         packY = padding;
         rowH = 0;
-
-
 
         fileData = FileSystemEngine::ReadFileBinary(std::string(path));
 
@@ -143,6 +169,20 @@ struct FontAtlas {
             pixels[i * 4 + 3] = 0u;
         }
 
+        textureDirty = false;
+        return true;
+    }
+
+    // GPU-only: creates the bgfx texture backing this atlas. MUST be called
+    // from the single thread that drives DrawText / EndFrame / bgfx::frame
+    // — never from a background loading thread. Idempotent: no-ops if a
+    // valid texture already exists, so it's safe to call defensively before
+    // every draw.
+    bool CreateGpuResources()
+    {
+        if (bgfx::isValid(texture))
+            return true;
+
         // No mipmaps. bgfx default sampler = bilinear filtering + clamp.
         texture = bgfx::createTexture2D(
             static_cast<uint16_t>(ATLAS_W),
@@ -152,12 +192,21 @@ struct FontAtlas {
             BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP,
             nullptr);
 
-        textureDirty = false;
-        return true;
+        return bgfx::isValid(texture);
+    }
+
+    // Convenience wrapper for a caller that's fine loading synchronously on
+    // the render thread and doesn't need the CPU/GPU split. Do NOT call
+    // this from a background loading thread — see CreateGpuResources().
+    bool Init(const char* path, float height, int paddingSize = 3)
+    {
+        return LoadCpuData(path, height, paddingSize) && CreateGpuResources();
     }
 
     void Destroy()
     {
+        // Must run on the same thread as other bgfx calls for this atlas.
+        std::lock_guard<std::mutex> lock(mutex);
         if (bgfx::isValid(texture)) {
             bgfx::destroy(texture);
             texture = BGFX_INVALID_HANDLE;
@@ -168,6 +217,7 @@ struct FontAtlas {
     }
 
     // ── EnsureGlyph ───────────────────────────────────────────────────────────
+    // CALLER MUST HOLD `mutex` before calling this — see DrawText/MeasureText.
 
     bool EnsureGlyph(int codepoint)
     {
@@ -191,6 +241,24 @@ struct FontAtlas {
             return true;
         }
 
+        // FIX: glyph is wider than a full fresh row could ever hold, no
+        // matter which row we place it on. Bail out with correct advance
+        // metrics recorded instead of letting the row-wrap logic below
+        // "succeed" into a row it still doesn't fit in and corrupt
+        // neighboring atlas memory.
+        if (w + 2 * padding > ATLAS_W) {
+            std::cerr << "[UiRenderer] Font atlas: codepoint " << codepoint
+                << " is wider than the atlas row capacity and cannot be packed.\n";
+            stbtt_FreeBitmap(bm, nullptr);
+            int advW = 0, lsb = 0;
+            stbtt_GetCodepointHMetrics(&fontInfo, codepoint, &advW, &lsb);
+            GlyphInfo g{};
+            g.advanceX = static_cast<float>(advW) * scale;
+            g.invisible = true;
+            glyphs[codepoint] = g;
+            return false;
+        }
+
         // Start a new row if the glyph doesn't fit horizontally (accounting for padding)
         if (packX + w + padding > ATLAS_W) {
             packX = padding;
@@ -203,7 +271,16 @@ struct FontAtlas {
             std::cerr << "[UiRenderer] Font atlas full – codepoint "
                 << codepoint << " will not render.\n";
             stbtt_FreeBitmap(bm, nullptr);
+            // FIX: previously this left advanceX at its default of 0.f, so
+            // once the atlas filled up, every subsequent new codepoint
+            // stacked at the same pen position forever (and stayed that
+            // way, since this result is cached permanently). Fetch the
+            // real advance so layout stays correct even for glyphs that
+            // can't be rasterized.
+            int advW = 0, lsb = 0;
+            stbtt_GetCodepointHMetrics(&fontInfo, codepoint, &advW, &lsb);
             GlyphInfo g{};
+            g.advanceX = static_cast<float>(advW) * scale;
             g.invisible = true;
             glyphs[codepoint] = g;
             return false;
@@ -250,6 +327,9 @@ struct FontAtlas {
         return true;
     }
 
+    // CALLER MUST HOLD `mutex` before calling this (same contract as
+    // EnsureGlyph — it reads `pixels` and the dirty rect). Also must run
+    // on the single bgfx-owning thread, since it calls bgfx::updateTexture2D.
     void FlushToGPU()
     {
         if (!textureDirty || !bgfx::isValid(texture))
@@ -290,6 +370,11 @@ struct FontAtlas {
 
 static std::unordered_map<uint32_t, FontAtlas*> s_fontRegistry;
 static uint32_t                                  s_nextFontId = 1; // 0 == INVALID_FONT
+// Guards s_fontRegistry / s_fontKeyCache ONLY. It does not, and never did,
+// serialize the bgfx calls made through a FontAtlas* handed out of the
+// registry — that's what FontAtlas::mutex plus the "GPU calls happen on
+// one thread only" contract are for. See the class-level comment on
+// FontAtlas for the full picture.
 static std::mutex                                s_fontMutex;
 
 // Cache key: path + '@' + pixel-height. Same .ttf at the same size returns the
@@ -410,7 +495,25 @@ namespace UiRenderer {
             return cacheIt->second;
 
         auto* atlas = new FontAtlas();
-        if (!atlas->Init(path, pixelHeight)) {
+
+        // FIX: only load CPU-side data here. This used to call atlas->Init(),
+        // which also called bgfx::createTexture2D — meaning whatever thread
+        // invoked LoadFont() made a bgfx call. If that thread wasn't the one
+        // driving DrawText/EndFrame (e.g. a background font-loading thread),
+        // that bgfx::createTexture2D call could run at the exact same moment
+        // as DrawText's bgfx::submit/updateTexture2D for a *different*,
+        // already-loaded font — two threads hitting bgfx's API concurrently,
+        // with nothing in this file serializing them (s_fontMutex only ever
+        // protected s_fontRegistry/s_fontKeyCache, and DrawText releases it
+        // long before making any bgfx calls). That's a very plausible source
+        // of intermittent, timing-dependent glyph/texture corruption.
+        //
+        // GPU texture creation is now deferred to DrawText (see there),
+        // lazily, the first time this atlas is actually drawn — which is
+        // guaranteed to happen on a single thread. That means this function
+        // now makes zero bgfx calls and is safe to call from any thread,
+        // including a background loader.
+        if (!atlas->LoadCpuData(path, pixelHeight)) {
             delete atlas;
             return INVALID_FONT;
         }
@@ -422,6 +525,11 @@ namespace UiRenderer {
     }
 
     // ── UnloadFont ────────────────────────────────────────────────────────────────
+    // NOTE: only call this once no other thread might still be mid-DrawText/
+    // MeasureText for this handle — it deletes the FontAtlas outright, and
+    // nothing here protects against a dangling FontAtlas* held by another
+    // in-flight call. That's a lifetime/ownership concern distinct from the
+    // packing-state race this file otherwise guards against.
 
     void UnloadFont(FontHandle handle)
     {
@@ -630,6 +738,10 @@ namespace UiRenderer {
     // ── MeasureText ───────────────────────────────────────────────────────────────
     // Returns the bounding box of the rendered text in atlas pixels.
     // Glyphs that are not yet in the atlas are added on demand (same as DrawText).
+    // Makes NO bgfx calls (unlike DrawText) — it only touches the CPU-side
+    // glyph cache — so it can safely be called from a different thread than
+    // DrawText (e.g. a layout thread), as long as it takes atlas->mutex
+    // exactly like DrawText does, which it does below.
 
     glm::vec2 MeasureText(const std::string& text, FontHandle fontHandle)
     {
@@ -642,6 +754,10 @@ namespace UiRenderer {
             if (it == s_fontRegistry.end()) return glm::vec2(0.f);
             atlas = it->second;
         }
+
+        // FIX: guard the glyph cache against a concurrent DrawText call on
+        // this same atlas from the render thread.
+        std::lock_guard<std::mutex> atlasLock(atlas->mutex);
 
         // Ensure every glyph is present so advance values are available
         {
@@ -688,7 +804,9 @@ namespace UiRenderer {
     }
 
     // ── EndFrame ──────────────────────────────────────────────────────────────────
-    // Uploads any atlas changes that accumulated this frame.
+    // Uploads any atlas changes that accumulated this frame. Must run on
+    // the same thread as DrawText (it calls bgfx::updateTexture2D via
+    // FlushToGPU).
 
     void EndFrame()
     {
@@ -696,7 +814,13 @@ namespace UiRenderer {
 
         std::lock_guard<std::mutex> lock(s_fontMutex);
         for (auto& [id, atlas] : s_fontRegistry)
+        {
+            // FIX: FlushToGPU reads `pixels` and the dirty rect, both of
+            // which EnsureGlyph (e.g. via a concurrent MeasureText call)
+            // could be mutating right now for this atlas.
+            std::lock_guard<std::mutex> atlasLock(atlas->mutex);
             atlas->FlushToGPU();
+        }
     }
 
     // ── PushMask ──────────────────────────────────────────────────────────────────
@@ -804,9 +928,9 @@ namespace UiRenderer {
     }
 
     void DrawText(std::string text, FontHandle fontHandle,
-                  const glm::mat3& transform,
-                  const glm::vec4& color, const glm::vec2& scale,
-                  const string& shader, std::unordered_map<std::string, vec4> shaderUniforms, float effectPadding)   // extra bleed, in atlas texels, needed by outline/glow/shadow
+        const glm::mat3& transform,
+        const glm::vec4& color, const glm::vec2& scale,
+        const string& shader, std::unordered_map<std::string, vec4> shaderUniforms, float effectPadding)   // extra bleed, in atlas texels, needed by outline/glow/shadow
     {
         if (text.empty() || fontHandle == INVALID_FONT) return;
 
@@ -817,6 +941,34 @@ namespace UiRenderer {
             if (it == s_fontRegistry.end()) return;
             atlas = it->second;
         }
+
+        // FIX: guards the glyph cache (packX/packY/rowH/pixels/glyphs/dirty
+        // rect) against a concurrent MeasureText call on this same atlas
+        // from another thread.
+        std::lock_guard<std::mutex> atlasLock(atlas->mutex);
+
+        // FIX: this is the actual fix for "fonts loading in parallel to a
+        // font being drawn." LoadFont() no longer creates the bgfx texture
+        // — it's created here instead, lazily, on first draw. Since
+        // DrawText is confirmed single-threaded, this guarantees
+        // bgfx::createTexture2D for every font atlas runs on that same one
+        // thread, no matter which thread actually called LoadFont(). This
+        // is idempotent (CreateGpuResources no-ops once the texture
+        // exists), so the cost after the first draw is one bgfx::isValid()
+        // check.
+        if (!bgfx::isValid(atlas->texture)) {
+            if (!atlas->CreateGpuResources()) {
+                std::cerr << "[UiRenderer] DrawText: failed to create GPU texture for font atlas\n";
+                return;
+            }
+        }
+
+        // FIX: effects bleed can never exceed the padding the atlas
+        // actually reserved between glyphs when it packed them, or the
+        // inflated UV/clamp rect reaches past the glyph's own cell and
+        // samples whatever glyph happens to be packed next door — which
+        // glyph that is depends on insertion order.
+        effectPadding = std::min(effectPadding, static_cast<float>(atlas->padding));
 
         // atlas pixel size — needed to convert padding into UV space, and to
         // feed u_TextureSize to the effects shader. Adjust field names if your
@@ -1004,7 +1156,7 @@ namespace UiRenderer {
     {
         if (rectSize.x <= 0.f || rectSize.y <= 0.f) return;
 
-        const float padU = (textureWidth  > 0.f) ? effectPadding / textureWidth  : 0.f;
+        const float padU = (textureWidth > 0.f) ? effectPadding / textureWidth : 0.f;
         const float padV = (textureHeight > 0.f) ? effectPadding / textureHeight : 0.f;
 
         const float x0 = rectPos.x - padU, x1 = rectPos.x + rectSize.x + padU;
@@ -1083,18 +1235,18 @@ namespace UiRenderer {
         // come out `margin` SCREEN pixels regardless of how `size` is
         // stretched (that's the entire point of 9-slicing). Clamped so two
         // opposite margins can't cross on a too-small element.
-        float gx1 = (size.x > 0.f) ? margins.left   / size.x : 0.f;
-        float gx2 = (size.x > 0.f) ? 1.f - margins.right  / size.x : 1.f;
-        float gy1 = (size.y > 0.f) ? margins.top    / size.y : 0.f;
+        float gx1 = (size.x > 0.f) ? margins.left / size.x : 0.f;
+        float gx2 = (size.x > 0.f) ? 1.f - margins.right / size.x : 1.f;
+        float gy1 = (size.y > 0.f) ? margins.top / size.y : 0.f;
         float gy2 = (size.y > 0.f) ? 1.f - margins.bottom / size.y : 1.f;
         if (gx1 > gx2) { const float m = (gx1 + gx2) * 0.5f; gx1 = gx2 = m; }
         if (gy1 > gy2) { const float m = (gy1 + gy2) * 0.5f; gy1 = gy2 = m; }
 
         // UV breakpoints, texture-space fraction — independent of `size`,
         // purely margins-in-texels over textureWidth/Height.
-        const float ux1 = (textureWidth  > 0.f) ? margins.left   / textureWidth  : 0.f;
-        const float ux2 = (textureWidth  > 0.f) ? 1.f - margins.right  / textureWidth  : 1.f;
-        const float uy1 = (textureHeight > 0.f) ? margins.top    / textureHeight : 0.f;
+        const float ux1 = (textureWidth > 0.f) ? margins.left / textureWidth : 0.f;
+        const float ux2 = (textureWidth > 0.f) ? 1.f - margins.right / textureWidth : 1.f;
+        const float uy1 = (textureHeight > 0.f) ? margins.top / textureHeight : 0.f;
         const float uy2 = (textureHeight > 0.f) ? 1.f - margins.bottom / textureHeight : 1.f;
 
         // Both outer bounds are exactly 0 / 1 — see comment above.

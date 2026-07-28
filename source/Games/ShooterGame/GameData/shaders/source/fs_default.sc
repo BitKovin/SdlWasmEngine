@@ -120,7 +120,7 @@ vec3 CalculateContourRim(vec3 normal, vec3 viewDir)
     // This transitions from 1.0 at NdotV=0.2 (grazing) down to 0.0 at NdotV=0.4 (facing).
     float frontMask = smoothstep(0.4, 0.2, NdotV); 
     
-    return rimEdge * frontMask * rim_color.rgb * 0.045; 
+    return rimEdge * frontMask * rim_color.rgb * direct_light_color.rgb * 0.2; 
 }
 
 // ==========================================
@@ -172,14 +172,14 @@ void CalculatePointLights(vec3 normal, vec3 worldPosition, vec3 viewDir, inout v
 
 vec3 CalculateDirectionalDiffuse(vec3 normal, vec3 lightDir)
 {
-    float diffuse_factor = ComputeStyledDiffuse(normal, lightDir);
+    float diffuse_factor = dot(normal, lightDir) * 0.5 + 0.5;//ComputeStyledDiffuse(normal, lightDir);
     
     // Deadlock anchors exposure to a target value. We do this by setting a strong ambient floor
     // combined with the heavily weighted directional light.
     vec3 ambient = light_color.rgb * 0.9f; // Base ambient
     vec3 diffuse = direct_light_color.rgb;
 
-    return mix(ambient, diffuse, diffuse_factor) * 1.0;
+    return mix(ambient, diffuse + ambient, diffuse_factor) * 0.7;
 }
 
 vec3 CalculateDirectionalSpecular(vec3 normal, vec3 lightDir, vec3 viewDir)

@@ -3,6 +3,9 @@
 <var name="bspzip">&quot;[RadiantPath]../../BspZip.exe&quot;</var>
 <var name="mbspc">&quot;[RadiantPath]mbspc.[ExecutableType]&quot;</var>
 <var name="q3map2">&quot;[RadiantPath]q3map2.[ExecutableType]&quot; -v[ExtraResourcePaths]<cond value="[MonitorAddress]"> -connect [MonitorAddress]</cond> -game qfusion -fs_basepath &quot;[EnginePath]&quot;<cond value="[GameName]"> -fs_game [GameName]</cond></var>
+<var name="threads">24</var>
+<var name="colorCorrection">-gamma 1.7 -compensate 1.0</var>
+<var name="dirt">-dirty -dirtscale 3.0 -dirtdepth 96 -dirtgain 2.0</var>
 <build name="Single: bsp">
 <command>[q3map2] -meta &quot;[MapFile]&quot;</command>
 </build>
@@ -33,21 +36,21 @@
 <command>[q3map2] -meta &quot;[MapFile]&quot;</command>
 <command></command>
 <command>[q3map2] -vis -saveprt &quot;[MapFile]&quot;</command>
-<command>[q3map2] -light -fast -patchshadows -samples 2 -filter -bounce 2 -shade -bouncegrid -gamma 1.7 -compensate 1.0 -threads 24 -dirty -dirtscale 2.0 -dirtdepth 64 -dirtgain 2.0 -lightmapsize 256 &quot;[MapFile]&quot;</command>
+<command>[q3map2] -light -fast -patchshadows -samples 2 -filter -bounce 2 -shade -bouncegrid [colorCorrection] -threads [threads] [dirt] -lightmapsize 256 &quot;[MapFile]&quot;</command>
 <command>[bspzip] &quot;[BspFile]&quot;</command>
 </build>
 <build name="(Final) Normal">
 <command>[q3map2] -meta &quot;[MapFile]&quot;</command>
 <command></command>
 <command>[q3map2] -vis -saveprt &quot;[MapFile]&quot;</command>
-<command>[q3map2] -light -fast -patchshadows -samples 4 -super 2 -shade -samplesize 2 -bouncegrid -filter -filterwindow 2 -dirty -dirtscale 2.0 -dirtdepth 64 -dirtgain 2.0 -bounce 5 -gamma 1.7 -compensate 1.0 -threads 24 -lightmapsize 1024 &quot;[MapFile]&quot;</command>
+<command>[q3map2] -light -fast -patchshadows -samples 4 -super 2 -shade -samplesize 2 -bouncegrid -filter -filterwindow 2 [dirt] -bounce 5 [colorCorrection] -threads [threads] -lightmapsize 1024 &quot;[MapFile]&quot;</command>
 <command>[bspzip] &quot;[BspFile]&quot;</command>
 </build>
 <build name="(Final) Best (very long. No practical needd)">
 <command>[q3map2] -meta &quot;[MapFile]&quot;</command>
 <command></command>
 <command>[q3map2] -vis -saveprt &quot;[MapFile]&quot;</command>
-<command>[q3map2] -light -patchshadows -samples 4 -super 2 -shade -samplesize 2 -bouncegrid -filter -filterwindow 2 -dirty -dirtscale 2.0 -dirtdepth 64 -dirtgain 2.0 -bounce 5 -gamma 1.7 -compensate 1.0 -threads 24 -lightmapsize 512 &quot;[MapFile]&quot;</command>
+<command>[q3map2] -light -patchshadows -samples 4 -super 2 -shade -samplesize 2 -bouncegrid -filter -filterwindow 2 [dirt] -bounce 5 [colorCorrection] -threads [threads] -lightmapsize 512 &quot;[MapFile]&quot;</command>
 <command>[bspzip] &quot;[BspFile]&quot;</command>
 </build>
 <separator/>

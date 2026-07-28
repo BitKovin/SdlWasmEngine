@@ -141,7 +141,7 @@ public:
         else
         {
             if(NetworkManager::IsServer())
-            Level::LoadLevelFromFile("GameData/maps/lvl1_proto.bsp");
+            Level::LoadLevelFromFile("GameData/maps/lvl1.bsp");
         }
 		
         AssetRegistry::GetSkinnedModelFromFile("GameData/models/arms.glb");
