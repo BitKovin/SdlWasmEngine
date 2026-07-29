@@ -750,6 +750,11 @@ void EngineMain::GameUpdate()
 
     }
 
+    {
+        ZoneScopedN("Pre Finalize");
+        Level::Current->PreFinalize();
+    }
+
     if (!SimulatingGameTicks)
     {
         ZoneScopedN("Audio");

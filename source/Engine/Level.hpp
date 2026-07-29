@@ -202,6 +202,8 @@ public:
 
 	void AsyncUpdate(bool paused);
 
+	void PreFinalize();
+
 	void DevUiUpdate()
 	{
 		std::lock_guard<std::recursive_mutex> lock(entityArrayLock);

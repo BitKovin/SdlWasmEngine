@@ -27,7 +27,7 @@ uniform vec4 lmStyleColor3;
 uniform vec4 isRBSP;
 
 #ifndef MAX_POINT_LIGHTS
-    #define MAX_POINT_LIGHTS 16
+    #define MAX_POINT_LIGHTS 5
 #endif
 uniform mat4 PointLights[MAX_POINT_LIGHTS];
 

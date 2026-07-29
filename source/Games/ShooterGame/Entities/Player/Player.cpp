@@ -2468,6 +2468,34 @@ void Player::AsyncUpdate()
 		UpdateBody();
 	}
 
+	{
+		auto pose = bodyAnimator.GetResultPose();
+		//pose.SetBoneTransform();
+
+		if (InThirdPerson())
+		{
+			if (currentWeapon)
+			{
+
+				pose = currentWeapon->ApplyWeaponAnimation(pose);
+
+			}
+		}
+		else
+		{
+			mat4 scale0 = scale(vec3(0));
+			pose.SetBoneTransform("neck_01", scale0);
+			pose.SetBoneTransform("upperarm_r", scale0);
+			pose.SetBoneTransform("upperarm_l", scale0);
+
+			if (cameraRotation.x < 0)
+				pose.SetBoneTransform("spine_03", scale0);
+		}
+
+
+		bodyMesh->PasteAnimationPose(pose);
+	}
+
 	controller.Update(Time::DeltaTimeF);
 	bodyAnimator.Update();
 
@@ -2558,31 +2586,7 @@ void Player::UpdateBody()
 
 	vec3 playerForward = MathHelper::GetForwardVector(vec3(0, cameraRotation.y, 0));
 
-	auto pose = bodyAnimator.GetResultPose();
-	//pose.SetBoneTransform();
-
-	if (InThirdPerson())
-	{
-		if (currentWeapon)
-		{
-
-			pose = currentWeapon->ApplyWeaponAnimation(pose);
-
-		}
-	}
-	else
-	{
-		mat4 scale0 = scale(vec3(0));
-		pose.SetBoneTransform("neck_01", scale0);
-		pose.SetBoneTransform("upperarm_r", scale0);
-		pose.SetBoneTransform("upperarm_l", scale0);
-
-		if(cameraRotation.x < 0)
-		pose.SetBoneTransform("spine_03", scale0);
-	}
-
-
-	bodyMesh->PasteAnimationPose(pose);
+	
 	bodyMesh->Position = Position - vec3(0, controller.height / 2.0f, 0) - playerForward * 0.2f;
 	bodyMesh->Rotation.y = cameraRotation.y;
 

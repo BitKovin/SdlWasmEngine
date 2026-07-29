@@ -124,6 +124,8 @@ public:
 
 	void DrawForward(mat4x4 view, mat4x4 projection);
 
+	void PreFinalize() override;
+
 	void FinalizeFrameData();
 
 	int MaxParticles = 0;

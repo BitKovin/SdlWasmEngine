@@ -141,7 +141,7 @@ void LightManager::ApplyPointLightToShader(Shader* shader, vec3 boundsMin, vec3 
     const float minX = boundsMin.x, minY = boundsMin.y, minZ = boundsMin.z;
     const float maxX = boundsMax.x, maxY = boundsMax.y, maxZ = boundsMax.z;
 
-    constexpr size_t MAX_LIGHTS = 16u;
+    constexpr size_t MAX_LIGHTS = 5u;
     const int maxLights = static_cast<int>(MAX_LIGHTS);
 
     // mat4 column layout:

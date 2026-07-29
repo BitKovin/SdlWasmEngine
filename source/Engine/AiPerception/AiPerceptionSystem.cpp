@@ -51,41 +51,35 @@ void AiPerceptionSystem::Update()
 {
     const int frameDistrib = 4;
 
-    std::vector<std::function<void()>> updateJobs;
-    updateJobs.reserve(observers.size() / 3); // Pre-allocate for efficiency
-
     observers.erase(
         std::remove(observers.begin(), observers.end(), nullptr),
         observers.end()
     );
 
+    std::vector<Observer*> toUpdate;
+    toUpdate.reserve(observers.size() / frameDistrib + 1);
+
+    int currentFrame = EngineMain::MainInstance->frame;
 
     for (auto& observer : observers)
     {
-        // Promote sounds emitted last frame into heardSounds so AI can read them this frame,
-        // then clear the staging buffer ready for new EmitSoundAt() calls.
         observer->heardSounds = std::move(observer->pendingSounds);
         observer->pendingSounds.clear();
 
-        if (observer->id % frameDistrib == EngineMain::MainInstance->frame % frameDistrib)
-        {
-
-            updateJobs.emplace_back([observer]()
-                {
-                    ZoneScoped;
-                    std::string zoneName = "Observer " + observer->owner.str();
-                    ZoneName(zoneName.c_str(), zoneName.size());
-                    observer->UpdateVisibility(targets);
-				});
-        }
+        if (observer->id % frameDistrib == currentFrame % frameDistrib)
+            toUpdate.push_back(observer.get());
     }
 
-    if (!updateJobs.empty()) {
-        Level::Current->asyncUpdateThreadPool->QueueJobs(std::move(updateJobs));
+    if (!toUpdate.empty())
+    {
+        Level::Current->asyncUpdateThreadPool->ParallelFor(toUpdate.size(), [&toUpdate](size_t i)
+            {
+                ZoneScoped;
+                std::string zoneName = "Observer " + toUpdate[i]->owner.str();
+                ZoneName(zoneName.c_str(), zoneName.size());
+                toUpdate[i]->UpdateVisibility(targets);
+            });
     }
-
-    Level::Current->asyncUpdateThreadPool->WaitForFinish();
-
 }
 
 void AiPerceptionSystem::EmitSoundAt(const glm::vec3& position, float radius, int severity, std::string causerId)

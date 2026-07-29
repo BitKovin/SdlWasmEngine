@@ -67,6 +67,7 @@ protected:
 	vec4 finalizedColor = vec4(1);
 	std::unordered_set<std::string> finalMeshHideList{};
 	std::map<std::string, vec4> finalizedMeshCustomShaderParams{};
+	bool finalizedCameraVisible = true;
 
 	BoundingBox finalizedBoundingBox;
 
@@ -172,7 +173,7 @@ public:
 
 	void FinalizeFrameData();
 
-
+	void PreFinalize() override;
 
 	//obj or gml files are strongly recommended
 	virtual void LoadFromFile(const string& path)
@@ -203,6 +204,8 @@ public:
 
 		return Visible;
 	}
+
+	bool PrecalculateCameraVisible();
 
 	bool IsCameraVisible();
 

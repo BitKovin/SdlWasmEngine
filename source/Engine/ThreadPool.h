@@ -52,6 +52,32 @@ public:
     }
     void WaitForFinish();
 
+    template <class Func>
+    void ParallelFor(size_t count, Func func) {
+        if (count == 0) return;
+#ifdef DISABLE_THREADPOOL
+        for (size_t i = 0; i < count; ++i) func(i);
+#else
+        size_t numThreads = std::max<size_t>(1, threads_.size());
+        size_t chunk = (count + numThreads - 1) / numThreads;
+
+        std::vector<std::function<void()>> jobs;
+        jobs.reserve(numThreads);
+
+        for (size_t begin = 0; begin < count; begin += chunk) {
+            size_t end = std::min(count, begin + chunk);
+            jobs.emplace_back([func, begin, end]() {
+                for (size_t i = begin; i < end; ++i) {
+                    func(i);
+                }
+                });
+        }
+
+        QueueJobs(std::move(jobs));
+        WaitForFinish(); // ParallelFor is self-contained; callers don't need to call this separately
+#endif
+    }
+
     // Optional convenience API: returns a future<T>
     template <class F, class... Args>
     auto Enqueue(F&& f, Args&&... args)

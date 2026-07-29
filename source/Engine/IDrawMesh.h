@@ -53,6 +53,9 @@ public:
 
 	virtual void FinalizeFrameData(){}
 
+	//called in parallel from game thread right at the end of a frame. Used to finalize non GPU data
+	virtual void PreFinalize(){}
+
 	virtual void PreDraw(){}
 
 	virtual bool IsCameraVisible() { return IsInFrustrum(Camera::frustum); }

@@ -207,11 +207,9 @@ void ParticleEmitter::DrawForward(mat4x4 view, mat4x4 projection)
     BgfxStateManager::SetState(startState);
 }
 
-// ---------------------------------------------------------------------------
-// FinalizeFrameData
-// ---------------------------------------------------------------------------
-void ParticleEmitter::FinalizeFrameData()
+void ParticleEmitter::PreFinalize()
 {
+
     {
         std::lock_guard<std::recursive_mutex> lock(particlesMutex);
         finalizedParticles = Particles;
@@ -219,9 +217,9 @@ void ParticleEmitter::FinalizeFrameData()
 
     const vec3 cameraPosition = Camera::finalizedPosition;
     const vec3 cameraRotation = Camera::finalizedRotation;
-    const vec3 cameraForward  = MathHelper::GetForwardVector(cameraRotation);
-    const vec3 cameraRight    = MathHelper::GetRightVector(cameraRotation);
-    const vec3 cameraUp       = MathHelper::GetUpVector(cameraRotation);
+    const vec3 cameraForward = MathHelper::GetForwardVector(cameraRotation);
+    const vec3 cameraRight = MathHelper::GetRightVector(cameraRotation);
+    const vec3 cameraUp = MathHelper::GetUpVector(cameraRotation);
 
     const int cameraC = Level::Current->BspData.FindClusterAtPosition(cameraPosition);
 
@@ -309,6 +307,15 @@ void ParticleEmitter::FinalizeFrameData()
         }
 
     }
+
+}
+
+// ---------------------------------------------------------------------------
+// FinalizeFrameData
+// ---------------------------------------------------------------------------
+void ParticleEmitter::FinalizeFrameData()
+{
+    
 }
 
 // ---------------------------------------------------------------------------

@@ -33,6 +33,7 @@
 
 #include <Network/NetworkManager.h>
 #include <Network/NetworkedEntity.h>
+#include <IDrawMesh.h>
 
 Level* Level::Current = nullptr;
 
@@ -457,34 +458,68 @@ void Level::AsyncUpdate(bool paused)
 	RemovePendingEntities();
 
 	entityArrayLock.lock();
-
 	auto objects = LevelObjects;
-
 	entityArrayLock.unlock();
 
-	std::vector<std::function<void()>> updateJobs;
-	updateJobs.reserve(objects.size()); // Pre-allocate for efficiency
+	std::vector<LevelObject*> toUpdate;
+	toUpdate.reserve(objects.size());
 
-	for (auto var : objects) 
+	for (auto var : objects)
 	{
-		if (var->UpdateWhenPaused || paused == false) 
-		{
-			if (var->UpdateEnabled && var->wantsAsyncUpdate)
-				updateJobs.emplace_back([var]() 
-					{ 
-						ZoneScoped;
-						std::string zoneName = "Async Update Entity" + var->GetId();
-						ZoneName(zoneName.c_str(), zoneName.size());
-						var->AsyncUpdate();
-					});
-		}
+		if ((var->UpdateWhenPaused || !paused) && var->UpdateEnabled && var->wantsAsyncUpdate)
+			toUpdate.push_back(var);
 	}
 
-	if (!updateJobs.empty()) {
-		asyncUpdateThreadPool->QueueJobs(std::move(updateJobs));
+	if (!toUpdate.empty())
+	{
+		asyncUpdateThreadPool->ParallelFor(toUpdate.size(), [&toUpdate](size_t i)
+			{
+				ZoneScoped;
+				std::string zoneName = "Async Update Entity" + toUpdate[i]->GetId();
+				ZoneName(zoneName.c_str(), zoneName.size());
+				toUpdate[i]->AsyncUpdate();
+			});
 	}
 
-	asyncUpdateThreadPool->WaitForFinish();
+	AddPendingLevelObjects();
+	RemovePendingEntities();
+}
+
+void Level::PreFinalize()
+{
+	AddPendingLevelObjects();
+	RemovePendingEntities();
+
+	entityArrayLock.lock();
+	auto objects = LevelObjects;
+	entityArrayLock.unlock();
+
+	// Flatten object -> draw-mesh into one indexable list so ParallelFor
+	// splits it into equal contiguous chunks, regardless of how unevenly
+	// meshes are distributed across objects.
+	struct DrawMeshWork {
+		LevelObject* var;
+		IDrawMesh* mesh;
+	};
+
+	std::vector<DrawMeshWork> work;
+	work.reserve(objects.size());
+
+	for (auto var : objects)
+		for (auto d : var->GetDrawMeshes())
+			work.push_back({ var, d });
+
+	if (!work.empty())
+	{
+		asyncUpdateThreadPool->ParallelFor(work.size(), [&work](size_t i)
+			{
+				ZoneScoped;
+				std::string zoneName = "draw object pre finalize" + work[i].var->GetId();
+				ZoneName(zoneName.c_str(), zoneName.size());
+				work[i].mesh->PreFinalize();
+			});
+	}
+
 	AddPendingLevelObjects();
 	RemovePendingEntities();
 }

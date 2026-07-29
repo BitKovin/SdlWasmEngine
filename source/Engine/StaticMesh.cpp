@@ -49,9 +49,14 @@ void StaticMesh::FinalizeFrameData()
 	finalMeshHideList = std::unordered_set<std::string>(MeshHideList);
 	finalizedColor = Color;
 	finalizedMeshCustomShaderParams = MeshCustomShaderParams;
+}
 
+void StaticMesh::PreFinalize()
+{
 
 	finalizedBoundingBox = GetBoundingBox();
+
+	finalizedCameraVisible = PrecalculateCameraVisible();
 }
 
 bool StaticMesh::IsInFrustrum(Frustum frustrum)
@@ -60,7 +65,7 @@ bool StaticMesh::IsInFrustrum(Frustum frustrum)
 
 	//DebugDraw::Bounds(sphere.offset - vec3(sphere.Radius), sphere.offset + vec3(sphere.Radius), 0.01f);
 
-	auto bounds = GetBoundingBox();
+	auto bounds = finalizedBoundingBox;
 
 	return frustrum.IsBoxVisible(bounds.Min, bounds.Max);
 }
@@ -75,18 +80,17 @@ BoundingBox StaticMesh::GetBoundingBox()
 }
 
 
-bool StaticMesh::IsCameraVisible()
+bool StaticMesh::PrecalculateCameraVisible()
 {
-	if (model == nullptr)
-		return false;
-
 	if (IsViewmodel) return isVisible();
+
+	if((IsInFrustrum(Camera::frustum) && isVisible()) == false) return false;
 
 	if (Level::Current->BspData.m_numOfVerts)
 	{
 		int cameraC = Level::Current->BspData.FindClusterAtPosition(Camera::finalizedPosition);
 
-		auto bounds = GetBoundingBox();
+		auto bounds = finalizedBoundingBox;
 
 		vec3 min = bounds.Min;
 		vec3 max = bounds.Max;
@@ -122,7 +126,15 @@ bool StaticMesh::IsCameraVisible()
 			return false;
 	}
 
-	return IsInFrustrum(Camera::frustum) && isVisible();
+	return true;
+}
+
+bool StaticMesh::IsCameraVisible()
+{
+	if (model == nullptr)
+		return false;
+
+	return finalizedCameraVisible;
 }
 
 void StaticMesh::DrawForward(mat4x4 view, mat4x4 projection)
