@@ -74,7 +74,7 @@
 			<value>delay</value>
 		</property>
 		<property name="value">
-			<value>400</value>
+			<value>280</value>
 		</property>
 		<relationship name="automatableObject">
 			<destination>{0e820b92-ce0a-49b8-9864-8a3c8233cd15}</destination>
@@ -96,7 +96,7 @@
 			<value>level</value>
 		</property>
 		<property name="value">
-			<value>-24.5</value>
+			<value>-29.5</value>
 		</property>
 		<relationship name="automatableObject">
 			<destination>{0e820b92-ce0a-49b8-9864-8a3c8233cd15}</destination>
@@ -173,7 +173,7 @@
 			<value>wetLevel</value>
 		</property>
 		<property name="value">
-			<value>-5</value>
+			<value>-9.5</value>
 		</property>
 		<relationship name="automatableObject">
 			<destination>{14730547-569d-4f6f-8348-b9db65f87eb1}</destination>

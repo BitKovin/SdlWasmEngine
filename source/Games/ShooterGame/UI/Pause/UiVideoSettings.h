@@ -23,37 +23,14 @@
 //
 // Same shape as UiInputSettings: UiCanvas, FocusTrap, a backButton wired to
 // both onClick and OnNavCancel, content built from UiSettingsStyle's shared
-// card-panel/divider/type-scale language. Two cards now instead of one --
-// Display (Resolution, Window Mode) and Graphics (MSAA, FXAA) -- mirroring
-// how UiInputSettings splits Sensitivity from Key Bindings rather than
-// cramming everything into a single panel. See UiSettingsStyle.hpp for the
-// shared constants/panel classes.
+// card-panel/divider/type-scale language.
 //
-// Resolution + Window Mode keep their previous behavior (applied immediately
-// via UpdateResolution/UpdateWindowMode, unchanged from before).
+// Two cards:
+//   - Display: Resolution, Window Mode, VSync
+//   - Graphics: MSAA, FXAA, Dynamic Shadows
 //
-// MSAA + FXAA are real now, sourced from the actual Settings/VideoSettings.h
-// this time (VideoSettingsModel::msaa / fxaa_enabled, already populated by
-// the same VideoSettings::InitModelData(model) call this file already makes
-// for resolutions) rather than the earlier "Off/FXAA/MSAA" single-dropdown
-// guess, which conflated two independent settings into one and didn't match
-// how the engine actually models them. They're two separate controls,
-// matching VideoSettingsModel's shape:
-//   - MSAA is an integer sample count (0/2/4/8), read from and written to
-//     EngineMain::MainInstance->MainRenderer->MultiSampleCount -- a
-//     dropdown, same as Resolution/Window Mode, options fixed to the four
-//     values the real onChange("msaa", ...) handler parses.
-//   - FXAA is a bool, read from and written to
-//     EngineMain::MainInstance->MainRenderer->FXAAEnabled -- there's no
-//     checkbox widget anywhere else in this codebase to model against, so
-//     it uses the same On/Off toggle-button treatment UiInputSettings uses
-//     for Invert Y (invertYButton/invertYToggleBg/invertYLabel there,
-//     fxaaButton/fxaaToggleBg/fxaaLabel here). Functionally a checkbox
-//     either way -- just this codebase's established look for one.
-// Both apply immediately on change, same as every other control on this
-// screen, and are also written into GameSettings::Instance().Video (MSAA,
-// FXAA) alongside Resolution and Window Mode, so all four round-trip through
-// Serialize()/Deserialize() the next time the game saves/loads settings.
+// Every control updates its corresponding property in GameSettings::Instance().Video
+// and then immediately triggers ApplyToEngine().
 // ---------------------------------------------------------------------------
 
 class UiVideoSettings : public UiCanvas
@@ -104,10 +81,10 @@ public:
         AddChild(rootBox);
 
         backButton->onClick = [this]()
-        {
-            parentMenu->visible = true;
-            RemoveFromParent();
-        };
+            {
+                parentMenu->visible = true;
+                RemoveFromParent();
+            };
 
         UpdateChildrenOffsetRecursive();
         UpdateChildrenOffsetRecursive();
@@ -131,6 +108,9 @@ private:
     std::shared_ptr<UiElement> displayPanel;
     std::shared_ptr<UiDropdown> resolutions;
     std::shared_ptr<UiDropdown> windowMode;
+    std::shared_ptr<UiButton> vsyncButton;
+    std::shared_ptr<UiImage> vsyncToggleBg;
+    std::shared_ptr<UiText> vsyncLabel;
 
     // ── Graphics ─────────────────────────────────────────────────────────────
     std::shared_ptr<UiElement> graphicsPanel;
@@ -138,6 +118,9 @@ private:
     std::shared_ptr<UiButton> fxaaButton;
     std::shared_ptr<UiImage> fxaaToggleBg;
     std::shared_ptr<UiText> fxaaLabel;
+    std::shared_ptr<UiButton> dynamicShadowsButton;
+    std::shared_ptr<UiImage> dynamicShadowsToggleBg;
+    std::shared_ptr<UiText> dynamicShadowsLabel;
 
     std::shared_ptr<UiHorizontalBox> buttonsRow;
     std::shared_ptr<UiButton> backButton;
@@ -191,7 +174,32 @@ private:
         windowMode->onSelectionChanged = UiVideoSettings::UpdateWindowMode;
         content->AddChild(GetSettingRow("Window Mode", windowMode));
 
-        displayPanel = std::make_shared<UiCardPanel>(vec2(ContentWidth, 250.f), content);
+        // ── VSync ─────────────────────────────────────────────────────────────
+        vsyncButton = std::make_shared<UiButton>();
+        vsyncButton->size = vec2(120.f, 40.f);
+
+        vsyncToggleBg = std::make_shared<UiImage>();
+        vsyncToggleBg->size = vsyncButton->size;
+        vsyncButton->AddChild(vsyncToggleBg);
+
+        vsyncLabel = std::make_shared<UiText>();
+        vsyncLabel->fontSize = 24.f;
+        vsyncLabel->pivot = vec2(0.5f);
+        vsyncLabel->origin = vec2(0.5f);
+        vsyncButton->AddChild(vsyncLabel);
+
+        RefreshVSyncLabel(GameSettings::Instance().Video.VSync);
+
+        vsyncButton->onClick = [this]()
+            {
+                bool enabled = !GameSettings::Instance().Video.VSync;
+                GameSettings::Instance().Video.VSync = enabled;
+                GameSettings::Instance().Video.ApplyToEngine();
+                RefreshVSyncLabel(enabled);
+            };
+        content->AddChild(GetSettingRow("VSync", vsyncButton));
+
+        displayPanel = std::make_shared<UiCardPanel>(vec2(ContentWidth, 320.f), content);
     }
 
     // ───────────────────────────────────────────────────────────────────────
@@ -214,11 +222,6 @@ private:
         content->AddChild(MakeDivider(ContentWidth - PanelPadding * 2.f));
 
         // ── MSAA ─────────────────────────────────────────────────────────────
-        // Fixed to the four sample counts the real onChange("msaa", ...)
-        // handler in Settings/VideoSettings.h parses ("0"/"2"/"4"/"8"). If
-        // MultiSampleCount is currently something outside that set, it's
-        // appended rather than silently snapped to the nearest option --
-        // same defensive fallback Resolution already uses above.
         std::vector<std::string> msaaOptions = { "0", "2", "4", "8" };
         std::string currentMsaa = std::to_string(model.msaa);
         if (std::find(msaaOptions.begin(), msaaOptions.end(), currentMsaa) == msaaOptions.end())
@@ -248,25 +251,62 @@ private:
         fxaaLabel->pivot = vec2(0.5f);
         fxaaLabel->origin = vec2(0.5f);
         fxaaButton->AddChild(fxaaLabel);
-        RefreshFXAALabel(model.fxaa_enabled);
+        RefreshFXAALabel(GameSettings::Instance().Video.FXAA);
 
         fxaaButton->onClick = [this]()
-        {
-            bool enabled = !EngineMain::MainInstance->MainRenderer->FXAAEnabled;
-            EngineMain::MainInstance->MainRenderer->FXAAEnabled = enabled;
-            GameSettings::Instance().Video.FXAA = enabled;
-            RefreshFXAALabel(enabled);
-        };
+            {
+                bool enabled = !GameSettings::Instance().Video.FXAA;
+                GameSettings::Instance().Video.FXAA = enabled;
+                GameSettings::Instance().Video.ApplyToEngine();
+                RefreshFXAALabel(enabled);
+            };
 
         content->AddChild(GetSettingRow("FXAA", fxaaButton));
 
-        graphicsPanel = std::make_shared<UiCardPanel>(vec2(ContentWidth, 250.f), content);
+        // ── Dynamic Shadows ──────────────────────────────────────────────────
+        dynamicShadowsButton = std::make_shared<UiButton>();
+        dynamicShadowsButton->size = vec2(120.f, 40.f);
+
+        dynamicShadowsToggleBg = std::make_shared<UiImage>();
+        dynamicShadowsToggleBg->size = dynamicShadowsButton->size;
+        dynamicShadowsButton->AddChild(dynamicShadowsToggleBg);
+
+        dynamicShadowsLabel = std::make_shared<UiText>();
+        dynamicShadowsLabel->fontSize = 24.f;
+        dynamicShadowsLabel->pivot = vec2(0.5f);
+        dynamicShadowsLabel->origin = vec2(0.5f);
+        dynamicShadowsButton->AddChild(dynamicShadowsLabel);
+        RefreshDynamicShadowsLabel(GameSettings::Instance().Video.DynamicShadows);
+
+        dynamicShadowsButton->onClick = [this]()
+            {
+                bool enabled = !GameSettings::Instance().Video.DynamicShadows;
+                GameSettings::Instance().Video.DynamicShadows = enabled;
+                GameSettings::Instance().Video.ApplyToEngine();
+                RefreshDynamicShadowsLabel(enabled);
+            };
+
+        content->AddChild(GetSettingRow("Dynamic Shadows", dynamicShadowsButton));
+
+        graphicsPanel = std::make_shared<UiCardPanel>(vec2(ContentWidth, 320.f), content);
+    }
+
+    void RefreshVSyncLabel(bool on)
+    {
+        vsyncLabel->text = on ? "On" : "Off";
+        vsyncToggleBg->color = on ? SettingsStyle::ToggleOn : SettingsStyle::ToggleOff;
     }
 
     void RefreshFXAALabel(bool on)
     {
         fxaaLabel->text = on ? "On" : "Off";
         fxaaToggleBg->color = on ? SettingsStyle::ToggleOn : SettingsStyle::ToggleOff;
+    }
+
+    void RefreshDynamicShadowsLabel(bool on)
+    {
+        dynamicShadowsLabel->text = on ? "On" : "Off";
+        dynamicShadowsToggleBg->color = on ? SettingsStyle::ToggleOn : SettingsStyle::ToggleOff;
     }
 
     std::shared_ptr<UiHorizontalBox> GetSettingRow(const std::string& label, std::shared_ptr<UiElement> control)
@@ -309,68 +349,31 @@ private:
 
     static inline void UpdateResolution(int index, const std::string& value)
     {
-        // Parse resolution string, expected format: "WIDTHxHEIGHT" (e.g., "1920x1080")
         size_t xPos = value.find('x');
         if (xPos == std::string::npos) return;
 
         int width = std::stoi(value.substr(0, xPos));
         int height = std::stoi(value.substr(xPos + 1));
 
-        // Assuming gWindow is your SDL_Window* accessible globally
-        SDL_Window* gWindow = EngineMain::MainInstance->Window;
-
-        // For fullscreen modes, we need to change the display mode
-        Uint32 flags = SDL_GetWindowFlags(gWindow);
-        if (flags & SDL_WINDOW_FULLSCREEN) {
-            // In fullscreen, we must change the display mode
-            SDL_DisplayMode mode;
-            mode.format = SDL_PIXELFORMAT_UNKNOWN; // let SDL choose
-            mode.w = width;
-            mode.h = height;
-            mode.refresh_rate = 0; // use current refresh rate
-            mode.driverdata = nullptr;
-
-            SDL_SetWindowDisplayMode(gWindow, &mode);
-            // Toggle fullscreen off and on to apply? Usually SetDisplayMode works immediately
-            // But we can also just set the mode and it should apply
-        }
-        else {
-            // Windowed mode: just set the size
-            SDL_SetWindowSize(gWindow, width, height);
-        }
-
         GameSettings::Instance().Video.Width = width;
         GameSettings::Instance().Video.Height = height;
+        GameSettings::Instance().Video.ApplyToEngine();
     }
 
     static inline void UpdateWindowMode(int index, const std::string& value)
     {
-        // Dropdown options are {"windowed"=0, "fullscreen"=1, "borderless"=2} --
-        // the string stored here must match that same order, since it's what
-        // VideoSettingsData::ApplyToEngine() reads back on next load. Previously
-        // index 1/2 stored the opposite label from what the SDL call actually did.
-
         if (index == 0)
-        {
-            SDL_SetWindowFullscreen(EngineMain::MainInstance->Window, 0);
             GameSettings::Instance().Video.WindowMode = "windowed";
-        }
         else if (index == 1)
-        {
-            SDL_SetWindowFullscreen(EngineMain::MainInstance->Window, SDL_WINDOW_FULLSCREEN);
             GameSettings::Instance().Video.WindowMode = "fullscreen";
-        }
         else // index == 2
-        {
-            SDL_SetWindowFullscreen(EngineMain::MainInstance->Window, SDL_WINDOW_FULLSCREEN_DESKTOP);
             GameSettings::Instance().Video.WindowMode = "borderless";
-        }
+
+        GameSettings::Instance().Video.ApplyToEngine();
     }
 
     static inline void UpdateMSAA(int index, const std::string& value)
     {
-        // Same parse-with-fallback-to-0 behavior as the real
-        // onChange("msaa", ...) handler in Settings/VideoSettings.h.
         int msaaLevel = 0;
         try
         {
@@ -380,8 +383,8 @@ private:
         {
         }
 
-        EngineMain::MainInstance->MainRenderer->MultiSampleCount = msaaLevel;
         GameSettings::Instance().Video.MSAA = msaaLevel;
+        GameSettings::Instance().Video.ApplyToEngine();
     }
 
 };

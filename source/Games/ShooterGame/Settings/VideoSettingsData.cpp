@@ -2,6 +2,7 @@
 
 #include <SDL2/SDL.h>
 #include <EngineMain.h>
+#include <BgfxResetManager.h>
 
 void VideoSettingsData::ApplyToEngine() const
 {
@@ -45,10 +46,10 @@ void VideoSettingsData::ApplyToEngine() const
         EngineMain::MainInstance->MainRenderer->FXAAEnabled = FXAA;
     }
 
-    // VSync: this project renders through bgfx rather than a raw GL context,
-    // so the swap-interval call belongs wherever bgfx::reset()/BGFX_RESET_VSYNC
-    // is issued (e.g. EngineMain's render setup). Hook it up there — the flag
-    // is stored and persisted here either way.
+    BgfxResetManager::SetVSync(VSync);
+
+    EngineMain::MainInstance->MainRenderer->DynamicShadows = DynamicShadows;
+
 }
 
 void VideoSettingsData::FromCurrentState()
@@ -80,6 +81,8 @@ void VideoSettingsData::FromCurrentState()
         FXAA = EngineMain::MainInstance->MainRenderer->FXAAEnabled;
     }
 
-    // VSync: no live getter exists in the given API (see the note in
-    // ApplyToEngine above) -- nothing to read back, so it's left as-is.
+    VSync = BgfxResetManager::GetVSync();
+
+    DynamicShadows = EngineMain::MainInstance->MainRenderer->DynamicShadows;
+
 }

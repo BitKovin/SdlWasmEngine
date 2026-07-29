@@ -19,13 +19,13 @@
 
 struct VideoSettingsData
 {
-    int Width = 1920;
-    int Height = 1080;
-    std::string WindowMode = "windowed"; // "windowed" | "fullscreen" | "borderless"
-    bool VSync = true;
+    int Width = 1280;
+    int Height = 720;
+    std::string WindowMode = "borderless"; // "windowed" | "fullscreen" | "borderless"
+    bool VSync = false;
     int MSAA = 0;      // sample count: 0 / 2 / 4 / 8
     bool FXAA = false;
-
+    bool DynamicShadows = true;
     void ResetToDefaults() { *this = VideoSettingsData(); }
 
     void ApplyToEngine() const; // implemented in VideoSettingsData.cpp
@@ -40,6 +40,7 @@ struct VideoSettingsData
         ss << "VSync=" << (VSync ? 1 : 0) << "\n";
         ss << "MSAA=" << MSAA << "\n";
         ss << "FXAA=" << (FXAA ? 1 : 0) << "\n";
+        ss << "DynamicShadows=" << (DynamicShadows ? 1 : 0) << "\n";
         return ss.str();
     }
 
@@ -53,6 +54,7 @@ struct VideoSettingsData
             else if (key == "VSync")      VSync = (value == "1" || value == "true");
             else if (key == "MSAA")       MSAA = std::stoi(value);
             else if (key == "FXAA")       FXAA = (value == "1" || value == "true");
+            else if (key == "DynamicShadows")       DynamicShadows = (value == "1" || value == "true");
         }
         catch (...) { /* malformed line — keep current value */ }
     }

@@ -35,6 +35,8 @@ public:
 
 	bool FXAAEnabled = false;
 
+	bool DynamicShadows = true;
+
 	float ResolutionScale = 1.0f;
 
 	Shader* fullscreenShader = nullptr;

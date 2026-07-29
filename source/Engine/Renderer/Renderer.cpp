@@ -462,7 +462,11 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
             mesh->DrawForward(Camera::finalizedView, P);
         }
 
-        DrawDetailShadows(VissibleRenderList);
+        if (DynamicShadows)
+        {
+            DrawDetailShadows(VissibleRenderList);
+        }
+
 
         for (auto* mesh : VissibleRenderList)
         {
