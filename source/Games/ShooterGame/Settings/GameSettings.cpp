@@ -6,7 +6,7 @@
 
 #include <FileSystem/FileSystem.h>
 
-std::string GameSettings::DefaultSavePath = "Save/GameSettings.cfg";
+std::string GameSettings::DefaultSavePath = "SaveData/GameSettings.cfg";
 
 GameSettings& GameSettings::Instance()
 {

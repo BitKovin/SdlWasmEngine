@@ -41,6 +41,12 @@ public:
     // instead.
     std::string GetPhysicalPath(const std::string& path) override;
 
+    bool WriteSaveFile(const std::string& path, const std::string& content);
+    bool WriteSaveFileBinary(const std::string& path, const std::vector<uint8_t>& data);
+
+    std::optional<std::string> ReadSaveFile(const std::string& path);
+    std::optional<std::vector<uint8_t>> ReadSaveFileBinary(const std::string& path);
+
 private:
     // Mirrors the exact rule SDL_RWFromFile itself uses on Android: a
     // leading '/' means "real filesystem path" (internal/external storage),

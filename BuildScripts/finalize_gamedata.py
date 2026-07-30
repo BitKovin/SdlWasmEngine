@@ -7,6 +7,7 @@ import time
 import json
 from pathlib import Path
 import zipfile
+import os
 
 
 SIZE_THRESHOLD = 10 * 1024 * 1024      # 10 MB
@@ -122,7 +123,16 @@ def unpack_zip(zip_path):
 
     try:
         with zipfile.ZipFile(zip_path, "r") as zf:
-            zf.extractall(extract_dir)
+            # Iterate through all items in the zip instead of using extractall()
+            for info in zf.infolist():
+                # Extract the individual file or directory
+                extracted_path = zf.extract(info, extract_dir)
+                
+                # Calculate the original modification time using your existing helper
+                mtime = _zip_entry_mtime(info.date_time)
+                
+                # Manually restore the original access and modification times
+                os.utime(extracted_path, (mtime, mtime))
 
         zip_path.unlink()
 

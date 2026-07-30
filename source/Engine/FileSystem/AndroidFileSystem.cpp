@@ -84,6 +84,32 @@ uint32_t AndroidFileSystem::GetApkModTime() {
     return s_apkModTime;
 }
 
+// Save data lives in the app's private internal storage -- always present
+// for the app's own package with no permissions or external-storage state
+// to worry about, and it survives app updates until the user clears data
+// or uninstalls. Queried once and cached, same pattern as GetApkModTime.
+std::string AndroidFileSystem::GetSaveDataRoot() {
+    static std::string s_root;
+    static bool s_queried = false;
+    if (s_queried) return s_root;
+    s_queried = true;
+
+    const char* internalPath = SDL_AndroidGetInternalStoragePath();
+    if (internalPath) {
+        s_root = internalPath;
+    }
+    else {
+        SDL_Log("AndroidFileSystem: SDL_AndroidGetInternalStoragePath() returned null");
+    }
+    return s_root;
+}
+
+std::optional<std::string> AndroidFileSystem::ToSaveDataPhysicalPath(const std::string& path) {
+    std::string root = GetSaveDataRoot();
+    if (root.empty()) return std::nullopt;
+    return root + "/" + path;
+}
+
 bool AndroidFileSystem::LoadManifest() {
     auto text = NativeFileSystem::ReadFile("GameData/manifest.json");
     if (!text) {
@@ -188,6 +214,10 @@ bool AndroidFileSystem::IsAssetPath(const std::string& path) {
     return path.empty() || path.front() != '/';
 }
 
+bool AndroidFileSystem::IsSaveDataPath(const std::string& path) {
+    return path == "SaveData" || path.rfind("SaveData/", 0) == 0;
+}
+
 std::string AndroidFileSystem::GetPhysicalPath(const std::string& path) {
 #ifdef __ANDROID__
     // Asset-relative paths (packaged inside the APK) have no real location
@@ -215,6 +245,15 @@ std::optional<std::string> AndroidFileSystem::ToManifestRelative(const std::stri
 
 std::vector<std::string> AndroidFileSystem::GetFilesInPath(const std::string& path) {
 #ifdef __ANDROID__
+    if (IsSaveDataPath(path)) {
+        // Real files on disk under the save-data root, not APK assets --
+        // std::filesystem (via the base class) can enumerate them directly.
+        if (auto physical = ToSaveDataPhysicalPath(path)) {
+            return NativeFileSystem::GetFilesInPath(*physical);
+        }
+        return {};
+    }
+
     if (auto rel = ToManifestRelative(path)) {
         auto it = m_manifestDirChildren.find(*rel);
         if (it != m_manifestDirChildren.end()) return it->second;
@@ -247,6 +286,11 @@ std::vector<std::string> AndroidFileSystem::GetFilesInPath(const std::string& pa
 
 bool AndroidFileSystem::IsDirectory(const std::string& path) {
 #ifdef __ANDROID__
+    if (IsSaveDataPath(path)) {
+        auto physical = ToSaveDataPhysicalPath(path);
+        return physical.has_value() && NativeFileSystem::IsDirectory(*physical);
+    }
+
     if (auto rel = ToManifestRelative(path)) {
         return rel->empty() || m_manifestDirs.count(*rel) != 0;
     }
@@ -276,6 +320,11 @@ bool AndroidFileSystem::IsDirectory(const std::string& path) {
 
 uint32_t AndroidFileSystem::GetFileModificationTime(const std::string& path) {
 #ifdef __ANDROID__
+    if (IsSaveDataPath(path)) {
+        auto physical = ToSaveDataPhysicalPath(path);
+        return physical ? NativeFileSystem::GetFileModificationTime(*physical) : 0;
+    }
+
     if (auto rel = ToManifestRelative(path)) {
         auto it = m_manifestFiles.find(*rel);
         if (it != m_manifestFiles.end()) return it->second.mtime;
@@ -288,4 +337,57 @@ uint32_t AndroidFileSystem::GetFileModificationTime(const std::string& path) {
     }
 #endif
     return NativeFileSystem::GetFileModificationTime(path);
+}
+
+bool AndroidFileSystem::WriteSaveFile(const std::string& path, const std::string& content) {
+#ifdef __ANDROID__
+    if (IsSaveDataPath(path)) {
+        auto physical = ToSaveDataPhysicalPath(path);
+        if (!physical) {
+            SDL_Log("AndroidFileSystem::WriteSaveFile: no writable storage root for '%s'", path.c_str());
+            return false;
+        }
+        // Now a real absolute path (leading '/'), so the base class's
+        // SDL_RWops-based write goes straight to real storage instead of
+        // being resolved as a (read-only) asset.
+        return NativeFileSystem::WriteSaveFile(*physical, content);
+    }
+#endif
+    return NativeFileSystem::WriteSaveFile(path, content);
+}
+
+bool AndroidFileSystem::WriteSaveFileBinary(const std::string& path, const std::vector<uint8_t>& data) {
+#ifdef __ANDROID__
+    if (IsSaveDataPath(path)) {
+        auto physical = ToSaveDataPhysicalPath(path);
+        if (!physical) {
+            SDL_Log("AndroidFileSystem::WriteSaveFileBinary: no writable storage root for '%s'", path.c_str());
+            return false;
+        }
+        return NativeFileSystem::WriteSaveFileBinary(*physical, data);
+    }
+#endif
+    return NativeFileSystem::WriteSaveFileBinary(path, data);
+}
+
+std::optional<std::string> AndroidFileSystem::ReadSaveFile(const std::string& path) {
+#ifdef __ANDROID__
+    if (IsSaveDataPath(path)) {
+        auto physical = ToSaveDataPhysicalPath(path);
+        if (!physical) return std::nullopt;
+        return NativeFileSystem::ReadSaveFile(*physical);
+    }
+#endif
+    return NativeFileSystem::ReadSaveFile(path);
+}
+
+std::optional<std::vector<uint8_t>> AndroidFileSystem::ReadSaveFileBinary(const std::string& path) {
+#ifdef __ANDROID__
+    if (IsSaveDataPath(path)) {
+        auto physical = ToSaveDataPhysicalPath(path);
+        if (!physical) return std::nullopt;
+        return NativeFileSystem::ReadSaveFileBinary(*physical);
+    }
+#endif
+    return NativeFileSystem::ReadSaveFileBinary(path);
 }
