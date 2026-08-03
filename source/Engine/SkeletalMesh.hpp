@@ -254,6 +254,7 @@ public:
 	}
 
 	AnimationPose GetAnimationPose();
+	const AnimationPose& GetAnimationPoseRef();
 
 	void PasteAnimationPose(AnimationPose pose)
 	{

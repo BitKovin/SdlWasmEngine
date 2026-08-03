@@ -172,7 +172,7 @@ public:
 				{
 					if (weight <= 0.0f) return;
 					float total = accumulated + weight;
-					pose = AnimationPose::Lerp(pose, anim->GetAnimationPose(), weight / total);
+					pose = AnimationPose::Lerp(pose, anim->GetAnimationPoseRef(), weight / total);
 					accumulated = total;
 				};
 
@@ -180,8 +180,10 @@ public:
 			blendIn(sideAxisAnim, sideWeight);
 		}
 
-		pose = AnimationPose::LayeredLerp("spine_01", idleAnim->GetRootNode(), pose, idleAnim->GetAnimationPose(), 0.5, 0.5);
-		pose = AnimationPose::LayeredLerp("spine_02", idleAnim->GetRootNode(), pose, idleAnim->GetAnimationPose(), 1.0, 1.0);
+		auto idleAnimationPoseRef = idleAnim->GetAnimationPoseRef();
+
+		pose = AnimationPose::LayeredLerp("spine_01", idleAnim->GetRootNode(), pose, idleAnimationPoseRef, 0.5, 0.5);
+		pose = AnimationPose::LayeredLerp("spine_02", idleAnim->GetRootNode(), pose, idleAnimationPoseRef, 1.0, 1.0);
 
 		return pose;
 	}

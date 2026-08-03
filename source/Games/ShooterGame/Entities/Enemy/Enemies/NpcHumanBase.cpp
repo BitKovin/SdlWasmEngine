@@ -893,8 +893,13 @@ void NpcHumanBase::UpdateStatusWidgets()
 {
     statusWidget->Position = mesh->Position + WorldOrientationManager::GetUpVector() * 2.0f;
     statusWidget->TwoSided = true;
-    statusWidget->Update();
+
     statusWidget->Visible  = !IsDead() && widgetVisible;
+
+    if (statusWidget->Visible)
+    {
+        statusWidget->Update();
+    }
 }
 
 void NpcHumanBase::UpdateDebugUI()

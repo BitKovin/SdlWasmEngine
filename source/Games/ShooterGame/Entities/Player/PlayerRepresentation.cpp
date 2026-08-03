@@ -236,13 +236,15 @@ AnimationPose PlayerRepresentation::ApplyWeaponAnimation(AnimationPose pose)
     if (!hasR && !hasL)
         return pose;
 
+    auto weaponPose = weaponAnimation->GetAnimationPoseRef();
+
     // Layer the weapon animation onto the upper spine so legs remain
     // driven by the locomotion animator.
     AnimationPose outPose = AnimationPose::LayeredLerp(
         "spine_03",
         weaponAnimation->GetRootNode(),
         pose,
-        weaponAnimation->GetAnimationPose(),
+        weaponPose,
         1, 1);
 
     if (hasL == false && currentState.weaponRHandlingType != 0)

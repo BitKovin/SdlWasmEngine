@@ -305,6 +305,11 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
         if (colorBuffer->type() == TextureType::Texture2D)
             InitFrameBuffers();
 
+        if (colorBuffer->samples() != MultiSampleCount)
+        {
+            InitFrameBuffers();
+        }
+
         colorBuffer->setSamples(MultiSampleCount);
         depthBuffer->setSamples(MultiSampleCount);
     }

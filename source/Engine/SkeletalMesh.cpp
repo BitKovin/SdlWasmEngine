@@ -264,7 +264,7 @@ LightVolPointData SkeletalMesh::GetLightVolData()
 	vec3 samplePos = box.Center() + vec3(0, 0.5, 0);
 
 
-	auto light = Level::Current->BspData.GetLightvolColorPoint(samplePos * MAP_SCALE, true);
+	auto light = Level::Current->BspData.GetLightvolColorPoint(samplePos * MAP_SCALE, IsViewmodel);
 	return light;
 }
 
@@ -519,6 +519,7 @@ void SkeletalMesh::StartRagdoll()
 
 			if (JPH::isfinite(ToPhysics(linearVel).LengthSq()) && JPH::isfinite(ToPhysics(angularVel).LengthSq()))
 			{
+				Physics::Activate(hitbox);
 				Physics::SetLinearVelocity(hitbox, linearVel / 1.5f);
 				Physics::SetAngularVelocity(hitbox, angularVel / 1.5f);
 			}
@@ -824,7 +825,7 @@ void SkeletalMesh::UpdateHitboxes()
 		boneLinearVel[boneName] = linearVelocity;
 		boneAngularVel[boneName] = angularVelocity;
 
-		Physics::SetBodyPositionAndRotation(body, boneTrans.Position, boneTrans.RotationQuaternion);
+		Physics::SetBodyPositionAndRotationNoActivation(body, boneTrans.Position, boneTrans.RotationQuaternion);
 	}
 
 }
