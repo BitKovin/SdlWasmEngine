@@ -386,7 +386,7 @@ void Animator::updateRootMotion()
 // ApplyBonePoseArray — par_unseq fill, then world+skin pass
 // ─────────────────────────────────────────────────────────────────────────────
 
-void Animator::ApplyBonePoseArray(std::unordered_map<hashed_string, glm::mat4> pose)
+void Animator::ApplyBonePoseArray(const std::unordered_map<hashed_string, glm::mat4>& pose)
 {
     const SkeletonBone* bones = m_model->skeleton.bones;
     glm::mat4*          lp   = m_localPose;
@@ -412,8 +412,8 @@ void Animator::ApplyBonePoseArray(std::unordered_map<hashed_string, glm::mat4> p
 // ─────────────────────────────────────────────────────────────────────────────
 
 void Animator::ApplyLocalSpacePoseArray(
-    std::unordered_map<hashed_string, glm::mat4> pose,
-    std::unordered_map<hashed_string, glm::mat4> overridePose)
+    const std::unordered_map<hashed_string, glm::mat4>& pose,
+    const std::unordered_map<hashed_string, glm::mat4>& overridePose)
 {
     const FlatSkeleton& skel = m_model->skeleton;
     const uint16_t      n    = skel.boneCount;
@@ -621,7 +621,13 @@ std::vector<std::string> Animator::get()
 
 std::vector<glm::mat4>& Animator::getBoneMatrices() { return m_boneMatrices; }
 
-std::unordered_map<hashed_string, glm::mat4> Animator::GetBonePoseArray()
+// Returned by const reference on purpose: currentPose is a persistent member,
+// so returning it by value was an unconditional full hash-map copy (node
+// alloc + relink + rehash) on every call, whether the caller needed to own
+// a snapshot or was just going to read a value out of it. Callers that
+// genuinely need to own an independent copy (e.g. to survive across later
+// mutating calls) should copy explicitly at the call site.
+const std::unordered_map<hashed_string, glm::mat4>& Animator::GetBonePoseArray()
 {
     buildCurrentPose();
     return currentPose;

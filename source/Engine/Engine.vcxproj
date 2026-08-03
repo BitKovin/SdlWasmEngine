@@ -482,6 +482,7 @@
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="ShaderManager.cpp" />
     <ClCompile Include="SkeletalMesh.cpp" />
+    <ClCompile Include="SkeletalMesh_AnimationPoseManip.cpp" />
     <ClCompile Include="skinned_model.cpp" />
     <ClCompile Include="SoundSystem\FmodEventInstance.cpp" />
     <ClCompile Include="SoundSystem\SoundInstance.cpp" />

@@ -354,4 +354,7 @@ struct SkinnedModel
 };
 
 } // namespace roj
+
+void PrewarmSkeletonTopology(roj::BoneNode* rootNode);
+
 #endif // SKINNED_MODEL_HPP

@@ -750,6 +750,8 @@ bool ModelLoader<SkinnedMesh>::load(const std::string& path)
     for (size_t i = 0; i < m_scene->mNumTextures; ++i)
         LoadTextureFromScene(m_scene->mTextures[i]);
 
+    PrewarmSkeletonTopology(&m_model.defaultRoot);
+
     return true;
 }
 
