@@ -128,7 +128,7 @@ void Renderer::RenderLevel(Level* level, bgfx::FrameBufferHandle targetFrameBuff
 
     //colorTex = customIdResolveBuffer->textureHandle();
 
-    const bool blurEnabled = true;
+    const bool blurEnabled = false;
 
     if (blurEnabled)
     {

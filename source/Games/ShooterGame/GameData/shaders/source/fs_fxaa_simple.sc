@@ -15,7 +15,7 @@ uniform vec4 screenSize;
 //   8  → 17 taps  — default, smooth edges with no dithering
 //  16  → 33 taps  — very smooth, higher GPU cost
 //   4  → 9 taps   — cheaper, still better than original
-#define FXAA_SAMPLE_HALF    8
+#define FXAA_SAMPLE_HALF    4
 
 vec4 fxaa(
     sampler2D tex,

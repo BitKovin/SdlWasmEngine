@@ -306,4 +306,7 @@ protected:
     glm::vec4 finalizedGlowColor      = glm::vec4(1.f, 1.f, 1.f, 1.f);
     float     finalizedGlowRadius     = 6.f;
     float     finalizedGlowIntensity  = 1.f;
+
+	bool finalizedVisible = false;
+
 };

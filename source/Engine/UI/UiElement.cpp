@@ -123,6 +123,8 @@ void UiElement::FinalizeChildren()
     finalizedSize = GetSize();
     finalizedMatrix = worldMatrix;    // ← snapshot for Draw()
 
+    finalizedVisible = visible;
+
     FinalizeEffects();
 
     finalizedChildren = children;
@@ -371,7 +373,7 @@ void UiElement::Draw()
 {
     for (auto& child : finalizedChildren)
     {
-        if (!child->visible) continue;
+        if (!child->finalizedVisible) continue;
 
         if (DrawingLate)
         {
