@@ -2338,8 +2338,7 @@ void CQuake3BSP::BSPDebug(int index)
     printf("EndFace.\n");
 }
 
-static void AddPhysicsBodyForEntityAndModel(Entity* entity, BSPModelRef& model)
-{
+static void AddPhysicsBodyForEntityAndModel(Entity* entity, BSPModelRef& model) {
 
     vec3 bodyPos = vec3(0);
 
@@ -2366,11 +2365,17 @@ static void AddPhysicsBodyForEntityAndModel(Entity* entity, BSPModelRef& model)
     }
     else
     {
-        // Grouped meshes per texture (normal and sky)
-        unordered_map<string, MeshUtils::PositionVerticesIndices> meshesByTexture;
-        unordered_map<string, MeshUtils::PositionVerticesIndices> meshesSkyByTexture;
+        // Combined mesh structures for non-convex geometry
+        struct CombinedMesh {
+            vector<vec3> vertices;
+            vector<uint32_t> indices;
+            vector<string> materials;
+        };
 
-        // For convex collisions: points per texture
+        CombinedMesh standardMesh;
+        CombinedMesh skyMesh;
+
+        // For convex collisions: points grouped per texture
         unordered_map<string, vector<vec3>> convexPointsByTexture;
         unordered_map<string, vector<vec3>> convexPointsSkyByTexture;
 
@@ -2410,87 +2415,79 @@ static void AddPhysicsBodyForEntityAndModel(Entity* entity, BSPModelRef& model)
                 continue; // no indices needed for convex hull
             }
 
-            // Append to the proper mesh bucket (with index offset)
-            if (sky)
-            {
-                auto& bucket = meshesSkyByTexture[textureName];
-                size_t offset = bucket.vertices.size();
-                bucket.vertices.insert(bucket.vertices.end(), facePositions.begin(), facePositions.end());
-                for (int idx : indices)
-                    bucket.indices.push_back(static_cast<int>(idx) + static_cast<int>(offset));
-            }
-            else
-            {
-                auto& bucket = meshesByTexture[textureName];
-                size_t offset = bucket.vertices.size();
-                bucket.vertices.insert(bucket.vertices.end(), facePositions.begin(), facePositions.end());
-                for (int idx : indices)
-                    bucket.indices.push_back(static_cast<int>(idx) + static_cast<int>(offset));
-            }
+            // Build a temporary mesh for this face to clean up degenerates FIRST
+            MeshUtils::PositionVerticesIndices faceMesh;
+            faceMesh.vertices = facePositions;
+            for (auto idx : indices)
+                faceMesh.indices.push_back(static_cast<int>(idx));
+
+            faceMesh = MeshUtils::RemoveDegenerates(faceMesh, 0.01f, 0.00f);
+
+            if (faceMesh.vertices.empty() || faceMesh.indices.empty())
+                continue;
+
+            // Append to the proper combined mesh buffer
+            CombinedMesh& targetMesh = sky ? skyMesh : standardMesh;
+            uint32_t offset = static_cast<uint32_t>(targetMesh.vertices.size());
+
+            targetMesh.vertices.insert(targetMesh.vertices.end(), faceMesh.vertices.begin(), faceMesh.vertices.end());
+
+            for (int idx : faceMesh.indices)
+                targetMesh.indices.push_back(static_cast<uint32_t>(idx) + offset);
+
+            // Populate the material list per triangle
+            size_t numTriangles = faceMesh.indices.size() / 3;
+            for (size_t t = 0; t < numTriangles; ++t)
+                targetMesh.materials.push_back(textureName);
         } // end faces loop
 
-        // Create convex hull shapes per texture (if convex mode)
         if (entity->ConvexCollision)
         {
+            // Create convex hull shapes per texture, supplying the surface name
             for (auto& p : convexPointsByTexture)
             {
-                auto& points = p.second;
+                const auto& textureName = p.first;
+                const auto& points = p.second;
                 if (!points.empty())
                 {
-                    auto shape = Physics::CreateConvexHullFromPoints(points);
+                    auto shape = Physics::CreateConvexHullFromPoints(points, textureName);
                     shapes.push_back(shape);
                 }
             }
             for (auto& p : convexPointsSkyByTexture)
             {
-                auto& points = p.second;
+                const auto& textureName = p.first;
+                const auto& points = p.second;
                 if (!points.empty())
                 {
-                    auto shape = Physics::CreateConvexHullFromPoints(points);
+                    auto shape = Physics::CreateConvexHullFromPoints(points, textureName);
                     shapesSky.push_back(shape);
                 }
             }
         }
         else
         {
-            // Create mesh shapes per texture (normal)
-            for (auto& kv : meshesByTexture)
+            // Create single mesh shape for all standard faces
+            if (!standardMesh.vertices.empty() && !standardMesh.indices.empty())
             {
-                auto textureName = kv.first;
-                auto mesh = kv.second;
-
-                if (mesh.vertices.empty() || mesh.indices.empty())
-                    continue;
-
-                mesh = MeshUtils::RemoveDegenerates(mesh, 0.01f, 0.00f);
-                if (mesh.vertices.empty() || mesh.indices.empty())
-                    continue;
-
-                auto shape = Physics::CreateMeshShape(mesh.vertices, mesh.indices, textureName);
+                auto shape = Physics::CreateMeshShape(standardMesh.vertices, standardMesh.indices, standardMesh.materials);
                 shapes.push_back(shape);
             }
 
-            // Create mesh shapes per texture (sky)
-            for (auto& kv : meshesSkyByTexture)
+            // Create single mesh shape for all sky faces
+            if (!skyMesh.vertices.empty() && !skyMesh.indices.empty())
             {
-                auto textureName = kv.first;
-                auto mesh = kv.second;
-
-                if (mesh.vertices.empty() || mesh.indices.empty())
-                    continue;
-
-                mesh = MeshUtils::RemoveDegenerates(mesh, 0.01f, 0.00f);
-                if (mesh.vertices.empty() || mesh.indices.empty())
-                    continue;
-
-                auto shape = Physics::CreateMeshShape(mesh.vertices, mesh.indices, textureName);
+                auto shape = Physics::CreateMeshShape(skyMesh.vertices, skyMesh.indices, skyMesh.materials);
                 shapesSky.push_back(shape);
             }
         }
     }
 
+    if (shapes.empty() && shapesSky.empty())
+        return; // Safety bailout if geometry is completely empty
 
-    RefConst<Shape> finalShape = Physics::CreateStaticCompoundShapeFromConvexShapes(shapes);
+    // Use single shape directly if only 1 exists, otherwise wrap in a static compound shape
+    RefConst<Shape> finalShape = shapes.size() == 1 ? shapes[0] : Physics::CreateStaticCompoundShapeFromConvexShapes(shapes);
 
     Body* body = Physics::CreateBodyFromShape(entity, vec3(0), finalShape, 300, entity->Static ? JPH::EMotionType::Static : JPH::EMotionType::Kinematic, entity->DefaultBrushGroup, entity->DefaultBrushCollisionMask);
 
@@ -2500,14 +2497,12 @@ static void AddPhysicsBodyForEntityAndModel(Entity* entity, BSPModelRef& model)
 
     model.StaticNavigation = entity->Static;
 
-    if (shapesSky.size())
+    if (!shapesSky.empty())
     {
-        RefConst<Shape> skyShape = Physics::CreateStaticCompoundShapeFromConvexShapes(shapesSky);
+        RefConst<Shape> skyShape = shapesSky.size() == 1 ? shapesSky[0] : Physics::CreateStaticCompoundShapeFromConvexShapes(shapesSky);
         Body* bodySky = Physics::CreateBodyFromShape(entity, vec3(0), skyShape, 10, JPH::EMotionType::Static, BodyType::WorldSkybox, BodyType::CharacterCapsule);
         entity->Bodies.push_back(bodySky);
     }
-
-
 }
 
 void CQuake3BSP::LoadToLevel()

@@ -2030,9 +2030,9 @@ void Player::Update()
 
 	UpdateStamina();
 
-	auto lightData = Level::Current->BspData.GetLightvolColorPoint(Position * MAP_SCALE, true);
+	//auto lightData = Level::Current->BspData.GetLightvolColorPoint(Position * MAP_SCALE, true);
 
-	float lightLevel = LightVisibility::Compute(lightData);
+	//float lightLevel = LightVisibility::Compute(lightData);
 
 	//printf("light level: %f \n", lightLevel);
 

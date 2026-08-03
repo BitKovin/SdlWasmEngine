@@ -725,9 +725,9 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 
 	if (movementQuality == CharacterControllerMovementQuality::Player)
 	{
-		numOfIterations = 16;
+		numOfIterations = 8;
 		startRadius = 0.25f;
-		rayRadius = 0.1f;
+		rayRadius = 0.0f;
 		radiusStep = 0.25f;
 	}
 

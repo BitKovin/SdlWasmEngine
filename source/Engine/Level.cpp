@@ -310,6 +310,8 @@ Level* Level::OpenLevel(string filePath)
 		return OpenLevel(pendingLoadLevelPath);
 	}
 
+	Physics::OptimizeWorld();
+
 	return newLevel;
 }
 

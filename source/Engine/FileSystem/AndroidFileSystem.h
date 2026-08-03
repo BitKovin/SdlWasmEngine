@@ -52,6 +52,7 @@ private:
     // leading '/' means "real filesystem path" (internal/external storage),
     // anything else means "asset-relative path" (packaged inside the APK).
     static bool IsAssetPath(const std::string& path);
+    bool IsSaveDataPath(const std::string& path);
 
     // Non-static: needs *this* as the implicit object to call the base
     // class's NativeFileSystem::GetFileModificationTime through, since that

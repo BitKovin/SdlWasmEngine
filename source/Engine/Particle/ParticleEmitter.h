@@ -180,6 +180,7 @@ protected:
 private:
 
 	std::vector<InstanceData> instances;
+	std::vector<InstanceData> preFinalizedInstances;
 
 	// Shared billboard geometry — created once, reused by all emitters
 	static bgfx::VertexBufferHandle s_billboardVbh;

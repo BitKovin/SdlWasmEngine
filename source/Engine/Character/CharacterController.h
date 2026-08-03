@@ -17,13 +17,13 @@ class CharacterController
 {
 public:
 	CharacterController();
-	~CharacterController();
+	virtual ~CharacterController();
 
-	void Init(Entity* owner, vec3 position, float radius = 0.5, float height = 1.8, float mass = 30);
+	virtual void Init(Entity* owner, vec3 position, float radius = 0.5, float height = 1.8, float mass = 30);
 
 	void Destroy();
 
-	void Update(float deltaTime);
+	virtual void Update(float deltaTime);
 
 	vec3 GetPosition();
 	vec3 GetSmoothPosition();
@@ -32,8 +32,8 @@ public:
 
 	void UpdateSmoothPosition(float deltaTime);
 
-	vec3 GetVelocity();
-	void SetVelocity(vec3 vel);
+	virtual vec3 GetVelocity();
+	virtual void SetVelocity(vec3 vel);
 
 	Body* body = nullptr;
 	Body* sensorBody = nullptr;
@@ -98,16 +98,36 @@ public:
 	// Registry of all live CharacterControllers. Populated in Init(), removed in destructor.
 	static std::vector<CharacterController*> s_allControllers;
 
-private:
+protected:
+
+	// Exposed to subclasses (e.g. QuakeCharacterController) so alternate
+	// movement implementations can reuse the existing ground-sampling,
+	// character-stacking, and camera-smoothing logic instead of
+	// reimplementing it. Platform-attach state below is protected (not
+	// private) for the same reason: it's tightly coupled to the base
+	// class's own velocity-integration order, so a subclass with a
+	// different integration order (e.g. QuakeCharacterController) has to
+	// re-sequence it rather than call a shared helper -- but it still
+	// needs read/write access to reuse it instead of reimplementing its
+	// own parallel copy.
+	float currentCameraHeight = 0.0f;
+	float targetCameraHeight = 0.0f;
+
+	void UpdateGroundCheck(bool& hitsGround, float& calculatedCharacterHeight, bool& canStand, vec3& walkableNormal, vec3& notWalkableNormal);
+
+	bool CheckGroundAt(vec3 location, float radius, float& height, bool& canStand, vec3& normal, const Body** hitBody);
+
+	// Detects characters we are standing on, manages AddIgnorePair/RemoveIgnorePair,
+	// and applies horizontal separation impulses to both bodies.
+	void UpdateCharacterStacking(float deltaTime);
+
+protected:
 
 	Entity* owner = nullptr;
 	float standingHeight = 1.8f;
 
 	// Saved before SetLadderMode(true) zeroes stepHeight; restored on exit.
 	float savedStepHeight = 0.4f;
-
-	float currentCameraHeight = 0.0f;
-	float targetCameraHeight = 0.0f;
 
 	const Body* lastStandingOnBody = nullptr;
 	glm::vec3 baseLocalAttachPoint = glm::vec3(0.0f);
@@ -123,13 +143,5 @@ private:
 	std::unordered_map<BodyID, Delay> removeCollisionCooldown;
 
 	bool CanStandUp();
-
-	void UpdateGroundCheck(bool& hitsGround, float& calculatedCharacterHeight, bool& canStand, vec3& walkableNormal, vec3& notWalkableNormal);
-
-	bool CheckGroundAt(vec3 location, float radius, float& height, bool& canStand, vec3& normal, const Body** hitBody);
-
-	// Detects characters we are standing on, manages AddIgnorePair/RemoveIgnorePair,
-	// and applies horizontal separation impulses to both bodies.
-	void UpdateCharacterStacking(float deltaTime);
 
 };

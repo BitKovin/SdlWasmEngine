@@ -28,9 +28,9 @@ unordered_map<BodyID, Body*> Physics::bodyIdMap;
 
 vector<Body*> Physics::existingBodies = vector<Body*>();
 
-std::unordered_map<std::string, uint64_t> Physics::SurfaceIds = std::unordered_map<std::string, uint64_t>();
-std::unordered_map<uint64_t, std::string> Physics::SurfaceNames = std::unordered_map<uint64_t, std::string>();
-uint64_t Physics::nextSurfaceId = 1;
+std::unordered_map<std::string, uint32_t> Physics::SurfaceIds = std::unordered_map<std::string, uint32_t>();
+std::unordered_map<uint32_t, std::string> Physics::SurfaceNames = std::unordered_map<uint32_t, std::string>();
+uint32_t Physics::nextSurfaceId = 1;
 
 recursive_mutex Physics::physicsMainLock = recursive_mutex();
 
@@ -679,7 +679,7 @@ void Physics::UpdateSwingTwistMotor(TwoBodyConstraint* constraint,
 
 }
 
-uint64_t Physics::FindSurfaceId(string surfaceName)
+uint32_t Physics::FindSurfaceId(string surfaceName)
 {
 	Physics::physicsMainLock.lock();
 
@@ -700,7 +700,7 @@ uint64_t Physics::FindSurfaceId(string surfaceName)
 	return newId;
 }
 
-string Physics::FindSurfacyById(uint64_t id)
+string Physics::FindSurfacyById(uint32_t id)
 {
 	std::lock_guard<std::recursive_mutex> guard(Physics::physicsMainLock);
 
@@ -730,51 +730,116 @@ void Physics::AddImpulseAtLocation(const Body* body, vec3 impulse, vec3 point)
 
 }
 
-RefConst<Shape> Physics::CreateMeshShape(const std::vector<vec3>& vertices, const std::vector<uint32_t>& indices,string surfaceType)
+RefConst<Shape> Physics::CreateMeshShape(const std::vector<vec3>& vertices, const std::vector<uint32_t>& indices, const std::vector<std::string>& materials)
 {
-	// Validate that the number of indices is a multiple of 3 (required for triangles)
 	if (indices.size() % 3 != 0)
 	{
 		Logger::Error("Number of indices (%zu) must be a multiple of 3 to form complete triangles.", indices.size());
-		return RefConst<Shape>(); // Return empty shape on error
+		return RefConst<Shape>();
 	}
 
-	// Convert vertices to Jolt's Float3 format
+	size_t numTriangles = indices.size() / 3;
+	if (!materials.empty() && materials.size() != numTriangles)
+	{
+		Logger::Error("Material count (%zu) does not match triangle count (%zu).", materials.size(), numTriangles);
+		return RefConst<Shape>();
+	}
+
+	// 1. Convert vertices
 	Array<Float3> joltVertices;
-	joltVertices.reserve(vertices.size()); // Reserve space to avoid reallocations
+	joltVertices.reserve(vertices.size());
 	for (const auto& v : vertices)
 	{
 		joltVertices.push_back(Float3(v.x, v.y, v.z));
 	}
 
-	// Convert indices to Jolt's IndexedTriangle format
+	// 2. Prepare material tracking
+	// Jolt requires an array of RefConst<PhysicsMaterial>
+	JPH::PhysicsMaterialList joltMaterials;
+	// Map to prevent creating duplicate materials for the same surface ID
+	std::unordered_map<int, uint32_t> surfaceIdToJoltMatIndex;
+
+	// 3. Convert indices and assign materials
 	Array<IndexedTriangle> joltTriangles;
-	joltTriangles.reserve(indices.size() / 3); // Reserve space for the number of triangles
+	joltTriangles.reserve(numTriangles);
+
 	for (size_t i = 0; i < indices.size(); i += 3)
 	{
 		IndexedTriangle tri;
-		tri.mIdx[0] = indices[i + 0];     // First vertex index of the triangle
-		tri.mIdx[1] = indices[i + 1]; // Second vertex index
-		tri.mIdx[2] = indices[i + 2]; // Third vertex index
+		tri.mIdx[0] = indices[i + 0];
+		tri.mIdx[1] = indices[i + 1];
+		tri.mIdx[2] = indices[i + 2];
+
+		int surfaceId = materials.empty() ? 0 : FindSurfaceId(materials[i / 3]);
+
+		// Find or create the material in our unique list
+		uint32_t matIndex = 0;
+		auto it = surfaceIdToJoltMatIndex.find(surfaceId);
+		if (it == surfaceIdToJoltMatIndex.end())
+		{
+			// Material doesn't exist yet, create it
+			matIndex = static_cast<uint32_t>(joltMaterials.size());
+			surfaceIdToJoltMatIndex[surfaceId] = matIndex;
+
+			// Allocate our custom material and add it to Jolt's list
+			joltMaterials.push_back(new MySurfaceMaterial(surfaceId));
+		}
+		else
+		{
+			// Material already exists, use its index
+			matIndex = it->second;
+		}
+
+		// Assign the index pointing to the joltMaterials array
+		tri.mMaterialIndex = matIndex;
 		joltTriangles.push_back(tri);
 	}
 
-	// Create MeshShapeSettings with the converted data
-	MeshShapeSettings shapeSettings(joltVertices, joltTriangles);
-	shapeSettings.mUserData = FindSurfaceId(surfaceType);
+	// 4. Construct the settings object with ALL arrays populated
+	MeshShapeSettings shapeSettings;
+	shapeSettings.mTriangleVertices = std::move(joltVertices);
+	shapeSettings.mIndexedTriangles = std::move(joltTriangles);
+	shapeSettings.mMaxTrianglesPerLeaf = 4;
+	shapeSettings.mBuildQuality = JPH::MeshShapeSettings::EBuildQuality::FavorRuntimePerformance;
 
+	// CRITICAL: We must pass the material list to Jolt, or it will delete our indices!
+	shapeSettings.mMaterials = std::move(joltMaterials);
 
-	// Attempt to create the shape
 	Shape::ShapeResult result = shapeSettings.Create();
 	if (result.HasError())
 	{
 		Logger::Error("Error creating mesh shape: %s", result.GetError().c_str());
-		return RefConst<Shape>(); // Return empty shape on error
+		return RefConst<Shape>();
 	}
 
-
-	// Return the successfully created shape
 	return result.Get();
+}
+
+RefConst<Shape> Physics::CreateConvexHullFromPoints(const std::vector<glm::vec3>& points, std::string surfaceName)
+{
+	// Convert std::vector<Vec3> to Array<Vec3> (Jolt's format)
+	Array<Vec3> hullPoints;
+	for (auto pt : points)
+	{
+		hullPoints.push_back(Vec3(pt.x, pt.y, pt.z));
+	}
+
+	// Settings for the convex hull shape
+	ConvexHullShapeSettings shapeSettings(hullPoints);
+	shapeSettings.mMaterial = new MySurfaceMaterial(FindSurfaceId(surfaceName)); // Assign the specified material
+
+	// Optional: check for errors
+	Shape::ShapeResult result = shapeSettings.Create();
+	if (result.HasError())
+	{
+		printf("Error creating convex hull shape: %s\n", result.GetError().c_str());
+		return nullptr;
+	}
+
+	// Successfully created shape
+	RefConst<Shape> shape = result.Get();
+
+	return shape;
 }
 
 vector<Physics::HitResult> Physics::PointTrace(
@@ -840,9 +905,11 @@ vector<Physics::HitResult> Physics::PointTrace(
 
 		if (leaf)
 		{
-			int surfId = leaf->GetUserData();
-			if (surfId)
-				hr.surfaceName = FindSurfacyById(surfId);
+			auto material = leaf->GetMaterial(r.mSubShapeID2);
+			if (material != JPH::PhysicsMaterial::sDefault)
+			{
+				hr.surfaceName = ((MySurfaceMaterial*)material)->GetName();
+			}
 		}
 
 		// Set body + entity info
@@ -915,18 +982,11 @@ Physics::HitResult Physics::LineTrace(const vec3 start, const vec3 end, const Bo
 		if (body)
 		{
 			const JPH::Shape* root_shape = body->GetShape();
-			JPH::SubShapeID remainder;
-			const JPH::Shape* hit_shape = root_shape->GetLeafShape(result.mSubShapeID2, remainder);
-
-			if (hit_shape)
+			auto material = root_shape->GetMaterial(result.mSubShapeID2);
+			
+			if (material != JPH::PhysicsMaterial::sDefault)
 			{
-				int hitSurfaceId = hit_shape->GetUserData();
-
-				if (hitSurfaceId)
-				{
-					hit.surfaceName = FindSurfacyById(hitSurfaceId);
-				}
-
+				hit.surfaceName = ((MySurfaceMaterial*)material)->GetName();
 			}
 
 			// Calculate fraction of the hit along the ray.
@@ -1045,15 +1105,11 @@ Physics::HitResult Physics::SphereTrace(const vec3 start, const vec3 end, float 
 			JPH::SubShapeID remainder;
 			const JPH::Shape* hit_shape = root_shape->GetLeafShape(collector.GetHit().mSubShapeID2, remainder);
 
-			if (hit_shape)
+			auto material = root_shape->GetMaterial(collector.GetHit().mSubShapeID2);
+
+			if (material != JPH::PhysicsMaterial::sDefault)
 			{
-				int hitSurfaceId = hit_shape->GetUserData();
-
-				if (hitSurfaceId)
-				{
-					hit.surfaceName = FindSurfacyById(hitSurfaceId);
-				}
-
+				hit.surfaceName = ((MySurfaceMaterial*)material)->GetName();
 			}
 
 			hit.normal = FromPhysics(body->GetWorldSpaceSurfaceNormal(collector.GetHit().mSubShapeID2, collector.GetHit().mContactPointOn2));
@@ -1148,14 +1204,14 @@ std::vector<Physics::HitResult> Physics::MultiLineTrace(const vec3 start, const 
 		hit.normal = FromPhysics(body->GetWorldSpaceSurfaceNormal(result.mSubShapeID2, ray.GetPointOnRay(result.mFraction)));
 
 		const JPH::Shape* root_shape = body->GetShape();
-		JPH::SubShapeID remainder;
-		const JPH::Shape* hit_shape = root_shape->GetLeafShape(result.mSubShapeID2, remainder);
-		if (hit_shape)
+		
+		auto material = root_shape->GetMaterial(result.mSubShapeID2);
+
+		if (material != JPH::PhysicsMaterial::sDefault)
 		{
-			int hitSurfaceId = (int)hit_shape->GetUserData();
-			if (hitSurfaceId)
-				hit.surfaceName = FindSurfacyById(hitSurfaceId);
+			hit.surfaceName = ((MySurfaceMaterial*)material)->GetName();
 		}
+
 
 		hit.hitbody = body;
 
@@ -1231,13 +1287,12 @@ std::vector<Physics::HitResult> Physics::MultiSphereTrace(const vec3 start, cons
 		hit.normal = FromPhysics(body->GetWorldSpaceSurfaceNormal(result.mSubShapeID2, result.mContactPointOn2));
 
 		const JPH::Shape* root_shape = body->GetShape();
-		JPH::SubShapeID remainder;
-		const JPH::Shape* hit_shape = root_shape->GetLeafShape(result.mSubShapeID2, remainder);
-		if (hit_shape)
+		
+		auto material = root_shape->GetMaterial(result.mSubShapeID2);
+
+		if (material != JPH::PhysicsMaterial::sDefault)
 		{
-			int hitSurfaceId = (int)hit_shape->GetUserData();
-			if (hitSurfaceId)
-				hit.surfaceName = FindSurfacyById(hitSurfaceId);
+			hit.surfaceName = ((MySurfaceMaterial*)material)->GetName();
 		}
 
 		hit.hitbody = body;
@@ -1322,13 +1377,12 @@ std::vector<Physics::HitResult> Physics::MultiSphereOverlap(const vec3 center, f
 
 		// Surface name logic (same as your other traces)
 		const JPH::Shape* root_shape = body->GetShape();
-		JPH::SubShapeID remainder;
-		const JPH::Shape* hit_shape = root_shape->GetLeafShape(result.mSubShapeID2, remainder);
-		if (hit_shape)
+		
+		auto material = root_shape->GetMaterial(result.mSubShapeID2);
+
+		if (material != JPH::PhysicsMaterial::sDefault)
 		{
-			int hitSurfaceId = (int)hit_shape->GetUserData();
-			if (hitSurfaceId)
-				hit.surfaceName = FindSurfacyById(hitSurfaceId);
+			hit.surfaceName = ((MySurfaceMaterial*)material)->GetName();
 		}
 
 		hit.hitbody = body;
@@ -1414,18 +1468,12 @@ Physics::HitResult Physics::SphereTraceForEntity(vector<Entity*> entityties, con
 		{
 
 			const JPH::Shape* root_shape = body->GetShape();
-			JPH::SubShapeID remainder;
-			const JPH::Shape* hit_shape = root_shape->GetLeafShape(collector.GetHit().mSubShapeID2, remainder);
+			
+			auto material = root_shape->GetMaterial(collector.GetHit().mSubShapeID2);
 
-			if (hit_shape)
+			if (material != JPH::PhysicsMaterial::sDefault)
 			{
-				int hitSurfaceId = hit_shape->GetUserData();
-
-				if (hitSurfaceId)
-				{
-					hit.surfaceName = FindSurfacyById(hitSurfaceId);
-				}
-
+				hit.surfaceName = ((MySurfaceMaterial*)material)->GetName();
 			}
 
 			hit.normal = FromPhysics(body->GetWorldSpaceSurfaceNormal(collector.GetHit().mSubShapeID2, collector.GetHit().mContactPointOn2));
@@ -1528,13 +1576,12 @@ Physics::HitResult Physics::CylinderTrace(const vec3 start, const vec3 end, floa
 		if (body) {
 			// Process hit shape
 			const JPH::Shape* root_shape = body->GetShape();
-			JPH::SubShapeID remainder;
-			const JPH::Shape* hit_shape = root_shape->GetLeafShape(collector.GetHit().mSubShapeID2, remainder);
-			if (hit_shape) {
-				int hitSurfaceId = hit_shape->GetUserData();
-				if (hitSurfaceId) {
-					hit.surfaceName = FindSurfacyById(hitSurfaceId);
-				}
+			
+			auto material = root_shape->GetMaterial(collector.GetHit().mSubShapeID2);
+
+			if (material != JPH::PhysicsMaterial::sDefault)
+			{
+				hit.surfaceName = ((MySurfaceMaterial*)material)->GetName();
 			}
 
 			// Extract hit information
@@ -1613,14 +1660,13 @@ Physics::HitResult Physics::ShapeTrace(const Shape* shape, vec3 start, vec3 end,
 		JPH::BodyLockRead body_lock(physics_system->GetBodyLockInterface(), collector.GetHit().mBodyID2);
 		const JPH::Body* body = &body_lock.GetBody();
 		if (body) {
+			
 			const JPH::Shape* root_shape = body->GetShape();
-			JPH::SubShapeID remainder;
-			const JPH::Shape* hit_shape = root_shape->GetLeafShape(collector.GetHit().mSubShapeID2, remainder);
-			if (hit_shape) {
-				int hitSurfaceId = hit_shape->GetUserData();
-				if (hitSurfaceId) {
-					hit.surfaceName = FindSurfacyById(hitSurfaceId);
-				}
+			auto material = root_shape->GetMaterial(collector.GetHit().mSubShapeID2);
+
+			if (material != JPH::PhysicsMaterial::sDefault)
+			{
+				hit.surfaceName = ((MySurfaceMaterial*)material)->GetName();
 			}
 
 			hit.normal = FromPhysics(body->GetWorldSpaceSurfaceNormal(collector.GetHit().mSubShapeID2, collector.GetHit().mContactPointOn2));
@@ -1902,3 +1948,16 @@ bool DrawFilter::ShouldDraw(const Body& inBody) const
 	return true;
 }
 #endif // DEBUG
+
+MySurfaceMaterial::MySurfaceMaterial(uint32_t surfaceId)
+{
+
+	mSurfaceId = surfaceId;
+
+
+}
+
+std::string MySurfaceMaterial::GetName() const
+{
+	return Physics::FindSurfacyById(mSurfaceId);
+}

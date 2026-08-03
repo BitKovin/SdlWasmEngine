@@ -340,6 +340,22 @@ public:
 	bool ShouldDraw([[maybe_unused]] const Body& inBody) const override;
 };
 
+class MySurfaceMaterial : public JPH::PhysicsMaterial
+{
+public:
+
+	MySurfaceMaterial(uint32_t surfaceId);
+
+	std::string GetName() const;
+
+	// Required by Jolt
+	virtual const char* GetDebugName() const override { return GetName().c_str(); }
+	virtual JPH::Color GetDebugColor() const override { return JPH::Color::sGreen; } // Pick a color
+
+
+
+	int mSurfaceId = 0;
+};
 
 class MyDebugRenderer : public JPH::DebugRendererSimple
 {
@@ -409,9 +425,9 @@ private:
 
 	static vector<Body*> existingBodies;
 
-	static std::unordered_map<std::string, uint64_t> SurfaceIds;
-	static std::unordered_map<uint64_t, std::string> SurfaceNames;
-	static uint64_t nextSurfaceId;
+	static std::unordered_map<std::string, uint32_t> SurfaceIds;
+	static std::unordered_map<uint32_t, std::string> SurfaceNames;
+	static uint32_t nextSurfaceId;
 
 	static inline std::unordered_map<TwoBodyConstraint*, float> mConstraintBaseTorque;
 	static inline std::unordered_map<TwoBodyConstraint*, float> mConstraintLastStrength;
@@ -517,7 +533,7 @@ public:
 		auto currentPos = body->GetPosition();
 		auto targetPos = position;
 
-		auto hit = ShapeTrace(body->GetShape(), FromPhysics(currentPos), targetPos,vec3(0.99), data->mask, {body}, ignoreEntities);
+		auto hit = ShapeTrace(body->GetShape(), FromPhysics(currentPos), targetPos,vec3(1.00), data->mask, {body}, ignoreEntities);
 
 		if (hit.hasHit)
 		{
@@ -674,6 +690,11 @@ public:
 		
 	}
 
+	static void OptimizeWorld()
+	{
+		physics_system->OptimizeBroadPhase();
+	}
+
 	static void ResetSimulation()
 	{
 
@@ -799,8 +820,8 @@ public:
 	// Update the motor target every frame (childTransformRelParent = child transform in parent space)
 	static void UpdateSwingTwistMotor(TwoBodyConstraint* constraint, const quat& childTransformRelParent, const float& strength);
 
-	static uint64_t FindSurfaceId(string surfaceName);
-	static string FindSurfacyById(uint64_t id);
+	static uint32_t FindSurfaceId(string surfaceName);
+	static string FindSurfacyById(uint32_t id);
 
 
 	static void Deactivate(const Body* body)
@@ -846,34 +867,11 @@ public:
  * @param indices A vector of indices defining triangles (3 indices per triangle).
  * @return A RefConst<Shape> containing the created shape, or an empty RefConst if creation fails.
  */
-	static RefConst<Shape> CreateMeshShape(const std::vector<vec3>& vertices, const std::vector<uint32_t>& indices, string surfaceType = "default");
+	static RefConst<Shape> CreateMeshShape(const std::vector<vec3>& vertices, const std::vector<uint32_t>& indices, const std::vector<std::string>& materials);
 
 
-	static RefConst<Shape> CreateConvexHullFromPoints(const std::vector<glm::vec3>& points)
-	{
-		// Convert std::vector<Vec3> to Array<Vec3> (Jolt's format)
-		Array<Vec3> hullPoints;
-		for (auto pt : points)
-		{
-			hullPoints.push_back(Vec3(pt.x, pt.y, pt.z));
-		}
 
-		// Settings for the convex hull shape
-		ConvexHullShapeSettings shapeSettings(hullPoints);
-
-		// Optional: check for errors
-		Shape::ShapeResult result = shapeSettings.Create();
-		if (result.HasError())
-		{
-			printf("Error creating convex hull shape: %s\n", result.GetError().c_str());
-			return nullptr;
-		}
-
-		// Successfully created shape
-		RefConst<Shape> shape = result.Get();
-
-		return shape;
-	}
+	static RefConst<Shape> CreateConvexHullFromPoints(const std::vector<glm::vec3>& points, std::string surfaceName);
 
 	static RefConst<Shape> CreateStaticCompoundShapeFromConvexShapes(const std::vector<RefConst<Shape>>& convexShapes)
 	{

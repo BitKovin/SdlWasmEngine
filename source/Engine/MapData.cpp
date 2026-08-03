@@ -279,7 +279,7 @@ void MapData::LoadToLevel()
                 for (auto face : faces)
                 {
 
-                    auto shape = Physics::CreateConvexHullFromPoints(face->vertexLocations);
+                    auto shape = Physics::CreateConvexHullFromPoints(face->vertexLocations, "need to delete this whole file anyway");
 
                     colShapes.push_back(shape);
 

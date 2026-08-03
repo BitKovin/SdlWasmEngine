@@ -223,7 +223,7 @@ void ParticleEmitter::PreFinalize()
 
     const int cameraC = Level::Current->BspData.FindClusterAtPosition(cameraPosition);
 
-    instances.clear();
+    preFinalizedInstances.clear();
 
     if (DepthSorting)
     {
@@ -265,14 +265,14 @@ void ParticleEmitter::PreFinalize()
             std::sort(visible.begin(), visible.end(),
                 [](const auto& a, const auto& b) { return a.first > b.first; });
 
-            instances.reserve(visible.size());
+            preFinalizedInstances.reserve(visible.size());
             for (auto& v : visible)
-                instances.push_back(std::move(v.second));
+                preFinalizedInstances.push_back(std::move(v.second));
         }
     }
     else
     {
-        instances.reserve(finalizedParticles.size());
+        preFinalizedInstances.reserve(finalizedParticles.size());
         for (const auto& particle : finalizedParticles)
         {
 
@@ -303,7 +303,7 @@ void ParticleEmitter::PreFinalize()
             data.model[3] = world[3];
             data.Color = particle.Color * vec4(GetLightForParticle(particle), 1.0f);
             data.Color.a *= particle.Transparency;
-            instances.push_back(std::move(data));
+            preFinalizedInstances.push_back(std::move(data));
         }
 
     }
@@ -315,7 +315,7 @@ void ParticleEmitter::PreFinalize()
 // ---------------------------------------------------------------------------
 void ParticleEmitter::FinalizeFrameData()
 {
-    
+    instances = std::vector(preFinalizedInstances);
 }
 
 // ---------------------------------------------------------------------------
