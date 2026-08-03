@@ -15,6 +15,16 @@
 
 #include <StaticMesh.h>
 
+#if __ANDROID__
+
+#define FRAMEBUFFER_TEXTURE_FORMAT TextureFormat::RGBA8
+
+#endif
+
+#ifndef FRAMEBUFFER_TEXTURE_FORMAT
+#define FRAMEBUFFER_TEXTURE_FORMAT TextureFormat::RGBA16F
+#endif
+
 // -----------------------------------------------------------------------
 // bgfx clear-color helper  (RGBA packed as uint32_t 0xRRGGBBAA)
 // -----------------------------------------------------------------------
@@ -694,7 +704,7 @@ void Renderer::InitFullscreenBuffers()
 void Renderer::InitFrameBuffers()
 {
     ivec2 screenResolution = GetScreenResolution();
-    TextureFormat colorFmt = TextureFormat::RGBA16F;
+    TextureFormat colorFmt = FRAMEBUFFER_TEXTURE_FORMAT;
 
     delete colorBuffer;      colorBuffer = nullptr;
     delete depthBuffer;      depthBuffer = nullptr;
@@ -745,7 +755,7 @@ void Renderer::InitFrameBuffers()
 void Renderer::InitResolveFrameBuffers()
 {
     ivec2 screenResolution = GetScreenResolution();
-    TextureFormat colorFmt = TextureFormat::RGBA16F;
+    TextureFormat colorFmt = FRAMEBUFFER_TEXTURE_FORMAT;
 
     constexpr uint64_t kSamplerFlags =
         BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP

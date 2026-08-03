@@ -103,11 +103,11 @@ public:
     std::vector<std::string> get();
     std::vector<glm::mat4>&  getBoneMatrices();
 
-    std::unordered_map<hashed_string, glm::mat4> GetBonePoseArray();
+    const std::unordered_map<hashed_string, glm::mat4>& GetBonePoseArray();
 
-    void ApplyBonePoseArray(std::unordered_map<hashed_string, glm::mat4> pose);
-    void ApplyLocalSpacePoseArray(std::unordered_map<hashed_string, glm::mat4> pose,
-                                  std::unordered_map<hashed_string, glm::mat4> overridePose);
+    void ApplyBonePoseArray(const std::unordered_map<hashed_string, glm::mat4>& pose);
+    void ApplyLocalSpacePoseArray(const std::unordered_map<hashed_string, glm::mat4>& pose,
+                                  const std::unordered_map<hashed_string, glm::mat4>& overridePose);
 
     void UpdateAnimationPose();
     void updateRootMotion();

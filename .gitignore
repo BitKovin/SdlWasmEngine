@@ -475,3 +475,4 @@ Build/ShooterGame/android/*
 *spirv-opt.lib
 *spirv-cross.lib
 *tint.lib
+source/Games/ShooterGame/imgui.ini
