@@ -1,9 +1,30 @@
 [
   {
-    "Name": "windows-gdk",
+    "Name": "windows",
+    "Success": false,
+    "DurationSeconds": 36.7847186,
+    "LogFilePath": "F:\\Git\\SdlWasmEngine\\BuildLogs\\windows.log",
+    "ErrorMessage": "Exit code 1 \u2014 see F:\\Git\\SdlWasmEngine\\BuildLogs\\windows.log"
+  },
+  {
+    "Name": "linux",
+    "Success": false,
+    "DurationSeconds": 0.1384281,
+    "LogFilePath": "F:\\Git\\SdlWasmEngine\\BuildLogs\\linux.log",
+    "ErrorMessage": "Exit code 1 \u2014 see F:\\Git\\SdlWasmEngine\\BuildLogs\\linux.log"
+  },
+  {
+    "Name": "emscripten",
     "Success": true,
-    "DurationSeconds": 100.4910888,
-    "LogFilePath": "F:\\Git\\SdlWasmEngine\\BuildLogs\\windows-gdk.log",
+    "DurationSeconds": 9.2032115,
+    "LogFilePath": "F:\\Git\\SdlWasmEngine\\BuildLogs\\emscripten.log",
     "ErrorMessage": null
+  },
+  {
+    "Name": "windows-gdk",
+    "Success": false,
+    "DurationSeconds": 24.7796598,
+    "LogFilePath": "F:\\Git\\SdlWasmEngine\\BuildLogs\\windows-gdk.log",
+    "ErrorMessage": "Exit code 1 \u2014 see F:\\Git\\SdlWasmEngine\\BuildLogs\\windows-gdk.log"
   }
 ]

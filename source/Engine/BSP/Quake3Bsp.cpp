@@ -1019,35 +1019,45 @@ void CQuake3BSP::PreloadFace(int index)
 
         // Parse filename only for animation markers
         if (!filename.empty()) {
+            size_t prefixLen = 0;
+
+            // Detect prefix
             if (filename[0] == '+') {
                 animPrefix = "+";
-                size_t pos = 1;
-                currentFrame = 0;
-                while (pos < filename.size() && isdigit(static_cast<unsigned char>(filename[pos]))) {
-                    currentFrame = currentFrame * 10 + (filename[pos] - '0');
-                    ++pos;
-                }
-                if (pos > 1 && pos < filename.size()) {
-                    baseFilename = filename.substr(pos);
-                    isAnimated = true;
-                }
+                prefixLen = 1;
             }
             else if (filename.size() > 5 && filename.substr(0, 5) == "plus_") {
                 animPrefix = "plus_";
-                size_t pos = 5;
-                currentFrame = 0;
-                while (pos < filename.size() && isdigit(static_cast<unsigned char>(filename[pos]))) {
-                    currentFrame = currentFrame * 10 + (filename[pos] - '0');
-                    ++pos;
+                prefixLen = 5;
+            }
+
+            // If a valid prefix was found and there are characters following it
+            if (prefixLen > 0 && prefixLen < filename.size()) {
+                char frameChar = filename[prefixLen];
+                bool validFrame = false;
+
+                // Parse the single-character frame index (0-9, a-z, A-Z)
+                if (isdigit(static_cast<unsigned char>(frameChar))) {
+                    currentFrame = frameChar - '0';
+                    validFrame = true;
                 }
-                if (pos > 5 && pos < filename.size()) {
-                    baseFilename = filename.substr(pos);
+                else if (islower(static_cast<unsigned char>(frameChar))) {
+                    currentFrame = frameChar - 'a' + 10;
+                    validFrame = true;
+                }
+                else if (isupper(static_cast<unsigned char>(frameChar))) {
+                    currentFrame = frameChar - 'A' + 10;
+                    validFrame = true;
+                }
+
+                // If it is a valid frame and there is a base filename remaining
+                if (validFrame && (prefixLen + 1) < filename.size()) {
+                    baseFilename = filename.substr(prefixLen + 1);
                     isAnimated = true;
                 }
             }
         }
     }
-
     bool isCube = nameL > 5
         && textureName[nameL - 1] == 'e' && textureName[nameL - 2] == 'b'
         && textureName[nameL - 3] == 'u' && textureName[nameL - 4] == 'c';
@@ -1144,16 +1154,25 @@ void CQuake3BSP::PreloadFace(int index)
 
     if (isAnimated && !baseFilename.empty() && !isCube) {
         std::vector<int> animFrames;
-        const int MAX_FRAMES = 64;  // safety limit (Quake animations are tiny)
+        const int MAX_FRAMES = 36;  // Single-char frames max out at 36 (0-9 + a-z)
 
         for (int f = 0; f < MAX_FRAMES; ++f) {
-            string frameFilename = animPrefix + std::to_string(f) + baseFilename;
+            // Map frame index to character: 0-9 -> '0'-'9', 10-35 -> 'a'-'z'
+            char frameChar = (f < 10) ? ('0' + f) : ('a' + (f - 10));
+
+            string frameFilename = animPrefix + frameChar + baseFilename;
             string frameFullTextureName = directory + frameFilename;
             string framePath = "GameData/" + frameFullTextureName + ".png";
 
             auto frameTex = AssetRegistry::GetTextureFromFile(framePath);
+            if (frameTex == nullptr || !frameTex->valid) {
+                // Try .jpg if .png failed
+                framePath = "GameData/" + frameFullTextureName + ".jpg";
+                frameTex = AssetRegistry::GetTextureFromFile(framePath);
+            }
+
             if (!frameTex || frameTex->getID() == 0) {
-                break;  // stop at first missing frame (standard Quake behavior)
+                break;  // Stop at first missing frame (standard engine behavior)
             }
             animFrames.push_back((int)frameTex->getID());
         }
@@ -2171,16 +2190,19 @@ bool CQuake3BSP::RenderMergedFace(int mergedIndex, bool lightmap,
 
     const CachedFaceTextureData& data = cachedFaces[mergedFace.referenceFace];
 
+
     int faceTexture = GetFaceTextureNativeId(data.textureId);
-    if (faceTexture == 0) return false;
+
 
     if (data.animatedTextureFrames.size() > 0)
     {
         // Simple frame animation: cycle through frames based on time.
         uint64_t timeMs = Time::GameTime * 1000.0f;
-        size_t frameIndex = (timeMs / 100) % data.animatedTextureFrames.size(); // Change frame every 100ms
+        size_t frameIndex = (timeMs / 200) % data.animatedTextureFrames.size(); // Change frame every 200ms
         faceTexture = GetFaceTextureNativeId(data.animatedTextureFrames[frameIndex]);
     }
+
+    if (faceTexture == 0) return false;
 
     Shader* shader = ShaderManager::GetShaderProgram(
         "bsp/vs_bsp", data.isCube ? "bsp/fs_bsp_cube" : "bsp/fs_bsp");

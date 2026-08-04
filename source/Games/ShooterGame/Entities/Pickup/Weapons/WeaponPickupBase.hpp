@@ -14,6 +14,7 @@ public:
 	WeaponPickupBase() : PickupBase()
 	{
 		areaSize = vec3(1.0f);
+		SaveGame = true;
 	}
 
 	void OnPickup(Player* player) override

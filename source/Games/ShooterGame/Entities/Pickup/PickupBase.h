@@ -38,6 +38,22 @@ public:
 	void NetSerialize(NetPacket& packet) override;
 	void NetDeserialize(NetPacket& packet) override;
 
+	void Serialize(json& target) override
+	{
+
+		SERIALIZE_FIELD(target, pickedUp);
+	}
+
+	void Deserialize(json& source) override
+	{
+
+		DESERIALIZE_FIELD(source, pickedUp);
+		if (pickedUp)
+		{
+			Visible = false;
+		}
+	}
+
 private:
 
 };

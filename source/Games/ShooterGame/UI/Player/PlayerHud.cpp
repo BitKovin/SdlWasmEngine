@@ -87,7 +87,7 @@ void PlayerHud::Init(Player* playerRef)
     hudCanvas->AddChild(useIndicator);
 
 	playerStatusContainer = make_shared<UiImage>();
-	//hudCanvas->AddChild(playerStatusContainer);
+	//hudCanvas->AddChild(playerStatusContainer); unused
 
 	playerStatusContainer->ImagePath = "GameData/textures/ui/hud/status.png";
 	playerStatusContainer->size = vec2(392, 317);

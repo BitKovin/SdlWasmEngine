@@ -25,7 +25,7 @@ uniform vec4 modelColor;
 uniform vec4 PointLightsNumber;
 
 #ifndef MAX_POINT_LIGHTS
-    #define MAX_POINT_LIGHTS 16
+    #define MAX_POINT_LIGHTS 5
 #endif
 
 uniform mat4 PointLights[MAX_POINT_LIGHTS];
