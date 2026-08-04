@@ -671,5 +671,11 @@
     <ClInclude Include="UI\Pause\UiSoundSettings.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="UI\Player\HudStatusBar.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\Player\HudStatElement.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

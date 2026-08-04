@@ -1,11 +1,23 @@
 #include "PlayerHud.hpp"
 #include <EngineMain.h>
+#include <cstdio>
 
 #include "../../Entities/Player/Player.hpp"
 
 #include "ScoreIndicator.hpp"
 
 #include <UI/UiDropdown.hpp>
+
+namespace
+{
+    // "3" / "3.0"-style formatting for the stamina readout.
+    std::string FormatOneDecimal(float v)
+    {
+        char buf[32];
+        std::snprintf(buf, sizeof(buf), "%.1f", v);
+        return std::string(buf);
+    }
+}
 
 PlayerHud::PlayerHud()
 {
@@ -35,35 +47,23 @@ void PlayerHud::Init(Player* playerRef)
     crosshair->origin = vec2(0.5f, 0.5f);
 	hudCanvas->AddChild(crosshair);
 
-    text = make_shared<UiText>();
-    text->position = vec2(20, -20);
-    text->origin = vec2(0, 1);
-    text->pivot = vec2(0, 1);
-    text->text = std::to_string((int)player->Health);
+    // ── Retro text status bar: STAMINA / HEALTH / AMMO ─────────────────────
+    // Each column is a fixed size so the three stay evenly spaced no matter
+    // how many digits a value has, and the whole row is pivot-centered so it
+    // stays centered on any aspect ratio (canvas is 1080 tall, variable
+    // width). See UI/HudStatusBar.hpp and UI/HudStatElement.hpp.
+    statusBar = make_shared<HudStatusBar>();
+    hudCanvas->AddChild(statusBar);
 
-	text->font = UiRenderer::LoadFont("GameData/fonts/TypographerRotunda.ttf", 100);
-    text->fontSize = 100;
+    const vec2 statColumnSize = vec2(170.f, 100.f);
+    staminaStat = make_shared<HudStatElement>("STAMINA", statColumnSize, vec4(0.32f, 0.32f, 0.44f, 1.f));
+    statusBar->AddChild(staminaStat);
 
-    text->shadowEnabled = true;
-    text->shadowSoftness = 8;
-    text->shadowSpread = 5;
-    text->shadowColor = vec4(0, 0, 0, 0.8);
-	text->outlineEnabled = true;
-    text->outlineWidth = 2;
+    healthStat = make_shared<HudStatElement>("HEALTH", statColumnSize, vec4(0.45f, 0.21f, 0.21f, 1.f));
+    statusBar->AddChild(healthStat);
 
-	//text->glowEnabled = true;
-
-    ammoText = make_shared<UiText>();
-    ammoText->position = vec2(-20, -20);
-    ammoText->origin = vec2(1, 1);
-    ammoText->pivot = vec2(1, 1);
-	hudCanvas->AddChild(ammoText);
-
-
-    hudCanvas->AddChild(text);
-    hudCanvas->AddChild(crosshair);
-
-
+    ammoStat = make_shared<HudStatElement>("AMMO", statColumnSize, vec4(0.64f, 0.60f, 0.48f, 1.f));
+    statusBar->AddChild(ammoStat);
 
     ScreenControls = make_shared<ScreenMobileControls>();
     EngineMain::Viewport.AddChild(ScreenControls);
@@ -86,82 +86,30 @@ void PlayerHud::Init(Player* playerRef)
 
     hudCanvas->AddChild(useIndicator);
 
-	playerStatusContainer = make_shared<UiImage>();
-	//hudCanvas->AddChild(playerStatusContainer); unused
-
-	playerStatusContainer->ImagePath = "GameData/textures/ui/hud/status.png";
-	playerStatusContainer->size = vec2(392, 317);
-	playerStatusContainer->origin = vec2(0.0f, 1.0f);
-	playerStatusContainer->pivot = vec2(0.0f, 1.0f);
-
-	playerStatusContainer->color = vec4(vec3(.85f),0.9f);
-
-	healthBar = make_shared<UiImage>();
-	playerStatusContainer->AddChild(healthBar);
-	healthBar->ImagePath = "GameData/textures/ui/hud/progressbar.png";
-	healthBar->size = vec2(282, 37);
-	healthBar->position = vec2(47, 158);
-	healthBar->color = vec4(1, 0.2, 0.2, 1);
-
-
-    armorBar = make_shared<UiImage>();
-    playerStatusContainer->AddChild(armorBar);
-    armorBar->ImagePath = "GameData/textures/ui/hud/progressbar.png";
-    armorBar->size = vec2(282, 37);
-    armorBar->position = vec2(47, 92);
-    armorBar->color = vec4(1.1, 0.7, 0.0, 1);
-
-	staminaBar1 = make_shared<StaminaBar>();
-	playerStatusContainer->AddChild(staminaBar1);
-	staminaBar1->origin = vec2(0, 1);
-	staminaBar1->pivot = vec2(0, 1);
-	staminaBar1->position = vec2(50, -25);
-
-    staminaBar2 = make_shared<StaminaBar>();
-    playerStatusContainer->AddChild(staminaBar2);
-    staminaBar2->origin = vec2(0, 1);
-    staminaBar2->pivot = vec2(0, 1);
-    staminaBar2->position = vec2(50 + 90, -25);
-
-    staminaBar3 = make_shared<StaminaBar>();
-    playerStatusContainer->AddChild(staminaBar3);
-    staminaBar3->origin = vec2(0, 1);
-    staminaBar3->pivot = vec2(0, 1);
-    staminaBar3->position = vec2(50 + 90 * 2, -25);
-
     //hudCanvas->AddChild(std::make_shared<UiScoreIndicator>());
 
 }
 
 void PlayerHud::Update()
 {
-    text->text = "HEALTH: " + std::to_string((int)player->Health) + "\n" + "Stamina: " + to_string(player->stamina);
+    staminaStat->SetValue(FormatOneDecimal(player->stamina));
+	staminaStat->ProgressBar->Progress = player->stamina / 3.0f;
+    healthStat->SetValue(std::to_string((int)player->Health));
+	healthStat->ProgressBar->Progress = player->Health / player->MaxHealth;
 
-    ammoText->text = "";
+    ammoStat->SetValue("");
     if (player->currentWeapon)
     {
         if (player->currentWeapon->GetAmmoType() != WeaponAmmoType::None)
         {
             int ammoCount = player->GetAmmo(player->currentWeapon->GetAmmoType());
             int ammoLimit = player->GetAmmoLimit(player->currentWeapon->GetAmmoType());
-            ammoText->text = to_string(ammoCount) + " / " + to_string(ammoLimit);
+            ammoStat->SetValue(to_string(ammoCount));// +" / " + to_string(ammoLimit));
+			ammoStat->ProgressBar->Progress = ammoLimit > 0 ? (float)ammoCount / (float)ammoLimit : 0.0f;
 		}
     }
 
     crosshair->visible = !useIndicator->visible;
-
-    healthBar->size = vec2(glm::max(0.0f, glm::min(1.0f, player->Health / player->MaxHealth)) * 282, 37);
-
-	float stamina = player->stamina;
-
-	float stamina1 = glm::clamp(stamina, 0.0f, 1.0f);
-	float stamina2 = glm::clamp(stamina - 1.0f, 0.0f, 1.0f);
-	float stamina3 = glm::clamp(stamina - 2.0f, 0.0f, 1.0f);
-
-	staminaBar1->stamina = stamina1;
-	staminaBar2->stamina = stamina2;
-	staminaBar3->stamina = stamina3;
-
 
 	//frameRate->text = "FPS: " + to_string((int)(1.0f / Time::DeltaTimeF));
 
@@ -360,7 +308,7 @@ StaminaBar::StaminaBar()
 void StaminaBar::Update()
 {
 
-    staminaFill->Progress = stamina;
+    staminaFill->Progress = stamina; 
 
     UiImage::Update();
 }

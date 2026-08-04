@@ -10,6 +10,7 @@
 #include <UI/UiVideo.hpp>
 #include <UI/UiVerticalBox.hpp>
 #include <UI/UiProgressBar.hpp>
+#include "HudStatusBar.hpp"
 #include <Entity.h>
 #include <Entities/Player/Weapons/WeaponBase.h>
 
@@ -26,7 +27,7 @@ public:
 
 	std::string oldMainUUID;
 	std::string oldOffhandUUID;
-
+	 
 	Player* player = nullptr;
 
 	void Update();
@@ -54,6 +55,9 @@ private:
 
 };
 
+// Kept for compatibility in case other code references the type. PlayerHud
+// no longer instantiates this -- stamina is now shown as plain text in the
+// retro status bar (see HudStatElement below).
 class StaminaBar : public UiImage
 {
 
@@ -97,22 +101,20 @@ private:
 
 	std::shared_ptr<WeaponSlots> slots;
 
-	std::shared_ptr<UiButton> img;
-	std::shared_ptr<UiText> text;
-	std::shared_ptr<UiText> ammoText;
 	std::shared_ptr<UiCrosshair> crosshair;
 
 	std::shared_ptr<UiText> frameRate;
 
 	std::shared_ptr<UseIndicator> useIndicator;
 
-
-	std::shared_ptr<UiImage> healthBar;
-	std::shared_ptr<UiImage> armorBar;
-	std::shared_ptr<UiImage> playerStatusContainer;
-
-	std::shared_ptr<StaminaBar> staminaBar1;
-	std::shared_ptr<StaminaBar> staminaBar2;
-	std::shared_ptr<StaminaBar> staminaBar3;
+	// ── Retro text HUD: STAMINA / HEALTH / AMMO ─────────────────────────────
+	// Fixed-width columns in a centered row -- see UI/HudStatusBar.hpp and
+	// UI/HudStatElement.hpp. To add another readout later, construct one
+	// more HudStatElement, AddChild it to statusBar, and update its value
+	// in PlayerHud::Update().
+	std::shared_ptr<HudStatusBar> statusBar;
+	std::shared_ptr<HudStatElement> staminaStat;
+	std::shared_ptr<HudStatElement> healthStat;
+	std::shared_ptr<HudStatElement> ammoStat;
 
 };

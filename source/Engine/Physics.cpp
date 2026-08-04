@@ -253,6 +253,20 @@ void MyContactListener::OnContactRemoved(const JPH::SubShapeIDPair& inSubShapePa
 	// Leave empty; removals are handled in afterSimulation()
 }
 
+
+MySurfaceMaterial::MySurfaceMaterial(uint32_t surfaceId)
+{
+
+	mSurfaceId = surfaceId;
+
+
+}
+
+std::string MySurfaceMaterial::GetName() const
+{
+	return Physics::FindSurfacyById(mSurfaceId);
+}
+
 void Physics::SetGravity(vec3 gravity)
 {
 	physics_system->SetGravity(ToPhysics(gravity));
@@ -1949,15 +1963,3 @@ bool DrawFilter::ShouldDraw(const Body& inBody) const
 }
 #endif // DEBUG
 
-MySurfaceMaterial::MySurfaceMaterial(uint32_t surfaceId)
-{
-
-	mSurfaceId = surfaceId;
-
-
-}
-
-std::string MySurfaceMaterial::GetName() const
-{
-	return Physics::FindSurfacyById(mSurfaceId);
-}

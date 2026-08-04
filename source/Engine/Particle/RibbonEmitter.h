@@ -24,6 +24,8 @@ public:
     void FinalizeFrameData();
     void DrawForward(mat4x4 view, mat4x4 projection);
 
+	void PreFinalize() override{}
+
     bool IsCameraVisible() { return true; }
 
 private:

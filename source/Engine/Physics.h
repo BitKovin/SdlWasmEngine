@@ -34,6 +34,7 @@
 #include <Jolt/Core/Reference.h>
 #include <Jolt/Physics/Body/BodyLockMulti.h>
 #include <Jolt/Physics/Constraints/SwingTwistConstraint.h>
+#include <Jolt/Physics/Collision/PhysicsMaterial.h>
 
 #include <unordered_set>
 
@@ -164,6 +165,24 @@ namespace Layers
 	static constexpr ObjectLayer MOVING = 1;
 	static constexpr ObjectLayer TRACE_ONLY = 2;
 	static constexpr ObjectLayer NUM_LAYERS = 3;
+};
+
+
+class MySurfaceMaterial : public JPH::PhysicsMaterial
+{
+public:
+
+	MySurfaceMaterial(uint32_t surfaceId);
+
+	std::string GetName() const;
+
+	// Required by Jolt
+	virtual const char* GetDebugName() const override { return GetName().c_str(); }
+	virtual JPH::Color GetDebugColor() const override { return JPH::Color::sGreen; } // Pick a color
+
+
+
+	int mSurfaceId = 0;
 };
 
 /// Class that determines if two object layers can collide
@@ -340,22 +359,6 @@ public:
 	bool ShouldDraw([[maybe_unused]] const Body& inBody) const override;
 };
 
-class MySurfaceMaterial : public JPH::PhysicsMaterial
-{
-public:
-
-	MySurfaceMaterial(uint32_t surfaceId);
-
-	std::string GetName() const;
-
-	// Required by Jolt
-	virtual const char* GetDebugName() const override { return GetName().c_str(); }
-	virtual JPH::Color GetDebugColor() const override { return JPH::Color::sGreen; } // Pick a color
-
-
-
-	int mSurfaceId = 0;
-};
 
 class MyDebugRenderer : public JPH::DebugRendererSimple
 {

@@ -590,6 +590,8 @@
     <ClInclude Include="UI\Pause\UI\UiConfirmDialog.hpp" />
     <ClInclude Include="UI\Pause\UI\UiRebindCaptureModal.hpp" />
     <ClInclude Include="UI\Player\Crosshair.h" />
+    <ClInclude Include="UI\Player\HudStatElement.hpp" />
+    <ClInclude Include="UI\Player\HudStatusBar.hpp" />
     <ClInclude Include="UI\Player\PlayerHud.hpp" />
     <ClInclude Include="UI\Player\ScoreIndicator.hpp" />
     <ClInclude Include="UI\Player\ScreenMobileControls.h" />

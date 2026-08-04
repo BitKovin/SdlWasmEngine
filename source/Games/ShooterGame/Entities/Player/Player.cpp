@@ -1795,10 +1795,10 @@ void Player::UpdateDebugUI()
 
 	draw->AddText(NULL, 24.0f, ImVec2(10, 10), IM_COL32(255, 255, 255, 255), fps.c_str());
 
-	for (size_t i = 0; i < 10; i++)
-	{
-		Level::Current->BspData.FindPath(testStart, Position);
-	}
+	//for (size_t i = 0; i < 10; i++)
+	//{
+	//	Level::Current->BspData.FindPath(testStart, Position);
+	//}
 
 
 	if (EngineMain::MainInstance->Paused == false) return;

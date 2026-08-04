@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-04T10:04:11Z",
+  "generatedAt": "2026-08-04T17:10:42Z",
   "root": "GameData",
   "entries": [
     {
@@ -20,7 +20,7 @@
       "path": "animations.zip",
       "type": "file",
       "size": 7163982,
-      "mtime": 1785837834
+      "mtime": 1785863425
     },
     {
       "path": "animations/npc",
@@ -37,42 +37,42 @@
       "path": "animations/npc/caution_idle.glb",
       "type": "file",
       "size": 1864548,
-      "mtime": 1785837826,
+      "mtime": 1785863416,
       "archive": "animations.zip"
     },
     {
       "path": "animations/npc/idle.glb",
       "type": "file",
       "size": 1812432,
-      "mtime": 1785837826,
+      "mtime": 1785863416,
       "archive": "animations.zip"
     },
     {
       "path": "animations/npc/inPain.glb",
       "type": "file",
       "size": 1920624,
-      "mtime": 1785837826,
+      "mtime": 1785863416,
       "archive": "animations.zip"
     },
     {
       "path": "animations/npc/run.glb",
       "type": "file",
       "size": 1828316,
-      "mtime": 1785837826,
+      "mtime": 1785863416,
       "archive": "animations.zip"
     },
     {
       "path": "animations/npc/standUp.glb",
       "type": "file",
       "size": 2339232,
-      "mtime": 1785837826,
+      "mtime": 1785863416,
       "archive": "animations.zip"
     },
     {
       "path": "animations/npc/walk.glb",
       "type": "file",
       "size": 740580,
-      "mtime": 1785837826,
+      "mtime": 1785863416,
       "archive": "animations.zip"
     },
     {
@@ -87,28 +87,28 @@
       "path": "animations/player/body/idle.glb",
       "type": "file",
       "size": 1812432,
-      "mtime": 1785837826,
+      "mtime": 1785863416,
       "archive": "animations.zip"
     },
     {
       "path": "animations/player/body/run_f.glb",
       "type": "file",
       "size": 1828316,
-      "mtime": 1785837826,
+      "mtime": 1785863416,
       "archive": "animations.zip"
     },
     {
       "path": "animations/player/tp_weapons.glb",
       "type": "file",
       "size": 800124,
-      "mtime": 1785837826,
+      "mtime": 1785863416,
       "archive": "animations.zip"
     },
     {
       "path": "arms.glb",
       "type": "file",
       "size": 148620,
-      "mtime": 1785837826
+      "mtime": 1785863417
     },
     {
       "path": "base",
@@ -481,8 +481,8 @@
     {
       "path": "maps.zip",
       "type": "file",
-      "size": 5891252,
-      "mtime": 1785837836
+      "size": 5992857,
+      "mtime": 1785863426
     },
     {
       "path": "maps/Level.bsp",
@@ -842,57 +842,57 @@
     {
       "path": "maps/lvl1.autosave.map",
       "type": "file",
-      "size": 164240,
-      "mtime": 1785503460,
+      "size": 207408,
+      "mtime": 1785855708,
       "archive": "maps.zip"
     },
     {
       "path": "maps/lvl1.bak",
       "type": "file",
-      "size": 164516,
-      "mtime": 1785502936,
+      "size": 205638,
+      "mtime": 1785855504,
       "archive": "maps.zip"
     },
     {
       "path": "maps/lvl1.bsp",
       "type": "file",
-      "size": 666436,
-      "mtime": 1785503236,
+      "size": 824528,
+      "mtime": 1785855040,
       "archive": "maps.zip"
     },
     {
       "path": "maps/lvl1.bsp.nav",
       "type": "file",
-      "size": 41459,
-      "mtime": 1785504658,
+      "size": 43712,
+      "mtime": 1785855062,
       "archive": "maps.zip"
     },
     {
       "path": "maps/lvl1.map",
       "type": "file",
-      "size": 164240,
-      "mtime": 1785503168,
+      "size": 207408,
+      "mtime": 1785855576,
       "archive": "maps.zip"
     },
     {
       "path": "maps/lvl1.prt",
       "type": "file",
-      "size": 166916,
-      "mtime": 1785503200,
+      "size": 236589,
+      "mtime": 1785855002,
       "archive": "maps.zip"
     },
     {
       "path": "maps/lvl1.srf",
       "type": "file",
-      "size": 59458,
-      "mtime": 1785503200,
+      "size": 79337,
+      "mtime": 1785855002,
       "archive": "maps.zip"
     },
     {
       "path": "maps/lvl1/lm_0000.tga",
       "type": "file",
       "size": 3145746,
-      "mtime": 1785503236,
+      "mtime": 1785855040,
       "archive": "maps.zip"
     },
     {
@@ -1394,7 +1394,7 @@
       "path": "models.zip",
       "type": "file",
       "size": 29083968,
-      "mtime": 1785837837
+      "mtime": 1785863428
     },
     {
       "path": "models/cube.mtl",
@@ -1418,7 +1418,7 @@
       "path": "models/effects/explosion.glb",
       "type": "file",
       "size": 33232,
-      "mtime": 1785837826,
+      "mtime": 1785863418,
       "archive": "models.zip"
     },
     {
@@ -1440,7 +1440,7 @@
       "path": "models/enemies/dog/dog.glb",
       "type": "file",
       "size": 165792,
-      "mtime": 1785837826,
+      "mtime": 1785863418,
       "archive": "models.zip"
     },
     {
@@ -1458,7 +1458,7 @@
       "path": "models/enemies/humanAxe/humanAxe.glb",
       "type": "file",
       "size": 346712,
-      "mtime": 1785837826,
+      "mtime": 1785863418,
       "archive": "models.zip"
     },
     {
@@ -1472,7 +1472,7 @@
       "path": "models/enemies/humanAxe/humanAxe1.glb",
       "type": "file",
       "size": 346940,
-      "mtime": 1785837826,
+      "mtime": 1785863418,
       "archive": "models.zip"
     },
     {
@@ -1483,7 +1483,7 @@
       "path": "models/enemies/humanGun/humanGun.glb",
       "type": "file",
       "size": 363396,
-      "mtime": 1785837828,
+      "mtime": 1785863418,
       "archive": "models.zip"
     },
     {
@@ -1501,7 +1501,7 @@
       "path": "models/enemies/zombie/zombie.glb",
       "type": "file",
       "size": 242272,
-      "mtime": 1785837828,
+      "mtime": 1785863418,
       "archive": "models.zip"
     },
     {
@@ -1533,7 +1533,7 @@
       "path": "models/engine/widgetPlane.glb",
       "type": "file",
       "size": 1260,
-      "mtime": 1785837828,
+      "mtime": 1785863418,
       "archive": "models.zip"
     },
     {
@@ -1544,7 +1544,7 @@
       "path": "models/enviroment/door.glb",
       "type": "file",
       "size": 166588,
-      "mtime": 1785837828,
+      "mtime": 1785863418,
       "archive": "models.zip"
     },
     {
@@ -3372,7 +3372,7 @@
       "path": "models/npc/base.glb",
       "type": "file",
       "size": 1443044,
-      "mtime": 1785837828,
+      "mtime": 1785863418,
       "archive": "models.zip"
     },
     {
@@ -3386,7 +3386,7 @@
       "path": "models/npc/guard.glb",
       "type": "file",
       "size": 1803040,
-      "mtime": 1785837828,
+      "mtime": 1785863418,
       "archive": "models.zip"
     },
     {
@@ -3471,42 +3471,42 @@
       "path": "models/pickups/weapons/cane.glb",
       "type": "file",
       "size": 24408,
-      "mtime": 1785837828,
+      "mtime": 1785863418,
       "archive": "models.zip"
     },
     {
       "path": "models/pickups/weapons/cannon.glb",
       "type": "file",
       "size": 624744,
-      "mtime": 1785837828,
+      "mtime": 1785863418,
       "archive": "models.zip"
     },
     {
       "path": "models/pickups/weapons/pistol.glb",
       "type": "file",
       "size": 59896,
-      "mtime": 1785837828,
+      "mtime": 1785863418,
       "archive": "models.zip"
     },
     {
       "path": "models/pickups/weapons/shotgun.glb",
       "type": "file",
       "size": 104024,
-      "mtime": 1785837828,
+      "mtime": 1785863418,
       "archive": "models.zip"
     },
     {
       "path": "models/pickups/weapons/stg44.glb",
       "type": "file",
       "size": 643968,
-      "mtime": 1785837828,
+      "mtime": 1785863418,
       "archive": "models.zip"
     },
     {
       "path": "models/pickups/weapons/twinswords.glb",
       "type": "file",
       "size": 104688,
-      "mtime": 1785837828,
+      "mtime": 1785863420,
       "archive": "models.zip"
     },
     {
@@ -3517,35 +3517,35 @@
       "path": "models/player/arms.glb",
       "type": "file",
       "size": 244136,
-      "mtime": 1785837828,
+      "mtime": 1785863420,
       "archive": "models.zip"
     },
     {
       "path": "models/player/arms2.glb",
       "type": "file",
       "size": 221392,
-      "mtime": 1785837828,
+      "mtime": 1785863420,
       "archive": "models.zip"
     },
     {
       "path": "models/player/arms_a.glb",
       "type": "file",
       "size": 112912,
-      "mtime": 1785837828,
+      "mtime": 1785863420,
       "archive": "models.zip"
     },
     {
       "path": "models/player/arms_actions.glb",
       "type": "file",
       "size": 56408,
-      "mtime": 1785837828,
+      "mtime": 1785863420,
       "archive": "models.zip"
     },
     {
       "path": "models/player/arms_p.glb",
       "type": "file",
       "size": 197020,
-      "mtime": 1785837830,
+      "mtime": 1785863420,
       "archive": "models.zip"
     },
     {
@@ -3556,7 +3556,7 @@
       "path": "models/player/bike/bike.glb",
       "type": "file",
       "size": 3900548,
-      "mtime": 1785837830,
+      "mtime": 1785863420,
       "archive": "models.zip"
     },
     {
@@ -3592,7 +3592,7 @@
       "path": "models/player/body/player_body.glb",
       "type": "file",
       "size": 485768,
-      "mtime": 1785837830,
+      "mtime": 1785863420,
       "archive": "models.zip"
     },
     {
@@ -3603,14 +3603,14 @@
       "path": "models/player/weapons/arms.glb",
       "type": "file",
       "size": 244136,
-      "mtime": 1785837830,
+      "mtime": 1785863420,
       "archive": "models.zip"
     },
     {
       "path": "models/player/weapons/arms2.glb",
       "type": "file",
       "size": 221392,
-      "mtime": 1785837830,
+      "mtime": 1785863420,
       "archive": "models.zip"
     },
     {
@@ -3621,7 +3621,7 @@
       "path": "models/player/weapons/cane/cane.glb",
       "type": "file",
       "size": 299256,
-      "mtime": 1785837830,
+      "mtime": 1785863420,
       "archive": "models.zip"
     },
     {
@@ -3656,7 +3656,7 @@
       "path": "models/player/weapons/cane/cane_tp.glb",
       "type": "file",
       "size": 301024,
-      "mtime": 1785837830,
+      "mtime": 1785863420,
       "archive": "models.zip"
     },
     {
@@ -3667,14 +3667,14 @@
       "path": "models/player/weapons/cannon/cannon.glb",
       "type": "file",
       "size": 957588,
-      "mtime": 1785837830,
+      "mtime": 1785863420,
       "archive": "models.zip"
     },
     {
       "path": "models/player/weapons/cannon/cannon_tp.glb",
       "type": "file",
       "size": 1808000,
-      "mtime": 1785837830,
+      "mtime": 1785863420,
       "archive": "models.zip"
     },
     {
@@ -3685,7 +3685,7 @@
       "path": "models/player/weapons/leftHand/empty.glb",
       "type": "file",
       "size": 303956,
-      "mtime": 1785837830,
+      "mtime": 1785863422,
       "archive": "models.zip"
     },
     {
@@ -3696,14 +3696,14 @@
       "path": "models/player/weapons/mpsd/mpsd.glb",
       "type": "file",
       "size": 1075732,
-      "mtime": 1785837830,
+      "mtime": 1785863422,
       "archive": "models.zip"
     },
     {
       "path": "models/player/weapons/mpsd/mpsd_tp.glb",
       "type": "file",
       "size": 1084380,
-      "mtime": 1785837830,
+      "mtime": 1785863422,
       "archive": "models.zip"
     },
     {
@@ -3714,7 +3714,7 @@
       "path": "models/player/weapons/pistol/glock.glb",
       "type": "file",
       "size": 710456,
-      "mtime": 1785837830,
+      "mtime": 1785863422,
       "archive": "models.zip"
     },
     {
@@ -3735,7 +3735,7 @@
       "path": "models/player/weapons/pistol/pistol.glb",
       "type": "file",
       "size": 193688,
-      "mtime": 1785837830,
+      "mtime": 1785863422,
       "archive": "models.zip"
     },
     {
@@ -3749,14 +3749,14 @@
       "path": "models/player/weapons/pistol/pistol_tp.glb",
       "type": "file",
       "size": 380548,
-      "mtime": 1785837832,
+      "mtime": 1785863422,
       "archive": "models.zip"
     },
     {
       "path": "models/player/weapons/pistol/revolver.glb",
       "type": "file",
       "size": 1714388,
-      "mtime": 1785837832,
+      "mtime": 1785863422,
       "archive": "models.zip"
     },
     {
@@ -3767,7 +3767,7 @@
       "path": "models/player/weapons/pistol_silent/pistol_silent.glb",
       "type": "file",
       "size": 1477516,
-      "mtime": 1785837832,
+      "mtime": 1785863422,
       "archive": "models.zip"
     },
     {
@@ -3778,7 +3778,7 @@
       "path": "models/player/weapons/revolver/revolver.glb",
       "type": "file",
       "size": 1236396,
-      "mtime": 1785837832,
+      "mtime": 1785863422,
       "archive": "models.zip"
     },
     {
@@ -3789,14 +3789,14 @@
       "path": "models/player/weapons/shotgun/shotgun.glb",
       "type": "file",
       "size": 364800,
-      "mtime": 1785837832,
+      "mtime": 1785863422,
       "archive": "models.zip"
     },
     {
       "path": "models/player/weapons/shotgun/shotgun_tp.glb",
       "type": "file",
       "size": 525028,
-      "mtime": 1785837832,
+      "mtime": 1785863422,
       "archive": "models.zip"
     },
     {
@@ -3807,7 +3807,7 @@
       "path": "models/player/weapons/sniper/sniper.glb",
       "type": "file",
       "size": 1150836,
-      "mtime": 1785837832,
+      "mtime": 1785863422,
       "archive": "models.zip"
     },
     {
@@ -3818,14 +3818,14 @@
       "path": "models/player/weapons/stg44/stg44.glb",
       "type": "file",
       "size": 1027124,
-      "mtime": 1785837832,
+      "mtime": 1785863422,
       "archive": "models.zip"
     },
     {
       "path": "models/player/weapons/stg44/stg44_tp.glb",
       "type": "file",
       "size": 2166492,
-      "mtime": 1785837832,
+      "mtime": 1785863422,
       "archive": "models.zip"
     },
     {
@@ -3836,7 +3836,7 @@
       "path": "models/player/weapons/sword/sword.glb",
       "type": "file",
       "size": 439580,
-      "mtime": 1785837832,
+      "mtime": 1785863424,
       "archive": "models.zip"
     },
     {
@@ -3847,7 +3847,7 @@
       "path": "models/player/weapons/swords/swords_tp.glb",
       "type": "file",
       "size": 289156,
-      "mtime": 1785837832,
+      "mtime": 1785863424,
       "archive": "models.zip"
     },
     {
@@ -3865,7 +3865,7 @@
       "path": "models/player/weapons/tommy/tommy.glb",
       "type": "file",
       "size": 1816424,
-      "mtime": 1785837832,
+      "mtime": 1785863424,
       "archive": "models.zip"
     },
     {
@@ -3876,14 +3876,14 @@
       "path": "models/player/weapons/twinsword/twinsword.glb",
       "type": "file",
       "size": 849584,
-      "mtime": 1785837832,
+      "mtime": 1785863424,
       "archive": "models.zip"
     },
     {
       "path": "models/player/weapons/twinsword/twinsword_tp.glb",
       "type": "file",
       "size": 359752,
-      "mtime": 1785837834,
+      "mtime": 1785863424,
       "archive": "models.zip"
     },
     {
@@ -3940,7 +3940,7 @@
       "path": "models/weapons/glock.glb",
       "type": "file",
       "size": 472240,
-      "mtime": 1785837834,
+      "mtime": 1785863424,
       "archive": "models.zip"
     },
     {
@@ -8395,7 +8395,7 @@
       "path": "testViewmodel.glb",
       "type": "file",
       "size": 512540,
-      "mtime": 1785837826
+      "mtime": 1785863417
     },
     {
       "path": "texture0.jpg",

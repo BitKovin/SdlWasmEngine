@@ -288,6 +288,8 @@ set(ENABLE_ASSERTS               OFF CACHE BOOL "" FORCE)
 set(JPH_NO_DEBUG                 ON  CACHE BOOL "" FORCE)
 set(ENABLE_ALL_WARNINGS          OFF CACHE BOOL "" FORCE)
 
+set(USE_RTTI                     ON  CACHE BOOL "" FORCE)
+
 if(LINUX)
     set(INTERPROCEDURAL_OPTIMIZATION OFF CACHE BOOL "" FORCE)
 else()

@@ -1156,8 +1156,24 @@ namespace UiRenderer {
     {
         if (rectSize.x <= 0.f || rectSize.y <= 0.f) return;
 
-        const float padU = (textureWidth > 0.f) ? effectPadding / textureWidth : 0.f;
-        const float padV = (textureHeight > 0.f) ? effectPadding / textureHeight : 0.f;
+        // Shadow/outline/glow radii (effectPadding included) are authored in
+        // "texels" but what they actually need to mean is screen pixels —
+        // a flat/tinted UI image (e.g. UiProgressBar's Background/Progress
+        // image, which falls back to a small solid-color swatch when its
+        // configured path is invalid) has no meaningful relationship
+        // between its own pixel dimensions and how large it's drawn on
+        // screen. Deriving padU/padV and u_TextureSize from the BOUND
+        // TEXTURE's resolution meant a tiny fallback texture blew every
+        // "N texels" parameter up into a UV distance many multiples of the
+        // element's own [0,1] extent, pushing shadow sampling out into
+        // u_ClampRect's transparent region — no visible shadow, just a
+        // faint, badly-scaled fringe. Anchoring to `size` (the element's
+        // actual on-screen pixel footprint, already available here) keeps
+        // e.g. "5px shadow offset" meaning 5 screen pixels regardless of
+        // what's bound as the texture. `textureWidth`/`textureHeight` are
+        // intentionally no longer used for this — see below.
+        const float padU = (size.x > 0.f) ? effectPadding / size.x : 0.f;
+        const float padV = (size.y > 0.f) ? effectPadding / size.y : 0.f;
 
         const float x0 = rectPos.x - padU, x1 = rectPos.x + rectSize.x + padU;
         const float y0 = rectPos.y - padV, y1 = rectPos.y + rectSize.y + padV;
@@ -1169,8 +1185,16 @@ namespace UiRenderer {
         sp->SetUniform("u_Color", color);
         sp->SetTexture("u_Texture", texture);
 
-        if (!shader.empty() && textureWidth > 0.f && textureHeight > 0.f)
-            sp->SetUniform("u_TextureSize", glm::vec4(textureWidth, textureHeight, 0.f, 0.f));
+        // u_TextureSize now feeds fs_effects.sc's texelSize purely as the
+        // effect-radius reference scale (screen pixels), independent of
+        // whatever texture is actually bound. It does NOT affect what part
+        // of the texture gets drawn — sampleTexClamped()/texture2D still
+        // sample directly off v_texcoord0, which comes from rectPos/
+        // rectSize as before.
+        if (!shader.empty() && size.x > 0.f && size.y > 0.f)
+            sp->SetUniform("u_TextureSize", glm::vec4(size.x, size.y, 0.f, 0.f));
+        (void)textureWidth;
+        (void)textureHeight;
 
         for (const auto& pair : shaderUniforms)
             sp->SetUniform(pair.first, pair.second);
@@ -1260,6 +1284,17 @@ namespace UiRenderer {
         // comment above for why 9-slice doesn't apply it.
         (void)effectPadding;
 
+        // textureWidth/textureHeight are still used above for the UV-space
+        // margins (ux/uy) — that part genuinely needs the real texture's
+        // pixel dimensions so corners/edges sample the right texels. But
+        // u_TextureSize below only feeds fs_effects.sc's shadow/outline/glow
+        // ring-sampling radius (see the matching comment in
+        // DrawTexturedRectRegion), which should scale with how big this
+        // element actually is on screen, not with the resolution of
+        // whatever texture happens to be bound (e.g. a small flat-color
+        // fallback). Anchoring it to `size` instead keeps those effects
+        // correctly scaled regardless of texture resolution.
+
         Shader* sp = shader.empty() ? s_texturedShader : ShaderManager::GetShaderProgram("vs_ui", shader);
         sp->UseProgram();
         SetShaderProjection(sp);
@@ -1267,8 +1302,8 @@ namespace UiRenderer {
         sp->SetUniform("u_Color", color);
         sp->SetTexture("u_Texture", texture);
 
-        if (!shader.empty() && textureWidth > 0.f && textureHeight > 0.f)
-            sp->SetUniform("u_TextureSize", glm::vec4(textureWidth, textureHeight, 0.f, 0.f));
+        if (!shader.empty() && size.x > 0.f && size.y > 0.f)
+            sp->SetUniform("u_TextureSize", glm::vec4(size.x, size.y, 0.f, 0.f));
 
         for (const auto& pair : shaderUniforms)
             sp->SetUniform(pair.first, pair.second);
