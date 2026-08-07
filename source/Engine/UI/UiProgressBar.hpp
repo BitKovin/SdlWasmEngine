@@ -85,8 +85,8 @@ public:
         // both passes; just not each other's own field.
         const vec4 parentTint = (inheritParentColor && parent) ? parent->GetFinalColor() : vec4(1.f);
 
-        RectPosition = bgMin;
-        RectSize = bgSize;
+        RectPosition = vec2(0);
+        RectSize = vec2(1);//background casts effects. Keep it always visible
         DrawSelfTextured(bgTex->getHandle(), BackgroundColor * parentTint,
             static_cast<float>(bgTex->width), static_cast<float>(bgTex->height));
 

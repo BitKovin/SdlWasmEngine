@@ -15,21 +15,6 @@ private:
 
     std::string finalizedText = "";
 
-    // ---- finalized effect parameters (snapshot used at render time) ----
-    bool        finalizedShadowEnabled = false;
-    glm::vec4   finalizedShadowColor = glm::vec4(0.f, 0.f, 0.f, 1.f);
-    glm::vec2   finalizedShadowOffset = glm::vec2(2.f, -2.f);
-    float       finalizedShadowSoftness = 1.f;
-    float       finalizedShadowSpread = 4.f;
-
-    bool        finalizedOutlineEnabled = false;
-    glm::vec4   finalizedOutlineColor = glm::vec4(0.f, 0.f, 0.f, 1.f);
-    float       finalizedOutlineWidth = 1.f;
-
-    bool        finalizedGlowEnabled = false;
-    glm::vec4   finalizedGlowColor = glm::vec4(1.f, 1.f, 1.f, 1.f);
-    float       finalizedGlowRadius = 6.f;
-    float       finalizedGlowIntensity = 1.f;
 
 public:
     UiRenderer::FontHandle font = 0;
@@ -37,23 +22,6 @@ public:
     float       fontSize = 48;
     glm::vec4   textColor = glm::vec4(1.f);
 
-    // ---- shadow ----
-    bool        shadowEnabled = false;
-    glm::vec4   shadowColor = glm::vec4(0.f, 0.f, 0.f, 1.f);
-    glm::vec2   shadowOffset = glm::vec2(6.f, 6.f);
-    float       shadowSoftness = 3.f;
-    float       shadowSpread = 3.f;
-
-    // ---- outline ----
-    bool        outlineEnabled = false;
-    glm::vec4   outlineColor = glm::vec4(0.f, 0.f, 0.f, 1.f);
-    float       outlineWidth = 1.f;
-
-    // ---- glow ----
-    bool        glowEnabled = false;
-    glm::vec4   glowColor = glm::vec4(1.f, 1.f, 1.f, 1.f);
-    float       glowRadius = 6.f;
-    float       glowIntensity = 1.f;
 
     UiText()
     {
@@ -72,21 +40,6 @@ public:
     {
         UiElement::FinalizeChildren();
         finalizedText = text;
-
-        finalizedShadowEnabled = shadowEnabled;
-        finalizedShadowColor = shadowColor;
-        finalizedShadowOffset = shadowOffset;
-        finalizedShadowSoftness = shadowSoftness;
-		finalizedShadowSpread = shadowSpread;
-
-        finalizedOutlineEnabled = outlineEnabled;
-        finalizedOutlineColor = outlineColor;
-        finalizedOutlineWidth = outlineWidth;
-
-        finalizedGlowEnabled = glowEnabled;
-        finalizedGlowColor = glowColor;
-        finalizedGlowRadius = glowRadius;
-        finalizedGlowIntensity = glowIntensity;
     }
 
     virtual glm::vec2 GetSize() override
@@ -102,7 +55,7 @@ public:
         const glm::vec2 scale(fontSize / StaticFontSize);
 
         // Calculate the conversion ratio from screen-space to atlas-space
-        const float toAtlas = StaticFontSize / fontSize;
+        const float toAtlas = fontSize / StaticFontSize;
 
         std::string shader = "";
         std::unordered_map<std::string, glm::vec4> uniforms;
@@ -113,11 +66,11 @@ public:
             shader = "ui/fs_effects";
 
             // Convert all screen-space effect parameters into atlas-space
-            glm::vec2 atlasShadowOffset = finalizedShadowOffset * toAtlas;
-            float     atlasShadowSpread = finalizedShadowSpread * toAtlas;
-            float     atlasShadowSoftness = finalizedShadowSoftness * toAtlas;
-            float     atlasOutlineWidth = finalizedOutlineWidth * toAtlas;
-            float     atlasGlowRadius = finalizedGlowRadius * toAtlas;
+            glm::vec2 atlasShadowOffset = finalizedShadowOffset;
+            float     atlasShadowSpread = finalizedShadowSpread;
+            float     atlasShadowSoftness = finalizedShadowSoftness;
+            float     atlasOutlineWidth = finalizedOutlineWidth;
+            float     atlasGlowRadius = finalizedGlowRadius;
 
             uniforms["u_ShadowColor"] = finalizedShadowColor;
             uniforms["u_ShadowParams"] = glm::vec4(atlasShadowOffset.x, atlasShadowOffset.y,

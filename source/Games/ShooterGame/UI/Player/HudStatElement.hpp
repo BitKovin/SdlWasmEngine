@@ -38,11 +38,12 @@ public:
         Label->pivot = vec2(0.5f, 0.f);
         Label->color = vec4(0.8f, 0.8f, 0.8f, 1.f);
         Label->outlineEnabled = true;
-        Label->outlineWidth = 1.f;
+        Label->outlineWidth = 2.f;
         Label->outlineColor = vec4(0.f, 0.f, 0.f, 1.f);
 		Label->shadowEnabled = true;
-        Label->shadowOffset = vec2(3);
-        Label->shadowSoftness = 5;
+        Label->shadowOffset = vec2(2.f, 2.f);
+        Label->shadowSoftness = 5.f;
+		Label->shadowSpread = 4.f;
 		Label->color = mix(Label->color, accentColor, 0.4f);
         AddChild(Label);
 
@@ -53,25 +54,29 @@ public:
         Value->pivot = vec2(0.5f, 1.f);
         Value->color = accentColor;
         Value->outlineEnabled = true;
-        Value->outlineWidth = 1.5f;
+        Value->outlineWidth = 2.0f;
         Value->outlineColor = vec4(0.f, 0.f, 0.f, 1.f);
 		Value->shadowEnabled = true;
-        Value->shadowOffset = vec2(3);
-        Value->shadowSoftness = 5;
+        Value->shadowOffset = vec2(2.f, 2.f);
+        Value->shadowSoftness = 5.f;
+        Value->shadowSpread = 4.f;
         AddChild(Value);
 
         ProgressBar = make_shared<UiProgressBar>();
 		ProgressBar->position = vec2(0.f, Label->GetSize().y - 2);
         ProgressBar->origin = vec2(0.5f, 0.0f);
+        ProgressBar->Progress = 0.5f;
         ProgressBar->pivot = vec2(0.5f, 0.5f);
         ProgressBar->size = vec2(Label->GetSize().x + 6, 5);
 		ProgressBar->color = accentColor * vec4(0.5f, 0.5f, 0.5f, 1.f);
         ProgressBar->BackgroundColor = ProgressBar->color * vec4(0.4f, 0.4f, 0.4f, 1.f);
 		ProgressBar->ProgressImage = "GameData/textures/generic/white.png";
 		ProgressBar->BackgroundImage = "GameData/textures/generic/white.png";
+		ProgressBar->outlineEnabled = true;
 		ProgressBar->shadowEnabled = true;
-		ProgressBar->shadowOffset = vec2(5);
-		ProgressBar->shadowSoftness = 6;
+		ProgressBar->shadowOffset = vec2(1.f, 1.f);
+
+
         AddChild(ProgressBar);
 
     }

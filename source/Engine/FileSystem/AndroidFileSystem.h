@@ -54,6 +54,9 @@ private:
     static bool IsAssetPath(const std::string& path);
     bool IsSaveDataPath(const std::string& path);
 
+    static std::string GetSaveDataRoot();
+    static std::optional<std::string> ToSaveDataPhysicalPath(const std::string& path);
+
     // Non-static: needs *this* as the implicit object to call the base
     // class's NativeFileSystem::GetFileModificationTime through, since that
     // is itself a non-static member function. Only meaningfully defined

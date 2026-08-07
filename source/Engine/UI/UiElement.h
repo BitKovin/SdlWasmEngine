@@ -88,19 +88,31 @@ public:
     // Effects and PixelShader are mutually exclusive for now — an element
     // doesn't currently combine a custom PixelShader with shadow/outline/glow
     // in the same draw call.
+    //
+    // Every distance/offset/radius below (shadowOffset, shadowSoftness,
+    // shadowSpread, outlineWidth, glowRadius) is in VIEWPORT PIXELS — the same
+    // "1 UI unit == 1 output pixel" space size/position already use (see the
+    // note at the top of UiRenderer.h) — never element-local [0,1] space and
+    // never a bound texture's own texel space. That holds equally when this
+    // element is being rendered into UiRenderer::customViewport (UI drawn onto
+    // a 3D billboard): a "6px shadow" is still 6 pixels of whatever target is
+    // actually being rendered to. ui/fs_effects converts these to the right
+    // UV-space delta per fragment using screen-space derivatives (see the note
+    // at the top of UiRenderer.h); nothing on this class needs to know about
+    // texels or UV at all.
     bool      shadowEnabled  = false;
     glm::vec4 shadowColor    = glm::vec4(0.f, 0.f, 0.f, 1.f);
-    glm::vec2 shadowOffset   = glm::vec2(6.f, 6.f);
+    glm::vec2 shadowOffset   = glm::vec2(4.f, 4.f);
     float     shadowSoftness = 3.f;
     float     shadowSpread   = 3.f;
 
     bool      outlineEnabled = false;
     glm::vec4 outlineColor   = glm::vec4(0.f, 0.f, 0.f, 1.f);
-    float     outlineWidth   = 1.f;
+    float     outlineWidth   = 1.5f;
 
     bool      glowEnabled    = false;
     glm::vec4 glowColor      = glm::vec4(1.f, 1.f, 1.f, 1.f);
-    float     glowRadius     = 6.f;
+    float     glowRadius     = 8.f;
     float     glowIntensity  = 1.f;
 
     bool HasActiveEffects() const { return shadowEnabled || outlineEnabled || glowEnabled; }
@@ -111,13 +123,17 @@ public:
     std::string GetEffectsShaderName() const { return finalizedHasEffects ? std::string("ui/fs_effects") : std::string(); }
 
     // vec4 uniform block matching ui/fs_effects: u_ShadowColor/u_ShadowParams/
-    // u_ShadowParams2, u_OutlineColor/u_OutlineParams, u_GlowColor/u_GlowParams.
-    // Only meaningful when GetEffectsShaderName() is non-empty.
+    // u_ShadowParams2, u_OutlineColor/u_OutlineParams, u_GlowColor/u_GlowParams,
+    // plus a default full-texture u_ClampRect. Only meaningful when
+    // GetEffectsShaderName() is non-empty. Note there's no viewport-pixel-to-UV
+    // conversion factor in here — ui/fs_effects derives that itself per fragment
+    // from screen-space derivatives (see the note at the top of UiRenderer.h),
+    // so nothing upstream of the shader needs to compute or pass one.
     std::unordered_map<std::string, glm::vec4> GetEffectsUniforms() const;
 
     // How far outside [0,size] the active effects can draw (max of shadow /
-    // outline / glow reach). Feed to DrawText's effectPadding, or use to pad
-    // a custom quad for non-text elements.
+    // outline / glow reach), in VIEWPORT PIXELS. Feed to DrawText's
+    // effectPadding, or use to pad a custom quad for non-text elements.
     float GetEffectsPadding() const;
 
     // ── Partial rect ────────────────────────────────────────────────────────

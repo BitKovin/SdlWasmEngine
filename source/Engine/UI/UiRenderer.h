@@ -15,7 +15,25 @@ class Texture;
 // == 1 output pixel, no separate DPI/UI-scale factor anywhere in this system.
 // Worth knowing if you're writing a fragment shader that wants to reason
 // about on-screen pixel size: element->size (and finalizedSize) already *is*
-// that, no conversion needed.
+// that, no conversion needed. This holds equally whether rendering to the
+// real screen or to customViewport (see below) — only the pixel dimensions
+// of "the render target" change, the 1:1 mapping doesn't.
+//
+// This is also why every shadow/outline/glow property on UiElement (offset,
+// spread, softness, outline width, glow radius) is authored in the same
+// viewport-pixel units, never in element-local [0,1] space or in the bound
+// texture's own texel space. The ui/fs_effects shader converts "N viewport
+// pixels" to the right UV delta to sample using screen-space derivatives of
+// its own UV (dFdx/dFdy) rather than a value computed here in C++ — that's
+// deliberate: a value computed from `size` here would have to assume
+// declared element size maps 1:1 onto this draw's actual rasterized
+// resolution, which isn't safe to assume (DPI/backbuffer scale differences,
+// customViewport, etc. can all break that assumption even though the
+// vertex-side transform doesn't care). Measuring it on the GPU from real
+// neighboring fragments sidesteps needing that assumption at all. Every
+// draw function that can carry effects still hands the shader
+// u_ViewportSize and u_ElementSize for whatever future effect wants that
+// context explicitly.
 
 namespace UiRenderer {
 
@@ -76,7 +94,10 @@ namespace UiRenderer {
 
     // Text — the transform places the text origin in screen space (accounts for
     // all ancestor rotations).  scale is the font-size multiplier applied on top
-    // of the atlas pixel size, independent of the transform.
+    // of the atlas pixel size, independent of the transform. effectPadding is
+    // in VIEWPORT PIXELS (same as DrawTexturedRectRegion/DrawTexturedRect9Slice)
+    // — internally converted to the font atlas's own native pixel space using
+    // `scale`, since that's the space the glyph geometry/UV math operates in.
     void DrawText(std::string text, FontHandle font,
                   const glm::mat3& transform,
                   const glm::vec4& color, const glm::vec2& scale,
@@ -92,11 +113,12 @@ namespace UiRenderer {
     // (full rect, no effects); reach for these when you actually need a
     // partial rect, effect padding, or 9-slicing.
     //
-    // effectPadding is in source-texture texels, same meaning as DrawText's —
-    // both position and UV are inflated by effectPadding/textureWidth (or
-    // height), so the extra geometry samples real texels just past the
-    // requested rect rather than stretching or repeating the edge. Pass 0 (or
-    // textureWidth/Height = 0) for no padding.
+    // effectPadding is in VIEWPORT PIXELS, same meaning as DrawText's — both
+    // position and UV are inflated to match (converted internally to each
+    // draw's own local/UV space), so the extra geometry samples real texels
+    // just past the requested rect rather than stretching or repeating the
+    // edge, and a "6px shadow" reaches 6 actual screen pixels regardless of
+    // the bound texture's resolution. Pass 0 for no padding.
 
     // Sub-rectangle of this element (rectPos/rectSize in local [0,1] space —
     // (0,0)/(1,1) draws the whole element, same as DrawTexturedRect) mapped
@@ -104,6 +126,11 @@ namespace UiRenderer {
     // masking primitive: only the requested fraction is actually submitted as
     // geometry, so unlike a fragment-shader discard/mix, nothing is drawn (or
     // sampled) outside the requested rect at all.
+    // effectPadding: viewport pixels. textureWidth/textureHeight: the real
+    // bound texture's pixel dimensions — no longer used for the padding math
+    // (see the .cpp; geometry/UV padding here is always 1:1 with the element,
+    // independent of texture resolution) but still accepted for symmetry
+    // with DrawTexturedRect9Slice and in case a future caller needs it.
     void DrawTexturedRectRegion(const glm::mat3& transform, const glm::vec2& size,
                                 const glm::vec2& rectPos, const glm::vec2& rectSize,
                                 bgfx::TextureHandle texture, const glm::vec4& color,
@@ -116,11 +143,20 @@ namespace UiRenderer {
     // combinable with a partial rect (DrawTexturedRectRegion) in one call —
     // this always draws the full element.
     //
-    // Unlike DrawTexturedRectRegion/DrawText, effectPadding does NOT expand
-    // the geometry here — total size is always exactly `size`, regardless of
-    // effectPadding. Shadow/outline/glow on a 9-sliced element render
-    // clipped to its own box instead of bleeding past it; a stable,
-    // predictable footprint is the point of 9-slicing in the first place.
+    // effectPadding (viewport pixels, same as DrawTexturedRectRegion/DrawText)
+    // extends only the OUTER boundary of the whole 9-slice grid by that many
+    // screen pixels on all 4 sides — the corner/edge/center proportions
+    // between the margins themselves never move, so shadow/outline/glow gets
+    // real geometry (and real texture UV, sampled just past the source
+    // texture's own edge) to bleed into without disturbing the 9-slice's own
+    // stable footprint. The outward padding amount itself is exact at the
+    // corners and at each edge cell's native (unstretched) axis, since a
+    // 9-slice's outer boundary is always native (1 texel = 1 pixel) scale by
+    // construction. Ring-sampling reach (shadow/outline/glow radius) is exact
+    // everywhere, including deep inside a stretched edge/center cell —
+    // fs_effects.sc derives the pixel-to-UV conversion per fragment from
+    // screen-space derivatives rather than a single value for the whole draw,
+    // so it naturally picks up each cell's own texel:pixel ratio.
     struct NineSliceMargins { float left = 0.f, top = 0.f, right = 0.f, bottom = 0.f; };
 
     void DrawTexturedRect9Slice(const glm::mat3& transform, const glm::vec2& size,

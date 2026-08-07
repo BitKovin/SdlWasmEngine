@@ -131,7 +131,19 @@ struct FontAtlas {
     // the render thread for a different (already-loaded) font atlas.
     bool LoadCpuData(const char* path, float height, int paddingSize = 3)
     {
-        padding = static_cast<int>(height / 3) + paddingSize;
+        // Packing gap between glyphs, in atlas texels. This used to scale with
+        // font height (height/3 + paddingSize) on the assumption that it also
+        // had to reserve enough room for whatever shadow/outline/glow radius
+        // might later be requested against this text. It no longer does:
+        // DrawText's effect geometry/UV now extend past this gap freely, sized
+        // from the actual viewport-pixel effect radius requested per draw (see
+        // DrawText) rather than from whatever got baked in here at load time.
+        // fs_effects.sc's per-glyph u_ClampRect is what actually stops that
+        // from sampling into a neighboring glyph, independent of this gap's
+        // size — see the clampPadX/Y comment in DrawText. So this only needs
+        // to be big enough to keep bilinear texture filtering from blending
+        // across the glyph boundary at zero distance.
+        padding = paddingSize;
         packX = padding;
         packY = padding;
         rowH = 0;
@@ -570,6 +582,16 @@ namespace UiRenderer {
             -1.0f, 1.0f);
 
         shader->SetUniform("u_Projection", uiProjection);
+
+        // Viewport pixel dimensions of whatever's actually being rendered to right
+        // now — the real screen, or the custom off-screen target when UI is being
+        // rendered onto a 3D billboard (see UiRenderer::customViewport). Every
+        // element size/position is already expressed 1:1 in these units (see the
+        // "1 UI unit == 1 output pixel" note at the top of UiRenderer.h), so this
+        // is here purely so a shader can reason in absolute viewport-pixel terms
+        // if it needs to. Set unconditionally (not just for effects shaders) since
+        // it's cheap and correct for every draw.
+        shader->SetUniform("u_ViewportSize", glm::vec4(screenWidth, screenHeight, 0.f, 0.f));
     }
 
     static glm::mat4 BuildQuadModel(const glm::vec2& pos, const glm::vec2& size,
@@ -890,6 +912,7 @@ namespace UiRenderer {
         sp->SetUniform("u_Model", BuildQuadModelFromMat3(transform, size));
         sp->SetUniform("u_Color", color);
         sp->SetTexture("u_Texture", texture);
+        sp->SetUniform("u_ElementSize", glm::vec4(size.x, size.y, 0.f, 0.f));
 
         vec4 textureSize = {
             (float)textureWidth, (float)textureHeight,
@@ -910,10 +933,12 @@ namespace UiRenderer {
         SetShaderProjection(sp);
         sp->SetUniform("u_Model", BuildQuadModelFromMat3(transform, size));
         sp->SetUniform("u_Color", color);
+        sp->SetUniform("u_ElementSize", glm::vec4(size.x, size.y, 0.f, 0.f));
         for (auto& [name, tex] : textures) sp->SetTexture(name, tex);
         for (auto& [name, v4] : vec4s)    sp->SetUniform(name, v4);
         SubmitQuad(sp);
     }
+
 
     void DrawBorderRect(const glm::mat3& transform, const glm::vec2& size,
         const glm::vec4& color)
@@ -930,7 +955,7 @@ namespace UiRenderer {
     void DrawText(std::string text, FontHandle fontHandle,
         const glm::mat3& transform,
         const glm::vec4& color, const glm::vec2& scale,
-        const string& shader, std::unordered_map<std::string, vec4> shaderUniforms, float effectPadding)   // extra bleed, in atlas texels, needed by outline/glow/shadow
+        const string& shader, std::unordered_map<std::string, vec4> shaderUniforms, float effectPadding)   // extra bleed, in VIEWPORT PIXELS, needed by outline/glow/shadow
     {
         if (text.empty() || fontHandle == INVALID_FONT) return;
 
@@ -963,18 +988,33 @@ namespace UiRenderer {
             }
         }
 
-        // FIX: effects bleed can never exceed the padding the atlas
-        // actually reserved between glyphs when it packed them, or the
-        // inflated UV/clamp rect reaches past the glyph's own cell and
-        // samples whatever glyph happens to be packed next door — which
-        // glyph that is depends on insertion order.
-        effectPadding = std::min(effectPadding, static_cast<float>(atlas->padding));
+        // effectPadding arrives in VIEWPORT PIXELS (see UiElement::GetEffectsPadding),
+        // consistent with every other draw call in this file. Convert to the atlas's
+        // own native pixel space (pre-`scale`) since that's the space the geometry/UV
+        // math below (penX/penY/g.bitmapW/etc) already operates in — without this, a
+        // DrawText call using scale != (1,1) would inflate by the wrong amount.
+        const float atlasPadX = (scale.x > 0.f) ? effectPadding / scale.x : effectPadding;
+        const float atlasPadY = (scale.y > 0.f) ? effectPadding / scale.y : effectPadding;
 
-        // atlas pixel size — needed to convert padding into UV space, and to
-        // feed u_TextureSize to the effects shader. Adjust field names if your
-        // FontAtlas stores them differently.
+        // atlas pixel size — needed to convert padding into UV space below.
         const float atlasW = static_cast<float>(FontAtlas::ATLAS_W);
         const float atlasH = static_cast<float>(FontAtlas::ATLAS_H);
+
+        // The atlas only physically reserves atlas->padding texels of blank space
+        // between packed glyphs (see FontAtlas::padding) — just enough to keep
+        // bilinear filtering from blending across a glyph boundary, not sized for an
+        // arbitrarily large effect radius. Geometry and UV below extend by the FULL
+        // atlasPadX/Y — so a big shadow/glow gets its correct on-screen reach, and
+        // (just as importantly) the glyph's own tight ink isn't distorted, since
+        // geometry and UV need to share one consistent position→UV scale across the
+        // whole quad (see the matching comment on DrawTexturedRect9Slice's padding for
+        // why mixing scales there would be wrong). The per-glyph u_ClampRect that
+        // actually gates sampling, below, stays capped at this smaller safe margin
+        // instead: past that cap, fs_effects.sc's sampleTexClamped() returns
+        // transparent, so an oversized effect just fades out sooner than requested
+        // instead of bleeding into whatever glyph happens to be packed next door.
+        const float clampPadX = std::min(atlasPadX, static_cast<float>(atlas->padding));
+        const float clampPadY = std::min(atlasPadY, static_cast<float>(atlas->padding));
 
         // Pass 1: ensure all glyphs
         {
@@ -1025,8 +1065,10 @@ namespace UiRenderer {
         bgfx::allocTransientVertexBuffer(&tvb, vertexCount, s_quadLayout);
         auto* v = reinterpret_cast<QuadVertex*>(tvb.data);
 
-        const float padU = effectPadding / atlasW;
-        const float padV = effectPadding / atlasH;
+        const float padU = atlasPadX / atlasW;
+        const float padV = atlasPadY / atlasH;
+        const float clampPadU = clampPadX / atlasW;
+        const float clampPadV = clampPadY / atlasH;
 
         // One entry per emitted (visible) glyph, same order they're written
         // to the VB — Pass 4 uses this as each glyph's own u_ClampRect when
@@ -1049,14 +1091,19 @@ namespace UiRenderer {
                 penX += stbtt_GetCodepointKernAdvance(&atlas->fontInfo, prevCp, cp) * atlas->scale;
             if (!g.invisible) {
                 // geometry: inflate the quad around the glyph's ink, pen position untouched
-                const float lx = penX + static_cast<float>(g.xoff) - effectPadding;
-                const float ly = penY + baseline + static_cast<float>(g.yoff) - effectPadding;
-                const float rw = static_cast<float>(g.bitmapW) + effectPadding * 2.f;
-                const float rh = static_cast<float>(g.bitmapH) + effectPadding * 2.f;
+                const float lx = penX + static_cast<float>(g.xoff) - atlasPadX;
+                const float ly = penY + baseline + static_cast<float>(g.yoff) - atlasPadY;
+                const float rw = static_cast<float>(g.bitmapW) + atlasPadX * 2.f;
+                const float rh = static_cast<float>(g.bitmapH) + atlasPadY * 2.f;
                 const float nx = lx / textW, ny = ly / textH;
                 const float nrw = rw / textW, nrh = rh / textH;
 
-                // UV: inflate to match, so the shader has real atlas pixels to sample for the halo
+                // UV: inflate by the SAME atlasPadX/Y as geometry above (not the
+                // smaller, clamp-capped amount) — using one consistent scale for the
+                // whole quad keeps the glyph's own tight ink undistorted, not just its
+                // padding border. sampleTexClamped()'s clamp-rect check (below) is what
+                // actually limits how far a sample is allowed to reach, independent of
+                // how far this UV range itself extends.
                 const float u0 = g.u0 - padU, u1 = g.u1 + padU;
                 const float v0 = g.v0 - padV, v1 = g.v1 + padV;
 
@@ -1068,7 +1115,11 @@ namespace UiRenderer {
                 v[5] = { nx + nrw, ny,       u1, v0 };
                 v += 6;
 
-                glyphClampRects.emplace_back(u0, v0, u1, v1);
+                // Clamp rect stays capped at the atlas's real, physically-safe margin
+                // (clampPadU/V) regardless of how far the geometry/UV above actually
+                // extends — see the atlasPadX/clampPadX comment further up.
+                glyphClampRects.emplace_back(g.u0 - clampPadU, g.v0 - clampPadV,
+                                              g.u1 + clampPadU, g.v1 + clampPadV);
             }
             penX += g.advanceX; prevCp = cp;
         }
@@ -1122,7 +1173,7 @@ namespace UiRenderer {
             sp->SetUniform("u_Model", model);
             sp->SetUniform("u_Color", color);
             sp->SetTexture("u_Texture", atlas->texture);
-            sp->SetUniform("u_TextureSize", glm::vec4(atlasW, atlasH, 0.f, 0.f));
+            sp->SetUniform("u_ElementSize", glm::vec4(drawSize.x, drawSize.y, 0.f, 0.f));
 
             for (const auto& pair : shaderUniforms)
                 sp->SetUniform(pair.first, pair.second);
@@ -1156,22 +1207,12 @@ namespace UiRenderer {
     {
         if (rectSize.x <= 0.f || rectSize.y <= 0.f) return;
 
-        // Shadow/outline/glow radii (effectPadding included) are authored in
-        // "texels" but what they actually need to mean is screen pixels —
-        // a flat/tinted UI image (e.g. UiProgressBar's Background/Progress
-        // image, which falls back to a small solid-color swatch when its
-        // configured path is invalid) has no meaningful relationship
-        // between its own pixel dimensions and how large it's drawn on
-        // screen. Deriving padU/padV and u_TextureSize from the BOUND
-        // TEXTURE's resolution meant a tiny fallback texture blew every
-        // "N texels" parameter up into a UV distance many multiples of the
-        // element's own [0,1] extent, pushing shadow sampling out into
-        // u_ClampRect's transparent region — no visible shadow, just a
-        // faint, badly-scaled fringe. Anchoring to `size` (the element's
-        // actual on-screen pixel footprint, already available here) keeps
-        // e.g. "5px shadow offset" meaning 5 screen pixels regardless of
-        // what's bound as the texture. `textureWidth`/`textureHeight` are
-        // intentionally no longer used for this — see below.
+        // effectPadding arrives in VIEWPORT PIXELS (see UiElement::GetEffectsPadding)
+        // — convert to this element's local [0,1] space by dividing by its own
+        // on-screen size, so the padding geometry/UV extend by the right amount
+        // regardless of the bound texture's actual resolution (fs_effects.sc's own
+        // ring-sampling radius is handled separately, via screen-space derivatives —
+        // see pixelsToUV() in fs_effects.sc).
         const float padU = (size.x > 0.f) ? effectPadding / size.x : 0.f;
         const float padV = (size.y > 0.f) ? effectPadding / size.y : 0.f;
 
@@ -1184,15 +1225,7 @@ namespace UiRenderer {
         sp->SetUniform("u_Model", BuildQuadModelFromMat3(transform, size));
         sp->SetUniform("u_Color", color);
         sp->SetTexture("u_Texture", texture);
-
-        // u_TextureSize now feeds fs_effects.sc's texelSize purely as the
-        // effect-radius reference scale (screen pixels), independent of
-        // whatever texture is actually bound. It does NOT affect what part
-        // of the texture gets drawn — sampleTexClamped()/texture2D still
-        // sample directly off v_texcoord0, which comes from rectPos/
-        // rectSize as before.
-        if (!shader.empty() && size.x > 0.f && size.y > 0.f)
-            sp->SetUniform("u_TextureSize", glm::vec4(size.x, size.y, 0.f, 0.f));
+        sp->SetUniform("u_ElementSize", glm::vec4(size.x, size.y, 0.f, 0.f));
         (void)textureWidth;
         (void)textureHeight;
 
@@ -1237,23 +1270,26 @@ namespace UiRenderer {
     {
         if (size.x <= 0.f || size.y <= 0.f) return;
 
-        // Unlike DrawTexturedRectRegion/DrawText, 9-slice geometry NEVER
-        // extends past [0,size] — corners/edges/center always add up to
-        // exactly `size`, full stop, whether or not effectPadding is > 0.
-        // That means shadow/outline/glow on a 9-sliced element render
-        // clipped to its own box rather than bleeding past it, which is a
-        // real limitation compared to a plain UiImage — but a 9-slice's
-        // whole point is a stable, predictable footprint (borders, panels,
-        // buttons sized to fit content), and letting effects silently grow
-        // that footprint undermines exactly what 9-slicing is for.
+        // effectPadding (viewport pixels) extends only the OUTER boundary of the
+        // whole 9-slice grid — the inner grid lines (gx1/gx2/gy1/gy2 and
+        // ux1/ux2/uy1/uy2 below) never move, so corner/edge/center proportions
+        // the element was actually authored with stay exactly as configured; the
+        // whole grid just gets `effectPadding` extra screen pixels of margin on
+        // all 4 sides for shadow/outline/glow to bleed into.
         //
-        // No UV padding either, and deliberately not just "no geometry
-        // padding" — padding only the UV while geometry stays fixed would
-        // cram extra texture range into the same corner size, shrinking
-        // the apparent content instead of leaving it at native scale. The
-        // shader's own internal ring-sampling still reads slightly outside
-        // each cell during blur/glow (clamped by u_ClampRect, see
-        // fs_effects.sc); it just doesn't get a *dedicated* margin for it.
+        // This is safe to convert 1:1 (viewport pixels == texture texels) at the
+        // outer boundary specifically, because every cell touching it is either a
+        // corner (native 1:1 scale in both axes by 9-slice construction) or an
+        // edge cell in the direction perpendicular to its own stretch (which is
+        // exactly the direction of the outer boundary it touches, e.g. the top
+        // edge cell is stretched horizontally but still native vertically) — so
+        // there's no separate "convert to element-local space" step needed the
+        // way DrawTexturedRectRegion needs one; the padding is already correct in
+        // real texture texels.
+        const float padGX = (size.x > 0.f) ? effectPadding / size.x : 0.f;
+        const float padGY = (size.y > 0.f) ? effectPadding / size.y : 0.f;
+        const float padUX = (textureWidth  > 0.f) ? effectPadding / textureWidth  : 0.f;
+        const float padUY = (textureHeight > 0.f) ? effectPadding / textureHeight : 0.f;
 
         // Geometry breakpoints, local [0,1] space relative to `size` — corners
         // come out `margin` SCREEN pixels regardless of how `size` is
@@ -1273,27 +1309,15 @@ namespace UiRenderer {
         const float uy1 = (textureHeight > 0.f) ? margins.top / textureHeight : 0.f;
         const float uy2 = (textureHeight > 0.f) ? 1.f - margins.bottom / textureHeight : 1.f;
 
-        // Both outer bounds are exactly 0 / 1 — see comment above.
-        const float gx[4] = { 0.f, gx1, gx2, 1.f };
-        const float gy[4] = { 0.f, gy1, gy2, 1.f };
-        const float ux[4] = { 0.f, ux1, ux2, 1.f };
-        const float uy[4] = { 0.f, uy1, uy2, 1.f };
-
-        // effectPadding is intentionally unused — kept in the signature to
-        // match DrawTexturedRectRegion/DrawText's shape, but see the big
-        // comment above for why 9-slice doesn't apply it.
-        (void)effectPadding;
-
-        // textureWidth/textureHeight are still used above for the UV-space
-        // margins (ux/uy) — that part genuinely needs the real texture's
-        // pixel dimensions so corners/edges sample the right texels. But
-        // u_TextureSize below only feeds fs_effects.sc's shadow/outline/glow
-        // ring-sampling radius (see the matching comment in
-        // DrawTexturedRectRegion), which should scale with how big this
-        // element actually is on screen, not with the resolution of
-        // whatever texture happens to be bound (e.g. a small flat-color
-        // fallback). Anchoring it to `size` instead keeps those effects
-        // correctly scaled regardless of texture resolution.
+        // Only the OUTER breakpoints (index 0 and 3) move for padding — see the
+        // comment on padGX/padGY/padUX/padUY above. sampleTexClamped() in
+        // fs_effects.sc keeps the padded UV from ever reading real content past
+        // the source texture's own edge (u_ClampRect defaults to (0,0,1,1) for a
+        // 9-sliced draw, same as a plain image — see UiElement::GetEffectsUniforms).
+        const float gx[4] = { -padGX, gx1, gx2, 1.f + padGX };
+        const float gy[4] = { -padGY, gy1, gy2, 1.f + padGY };
+        const float ux[4] = { -padUX, ux1, ux2, 1.f + padUX };
+        const float uy[4] = { -padUY, uy1, uy2, 1.f + padUY };
 
         Shader* sp = shader.empty() ? s_texturedShader : ShaderManager::GetShaderProgram("vs_ui", shader);
         sp->UseProgram();
@@ -1301,9 +1325,7 @@ namespace UiRenderer {
         sp->SetUniform("u_Model", BuildQuadModelFromMat3(transform, size));
         sp->SetUniform("u_Color", color);
         sp->SetTexture("u_Texture", texture);
-
-        if (!shader.empty() && size.x > 0.f && size.y > 0.f)
-            sp->SetUniform("u_TextureSize", glm::vec4(size.x, size.y, 0.f, 0.f));
+        sp->SetUniform("u_ElementSize", glm::vec4(size.x, size.y, 0.f, 0.f));
 
         for (const auto& pair : shaderUniforms)
             sp->SetUniform(pair.first, pair.second);

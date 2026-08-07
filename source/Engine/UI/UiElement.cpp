@@ -208,8 +208,11 @@ void UiElement::DrawSelfTextured(bgfx::TextureHandle texture, const glm::vec4& c
     std::unordered_map<std::string, glm::vec4> uniforms;
     if (usingEffects)
     {
+        // No texture-size-derived uniform to worry about here — ui/fs_effects
+        // gets its viewport-pixel-to-UV conversion from screen-space derivatives
+        // computed in the shader itself, not from anything passed in this map
+        // (see the note at the top of UiRenderer.h).
         uniforms = GetEffectsUniforms();
-        uniforms["u_TextureSize"] = glm::vec4(textureWidth, textureHeight, 0.f, 0.f);
     }
 
     if (NineSliceEnabled)

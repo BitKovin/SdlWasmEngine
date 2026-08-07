@@ -1,6 +1,10 @@
 package com.bitkovin.shootergame;
 
+import android.os.Build;
+import android.os.Bundle;
 import android.view.KeyEvent;
+import android.window.OnBackInvokedCallback;
+import android.window.OnBackInvokedDispatcher;
 import org.libsdl.app.SDLActivity;
 
 public class GameActivity extends SDLActivity {
@@ -10,16 +14,23 @@ public class GameActivity extends SDLActivity {
         return new String[] { "main" };
     }
 
-    // SDLActivity's own onBackPressed() only blocks the close if the native
-    // SDL_ANDROID_TRAP_BACK_BUTTON hint already reads true at that instant —
-    // but that hint is set from inside main(), which only starts running
-    // once SDLActivity reaches RESUMED + surface-ready. Overriding here is
-    // authoritative from the very first back press, no hint/race involved.
+    private final OnBackInvokedCallback backCallback = () -> {
+        onNativeKeyDown(KeyEvent.KEYCODE_BACK);
+        onNativeKeyUp(KeyEvent.KEYCODE_BACK);
+    };
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if (Build.VERSION.SDK_INT >= 33) {
+            getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
+                    OnBackInvokedDispatcher.PRIORITY_DEFAULT, backCallback);
+        }
+    }
+
+    // Fallback for pre-API-33 devices, where this is still the only path.
     @Override
     public void onBackPressed() {
-        // Forward as a normal key event — same SDLK_AC_BACK your
-        // Input::AddAction("back") already listens for — instead of
-        // falling through to super.onBackPressed(), which calls finish().
         onNativeKeyDown(KeyEvent.KEYCODE_BACK);
         onNativeKeyUp(KeyEvent.KEYCODE_BACK);
     }
