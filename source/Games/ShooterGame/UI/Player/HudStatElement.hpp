@@ -62,12 +62,16 @@ public:
         Value->shadowSpread = 4.f;
         AddChild(Value);
 
+        float progressBarWidth = Label->GetSize().x + 4;
+
+        progressBarWidth = std::clamp(progressBarWidth, 120.0f, 240.0f);
+
         ProgressBar = make_shared<UiProgressBar>();
 		ProgressBar->position = vec2(0.f, Label->GetSize().y - 2);
         ProgressBar->origin = vec2(0.5f, 0.0f);
         ProgressBar->Progress = 0.5f;
         ProgressBar->pivot = vec2(0.5f, 0.5f);
-        ProgressBar->size = vec2(Label->GetSize().x + 6, 5);
+        ProgressBar->size = vec2(progressBarWidth + 6, 5);
 		ProgressBar->color = accentColor * vec4(0.5f, 0.5f, 0.5f, 1.f);
         ProgressBar->BackgroundColor = ProgressBar->color * vec4(0.4f, 0.4f, 0.4f, 1.f);
 		ProgressBar->ProgressImage = "GameData/textures/generic/white.png";

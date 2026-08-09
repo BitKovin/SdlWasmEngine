@@ -1,0 +1,11 @@
+{
+    "entries": [
+        { "key": "SETTINGS_GAME_TITLE",             "value": "ゲームプレイ設定",                    "description": "Title at the top of the gameplay settings screen" },
+        { "key": "SETTINGS_GAME_HEADER",            "value": "ゲームプレイ",                        "description": "Header for the Gameplay card" },
+        { "key": "SETTINGS_GAME_DIFFICULTY",        "value": "難易度",                              "description": "Placeholder row label - not yet functional" },
+        { "key": "SETTINGS_GAME_TUTORIAL_HINTS",    "value": "チュートリアルヒント",                "description": "Placeholder row label - not yet functional" },
+        { "key": "SETTINGS_GAME_AUTOSAVE",          "value": "オートセーブ",                        "description": "Placeholder row label - not yet functional" },
+        { "key": "SETTINGS_GAME_PLACEHOLDER_SOON",  "value": "近日公開",                            "description": "Pill label shown on each placeholder row" },
+        { "key": "SETTINGS_GAME_COMING_SOON_NOTE",  "value": "ゲームプレイ設定は近日公開予定です。", "description": "Footnote under the placeholder rows" }
+    ]
+}

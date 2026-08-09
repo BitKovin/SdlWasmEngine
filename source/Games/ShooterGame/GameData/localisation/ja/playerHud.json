@@ -1,0 +1,8 @@
+{
+    "entries": [
+        { "key": "PLAYER_HUD_HEALTH",     "value": "HP",       "description": "Display for player's health" },
+        { "key": "PLAYER_HUD_ARMOR",      "value": "アーマー", "description": "Display for player's armor" },
+        { "key": "PLAYER_HUD_STAMINA",    "value": "スタミナ", "description": "Display for player's stamina" },
+        { "key": "PLAYER_HUD_AMMO",       "value": "弾薬",     "description": "Display for player's ammo" }
+    ]
+}

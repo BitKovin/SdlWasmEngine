@@ -148,6 +148,8 @@ inline std::shared_ptr<UiImage> MakeDivider(float width,
     auto divider = std::make_shared<UiImage>();
     divider->color = color;
     divider->size = vec2(width, thickness);
+	divider->origin = vec2(0.5f, 0.0f);
+	divider->pivot = vec2(0.5f, 0.0f);
     return divider;
 }
 
