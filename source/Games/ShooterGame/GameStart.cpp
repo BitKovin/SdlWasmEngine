@@ -292,6 +292,8 @@ private:
 GameStart::GameStart()
 {
 
+	Localisation::SetLanguage("ua");
+
 	PauseGameManager::SetGamePaused(false);
 	PauseGameManager::SetGamePausedGameplay(false);
 
@@ -314,6 +316,10 @@ GameStart::GameStart()
     }
 
     if (startedGame) return;
+
+    UiRenderer::AddFallbackFont("GameData/fonts/NotoSans.ttf");
+    UiRenderer::AddFallbackFont("GameData/fonts/NotoSerifJP.ttf");
+    UiRenderer::AddFallbackFont("GameData/fonts/NotoSansSC.ttf");
 
     GameSettings::Instance().LoadFromFile();
     GameSettings::Instance().ApplyAll();

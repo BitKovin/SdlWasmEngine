@@ -10,6 +10,7 @@
 #include <string>
 #include "../Time.hpp"
 #include <mutex>
+#include <memory>
 #include "UiManager.h"
 
 #include <BgfxStateManager.h>
@@ -49,7 +50,37 @@ struct GlyphInfo {
     float advanceX = 0.f;
     // True when the glyph has no visible pixels (space, control chars)
     bool  invisible = false;
+    // True when this glyph's bitmap/metrics came from a global fallback font
+    // (see AddFallbackFont) rather than the FontAtlas's own .ttf. Kerning
+    // lookups skip any pair involving a fallback-sourced glyph — see
+    // MeasureText/DrawText — since a font's kern table has no meaningful
+    // entry for a glyph it doesn't actually contain.
+    bool  fromFallback = false;
 };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FallbackFont
+//   A parsed .ttf kept around purely as a glyph *source* for codepoints that
+//   some other FontAtlas's own font doesn't cover — see AddFallbackFont in
+//   UiRenderer.h. Unlike FontAtlas, a FallbackFont owns no atlas bitmap, no
+//   packing state, and no bgfx texture of its own: whatever glyph gets pulled
+//   from it is rasterized straight into whichever FontAtlas asked for it (see
+//   FontAtlas::EnsureGlyph below) and baked into THAT atlas's own bitmap/
+//   packing/glyph cache. So a FallbackFont is pure CPU-side data — parsing one
+//   makes no bgfx calls, same as FontAtlas::LoadCpuData.
+// ─────────────────────────────────────────────────────────────────────────────
+
+struct FallbackFont {
+    std::string          path;
+    stbtt_fontinfo       fontInfo{};
+    std::vector<uint8_t> fileData; // raw .ttf bytes; must outlive fontInfo
+    int ascent = 0, descent = 0, lineGap = 0;
+};
+
+// Real definition lives near the fallback font registry further down (it
+// needs s_fallbackFonts/s_fallbackMutex, declared there). Forward-declared
+// here so FontAtlas::EnsureGlyph can call it.
+static FallbackFont* FindFallbackGlyphSource(int codepoint);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FontAtlas
@@ -230,24 +261,67 @@ struct FontAtlas {
 
     // ── EnsureGlyph ───────────────────────────────────────────────────────────
     // CALLER MUST HOLD `mutex` before calling this — see DrawText/MeasureText.
+    //
+    // Codepoints this atlas's own font doesn't cover are resolved through the
+    // global fallback chain (see AddFallbackFont) before falling back further
+    // to this font's own .notdef ("tofu") box — see the fromFallback logic
+    // below. Either way the result is baked into THIS atlas's own bitmap/
+    // packing/glyph cache, at a scale matched to THIS atlas's pixelHeight, so
+    // every caller downstream (MeasureText, DrawText) just sees a normal
+    // glyphs[] entry and never needs to know or care where it came from.
 
     bool EnsureGlyph(int codepoint)
     {
         if (glyphs.count(codepoint))
             return true;
 
+        // Which font, and at what scale, actually supplies this glyph's
+        // bitmap/metrics. Defaults to this atlas's own font — the common
+        // case, and the only option once no fallback covers the codepoint
+        // either (see below).
+        stbtt_fontinfo* srcFont = &fontInfo;
+        float srcScale = scale;
+        bool fromFallback = false;
+
+        // Glyph index 0 is the font's .notdef ("tofu") glyph — stb maps any
+        // codepoint absent from the font's own cmap to it. That's the right
+        // trigger for "go look in the global fallback chain", NOT "the
+        // rasterized bitmap came out empty": a real, covered glyph like
+        // space is legitimately empty and must keep using this atlas's own
+        // metrics/kerning below, not get rerouted to a fallback font.
+        if (stbtt_FindGlyphIndex(&fontInfo, codepoint) == 0) {
+            if (FallbackFont* fb = FindFallbackGlyphSource(codepoint)) {
+                srcFont = &fb->fontInfo;
+                // Match THIS atlas's requested pixel height using the
+                // fallback font's OWN ascent/descent/lineGap — the same
+                // formula used for this atlas's own `scale` above, just
+                // against a different font's metrics — so a fallback glyph
+                // lands at the same nominal line height as everything else
+                // in this string, instead of whatever scale this atlas's
+                // own `scale` (derived from a completely different font's
+                // metrics) would imply for it.
+                const float denom = static_cast<float>(fb->ascent - fb->descent + fb->lineGap);
+                srcScale = (denom > 0.f) ? (pixelHeight / denom) : scale;
+                fromFallback = true;
+            }
+            // else: nothing in the fallback chain covers it either. Fall
+            // through and rasterize this font's own .notdef box, exactly
+            // as before fallback fonts existed.
+        }
+
         // Rasterize the glyph into a temporary 1-channel bitmap
         int w = 0, h = 0, xoff = 0, yoff = 0;
         uint8_t* bm = stbtt_GetCodepointBitmap(
-            &fontInfo, scale, scale, codepoint, &w, &h, &xoff, &yoff);
+            srcFont, srcScale, srcScale, codepoint, &w, &h, &xoff, &yoff);
 
         if (!bm || w <= 0 || h <= 0) {
             // Invisible / missing glyph (e.g. space, tab) – record metrics only
             int advW = 0, lsb = 0;
-            stbtt_GetCodepointHMetrics(&fontInfo, codepoint, &advW, &lsb);
+            stbtt_GetCodepointHMetrics(srcFont, codepoint, &advW, &lsb);
             GlyphInfo g{};
-            g.advanceX = static_cast<float>(advW) * scale;
+            g.advanceX = static_cast<float>(advW) * srcScale;
             g.invisible = true;
+            g.fromFallback = fromFallback;
             glyphs[codepoint] = g;
             if (bm) stbtt_FreeBitmap(bm, nullptr);
             return true;
@@ -263,10 +337,11 @@ struct FontAtlas {
                 << " is wider than the atlas row capacity and cannot be packed.\n";
             stbtt_FreeBitmap(bm, nullptr);
             int advW = 0, lsb = 0;
-            stbtt_GetCodepointHMetrics(&fontInfo, codepoint, &advW, &lsb);
+            stbtt_GetCodepointHMetrics(srcFont, codepoint, &advW, &lsb);
             GlyphInfo g{};
-            g.advanceX = static_cast<float>(advW) * scale;
+            g.advanceX = static_cast<float>(advW) * srcScale;
             g.invisible = true;
+            g.fromFallback = fromFallback;
             glyphs[codepoint] = g;
             return false;
         }
@@ -290,10 +365,11 @@ struct FontAtlas {
             // real advance so layout stays correct even for glyphs that
             // can't be rasterized.
             int advW = 0, lsb = 0;
-            stbtt_GetCodepointHMetrics(&fontInfo, codepoint, &advW, &lsb);
+            stbtt_GetCodepointHMetrics(srcFont, codepoint, &advW, &lsb);
             GlyphInfo g{};
-            g.advanceX = static_cast<float>(advW) * scale;
+            g.advanceX = static_cast<float>(advW) * srcScale;
             g.invisible = true;
+            g.fromFallback = fromFallback;
             glyphs[codepoint] = g;
             return false;
         }
@@ -323,10 +399,11 @@ struct FontAtlas {
         g.xoff = xoff;
         g.yoff = yoff;
         g.invisible = false;
+        g.fromFallback = fromFallback;
 
         int advW = 0, lsb = 0;
-        stbtt_GetCodepointHMetrics(&fontInfo, codepoint, &advW, &lsb);
-        g.advanceX = static_cast<float>(advW) * scale;
+        stbtt_GetCodepointHMetrics(srcFont, codepoint, &advW, &lsb);
+        g.advanceX = static_cast<float>(advW) * srcScale;
 
         glyphs[codepoint] = g;
 
@@ -396,6 +473,38 @@ static std::unordered_map<std::string, UiRenderer::FontHandle> s_fontKeyCache;
 static std::string MakeFontKey(const char* path, float pixelHeight)
 {
     return std::string(path) + "@" + std::to_string(pixelHeight);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Fallback font registry — see AddFallbackFont in UiRenderer.h.
+//
+// Global, ordered list consulted by EVERY FontAtlas's EnsureGlyph, for any
+// codepoint that atlas's own font doesn't cover. Deliberately kept as its
+// own list/mutex rather than folded into s_fontRegistry/s_fontMutex above:
+// a fallback font is never handed out as a FontHandle and never drawn with
+// directly, and — importantly for locking — AddFallbackFont/
+// RemoveFallbackFont/ClearFallbackFonts/FindFallbackGlyphSource never touch
+// a FontAtlas or its mutex. That means EnsureGlyph can safely lock
+// s_fallbackMutex while it's already holding its own atlas's mutex: there's
+// no cycle, since nothing reachable from s_fallbackMutex ever waits on an
+// atlas's mutex in turn.
+// ─────────────────────────────────────────────────────────────────────────────
+
+static std::vector<std::unique_ptr<FallbackFont>> s_fallbackFonts;
+static std::mutex                                  s_fallbackMutex;
+
+// Returns the first registered fallback font (in AddFallbackFont order)
+// whose cmap actually covers `codepoint`, or nullptr if none do. See the
+// forward declaration next to FallbackFont for why this exists ahead of
+// FontAtlas.
+static FallbackFont* FindFallbackGlyphSource(int codepoint)
+{
+    std::lock_guard<std::mutex> lock(s_fallbackMutex);
+    for (auto& fb : s_fallbackFonts) {
+        if (stbtt_FindGlyphIndex(&fb->fontInfo, codepoint) != 0)
+            return fb.get();
+    }
+    return nullptr;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -471,6 +580,7 @@ namespace UiRenderer {
         s_flatColorShader = ShaderManager::GetShaderProgram("vs_ui", "fs_ui_flatcolor");
     }
 
+
     // ── Shutdown ──────────────────────────────────────────────────────────────────
 
     void Shutdown()
@@ -483,13 +593,23 @@ namespace UiRenderer {
         s_texturedShader = nullptr;
         s_flatColorShader = nullptr;
 
-        std::lock_guard<std::mutex> lock(s_fontMutex);
-        for (auto& [id, atlas] : s_fontRegistry) {
-            atlas->Destroy();
-            delete atlas;
+        {
+            std::lock_guard<std::mutex> lock(s_fontMutex);
+            for (auto& [id, atlas] : s_fontRegistry) {
+                atlas->Destroy();
+                delete atlas;
+            }
+            s_fontRegistry.clear();
+            s_fontKeyCache.clear();
         }
-        s_fontRegistry.clear();
-        s_fontKeyCache.clear();
+
+        // Fallback fonts make no bgfx calls and own no GPU resources (see
+        // FallbackFont), so this is just releasing CPU-side memory — no
+        // Destroy() step needed, unlike the FontAtlas loop above.
+        {
+            std::lock_guard<std::mutex> lock(s_fallbackMutex);
+            s_fallbackFonts.clear();
+        }
     }
 
 
@@ -562,6 +682,78 @@ namespace UiRenderer {
                 break;
             }
         }
+    }
+
+    // ── AddFallbackFont ──────────────────────────────────────────────────────────
+    // See UiRenderer.h. Parses the .ttf and appends it to the global fallback
+    // chain (order = priority; first font in the chain that covers a given
+    // codepoint wins — see FindFallbackGlyphSource). Re-adding a path that's
+    // already registered is a harmless no-op rather than a duplicate entry.
+    //
+    // Unlike LoadFont, there's no pixelHeight parameter and no returned
+    // handle: a fallback font never gets its own exposed atlas/texture to
+    // draw with directly. It's purely a glyph source, consulted on demand by
+    // whichever FontAtlas needs it, and rasterized fresh at THAT atlas's own
+    // pixelHeight every time (see EnsureGlyph) — so one AddFallbackFont call
+    // transparently covers every primary font and every size it's ever
+    // loaded at, present or future.
+    //
+    // Like LoadFont's CPU-only path, this makes zero bgfx calls, so it's
+    // safe to call from a background loading thread.
+
+    bool AddFallbackFont(const char* path)
+    {
+        auto fb = std::make_unique<FallbackFont>();
+        fb->fileData = FileSystemEngine::ReadFileBinary(std::string(path));
+
+        if (fb->fileData.empty()) {
+            std::cerr << "[UiRenderer] AddFallbackFont: cannot open '" << path << "'\n";
+            return false;
+        }
+
+        if (!stbtt_InitFont(&fb->fontInfo, fb->fileData.data(), 0)) {
+            std::cerr << "[UiRenderer] AddFallbackFont: stbtt_InitFont failed for '" << path << "'\n";
+            return false;
+        }
+
+        fb->path = path;
+        stbtt_GetFontVMetrics(&fb->fontInfo, &fb->ascent, &fb->descent, &fb->lineGap);
+
+        std::lock_guard<std::mutex> lock(s_fallbackMutex);
+        for (auto& existing : s_fallbackFonts) {
+            if (existing->path == fb->path)
+                return true; // already registered — not an error, just a no-op
+        }
+        s_fallbackFonts.push_back(std::move(fb));
+        return true;
+    }
+
+    // ── RemoveFallbackFont ───────────────────────────────────────────────────────
+    // See UiRenderer.h. Only removes this font from future fallback lookups.
+    // Any glyph it already supplied is baked permanently into whichever
+    // FontAtlas pulled it — same as every other glyph in that atlas's cache
+    // — so this can't retroactively change text that's already been drawn or
+    // measured; it only affects codepoints EnsureGlyph hasn't seen yet.
+
+    void RemoveFallbackFont(const char* path)
+    {
+        std::lock_guard<std::mutex> lock(s_fallbackMutex);
+        for (auto it = s_fallbackFonts.begin(); it != s_fallbackFonts.end(); ++it) {
+            if ((*it)->path == path) {
+                s_fallbackFonts.erase(it);
+                return;
+            }
+        }
+    }
+
+    // ── ClearFallbackFonts ───────────────────────────────────────────────────────
+    // See UiRenderer.h. Same "doesn't undo already-baked glyphs" caveat as
+    // RemoveFallbackFont, just for the whole chain at once.
+
+    void ClearFallbackFonts()
+    {
+        std::lock_guard<std::mutex> lock(s_fallbackMutex);
+        s_fallbackFonts.clear();
     }
 
     // ── Projection helper ─────────────────────────────────────────────────────────
@@ -797,6 +989,7 @@ namespace UiRenderer {
         float lineW = 0.f;
         int   numLines = 1;
         int   prevCp = 0;
+        bool  prevFromFallback = false;
 
         const char* p = text.c_str();
         while (*p) {
@@ -807,18 +1000,25 @@ namespace UiRenderer {
                 if (lineW > maxLineW) maxLineW = lineW;
                 lineW = 0.f;
                 prevCp = 0;
+                prevFromFallback = false;
                 ++numLines;
                 continue;
             }
 
             const auto it = atlas->glyphs.find(cp);
             if (it == atlas->glyphs.end()) continue;
+            const GlyphInfo& g = it->second;
 
-            if (prevCp != 0)
+            // Kerning tables are only meaningful within a single font — skip
+            // the lookup (treat as 0) whenever either glyph in the pair was
+            // actually sourced from the fallback chain (see EnsureGlyph)
+            // rather than this atlas's own font.
+            if (prevCp != 0 && !prevFromFallback && !g.fromFallback)
                 lineW += stbtt_GetCodepointKernAdvance(&atlas->fontInfo, prevCp, cp) * atlas->scale;
 
-            lineW += it->second.advanceX;
+            lineW += g.advanceX;
             prevCp = cp;
+            prevFromFallback = g.fromFallback;
         }
         if (lineW > maxLineW) maxLineW = lineW;
 
@@ -1032,20 +1232,22 @@ namespace UiRenderer {
         int   numLines = 1, numGlyphs = 0;
         {
             const char* p = text.c_str();
-            int prevCp = 0;
+            int  prevCp = 0;
+            bool prevFromFallback = false;
             while (*p) {
                 const int cp = NextCodepoint(p);
                 if (cp <= 0) continue;
                 if (cp == '\n') {
                     if (lineW > maxLineW) maxLineW = lineW;
-                    lineW = 0.f; prevCp = 0; ++numLines; continue;
+                    lineW = 0.f; prevCp = 0; prevFromFallback = false; ++numLines; continue;
                 }
                 const auto it = atlas->glyphs.find(cp);
                 if (it == atlas->glyphs.end()) continue;
                 const GlyphInfo& g = it->second;
-                if (prevCp != 0)
+                // See MeasureText: skip kerning across a fallback-sourced glyph.
+                if (prevCp != 0 && !prevFromFallback && !g.fromFallback)
                     lineW += stbtt_GetCodepointKernAdvance(&atlas->fontInfo, prevCp, cp) * atlas->scale;
-                lineW += g.advanceX; prevCp = cp;
+                lineW += g.advanceX; prevCp = cp; prevFromFallback = g.fromFallback;
                 if (!g.invisible) ++numGlyphs;
             }
             if (lineW > maxLineW) maxLineW = lineW;
@@ -1079,15 +1281,17 @@ namespace UiRenderer {
 
         float penX = 0.f, penY = 0.f;
         int   prevCp = 0;
+        bool  prevFromFallback = false;
         const char* p = text.c_str();
         while (*p) {
             const int cp = NextCodepoint(p);
             if (cp <= 0) continue;
-            if (cp == '\n') { penX = 0.f; penY += lineH; prevCp = 0; continue; }
+            if (cp == '\n') { penX = 0.f; penY += lineH; prevCp = 0; prevFromFallback = false; continue; }
             const auto it = atlas->glyphs.find(cp);
             if (it == atlas->glyphs.end()) continue;
             const GlyphInfo& g = it->second;
-            if (prevCp != 0)
+            // See MeasureText: skip kerning across a fallback-sourced glyph.
+            if (prevCp != 0 && !prevFromFallback && !g.fromFallback)
                 penX += stbtt_GetCodepointKernAdvance(&atlas->fontInfo, prevCp, cp) * atlas->scale;
             if (!g.invisible) {
                 // geometry: inflate the quad around the glyph's ink, pen position untouched
@@ -1121,7 +1325,7 @@ namespace UiRenderer {
                 glyphClampRects.emplace_back(g.u0 - clampPadU, g.v0 - clampPadV,
                                               g.u1 + clampPadU, g.v1 + clampPadV);
             }
-            penX += g.advanceX; prevCp = cp;
+            penX += g.advanceX; prevCp = cp; prevFromFallback = g.fromFallback;
         }
 
         // Pass 4: submit

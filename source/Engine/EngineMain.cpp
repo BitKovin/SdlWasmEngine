@@ -200,7 +200,7 @@ void EngineMain::Init(std::vector<std::string> args)
 
     Logger::Info("init");
 
-    MainThreadPool = new ThreadPool("Tread Pool");
+    MainThreadPool = new ThreadPool("Thread Pool");
 
     MainThreadPool->Start(ThreadPool::GetNumThreadsForThreadPool());
 

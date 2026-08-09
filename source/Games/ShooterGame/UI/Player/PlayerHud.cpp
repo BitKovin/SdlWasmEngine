@@ -56,13 +56,13 @@ void PlayerHud::Init(Player* playerRef)
     hudCanvas->AddChild(statusBar);
 
     const vec2 statColumnSize = vec2(170.f, 100.f);
-    staminaStat = make_shared<HudStatElement>("STAMINA", statColumnSize, vec4(0.32f, 0.32f, 0.44f, 1.f));
+    staminaStat = make_shared<HudStatElement>("${PLAYER_HUD_STAMINA}", statColumnSize, vec4(0.32f, 0.32f, 0.44f, 1.f));
     statusBar->AddChild(staminaStat);
 
-    healthStat = make_shared<HudStatElement>("HEALTH", statColumnSize, vec4(0.45f, 0.21f, 0.21f, 1.f));
+    healthStat = make_shared<HudStatElement>("${PLAYER_HUD_HEALTH}", statColumnSize, vec4(0.45f, 0.21f, 0.21f, 1.f));
     statusBar->AddChild(healthStat);
 
-    ammoStat = make_shared<HudStatElement>("AMMO", statColumnSize, vec4(0.64f, 0.60f, 0.48f, 1.f));
+    ammoStat = make_shared<HudStatElement>("${PLAYER_HUD_AMMO}", statColumnSize, vec4(0.64f, 0.60f, 0.48f, 1.f));
     statusBar->AddChild(ammoStat);
 
     ScreenControls = make_shared<ScreenMobileControls>();

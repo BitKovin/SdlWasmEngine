@@ -48,6 +48,44 @@ namespace UiRenderer {
     FontHandle LoadFont(const char* path, float pixelHeight);
     void       UnloadFont(FontHandle handle);
 
+    // ── Global fallback fonts ───────────────────────────────────────────────────
+    // Register a .ttf to be searched, in the order added, whenever DrawText or
+    // MeasureText hit a codepoint that the requested FontHandle's own font
+    // doesn't cover (checked by cmap coverage, not by whether the glyph happens
+    // to rasterize empty — so real, legitimately-blank glyphs like space are
+    // never rerouted here). Applies globally to every FontHandle, current and
+    // future, with no per-font opt-out — this is meant for broad coverage gaps
+    // (e.g. a primary UI font that's Latin-only, backed by a CJK or emoji
+    // fallback), not per-element font substitution.
+    //
+    // There's no FontHandle/pixelHeight for a fallback font, and you never draw
+    // with one directly: whenever some other font is missing a glyph, the first
+    // fallback in this list that covers it gets that ONE glyph rasterized at
+    // the requesting font's own pixel height and baked directly into that
+    // font's own atlas/glyph cache, baseline-aligned to it — so every
+    // downstream draw/measure call proceeds exactly as if the glyph had come
+    // from the primary font all along, with two caveats: kerning against a
+    // fallback-sourced glyph is always treated as 0 (a font's kern table has
+    // no meaningful entry for a glyph it doesn't contain), and because the
+    // fallback is picked per requesting font/size rather than pre-baked, the
+    // very first draw/measure of a given fallback codepoint pays that font's
+    // usual one-time glyph-rasterization cost.
+    //
+    // Safe to call from any thread — like LoadFont's CPU-side path, this makes
+    // no bgfx calls. Returns false if the file couldn't be read/parsed.
+    bool AddFallbackFont(const char* path);
+
+    // Removes a previously-added fallback by path (no-op if not registered).
+    // Only affects codepoints not yet resolved: glyphs this fallback already
+    // supplied are baked permanently into whichever font pulled them, same as
+    // any other cached glyph, so this can't retroactively change text that's
+    // already been drawn or measured.
+    void RemoveFallbackFont(const char* path);
+
+    // Clears the entire fallback chain. Same "doesn't undo already-baked
+    // glyphs" caveat as RemoveFallbackFont.
+    void ClearFallbackFonts();
+
     // ── Draw calls — legacy (pos + rotation + pivot) ───────────────────────────
     // These remain for any code that hasn't been ported to matrix calls yet.
     void DrawTexturedRect(const glm::vec2& pos, const glm::vec2& size, float rotation, vec2 pivot, bgfx::TextureHandle texture, const glm::vec4& color = glm::vec4(1.0f));
