@@ -407,6 +407,7 @@
     <ClCompile Include="includedLibraries\stb_implementation.cpp" />
     <ClCompile Include="LevelTraversalSystem.cpp" />
     <ClCompile Include="LoadingScreen\LoadingScreenSystem.cpp" />
+    <ClCompile Include="Localization\Localisation.cpp" />
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="model_animator.cpp" />
     <ClCompile Include="AssetRegistry.cpp" />
@@ -471,6 +472,7 @@
     <ClCompile Include="Particle\TrailEmitter.cpp" />
     <ClCompile Include="Physics.cpp" />
     <ClCompile Include="Physics.h" />
+    <ClCompile Include="Physics\PhysicsMaterialHelper.cpp" />
     <ClCompile Include="Profiling\Tracy.cpp" />
     <ClCompile Include="RandomHelper.cpp" />
     <ClCompile Include="Renderer\Abstractions\FrameBuffer.cpp" />
@@ -590,6 +592,7 @@
     <ClInclude Include="LevelTraversalSystem.h" />
     <ClInclude Include="LoadingScreen\LoadingScreenSystem.h" />
     <ClInclude Include="LoadingScreen\UiLoadingScreenBase.h" />
+    <ClInclude Include="Localization\Localisation.h" />
     <ClInclude Include="malloc_override.h" />
     <ClInclude Include="model_animator.hpp" />
     <ClInclude Include="AssetRegistry.h" />
@@ -664,6 +667,7 @@
     <ClInclude Include="Particle\TrailEmitter.h" />
     <ClInclude Include="PhysicsConverter.h" />
     <ClInclude Include="PhysicsHelper.h" />
+    <ClInclude Include="Physics\PhysicsMaterialHelper.h" />
     <ClInclude Include="PlatformMains\android_main.hpp" />
     <ClInclude Include="PlatformMains\emscripten_main.hpp" />
     <ClInclude Include="PlatformMains\gdk_main.hpp" />

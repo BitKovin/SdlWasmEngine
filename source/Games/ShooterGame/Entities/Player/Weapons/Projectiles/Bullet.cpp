@@ -159,7 +159,7 @@ void Bullet::TargetHit(Physics::HitResult hit)
 
 	hit.entity->OnPointDamage(Damage, hit.position, MathHelper::FastNormalize(Position - oldPos), hit.hitboxName, damageCauser, this);
 
-	Logger::Log("Hit surface: " + hit.surfaceName + "   on entity: " + hit.entity->ClassName);
+	Logger::Log("Hit surface: " + to_string(hit.surfaceMaterialType) + "   on entity: " + hit.entity->ClassName);
 
 	IEnemy* enemy = dynamic_cast<IEnemy*>(hit.entity);
 

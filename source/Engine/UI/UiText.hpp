@@ -6,6 +6,8 @@
 #include "../glm.h"
 #include "../AssetRegistry.h"
 
+#include <Localization/Localisation.h>
+
 const float StaticFontSize = 200;
 
 class UiText : public UiElement
@@ -45,7 +47,7 @@ public:
     virtual glm::vec2 GetSize() override
     {
         if (font == UiRenderer::INVALID_FONT) return glm::vec2(0.f);
-        glm::vec2 atlasSize = UiRenderer::MeasureText(text, font);
+        glm::vec2 atlasSize = UiRenderer::MeasureText(Localisation::LocalizeString(text), font);
         if (atlasSize.x == 0.f) return glm::vec2(0.f);
         return atlasSize * (fontSize / StaticFontSize);
     }
@@ -91,7 +93,7 @@ public:
             effectPadding = std::max({ shadowReach, outlineReach, glowReach });
         }
 
-        UiRenderer::DrawText(finalizedText, font, finalizedMatrix, textColor * GetFinalColor(), scale, shader, uniforms, effectPadding);
+        UiRenderer::DrawText(Localisation::LocalizeString(finalizedText), font, finalizedMatrix, textColor * GetFinalColor(), scale, shader, uniforms, effectPadding);
 
         UiElement::Draw();
     }

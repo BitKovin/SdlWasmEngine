@@ -2426,17 +2426,6 @@ static void AddPhysicsBodyForEntityAndModel(Entity* entity, BSPModelRef& model) 
             for (auto& v : vertices)
                 facePositions.push_back(v.Position / MAP_SCALE);
 
-            if (entity->ConvexCollision)
-            {
-                // Collect points per texture (sky/normal)
-                if (sky)
-                    convexPointsSkyByTexture[textureName].insert(convexPointsSkyByTexture[textureName].end(),
-                        facePositions.begin(), facePositions.end());
-                else
-                    convexPointsByTexture[textureName].insert(convexPointsByTexture[textureName].end(),
-                        facePositions.begin(), facePositions.end());
-                continue; // no indices needed for convex hull
-            }
 
             // Build a temporary mesh for this face to clean up degenerates FIRST
             MeshUtils::PositionVerticesIndices faceMesh;
@@ -2464,36 +2453,13 @@ static void AddPhysicsBodyForEntityAndModel(Entity* entity, BSPModelRef& model) 
                 targetMesh.materials.push_back(textureName);
         } // end faces loop
 
-        if (entity->ConvexCollision)
-        {
-            // Create convex hull shapes per texture, supplying the surface name
-            for (auto& p : convexPointsByTexture)
-            {
-                const auto& textureName = p.first;
-                const auto& points = p.second;
-                if (!points.empty())
-                {
-                    auto shape = Physics::CreateConvexHullFromPoints(points, textureName);
-                    shapes.push_back(shape);
-                }
-            }
-            for (auto& p : convexPointsSkyByTexture)
-            {
-                const auto& textureName = p.first;
-                const auto& points = p.second;
-                if (!points.empty())
-                {
-                    auto shape = Physics::CreateConvexHullFromPoints(points, textureName);
-                    shapesSky.push_back(shape);
-                }
-            }
-        }
-        else
+
+
         {
             // Create single mesh shape for all standard faces
             if (!standardMesh.vertices.empty() && !standardMesh.indices.empty())
             {
-                auto shape = Physics::CreateMeshShape(standardMesh.vertices, standardMesh.indices, standardMesh.materials);
+                auto shape = Physics::CreateMeshShape(standardMesh.vertices, standardMesh.indices, standardMesh.materials, entity->ConvexCollision);
                 shapes.push_back(shape);
             }
 

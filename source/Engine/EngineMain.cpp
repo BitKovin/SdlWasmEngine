@@ -38,6 +38,8 @@
 
 #include <Network/NetworkManager.h>
 
+#include <Localization/Localisation.h>
+
 
 EngineMain* EngineMain::MainInstance = nullptr;
 
@@ -191,6 +193,8 @@ void EngineMain::Init(std::vector<std::string> args)
 
     LevelObjectFactory::instance().registerDefaults();
     BehaviorTree::RegisterTypes();
+
+	Localisation::Initialize("GameData/localisation", "en");
 
     UpdateScreenSize();
 

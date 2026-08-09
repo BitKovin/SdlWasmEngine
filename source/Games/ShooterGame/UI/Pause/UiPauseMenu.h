@@ -13,6 +13,8 @@
 #include <UI/UiTextBox.hpp>
 #include <UI/UiSlider.hpp>
 
+#include <Localization/Localisation.h>
+
 class UiPauseMenu : public UiCanvas
 {
 public:
@@ -28,12 +30,12 @@ public:
 		optionsBox = std::make_shared<UiVerticalBox>();
 		optionsBox->origin = vec2(0.5f);
 		optionsBox->pivot = vec2(0.5f);
-		
-		resumeButton = MakeButton("Resume");
-		saveButton = MakeButton("Save Game");
-		loadButton = MakeButton("Load Game");
-		settingsButton = MakeButton("Settings");
-		menuButton = MakeButton("Main Menu");
+
+		resumeButton = MakeButton("${PAUSE_MENU_RESUME}");
+		saveButton = MakeButton("${PAUSE_MENU_SAVE}");
+		loadButton = MakeButton("${PAUSE_MENU_LOAD}");
+		settingsButton = MakeButton("${PAUSE_MENU_SETTINGS}");
+		menuButton = MakeButton("${PAUSE_MENU_MAIN_MENU}");
 
 		optionsBox->AddChild(resumeButton);
 		optionsBox->AddChild(saveButton);
@@ -55,7 +57,7 @@ public:
 
 		AddChild(optionsBox);
 
-		resumeButton->onClick = [&]() 
+		resumeButton->onClick = [&]()
 			{
 				PauseGameManager::SetGamePaused(false);
 				Input::GetAction("pause")->CleanPressed();
@@ -63,13 +65,13 @@ public:
 
 		settingsButton->onClick = [&]()
 			{
-				
+
 				EngineMain::MainInstance->Viewport.AddChild(std::make_shared<UiSettingsMenu>(shared_from_this()));
 				visible = false;
 			};
 
 	}
-	
+
 	void OnNavCancel() override
 	{
 		resumeButton->onClick();
@@ -105,7 +107,7 @@ private:
 		std::shared_ptr<UiText> txt = make_shared<UiText>();
 
 		btn->size = vec2(400, 70);
-		
+
 		txt->text = text;
 
 		txt->pivot = vec2(0.5f);
@@ -123,4 +125,3 @@ private:
 	}
 
 };
-

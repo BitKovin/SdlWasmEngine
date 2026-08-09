@@ -1,0 +1,9 @@
+{
+    "entries": [
+        { "key": "PAUSE_MENU_RESUME",     "value": "Resume",     "description": "Button that resumes gameplay" },
+        { "key": "PAUSE_MENU_SAVE",       "value": "Save Game",  "description": "Button that opens the save game flow" },
+        { "key": "PAUSE_MENU_LOAD",       "value": "Load Game",  "description": "Button that opens the load game flow" },
+        { "key": "PAUSE_MENU_SETTINGS",   "value": "Settings",   "description": "Button that opens the settings menu" },
+        { "key": "PAUSE_MENU_MAIN_MENU",  "value": "Main Menu",  "description": "Button that quits to the main menu" }
+    ]
+}

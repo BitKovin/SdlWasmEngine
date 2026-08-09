@@ -18,6 +18,8 @@ ObjectVsBroadPhaseLayerFilterImpl* Physics::object_vs_broadphase_layer_filter = 
 
 ObjectLayerPairFilterImpl* Physics::object_vs_object_layer_filter = nullptr;
 
+LODSimShapeFilter* Physics::lodSimShapeFilter = nullptr;
+
 PhysicsSystem* Physics::physics_system = nullptr;
 
 MyContactListener* Physics::contact_listener = nullptr;
@@ -231,7 +233,7 @@ void MyContactListener::OnContactRemoved(const JPH::SubShapeIDPair& inSubShapePa
 }
 
 
-MySurfaceMaterial::MySurfaceMaterial(uint32_t surfaceId)
+MySurfaceMaterial::MySurfaceMaterial(PhysicsMaterialType surfaceId)
 {
 
 	mSurfaceId = surfaceId;
@@ -241,7 +243,46 @@ MySurfaceMaterial::MySurfaceMaterial(uint32_t surfaceId)
 
 std::string MySurfaceMaterial::GetName() const
 {
-	return Physics::FindSurfacyById(mSurfaceId);
+	return to_string((uint64_t)mSurfaceId);
+}
+
+bool LODSimShapeFilter::ShouldCollide(const Body& inBody1, const Shape* inShape1, const SubShapeID& inSubShapeIDOfShape1,
+	const Body& inBody2, const Shape* inShape2, const SubShapeID& inSubShapeIDOfShape2) const
+{
+	// The precise-mesh half of a mesh+convex LOD shape only exists for ray/shape-cast queries;
+	// it must never generate an actual physics contact. Untagged shapes (the default - GetUserData()
+	// returns 0 unless something explicitly tagged the shape) and the convex proxy are left free to
+	// collide normally, so every pre-existing shape in the codebase is completely unaffected.
+	if (inShape1->GetUserData() == ShapeTags::QueryOnly || inShape2->GetUserData() == ShapeTags::QueryOnly)
+		return false;
+
+	return true;
+}
+
+// Shared logic for both LODQueryShapeFilter::ShouldCollide overloads: decides whether a single
+// (leaf) shape, identified by its ShapeTags user data, should be visible to the current query.
+// Untagged shapes (the default) always return true here regardless of inTraceAgainstConvex, so
+// this only ever changes behavior for the two sub-shapes of an opted-in LOD mesh shape.
+static bool LODShapeTagAllowsQuery(uint64 inTag, bool inTraceAgainstConvex)
+{
+	if (inTag == ShapeTags::CollisionOnly)
+		return inTraceAgainstConvex;   // convex proxy: only visible when explicitly requested
+
+	if (inTag == ShapeTags::QueryOnly)
+		return !inTraceAgainstConvex;  // precise mesh: the default query target
+
+	return true; // untagged / ordinary shapes: always collides, in both simulation and queries
+}
+
+bool LODQueryShapeFilter::ShouldCollide(const Shape* inShape2, const SubShapeID& inSubShapeIDOfShape2) const
+{
+	return LODShapeTagAllowsQuery(inShape2->GetUserData(), mTraceAgainstConvex);
+}
+
+bool LODQueryShapeFilter::ShouldCollide(const Shape* inShape1, const SubShapeID& inSubShapeIDOfShape1, const Shape* inShape2, const SubShapeID& inSubShapeIDOfShape2) const
+{
+	return LODShapeTagAllowsQuery(inShape1->GetUserData(), mTraceAgainstConvex)
+		&& LODShapeTagAllowsQuery(inShape2->GetUserData(), mTraceAgainstConvex);
 }
 
 void Physics::SetGravity(vec3 gravity)
@@ -370,6 +411,11 @@ void Physics::Init()
 
 	physics_system->Init(cMaxBodies, cNumBodyMutexes, cMaxBodyPairs, cMaxContactConstraints, *broad_phase_layer_interface, *object_vs_broadphase_layer_filter, *object_vs_object_layer_filter);
 
+	// Enforce the mesh/convex LOD split during simulation (see CreateMeshShape's
+	// convexCollisionShape parameter and the ShapeTags namespace in Physics.h). Shapes that were
+	// never tagged are untouched by this filter and keep colliding exactly as before.
+	lodSimShapeFilter = new LODSimShapeFilter();
+	physics_system->SetSimShapeFilter(lodSimShapeFilter);
 
 	contact_listener = new MyContactListener();
 	physics_system->SetContactListener(contact_listener);
@@ -660,39 +706,6 @@ void Physics::UpdateSwingTwistMotor(TwoBodyConstraint* constraint,
 
 }
 
-uint32_t Physics::FindSurfaceId(string surfaceName)
-{
-	Physics::physicsMainLock.lock();
-
-	auto result = SurfaceIds.find(surfaceName);
-
-	if (result != SurfaceIds.end())
-	{
-		Physics::physicsMainLock.unlock();
-		return result->second;
-	}
-
-	int newId = nextSurfaceId;
-	nextSurfaceId++;
-	SurfaceIds[surfaceName] = newId;
-	SurfaceNames[newId] = surfaceName;
-	Physics::physicsMainLock.unlock();
-
-	return newId;
-}
-
-string Physics::FindSurfacyById(uint32_t id)
-{
-	std::lock_guard<std::recursive_mutex> guard(Physics::physicsMainLock);
-
-	auto it = SurfaceNames.find(id);
-	if (it != SurfaceNames.end())
-		return it->second;
-
-	// Not found — choose what makes sense: empty, error, or throw
-	return std::string();  // empty = “unknown”
-}
-
 void Physics::AddImpulse(const Body* body, vec3 impulse)
 {
 
@@ -711,7 +724,7 @@ void Physics::AddImpulseAtLocation(const Body* body, vec3 impulse, vec3 point)
 
 }
 
-RefConst<Shape> Physics::CreateMeshShape(const std::vector<vec3>& vertices, const std::vector<uint32_t>& indices, const std::vector<std::string>& materials)
+RefConst<Shape> Physics::CreateMeshShape(const std::vector<vec3>& vertices, const std::vector<uint32_t>& indices, const std::vector<std::string>& materials, bool convexCollisionShape)
 {
 	if (indices.size() % 3 != 0)
 	{
@@ -738,7 +751,7 @@ RefConst<Shape> Physics::CreateMeshShape(const std::vector<vec3>& vertices, cons
 	// Jolt requires an array of RefConst<PhysicsMaterial>
 	JPH::PhysicsMaterialList joltMaterials;
 	// Map to prevent creating duplicate materials for the same surface ID
-	std::unordered_map<int, uint32_t> surfaceIdToJoltMatIndex;
+	std::unordered_map<PhysicsMaterialType, uint32_t> surfaceIdToJoltMatIndex;
 
 	// 3. Convert indices and assign materials
 	Array<IndexedTriangle> joltTriangles;
@@ -751,7 +764,7 @@ RefConst<Shape> Physics::CreateMeshShape(const std::vector<vec3>& vertices, cons
 		tri.mIdx[1] = indices[i + 1];
 		tri.mIdx[2] = indices[i + 2];
 
-		int surfaceId = materials.empty() ? 0 : FindSurfaceId(materials[i / 3]);
+		PhysicsMaterialType surfaceId = materials.empty() ? PhysicsMaterialType::Unknown : PhysicsMaterialHelper::Classify(materials[i / 3]);
 
 		// Find or create the material in our unique list
 		uint32_t matIndex = 0;
@@ -793,7 +806,50 @@ RefConst<Shape> Physics::CreateMeshShape(const std::vector<vec3>& vertices, cons
 		return RefConst<Shape>();
 	}
 
-	return result.Get();
+	Ref<Shape> meshShape = result.Get();
+
+	if (!convexCollisionShape)
+		return meshShape;
+
+	// The mesh is precise but comparatively expensive/less stable to simulate directly; tag it as
+	// query-only so LODSimShapeFilter excludes it from physics response while LODQueryShapeFilter
+	// still lets ray/shape-cast queries hit it by default.
+	meshShape->SetUserData(ShapeTags::QueryOnly);
+
+	// Build a convex hull collision proxy from the same vertex cloud. This is what actually
+	// resolves physics contacts, so it needs to be reasonably close to the mesh's silhouette - a
+	// good fit for props/rocks/simple geometry, but a single hull will fill in the concavities of
+	// large non-convex level geometry, so this option is best reserved for that exception case.
+	Array<Vec3> hullPoints;
+	hullPoints.reserve(vertices.size());
+	for (const auto& v : vertices)
+		hullPoints.push_back(Vec3(v.x, v.y, v.z));
+
+	ConvexHullShapeSettings hullSettings(hullPoints);
+	Shape::ShapeResult hullResult = hullSettings.Create();
+	if (hullResult.HasError())
+	{
+		Logger::Error("Error creating convex collision shape for mesh: %s. Falling back to mesh-only collision.", hullResult.GetError().c_str());
+		meshShape->SetUserData(ShapeTags::Untagged);
+		return meshShape;
+	}
+
+	Ref<Shape> convexShape = hullResult.Get();
+	convexShape->SetUserData(ShapeTags::CollisionOnly);
+
+	StaticCompoundShapeSettings compoundSettings;
+	compoundSettings.AddShape(Vec3::sZero(), Quat::sIdentity(), convexShape.GetPtr());
+	compoundSettings.AddShape(Vec3::sZero(), Quat::sIdentity(), meshShape.GetPtr());
+
+	Shape::ShapeResult compoundResult = compoundSettings.Create();
+	if (compoundResult.HasError())
+	{
+		Logger::Error("Error creating mesh/convex LOD compound shape: %s. Falling back to mesh-only collision.", compoundResult.GetError().c_str());
+		meshShape->SetUserData(ShapeTags::Untagged);
+		return meshShape;
+	}
+
+	return compoundResult.Get();
 }
 
 RefConst<Shape> Physics::CreateConvexHullFromPoints(const std::vector<glm::vec3>& points, std::string surfaceName)
@@ -807,7 +863,7 @@ RefConst<Shape> Physics::CreateConvexHullFromPoints(const std::vector<glm::vec3>
 
 	// Settings for the convex hull shape
 	ConvexHullShapeSettings shapeSettings(hullPoints);
-	shapeSettings.mMaterial = new MySurfaceMaterial(FindSurfaceId(surfaceName)); // Assign the specified material
+	shapeSettings.mMaterial = new MySurfaceMaterial(PhysicsMaterialHelper::Classify(surfaceName)); // Assign the specified material
 
 	// Optional: check for errors
 	Shape::ShapeResult result = shapeSettings.Create();
@@ -827,7 +883,8 @@ vector<Physics::HitResult> Physics::PointTrace(
 	const vec3 point,
 	const BodyType mask,
 	const vector<Body*> ignoreList,
-	const vector<Entity*> entityIgnoreList)
+	const vector<Entity*> entityIgnoreList,
+	bool traceAgainstConvex)
 {
 	vector<HitResult> hits;
 
@@ -845,13 +902,17 @@ vector<Physics::HitResult> Physics::PointTrace(
 	filter.ignoreList = ignoreList;
 	filter.entityIgnoreList = entityIgnoreList;
 
+	LODQueryShapeFilter shapeFilter;
+	shapeFilter.mTraceAgainstConvex = traceAgainstConvex;
+
 	// Run the query
 	physics_system->GetNarrowPhaseQuery().CollidePoint(
 		physPoint,
 		collector,
-		{},        // BroadPhaseLayerFilter
-		{},        // ObjectLayerFilter
-		filter     // BodyFilter
+		{},          // BroadPhaseLayerFilter
+		{},          // ObjectLayerFilter
+		filter,      // BodyFilter
+		shapeFilter  // ShapeFilter
 	);
 
 	// If nothing hit
@@ -870,7 +931,6 @@ vector<Physics::HitResult> Physics::PointTrace(
 		hr.hitbody = nullptr;
 		hr.entity = nullptr;
 		hr.hitboxName = "";
-		hr.surfaceName = "";
 
 		// Lock body
 		JPH::BodyLockRead lock(physics_system->GetBodyLockInterface(), r.mBodyID);
@@ -889,7 +949,7 @@ vector<Physics::HitResult> Physics::PointTrace(
 			auto material = leaf->GetMaterial(r.mSubShapeID2);
 			if (material != JPH::PhysicsMaterial::sDefault)
 			{
-				hr.surfaceName = ((MySurfaceMaterial*)material)->GetName();
+				hr.surfaceMaterialType = ((MySurfaceMaterial*)material)->mSurfaceId;
 			}
 		}
 
@@ -913,7 +973,7 @@ vector<Physics::HitResult> Physics::PointTrace(
 	return hits;
 }
 
-Physics::HitResult Physics::LineTrace(const vec3 start, const vec3 end, const BodyType mask, const vector<Body*> ignoreList, const vector<Entity*> entityIgnoreList)
+Physics::HitResult Physics::LineTrace(const vec3 start, const vec3 end, const BodyType mask, const vector<Body*> ignoreList, const vector<Entity*> entityIgnoreList, bool traceAgainstConvex)
 {
 	HitResult hit;
 	hit.fraction = 1.0f;
@@ -924,7 +984,6 @@ Physics::HitResult Physics::LineTrace(const vec3 start, const vec3 end, const Bo
 	hit.shapePosition = end;
 	hit.entity = nullptr;
 	hit.hitboxName = "";
-	hit.surfaceName = "";
 
 	// Convert start and end from your own vector type to Jolt's coordinate system.
 	JPH::Vec3 startLoc = ToPhysics(start);
@@ -936,22 +995,27 @@ Physics::HitResult Physics::LineTrace(const vec3 start, const vec3 end, const Bo
 	JPH::Vec3 ray_dir = endLoc - startLoc;
 	ray.mDirection = ray_dir;
 
-	// Prepare a result structure for the ray cast.
-	JPH::RayCastResult result;
-
 	TraceBodyFilter filter;
 	filter.mask = mask;
 	filter.ignoreList = ignoreList;
 	filter.entityIgnoreList = entityIgnoreList;
 
+	LODQueryShapeFilter shapeFilter;
+	shapeFilter.mTraceAgainstConvex = traceAgainstConvex;
+
 	//physicsMainLock.lock();
 
-	// Cast the ray using the narrow phase query.
-	bool hasHit = physics_system->GetNarrowPhaseQuery().CastRay(ray, result, {}, {}, filter);
+	// Use the collector-based CastRay overload: the single-hit bool CastRay(ray, result, ...)
+	// overload does not accept a ShapeFilter, so we can't select mesh-vs-convex through it.
+	JPH::RayCastSettings raySettings;
+	JPH::ClosestHitCollisionCollector<JPH::CastRayCollector> collector;
+	physics_system->GetNarrowPhaseQuery().CastRay(ray, raySettings, collector, {}, {}, filter, shapeFilter);
+
+	bool hasHit = collector.HadHit();
 
 	if (hasHit)
 	{
-
+		const JPH::RayCastResult& result = collector.mHit;
 
 		// Lock the body using the BodyLockInterface to safely access it.
 		JPH::BodyLockRead body_lock(physics_system->GetBodyLockInterface(), result.mBodyID);
@@ -967,7 +1031,7 @@ Physics::HitResult Physics::LineTrace(const vec3 start, const vec3 end, const Bo
 			
 			if (material != JPH::PhysicsMaterial::sDefault)
 			{
-				hit.surfaceName = ((MySurfaceMaterial*)material)->GetName();
+				hit.surfaceMaterialType = ((MySurfaceMaterial*)material)->mSurfaceId;
 			}
 
 			// Calculate fraction of the hit along the ray.
@@ -1016,7 +1080,7 @@ Physics::HitResult Physics::LineTrace(const vec3 start, const vec3 end, const Bo
 	return hit;
 }
 
-Physics::HitResult Physics::SphereTrace(const vec3 start, const vec3 end, float radius, const BodyType mask, const vector<Body*> ignoreList, const vector<Entity*> entityIgnoreList)
+Physics::HitResult Physics::SphereTrace(const vec3 start, const vec3 end, float radius, const BodyType mask, const vector<Body*> ignoreList, const vector<Entity*> entityIgnoreList, bool traceAgainstConvex)
 {
 	HitResult hit;
 
@@ -1065,11 +1129,14 @@ Physics::HitResult Physics::SphereTrace(const vec3 start, const vec3 end, float 
 	filter.ignoreList = ignoreList;
 	filter.entityIgnoreList = entityIgnoreList;
 
+	LODQueryShapeFilter shapeFilter;
+	shapeFilter.mTraceAgainstConvex = traceAgainstConvex;
+
 	//physicsMainLock.lock();
 
 	// Cast the shape using the narrow phase query.
 	ClosestHitShapeCastCollector collector;
-	physics_system->GetNarrowPhaseQuery().CastShape(shape_cast, JPH::ShapeCastSettings(), JPH::Vec3::sZero(), collector, {}, {}, filter);
+	physics_system->GetNarrowPhaseQuery().CastShape(shape_cast, JPH::ShapeCastSettings(), JPH::Vec3::sZero(), collector, {}, {}, filter, shapeFilter);
 	if (collector.HadHit())
 	{
 
@@ -1090,7 +1157,7 @@ Physics::HitResult Physics::SphereTrace(const vec3 start, const vec3 end, float 
 
 			if (material != JPH::PhysicsMaterial::sDefault)
 			{
-				hit.surfaceName = ((MySurfaceMaterial*)material)->GetName();
+				hit.surfaceMaterialType = ((MySurfaceMaterial*)material)->mSurfaceId;
 			}
 
 			hit.normal = FromPhysics(body->GetWorldSpaceSurfaceNormal(collector.GetHit().mSubShapeID2, collector.GetHit().mContactPointOn2));
@@ -1138,7 +1205,7 @@ Physics::HitResult Physics::SphereTrace(const vec3 start, const vec3 end, float 
 
 // Multi Line Trace (collects ALL hits along the ray, sorted closest → farthest)
 std::vector<Physics::HitResult> Physics::MultiLineTrace(const vec3 start, const vec3 end, const BodyType mask,
-	const vector<Body*> ignoreList, const vector<Entity*> entityIgnoreList)
+	const vector<Body*> ignoreList, const vector<Entity*> entityIgnoreList, bool traceAgainstConvex)
 {
 	std::vector<HitResult> outHits;
 
@@ -1154,11 +1221,14 @@ std::vector<Physics::HitResult> Physics::MultiLineTrace(const vec3 start, const 
 	filter.ignoreList = ignoreList;
 	filter.entityIgnoreList = entityIgnoreList;
 
+	LODQueryShapeFilter shapeFilter;
+	shapeFilter.mTraceAgainstConvex = traceAgainstConvex;
+
 	// Jolt multi-hit raycast requires RayCastSettings + the templated collector
 	JPH::RayCastSettings rayCastSettings; // defaults are fine for most use-cases
 	JPH::AllHitCollisionCollector<JPH::CastRayCollector> collector;
 
-	physics_system->GetNarrowPhaseQuery().CastRay(ray, rayCastSettings, collector, {}, {}, filter);
+	physics_system->GetNarrowPhaseQuery().CastRay(ray, rayCastSettings, collector, {}, {}, filter, shapeFilter);
 
 	collector.Sort(); // built-in sort (closest → farthest) – fixes your lambda ambiguity error
 
@@ -1173,7 +1243,6 @@ std::vector<Physics::HitResult> Physics::MultiLineTrace(const vec3 start, const 
 		hit.hasHit = false;
 		hit.entity = nullptr;
 		hit.hitboxName = "";
-		hit.surfaceName = "";
 
 		JPH::BodyLockRead body_lock(physics_system->GetBodyLockInterface(), result.mBodyID);
 		if (!body_lock.Succeeded()) continue;
@@ -1190,7 +1259,7 @@ std::vector<Physics::HitResult> Physics::MultiLineTrace(const vec3 start, const 
 
 		if (material != JPH::PhysicsMaterial::sDefault)
 		{
-			hit.surfaceName = ((MySurfaceMaterial*)material)->GetName();
+			hit.surfaceMaterialType = ((MySurfaceMaterial*)material)->mSurfaceId;
 		}
 
 
@@ -1212,7 +1281,7 @@ std::vector<Physics::HitResult> Physics::MultiLineTrace(const vec3 start, const 
 
 // Multi Sphere Trace (collects ALL hits along the sphere sweep, sorted closest → farthest)
 std::vector<Physics::HitResult> Physics::MultiSphereTrace(const vec3 start, const vec3 end, float radius,
-	const BodyType mask, const vector<Body*> ignoreList, const vector<Entity*> entityIgnoreList)
+	const BodyType mask, const vector<Body*> ignoreList, const vector<Entity*> entityIgnoreList, bool traceAgainstConvex)
 {
 	std::vector<HitResult> outHits;
 
@@ -1239,9 +1308,12 @@ std::vector<Physics::HitResult> Physics::MultiSphereTrace(const vec3 start, cons
 	filter.ignoreList = ignoreList;
 	filter.entityIgnoreList = entityIgnoreList;
 
+	LODQueryShapeFilter shapeFilter;
+	shapeFilter.mTraceAgainstConvex = traceAgainstConvex;
+
 	// Correct Jolt multi-hit collector for shape casts
 	JPH::AllHitCollisionCollector<JPH::CastShapeCollector> collector;
-	physics_system->GetNarrowPhaseQuery().CastShape(shape_cast, JPH::ShapeCastSettings(), JPH::Vec3::sZero(), collector, {}, {}, filter);
+	physics_system->GetNarrowPhaseQuery().CastShape(shape_cast, JPH::ShapeCastSettings(), JPH::Vec3::sZero(), collector, {}, {}, filter, shapeFilter);
 
 	collector.Sort(); // built-in sort (closest → farthest)
 
@@ -1256,7 +1328,6 @@ std::vector<Physics::HitResult> Physics::MultiSphereTrace(const vec3 start, cons
 		hit.hasHit = false;
 		hit.entity = nullptr;
 		hit.hitboxName = "";
-		hit.surfaceName = "";
 
 		JPH::BodyLockRead body_lock(physics_system->GetBodyLockInterface(), result.mBodyID2);
 		if (!body_lock.Succeeded()) continue;
@@ -1273,7 +1344,7 @@ std::vector<Physics::HitResult> Physics::MultiSphereTrace(const vec3 start, cons
 
 		if (material != JPH::PhysicsMaterial::sDefault)
 		{
-			hit.surfaceName = ((MySurfaceMaterial*)material)->GetName();
+			hit.surfaceMaterialType = ((MySurfaceMaterial*)material)->mSurfaceId;
 		}
 
 		hit.hitbody = body;
@@ -1293,7 +1364,7 @@ std::vector<Physics::HitResult> Physics::MultiSphereTrace(const vec3 start, cons
 }
 
 std::vector<Physics::HitResult> Physics::MultiSphereOverlap(const vec3 center, float radius,
-	const BodyType mask, const vector<Body*> ignoreList, const vector<Entity*> entityIgnoreList)
+	const BodyType mask, const vector<Body*> ignoreList, const vector<Entity*> entityIgnoreList, bool traceAgainstConvex)
 {
 	std::vector<HitResult> outHits;
 
@@ -1316,6 +1387,9 @@ std::vector<Physics::HitResult> Physics::MultiSphereOverlap(const vec3 center, f
 	filter.ignoreList = ignoreList;
 	filter.entityIgnoreList = entityIgnoreList;
 
+	LODQueryShapeFilter shapeFilter;
+	shapeFilter.mTraceAgainstConvex = traceAgainstConvex;
+
 	// Correct collector for CollideShape
 	JPH::AllHitCollisionCollector<JPH::CollideShapeCollector> collector;
 
@@ -1332,7 +1406,7 @@ std::vector<Physics::HitResult> Physics::MultiSphereOverlap(const vec3 center, f
 		{},                                    // BroadPhaseLayerFilter (default)
 		{},                                    // ObjectLayerFilter (default)
 		filter,                                // BodyFilter (your TraceBodyFilter should derive from BodyFilter)
-		{}                                     // ShapeFilter (default)
+		shapeFilter                            // ShapeFilter
 	);
 
 	collector.Sort();   // closest to farthest based on penetration
@@ -1348,7 +1422,6 @@ std::vector<Physics::HitResult> Physics::MultiSphereOverlap(const vec3 center, f
 		hit.hasHit = false;
 		hit.entity = nullptr;
 		hit.hitboxName = "";
-		hit.surfaceName = "";
 
 		JPH::BodyLockRead body_lock(physics_system->GetBodyLockInterface(), result.mBodyID2);
 		if (!body_lock.Succeeded()) continue;
@@ -1363,7 +1436,7 @@ std::vector<Physics::HitResult> Physics::MultiSphereOverlap(const vec3 center, f
 
 		if (material != JPH::PhysicsMaterial::sDefault)
 		{
-			hit.surfaceName = ((MySurfaceMaterial*)material)->GetName();
+			hit.surfaceMaterialType = ((MySurfaceMaterial*)material)->mSurfaceId;
 		}
 
 		hit.hitbody = body;
@@ -1382,7 +1455,7 @@ std::vector<Physics::HitResult> Physics::MultiSphereOverlap(const vec3 center, f
 	return outHits;
 }
 
-Physics::HitResult Physics::SphereTraceForEntity(vector<Entity*> entityties, const vec3 start, const vec3 end, float radius, const BodyType mask, const vector<Body*> ignoreList)
+Physics::HitResult Physics::SphereTraceForEntity(vector<Entity*> entityties, const vec3 start, const vec3 end, float radius, const BodyType mask, const vector<Body*> ignoreList, bool traceAgainstConvex)
 {
 	HitResult hit;
 
@@ -1431,11 +1504,14 @@ Physics::HitResult Physics::SphereTraceForEntity(vector<Entity*> entityties, con
 	filter.mask = mask;
 	filter.ignoreList = ignoreList;
 
+	LODQueryShapeFilter shapeFilter;
+	shapeFilter.mTraceAgainstConvex = traceAgainstConvex;
+
 	//physicsMainLock.lock();
 
 	// Cast the shape using the narrow phase query.
 	ClosestHitShapeCastCollector collector;
-	physics_system->GetNarrowPhaseQuery().CastShape(shape_cast, JPH::ShapeCastSettings(), JPH::Vec3::sZero(), collector, {}, {}, filter);
+	physics_system->GetNarrowPhaseQuery().CastShape(shape_cast, JPH::ShapeCastSettings(), JPH::Vec3::sZero(), collector, {}, {}, filter, shapeFilter);
 	if (collector.HadHit())
 	{
 
@@ -1454,7 +1530,7 @@ Physics::HitResult Physics::SphereTraceForEntity(vector<Entity*> entityties, con
 
 			if (material != JPH::PhysicsMaterial::sDefault)
 			{
-				hit.surfaceName = ((MySurfaceMaterial*)material)->GetName();
+				hit.surfaceMaterialType = ((MySurfaceMaterial*)material)->mSurfaceId;
 			}
 
 			hit.normal = FromPhysics(body->GetWorldSpaceSurfaceNormal(collector.GetHit().mSubShapeID2, collector.GetHit().mContactPointOn2));
@@ -1499,7 +1575,7 @@ Physics::HitResult Physics::SphereTraceForEntity(vector<Entity*> entityties, con
 	return hit;
 }
 
-Physics::HitResult Physics::CylinderTrace(const vec3 start, const vec3 end, float radius, float halfHeight, const BodyType mask, const vector<Body*> ignoreList, const vector<Entity*> entityIgnoreList)
+Physics::HitResult Physics::CylinderTrace(const vec3 start, const vec3 end, float radius, float halfHeight, const BodyType mask, const vector<Body*> ignoreList, const vector<Entity*> entityIgnoreList, bool traceAgainstConvex)
 {
 	HitResult hit;
 	// Initialize default values
@@ -1546,10 +1622,13 @@ Physics::HitResult Physics::CylinderTrace(const vec3 start, const vec3 end, floa
 	filter.ignoreList = ignoreList;
 	filter.entityIgnoreList = entityIgnoreList;
 
+	LODQueryShapeFilter shapeFilter;
+	shapeFilter.mTraceAgainstConvex = traceAgainstConvex;
+
 	// Perform shape cast
 	// physicsMainLock.lock(); // Uncomment if thread safety required
 	ClosestHitShapeCastCollector collector;
-	physics_system->GetNarrowPhaseQuery().CastShape(shape_cast, JPH::ShapeCastSettings(), JPH::Vec3::sZero(), collector, {}, {}, filter);
+	physics_system->GetNarrowPhaseQuery().CastShape(shape_cast, JPH::ShapeCastSettings(), JPH::Vec3::sZero(), collector, {}, {}, filter, shapeFilter);
 
 	if (collector.HadHit()) {
 		JPH::BodyLockRead body_lock(physics_system->GetBodyLockInterface(), collector.GetHit().mBodyID2);
@@ -1562,7 +1641,7 @@ Physics::HitResult Physics::CylinderTrace(const vec3 start, const vec3 end, floa
 
 			if (material != JPH::PhysicsMaterial::sDefault)
 			{
-				hit.surfaceName = ((MySurfaceMaterial*)material)->GetName();
+				hit.surfaceMaterialType = ((MySurfaceMaterial*)material)->mSurfaceId;
 			}
 
 			// Extract hit information
@@ -1601,7 +1680,7 @@ Physics::HitResult Physics::CylinderTrace(const vec3 start, const vec3 end, floa
 	return hit;
 }
 
-Physics::HitResult Physics::ShapeTrace(const Shape* shape, vec3 start, vec3 end, vec3 scale, const BodyType mask, const vector<Body*> ignoreList, const vector<Entity*> entityIgnoreList)
+Physics::HitResult Physics::ShapeTrace(const Shape* shape, vec3 start, vec3 end, vec3 scale, const BodyType mask, const vector<Body*> ignoreList, const vector<Entity*> entityIgnoreList, bool traceAgainstConvex)
 {
 	HitResult hit;
 	hit.fraction = 1.0f;
@@ -1634,8 +1713,11 @@ Physics::HitResult Physics::ShapeTrace(const Shape* shape, vec3 start, vec3 end,
 	filter.ignoreList = ignoreList;
 	filter.entityIgnoreList = entityIgnoreList;
 
+	LODQueryShapeFilter shapeFilter;
+	shapeFilter.mTraceAgainstConvex = traceAgainstConvex;
+
 	ClosestHitShapeCastCollector collector;
-	physics_system->GetNarrowPhaseQuery().CastShape(shape_cast, JPH::ShapeCastSettings(), JPH::Vec3::sZero(), collector, {}, {}, filter);
+	physics_system->GetNarrowPhaseQuery().CastShape(shape_cast, JPH::ShapeCastSettings(), JPH::Vec3::sZero(), collector, {}, {}, filter, shapeFilter);
 
 	if (collector.HadHit()) {
 		JPH::BodyLockRead body_lock(physics_system->GetBodyLockInterface(), collector.GetHit().mBodyID2);
@@ -1647,7 +1729,7 @@ Physics::HitResult Physics::ShapeTrace(const Shape* shape, vec3 start, vec3 end,
 
 			if (material != JPH::PhysicsMaterial::sDefault)
 			{
-				hit.surfaceName = ((MySurfaceMaterial*)material)->GetName();
+				hit.surfaceMaterialType = ((MySurfaceMaterial*)material)->mSurfaceId;
 			}
 
 			hit.normal = FromPhysics(body->GetWorldSpaceSurfaceNormal(collector.GetHit().mSubShapeID2, collector.GetHit().mContactPointOn2));

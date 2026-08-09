@@ -31,11 +31,15 @@
 #include <Jolt/Physics/Collision/Shape/CompoundShape.h>
 #include <Jolt/Physics/Collision/Shape/StaticCompoundShape.h>
 #include <Jolt/Physics/Collision/Shape/MeshShape.h>
+#include <Jolt/Physics/Collision/ShapeFilter.h>
+#include <Jolt/Physics/Collision/SimShapeFilter.h>
 #include <Jolt/Core/Reference.h>
 #include <Jolt/Physics/Body/BodyLockMulti.h>
 #include <Jolt/Physics/Constraints/SwingTwistConstraint.h>
 #include <Jolt/Physics/Collision/PhysicsMaterial.h>
 #include <map>
+
+#include <Physics/PhysicsMaterialHelper.h>
 
 #include <unordered_set>
 
@@ -168,12 +172,29 @@ namespace Layers
 	static constexpr ObjectLayer NUM_LAYERS = 3;
 };
 
+// Tags stored via Shape::SetUserData() / read back via Shape::GetUserData() to distinguish the
+// sub-shapes of a "LOD" collision shape built by Physics::CreateMeshShape(..., convexCollisionShape = true).
+//
+// IMPORTANT: the default value (0 / Untagged) is what every shape has unless something explicitly
+// calls SetUserData() on it. Both LODSimShapeFilter and LODQueryShapeFilter treat Untagged shapes
+// as always allowed, in both simulation and queries - i.e. every existing shape in the codebase
+// (boxes, capsules, hitboxes, convex hulls, plain mesh shapes, ...) keeps colliding with everything
+// exactly as it did before this feature existed. Only the two sub-shapes of an opted-in LOD mesh
+// shape ever carry the CollisionOnly / QueryOnly tags below - this is meant to stay the exception,
+// not something every shape needs to know or care about.
+namespace ShapeTags
+{
+	static constexpr uint64 Untagged = 0;      // default for every shape; always collides, in both simulation and queries
+	static constexpr uint64 CollisionOnly = 1; // convex LOD proxy; simulation response only, hidden from queries by default
+	static constexpr uint64 QueryOnly = 2;     // precise mesh LOD half; ray/shape-cast queries only, excluded from simulation
+};
+
 
 class MySurfaceMaterial : public JPH::PhysicsMaterial
 {
 public:
 
-	MySurfaceMaterial(uint32_t surfaceId);
+	MySurfaceMaterial(PhysicsMaterialType surfaceId);
 
 	std::string GetName() const;
 
@@ -183,7 +204,7 @@ public:
 
 
 
-	int mSurfaceId = 0;
+	PhysicsMaterialType mSurfaceId = PhysicsMaterialType::Unknown;
 };
 
 /// Class that determines if two object layers can collide
@@ -346,6 +367,44 @@ public:
 	virtual bool ShouldCollideLocked(const Body& inBody) const override;
 };
 
+/// Filter used during PhysicsSystem::Update (the actual physics simulation) to decide which
+/// sub-shapes of a "LOD" collision shape are allowed to generate contact/collision response.
+/// Sub-shapes tagged ShapeTags::QueryOnly (the precise mesh half of a mesh+convex LOD shape) are
+/// excluded from simulation so only the ShapeTags::CollisionOnly convex proxy - or any ordinary,
+/// untagged shape - resolves physics contacts.
+/// A single instance is registered globally via PhysicsSystem::SetSimShapeFilter, so ShouldCollide
+/// must be thread safe; it holds no mutable state and only reads shape user data.
+class LODSimShapeFilter : public SimShapeFilter
+{
+public:
+	virtual bool ShouldCollide(const Body& inBody1, const Shape* inShape1, const SubShapeID& inSubShapeIDOfShape1,
+		const Body& inBody2, const Shape* inShape2, const SubShapeID& inSubShapeIDOfShape2) const override;
+};
+
+/// Filter used during ray/shape-cast queries (NarrowPhaseQuery::CastRay, CastShape, CollideShape,
+/// CollidePoint, ...) to decide which sub-shapes of a "LOD" collision shape are visible to that
+/// particular query.
+/// By default (mTraceAgainstConvex == false) queries hit the ShapeTags::QueryOnly shape (the
+/// precise mesh) and skip the ShapeTags::CollisionOnly convex proxy, matching what physics looks
+/// like visually. Set mTraceAgainstConvex to true to instead trace against the cheap convex
+/// collision proxy (e.g. for movement sweeps that should match simulation behavior exactly).
+/// Ordinary, untagged shapes are never affected by mTraceAgainstConvex and always participate.
+/// Construct one of these per query call, the same way TraceBodyFilter is used per call.
+class LODQueryShapeFilter : public ShapeFilter
+{
+public:
+	bool mTraceAgainstConvex = false;
+
+	/// Called when testing a ray/point against a single (leaf) shape.
+	virtual bool ShouldCollide(const Shape* inShape2, const SubShapeID& inSubShapeIDOfShape2) const override;
+
+	/// Called when testing a shape against a shape (e.g. CastShape / CollideShape), at every level
+	/// of both shape hierarchies. Applies symmetrically to the shape being cast/collided (inShape1)
+	/// and to the shapes it is being tested against (inShape2), so sweeping a body's own LOD shape
+	/// through the world respects the same LOD selection as the world geometry it collides with.
+	virtual bool ShouldCollide(const Shape* inShape1, const SubShapeID& inSubShapeIDOfShape1, const Shape* inShape2, const SubShapeID& inSubShapeIDOfShape2) const override;
+};
+
 #ifdef JPH_DEBUG_RENDERER
 
 class DrawFilter : public BodyDrawFilter
@@ -421,6 +480,8 @@ private:
 	static ObjectVsBroadPhaseLayerFilterImpl* object_vs_broadphase_layer_filter;
 
 	static ObjectLayerPairFilterImpl* object_vs_object_layer_filter;
+
+	static LODSimShapeFilter* lodSimShapeFilter;
 
 	static unordered_map<BodyID, Body*> bodyIdMap;
 
@@ -826,8 +887,6 @@ public:
 	// Update the motor target every frame (childTransformRelParent = child transform in parent space)
 	static void UpdateSwingTwistMotor(TwoBodyConstraint* constraint, const quat& childTransformRelParent, const float& strength);
 
-	static uint32_t FindSurfaceId(string surfaceName);
-	static string FindSurfacyById(uint32_t id);
 
 
 	static void Deactivate(const Body* body)
@@ -873,7 +932,15 @@ public:
  * @param indices A vector of indices defining triangles (3 indices per triangle).
  * @return A RefConst<Shape> containing the created shape, or an empty RefConst if creation fails.
  */
-	static RefConst<Shape> CreateMeshShape(const std::vector<vec3>& vertices, const std::vector<uint32_t>& indices, const std::vector<std::string>& materials);
+	/// Creates a MeshShape for static geometry. When convexCollisionShape is true, the mesh is
+	/// paired with a convex hull built from the same vertex cloud inside a StaticCompoundShape:
+	/// the convex hull is used for physics simulation response (cheap, stable contacts) while the
+	/// precise mesh is used for ray/shape-cast queries (accurate hit results). This is a good fit
+	/// for geometry that is reasonably close to convex (props, rocks, simple architecture) - for
+	/// large concave level geometry a single convex hull will fill in the concavities, so prefer
+	/// leaving this false (the default) there. Shapes returned with convexCollisionShape = false
+	/// are untagged and behave exactly as before: the mesh alone is used for everything.
+	static RefConst<Shape> CreateMeshShape(const std::vector<vec3>& vertices, const std::vector<uint32_t>& indices, const std::vector<std::string>& materials, bool convexCollisionShape = false);
 
 
 
@@ -962,16 +1029,17 @@ public:
 		float fraction = 1;  // Fraction along the ray where the hit occurred.
 		Entity* entity = nullptr;
 		string hitboxName = "";
-		string surfaceName = "";
+		PhysicsMaterialType surfaceMaterialType = PhysicsMaterialType::Unknown;
 	};
 
 	static vector<Physics::HitResult> PointTrace(
 		const vec3 point,
 		const BodyType mask,
 		const vector<Body*> ignoreList = {},
-		const vector<Entity*> entityIgnoreList = {});
+		const vector<Entity*> entityIgnoreList = {},
+		bool traceAgainstConvex = true); //since usually it traces againt volumes that are created to have 2 meshes
 
-	static HitResult LineTrace(const vec3 start, const vec3 end, const BodyType mask = BodyType::GroupHitTest, const vector<Body*> ignoreList = {}, const vector<Entity*> entityIgnoreList = {});
+	static HitResult LineTrace(const vec3 start, const vec3 end, const BodyType mask = BodyType::GroupHitTest, const vector<Body*> ignoreList = {}, const vector<Entity*> entityIgnoreList = {}, bool traceAgainstConvex = false);
 
 	class ClosestHitShapeCastCollector : public JPH::CollisionCollector<JPH::ShapeCastResult, JPH::CollisionCollectorTraitsCastShape>
 	{
@@ -997,14 +1065,14 @@ public:
 		JPH::ShapeCastResult mHit;
 	};
 	
-	static HitResult SphereTrace(const vec3 start, const vec3 end, float radius, const BodyType mask = BodyType::GroupHitTest, const vector<Body*> ignoreList = {}, const vector<Entity*> entityIgnoreList = {});
-	static std::vector<HitResult> MultiLineTrace(const vec3 start, const vec3 end, const BodyType mask, const vector<Body*> ignoreList, const vector<Entity*> entityIgnoreList);
-	static std::vector<HitResult> MultiSphereTrace(const vec3 start, const vec3 end, float radius, const BodyType mask, const vector<Body*> ignoreList, const vector<Entity*> entityIgnoreList);
-	static std::vector<Physics::HitResult> MultiSphereOverlap(const vec3 center, float radius, const BodyType mask, const vector<Body*> ignoreList, const vector<Entity*> entityIgnoreList);
-	static HitResult SphereTraceForEntity(vector<Entity*> entityties, const vec3 start, const vec3 end, float radius, const BodyType mask = BodyType::GroupHitTest, const vector<Body*> ignoreList = {});
+	static HitResult SphereTrace(const vec3 start, const vec3 end, float radius, const BodyType mask = BodyType::GroupHitTest, const vector<Body*> ignoreList = {}, const vector<Entity*> entityIgnoreList = {}, bool traceAgainstConvex = false);
+	static std::vector<HitResult> MultiLineTrace(const vec3 start, const vec3 end, const BodyType mask, const vector<Body*> ignoreList, const vector<Entity*> entityIgnoreList, bool traceAgainstConvex = false);
+	static std::vector<HitResult> MultiSphereTrace(const vec3 start, const vec3 end, float radius, const BodyType mask, const vector<Body*> ignoreList, const vector<Entity*> entityIgnoreList, bool traceAgainstConvex = false);
+	static std::vector<Physics::HitResult> MultiSphereOverlap(const vec3 center, float radius, const BodyType mask, const vector<Body*> ignoreList, const vector<Entity*> entityIgnoreList, bool traceAgainstConvex = false);
+	static HitResult SphereTraceForEntity(vector<Entity*> entityties, const vec3 start, const vec3 end, float radius, const BodyType mask = BodyType::GroupHitTest, const vector<Body*> ignoreList = {}, bool traceAgainstConvex = false);
 
-	static HitResult CylinderTrace(const vec3 start, const vec3 end, float radius, float halfHeight, const BodyType mask = BodyType::GroupHitTest, const vector<Body*> ignoreList = {}, const vector<Entity*> entityIgnoreList = {});
-	static HitResult ShapeTrace(const Shape* shape,vec3 start, vec3 end, vec3 scale, const BodyType mask = BodyType::GroupHitTest, const vector<Body*> ignoreList = {}, const vector<Entity*> entityIgnoreList = {});
+	static HitResult CylinderTrace(const vec3 start, const vec3 end, float radius, float halfHeight, const BodyType mask = BodyType::GroupHitTest, const vector<Body*> ignoreList = {}, const vector<Entity*> entityIgnoreList = {}, bool traceAgainstConvex = false);
+	static HitResult ShapeTrace(const Shape* shape,vec3 start, vec3 end, vec3 scale, const BodyType mask = BodyType::GroupHitTest, const vector<Body*> ignoreList = {}, const vector<Entity*> entityIgnoreList = {}, bool traceAgainstConvex = false);
 
 };
 
