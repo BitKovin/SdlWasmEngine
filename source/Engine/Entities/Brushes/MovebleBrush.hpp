@@ -32,7 +32,7 @@ public:
 		SaveGame = true;
 		ConvexCollision = true;
 		Static = false;
-
+		DefaultBrushCollisionMask = BodyType::GroupCollisionTest & ~BodyType::World;
 	}
 
 	void Serialize(json& target)

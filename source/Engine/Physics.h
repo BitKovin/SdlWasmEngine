@@ -35,6 +35,7 @@
 #include <Jolt/Physics/Body/BodyLockMulti.h>
 #include <Jolt/Physics/Constraints/SwingTwistConstraint.h>
 #include <Jolt/Physics/Collision/PhysicsMaterial.h>
+#include <map>
 
 #include <unordered_set>
 
@@ -305,8 +306,9 @@ public:
 	static void CleanIgnorePairs();
 
 private:
-	static inline std::set<std::pair<Entity*, Entity*>> previousContacts;
-	static inline std::set<std::pair<Entity*, Entity*>> currentContacts;
+private:
+	static inline std::map<std::pair<Entity*, Entity*>, BodyID> previousContacts;
+	static inline std::map<std::pair<Entity*, Entity*>, BodyID> currentContacts;
 	static inline std::unordered_set<std::pair<uint32_t, uint32_t>, PairHash> ignoredPairs;
 };
 
@@ -451,22 +453,23 @@ public:
 	struct PendingBodyEnterPair
 	{
 		Entity* target = nullptr;
-
 		Entity* entity = nullptr;
+		BodyID targetBodyID; // the specific body (belonging to `target`) that actually touched the sensor
 
 		bool operator==(const PendingBodyEnterPair& other) const
 		{
 			return target == other.target && entity == other.entity;
 		}
-
 	};
+
+	static std::vector<Physics::PendingBodyEnterPair> gRemovals;
+	static std::vector<Physics::PendingBodyEnterPair> gAdds;
 
 	static std::recursive_mutex physicsMainLock;
 
 	static PhysicsSystem* physics_system;
 	
-	static std::vector<Physics::PendingBodyEnterPair> gRemovals;
-	static std::vector<Physics::PendingBodyEnterPair> gAdds;
+
 
 	static bool DebugDraw;
 

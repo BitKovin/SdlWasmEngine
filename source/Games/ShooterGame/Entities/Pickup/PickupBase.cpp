@@ -22,6 +22,8 @@ void PickupBase::OnBodyEntered(Body* body, Entity* entity)
 
 	if (pickedUp) return;
 
+	auto BodyData = Physics::GetBodyData(body);
+
 	Player* player = dynamic_cast<Player*>(entity);
 
 	if (player)

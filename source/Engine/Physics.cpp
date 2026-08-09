@@ -156,29 +156,16 @@ void MyContactListener::afterSimulation()
 
 
 
-	// Find added contacts: in current but not in previous
-	for (const auto& pair : currentContacts)
-	{
-		if (previousContacts.find(pair) == previousContacts.end())
-		{
-			Physics::PendingBodyEnterPair p;
-			p.entity = pair.first;  // Sensor entity
-			p.target = pair.second; // Target entity
-			adds.push_back(p);
-		}
-	}
+	for (auto& [key, bodyID] : currentContacts)
+		if (previousContacts.find(key) == previousContacts.end())
+			Physics::gAdds.push_back({ key.second, key.first, bodyID }); // {target, entity, targetBodyID}
 
-	// Find removed contacts: in previous but not in current
-	for (const auto& pair : previousContacts)
-	{
-		if (currentContacts.find(pair) == currentContacts.end())
-		{
-			Physics::PendingBodyEnterPair p;
-			p.entity = pair.first;  // Sensor entity
-			p.target = pair.second; // Target entity
-			removals.push_back(p);
-		}
-	}
+	for (auto& [key, bodyID] : previousContacts)
+		if (currentContacts.find(key) == currentContacts.end())
+			Physics::gRemovals.push_back({ key.second, key.first, bodyID });
+
+	previousContacts = std::move(currentContacts);
+	currentContacts.clear();
 
 	auto newAdds = Physics::gAdds;
 	auto newRemovs = Physics::gRemovals;
@@ -209,16 +196,11 @@ void MyContactListener::OnContactAdded(const Body& inBody1, const Body& inBody2,
 
 	Physics::physicsMainLock.lock();
 
-	// Add pair if body1 is a sensor
 	if (inBody1.IsSensor())
-	{
-		currentContacts.insert({ entity1, entity2 });
-	}
-	// Add pair if body2 is a sensor
+		currentContacts[{ entity1, entity2 }] = inBody2.GetID();
+
 	if (inBody2.IsSensor())
-	{
-		currentContacts.insert({ entity2, entity1 });
-	}
+		currentContacts[{ entity2, entity1 }] = inBody1.GetID();
 
 	Physics::physicsMainLock.unlock();
 }
@@ -234,16 +216,11 @@ void MyContactListener::OnContactPersisted(const Body& inBody1, const Body& inBo
 
 	Physics::physicsMainLock.lock();
 
-	// Add pair if body1 is a sensor
 	if (inBody1.IsSensor())
-	{
-		currentContacts.insert({ entity1, entity2 });
-	}
-	// Add pair if body2 is a sensor
+		currentContacts[{ entity1, entity2 }] = inBody2.GetID();
+
 	if (inBody2.IsSensor())
-	{
-		currentContacts.insert({ entity2, entity1 });
-	}
+		currentContacts[{ entity2, entity1 }] = inBody1.GetID();
 
 	Physics::physicsMainLock.unlock();
 }
@@ -407,15 +384,16 @@ void Physics::Init()
 
 void Physics::UpdatePendingBodyExitsEnters()
 {
-
 	std::unordered_set<PendingBodyEnterPair> processedAdds;
 	std::unordered_set<PendingBodyEnterPair> processedRemovals;
 
+	const auto& lockInterface = physics_system->GetBodyLockInterfaceNoLock(); // swap for your actual PhysicsSystem* accessor;
+	// use GetBodyLockInterface() instead if anything
+	// could touch bodies concurrently here
+
 	for (auto& pair : gRemovals)
 	{
-
-		auto result = processedRemovals.find(pair);
-		if (result != processedRemovals.end()) 
+		if (processedRemovals.find(pair) != processedRemovals.end())
 		{
 			Logger::Log("found duplicate exit pair");
 			continue;
@@ -424,18 +402,16 @@ void Physics::UpdatePendingBodyExitsEnters()
 		if (pair.entity == nullptr || pair.target == nullptr)
 			continue;
 
-		//in case if one of them was deleted in previous frame
 		if (Level::Current->DeletedLevelObjectAdresses.find(pair.entity) != Level::Current->DeletedLevelObjectAdresses.end())
-		{
 			continue;
-		}
 		if (Level::Current->DeletedLevelObjectAdresses.find(pair.target) != Level::Current->DeletedLevelObjectAdresses.end())
-		{
 			continue;
-		}
 
-		//pair.target->OnBodyExited(pair.entity->LeadBody, pair.entity);	
-		pair.entity->OnBodyExited(pair.target->LeadBody, pair.target);
+		BodyLockRead lock(lockInterface, pair.targetBodyID);
+		if (!lock.Succeeded())
+			continue; // that specific body no longer exists
+
+		pair.entity->OnBodyExited(GetBodyFromId(lock.GetBody().GetID()), pair.target);
 
 		processedRemovals.insert(pair);
 	}
@@ -443,38 +419,29 @@ void Physics::UpdatePendingBodyExitsEnters()
 
 	for (auto& pair : gAdds)
 	{
-
-		auto result = processedAdds.find(pair);
+		if (processedAdds.find(pair) != processedAdds.end())
 		{
-			if (result != processedAdds.end()) 
-			{
-				Logger::Log("found duplicate enter pair");
-				continue;
-			}
+			Logger::Log("found duplicate enter pair");
+			continue;
 		}
 
 		if (pair.entity == nullptr || pair.target == nullptr)
 			continue;
 
-		//in case if one of them was deleted in previous frame
 		if (Level::Current->DeletedLevelObjectAdresses.find(pair.entity) != Level::Current->DeletedLevelObjectAdresses.end())
-		{
 			continue;
-		}
 		if (Level::Current->DeletedLevelObjectAdresses.find(pair.target) != Level::Current->DeletedLevelObjectAdresses.end())
-		{
 			continue;
-		}
 
+		BodyLockRead lock(lockInterface, pair.targetBodyID);
+		if (!lock.Succeeded())
+			continue;
 
-		pair.entity->OnBodyEntered(pair.target->LeadBody, pair.target);
-		//pair.target->OnBodyEntered(pair.entity->LeadBody, pair.entity);
-
+		pair.entity->OnBodyEntered(GetBodyFromId(lock.GetBody().GetID()), pair.target);
 
 		processedAdds.insert(pair);
 	}
 	gAdds.clear();
-
 }
 
 void Physics::DrawConstraint(Constraint* constraint)

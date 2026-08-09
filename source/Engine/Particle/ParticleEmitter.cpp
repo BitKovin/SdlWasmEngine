@@ -195,6 +195,7 @@ void ParticleEmitter::DrawForward(mat4x4 view, mat4x4 projection)
     Renderer::SetSurfaceShaderUniforms(shader);
 
     shader->SetTexture("u_texture", savedTexture);
+    shader->SetUniform("viewProjectionInv", glm::inverse(projection * view));
 
     bgfx::setVertexBuffer(0, s_billboardVbh);
     bgfx::setIndexBuffer(s_billboardIbh);

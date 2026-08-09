@@ -33,9 +33,10 @@ NpcZombie::NpcZombie()
 {
 	ClassName = "npc_zombie";
 	maxSpeed = 1.5f;
-	canBeStunRagdolled = false;
-	Health = 100;
-	MaxHealth = 100;
+	canBeStunRagdolled = true;
+	Health = 210;
+	MaxHealth = 210;
+	canHear = true;
 }
 
 void NpcZombie::Stun()

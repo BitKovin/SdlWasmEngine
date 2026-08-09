@@ -75,6 +75,8 @@ protected:
 
     bool pendingNetDeath = false;
 
+	bool canHear = true;
+
     uint32_t numUpdates = 0;
 
     std::string damageSoundPath = "event:/NPC/Enemy1/Enemy1Damage";

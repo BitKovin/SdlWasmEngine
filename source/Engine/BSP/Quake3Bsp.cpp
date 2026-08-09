@@ -1392,13 +1392,14 @@ LightVolPointData CQuake3BSP::GetLightvolColorPoint(const glm::vec3& position, b
                 if (styleColor == glm::vec3(0.0f)) continue; // style is off – skip
 
 				float ambientFactor = 1.0f;
+                float directionalFactor = 1.0f;
 
                 if (s > 0)
                 {
                     auto maxDirectionalLight = std::max(std::max(vol.directional[s][0], vol.directional[s][1]), vol.directional[s][2]);
 
-					ambientFactor = std::min(maxDirectionalLight / 255.0f * 5.0f, 1.0f);
-
+					ambientFactor = std::min(maxDirectionalLight / 255.0f * 4.0f, 1.0f);
+                    directionalFactor = 0.8f;
                 }
 
 
@@ -1409,7 +1410,7 @@ LightVolPointData CQuake3BSP::GetLightvolColorPoint(const glm::vec3& position, b
                 directional += glm::vec3(
                     vol.directional[s][0] / 255.0f,
                     vol.directional[s][1] / 255.0f,
-                    vol.directional[s][2] / 255.0f) * styleColor * styleWeight;
+                    vol.directional[s][2] / 255.0f) * styleColor * styleWeight * directionalFactor;
 
 
 

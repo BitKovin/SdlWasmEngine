@@ -53,18 +53,29 @@ void Bullet::Update()
 
 }
 
-void Bullet::AsyncUpdate()
-{
+void Bullet::AsyncUpdate() {
 	// Only the physics trace happens here. This runs in parallel across all
 	// entities, so nothing below may read/write other entities' state.
 
-	if (isOwned)
+	// 1. LineTrace for world hits (0 radius so it doesn't catch on wall corners)
+	auto worldHit = Physics::LineTrace(oldPos, Position, BodyType::World);
+
+	// 2. SphereTrace for entities (larger hitbox for forgiving gameplay)
+	// We use GroupHitTest for entities, keeping the owner exclusion if owned.
+	auto entityHit = isOwned
+		? Physics::SphereTrace(oldPos, Position, 0.07f, BodyType::GroupHitTest & ~BodyType::World, {}, { owner })
+		: Physics::SphereTrace(oldPos, Position, 0.1f, BodyType::GroupHitTest & ~BodyType::World);
+
+	// 3. Resolve the closest hit
+	// NOTE: Change '.fraction' to '.distance' or '.time' if your engine's hit struct uses a different name.
+	if (worldHit.hasHit && entityHit.hasHit)
 	{
-		asyncHit = Physics::SphereTrace(oldPos, Position, 0.07f, BodyType::GroupHitTest, {}, { owner });
+		asyncHit = (worldHit.fraction < entityHit.fraction) ? worldHit : entityHit;
 	}
 	else
 	{
-		asyncHit = Physics::SphereTrace(oldPos, Position, 0.1f, BodyType::World);
+		// Fallback to whichever one actually registered a hit (if any)
+		asyncHit = worldHit.hasHit ? worldHit : entityHit;
 	}
 }
 

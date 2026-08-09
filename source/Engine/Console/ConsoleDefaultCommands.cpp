@@ -94,6 +94,21 @@ void CMD_MaxFPS(const std::vector<std::string>& args)
 	Console::Get().AddLog("Max FPS set to: %d", maxFps);
 }
 
+void CMD_CallAction(std::vector<std::string> args)
+{
+	std::string targetName = Console::ArgString(args, 0, "");
+	std::string action = Console::ArgString(args, 1, "");
+	if (targetName != "" && action != "")
+	{
+		Entity::CallActionOnEveryEntityWithName(targetName, action);
+		Console::Get().AddLog("Called action '%s' on entities with name '%s'", action.c_str(), targetName.c_str());
+	}
+	else
+	{
+		Console::Get().AddLog("Usage: callaction <target_name> <action>");
+	}
+}
+
 void ConsoleDefaultCommands::RegisterAll()
 {
 
@@ -105,5 +120,7 @@ void ConsoleDefaultCommands::RegisterAll()
 	REGISTER_CONSOLE_CMD("pso.load", "Loads PSO cache from file", CMD_LoadPSO);
 
 	REGISTER_CONSOLE_CMD("maxfps", "Sets target frame rate", CMD_MaxFPS);
+
+	REGISTER_CONSOLE_CMD("callaction", "callaction <target_name> <action> - Calls an action on all entities with a specific name", CMD_CallAction);
 
 }

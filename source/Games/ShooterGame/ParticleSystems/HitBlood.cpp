@@ -16,6 +16,8 @@ public:
 
         Transparent = true;
 
+		PixelShader = "fs_decal";
+
         isDecal = true;
         DepthSorting = false;
 	}
@@ -62,7 +64,7 @@ public:
         particle.globalRotation.z += randomAngle;
 
         // Slightly adjust particle position.
-        particle.position += normal * 0.03f;
+        particle.position += normal * 0.01f;
 
         particle.Size = 1;
         //particle.MaxDrawDistance = 60.0f;
@@ -159,7 +161,7 @@ public:
             drips->Position = particle.position;
             drips->Rotation = particle.velocity / 3.0f;
             drips->SpawnParticles(1);
-            
+
         }
 
         particle.velocity -= WorldOrientationManager::GetUpVector() * 10.0f * (deltaTime / 2.0f);
@@ -168,44 +170,52 @@ public:
 
         if (particle.UserValue2 < 1.9)
         {
-            
 
-                glm::vec3 dir = glm::normalize(particle.velocity);
-				auto hit = Physics::LineTrace(
-                    particle.position2,
-					particle.position,
-					BodyType::World
-				);
-				if (hit.hasHit)
-				{
 
-                    if (dot(hit.normal, particle.velocity) > 0)
+            glm::vec3 dir = glm::normalize(particle.velocity);
+            auto hit = Physics::LineTrace(
+                particle.position2,
+                particle.position,
+                BodyType::World
+            );
+            if (hit.hasHit)
+            {
+
+                if (dot(hit.normal, particle.velocity) > 0)
+                {
+                    particle.deathTime = 0;
+                    return particle;
+                }
+
+                if (RandomFloat() < ((particle.UserValue2 == 0) ? 0.5f : 0.5f))
+                {
+
+                    // Only place a decal if the surface under its *entire*
+                    // footprint is solid. A single LineTrace only proves the
+                    // hit point itself has geometry -- on meshes with holes
+                    // (fences, grates, foliage, etc.) that's not enough, and
+                    // the decal quad ends up straddling empty space.
+                    if (IsSurfaceSolidForDecal(hit.position, hit.normal, DecalSize))
                     {
-                        particle.deathTime = 0;
-                        return particle;
+                        GlobalParticleSystem::SpawnParticleAt("decal_blood", hit.position, hit.normal, vec3(1));
                     }
 
-					if (RandomFloat() < ((particle.UserValue2 == 0) ? 0.5f : 0.5f))
-					{
+                    if (particle.UserValue2 < 1.1)
+                    {
+                        particle.position = hit.position + hit.normal * (particle.CollisionRadius + 0.002f);
+                        particle.velocity = reflect(particle.velocity, hit.normal) * particle.BouncePower;
 
-						GlobalParticleSystem::SpawnParticleAt("decal_blood", hit.position, hit.normal, vec3(1));
+                        particle.UserValue2 = 3;
 
-						if (particle.UserValue2 < 1.1)
-						{
-                            particle.position = hit.position + hit.normal * (particle.CollisionRadius+0.002f);
-                            particle.velocity = reflect(particle.velocity, hit.normal) * particle.BouncePower;
+                    }
+                    particle.UserValue2++;
 
-                            particle.UserValue2 = 3;
+                }
+            }
 
-						}
-						particle.UserValue2++;
+            particle.position2 = particle.position;
 
-					}
-				}
-
-                particle.position2 = particle.position;
-
-		}
+        }
 
         particle.velocity -= WorldOrientationManager::GetUpVector() * 10.0f * (deltaTime / 2.0f);
         particle.Transparency = std::max(particle.Transparency - (deltaTime / 3.0f), 0.0f);
@@ -246,6 +256,80 @@ public:
     }
 
 private:
+
+    // ---------------------------------------------------------------
+    // Decal footprint validation
+    // ---------------------------------------------------------------
+
+    // World-space edge length of the blood decal quad spawned via
+    // "decal_blood". Tune this to match the actual rendered size of
+    // that decal (it's currently spawned with a scale of vec3(1), so
+    // this should equal decal_blood's base world size).
+    float DecalSize = 1.05f;
+
+    // Number of probe rays per edge of the sample grid (3 = 9 rays:
+    // corners, edge midpoints, center). Higher catches smaller holes
+    // (thinner wires / smaller gaps) at the cost of more traces per
+    // decal attempt. This only runs when a decal is about to be
+    // spawned, not every frame, so it's cheap in practice.
+    int DecalCheckResolution = 4; 
+
+    // How far above/below the sampled surface point each probe ray
+    // starts/ends. Needs to be big enough to punch through the local
+    // surface but small enough not to poke through to geometry behind
+    // thin meshes.
+    float DecalProbeOffset = 0.3f;
+
+    // Fraction of probe rays that must hit for the decal to be
+    // considered valid. 1.0f = every single ray must hit (strictest,
+    // what you asked for). Lower this (e.g. 0.85f) if legitimate flat
+    // surfaces start rejecting decals near edges/seams too often.
+    float DecalRequiredHitRatio = 0.8f;
+
+    bool IsSurfaceSolidForDecal(const glm::vec3& hitPos, const glm::vec3& hitNormal, float decalSize) const
+    {
+        // Build a tangent basis on the hit plane so we can sample points
+        // across the decal's footprint, not just its exact center.
+        glm::vec3 refUp = WorldOrientationManager::GetUpVector();
+        if (fabs(dot(refUp, hitNormal)) > 0.99f)
+            refUp = glm::vec3(1.0f, 0.0f, 0.0f);
+
+        glm::vec3 tangent = glm::normalize(glm::cross(refUp, hitNormal));
+        glm::vec3 bitangent = glm::normalize(glm::cross(hitNormal, tangent));
+
+        float halfSize = decalSize * 0.5f;
+        int res = std::max(DecalCheckResolution, 1);
+        int totalRays = res * res;
+        int hits = 0;
+
+        for (int x = 0; x < res; x++)
+        {
+            for (int y = 0; y < res; y++)
+            {
+                float u = (res == 1) ? 0.0f : ((float)x / (float)(res - 1) * 2.0f - 1.0f) * halfSize;
+                float v = (res == 1) ? 0.0f : ((float)y / (float)(res - 1) * 2.0f - 1.0f) * halfSize;
+
+                glm::vec3 samplePos = hitPos + tangent * u + bitangent * v;
+                glm::vec3 rayStart = samplePos + hitNormal * DecalProbeOffset;
+                glm::vec3 rayEnd = samplePos - hitNormal * DecalProbeOffset;
+
+                auto probe = Physics::LineTrace(rayStart, rayEnd, BodyType::World);
+
+                if (probe.hasHit)
+                {
+                    hits++;
+                }
+                else if (DecalRequiredHitRatio >= 1.0f)
+                {
+                    // Fast out: strict mode, one miss is enough to reject.
+                    return false;
+                }
+            }
+        }
+
+        return (float)hits / (float)totalRays >= DecalRequiredHitRatio;
+    }
+
     float RandomFloat() const { return static_cast<float>(rand()) / (float)RAND_MAX; }
 
     glm::vec3 RandomPosition(float radius) const {

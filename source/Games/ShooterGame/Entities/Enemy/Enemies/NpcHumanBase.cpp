@@ -179,6 +179,7 @@ void NpcHumanBase::UpdatePerception()
     // Heard sounds – wake the NPC even while Idle.
     if (!IsDead() && currentTarget.IsValid() == false)
     {
+        if(canHear)
         for (auto& s : observer->heardSounds)
         {
             // Try to find the causer entity.
