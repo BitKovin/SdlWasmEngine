@@ -662,7 +662,7 @@ void Player::TryWallJump()
 	if (jumpDelay.Wait()) return;
 
 
-	auto hit = Physics::SphereTrace(Position, Position + velocity*0.01f, 0.6f, BodyType::GroupCollisionTest & ~BodyType::CharacterCapsule, {}, { this });
+	auto hit = Physics::SphereTrace(Position, Position + velocity*0.01f, 0.6f, BodyType::GroupCollisionTest & ~BodyType::CharacterCapsule, {}, { this }, true);
 
 	if (hit.hasHit)
 	{

@@ -540,7 +540,7 @@ bool CharacterController::CanStandUp()
 	bottom -= vec3(0, 0.15f, 0);
 	vec3 top = newBodyPos + vec3(0.0f, newPhysHalf, 0.0f);
 
-	Physics::HitResult result = Physics::CylinderTrace(bottom, top, radius - 0.05f, 0.05f, BodyType::GroupCollisionTest, { body });
+	Physics::HitResult result = Physics::CylinderTrace(bottom, top, radius - 0.05f, 0.05f, BodyType::GroupCollisionTest, { body }, { owner }, true);
 
 
 	return !result.hasHit;
@@ -872,12 +872,12 @@ bool CharacterController::CheckGroundAt(vec3 location, float checkRadius, float&
 
 	if (checkRadius > 0)
 	{
-		result = Physics::CylinderTrace(start, end - vec3(0, 0.05f, 0), checkRadius, 0.05f, BodyType::GroupCollisionTest, { body, sensorBody }, { owner });
+		result = Physics::CylinderTrace(start, end - vec3(0, 0.05f, 0), checkRadius, 0.05f, BodyType::GroupCollisionTest, { body, sensorBody }, { owner }, true);
 		result.position = result.shapePosition - vec3(0, 0.02f, 0);
 	}
 	else
 	{
-		result = Physics::LineTrace(start, end, BodyType::GroupCollisionTest, { body, sensorBody }, { owner });
+		result = Physics::LineTrace(start, end, BodyType::GroupCollisionTest, { body, sensorBody }, { owner }, true);
 	}
 
 	*hitBody = result.hitbody;
