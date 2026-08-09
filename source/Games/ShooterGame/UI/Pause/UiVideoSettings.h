@@ -54,7 +54,7 @@ public:
         rootBox->ContentDistance = 20.f;
 
         titleText = std::make_shared<UiText>();
-        titleText->text = "Video Settings";
+        titleText->text = "${SETTINGS_VIDEO_TITLE}";
         titleText->fontSize = SettingsStyle::TitleSize;
         titleText->pivot = vec2(0.5f, 0.f);
         titleText->origin = vec2(0.5f, 0.f);
@@ -69,7 +69,7 @@ public:
         buttonsRow->origin = vec2(0.5f, 0);
         buttonsRow->pivot = vec2(0.5f, 0);
 
-        backButton = MakeButton("Back");
+        backButton = MakeButton("${SETTINGS_BACK}");
         buttonsRow->AddChild(backButton);
 
         rootBox->AddChild(titleText);
@@ -137,7 +137,7 @@ private:
         content->ContentDistance = 14.f;
 
         auto header = std::make_shared<UiText>();
-        header->text = "Display";
+        header->text = "${SETTINGS_VIDEO_DISPLAY_HEADER}";
         header->fontSize = PanelHeaderSize;
         header->pivot = vec2(0.f, 0.0f);
         header->origin = vec2(0.f, 0.0f);
@@ -157,10 +157,10 @@ private:
         resolutions->SetSelectedIndex(selectedIndex);
         resolutions->size = vec2(360.f, 56.f);
         resolutions->onSelectionChanged = UiVideoSettings::UpdateResolution;
-        content->AddChild(GetSettingRow("Resolution", resolutions));
+        content->AddChild(GetSettingRow("${SETTINGS_VIDEO_RESOLUTION}", resolutions));
 
         windowMode = std::make_shared<UiDropdown>();
-        windowMode->SetOptions({ "windowed", "fullscreen", "borderless" });
+        windowMode->SetOptions({ "${SETTINGS_VIDEO_WINDOWED}", "${SETTINGS_VIDEO_FULLSCREEN}", "${SETTINGS_VIDEO_BORDERLESS}" });
 
         int windowOption = 0;
         Uint32 flags = SDL_GetWindowFlags(EngineMain::MainInstance->Window);
@@ -172,7 +172,7 @@ private:
         windowMode->SetSelectedIndex(windowOption);
         windowMode->size = vec2(360.f, 56.f);
         windowMode->onSelectionChanged = UiVideoSettings::UpdateWindowMode;
-        content->AddChild(GetSettingRow("Window Mode", windowMode));
+        content->AddChild(GetSettingRow("${SETTINGS_VIDEO_WINDOW_MODE}", windowMode));
 
         // ── VSync ─────────────────────────────────────────────────────────────
         vsyncButton = std::make_shared<UiButton>();
@@ -197,7 +197,7 @@ private:
                 GameSettings::Instance().Video.ApplyToEngine();
                 RefreshVSyncLabel(enabled);
             };
-        content->AddChild(GetSettingRow("VSync", vsyncButton));
+        content->AddChild(GetSettingRow("${SETTINGS_VIDEO_VSYNC}", vsyncButton));
 
         displayPanel = std::make_shared<UiCardPanel>(vec2(ContentWidth, 320.f), content);
     }
@@ -214,7 +214,7 @@ private:
         content->ContentDistance = 14.f;
 
         auto header = std::make_shared<UiText>();
-        header->text = "Graphics";
+        header->text = "${SETTINGS_VIDEO_GRAPHICS_HEADER}";
         header->fontSize = PanelHeaderSize;
         header->pivot = vec2(0.f, 0.0f);
         header->origin = vec2(0.f, 0.0f);
@@ -236,7 +236,7 @@ private:
         msaaDropdown->SetSelectedIndex(msaaIndex);
         msaaDropdown->size = vec2(360.f, 56.f);
         msaaDropdown->onSelectionChanged = UiVideoSettings::UpdateMSAA;
-        content->AddChild(GetSettingRow("MSAA", msaaDropdown));
+        content->AddChild(GetSettingRow("${SETTINGS_VIDEO_MSAA}", msaaDropdown));
 
         // ── FXAA ─────────────────────────────────────────────────────────────
         fxaaButton = std::make_shared<UiButton>();
@@ -261,7 +261,7 @@ private:
                 RefreshFXAALabel(enabled);
             };
 
-        content->AddChild(GetSettingRow("FXAA", fxaaButton));
+        content->AddChild(GetSettingRow("${SETTINGS_VIDEO_FXAA}", fxaaButton));
 
         // ── Dynamic Shadows ──────────────────────────────────────────────────
         dynamicShadowsButton = std::make_shared<UiButton>();
@@ -286,26 +286,26 @@ private:
                 RefreshDynamicShadowsLabel(enabled);
             };
 
-        content->AddChild(GetSettingRow("Dynamic Shadows", dynamicShadowsButton));
+        content->AddChild(GetSettingRow("${SETTINGS_VIDEO_DYNAMIC_SHADOWS}", dynamicShadowsButton));
 
         graphicsPanel = std::make_shared<UiCardPanel>(vec2(ContentWidth, 320.f), content);
     }
 
     void RefreshVSyncLabel(bool on)
     {
-        vsyncLabel->text = on ? "On" : "Off";
+        vsyncLabel->text = on ? "${SETTINGS_TOGGLE_ON}" : "${SETTINGS_TOGGLE_OFF}";
         vsyncToggleBg->color = on ? SettingsStyle::ToggleOn : SettingsStyle::ToggleOff;
     }
 
     void RefreshFXAALabel(bool on)
     {
-        fxaaLabel->text = on ? "On" : "Off";
+        fxaaLabel->text = on ? "${SETTINGS_TOGGLE_ON}" : "${SETTINGS_TOGGLE_OFF}";
         fxaaToggleBg->color = on ? SettingsStyle::ToggleOn : SettingsStyle::ToggleOff;
     }
 
     void RefreshDynamicShadowsLabel(bool on)
     {
-        dynamicShadowsLabel->text = on ? "On" : "Off";
+        dynamicShadowsLabel->text = on ? "${SETTINGS_TOGGLE_ON}" : "${SETTINGS_TOGGLE_OFF}";
         dynamicShadowsToggleBg->color = on ? SettingsStyle::ToggleOn : SettingsStyle::ToggleOff;
     }
 

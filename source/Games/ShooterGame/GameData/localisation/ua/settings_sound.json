@@ -1,0 +1,9 @@
+{
+    "entries": [
+        { "key": "SETTINGS_SOUND_TITLE",         "value": "Налаштування звуку",  "description": "Title at the top of the sound settings screen" },
+        { "key": "SETTINGS_SOUND_VOLUME_HEADER", "value": "Гучність",            "description": "Header for the Volume card" },
+        { "key": "SETTINGS_SOUND_MASTER_VOLUME", "value": "Загальна гучність",   "description": "Row label for the master volume slider" },
+        { "key": "SETTINGS_SOUND_SFX_VOLUME",    "value": "Звукові ефекти",      "description": "Row label for the sound effects volume slider" },
+        { "key": "SETTINGS_SOUND_MUSIC_VOLUME",  "value": "Гучність музики",     "description": "Row label for the music volume slider" }
+    ]
+}

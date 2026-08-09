@@ -1,0 +1,35 @@
+{
+    "entries": [
+        { "key": "INPUT_CATEGORY_MOVEMENT",  "value": "Рух", "description": "" },
+        { "key": "INPUT_CATEGORY_COMBAT",    "value": "Бій" ,"description": "" },
+        { "key": "INPUT_CATEGORY_INTERACT",  "value": "Взаємодія", "description": "" },
+        { "key": "INPUT_CATEGORY_WEAPONS",   "value": "Зброя", "description": "" },
+        { "key": "INPUT_CATEGORY_MISC",      "value": "Різне", "description": "" },
+        { "key": "INPUT_CATEGORY_GENERAL",   "value": "Загальне", "description": "" },
+        { "key": "INPUT_CATEGORY_INVENTORY", "value": "Інвентар", "description": "" },
+
+        { "key": "INPUT_ACTION_FORWARD",  "value": "Рух вперед", "description": "" },
+        { "key": "INPUT_ACTION_BACKWARD", "value": "Рух назад", "description": "" },
+        { "key": "INPUT_ACTION_LEFT",     "value": "Рух ліворуч", "description": "" },
+        { "key": "INPUT_ACTION_RIGHT",    "value": "Рух праворуч", "description": "" },
+        { "key": "INPUT_ACTION_CROUCH",   "value": "Присідання", "description": "" },
+        { "key": "INPUT_ACTION_JUMP",     "value": "Стрибок", "description": "" },
+        { "key": "INPUT_ACTION_DASH",     "value": "Ривок", "description": "" },
+
+        { "key": "INPUT_ACTION_ATTACK",  "value": "Атака", "description": "" },
+        { "key": "INPUT_ACTION_ATTACK2", "value": "Атака іншою рукою", "description": "" },
+        { "key": "INPUT_ACTION_ATTACK3", "value": "Друга атака іншою рукою", "description": "" },
+
+        { "key": "INPUT_ACTION_INTERACT",   "value": "Взаємодія", "description": "" },
+        { "key": "INPUT_ACTION_QUICK_SAVE", "value": "Швидке збереження", "description": "" },
+        { "key": "INPUT_ACTION_QUICK_LOAD", "value": "Швидке завантаження", "description": "" },
+
+        { "key": "INPUT_ACTION_SLOT1",     "value": "Вибір слота 1", "description": "" },
+        { "key": "INPUT_ACTION_SLOT2",     "value": "Вибір слота 2", "description": "" },
+        { "key": "INPUT_ACTION_SLOT3",     "value": "Вибір слота 3", "description": "" },
+        { "key": "INPUT_ACTION_SLOT4",     "value": "Вибір слота 4", "description": "" },
+        { "key": "INPUT_ACTION_SLOT5",     "value": "Вибір слота 5", "description": "" },
+        { "key": "INPUT_ACTION_SLOT6",     "value": "Вибір слота 6", "description": "" },
+        { "key": "INPUT_ACTION_LAST_SLOT", "value": "Вибір останнього слота", "description": "" }
+    ]
+}

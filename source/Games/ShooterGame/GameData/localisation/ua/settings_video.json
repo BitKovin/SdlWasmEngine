@@ -1,0 +1,16 @@
+{
+    "entries": [
+        { "key": "SETTINGS_VIDEO_TITLE",           "value": "Налаштування відео", "description": "Title at the top of the video settings screen" },
+        { "key": "SETTINGS_VIDEO_DISPLAY_HEADER",  "value": "Екран",              "description": "Header for the Display card (Resolution/Window Mode/VSync)" },
+        { "key": "SETTINGS_VIDEO_RESOLUTION",      "value": "Роздільна здатність", "description": "Row label for the resolution dropdown" },
+        { "key": "SETTINGS_VIDEO_WINDOW_MODE",     "value": "Режим вікна",        "description": "Row label for the window mode dropdown" },
+        { "key": "SETTINGS_VIDEO_WINDOWED",        "value": "Віконний",           "description": "Window mode dropdown option: windowed" },
+        { "key": "SETTINGS_VIDEO_FULLSCREEN",      "value": "Повноекранний",      "description": "Window mode dropdown option: exclusive fullscreen" },
+        { "key": "SETTINGS_VIDEO_BORDERLESS",      "value": "Безрамковий",        "description": "Window mode dropdown option: borderless fullscreen" },
+        { "key": "SETTINGS_VIDEO_VSYNC",           "value": "VSync",              "description": "Row label for the VSync on/off toggle" },
+        { "key": "SETTINGS_VIDEO_GRAPHICS_HEADER", "value": "Графіка",            "description": "Header for the Graphics card (MSAA/FXAA/Dynamic Shadows)" },
+        { "key": "SETTINGS_VIDEO_MSAA",            "value": "MSAA",               "description": "Row label for the MSAA level dropdown" },
+        { "key": "SETTINGS_VIDEO_FXAA",            "value": "FXAA",               "description": "Row label for the FXAA on/off toggle" },
+        { "key": "SETTINGS_VIDEO_DYNAMIC_SHADOWS", "value": "Динамічні тіні",     "description": "Row label for the dynamic shadows on/off toggle" }
+    ]
+}

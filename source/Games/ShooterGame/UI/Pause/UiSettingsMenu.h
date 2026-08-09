@@ -34,17 +34,32 @@ public:
 		optionsBox->origin = vec2(0.5f);
 		optionsBox->pivot = vec2(0.5f);
 
-		gameButton = MakeButton("Gameplay Settings");
-		inputButton = MakeButton("Input Settings");
-		videoButton = MakeButton("Video Settings");
-		soundButton = MakeButton("Sound Settings");
-		backButton = MakeButton("Back");
+		gameButton = MakeButton("${SETTINGS_MENU_GAMEPLAY}");
+		inputButton = MakeButton("${SETTINGS_MENU_INPUT}");
+		videoButton = MakeButton("${SETTINGS_MENU_VIDEO}");
+		soundButton = MakeButton("${SETTINGS_MENU_SOUND}");
+		backButton = MakeButton("${SETTINGS_BACK}");
 
 		optionsBox->AddChild(gameButton);
 		optionsBox->AddChild(inputButton);
 		optionsBox->AddChild(videoButton);
 		optionsBox->AddChild(soundButton);
 		optionsBox->AddChild(backButton);
+
+		float maxButtonWidth = 0;
+
+		for (auto& child : optionsBox->children)
+		{
+			if (child->GetSize().x > maxButtonWidth)
+			{
+				maxButtonWidth = child->GetSize().x;
+			}
+		}
+
+		for (auto& child : optionsBox->children)
+		{
+			child->size.x = maxButtonWidth;
+		}
 
 		AddChild(optionsBox);
 
@@ -124,12 +139,21 @@ private:
 		std::shared_ptr<UiButton> btn = make_shared<UiButton>();
 		std::shared_ptr<UiText> txt = make_shared<UiText>();
 
-		btn->size = vec2(400, 70);
+
 
 		txt->text = text;
 
 		txt->pivot = vec2(0.5f);
 		txt->origin = vec2(0.5f);
+
+		float buttonWidth = 400;
+
+		if (buttonWidth < txt->GetSize().x + 20)
+		{
+			buttonWidth = txt->GetSize().x + 20;
+		}
+
+		btn->size = vec2(buttonWidth, 70);
 
 		btn->AddChild(txt);
 

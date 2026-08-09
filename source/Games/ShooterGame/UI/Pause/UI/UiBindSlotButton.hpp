@@ -93,7 +93,7 @@ public:
         icon->color = bound ? vec4(1.f) : vec4(1.f, 1.f, 1.f, 0.35f);
         mainButton->AddChild(icon);
 
-        caption->text = bound ? labelText : "Unbound";
+        caption->text = bound ? labelText : "${SETTINGS_INPUT_UNBOUND}";
         caption->position = vec2(SlotSize.x * 0.5f, SlotSize.y - 2.f);
         captionBg->size = vec2(SlotSize.x, 18.f);
 

@@ -52,15 +52,15 @@ public:
         panel->ContentDistance = 14.f;
 
         title = std::make_shared<UiText>();
-        title->text = "Rebind " + actionDisplayName + " — Slot " + std::to_string(slotIndex + 1);
+        title->text = "${SETTINGS_INPUT_REBIND_TITLE_PREFIX} " + actionDisplayName + " ${SETTINGS_INPUT_REBIND_SLOT_LABEL} " + std::to_string(slotIndex + 1);
         title->fontSize = 42.f;
         title->pivot = vec2(0.5f, 0.f);
         title->origin = vec2(0.5f, 0.f);
 
         hint = std::make_shared<UiText>();
         hint->text = (device == RebindDevice::Keyboard)
-            ? "Press a key or mouse button..."
-            : "Press a gamepad button or trigger...";
+            ? "${SETTINGS_INPUT_REBIND_HINT_KEYBOARD}"
+            : "${SETTINGS_INPUT_REBIND_HINT_GAMEPAD}";
         hint->fontSize = 30.f;
         hint->textColor = vec4(0.8f, 0.8f, 0.8f, 1.f);
         hint->pivot = vec2(0.5f, 0.f);
@@ -75,7 +75,7 @@ public:
         cancelButton = std::make_shared<UiButton>();
         cancelButton->size = vec2(150.f, 50.f);
         auto cancelLabel = std::make_shared<UiText>();
-        cancelLabel->text = "Cancel";
+        cancelLabel->text = "${SETTINGS_CANCEL}";
         cancelLabel->fontSize = SettingsStyle::ButtonLabelSize;
         cancelLabel->pivot = vec2(0.5f);
         cancelLabel->origin = vec2(0.5f);
@@ -90,7 +90,7 @@ public:
             unbindButton->Color = SettingsStyle::DangerFill; // Assuming you still want Unbind to be red
             unbindButton->HoverColor = SettingsStyle::DangerHover;
             auto unbindLabel = std::make_shared<UiText>();
-            unbindLabel->text = "Unbind";
+            unbindLabel->text = "${SETTINGS_INPUT_REBIND_UNBIND_BUTTON}";
             unbindLabel->fontSize = SettingsStyle::ButtonLabelSize;
             unbindLabel->pivot = vec2(0.5f);
             unbindLabel->origin = vec2(0.5f);
@@ -113,8 +113,17 @@ public:
         panel->AddChild(hint);
         // buttonsRow is purposefully NOT added yet. It is revealed only if they press the currently bound key.
 
+		float cardWidth = 460.f;
+
+        float textWidth = title->GetSize().x;
+
+		if (cardWidth < textWidth + 40.f)
+		{
+			cardWidth = textWidth + 40.f;
+		}
+
         // MATCH COLOR: Swapped CaptureFill and CaptureBorder for ConfirmFill and ConfirmBorder
-        auto card = std::make_shared<UiCardPanel>(vec2(460.f, 260.f), panel,
+        auto card = std::make_shared<UiCardPanel>(vec2(cardWidth, 260.f), panel,
             SettingsStyle::ConfirmFill, SettingsStyle::ConfirmBorder);
         card->origin = vec2(0.5f);
         card->pivot = vec2(0.5f);
@@ -140,6 +149,7 @@ public:
 
     void Update() override
     {
+
         // If we are showing the prompt, we wait for UI interaction.
         if (m_askingUnbind)
         {
@@ -181,6 +191,7 @@ public:
             }
             PollGamepad();
         }
+
     }
 
 private:
@@ -248,7 +259,7 @@ private:
         if (m_askingUnbind) return;
         m_askingUnbind = true;
 
-        hint->text = "Already bound to this slot. Unbind or Cancel?";
+        hint->text = "${SETTINGS_INPUT_REBIND_ALREADY_BOUND_PROMPT}";
         hint->textColor = vec4(1.0f, 0.8f, 0.2f, 1.0f); // Warning color
 
         panel->AddChild(buttonsRow);

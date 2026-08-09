@@ -79,7 +79,7 @@ public:
         rootBox->ContentDistance = 20.f;
 
         titleText = std::make_shared<UiText>();
-        titleText->text = "Input Settings";
+        titleText->text = "${SETTINGS_INPUT_TITLE}";
         titleText->fontSize = SettingsStyle::TitleSize;
         titleText->pivot = vec2(0.5f, 0.f);
         titleText->origin = vec2(0.5f, 0.f);
@@ -92,8 +92,8 @@ public:
         buttonsRow->pivot = vec2(0.5f, 0);
         buttonsRow->ContentDistance = 16.f;
 
-        resetButton = MakeButton("Reset to Defaults");
-        backButton = MakeButton("Back");
+        resetButton = MakeButton("${SETTINGS_INPUT_RESET_ALL}");
+        backButton = MakeButton("${SETTINGS_BACK}");
         resetButton->NavRight = backButton;
         backButton->NavLeft = resetButton;
         buttonsRow->AddChild(resetButton);
@@ -170,7 +170,7 @@ private:
         content->ContentDistance = 14.f;
 
         auto header = std::make_shared<UiText>();
-        header->text = "Sensitivity";
+        header->text = "${SETTINGS_INPUT_SENSITIVITY_HEADER}";
         header->fontSize = PanelHeaderSize;
         header->pivot = vec2(0.f, 0.0f);
         header->origin = vec2(0.f, 0.0f);
@@ -210,7 +210,7 @@ private:
             GameSettings::Instance().SaveToFile();
         };
 
-        content->AddChild(GetSliderRow("Mouse Sensitivity", mouseSensSlider, mouseSensText));
+        content->AddChild(GetSliderRow("${SETTINGS_INPUT_MOUSE_SENSITIVITY}", mouseSensSlider, mouseSensText));
 
         // ── Gamepad look sensitivity ─────────────────────────────────────────
         gpSensSlider = std::make_shared<UiSlider>();
@@ -243,7 +243,7 @@ private:
             GameSettings::Instance().SaveToFile();
         };
 
-        content->AddChild(GetSliderRow("Gamepad Sensitivity", gpSensSlider, gpSensText));
+        content->AddChild(GetSliderRow("${SETTINGS_INPUT_GAMEPAD_SENSITIVITY}", gpSensSlider, gpSensText));
 
         // ── Invert Y ─────────────────────────────────────────────────────────
         invertYButton = std::make_shared<UiButton>();
@@ -269,7 +269,7 @@ private:
             GameSettings::Instance().SaveToFile();
         };
 
-        content->AddChild(GetSliderRow("Invert Look Y", invertYButton, nullptr));
+        content->AddChild(GetSliderRow("${SETTINGS_INPUT_INVERT_LOOK_Y}", invertYButton, nullptr));
 
         sensitivityPanel = std::make_shared<UiCardPanel>(vec2(ContentWidth, 264.f), content);
     }
@@ -277,7 +277,7 @@ private:
     void RefreshInvertYLabel()
     {
         bool on = GameSettings::Instance().Input.Sensitivity.InvertY;
-        invertYLabel->text = on ? "On" : "Off";
+        invertYLabel->text = on ? "${SETTINGS_TOGGLE_ON}" : "${SETTINGS_TOGGLE_OFF}";
         invertYToggleBg->color = on ? SettingsStyle::ToggleOn : SettingsStyle::ToggleOff;
     }
 
@@ -327,7 +327,7 @@ private:
         content->ContentDistance = 10.f;
 
         auto header = std::make_shared<UiText>();
-        header->text = "Key Bindings";
+        header->text = "${SETTINGS_INPUT_KEY_BINDINGS_HEADER}";
         header->fontSize = PanelHeaderSize;
         header->pivot = vec2(0.f, 0.0f);
         header->origin = vec2(0.f, 0.0f);
@@ -377,7 +377,7 @@ private:
         auto kbCaption = std::make_shared<UiElement>();
         kbCaption->size = vec2(kbGroupWidth, CaptionSize + 6.f);
         auto kbTxt = std::make_shared<UiText>();
-        kbTxt->text = "KEYBOARD / MOUSE";
+        kbTxt->text = "${SETTINGS_INPUT_CAPTION_KEYBOARD_MOUSE}";
         kbTxt->fontSize = CaptionSize;
         kbTxt->textColor = CaptionColor;
         kbTxt->pivot = vec2(0.5f);
@@ -391,7 +391,7 @@ private:
         auto gpCaption = std::make_shared<UiElement>();
         gpCaption->size = vec2(gpGroupWidth, CaptionSize + 6.f);
         auto gpTxt = std::make_shared<UiText>();
-        gpTxt->text = "GAMEPAD";
+        gpTxt->text = "${SETTINGS_INPUT_CAPTION_GAMEPAD}";
         gpTxt->fontSize = CaptionSize;
         gpTxt->position = vec2(5, 0);
         gpTxt->textColor = CaptionColor;
@@ -490,7 +490,7 @@ private:
         resetRowButton->pivot = vec2(0.5f);
 
         auto resetLabel = std::make_shared<UiText>();
-        resetLabel->text = "Reset";
+        resetLabel->text = "${SETTINGS_INPUT_ROW_RESET}";
         resetLabel->fontSize = 25.f;
         resetLabel->pivot = vec2(0.5f);
         resetLabel->origin = vec2(0.5f);
@@ -652,7 +652,7 @@ private:
         }
 
         std::string message = "'" + InputBindingSerialization::KBDisplayName(value) +
-            "' is already bound to " + DisplayNameFor(conflict) + ". Reassign it here?";
+            "' ${SETTINGS_INPUT_REBIND_CONFLICT_MIDDLE} " + DisplayNameFor(conflict) + "${SETTINGS_INPUT_REBIND_CONFLICT_SUFFIX}";
 
         auto dialog = std::make_shared<UiConfirmDialog>(message,
             [this, action, slotIndex, value]()
@@ -675,7 +675,7 @@ private:
         }
 
         std::string message = "'" + InputBindingSerialization::GPDisplayName(value) +
-            "' is already bound to " + DisplayNameFor(conflict) + ". Reassign it here?";
+            "' ${SETTINGS_INPUT_REBIND_CONFLICT_MIDDLE} " + DisplayNameFor(conflict) + "${SETTINGS_INPUT_REBIND_CONFLICT_SUFFIX}";
 
         auto dialog = std::make_shared<UiConfirmDialog>(message,
             [this, action, slotIndex, value]()
@@ -714,7 +714,7 @@ private:
     void ConfirmResetAll()
     {
         auto dialog = std::make_shared<UiConfirmDialog>(
-            "Reset all input settings to defaults?",
+            "${SETTINGS_INPUT_CONFIRM_RESET_ALL}",
             [this]()
             {
                 GameSettings::Instance().Input.ResetToDefaults();

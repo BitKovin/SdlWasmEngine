@@ -67,7 +67,7 @@ public:
         rootBox->ContentDistance = 20.f;
 
         titleText = std::make_shared<UiText>();
-        titleText->text = "Sound Settings";
+        titleText->text = "${SETTINGS_SOUND_TITLE}";
         titleText->fontSize = SettingsStyle::TitleSize;
         titleText->pivot = vec2(0.5f, 0.f);
         titleText->origin = vec2(0.5f, 0.f);
@@ -78,7 +78,7 @@ public:
         buttonsRow->origin = vec2(0.5f, 0);
         buttonsRow->pivot = vec2(0.5f, 0);
 
-        backButton = MakeButton("Back");
+        backButton = MakeButton("${SETTINGS_BACK}");
         buttonsRow->AddChild(backButton);
 
         rootBox->AddChild(titleText);
@@ -144,22 +144,22 @@ private:
         content->ContentDistance = 14.f;
 
         auto header = std::make_shared<UiText>();
-        header->text = "Volume";
+        header->text = "${SETTINGS_SOUND_VOLUME_HEADER}";
         header->fontSize = PanelHeaderSize;
         header->pivot = vec2(0.f, 0.0f);
         header->origin = vec2(0.f, 0.0f);
         content->AddChild(header);
         content->AddChild(MakeDivider(ContentWidth - PanelPadding * 2.f));
 
-        content->AddChild(BuildVolumeRow("Master Volume", SoundManager::GlobalVolume,
+        content->AddChild(BuildVolumeRow("${SETTINGS_SOUND_MASTER_VOLUME}", SoundManager::GlobalVolume,
             masterSlider, masterText,
             [](float v) { SoundManager::GlobalVolume = v; }));
 
-        content->AddChild(BuildVolumeRow("Sound Effects", SoundManager::SfxVolume,
+        content->AddChild(BuildVolumeRow("${SETTINGS_SOUND_SFX_VOLUME}", SoundManager::SfxVolume,
             sfxSlider, sfxText,
             [](float v) { SoundManager::SfxVolume = v; }));
 
-        content->AddChild(BuildVolumeRow("Music Volume", SoundManager::MusicVolume,
+        content->AddChild(BuildVolumeRow("${SETTINGS_SOUND_MUSIC_VOLUME}", SoundManager::MusicVolume,
             musicSlider, musicText,
             [](float v) { SoundManager::MusicVolume = v; }));
 

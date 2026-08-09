@@ -337,31 +337,19 @@ GameStart::GameStart()
 
     Input::AddAction("dash")->AddKeyboardKey(SDL_KeyCode::SDLK_LSHIFT)->AddButton(GamepadButton::LeftShoulder);
 
-    InputActionRegistry::Register("forward", "Move Forward", "Movement");
-	InputActionRegistry::Register("backward", "Move Backward", "Movement");
-	InputActionRegistry::Register("left", "Move Left", "Movement");
-	InputActionRegistry::Register("right", "Move Right", "Movement");
-	InputActionRegistry::Register("crouch", "Crouch", "Movement");
-	InputActionRegistry::Register("jump", "Jump", "Movement");
-	InputActionRegistry::Register("dash", "Dash", "Movement");
+
 
     Input::AddAction("attack")->AddButton(GamepadButton::RightTrigger)->AddMouseButton(0);
     Input::AddAction("attack2")->AddButton(GamepadButton::LeftTrigger)->AddMouseButton(1);
 
     Input::AddAction("attack3")->AddButton(GamepadButton::Y)->AddKeyboardKey(SDL_KeyCode::SDLK_r);
 
-	InputActionRegistry::Register("attack", "Attack", "Combat");
-	InputActionRegistry::Register("attack2", "Offhand Attack", "Combat");
-    InputActionRegistry::Register("attack3", "Secondary Offhand Attack", "Combat");
 
     Input::AddAction("qSave")->AddKeyboardKey(SDL_KeyCode::SDLK_F6);
     Input::AddAction("qLoad")->AddKeyboardKey(SDL_KeyCode::SDLK_F7);
 
     Input::AddAction("interact")->AddKeyboardKey(SDL_KeyCode::SDLK_f);
 
-	InputActionRegistry::Register("interact", "Interact", "General");
-	InputActionRegistry::Register("qSave", "Quick Save", "General");
-	InputActionRegistry::Register("qLoad", "Quick Load", "General");
 
 
     Input::AddAction("cameraView")->AddKeyboardKey(SDL_KeyCode::SDLK_v);
@@ -384,14 +372,6 @@ GameStart::GameStart()
     Input::AddAction("slot6")->AddKeyboardKey(SDL_KeyCode::SDLK_6);
     Input::AddAction("lastSlot")->AddKeyboardKey(SDL_KeyCode::SDLK_q);
 
-	InputActionRegistry::Register("slot1", "Select Slot 1", "Inventory");
-	InputActionRegistry::Register("slot2", "Select Slot 2", "Inventory");
-	InputActionRegistry::Register("slot3", "Select Slot 3", "Inventory");
-	InputActionRegistry::Register("slot4", "Select Slot 4", "Inventory");
-	InputActionRegistry::Register("slot5", "Select Slot 5", "Inventory");
-	InputActionRegistry::Register("slot6", "Select Slot 6", "Inventory");
-	InputActionRegistry::Register("lastSlot", "Select Last Slot", "Inventory");
-
     Input::AddAction("inventory")->AddKeyboardKey(SDL_KeyCode::SDLK_TAB)->AddButton(GamepadButton::DPadUp);
 
     Input::AddAction("slotTest")->AddKeyboardKey(SDL_KeyCode::SDLK_t);
@@ -412,7 +392,29 @@ GameStart::GameStart()
     Input::AddAction("ui_left")->AddKeyboardKey(SDL_KeyCode::SDLK_LEFT)->AddButton(GamepadButton::DPadLeft);
 	Input::AddAction("ui_right")->AddKeyboardKey(SDL_KeyCode::SDLK_RIGHT)->AddButton(GamepadButton::DPadRight);
 
+    InputActionRegistry::Register("forward", "${INPUT_ACTION_FORWARD}", "${INPUT_CATEGORY_MOVEMENT}");
+    InputActionRegistry::Register("backward", "${INPUT_ACTION_BACKWARD}", "${INPUT_CATEGORY_MOVEMENT}");
+    InputActionRegistry::Register("left", "${INPUT_ACTION_LEFT}", "${INPUT_CATEGORY_MOVEMENT}");
+    InputActionRegistry::Register("right", "${INPUT_ACTION_RIGHT}", "${INPUT_CATEGORY_MOVEMENT}");
+    InputActionRegistry::Register("crouch", "${INPUT_ACTION_CROUCH}", "${INPUT_CATEGORY_MOVEMENT}");
+    InputActionRegistry::Register("jump", "${INPUT_ACTION_JUMP}", "${INPUT_CATEGORY_MOVEMENT}");
+    InputActionRegistry::Register("dash", "${INPUT_ACTION_DASH}", "${INPUT_CATEGORY_MOVEMENT}");
 
+    InputActionRegistry::Register("attack", "${INPUT_ACTION_ATTACK}", "${INPUT_CATEGORY_COMBAT}");
+    InputActionRegistry::Register("attack2", "${INPUT_ACTION_ATTACK2}", "${INPUT_CATEGORY_COMBAT}");
+    InputActionRegistry::Register("attack3", "${INPUT_ACTION_ATTACK3}", "${INPUT_CATEGORY_COMBAT}");
+
+    InputActionRegistry::Register("interact", "${INPUT_ACTION_INTERACT}", "${INPUT_CATEGORY_GENERAL}");
+    InputActionRegistry::Register("qSave", "${INPUT_ACTION_QUICK_SAVE}", "${INPUT_CATEGORY_GENERAL}");
+    InputActionRegistry::Register("qLoad", "${INPUT_ACTION_QUICK_LOAD}", "${INPUT_CATEGORY_GENERAL}");
+
+    InputActionRegistry::Register("slot1", "${INPUT_ACTION_SLOT1}", "${INPUT_CATEGORY_INVENTORY}");
+    InputActionRegistry::Register("slot2", "${INPUT_ACTION_SLOT2}", "${INPUT_CATEGORY_INVENTORY}");
+    InputActionRegistry::Register("slot3", "${INPUT_ACTION_SLOT3}", "${INPUT_CATEGORY_INVENTORY}");
+    InputActionRegistry::Register("slot4", "${INPUT_ACTION_SLOT4}", "${INPUT_CATEGORY_INVENTORY}");
+    InputActionRegistry::Register("slot5", "${INPUT_ACTION_SLOT5}", "${INPUT_CATEGORY_INVENTORY}");
+    InputActionRegistry::Register("slot6", "${INPUT_ACTION_SLOT6}", "${INPUT_CATEGORY_INVENTORY}");
+    InputActionRegistry::Register("lastSlot", "${INPUT_ACTION_LAST_SLOT}", "${INPUT_CATEGORY_INVENTORY}");
 
 
     //Input::AddAction("dbg_simulate")->AddKeyboardKey(SDL_KeyCode::SDLK_j);

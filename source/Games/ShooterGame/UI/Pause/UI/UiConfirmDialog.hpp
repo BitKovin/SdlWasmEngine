@@ -41,8 +41,8 @@ public:
     UiConfirmDialog(const std::string& message,
         std::function<void()> onYes,
         std::function<void()> onNo,
-        const std::string& yesLabel = "Yes",
-        const std::string& noLabel = "No")
+        const std::string& yesLabel = "${SETTINGS_CONFIRM_YES}",
+        const std::string& noLabel = "${SETTINGS_CONFIRM_NO}")
         : m_onYes(std::move(onYes)), m_onNo(std::move(onNo))
     {
         FocusTrap = true;
@@ -85,7 +85,14 @@ public:
 
         panel->AddChild(buttonsRow);
 
-        auto card = std::make_shared<UiCardPanel>(vec2(kCardWidth, 200.f), panel,
+		float cardWidth = kCardWidth;
+
+		if (cardWidth < messageText->GetSize().x + SettingsStyle::PanelPadding * 2.f)
+		{
+			cardWidth = messageText->GetSize().x + SettingsStyle::PanelPadding * 2.f;
+		}
+
+        auto card = std::make_shared<UiCardPanel>(vec2(cardWidth, 200.f), panel,
             SettingsStyle::ConfirmFill, SettingsStyle::ConfirmBorder);
         card->origin = vec2(0.5f);
         card->pivot = vec2(0.5f);

@@ -1,0 +1,8 @@
+{
+    "entries": [
+        { "key": "SETTINGS_MENU_GAMEPLAY", "value": "Gameplay Settings", "description": "Button on the settings hub that opens the gameplay settings screen" },
+        { "key": "SETTINGS_MENU_INPUT",    "value": "Input Settings",    "description": "Button on the settings hub that opens the input settings screen" },
+        { "key": "SETTINGS_MENU_VIDEO",    "value": "Video Settings",    "description": "Button on the settings hub that opens the video settings screen" },
+        { "key": "SETTINGS_MENU_SOUND",    "value": "Sound Settings",    "description": "Button on the settings hub that opens the sound settings screen" }
+    ]
+}

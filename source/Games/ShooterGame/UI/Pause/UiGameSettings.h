@@ -49,7 +49,7 @@ public:
         rootBox->ContentDistance = 20.f;
 
         titleText = std::make_shared<UiText>();
-        titleText->text = "Gameplay Settings";
+        titleText->text = "${SETTINGS_GAME_TITLE}";
         titleText->fontSize = SettingsStyle::TitleSize;
         titleText->pivot = vec2(0.5f, 0.f);
         titleText->origin = vec2(0.5f, 0.f);
@@ -60,7 +60,7 @@ public:
         buttonsRow->origin = vec2(0.5f, 0);
         buttonsRow->pivot = vec2(0.5f, 0);
 
-        backButton = MakeButton("Back");
+        backButton = MakeButton("${SETTINGS_BACK}");
         buttonsRow->AddChild(backButton);
 
         rootBox->AddChild(titleText);
@@ -112,21 +112,21 @@ private:
         content->ContentDistance = 14.f;
 
         auto header = std::make_shared<UiText>();
-        header->text = "Gameplay";
+        header->text = "${SETTINGS_GAME_HEADER}";
         header->fontSize = PanelHeaderSize;
         header->pivot = vec2(0.f, 0.0f);
         header->origin = vec2(0.f, 0.0f);
         content->AddChild(header);
         content->AddChild(MakeDivider(ContentWidth - PanelPadding * 2.f));
 
-        content->AddChild(MakePlaceholderRow("Difficulty"));
-        content->AddChild(MakePlaceholderRow("Tutorial Hints"));
-        content->AddChild(MakePlaceholderRow("Autosave"));
+        content->AddChild(MakePlaceholderRow("${SETTINGS_GAME_DIFFICULTY}"));
+        content->AddChild(MakePlaceholderRow("${SETTINGS_GAME_TUTORIAL_HINTS}"));
+        content->AddChild(MakePlaceholderRow("${SETTINGS_GAME_AUTOSAVE}"));
 
         content->AddChild(MakeSpacer(vec2(1.f, 4.f)));
 
         auto note = std::make_shared<UiText>();
-        note->text = "Gameplay settings are coming soon.";
+        note->text = "${SETTINGS_GAME_COMING_SOON_NOTE}";
         note->fontSize = CaptionSize;
         note->textColor = CaptionColor;
         note->DisableFocus = true;
@@ -172,7 +172,7 @@ private:
         placeholderPill->AddChild(pillBg);
 
         auto pillLabel = std::make_shared<UiText>();
-        pillLabel->text = "Soon";
+        pillLabel->text = "${SETTINGS_GAME_PLACEHOLDER_SOON}";
         pillLabel->fontSize = 24.f;
         pillLabel->textColor = CaptionColor;
         pillLabel->DisableFocus = true;
