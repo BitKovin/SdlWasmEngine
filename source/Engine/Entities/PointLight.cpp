@@ -11,6 +11,7 @@ PointLight::~PointLight()
 
 void PointLight::Finalize()
 {
+	if (Visible == false) return;
 
 	LightManager::UpdateLightSource(LightManager::PointLightInfo{ 
 		Position,color*intensity, radius, 
