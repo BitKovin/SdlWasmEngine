@@ -24,6 +24,60 @@ public:
 
 	}
 
+	void ShowMessage(Player* player)
+	{
+		std::string msg = "${KEYS_REQUIRED_MESSAGE}";
+		for (auto& k : requiredKeys)
+		{
+			switch (k)
+			{
+			case DoorKey::Red:
+				msg += "${KEYS_NAME_RED} ";
+				break;
+			case DoorKey::Green:
+				msg += "${KEYS_NAME_GREEN} ";
+				break;
+			case DoorKey::Blue:
+				msg += "${KEYS_NAME_BLUE} ";
+				break;
+			case DoorKey::Secret:
+				msg += "${KEYS_NAME_SECRET} ";
+				break;
+			case DoorKey::Special:
+				msg += "${KEYS_NAME_SPECIAL} ";
+				break;
+			default:
+				break;
+			}
+		}
+
+		if (requiredKeys.size() == 1)
+		{
+			switch (*requiredKeys.begin())
+			{
+			case DoorKey::Red:
+				msg = "${KEYS_REQUIRED_RED}";
+				break;
+			case DoorKey::Green:
+				msg = "${KEYS_REQUIRED_GREEN}";
+				break;
+			case DoorKey::Blue:
+				msg = "${KEYS_REQUIRED_BLUE}";
+				break;
+			case DoorKey::Secret:
+				msg = "${KEYS_REQUIRED_SECRET}";
+				break;
+			case DoorKey::Special:
+				msg = "${KEYS_REQUIRED_SPECIAL}";
+				break;
+			default:
+				break;
+			}
+		}
+
+		player->Hud.ShowMessage(msg, 2.0f);
+	}
+
 	void FromData(EntityData data)
 	{
 		TriggerBase::FromData(data);
@@ -52,7 +106,11 @@ public:
 
 		for (auto& k : requiredKeys)
 		{
-			if (player->keysInventory.count(k) == 0) return false;
+			if (player->keysInventory.count(k) == 0)
+			{
+				ShowMessage(player);
+				return false;
+			}
 		}
 		return true;
 	}

@@ -87,6 +87,17 @@ void PlayerHud::Init(Player* playerRef)
     hudCanvas->AddChild(useIndicator);
 
     //hudCanvas->AddChild(std::make_shared<UiScoreIndicator>());
+    
+	messageText = make_shared<UiText>();
+	messageText->origin = vec2(0.5f, 0.5f);
+	messageText->pivot = vec2(0.5f, 1.0f);
+	messageText->position = vec2(0, -100);
+	messageText->text = "";
+	messageText->visible = false;
+	messageText->fontSize = 60;
+	messageText->shadowEnabled = true;
+	messageText->color = vec4(0.65, 0.6, 0.5, 1);
+	hudCanvas->AddChild(messageText);
 
 }
 
@@ -110,6 +121,8 @@ void PlayerHud::Update()
     }
 
     crosshair->visible = !useIndicator->visible;
+
+	messageText->visible = messageDelay.Wait();
 
 	//frameRate->text = "FPS: " + to_string((int)(1.0f / Time::DeltaTimeF));
 

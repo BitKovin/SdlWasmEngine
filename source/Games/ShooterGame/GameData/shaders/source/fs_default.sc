@@ -44,7 +44,7 @@ float ComputeStyledDiffuse(vec3 normal, vec3 lightDir)
 
     float factor = clamp(dot(normal, normalize(lightDir)) * 0.9 + 0.1, 0.0, 1.0);
 
-
+    return factor * 0.9;
 
     const float shadow_start = 0.1;
 
@@ -179,7 +179,7 @@ vec3 CalculateDirectionalDiffuse(vec3 normal, vec3 lightDir)
     vec3 ambient = light_color.rgb * 0.9f; // Base ambient
     vec3 diffuse = direct_light_color.rgb;
 
-    return mix(ambient, diffuse + ambient, diffuse_factor) * 0.7;
+    return mix(ambient, diffuse + ambient, diffuse_factor) * 0.6;
 }
 
 vec3 CalculateDirectionalSpecular(vec3 normal, vec3 lightDir, vec3 viewDir)

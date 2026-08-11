@@ -564,7 +564,7 @@ vec3 StaticMesh::GetShadowColorMult()
 	lastLightVolData = lightData;
 
 	const vec3 ambientColor = lastLightVolData.ambientColor;
-	const vec3 directionalColor = lastLightVolData.directColor;
+	const vec3 directionalColor = lastLightVolData.directColor + lastLightVolData.ambientColor * 0.5f;
 	constexpr float kEps = 0.001f;
 
 	vec3 shadowColor;

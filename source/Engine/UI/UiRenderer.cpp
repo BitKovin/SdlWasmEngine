@@ -160,7 +160,7 @@ struct FontAtlas {
     // bgfx calls, so this is safe to call from any thread — including a
     // background font-loading thread running concurrently with DrawText on
     // the render thread for a different (already-loaded) font atlas.
-    bool LoadCpuData(const char* path, float height, int paddingSize = 3)
+    bool LoadCpuData(const char* path, float height, int paddingSize = 6)
     {
         // Packing gap between glyphs, in atlas texels. This used to scale with
         // font height (height/3 + paddingSize) on the assumption that it also

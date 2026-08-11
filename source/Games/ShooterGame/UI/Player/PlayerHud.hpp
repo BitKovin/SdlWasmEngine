@@ -92,10 +92,19 @@ public:
 
 	std::shared_ptr<ScreenMobileControls> ScreenControls;
 
+	void ShowMessage(const std::string& message, float duration = 3.0f)
+	{
+		messageText->text = message;
+		messageDelay.AddDelay(duration);
+	}
+
 private:
+
+	Delay messageDelay;
 
 	Player* player = nullptr;
 
+	std::shared_ptr<UiText> messageText;
 
 	std::shared_ptr<UiCanvas> hudCanvas;
 

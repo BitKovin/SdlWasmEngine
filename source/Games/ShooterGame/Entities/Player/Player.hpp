@@ -129,7 +129,6 @@ private:
 
 	bool freeFly = false;
 
-	PlayerHud Hud;
 
 	float bobProgress = 0;
 	float bobSpeed = 1.1f;
@@ -409,6 +408,9 @@ private:
 	void Death();
 
 public:
+
+
+	PlayerHud Hud;
 
 	PlayerBodyAnimator bodyAnimator = PlayerBodyAnimator(this);
 
