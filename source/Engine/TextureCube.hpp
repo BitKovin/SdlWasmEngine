@@ -245,7 +245,27 @@ private:
 					faceData = rotatedStorage.data();
 				}
 			}
-			// --- Save face as PNG next to the panorama ---
+
+			if (StringHelper::EndsWith(panoramaPath, "jpg"))
+			{
+
+				std::vector<uint8_t> jpgData;
+
+
+				stbi_write_jpg_to_func(pngWriteCallback, &jpgData,
+					faceSize, faceSize, 4,
+					faceData, 90);
+
+				if (!jpgData.empty()) {
+					if (!FileSystemEngine::WriteFileBinary(facePaths[slot], jpgData))
+						std::cerr << "[Cubemap] Failed to save face: " << facePaths[slot] << "\n";
+				}
+				else {
+					std::cerr << "[Cubemap] JPG encode failed for slot " << slot << "\n";
+				}
+
+			}
+			else if (StringHelper::EndsWith(panoramaPath, "png"))
 			{
 				std::vector<uint8_t> pngData;
 				stbi_write_png_to_func(pngWriteCallback, &pngData,

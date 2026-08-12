@@ -4,6 +4,9 @@
 
 void Player::TryMantle()
 {
+
+	if (canMantle == false) return;
+
 	// ── Guard 1: state / cooldown ─────────────────────────────────────────────
 	if (IsMantling())       return;
 	if (mantleDelay.Wait()) return;   // cooldown between mantle attempts

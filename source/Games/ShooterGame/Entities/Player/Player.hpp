@@ -113,7 +113,7 @@ private:
 
 	PointLight* playerLight = nullptr;
 
-	float maxSpeed = 7.0f;
+	float maxSpeed = 8.0f;
 	float maxSpeedAir = 2;
 	float acceleration = 90;
 	float airAcceleration = 10;
@@ -122,6 +122,7 @@ private:
 
 	bool canRun = false;
 	bool canDash = true;
+	bool canMantle = false;
 
 	vec3 oldPos = vec3();
 

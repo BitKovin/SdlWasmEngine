@@ -902,7 +902,7 @@ void CQuake3BSP::GenerateLightmap()
 {
     // ── Missing lightmap (grey 2×2 RGBA) ─────────────────────────────────────
     {
-        const uint8_t v = 200;
+        const uint8_t v = 255;
         uint8_t pixels[16] = {
             v,v,v,v,  v,v,v,v,
             v,v,v,v,  v,v,v,v

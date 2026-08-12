@@ -141,7 +141,7 @@ public:
         else
         {
             if(NetworkManager::IsServer())
-            Level::LoadLevelFromFile("GameData/maps/lvl1.bsp");
+            Level::LoadLevelFromFile("GameData/maps/lvl2.bsp");
         }
 		
         AssetRegistry::GetSkinnedModelFromFile("GameData/models/arms.glb");
@@ -292,7 +292,7 @@ private:
 GameStart::GameStart()
 {
 
-	Localisation::SetLanguage("ua");
+	//Localisation::SetLanguage("ua");
 
 	PauseGameManager::SetGamePaused(false);
 	PauseGameManager::SetGamePausedGameplay(false);
@@ -303,7 +303,7 @@ GameStart::GameStart()
 
 	UpdateWhenPaused = true;
 
-    Spawn("npcSimulationManager");
+    //Spawn("npcSimulationManager");
 
 	auto debuffs = DebuffFactory::Instance().GetRegisteredDebuffNames();
 
