@@ -169,7 +169,7 @@ void NpcHumanAxe::AsyncUpdate()
 	for (auto& ev : animEvents)
 		ProcessAnimationEvent(ev);  // runs on all peers
 
-	mesh->Position = Position - vec3(0, 1, 0);
+	mesh->Position = Position - vec3(0, 1, 0) + controller.GetSmoothOffset();
 
 	// Root motion applies on ALL peers.
 	// The owner's position is authoritative; non-owners are corrected each

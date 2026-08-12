@@ -59,6 +59,7 @@ void NpcHumanBase::Start()
 
     controller.Init(this, Position, 0.5f, 2.0f, 5);
     controller.movementQuality = CharacterControllerMovementQuality::NpcGeneric;
+	controller.stepSmoothingSpeed = 10.0f;
 
     desiredDirection = MathHelper::XZ(MathHelper::GetForwardVector(Rotation));
     if (glm::length(desiredDirection) < 0.001f)

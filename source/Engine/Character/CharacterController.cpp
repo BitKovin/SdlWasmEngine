@@ -248,7 +248,7 @@ void CharacterController::Update(float deltaTime)
 			Physics::SweepBody(body, vec3(currentPosition.x, newVerticalPosition, currentPosition.z), { owner });
 
 			float moved = currentPosition.y - FromPhysics(body->GetPosition()).y;
-			if (std::abs(moved) > 0.001f && movementQuality != CharacterControllerMovementQuality::NpcGeneric)
+			if (std::abs(moved) > 0.001f)
 			{
 				heightSmoothOffset += moved;
 			}
@@ -390,6 +390,11 @@ void CharacterController::SetSmoothPosition(vec3 position)
 	{
 		Physics::SetBodyPosition(body, position + vec3(0, stepHeight, 0) - vec3(0, heightSmoothOffset, 0));
 	}
+}
+
+vec3 CharacterController::GetSmoothOffset()
+{
+	return vec3(0, heightSmoothOffset, 0);
 }
 
 void CharacterController::UpdateSmoothPosition(float deltaTime)
@@ -658,7 +663,7 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 			radius - 0.01f,
 			outheight, outCanStand, outNormal, &hitBody);
 
-		if (centerHit && outNormal.y >= flatThreshold)
+		if (centerHit && (outNormal.y >= flatThreshold || GetVelocity().x != 0 || GetVelocity().z != 0))
 		{
 			// Perfectly flat ground - no need to sample around ring
 			avgNormal = outNormal;

@@ -30,6 +30,8 @@ public:
 	void SetPosition(vec3 position);
 	void SetSmoothPosition(vec3 position);
 
+	vec3 GetSmoothOffset();
+
 	void UpdateSmoothPosition(float deltaTime);
 
 	virtual vec3 GetVelocity();

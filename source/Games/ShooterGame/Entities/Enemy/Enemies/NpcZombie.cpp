@@ -142,7 +142,7 @@ void NpcZombie::AsyncUpdate()
 
 	mesh->Update(ModifyAnimationSpeed(1.0f));
 
-	mesh->Position = Position - vec3(0, 1, 0);
+	mesh->Position = Position - vec3(0, 1, 0) + controller.GetSmoothOffset();
 
 	// Root motion applies on ALL peers – zombie only uses it during stun.
 	auto rootMotion = mesh->PullRootMotion();

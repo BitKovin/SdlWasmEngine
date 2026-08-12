@@ -238,7 +238,7 @@ void NpcHumanGun::AsyncUpdate()
     for (auto& event : animEvents)
         ProcessAnimationEvent(event);
 
-    mesh->Position = Position - vec3(0, 1, 0);
+    mesh->Position = Position - vec3(0, 1, 0) + controller.GetSmoothOffset();
 
     auto rootMotion = mesh->PullRootMotion();
 
