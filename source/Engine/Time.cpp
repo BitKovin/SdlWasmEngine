@@ -15,7 +15,7 @@ std::vector<TimeScaleEffect> Time::timeScaleEffects;
 #ifdef DISTRIBUTION
 
 double Time::TargetFrameRate = 300.0;
-double Time::TargetFrameTime = 1.0 / 400.0;
+double Time::TargetFrameTime = 1.0 / 300.0;
 
 #else
 
