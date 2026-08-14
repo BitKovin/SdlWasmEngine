@@ -268,30 +268,6 @@ struct tBSPVisData {
 // Render helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
-struct FaceBuffers {
-    bgfx::VertexBufferHandle VBO = BGFX_INVALID_HANDLE;
-    bgfx::IndexBufferHandle  EBO = BGFX_INVALID_HANDLE;
-    uint32_t                 IndexCount = 0;
-
-    ~FaceBuffers()
-    {
-        if (bgfx::isValid(VBO)) { bgfx::destroy(VBO); VBO = BGFX_INVALID_HANDLE; }
-        if (bgfx::isValid(EBO)) { bgfx::destroy(EBO); EBO = BGFX_INVALID_HANDLE; }
-    }
-    FaceBuffers() = default;
-    FaceBuffers(const FaceBuffers&) = delete;
-    FaceBuffers& operator=(const FaceBuffers&) = delete;
-    FaceBuffers(FaceBuffers&& o) noexcept : VBO(o.VBO), EBO(o.EBO), IndexCount(o.IndexCount)
-    {
-        o.VBO = BGFX_INVALID_HANDLE;
-        o.EBO = BGFX_INVALID_HANDLE;
-    }
-};
-
-struct FaceBuffArray {
-    std::map<int, FaceBuffers> FB_Idx;
-};
-
 struct RenderBuffers
 {
     std::map<int, std::vector<VertexData>> v_faceVBOs;
@@ -380,8 +356,13 @@ struct OpaqueModelVBO {
 };
 
 struct MergedModelFacesData {
-    bgfx::VertexBufferHandle vbo = BGFX_INVALID_HANDLE;
-    bgfx::IndexBufferHandle  ibo = BGFX_INVALID_HANDLE;
+    // Offsets/counts into CQuake3BSP::m_worldVBO / m_worldIBO — the whole
+    // map shares one vertex buffer and one index buffer; each merged group
+    // is just a sub-range of it, selected at draw time via setVertexBuffer/
+    // setIndexBuffer start+count parameters.
+    uint32_t vertexOffset = 0;
+    uint32_t vertexCount  = 0;
+    uint32_t indexOffset  = 0;
     uint32_t IndexCount   = 0;
     uint32   referenceFace = 0;
     uint32   uId           = 0;
@@ -466,16 +447,13 @@ public:
 
     void GenerateTexture();
     void GenerateLightmap();
-    bool RenderSingleFace(int index, bool lightmap, LightVolPointData lightData, mat4 model);
     bool RenderMergedFace(int index, bool lightmap, LightVolPointData lightData, mat4 model);
-    void renderFaces();
 
     void BuildVBO();
     void CreateVBO_Patch(int index);
     void CreateVBO(int m_numOfFaces);
     void FillExtraLightmapUVs();
     void BSPDebug(int index);
-    void CreateRenderBuffers(int index);
     void CreateIndices(int index);
 
     std::string GetLightMapFilePathFromId(int id, const std::string& filePath);
@@ -504,7 +482,11 @@ public:
     tBSPFace*         m_pFaces;      // always populated (converted from RBSP if needed)
     tBSPFaceRBSP*     m_pFacesRBSP;  // raw on-disk RBSP/FBSP faces (nullptr for IBSP)
 
-    FaceBuffArray  FB_array;
+    // Whole-map shared buffers: every merged face group is a sub-range of
+    // these, addressed via MergedModelFacesData::vertexOffset/indexOffset.
+    bgfx::VertexBufferHandle m_worldVBO = BGFX_INVALID_HANDLE;
+    bgfx::IndexBufferHandle  m_worldIBO = BGFX_INVALID_HANDLE;
+
     RenderBuffers  Rbuffers;
     tBSPTexture*   pTextures;
     tBSPLightmap*  pLightmaps;  // legacy 128x128 raw data (nullptr for FBSP)

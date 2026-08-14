@@ -59,6 +59,7 @@
 #include <cstdio>
 #include <string>
 #include <vector>
+#include <map>
 
 namespace
 {
@@ -450,8 +451,35 @@ struct PhysicsMaterialHelper::Impl
         return PhysicsMaterialType::Unknown;
     }
 
-    PhysicsMaterialType Classify(std::string_view texturePath) const
+	static inline std::map<std::string, PhysicsMaterialType> texturesCache;
+
+	static PhysicsMaterialType GetCachedMaterial(std::string_view texturePath)
+	{
+		auto it = texturesCache.find(std::string(texturePath));
+		if (it != texturesCache.end())
+		{
+			return it->second;
+		}
+		return PhysicsMaterialType::Null;
+	}
+
+	static void CacheMaterial(std::string_view texturePath, PhysicsMaterialType material)
+	{
+		texturesCache[std::string(texturePath)] = material;
+	}
+
+    PhysicsMaterialType Classify(std::string_view texturePath)
     {
+
+		auto cachedMaterial = GetCachedMaterial(texturePath);
+
+		if (cachedMaterial != PhysicsMaterialType::Null)
+		{
+			return cachedMaterial;
+		}
+
+        PhysicsMaterialType result;
+
         std::string name;
         std::string folder;
         SplitPath(texturePath, name, folder);
@@ -465,10 +493,16 @@ struct PhysicsMaterialHelper::Impl
         for (size_t i = 0; i < kRuleCount; i++)
         {
             if (RegexSearchCaseInsensitive(rules[i].tokens.data(), name) >= 0)
-                return rules[i].material;
+            {
+                result = rules[i].material;
+				CacheMaterial(texturePath, result);
+				return result;
+            }
         }
 
-        return FolderFallback(folder);
+        result = FolderFallback(folder);
+        CacheMaterial(texturePath, result);
+        return result;
     }
 };
 
@@ -495,7 +529,7 @@ bool PhysicsMaterialHelper::Initialize()
     return Instance().m_impl->initSucceeded;
 }
 
-PhysicsMaterialType PhysicsMaterialHelper::ClassifyImpl(std::string_view texturePath) const
+PhysicsMaterialType PhysicsMaterialHelper::ClassifyImpl(std::string_view texturePath)
 {
     return m_impl->Classify(texturePath);
 }

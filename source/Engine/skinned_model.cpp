@@ -618,6 +618,11 @@ SkinnedMesh ModelLoader<SkinnedMesh>::processMesh(aiMesh* mesh, const aiScene* s
     const bgfx::Memory* vbMem = bgfx::copy(skinMesh.vertices.data(), sizeof(VertexData) * skinMesh.vertices.size());
     skinMesh.vbh = bgfx::createVertexBuffer(vbMem, skinMesh.layout);
 
+    if(bgfx::isValid(skinMesh.vbh) == false)
+    {
+		throw std::runtime_error("Failed to create vertex buffer for mesh: " + skinMesh.name);
+    }
+
     const bgfx::Memory* ibMem = bgfx::copy(skinMesh.indices.data(), sizeof(uint32_t) * skinMesh.indices.size());
     skinMesh.ibh = bgfx::createIndexBuffer(ibMem, BGFX_BUFFER_INDEX32);
 

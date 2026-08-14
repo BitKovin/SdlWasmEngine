@@ -1,18 +1,18 @@
 #include <Particle/GlobalParticleSystem.hpp>
 #include <FogManager.h>
 
-class particle_volumetricFogEmitter : public ParticleEmitter
+class particle_volumetricFogLightEmitter : public ParticleEmitter
 {
 public:
 
-    particle_volumetricFogEmitter()
+    particle_volumetricFogLightEmitter()
     {
         texture = "GameData/textures/particles/smoke.png";
         SpawnRate = 0;
         Emitting = true;
 
-        MaxParticles = 500;
-        InitialSpawnCount = 500;
+        MaxParticles = 1100;
+        InitialSpawnCount = 1100;
 
         Duration = 1000000;
 
@@ -31,10 +31,10 @@ public:
 
         if (yDist > 23)
         {
-            particle.position.y = Camera::position.y + (RandomFloat() * 2 - 0.8f) * 5.0f;
+            particle = GetNewParticle();
         }
 
-        if (distanceToCamera > 50)
+        if (distanceToCamera > 80)
         {
             vec3 oldPos = particle.position;
             particle = GetNewParticle();
@@ -62,7 +62,7 @@ public:
         particle.Transparency = MathHelper::MapRange(distanceToCamera, 1, 20, 0.07, 0.1f) * fadeIn * fadeOut
             * MathHelper::MapRange(distanceToCamera, 2, 7, 0.5, 1) * 0.6f;
 
-        particle.Size = MathHelper::MapRange(distanceToCamera, 1, 30, 8, 10);
+        particle.Size = MathHelper::MapRange(distanceToCamera, 1, 50, 11, 15);
 
         return particle;
     }
@@ -74,7 +74,7 @@ public:
         particle.Size = 3;
         particle.Transparency = 0.0f;
 
-        particle.position = Camera::position + MathHelper::XZ(RandomPosition(35)) + vec3(0, RandomFloat() * 2 - 0.8f, 0) * 4.0f;
+        particle.position = Camera::position + MathHelper::XZ(RandomPosition(70)) + vec3(0, RandomFloat() * 2 - 1.4f, 0) * 8.0f;
 
         particle.lifeTime = 0;
 
@@ -122,18 +122,18 @@ private:
 };
 
 
-class VolumetricFogSystem : public GlobalParticleSystem
+class VolumetricFogLightSystem : public GlobalParticleSystem
 {
 public:
 
-    particle_volumetricFogEmitter* particle_fog;
+    particle_volumetricFogLightEmitter* particle_fog;
 
-    VolumetricFogSystem()
+    VolumetricFogLightSystem()
     {
 
         //FogManager::Opacity = 1;
 
-        particle_fog = new particle_volumetricFogEmitter();
+        particle_fog = new particle_volumetricFogLightEmitter();
 
         emitters.push_back(particle_fog);
     }
@@ -164,4 +164,4 @@ private:
 };
 
 
-REGISTER_ENTITY(VolumetricFogSystem, "fog")
+REGISTER_ENTITY(VolumetricFogLightSystem, "fogLight")

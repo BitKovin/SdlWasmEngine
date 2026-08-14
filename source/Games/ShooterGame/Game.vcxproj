@@ -487,6 +487,7 @@
     <ClCompile Include="ParticleSystems\CaneTrail.cpp" />
     <ClCompile Include="ParticleSystems\CannonBulletTrail.cpp" />
     <ClCompile Include="ParticleSystems\Fog.cpp" />
+    <ClCompile Include="ParticleSystems\FogLight.cpp" />
     <ClCompile Include="ParticleSystems\HitBlood.cpp" />
     <ClCompile Include="ParticleSystems\WeaponSmoke.cpp" />
     <ClCompile Include="Settings\GameSettings.cpp" />

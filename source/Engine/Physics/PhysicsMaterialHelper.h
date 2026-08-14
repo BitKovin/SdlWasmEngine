@@ -98,6 +98,7 @@ namespace PhysicsMaterialTypeBits
 // ---------------------------------------------------------------------
 enum class PhysicsMaterialType : uint64_t
 {
+    Null = UINT64_MAX,
     Unknown = 0,
 
     // --- Non-rendering / engine-only ------------------------------------
@@ -270,7 +271,7 @@ private:
 
     static PhysicsMaterialHelper & Instance();
 
-    PhysicsMaterialType ClassifyImpl(std::string_view texturePath) const;
+    PhysicsMaterialType ClassifyImpl(std::string_view texturePath);
 
     struct Impl;
     Impl * m_impl; // owned; never null after construction succeeds

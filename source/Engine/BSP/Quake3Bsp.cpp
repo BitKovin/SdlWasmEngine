@@ -58,11 +58,8 @@ CQuake3BSP::~CQuake3BSP()
         if (bgfx::isValid(modelVBO.ibo)) bgfx::destroy(modelVBO.ibo);
     }
 
-    for (auto& mergedModel : mergedFacesData)
-    {
-        if (bgfx::isValid(mergedModel.vbo)) bgfx::destroy(mergedModel.vbo);
-        if (bgfx::isValid(mergedModel.ibo)) bgfx::destroy(mergedModel.ibo);
-    }
+    if (bgfx::isValid(m_worldVBO)) { bgfx::destroy(m_worldVBO); m_worldVBO = BGFX_INVALID_HANDLE; }
+    if (bgfx::isValid(m_worldIBO)) { bgfx::destroy(m_worldIBO); m_worldIBO = BGFX_INVALID_HANDLE; }
 
     delete[] m_pVerts;
     delete[] m_pVertsRBSP;
@@ -541,7 +538,7 @@ bool CQuake3BSP::LoadBSP(const char* filename)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// BuildVBO / CreateVBO / CreateIndices / CreateRenderBuffers
+// BuildVBO / CreateVBO / CreateIndices
 // ─────────────────────────────────────────────────────────────────────────────
 
 void CQuake3BSP::BuildVBO()
@@ -554,7 +551,6 @@ void CQuake3BSP::BuildVBO()
 
         CreateVBO(index);
         CreateIndices(index);
-        CreateRenderBuffers(index);
         numVisibleFaces++;
     }
 
@@ -869,28 +865,6 @@ void CQuake3BSP::CreateIndices(int index)
         out.push_back(i2);
         out.push_back(i1);
     }
-}
-
-// ── CreateRenderBuffers ───────────────────────────────────────────────────
-
-void CQuake3BSP::CreateRenderBuffers(int index)
-{
-    const auto& vertices = Rbuffers.v_faceVBOs[index];
-    const auto& indices = Rbuffers.v_faceIDXs[index];
-
-    // Billboards and degenerate faces produce no geometry
-    if (vertices.empty() || indices.empty()) return;
-
-    auto& fb = FB_array.FB_Idx[index];
-
-    const bgfx::Memory* vMem = bgfx::copy(
-        vertices.data(), static_cast<uint32_t>(vertices.size() * sizeof(VertexData)));
-    fb.VBO = bgfx::createVertexBuffer(vMem, VertexData::Declaration());
-
-    const bgfx::Memory* iMem = bgfx::copy(
-        indices.data(), static_cast<uint32_t>(indices.size() * sizeof(uint32_t)));
-    fb.EBO = bgfx::createIndexBuffer(iMem, BGFX_BUFFER_INDEX32);
-    fb.IndexCount = static_cast<uint32_t>(indices.size());
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1237,6 +1211,16 @@ void CQuake3BSP::BuildMergedModels()
 
     mergedFacesMapping.resize(m_numOfFaces);
 
+    // Accumulate every merged group's geometry into two flat CPU arrays.
+    // Each group's indices come out of MergeMeshes() already 0-based
+    // relative to that group's own vertex list, which is exactly what
+    // bgfx needs: setVertexBuffer(stream, vbo, startVertex, count) shifts
+    // the vertex fetch by startVertex, so index value 0 in a sub-range
+    // resolves to vertex `startVertex` of the shared buffer without any
+    // index rewriting on our part.
+    std::vector<VertexData> allVertices;
+    std::vector<uint32_t>   allIndices;
+
     for (const auto& keyPair : facesMap)
     {
         vector<MeshUtils::VerticesIndices> facesMeshes;
@@ -1254,18 +1238,15 @@ void CQuake3BSP::BuildMergedModels()
 
         MergedModelFacesData data;
 
-        {
-            const bgfx::Memory* vMem = bgfx::copy(
-                mergedMesh.vertices.data(),
-                static_cast<uint32_t>(mergedMesh.vertices.size() * sizeof(VertexData)));
-            data.vbo = bgfx::createVertexBuffer(vMem, VertexData::Declaration());
+        data.vertexOffset = static_cast<uint32_t>(allVertices.size());
+        data.vertexCount  = static_cast<uint32_t>(mergedMesh.vertices.size());
+        data.indexOffset  = static_cast<uint32_t>(allIndices.size());
+        data.IndexCount   = static_cast<uint32_t>(mergedMesh.indices.size());
 
-            const bgfx::Memory* iMem = bgfx::copy(
-                mergedMesh.indices.data(),
-                static_cast<uint32_t>(mergedMesh.indices.size() * sizeof(uint32_t)));
-            data.ibo = bgfx::createIndexBuffer(iMem, BGFX_BUFFER_INDEX32);
-            data.IndexCount = static_cast<uint32_t>(mergedMesh.indices.size());
-        }
+        allVertices.insert(allVertices.end(),
+            mergedMesh.vertices.begin(), mergedMesh.vertices.end());
+        allIndices.insert(allIndices.end(),
+            mergedMesh.indices.begin(), mergedMesh.indices.end());
 
         data.referenceFace = keyPair.second[0];
         data.uId = (uint32)mergedFacesData.size();
@@ -1277,6 +1258,21 @@ void CQuake3BSP::BuildMergedModels()
 
         for (int i : keyPair.second)
             mergedFacesMapping[i] = data.uId;
+    }
+
+    // One VBO + one IBO for the entire map. Individual draws select their
+    // slice via MergedModelFacesData's offset/count fields.
+    if (!allVertices.empty() && !allIndices.empty())
+    {
+        const bgfx::Memory* vMem = bgfx::copy(
+            allVertices.data(),
+            static_cast<uint32_t>(allVertices.size() * sizeof(VertexData)));
+        m_worldVBO = bgfx::createVertexBuffer(vMem, VertexData::Declaration());
+
+        const bgfx::Memory* iMem = bgfx::copy(
+            allIndices.data(),
+            static_cast<uint32_t>(allIndices.size() * sizeof(uint32_t)));
+        m_worldIBO = bgfx::createIndexBuffer(iMem, BGFX_BUFFER_INDEX32);
     }
 }
 
@@ -2007,7 +2003,7 @@ void CQuake3BSP::RenderBSP(const glm::vec3& cameraPos, tBSPModel& model,
     LightVolPointData lightData = { vec3(0), vec3(0), vec3(0) };
 
     // bgfx: depth writes are controlled per-draw via BGFX_STATE_WRITE_Z in the shader submit call.
-    // Opaque pass uses depth write (set in RenderMergedFace / RenderSingleFace state flags).
+    // Opaque pass uses depth write (set in RenderMergedFace state flags).
     if (!lightmap)
     {
         // model.mins/maxs are already in engine Y-up space after the LoadBSP
@@ -2106,70 +2102,6 @@ bool CQuake3BSP::IsFaceTransparent(int index)
     return cachedFaces[index].transparent;
 }
 
-// ─── RenderSingleFace ────────────────────────────────────────────────────────
-// Issues one indexed draw call for a single BSP face using its prebuilt VAO.
-// All texture binding and draw submission go through the existing abstraction
-// layer (ShaderProgram::SetTexture / VAO::DrawIndexed).
-// ─────────────────────────────────────────────────────────────────────────────
-
-bool CQuake3BSP::RenderSingleFace(int index, bool lightmap,
-    LightVolPointData lightData, mat4 model)
-{
-    auto bounds = faceBounds[index];
-    bounds = bounds.Transform(model);
-
-    if (!Camera::frustum.IsBoxVisible(bounds.Min, bounds.Max))
-        return false;
-
-    auto& buffers = FB_array.FB_Idx[index];
-    if (!bgfx::isValid(buffers.VBO) || !bgfx::isValid(buffers.EBO))
-        return false;
-
-    const CachedFaceTextureData& data = cachedFaces[index];
-
-    int faceTexture = GetFaceTextureNativeId(data.textureId);
-    if (faceTexture == 0) return false;
-
-    Shader* shader = ShaderManager::GetShaderProgram(
-        "bsp", data.isCube ? "bsp/bsp_cube" : "bsp/bsp");
-    shader->UseProgram();
-
-    shader->SetUniform("light_color", lightData.ambientColor);
-    shader->SetUniform("direct_light_color", lightData.directColor);
-    shader->SetUniform("direct_light_dir", lightData.direction);
-
-    bgfx::TextureHandle albedoHandle = { static_cast<uint16_t>(faceTexture) };
-    if (data.isCube)
-        shader->SetCubemapTexture("s_bspTexture", albedoHandle);
-    else
-        shader->SetTexture("s_bspTexture", albedoHandle);
-
-    // Bind all active lightmap slots. Slot 0 is always s_bspLightmap (primary).
-    // Slots 1-3 are s_bspLightmap1 .. s_bspLightmap3 for multi-style blending.
-    static const char* lmSamplers[BSP_MAX_LIGHTMAP_STYLES] = {
-        "s_bspLightmap", "s_bspLightmap1", "s_bspLightmap2", "s_bspLightmap3"
-    };
-    int missingId = m_missingLightmap ? (int)m_missingLightmap->getID() : 0;
-    for (int s = 0; s < BSP_MAX_LIGHTMAP_STYLES; ++s) {
-        int lmId = (s < data.numActiveSlots) ? data.lightmapIds[s] : missingId;
-        bgfx::TextureHandle lmHandle = { static_cast<uint16_t>(lmId) };
-        shader->SetTexture(lmSamplers[s], lmHandle);
-    }
-    shader->SetUniform("numLightmapSlots", (float)data.numActiveSlots);
-
-    shader->SetUniform("view", Camera::finalizedView);
-    shader->SetUniform("projection", Camera::finalizedProjection);
-    shader->SetUniform("model", model);
-
-    EngineMain::MainInstance->MainRenderer->SetSurfaceShaderUniforms(shader);
-
-    bgfx::setVertexBuffer(0, buffers.VBO);
-    bgfx::setIndexBuffer(buffers.EBO);
-
-    shader->Submit(ViewIdManager::GetCurrentId());
-    return true;
-}
-
 // ─── RenderMergedFace ────────────────────────────────────────────────────────
 
 bool CQuake3BSP::RenderMergedFace(int mergedIndex, bool lightmap,
@@ -2186,7 +2118,7 @@ bool CQuake3BSP::RenderMergedFace(int mergedIndex, bool lightmap,
     if (!Camera::frustum.IsBoxVisible(bounds.Min, bounds.Max))
         return false;
 
-    if (!bgfx::isValid(mergedFace.vbo) || !bgfx::isValid(mergedFace.ibo))
+    if (!bgfx::isValid(m_worldVBO) || !bgfx::isValid(m_worldIBO))
         return false;
 
     const CachedFaceTextureData& data = cachedFaces[mergedFace.referenceFace];
@@ -2256,19 +2188,13 @@ bool CQuake3BSP::RenderMergedFace(int mergedIndex, bool lightmap,
     EngineMain::MainInstance->MainRenderer->SetSurfaceShaderUniforms(shader);
     LightManager::ApplyPointLightToShader(shader, bounds.Min, bounds.Max);
 
-    bgfx::setVertexBuffer(0, mergedFace.vbo);
-    bgfx::setIndexBuffer(mergedFace.ibo);
+    bgfx::setVertexBuffer(0, m_worldVBO, mergedFace.vertexOffset, mergedFace.vertexCount);
+    bgfx::setIndexBuffer(m_worldIBO, mergedFace.indexOffset, mergedFace.IndexCount);
 
     BgfxStateManager::Apply();
     shader->Submit(ViewIdManager::GetCurrentId());
     BgfxStateManager::SetState(startState);
     return true;
-}
-
-void CQuake3BSP::renderFaces()
-{
-    for (auto& f : Rbuffers.v_faceVBOs)
-        RenderSingleFace(f.first, true, LightVolPointData(), scale(vec3(1.0f) / MAP_SCALE));
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
