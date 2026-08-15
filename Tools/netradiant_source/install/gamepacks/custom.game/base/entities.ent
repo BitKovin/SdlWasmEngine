@@ -446,4 +446,9 @@ mirrors player inside this area against plane described in transform point
     <group name="snd_reverb_zone" color="0.5 0.5 0.5">
 Plays fmod snapshop when entering. Can override each other.
 <string key="snapshot" name="Snapshot Path" value="snapshot:/Reverb/Cave Reverb">path to snapshot</string><integer key="priority" name="Priority" value="1">0 for world default</integer><string key="classname" name="Classname" value="snd_reverb_zone">The classname of the entity.</string></group>
+    <group name="trigger_damage" color="0.5 0.5 0.5">
+        <real key="enterDamage" name="enterDamage" value="10" />
+        <real key="tickDamage" name="tickDamage" value="10" />
+        <string key="classname" name="Classname" value="trigger_damage">The classname of the entity.</string>
+    </group>
 </classes>

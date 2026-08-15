@@ -32,6 +32,13 @@
 <command>[bspzip] &quot;[BspFile]&quot;</command>
 </build>
 <separator/>
+<build name="(Final) Fast">
+<command>[q3map2] -meta &quot;[MapFile]&quot;</command>
+<command></command>
+<command>[q3map2] -vis -saveprt &quot;[MapFile]&quot;</command>
+<command>[q3map2] -light -fast -patchshadows -samples 1 -filter -bounce 0 -shade [colorCorrection] -threads [threads] [dirt] -lightmapsize 256 &quot;[MapFile]&quot;</command>
+<command>[bspzip] &quot;[BspFile]&quot;</command>
+</build>
 <build name="(Final)">
 <command>[q3map2] -meta &quot;[MapFile]&quot;</command>
 <command></command>

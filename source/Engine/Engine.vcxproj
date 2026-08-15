@@ -377,6 +377,7 @@
     <ClCompile Include="Entities\Brushes\Sound\FmodReverbZone.cpp" />
     <ClCompile Include="Entities\Brushes\Sound\FmodReverbZone.h" />
     <ClCompile Include="Entities\Brushes\TriggerBase.cpp" />
+    <ClCompile Include="Entities\Brushes\TriggerDamage.cpp" />
     <ClCompile Include="Entities\PointLight.cpp" />
     <ClCompile Include="Entities\transformPoint.cpp" />
     <ClCompile Include="EntityHandle.cpp" />
@@ -544,6 +545,7 @@
     <ClInclude Include="Entities\Brushes\DestructibleBrush.hpp" />
     <ClInclude Include="Entities\Brushes\MovebleBrush.hpp" />
     <ClInclude Include="Entities\Brushes\TriggerBase.hpp" />
+    <ClInclude Include="Entities\Brushes\TriggerDamage.hpp" />
     <ClInclude Include="Entities\Brushes\TriggerOnce.hpp" />
     <ClInclude Include="Entities\Brushes\vis_through.hpp" />
     <ClInclude Include="Entities\Editor\Counter.h" />
