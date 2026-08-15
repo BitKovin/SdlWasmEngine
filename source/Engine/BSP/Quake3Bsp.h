@@ -659,6 +659,8 @@ public:
     BoundingBox GetTransformedBounds();
     mat4        GetWorldMatrix();
 
+	BoundingBox GetBoundingBox() override { return GetTransformedBounds(); }
+
     BSPModelRef(CQuake3BSP* bsp_ptr, int model_id, tBSPModel& model_ref);
     ~BSPModelRef();
 

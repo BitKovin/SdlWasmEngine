@@ -480,15 +480,13 @@ void Level::AsyncUpdate(bool paused)
 				std::string zoneName = "Async Update Entity" + toUpdate[i]->GetId();
 				ZoneName(zoneName.c_str(), zoneName.size());
 				toUpdate[i]->AsyncUpdate();
-			});
-	}
+			});}
 
 	AddPendingLevelObjects();
 	RemovePendingEntities();
 }
 
-void Level::PreFinalize()
-{
+void Level::PreFinalize() {
 	AddPendingLevelObjects();
 	RemovePendingEntities();
 
@@ -511,16 +509,27 @@ void Level::PreFinalize()
 		for (auto d : var->GetDrawMeshes())
 			work.push_back({ var, d });
 
-	if (!work.empty())
-	{
-		asyncUpdateThreadPool->ParallelFor(work.size(), [&work](size_t i)
+	// Total jobs = 1 (Navigation) + the number of mesh work items
+	size_t totalJobs = work.size() + 1;
+
+	asyncUpdateThreadPool->ParallelFor(totalJobs, [&work](size_t i)
+		{
+			if (i == 0)
 			{
+				ZoneScopedN("Navigation");
+				NavigationSystem::Update();
+			}
+			else
+			{
+				// Offset by 1 to access the correct mesh in the vector
+				size_t workIndex = i - 1;
+
 				ZoneScoped;
-				std::string zoneName = "draw object pre finalize" + work[i].var->GetId();
+				std::string zoneName = "draw object pre finalize" + work[workIndex].var->GetId();
 				ZoneName(zoneName.c_str(), zoneName.size());
-				work[i].mesh->PreFinalize();
-			});
-	}
+				work[workIndex].mesh->PreFinalize();
+			}
+		});
 
 	AddPendingLevelObjects();
 	RemovePendingEntities();

@@ -9,6 +9,7 @@
 #include <optional>
 #include <chrono>
 #include <imgui/imgui.h>
+#include <bgfx/bgfx.h>
 
 #include <atomic>
 
@@ -126,6 +127,41 @@ public:
         return totalMemory_;
     }
 
+    // Real bgfx resource handles are uint16_t (0..65535), so any ID at or
+    // above this boundary is guaranteed to be a synthetic/approximated entry
+    // that doesn't correspond to an actual bgfx handle -- e.g. the backbuffer
+    // in BgfxResetManager.h, which bgfx never exposes a handle for and which
+    // therefore can never appear in bgfx's own internal counters (getStats()'s
+    // textureMemoryUsed/rtMemoryUsed). Anything comparing our totals against
+    // those bgfx counters needs to exclude this range or the comparison is
+    // apples-to-oranges.
+    static constexpr uint64_t kSyntheticIdBase = 0x10000;
+
+    // Sum of only the entries backed by a real bgfx handle (id < kSyntheticIdBase).
+    // Use this instead of getMemoryByType() when cross-checking against bgfx::getStats().
+    size_t getRealMemoryByType(ResourceType type) const {
+        auto it = resources_.find(type);
+        if (it == resources_.end()) return 0;
+        size_t total = 0;
+        for (const auto& [id, entry] : it->second) {
+            if (id < kSyntheticIdBase) total += entry.sizeBytes;
+        }
+        return total;
+    }
+
+    // Sum of only the synthetic/approximated entries (id >= kSyntheticIdBase),
+    // e.g. the backbuffer. These are real VRAM that shows up in driver-reported
+    // totals, but can never show up in bgfx's own per-handle counters.
+    size_t getSyntheticMemoryByType(ResourceType type) const {
+        auto it = resources_.find(type);
+        if (it == resources_.end()) return 0;
+        size_t total = 0;
+        for (const auto& [id, entry] : it->second) {
+            if (id >= kSyntheticIdBase) total += entry.sizeBytes;
+        }
+        return total;
+    }
+
     // Get memory usage for a specific type
     size_t getMemoryByType(ResourceType type) const {
         auto it = totalMemoryByType_.find(type);
@@ -158,6 +194,115 @@ public:
         ImGui::Text("Total Memory: %.2f MB", totalMemory_ / (1024.0f * 1024.0f));
         ImGui::SameLine();
         ImGui::Text(" | Total Resources: %zu", getTotalResourceCount());
+
+        // Cross-check against bgfx's own counters. Our number above is a
+        // manual sum of every resource we explicitly register/unregister,
+        // so it can only ever be as complete as our instrumentation. bgfx
+        // itself tracks its own texture/render-target memory internally
+        // (independent of our bookkeeping) and, on backends that support
+        // it, the graphics driver reports the real committed VRAM for the
+        // process. Neither of these is "wrong" if it disagrees with us --
+        // they're the ground truth we're trying to match.
+        {
+            const bgfx::Stats* stats = bgfx::getStats();
+            if (stats)
+            {
+                const float bgfxTexRtMB =
+                    (stats->textureMemoryUsed > 0 ? stats->textureMemoryUsed : 0) / (1024.0f * 1024.0f) +
+                    (stats->rtMemoryUsed     > 0 ? stats->rtMemoryUsed     : 0) / (1024.0f * 1024.0f);
+
+                // Apples-to-apples: bgfx's counters only cover textures and
+                // render targets IT created (i.e. resources with a real bgfx
+                // handle), so compare against that same subset of our own
+                // tracking -- not getMemoryByType(), which would also pull in
+                // synthetic/approximated entries like the backbuffer that bgfx
+                // structurally can never count (it never handed us a handle
+                // for the swap chain in the first place).
+                const float ourTexRtMB =
+                    getRealMemoryByType(ResourceType::Texture)       / (1024.0f * 1024.0f) +
+                    getRealMemoryByType(ResourceType::TextureCube)   / (1024.0f * 1024.0f) +
+                    getRealMemoryByType(ResourceType::RenderTexture) / (1024.0f * 1024.0f);
+
+                const float syntheticMB =
+                    getSyntheticMemoryByType(ResourceType::Texture)       / (1024.0f * 1024.0f) +
+                    getSyntheticMemoryByType(ResourceType::TextureCube)   / (1024.0f * 1024.0f) +
+                    getSyntheticMemoryByType(ResourceType::RenderTexture) / (1024.0f * 1024.0f);
+
+                ImGui::Text("bgfx-reported (textures + RTs): %.2f MB", bgfxTexRtMB);
+                ImGui::SameLine();
+                ImGui::Text(" | Ours, real bgfx handles only: %.2f MB", ourTexRtMB);
+                ImGui::SameLine();
+                ImGui::TextColored(ImVec4(0.6f, 0.85f, 1.0f, 1.0f), " (delta %.2f MB)", ourTexRtMB - bgfxTexRtMB);
+                ImGui::TextDisabled("A non-zero delta here means we're missing (or double-counting) a real texture/RT creation site -- this is on us, not driver overhead.");
+                if (syntheticMB > 0.0f)
+                {
+                    ImGui::Text("Approximated, no real bgfx handle (e.g. backbuffer): %.2f MB", syntheticMB);
+                    ImGui::SameLine();
+                    ImGui::TextDisabled("(excluded above by design -- bgfx can't count what it never gave us a handle for)");
+                }
+
+                if (stats->gpuMemoryUsed >= 0)
+                {
+                    ImGui::Text("Driver-reported GPU memory: %.2f MB", stats->gpuMemoryUsed / (1024.0f * 1024.0f));
+                    if (stats->gpuMemoryMax > 0)
+                    {
+                        ImGui::SameLine();
+                        ImGui::Text(" / %.2f MB max", stats->gpuMemoryMax / (1024.0f * 1024.0f));
+                    }
+
+                    // Whether the figure above is scoped to this process or
+                    // reflects the whole GPU depends on which bgfx backend
+                    // ended up active at runtime -- this engine doesn't force
+                    // one, so we check and label it honestly rather than
+                    // assuming.
+                    const bgfx::RendererType::Enum renderer = bgfx::getRendererType();
+                    switch (renderer)
+                    {
+                    case bgfx::RendererType::Direct3D11:
+                    case bgfx::RendererType::Direct3D12:
+                    case bgfx::RendererType::Metal:
+                        ImGui::TextDisabled("(per-process on this backend -- comparable to Afterburner's per-process figure)");
+                        break;
+                    case bgfx::RendererType::OpenGL:
+                    case bgfx::RendererType::OpenGLES:
+                        ImGui::TextColored(ImVec4(1.0f, 0.7f, 0.2f, 1.0f),
+                            "(WARNING: on OpenGL this is derived from total-minus-available VRAM -- "
+                            "it reflects the whole GPU across every process, not just this one. "
+                            "Not directly comparable to a per-process tool.)");
+                        break;
+                    case bgfx::RendererType::Vulkan:
+                        ImGui::TextColored(ImVec4(1.0f, 0.85f, 0.3f, 1.0f),
+                            "(nominally per-process on Vulkan, but driver behavior here has been "
+                            "inconsistent -- verify against another tool before trusting it.)");
+                        break;
+                    default:
+                        ImGui::TextDisabled("(per-process semantics unverified for this backend)");
+                        break;
+                    }
+
+                    // Untracked = driver-reported minus bgfx's OWN internal
+                    // texture/RT counters, not minus our manual total. bgfx's
+                    // counters are the more trustworthy baseline here since
+                    // they're independent of whether we've wired up every
+                    // registration call site ourselves -- so this isolates
+                    // memory that is structurally invisible to any texture/RT
+                    // accounting at all: shader programs, uniform/constant
+                    // buffers, vertex/index buffer bytes (bgfx doesn't expose
+                    // a size for these either, only counts), the backbuffer if
+                    // the backend doesn't fold it into rtMemoryUsed, command
+                    // buffers, and driver/allocator overhead. If this is still
+                    // large, that's the real, structural gap -- not a bug in
+                    // our per-resource registration.
+                    const float untracked = (stats->gpuMemoryUsed / (1024.0f * 1024.0f)) - bgfxTexRtMB;
+                    ImGui::Text("Untracked beyond bgfx's texture/RT accounting: %.2f MB", untracked);
+                    ImGui::TextDisabled("(shaders, uniforms, VB/IB bytes, backbuffer if not in rtMemoryUsed, driver overhead)");
+                }
+                else
+                {
+                    ImGui::TextDisabled("Driver-reported VRAM: not exposed by this bgfx backend");
+                }
+            }
+        }
 
         ImGui::Separator();
 

@@ -9,6 +9,7 @@
 
 #include <BgfxStateManager.h>
 #include <Renderer/Abstractions/ViewIdManager.h>
+#include <Profiling/ResourceStatistics.hpp>
 
 // ---------------------------------------------------------------------------
 // Static member definitions
@@ -112,6 +113,17 @@ void ParticleEmitter::InitBilboardVaoIfNeeded()
 
     s_billboardVbh = bgfx::createVertexBuffer(bgfx::copy(vertices, sizeof(vertices)), s_billboardLayout);
     s_billboardIbh = bgfx::createIndexBuffer(bgfx::copy(indices, sizeof(indices)));
+
+    if (bgfx::isValid(s_billboardVbh))
+    {
+        ResourceStatistics::Instance().registerResource(
+            ResourceType::VertexBuffer, s_billboardVbh.idx, sizeof(vertices), "Particle Billboard VB");
+    }
+    if (bgfx::isValid(s_billboardIbh))
+    {
+        ResourceStatistics::Instance().registerResource(
+            ResourceType::IndexBuffer, s_billboardIbh.idx, sizeof(indices), "Particle Billboard IB");
+    }
 }
 
 void ParticleEmitter::DestroyBillboardVao()
@@ -119,12 +131,14 @@ void ParticleEmitter::DestroyBillboardVao()
 
 	if (bgfx::isValid(s_billboardVbh))
     {
+        ResourceStatistics::Instance().unregisterResource(ResourceType::VertexBuffer, s_billboardVbh.idx);
         bgfx::destroy(s_billboardVbh);
         s_billboardVbh = BGFX_INVALID_HANDLE;
     }
 
 	if (bgfx::isValid(s_billboardIbh))
     {
+        ResourceStatistics::Instance().unregisterResource(ResourceType::IndexBuffer, s_billboardIbh.idx);
         bgfx::destroy(s_billboardIbh);
         s_billboardIbh = BGFX_INVALID_HANDLE;
     }

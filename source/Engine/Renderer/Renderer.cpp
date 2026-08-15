@@ -10,6 +10,7 @@
 
 #include <bgfx/bgfx.h>
 #include <BgfxStateManager.h>
+#include <Profiling/ResourceStatistics.hpp>
 
 #include <World/WorldOrientationManager.h>
 
@@ -98,7 +99,10 @@ Renderer::~Renderer()
     delete depthBuffer;
 
     if (bgfx::isValid(m_fullscreenVB))
+    {
+        ResourceStatistics::Instance().unregisterResource(ResourceType::VertexBuffer, m_fullscreenVB.idx);
         bgfx::destroy(m_fullscreenVB);
+    }
 }
 
 // -----------------------------------------------------------------------
@@ -205,7 +209,6 @@ void Renderer::RenderLevel(Level* level, bgfx::FrameBufferHandle targetFrameBuff
     fullscreenShader->SetTexture("depthTexture", depthResolveBuffer->textureHandle());
     fullscreenShader->SetUniform("screenResolution", nativeRes);
     fullscreenShader->SetUniform("fxaaEnabled", FXAAEnabled);
-
 
     BgfxStateManager::Reset();
     BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Always);
@@ -696,6 +699,12 @@ void Renderer::InitFullscreenBuffers()
         bgfx::makeRef(kVerts, sizeof(kVerts)),
         m_fullscreenLayout
     );
+
+    if (bgfx::isValid(m_fullscreenVB))
+    {
+        ResourceStatistics::Instance().registerResource(
+            ResourceType::VertexBuffer, m_fullscreenVB.idx, sizeof(kVerts), "Fullscreen Triangle VB");
+    }
 }
 
 // -----------------------------------------------------------------------

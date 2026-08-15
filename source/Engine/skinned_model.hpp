@@ -14,6 +14,8 @@
 #include "BoundingBox.hpp"
 #include "utility/hashed_string.hpp"
 
+#include <Profiling/ResourceStatistics.hpp>
+
 #include <Helpers/Mesh/shadow_volume.hpp>
 
 #define MAX_BONE_INFLUENCE  4
@@ -58,12 +60,14 @@ namespace roj
             // Destroy GPU buffers if valid
             if (bgfx::isValid(vbh))
             {
+                ResourceStatistics::Instance().unregisterResource(ResourceType::VertexBuffer, vbh.idx);
                 bgfx::destroy(vbh);
                 vbh = BGFX_INVALID_HANDLE;
             }
 
             if (bgfx::isValid(ibh))
             {
+                ResourceStatistics::Instance().unregisterResource(ResourceType::IndexBuffer, ibh.idx);
                 bgfx::destroy(ibh);
                 ibh = BGFX_INVALID_HANDLE;
             }

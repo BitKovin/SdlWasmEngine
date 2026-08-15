@@ -15,6 +15,7 @@
 
 #include <BgfxStateManager.h>
 #include <Renderer/Abstractions/ViewIdManager.h>
+#include <Profiling/ResourceStatistics.hpp>
 
 #include <includedLibraries/stb_truetype.h>
 
@@ -125,6 +126,7 @@ struct FontAtlas {
     std::vector<uint8_t> pixels;         // ATLAS_W * ATLAS_H * 4 (RGBA8)
     bgfx::TextureHandle  texture = BGFX_INVALID_HANDLE;
     bool textureDirty = false;
+    std::string debugName;               // path + '@' + pixelHeight, for ResourceStatistics
 
     // ── Packing & Padding configuration ──────────────────────────────────────
     int padding = 10;
@@ -235,6 +237,17 @@ struct FontAtlas {
             BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP,
             nullptr);
 
+        if (bgfx::isValid(texture))
+        {
+            // Each atlas is ATLAS_W * ATLAS_H * 4 bytes (32MB at 4096x2048 RGBA8).
+            // This was previously completely untracked — every distinct
+            // font+size loaded via LoadFont() allocates one of these.
+            ResourceStatistics::Instance().registerResource(
+                ResourceType::Texture, texture.idx,
+                static_cast<size_t>(ATLAS_W) * ATLAS_H * 4,
+                debugName.empty() ? "FontAtlas" : debugName);
+        }
+
         return bgfx::isValid(texture);
     }
 
@@ -251,6 +264,7 @@ struct FontAtlas {
         // Must run on the same thread as other bgfx calls for this atlas.
         std::lock_guard<std::mutex> lock(mutex);
         if (bgfx::isValid(texture)) {
+            ResourceStatistics::Instance().unregisterResource(ResourceType::Texture, texture.idx);
             bgfx::destroy(texture);
             texture = BGFX_INVALID_HANDLE;
         }
@@ -576,6 +590,12 @@ namespace UiRenderer {
             bgfx::makeRef(quadVertices, sizeof(quadVertices)),
             s_quadLayout);
 
+        if (bgfx::isValid(s_quadVB))
+        {
+            ResourceStatistics::Instance().registerResource(
+                ResourceType::VertexBuffer, s_quadVB.idx, sizeof(quadVertices), "UI Quad VB");
+        }
+
         s_texturedShader = ShaderManager::GetShaderProgram("vs_ui", "fs_ui_textured");
         s_flatColorShader = ShaderManager::GetShaderProgram("vs_ui", "fs_ui_flatcolor");
     }
@@ -586,6 +606,7 @@ namespace UiRenderer {
     void Shutdown()
     {
         if (bgfx::isValid(s_quadVB)) {
+            ResourceStatistics::Instance().unregisterResource(ResourceType::VertexBuffer, s_quadVB.idx);
             bgfx::destroy(s_quadVB);
             s_quadVB = BGFX_INVALID_HANDLE;
         }
@@ -649,6 +670,8 @@ namespace UiRenderer {
             delete atlas;
             return INVALID_FONT;
         }
+
+        atlas->debugName = key;
 
         const FontHandle id = s_nextFontId++;
         s_fontRegistry[id] = atlas;

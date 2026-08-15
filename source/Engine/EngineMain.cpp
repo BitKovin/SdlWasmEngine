@@ -700,11 +700,6 @@ void EngineMain::GameUpdate()
     ZoneScopedN("GameUpdate");
 
     {
-        ZoneScopedN("Navigation");
-        NavigationSystem::Update();
-    }
-
-    {
         ZoneScopedN("Physics");
         if (Paused == false)
             Physics::Simulate();

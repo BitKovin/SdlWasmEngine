@@ -5,6 +5,8 @@
 #include "Helpers/StringHelper.h"
 #include "model_animator.hpp"
 
+#include <Profiling/ResourceStatistics.hpp>
+
 #include <Helpers/Mesh/shadow_volume.hpp>
 
 #include <unordered_set>
@@ -623,8 +625,21 @@ SkinnedMesh ModelLoader<SkinnedMesh>::processMesh(aiMesh* mesh, const aiScene* s
 		throw std::runtime_error("Failed to create vertex buffer for mesh: " + skinMesh.name);
     }
 
+    ResourceStatistics::Instance().registerResource(
+        ResourceType::VertexBuffer, skinMesh.vbh.idx,
+        sizeof(VertexData) * skinMesh.vertices.size(),
+        skinMesh.name.empty() ? "SkinnedMesh VB" : (skinMesh.name + " (VB)"));
+
     const bgfx::Memory* ibMem = bgfx::copy(skinMesh.indices.data(), sizeof(uint32_t) * skinMesh.indices.size());
     skinMesh.ibh = bgfx::createIndexBuffer(ibMem, BGFX_BUFFER_INDEX32);
+
+    if (bgfx::isValid(skinMesh.ibh))
+    {
+        ResourceStatistics::Instance().registerResource(
+            ResourceType::IndexBuffer, skinMesh.ibh.idx,
+            sizeof(uint32_t) * skinMesh.indices.size(),
+            skinMesh.name.empty() ? "SkinnedMesh IB" : (skinMesh.name + " (IB)"));
+    }
 
     skinMesh.shadowVolumePrecomp = BuildShadowVolumePrecomp(skinMesh);
 

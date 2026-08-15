@@ -6,6 +6,7 @@
 #include <ShaderManager.h>
 #include <Camera.h>
 #include <Logger.hpp>
+#include <Profiling/ResourceStatistics.hpp>
 
 #include <Renderer/Abstractions/ViewIdManager.h>
 
@@ -38,6 +39,13 @@ void DebugDraw::DebugVertex::init()
             vertexCapacity,
             DebugVertex::layout,
             BGFX_BUFFER_ALLOW_RESIZE);
+
+        if (bgfx::isValid(vertexBuffer))
+        {
+            ResourceStatistics::Instance().registerResource(
+                ResourceType::VertexBuffer, vertexBuffer.idx,
+                static_cast<size_t>(vertexCapacity) * sizeof(DebugVertex), "DebugDraw VB");
+        }
     }
 
 }
@@ -244,6 +252,7 @@ void DebugDraw::Draw()
     {
         if (bgfx::isValid(vertexBuffer))
         {
+            ResourceStatistics::Instance().unregisterResource(ResourceType::VertexBuffer, vertexBuffer.idx);
             bgfx::destroy(vertexBuffer);
             vertexBuffer = BGFX_INVALID_HANDLE;
         }
@@ -257,6 +266,10 @@ void DebugDraw::Draw()
 
         if (!bgfx::isValid(vertexBuffer))
             return;
+
+        ResourceStatistics::Instance().registerResource(
+            ResourceType::VertexBuffer, vertexBuffer.idx,
+            static_cast<size_t>(vertexCapacity) * sizeof(DebugVertex), "DebugDraw VB");
     }
 
     // Build vertex data

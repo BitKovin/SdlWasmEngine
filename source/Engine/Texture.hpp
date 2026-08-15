@@ -250,10 +250,18 @@ private:
 
         width = w;
         height = h;
-        ResourceStatistics::Instance().registerResource(
-            ResourceType::Texture, m_handle.idx,
-            (size_t)w * h * bpp,
-            "Texture*" + std::to_string(w) + "x" + std::to_string(h) + formatSuffix(format));
+        // Track the full mip chain, not just mip 0 — a generated chain adds
+        // ~1/3 more memory on top of the base level (sum of a geometric
+        // series with ratio 1/4 in area per level: 1 + 1/4 + 1/16 + ... = 4/3).
+        // Matches the precision already used in TextureCube.hpp.
+        {
+            size_t baseSize = (size_t)w * h * bpp;
+            size_t trackedSize = hasMips ? (baseSize + baseSize / 3) : baseSize;
+            ResourceStatistics::Instance().registerResource(
+                ResourceType::Texture, m_handle.idx,
+                trackedSize,
+                "Texture*" + std::to_string(w) + "x" + std::to_string(h) + formatSuffix(format));
+        }
         valid = true;
     }
 
@@ -354,10 +362,14 @@ private:
         // Report original dimensions to callers.
         width = w;
         height = h;
-        ResourceStatistics::Instance().registerResource(
-            ResourceType::Texture, m_handle.idx,
-            (size_t)w * h * bpp,
-            "Texture*" + std::to_string(w) + "x" + std::to_string(h) + formatSuffix(format));
+        {
+            size_t baseSize = (size_t)w * h * bpp;
+            size_t trackedSize = hasMips ? (baseSize + baseSize / 3) : baseSize;
+            ResourceStatistics::Instance().registerResource(
+                ResourceType::Texture, m_handle.idx,
+                trackedSize,
+                "Texture*" + std::to_string(w) + "x" + std::to_string(h) + formatSuffix(format));
+        }
         valid = true;
     }
     // -----------------------------------------------------------------------

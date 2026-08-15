@@ -4,6 +4,8 @@
 #include <Logger.hpp>
 #include <Network/NetworkedEntity.h>
 
+#include <Navigation/Navigation.hpp>
+
 class MovebleBrush : public NetworkedEntity
 {
 public:
@@ -26,6 +28,8 @@ public:
 	Delay updateSleepDelay;
 
 	bool useLightmap = false;
+
+	dtObstacleRef obstacleRef = 0;
 
 	MovebleBrush() : NetworkedEntity()
 	{
@@ -70,6 +74,8 @@ public:
 
 	}
 
+	void UpdateObstacle();
+
 	void Start()
 	{
 		Entity::Start();
@@ -97,13 +103,17 @@ public:
 			}
 
 		}
-
 	}
 
 	void LateUpdate()
 	{
 
 		Entity::LateUpdate();
+
+		if (obstacleRef == 0)
+		{
+			UpdateObstacle();
+		}
 
 		if (open)
 		{
@@ -153,8 +163,10 @@ public:
 
 		}
 
+		UpdateObstacle();
+
 		oldProgress = progress;
-		updateSleepDelay.AddDelay(0.2);
+		updateSleepDelay.AddDelay(0.1);
 
 	}
 

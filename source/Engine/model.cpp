@@ -61,8 +61,22 @@ namespace roj
 		const bgfx::Memory* vbMem = bgfx::makeRef(m.vertices.data(), sizeof(VertexData) * m.vertices.size());
 		m.vbh = bgfx::createVertexBuffer(vbMem, m.layout);
 
+		if (bgfx::isValid(m.vbh))
+		{
+			ResourceStatistics::Instance().registerResource(
+				ResourceType::VertexBuffer, m.vbh.idx,
+				sizeof(VertexData) * m.vertices.size(), "Mesh VB");
+		}
+
 		const bgfx::Memory* ibMem = bgfx::makeRef(m.indices.data(), sizeof(uint32_t) * m.indices.size());
 		m.ibh = bgfx::createIndexBuffer(ibMem, BGFX_BUFFER_INDEX32);
+
+		if (bgfx::isValid(m.ibh))
+		{
+			ResourceStatistics::Instance().registerResource(
+				ResourceType::IndexBuffer, m.ibh.idx,
+				sizeof(uint32_t) * m.indices.size(), "Mesh IB");
+		}
 
 		m.numIndices = static_cast<uint32_t>(indices.size());
 		m.textures = textures;

@@ -24,6 +24,7 @@
 
 #include <ShaderManager.h>
 #include <Physics.h>
+#include <Profiling/ResourceStatistics.hpp>
 
 #include <Logger.hpp>
 
@@ -54,12 +55,12 @@ CQuake3BSP::~CQuake3BSP()
 
     for (auto& modelVBO : opaqueVBOs)
     {
-        if (bgfx::isValid(modelVBO.vbo)) bgfx::destroy(modelVBO.vbo);
-        if (bgfx::isValid(modelVBO.ibo)) bgfx::destroy(modelVBO.ibo);
+        if (bgfx::isValid(modelVBO.vbo)) { ResourceStatistics::Instance().unregisterResource(ResourceType::VertexBuffer, modelVBO.vbo.idx); bgfx::destroy(modelVBO.vbo); }
+        if (bgfx::isValid(modelVBO.ibo)) { ResourceStatistics::Instance().unregisterResource(ResourceType::IndexBuffer, modelVBO.ibo.idx); bgfx::destroy(modelVBO.ibo); }
     }
 
-    if (bgfx::isValid(m_worldVBO)) { bgfx::destroy(m_worldVBO); m_worldVBO = BGFX_INVALID_HANDLE; }
-    if (bgfx::isValid(m_worldIBO)) { bgfx::destroy(m_worldIBO); m_worldIBO = BGFX_INVALID_HANDLE; }
+    if (bgfx::isValid(m_worldVBO)) { ResourceStatistics::Instance().unregisterResource(ResourceType::VertexBuffer, m_worldVBO.idx); bgfx::destroy(m_worldVBO); m_worldVBO = BGFX_INVALID_HANDLE; }
+    if (bgfx::isValid(m_worldIBO)) { ResourceStatistics::Instance().unregisterResource(ResourceType::IndexBuffer, m_worldIBO.idx); bgfx::destroy(m_worldIBO); m_worldIBO = BGFX_INVALID_HANDLE; }
 
     delete[] m_pVerts;
     delete[] m_pVertsRBSP;
@@ -1077,7 +1078,7 @@ void CQuake3BSP::PreloadFace(int index)
     data.isCube = isCube;
     data.textureId = faceTexture;
     data.textureName = textureName;
-    data.transparent = textureName.ends_with("_t") || transparentPixels;
+    data.transparent = textureName.ends_with("_t") || transparentPixels || StringHelper::Contains(textureName, "/common/");
     data.numOfIndices = numOfIndices;
     data.numActiveSlots = 1;
 
@@ -1273,6 +1274,21 @@ void CQuake3BSP::BuildMergedModels()
             allIndices.data(),
             static_cast<uint32_t>(allIndices.size() * sizeof(uint32_t)));
         m_worldIBO = bgfx::createIndexBuffer(iMem, BGFX_BUFFER_INDEX32);
+
+        if (bgfx::isValid(m_worldVBO))
+        {
+            ResourceStatistics::Instance().registerResource(
+                ResourceType::VertexBuffer, m_worldVBO.idx,
+                allVertices.size() * sizeof(VertexData),
+                "Quake3BSP World VBO: " + filePath);
+        }
+        if (bgfx::isValid(m_worldIBO))
+        {
+            ResourceStatistics::Instance().registerResource(
+                ResourceType::IndexBuffer, m_worldIBO.idx,
+                allIndices.size() * sizeof(uint32_t),
+                "Quake3BSP World IBO: " + filePath);
+        }
     }
 }
 
@@ -2240,6 +2256,21 @@ void CQuake3BSP::BuildStaticOpaqueObstacles()
                 static_cast<uint32_t>(indices.size() * sizeof(uint32_t)));
             modelVBO.ibo = bgfx::createIndexBuffer(iMem, BGFX_BUFFER_INDEX32);
             modelVBO.IndexCount = static_cast<uint32_t>(indices.size());
+
+            if (bgfx::isValid(modelVBO.vbo))
+            {
+                ResourceStatistics::Instance().registerResource(
+                    ResourceType::VertexBuffer, modelVBO.vbo.idx,
+                    vertices.size() * sizeof(VertexData),
+                    "Quake3BSP Model VBO[" + std::to_string(i) + "]: " + filePath);
+            }
+            if (bgfx::isValid(modelVBO.ibo))
+            {
+                ResourceStatistics::Instance().registerResource(
+                    ResourceType::IndexBuffer, modelVBO.ibo.idx,
+                    indices.size() * sizeof(uint32_t),
+                    "Quake3BSP Model IBO[" + std::to_string(i) + "]: " + filePath);
+            }
         }
 
         opaqueVBOs[i] = modelVBO;

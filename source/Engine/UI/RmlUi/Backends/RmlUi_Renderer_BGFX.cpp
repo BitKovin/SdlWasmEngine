@@ -119,24 +119,28 @@ RenderInterface_BGFX::~RenderInterface_BGFX()
     // Release all remaining geometry
     for (auto& [id, geo] : m_geometries)
     {
-        if (bgfx::isValid(geo.vbh)) bgfx::destroy(geo.vbh);
-        if (bgfx::isValid(geo.ibh)) bgfx::destroy(geo.ibh);
+        if (bgfx::isValid(geo.vbh)) { ResourceStatistics::Instance().unregisterResource(ResourceType::VertexBuffer, geo.vbh.idx); bgfx::destroy(geo.vbh); }
+        if (bgfx::isValid(geo.ibh)) { ResourceStatistics::Instance().unregisterResource(ResourceType::IndexBuffer, geo.ibh.idx); bgfx::destroy(geo.ibh); }
     }
     m_geometries.clear();
 
     // Release filters
     for (auto& [id, f] : m_filters)
     {
-        if (bgfx::isValid(f.mask_texture))
+        if (bgfx::isValid(f.mask_texture)) {
+            ResourceStatistics::Instance().unregisterResource(ResourceType::RenderTexture, f.mask_texture.idx);
             bgfx::destroy(f.mask_texture);
+        }
     }
     m_filters.clear();
 
     // Release shaders
     for (auto& [id, s] : m_shaders)
     {
-        if (bgfx::isValid(s.stop_texture))
+        if (bgfx::isValid(s.stop_texture)) {
+            ResourceStatistics::Instance().unregisterResource(ResourceType::Texture, s.stop_texture.idx);
             bgfx::destroy(s.stop_texture);
+        }
     }
     m_shaders.clear();
 
@@ -374,6 +378,19 @@ Rml::CompiledGeometryHandle RenderInterface_BGFX::CompileGeometry(
 
     geo.num_indices = static_cast<int>(indices.size());
 
+    if (bgfx::isValid(geo.vbh))
+    {
+        ResourceStatistics::Instance().registerResource(
+            ResourceType::VertexBuffer, geo.vbh.idx,
+            vertices.size() * sizeof(Rml::Vertex), "RmlUi Geometry VB");
+    }
+    if (bgfx::isValid(geo.ibh))
+    {
+        ResourceStatistics::Instance().registerResource(
+            ResourceType::IndexBuffer, geo.ibh.idx,
+            idx32.size() * sizeof(uint32_t), "RmlUi Geometry IB");
+    }
+
     Rml::CompiledGeometryHandle handle = m_nextGeometryId++;
     m_geometries[handle] = geo;
     return handle;
@@ -483,8 +500,8 @@ void RenderInterface_BGFX::ReleaseGeometry(Rml::CompiledGeometryHandle handle)
     if (it == m_geometries.end()) return;
 
     auto& geo = it->second;
-    if (bgfx::isValid(geo.vbh)) bgfx::destroy(geo.vbh);
-    if (bgfx::isValid(geo.ibh)) bgfx::destroy(geo.ibh);
+    if (bgfx::isValid(geo.vbh)) { ResourceStatistics::Instance().unregisterResource(ResourceType::VertexBuffer, geo.vbh.idx); bgfx::destroy(geo.vbh); }
+    if (bgfx::isValid(geo.ibh)) { ResourceStatistics::Instance().unregisterResource(ResourceType::IndexBuffer, geo.ibh.idx); bgfx::destroy(geo.ibh); }
 
     m_geometries.erase(it);
 }
@@ -607,6 +624,11 @@ Rml::TextureHandle RenderInterface_BGFX::GenerateTexture(
 
     if (!bgfx::isValid(tex)) return {};
 
+    ResourceStatistics::Instance().registerResource(
+        ResourceType::Texture, tex.idx,
+        static_cast<size_t>(source_dimensions.x) * source_dimensions.y * 4,
+        "RmlUi Generated Texture");
+
     return static_cast<Rml::TextureHandle>(tex.idx);
 }
 
@@ -615,7 +637,16 @@ void RenderInterface_BGFX::ReleaseTexture(Rml::TextureHandle texture_handle)
     bgfx::TextureHandle tex;
     tex.idx = static_cast<uint16_t>(texture_handle);
     if (bgfx::isValid(tex))
+    {
+        // This handle may have come from LoadTexture/GenerateTexture (registered
+        // as ResourceType::Texture) or from SaveLayerAsTexture, which promotes a
+        // framebuffer's color attachment into a plain texture (registered as
+        // ResourceType::RenderTexture at creation time). Try both — only one
+        // will ever find a match, the other is a harmless no-op.
+        ResourceStatistics::Instance().unregisterResource(ResourceType::Texture, tex.idx);
+        ResourceStatistics::Instance().unregisterResource(ResourceType::RenderTexture, tex.idx);
         bgfx::destroy(tex);
+    }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -995,7 +1026,7 @@ Rml::TextureHandle RenderInterface_BGFX::SaveLayerAsTexture()
     if (!bgfx::isValid(dstFb.fb) || !bgfx::isValid(dstFb.color))
     {
         if (bgfx::isValid(dstFb.fb)) bgfx::destroy(dstFb.fb);
-        if (bgfx::isValid(dstFb.color)) bgfx::destroy(dstFb.color);
+        if (bgfx::isValid(dstFb.color)) { ResourceStatistics::Instance().unregisterResource(ResourceType::RenderTexture, dstFb.color.idx); bgfx::destroy(dstFb.color); }
         return {};
     }
 
@@ -1083,7 +1114,7 @@ Rml::CompiledFilterHandle RenderInterface_BGFX::SaveLayerAsMaskImage()
     if (!bgfx::isValid(maskFb.fb) || !bgfx::isValid(maskFb.color))
     {
         if (bgfx::isValid(maskFb.fb)) bgfx::destroy(maskFb.fb);
-        if (bgfx::isValid(maskFb.color)) bgfx::destroy(maskFb.color);
+        if (bgfx::isValid(maskFb.color)) { ResourceStatistics::Instance().unregisterResource(ResourceType::RenderTexture, maskFb.color.idx); bgfx::destroy(maskFb.color); }
         return {};
     }
 
@@ -1261,8 +1292,10 @@ void RenderInterface_BGFX::ReleaseFilter(Rml::CompiledFilterHandle filter)
     auto it = m_filters.find(filter);
     if (it == m_filters.end()) return;
 
-    if (bgfx::isValid(it->second.mask_texture))
+    if (bgfx::isValid(it->second.mask_texture)) {
+        ResourceStatistics::Instance().unregisterResource(ResourceType::RenderTexture, it->second.mask_texture.idx);
         bgfx::destroy(it->second.mask_texture);
+    }
 
     m_filters.erase(it);
 }
@@ -1703,6 +1736,13 @@ Rml::CompiledShaderHandle RenderInterface_BGFX::CompileShader(
             shader.stop_texture = bgfx::createTexture2D(
                 STOP_TEX_SIZE, 1, false, 1, bgfx::TextureFormat::RGBA8,
                 BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP, mem);
+
+            if (bgfx::isValid(shader.stop_texture))
+            {
+                ResourceStatistics::Instance().registerResource(
+                    ResourceType::Texture, shader.stop_texture.idx,
+                    static_cast<size_t>(STOP_TEX_SIZE) * 1 * 4, "RmlUi Gradient Stop Texture");
+            }
         }
     }
 
@@ -1787,8 +1827,10 @@ void RenderInterface_BGFX::ReleaseShader(Rml::CompiledShaderHandle handle)
     auto it = m_shaders.find(handle);
     if (it == m_shaders.end()) return;
 
-    if (bgfx::isValid(it->second.stop_texture))
+    if (bgfx::isValid(it->second.stop_texture)) {
+        ResourceStatistics::Instance().unregisterResource(ResourceType::Texture, it->second.stop_texture.idx);
         bgfx::destroy(it->second.stop_texture);
+    }
 
     m_shaders.erase(it);
 }
@@ -1807,10 +1849,25 @@ BgfxFramebuffer RenderInterface_BGFX::CreateFramebuffer(int w, int h, bool with_
         bgfx::TextureFormat::RGBA8,
         BGFX_TEXTURE_RT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
 
+    if (bgfx::isValid(fb.color))
+    {
+        ResourceStatistics::Instance().registerResource(
+            ResourceType::RenderTexture, fb.color.idx,
+            static_cast<size_t>(w) * h * 4, "RmlUi Framebuffer Color");
+    }
+
     if (with_depth_stencil)
     {
         fb.depth_stencil = bgfx::createTexture2D(uint16_t(w), uint16_t(h), false, 1,
             bgfx::TextureFormat::D24S8, BGFX_TEXTURE_RT);
+
+        if (bgfx::isValid(fb.depth_stencil))
+        {
+            // D24S8 is 4 bytes/pixel, same as the color attachment.
+            ResourceStatistics::Instance().registerResource(
+                ResourceType::RenderTexture, fb.depth_stencil.idx,
+                static_cast<size_t>(w) * h * 4, "RmlUi Framebuffer Depth/Stencil");
+        }
 
         bgfx::Attachment attachments[2];
         attachments[0].init(fb.color);
@@ -1830,8 +1887,8 @@ BgfxFramebuffer RenderInterface_BGFX::CreateFramebuffer(int w, int h, bool with_
 void RenderInterface_BGFX::DestroyFramebuffer(BgfxFramebuffer& fb)
 {
     if (bgfx::isValid(fb.fb))            bgfx::destroy(fb.fb);
-    if (bgfx::isValid(fb.color))         bgfx::destroy(fb.color);
-    if (bgfx::isValid(fb.depth_stencil)) bgfx::destroy(fb.depth_stencil);
+    if (bgfx::isValid(fb.color))         { ResourceStatistics::Instance().unregisterResource(ResourceType::RenderTexture, fb.color.idx); bgfx::destroy(fb.color); }
+    if (bgfx::isValid(fb.depth_stencil)) { ResourceStatistics::Instance().unregisterResource(ResourceType::RenderTexture, fb.depth_stencil.idx); bgfx::destroy(fb.depth_stencil); }
     fb = {};
 }
 

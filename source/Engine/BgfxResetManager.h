@@ -3,6 +3,7 @@
 #include <bgfx/bgfx.h>
 #include <glm.h>
 #include <cstdint>
+#include <Profiling/ResourceStatistics.hpp>
 
 class BgfxResetManager
 {
@@ -272,6 +273,8 @@ public:
             s_format);
 
         s_dirty = false;
+
+        UpdateBackbufferTracking();
     }
 
     static bool IsDirty()
@@ -280,6 +283,70 @@ public:
     }
 
 private:
+    // The backbuffer (and, on most backends, its companion depth-stencil
+    // surface) is never exposed to us as a bgfx::TextureHandle -- bgfx and
+    // the platform own the swap chain directly. It's still real, often
+    // sizeable VRAM (especially with MSAA), so we track it here under two
+    // reserved synthetic IDs, built on ResourceStatistics::kSyntheticIdBase
+    // so it's excluded from any comparison against bgfx's own internal
+    // counters (which structurally can never include the backbuffer) while
+    // still counting toward Total Memory and driver-reported comparisons.
+    //
+    // NOTE: this is a best-effort estimate, not an exact figure -- bgfx
+    // doesn't expose the true backbuffer allocation size through its public
+    // API, and not every backend actually allocates a depth-stencil surface
+    // this way. Cross-check against ResourceStatistics's driver-reported
+    // line (bgfx::getStats()->gpuMemoryUsed) for the real ground truth.
+    static constexpr uint64_t kBackbufferColorId = ResourceStatistics::kSyntheticIdBase;
+    static constexpr uint64_t kBackbufferDepthId = ResourceStatistics::kSyntheticIdBase + 1;
+
+    static uint32_t BytesPerPixelForFormat(bgfx::TextureFormat::Enum format)
+    {
+        switch (format)
+        {
+        case bgfx::TextureFormat::RGBA16:
+        case bgfx::TextureFormat::RGBA16F:
+            return 8;
+        case bgfx::TextureFormat::RGBA32F:
+            return 16;
+        case bgfx::TextureFormat::RGBA8:
+        case bgfx::TextureFormat::BGRA8:
+        case bgfx::TextureFormat::RGB10A2:
+        default:
+            return 4; // best-effort default for uncommon backbuffer formats
+        }
+    }
+
+    static uint32_t MsaaSampleCount(uint32_t flags)
+    {
+        switch (flags & BGFX_RESET_MSAA_MASK)
+        {
+        case BGFX_RESET_MSAA_X2:  return 2;
+        case BGFX_RESET_MSAA_X4:  return 4;
+        case BGFX_RESET_MSAA_X8:  return 8;
+        case BGFX_RESET_MSAA_X16: return 16;
+        default:                  return 1;
+        }
+    }
+
+    static void UpdateBackbufferTracking()
+    {
+        const uint32_t samples = MsaaSampleCount(s_flags);
+        const size_t colorBytes =
+            (size_t)s_resolution.x * s_resolution.y * BytesPerPixelForFormat(s_format) * samples;
+        // Most bgfx backends auto-allocate a matching D24S8 depth-stencil
+        // surface (4 bytes/pixel) for the default back buffer.
+        const size_t depthBytes =
+            (size_t)s_resolution.x * s_resolution.y * 4 * samples;
+
+        ResourceStatistics::Instance().registerResource(
+            ResourceType::RenderTexture, kBackbufferColorId, colorBytes,
+            "Backbuffer Color (approx.)");
+        ResourceStatistics::Instance().registerResource(
+            ResourceType::RenderTexture, kBackbufferDepthId, depthBytes,
+            "Backbuffer Depth/Stencil (approx.)");
+    }
+
     static inline glm::uvec2 s_resolution = { 1280, 720 };
     static inline bgfx::TextureFormat::Enum s_format = bgfx::TextureFormat::RGBA8;
     static inline uint32_t s_flags = BGFX_RESET_NONE;
