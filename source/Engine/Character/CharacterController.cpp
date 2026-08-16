@@ -877,12 +877,12 @@ bool CharacterController::CheckGroundAt(vec3 location, float checkRadius, float&
 
 	if (checkRadius > 0)
 	{
-		result = Physics::CylinderTrace(start, end - vec3(0, 0.05f, 0), checkRadius, 0.05f, BodyType::GroupCollisionTest, { body, sensorBody }, { owner }, true);
+		result = Physics::CylinderTrace(start, end - vec3(0, 0.05f, 0), checkRadius, 0.05f, BodyType::GroupCharacter, { body, sensorBody }, { owner }, true);
 		result.position = result.shapePosition - vec3(0, 0.02f, 0);
 	}
 	else
 	{
-		result = Physics::LineTrace(start, end, BodyType::GroupCollisionTest, { body, sensorBody }, { owner }, true);
+		result = Physics::LineTrace(start, end, BodyType::GroupCharacter, { body, sensorBody }, { owner }, true);
 	}
 
 	*hitBody = result.hitbody;

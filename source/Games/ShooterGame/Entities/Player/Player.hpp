@@ -204,7 +204,7 @@ private:
 
 	float slideInterp = 0;
 
-	float WalkSpeed = 6.0f;// 4.5f;
+	float WalkSpeed = 7.5f;// 4.5f;
 	float CrouchSpeed = 2.5f;
 	float RunSpeed = 7.5f;
 

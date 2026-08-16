@@ -3144,6 +3144,26 @@
           "isBuiltIn": false
         }
       ]
+    },
+    {
+      "name": "func_character_block",
+      "entityType": "group",
+      "color": [
+        0.42745098039215684,
+        0.5568627450980392,
+        0.5725490196078431
+      ],
+      "box": [
+        -16,
+        -16,
+        -16,
+        16,
+        16,
+        16
+      ],
+      "description": "",
+      "inherits": [],
+      "properties": []
     }
   ]
 }

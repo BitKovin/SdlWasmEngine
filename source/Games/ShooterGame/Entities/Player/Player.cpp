@@ -253,8 +253,8 @@ void Player::UpdateStateGroundAir(vec2 input)
 	// If TryMantle() just succeeded this frame, don't run ground/air movement.
 	if (IsMantling()) return;
 
-	if (onGround)
-		bobProgress += glm::length(MathHelper::XZ(velocity)) * Time::DeltaTime * 0.80f;
+	if (onGround && !IsSliding())
+		bobProgress += glm::length(MathHelper::XZ(velocity)) * Time::DeltaTime * 0.60f;
 
 	// ── Slope info ────────────────────────────────────────────────────────
 	const vec3& groundNormal = controller.currentGroundNormal;
@@ -398,7 +398,7 @@ void Player::UpdateStateGroundAir(vec2 input)
 			{
 				TryWallJump();
 				velocity = controller.GetVelocity();
-				dashVector = glm::normalize(dashVector) * 20.0f;
+				dashVector = glm::normalize(dashVector) * 14.0f;
 				controller.SetVelocity(velocity);
 			}
 		}
@@ -2661,6 +2661,8 @@ void Player::OnDamage(float Damage, Entity* DamageCauser, Entity* Weapon)
 {
 
 	if (dead)return;
+
+	if (freeFly)return;
 
 	Entity::OnDamage(Damage, DamageCauser, Weapon);
 

@@ -543,6 +543,7 @@
     <ClInclude Include="Console\ConsoleDefaultCommands.h" />
     <ClInclude Include="Console\ConsoleRegister.h" />
     <ClInclude Include="Entities\Brushes\DestructibleBrush.hpp" />
+    <ClInclude Include="Entities\Brushes\FuncCharacterBlock.hpp" />
     <ClInclude Include="Entities\Brushes\MovebleBrush.hpp" />
     <ClInclude Include="Entities\Brushes\TriggerBase.hpp" />
     <ClInclude Include="Entities\Brushes\TriggerDamage.hpp" />

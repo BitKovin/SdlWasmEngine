@@ -75,7 +75,9 @@ enum BodyType : uint32_t {
 	NoRayTest = 1u << 5,
 	Liquid = 1u << 6,
 	WorldTransparent = 1u << 7,
-	WorldSkybox = 1u << 8 ,
+	WorldSkybox = 1u << 8,
+
+	CharacterBlocker = 1u << 9,
 
 	Area1 = 1u << 15, //per game logic for areas
 	Area2 = 1u << 16, //per game logic for areas
@@ -94,7 +96,8 @@ enum BodyType : uint32_t {
 	GroupAll = MainBody | HitBox | World | CharacterCapsule | NoRayTest | Liquid,
 	GroupHitTest = GroupAll & ~CharacterCapsule & ~Liquid,
 	GroupCollisionTest = GroupAll & ~HitBox & ~Liquid,
-	GroupAllPhysical = GroupHitTest & Liquid,
+	GroupAllPhysical = GroupHitTest | Liquid,
+	GroupCharacter = GroupCollisionTest | CharacterBlocker | WorldSkybox
 };
 
 // Overload bitwise operators for BodyType
@@ -1012,11 +1015,11 @@ public:
 
 	static Body* CreateCharacterBody(Entity* owner, vec3 Position, float Radius, float Height, float Mass,
 		BodyType group = BodyType::CharacterCapsule,
-		BodyType mask = BodyType::GroupCollisionTest | BodyType::WorldSkybox);
+		BodyType mask = BodyType::GroupCharacter);
 
 	static Body* CreateCharacterCylinderBody(Entity* owner, vec3 Position, float Radius, float Height, float Mass,
 		BodyType group = BodyType::CharacterCapsule,
-		BodyType mask = BodyType::GroupCollisionTest | BodyType::WorldSkybox);
+		BodyType mask = BodyType::GroupCharacter);
 
 
 	struct HitResult

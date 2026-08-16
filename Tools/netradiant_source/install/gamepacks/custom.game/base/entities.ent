@@ -451,4 +451,7 @@ Plays fmod snapshop when entering. Can override each other.
         <real key="tickDamage" name="tickDamage" value="10" />
         <string key="classname" name="Classname" value="trigger_damage">The classname of the entity.</string>
     </group>
+    <group name="func_character_block" color="0.42745098039215684 0.5568627450980392 0.5725490196078431">
+        <string key="classname" name="Classname" value="func_character_block">The classname of the entity.</string>
+    </group>
 </classes>

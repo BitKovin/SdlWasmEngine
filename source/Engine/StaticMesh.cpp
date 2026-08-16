@@ -582,10 +582,10 @@ vec3 StaticMesh::GetShadowColorMult()
 	shadowColor = mix(vec3(uniformShadow), shadowColor, blendT);
 	vec3 d = vec3(1.0f) - shadowColor;
 	shadowColor = vec3(1.0f) - d * d;
-	shadowColor += 0.05f;
+	shadowColor += 0.02f;
 	shadowColor = clamp(shadowColor, vec3(0.0f), vec3(1.0f));
 	shadowColor = 1.0f - shadowColor;
-	shadowColor *= 1.12f;
+	shadowColor *= 0.85f;
 	shadowColor = 1.0f - shadowColor;
 
 	cachedShadowColorMult = shadowColor;

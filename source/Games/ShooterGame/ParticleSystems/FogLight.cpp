@@ -11,8 +11,8 @@ public:
         SpawnRate = 0;
         Emitting = true;
 
-        MaxParticles = 1100;
-        InitialSpawnCount = 1100;
+        MaxParticles = 1500;
+        InitialSpawnCount = 1500;
 
         Duration = 1000000;
 
@@ -62,7 +62,7 @@ public:
         particle.Transparency = MathHelper::MapRange(distanceToCamera, 1, 20, 0.07, 0.1f) * fadeIn * fadeOut
             * MathHelper::MapRange(distanceToCamera, 2, 7, 0.5, 1) * 0.6f;
 
-        particle.Size = MathHelper::MapRange(distanceToCamera, 1, 50, 11, 15);
+        particle.Size = MathHelper::MapRange(distanceToCamera, 5, 70, 11, 21);
 
         return particle;
     }
@@ -74,7 +74,7 @@ public:
         particle.Size = 3;
         particle.Transparency = 0.0f;
 
-        particle.position = Camera::position + MathHelper::XZ(RandomPosition(70)) + vec3(0, RandomFloat() * 2 - 1.4f, 0) * 8.0f;
+        particle.position = Camera::position + MathHelper::XZ(RandomPosition(70)) + vec3(0, RandomFloat() * 2 - 1.4f, 0) * 20.0f;
 
         particle.lifeTime = 0;
 

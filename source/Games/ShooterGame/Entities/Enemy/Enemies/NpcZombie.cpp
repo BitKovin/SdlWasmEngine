@@ -129,6 +129,7 @@ void NpcZombie::AsyncUpdate()
 
 	controller.Update(Time::DeltaTimeF);
 	Position = controller.GetPosition();
+	speed = glm::length(MathHelper::XZ(controller.GetVelocity()));
 
 	ResolveTarget();
 
@@ -251,8 +252,12 @@ void NpcZombie::AsyncUpdate()
 	movingDirection = MathHelper::FastNormalize(movingDirection);
 
 	vec3 vel = controller.GetVelocity();
-	controller.SetVelocity(vec3(movingDirection.x * speed, vel.y,
-		movingDirection.z * speed));
+
+	if (controller.onGround)
+	{
+		controller.SetVelocity(vec3(movingDirection.x * speed, vel.y, movingDirection.z * speed));
+	}
+
 	mesh->Rotation = vec3(0,
 		MathHelper::FindLookAtRotation(vec3(), movingDirection).y, 0);
 

@@ -49,6 +49,7 @@ Entity* LevelObjectFactory::create(const std::string& technicalName) const
 #include "Entities/Brushes/DynamicPhysicsBrush.hpp"
 #include <Entities/Brushes/Sound/FmodReverbZone.h>
 #include <Entities/Brushes/TriggerDamage.hpp>
+#include <Entities/Brushes/FuncCharacterBlock.hpp>
 
 void LevelObjectFactory::registerDefaults()
 {
@@ -66,4 +67,5 @@ void LevelObjectFactory::registerDefaults()
     REGISTER_ENTITY_INLINE("func_physics_dynamic", DynamicPhysicsBrush);
 	REGISTER_ENTITY_INLINE("snd_reverb_zone", FmodReverbZone);
 	REGISTER_ENTITY_INLINE("trigger_damage", TriggerDamage);
+	REGISTER_ENTITY_INLINE("func_character_block", FuncCharacterBlock);
 }

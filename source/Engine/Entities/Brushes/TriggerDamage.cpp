@@ -17,6 +17,16 @@ void TriggerDamage::Update()
 
 	TriggerBase::Update();
 
+	for (auto ent : inEntities)
+	{
+		if(Level::Current->DeletedLevelObjectAdresses.count(ent))
+		{
+			inEntities.erase(std::remove(inEntities.begin(), inEntities.end(), ent), inEntities.end());
+		}
+	}
+
+	
+
 	if (tickDelay.Wait()) return;
 
 	for (auto entity : inEntities)
