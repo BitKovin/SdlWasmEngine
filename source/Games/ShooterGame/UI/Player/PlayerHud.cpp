@@ -99,6 +99,20 @@ void PlayerHud::Init(Player* playerRef)
 	messageText->color = vec4(0.65, 0.6, 0.5, 1);
 	hudCanvas->AddChild(messageText);
 
+
+    minorMessageText = make_shared<UiText>();
+    minorMessageText->origin = vec2(0.0f, 0.0f);
+    minorMessageText->pivot = vec2(0.0f, 0.0f);
+    minorMessageText->position = vec2(5, 5);
+    minorMessageText->text = "";
+    minorMessageText->visible = false;
+    minorMessageText->fontSize = 45;
+    minorMessageText->shadowEnabled = true;
+	minorMessageText->shadowOffset /= vec2(2);
+    minorMessageText->shadowSpread /= 2.0f;
+    minorMessageText->color = vec4(0.65, 0.6, 0.5, 1);
+    hudCanvas->AddChild(minorMessageText);
+
 }
 
 void PlayerHud::Update()
@@ -123,6 +137,7 @@ void PlayerHud::Update()
     crosshair->visible = !useIndicator->visible;
 
 	messageText->visible = messageDelay.Wait();
+    minorMessageText->visible = minorMessageDelay.Wait();
 
 	//frameRate->text = "FPS: " + to_string((int)(1.0f / Time::DeltaTimeF));
 

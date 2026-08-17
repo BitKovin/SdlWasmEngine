@@ -58,12 +58,19 @@ namespace SettingsStyle
     constexpr float ActionLabelSize = 33.f;
     constexpr float CaptionSize = 25.f;
     constexpr float ButtonLabelSize = 45.f;
-    constexpr float RowHeight = 88.f; // tall enough for a 72px UiBindSlotButton plus breathing room
+    // BUG FIX: this was 88 against an 85px slot (SlotButtonSize below) -- only
+    // ~1.5px of slack per side. UiRowCard doesn't clip its content, so any
+    // per-slot visual state whose footprint is even a little larger than its
+    // nominal size (e.g. whatever highlight the nav-focus system applies to
+    // the currently-focused slot) had nowhere to go but into the row above/
+    // below. 116 gives real headroom (~15px/side) so that can never happen.
+    constexpr float RowHeight = 90;
 
-    // Must match UiBindSlotButton::SlotSize -- keep in sync if that changes.
-    // Only used to size the (invisible) placeholders in the binding list's
-    // column-caption row so the captions land over the right slot group.
-    const vec2 SlotButtonSize = vec2(72.f, 72.f);
+    // Single source of truth for slot size -- UiBindSlotButton::SlotSize
+    // defaults from this directly (see UiBindSlotButton.hpp) rather than
+    // hard-coding its own copy, so the two can no longer drift apart. (They
+    // previously had: this said 72, UiBindSlotButton actually used 85.)
+    const vec2 SlotButtonSize = vec2(85.f, 85.f);
     constexpr float SlotGroupGap = 6.f;   // gap *within* a kb/gp pair
     constexpr float SlotGroupSep = 35.f;  // gap *between* the kb group and the gp group
 }

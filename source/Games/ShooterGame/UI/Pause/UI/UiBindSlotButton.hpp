@@ -9,6 +9,7 @@
 #include <string>
 
 #include "InputIconLibrary.h"
+#include "../UiSettingsStyle.hpp"
 
 // ---------------------------------------------------------------------------
 // UiBindSlotButton
@@ -35,7 +36,11 @@
 class UiBindSlotButton : public UiElement
 {
 public:
-    vec2 SlotSize = vec2(85.f, 85.f);
+    // BUG FIX: was a second hard-coded copy of the size (85,85) that had
+    // drifted out of sync with SettingsStyle::SlotButtonSize (which claimed
+    // 72,72 despite this actually being 85,85). Reading it from the shared
+    // constant means there's only one number to change now.
+    vec2 SlotSize = SettingsStyle::SlotButtonSize;
 
     std::function<void()> onActivate = nullptr;
 
@@ -50,6 +55,21 @@ public:
         mainButton->HoverColor = vec4(0.28f, 0.28f, 0.34f, 1.f);
         mainButton->ImagePath = "GameData/textures/generic/white.png";
         mainButton->onClick = [this]() { if (onActivate) onActivate(); };
+
+        // BUG FIX: a slot previously had *only* its flat Color fill to read
+        // as "a button" -- nothing marked its edge. Whenever that fill ended
+        // up close in shade to whatever sits behind it (row background, or
+        // just another slot's fill in the row above/below), the boundary
+        // between slots became invisible and a whole column could read as
+        // one continuous strip instead of N separate tiles. An explicit,
+        // always-on border makes every slot self-evidently boxed regardless
+        // of its current fill color. 2px is well inside the slack RowHeight
+        // now has over SlotSize (see SettingsStyle.hpp), so this can't cause
+        // the same kind of row-to-row bleed it's fixing.
+        mainButton->outlineEnabled = true;
+        mainButton->outlineColor = vec4(0.85f, 0.85f, 0.90f, 0.35f);
+        mainButton->outlineWidth = 2.f;
+
         UiElement::AddChild(mainButton);
 
         icon = std::make_shared<UiImage>();

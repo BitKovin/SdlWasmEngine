@@ -42,7 +42,7 @@ void GameSaveSystem::SaveGameToFile(std::string saveName)
 void GameSaveSystem::LoadGameFromFile(std::string saveName)
 {
 
-    string text = FileSystemEngine::ReadFile(saveDataPath + saveName + ".savg");;
+    string text = FileSystemEngine::ReadFile(saveDataPath + saveName + ".savg");
 
     if (text.size() < 1)
     {
@@ -57,4 +57,22 @@ void GameSaveSystem::LoadGameFromFile(std::string saveName)
 
     LoadGameFromData(gameData);
 
+}
+
+std::vector<std::string> GameSaveSystem::GetAllSaves()
+{
+    std::vector<std::string> files = FileSystemEngine::GetFilesInPath(saveDataPath);
+
+    for (auto& f : files)
+    {
+        constexpr std::string_view extension = ".savg";
+
+        if (f.size() >= extension.size() &&
+            f.compare(f.size() - extension.size(), extension.size(), extension) == 0)
+        {
+            f.erase(f.size() - extension.size());
+        }
+    }
+
+    return files;
 }

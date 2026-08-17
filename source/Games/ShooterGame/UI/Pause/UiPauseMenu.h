@@ -9,11 +9,14 @@
 #include <PauseGameManager.hpp>
 
 #include "UiSettingsMenu.h"
+#include "UiSaveLoadMenu.h"
 
 #include <UI/UiTextBox.hpp>
 #include <UI/UiSlider.hpp>
 
 #include <Localization/Localisation.h>
+
+#include <Network/NetworkManager.h>
 
 class UiPauseMenu : public UiCanvas
 {
@@ -38,8 +41,14 @@ public:
 		menuButton = MakeButton("${PAUSE_MENU_MAIN_MENU}");
 
 		optionsBox->AddChild(resumeButton);
-		optionsBox->AddChild(saveButton);
+
+		if (Player::Instance && Player::Instance->dead == false)
+		{
+			optionsBox->AddChild(saveButton);
+		}
+
 		optionsBox->AddChild(loadButton);
+
 		optionsBox->AddChild(settingsButton);
 		optionsBox->AddChild(menuButton);
 
@@ -69,6 +78,21 @@ public:
 				EngineMain::MainInstance->Viewport.AddChild(std::make_shared<UiSettingsMenu>(shared_from_this()));
 				visible = false;
 			};
+
+		saveButton->onClick = [&]()
+			{
+				EngineMain::MainInstance->Viewport.AddChild(
+					std::make_shared<UiSaveLoadMenu>(shared_from_this(), UiSaveLoadMenu::Mode::Save));
+				visible = false;
+			};
+
+		loadButton->onClick = [&]()
+			{
+				EngineMain::MainInstance->Viewport.AddChild(
+					std::make_shared<UiSaveLoadMenu>(shared_from_this(), UiSaveLoadMenu::Mode::Load));
+				visible = false;
+			};
+
 
 	}
 

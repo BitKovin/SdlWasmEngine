@@ -98,13 +98,21 @@ public:
 		messageDelay.AddDelay(duration);
 	}
 
+	void ShowMinorMessage(const std::string& message, float duration = 3.0f)
+	{
+		minorMessageText->text = message;
+		minorMessageDelay.AddDelay(duration);
+	}
+
 private:
 
 	Delay messageDelay;
+	Delay minorMessageDelay;
 
 	Player* player = nullptr;
 
 	std::shared_ptr<UiText> messageText;
+	std::shared_ptr<UiText> minorMessageText;
 
 	std::shared_ptr<UiCanvas> hudCanvas;
 

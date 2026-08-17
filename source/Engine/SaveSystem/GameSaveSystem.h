@@ -21,9 +21,13 @@ public:
 
 	static inline bool LoadingGame = false;
 
+	static std::vector<std::string> GetAllSaves();
+
+	static inline string saveDataPath = "SaveData/saves/";
+
 private:
 
-	static inline string saveDataPath = "SaveData/";
+
 
 };
 

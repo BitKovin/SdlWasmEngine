@@ -583,6 +583,8 @@
     <ClInclude Include="UI\Pause\UiGameSettings.h" />
     <ClInclude Include="UI\Pause\UiInputSettings.h" />
     <ClInclude Include="UI\Pause\UiPauseMenu.h" />
+    <ClInclude Include="UI\Pause\UiSaveLoadMenu.h" />
+    <ClInclude Include="UI\Pause\UiSaveSlotRow.hpp" />
     <ClInclude Include="UI\Pause\UiSettingsMenu.h" />
     <ClInclude Include="UI\Pause\UiSettingsStyle.hpp" />
     <ClInclude Include="UI\Pause\UiSoundSettings.h" />
@@ -604,6 +606,9 @@
     <ProjectReference Include="..\Engine\Engine.vcxproj">
       <Project>{d353d7f2-b610-486e-b37f-eac38f0a6e35}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="UI\Pause\UiVideoSettings.zip" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

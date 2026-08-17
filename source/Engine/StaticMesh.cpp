@@ -137,6 +137,33 @@ bool StaticMesh::IsCameraVisible()
 	return finalizedCameraVisible;
 }
 
+// Standard luminance weights (Rec. 709 / sRGB), assumes linear color values
+static inline float GetLuminance(const glm::vec3& color)
+{
+	return glm::dot(color, glm::vec3(0.2126f, 0.7152f, 0.0722f));
+}
+
+// Ensures 'light' has at least 'minBrightness' luminance.
+// Preserves color/hue by uniformly scaling (multiplying) the input.
+// If light is pure black, returns white at minBrightness.
+static glm::vec3 EnsureMinBrightness(const glm::vec3& light, float minBrightness)
+{
+	if (minBrightness <= 0.0f)
+		return light;
+
+	float brightness = GetLuminance(light);
+
+	if (brightness >= minBrightness)
+		return light; // already bright enough
+
+	constexpr float kEpsilon = 1e-6f;
+	if (brightness <= kEpsilon)
+		return glm::vec3(minBrightness); // fully black -> white at min brightness
+
+	float scale = minBrightness / brightness;
+	return light * scale;
+}
+
 void StaticMesh::DrawForward(mat4x4 view, mat4x4 projection)
 {
 
@@ -167,6 +194,9 @@ void StaticMesh::DrawForward(mat4x4 view, mat4x4 projection)
 	mat4x4 world = finalizedWorld;
 
 	auto lightData = GetLightVolData();
+
+	lightData.ambientColor = EnsureMinBrightness(lightData.ambientColor, 0.01f);
+	lightData.directColor = EnsureMinBrightness(lightData.directColor, 0.03f);
 
 	lastLightDir = lightData.direction * -1.0f;
 	lastLightVolData = lightData;

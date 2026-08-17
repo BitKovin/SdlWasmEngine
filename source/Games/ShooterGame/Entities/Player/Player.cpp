@@ -398,7 +398,7 @@ void Player::UpdateStateGroundAir(vec2 input)
 			{
 				TryWallJump();
 				velocity = controller.GetVelocity();
-				dashVector = glm::normalize(dashVector) * 14.0f;
+				dashVector = glm::normalize(dashVector) * 15.0f;
 				controller.SetVelocity(velocity);
 			}
 		}
@@ -1557,7 +1557,7 @@ vec3 Player::GetBobForMainWeapon()
 	bobT.y = (float)(sin(bobProgress * bobSpeed * 2) + 0.2f) * -0.15f;
 	bobT.x = (float)((sin(bobProgress * bobSpeed * 1)) - 0.17f) * 0.3f;
 
-	return bobT * 0.03f;
+	return bobT * 0.04f;
 }
 
 IInteractive* Player::UpdateInteractionRaycast()
@@ -1753,7 +1753,10 @@ void Player::UpdateWeapon()
 
 	rotatedWeaponPos -= mix(vec3(), vec3(0,0.025,0), slideInterp);
 
-	vec3 scaledBob = bob * mix(vec3(1), vec3(2.5, 2.2f, 2.2f), RunProgress);
+	float bobBlendIn = length(MathHelper::XZ(velocity)) / WalkSpeed;
+	bobBlendIn = std::clamp(bobBlendIn, 0.0f, 1.0f);
+
+	vec3 scaledBob = bob * mix(vec3(bobBlendIn), vec3(2.5, 2.2f, 2.2f), RunProgress);
 
 	if (currentWeapon)
 	{
@@ -2211,6 +2214,7 @@ void Player::Update()
 
 
 	Camera::rotation = cameraRotation;
+	Camera::ApplyCameraShake(Time::DeltaTimeF);
 
 	vec3 right = MathHelper::GetRightVector(Camera::rotation);
 
@@ -2266,7 +2270,7 @@ void Player::Update()
 				dashDir = playerForward;
 			}
 
-			dashVector = dashDir * 25.0f;
+			dashVector = dashDir * 17.0f;
 
 			dashProgress.AddDelay(0.25f);
 
@@ -2281,9 +2285,9 @@ void Player::Update()
 		if (Input::GetAction("qSave")->Pressed())
 		{
 			GameSaveSystem::SaveGameToFile("quicksave");
+			Hud.ShowMinorMessage("Saved game to slot: quicksave");
 		}
 	}
-
 
 	if (Input::GetAction("qLoad")->Pressed())
 	{
@@ -2633,8 +2637,6 @@ void Player::UpdateBody()
 		controller.cameraHeightCrouching = distance;
 
 	}
-
-	Camera::ApplyCameraShake(Time::DeltaTimeF);
 
 	observationTarget->position = Position + vec3(0, 0.65f, 0);
 

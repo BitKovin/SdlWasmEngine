@@ -4,6 +4,19 @@
         { "key": "PAUSE_MENU_SAVE",       "value": "Save Game",  "description": "Button that opens the save game flow" },
         { "key": "PAUSE_MENU_LOAD",       "value": "Load Game",  "description": "Button that opens the load game flow" },
         { "key": "PAUSE_MENU_SETTINGS",   "value": "Settings",   "description": "Button that opens the settings menu" },
-        { "key": "PAUSE_MENU_MAIN_MENU",  "value": "Main Menu",  "description": "Button that quits to the main menu" }
+        { "key": "PAUSE_MENU_MAIN_MENU",  "value": "Main Menu",  "description": "Button that quits to the main menu" },
+
+        { "key": "PAUSE_SAVE_TITLE",               "value": "Save Game",           "description": "Title of the save-game screen" },
+        { "key": "PAUSE_LOAD_TITLE",               "value": "Load Game",           "description": "Title of the load-game screen" },
+
+        { "key": "PAUSE_SAVE_SLOT_QUICKSAVE",      "value": "Quicksave",           "description": "Label for the reserved quicksave slot in the save/load list" },
+        { "key": "PAUSE_SAVE_SLOT_AUTOSAVE",       "value": "Autosave",            "description": "Label for the reserved autosave slot in the save/load list" },
+        { "key": "PAUSE_SAVE_SLOT_MANUAL",         "value": "Manual Save",         "description": "Label prefix for a manual save slot; the slot number is appended after this, e.g. 'Manual Save 3'" },
+        { "key": "PAUSE_SAVE_SLOT_EMPTY",          "value": "Empty",               "description": "Status text shown on a manual save slot that has no save in it yet" },
+        { "key": "PAUSE_SAVE_SLOT_AUTO_ONLY",      "value": "(auto-managed)",      "description": "Appended to the quicksave/autosave rows on the Save screen to show they can't be manually overwritten from here" },
+
+        { "key": "PAUSE_SAVE_CONFIRM_OVERWRITE",   "value": "Overwrite this save? This can't be undone.", "description": "Confirmation prompt shown before saving over a slot that already has a save in it" },
+        { "key": "PAUSE_LOAD_CONFIRM",             "value": "Load this save? Any unsaved progress will be lost.", "description": "Confirmation prompt shown before loading a save" },
+        { "key": "PAUSE_LOAD_NO_SAVES",            "value": "No saved games found.", "description": "Shown on the Load screen when there are no saves to load" }
     ]
 }

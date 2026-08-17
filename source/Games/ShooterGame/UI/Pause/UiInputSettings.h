@@ -102,7 +102,7 @@ public:
         rootBox->AddChild(titleText);
         rootBox->AddChild(sensitivityPanel);
         rootBox->AddChild(bindingsPanel);
-        rootBox->AddChild(MakeDivider(SettingsStyle::ContentWidth * 0.6f, vec4(1.f, 1.f, 1.f, 0.10f)));
+        //rootBox->AddChild(MakeDivider(SettingsStyle::ContentWidth * 0.6f, vec4(1.f, 1.f, 1.f, 0.10f)));
         rootBox->AddChild(buttonsRow);
 
         AddChild(rootBox);
@@ -456,6 +456,8 @@ private:
 
         // Keyboard/mouse pair, grouped tightly together.
         auto kbGroup = std::make_shared<UiHorizontalBox>();
+        kbGroup->origin = vec2(0, 0.5f);
+        kbGroup->pivot = vec2(0, 0.5f);
         kbGroup->ContentDistance = SlotGroupGap;
         for (int i = 0; i < 2; ++i)
         {
@@ -475,6 +477,8 @@ private:
         // Gamepad pair, grouped tightly together.
         auto gpGroup = std::make_shared<UiHorizontalBox>();
         gpGroup->ContentDistance = SlotGroupGap;
+        gpGroup->origin = vec2(0, 0.5f);
+        gpGroup->pivot = vec2(0, 0.5f);
         for (int i = 0; i < 2; ++i)
         {
             auto slot = std::make_shared<UiBindSlotButton>();
