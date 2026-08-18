@@ -1,0 +1,1 @@
+currently all localizations are automatically translated from English and Ukrainian. Not meant for final use. Only testing of localization system.

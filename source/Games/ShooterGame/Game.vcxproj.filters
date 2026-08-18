@@ -686,6 +686,9 @@
     <ClInclude Include="UI\Pause\UiSaveLoadMenu.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Systems\PowerUpSystem\PowerUpManager.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="UI\Pause\UiVideoSettings.zip" />

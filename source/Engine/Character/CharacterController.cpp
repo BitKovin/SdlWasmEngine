@@ -84,258 +84,269 @@ void CharacterController::Destroy()
 
 void CharacterController::Update(float deltaTime)
 {
-
 	if (body == nullptr) return;
 
 	UpdateSmoothPosition(deltaTime);
 
-	// -------------------------------
-	// 1) If previously attached, preemptively apply platform delta
-	// -------------------------------
-	if (lastStandingOnBody)
+	vec3 currentVelocity = GetVelocity();
+	bool isIdle = glm::length(MathHelper::XZ(currentVelocity)) < 0.001f && currentVelocity.y <= 0;
+	bool skipTracesAndMovement = (isIdle && onGround && standingOnEntity != nullptr && standingOnEntity->Static == true);
+
+	if (skipTracesAndMovement)
 	{
-		vec3 basePos = FromPhysics(lastStandingOnBody->GetPosition());
-		glm::quat baseRot = FromPhysics(lastStandingOnBody->GetRotation());
-
-		vec3 attachWorldPos = baseRot * baseLocalAttachPoint + basePos;
-		vec3 platformDelta = attachWorldPos - prevAttachWorldPos;
-
-		// clamp huge deltas to prevent teleport jumps
-		const float maxDelta = 10.0f;
-		if (glm::length(platformDelta) > maxDelta)
+		SetVelocity(vec3(0.0f));
+	}
+	else
+	{
+		// -------------------------------
+		// 1) If previously attached, preemptively apply platform delta
+		// -------------------------------
+		if (lastStandingOnBody)
 		{
-			prevAttachWorldPos = attachWorldPos;
-		}
-		else
-		{
-			if (glm::length(platformDelta) > 1e-6f)
+			vec3 basePos = FromPhysics(lastStandingOnBody->GetPosition());
+			glm::quat baseRot = FromPhysics(lastStandingOnBody->GetRotation());
+
+			vec3 attachWorldPos = baseRot * baseLocalAttachPoint + basePos;
+			vec3 platformDelta = attachWorldPos - prevAttachWorldPos;
+
+			// clamp huge deltas to prevent teleport jumps
+			const float maxDelta = 10.0f;
+			if (glm::length(platformDelta) > maxDelta)
 			{
-				vec3 currentPos = FromPhysics(body->GetPosition());
-				vec3 targetPos = currentPos + platformDelta;
+				prevAttachWorldPos = attachWorldPos;
+			}
+			else
+			{
+				if (glm::length(platformDelta) > 1e-6f)
+				{
+					vec3 currentPos = FromPhysics(body->GetPosition());
+					vec3 targetPos = currentPos + platformDelta;
 
-				// sweep character to follow platform while resolving collisions
-				Physics::SweepBody(body, targetPos, { owner });
+					// sweep character to follow platform while resolving collisions
+					Physics::SweepBody(body, targetPos, { owner });
+				}
+
+				prevAttachWorldPos = attachWorldPos;
 			}
 
-			prevAttachWorldPos = attachWorldPos;
+			prevBaseRotation = baseRot;
+			prevBasePosition = basePos;
 		}
 
-		prevBaseRotation = baseRot;
-		prevBasePosition = basePos;
-	}
+		// -------------------------------
+		// 2) Ground check after potential platform move
+		// -------------------------------
+		float verticalPosition;
+		bool standsOnGround;
+		vec3 walkableNormal = vec3();
+		vec3 notWalkableNormal = vec3();
+		UpdateGroundCheck(standsOnGround, verticalPosition, onGround, walkableNormal, notWalkableNormal);
 
-	// -------------------------------
-	// 2) Ground check after potential platform move
-	// -------------------------------
-	float verticalPosition;
-	bool standsOnGround;
-	vec3 walkableNormal = vec3();
-	vec3 notWalkableNormal = vec3();
-	UpdateGroundCheck(standsOnGround, verticalPosition, onGround, walkableNormal, notWalkableNormal);
+		currentGroundNormal = walkableNormal;
 
-	currentGroundNormal = walkableNormal;
+		//DebugDraw::Line(GetPosition() - vec3(0, 1, 0) * height / 2.0f, GetPosition() - vec3(0, 1, 0) * height / 2.0f + walkableNormal);
 
-	//DebugDraw::Line(GetPosition() - vec3(0, 1, 0) * height / 2.0f, GetPosition() - vec3(0, 1, 0) * height / 2.0f + walkableNormal);
-
-	if (onGround == false)
-	{
-		standingOnBody = nullptr;
-	}
-
-	const Body* currentBase = standingOnBody;
-
-	// -------------------------------
-	// 3) Platform attach/detach detection
-	// -------------------------------
-	bool wasAttached = (lastStandingOnBody != nullptr);
-	bool isAttached = (currentBase != nullptr);
-
-	if (wasAttached && !isAttached)
-	{
-		// Detached: apply last platform velocity to character
-		// (use fresh computation for accuracy on rotation)
-		vec3 basePos = FromPhysics(lastStandingOnBody->GetPosition());
-		glm::quat baseRot = FromPhysics(lastStandingOnBody->GetRotation());
-		vec3 linearVel = FromPhysics(lastStandingOnBody->GetLinearVelocity());
-		vec3 angularVel = FromPhysics(lastStandingOnBody->GetAngularVelocity());
-		vec3 worldOffset = baseRot * baseLocalAttachPoint;
-		vec3 platformVelAtAttach = linearVel + glm::cross(angularVel, worldOffset);
-
-		vec3 currentVel = GetVelocity();
-		currentVel += platformVelAtAttach;
-		SetVelocity(currentVel);
-		lastPlatformVelocity = vec3(0.0f);
-	}
-	else if (wasAttached && isAttached && (currentBase != lastStandingOnBody))
-	{
-		// Switched platforms: detach from old, attach to new
-		// Detach from old
-		vec3 oldBasePos = FromPhysics(lastStandingOnBody->GetPosition());
-		glm::quat oldBaseRot = FromPhysics(lastStandingOnBody->GetRotation());
-		vec3 oldLinearVel = FromPhysics(lastStandingOnBody->GetLinearVelocity());
-		vec3 oldAngularVel = FromPhysics(lastStandingOnBody->GetAngularVelocity());
-		vec3 oldWorldOffset = oldBaseRot * baseLocalAttachPoint;
-		vec3 oldPlatformVel = oldLinearVel + glm::cross(oldAngularVel, oldWorldOffset);
-
-		vec3 currentVel = GetVelocity();
-		currentVel += oldPlatformVel;
-		SetVelocity(currentVel);
-		lastPlatformVelocity = vec3(0.0f);  // Temporary reset
-
-		// Attach to new (fall through to attach logic below)
-		wasAttached = false;  // Force attach block to run
-	}
-
-	if (!wasAttached && isAttached)
-	{
-		// Attaching to a new platform: store local attach point
-		vec3 basePos = FromPhysics(currentBase->GetPosition());
-		glm::quat baseRot = FromPhysics(currentBase->GetRotation());
-		vec3 charPos = FromPhysics(body->GetPosition());
-
-		baseLocalAttachPoint = glm::inverse(baseRot) * (charPos - basePos);
-		prevAttachWorldPos = charPos;
-		prevBaseRotation = baseRot;
-		prevBasePosition = basePos;
-
-		// Adjust character's velocity to be relative to the platform
-		vec3 linearVel = FromPhysics(currentBase->GetLinearVelocity());
-		vec3 angularVel = FromPhysics(currentBase->GetAngularVelocity());
-		vec3 worldOffset = baseRot * baseLocalAttachPoint;
-		vec3 platformVelAtAttach = linearVel + glm::cross(angularVel, worldOffset);
-
-		vec3 currentVel = GetVelocity();
-		currentVel -= platformVelAtAttach;
-		SetVelocity(currentVel);
-
-		lastPlatformVelocity = platformVelAtAttach;
-	}
-
-	lastStandingOnBody = currentBase;
-
-	// -------------------------------
-	// 4) Original character movement / gravity / slope logic
-	// -------------------------------
-	vec3 velocity = GetVelocity();
-
-	if (velocity.y > 0.1f)
-	{
-		onGround = false;
-	}
-
-	// Manual gravity — skipped when the ladder (or any future system) takes
-	// sole ownership of vertical velocity via suppressGravity.
-	if (!suppressGravity)
-	{
-		if (onGround && velocity.y < 0)
+		if (onGround == false)
 		{
-			velocity.y -= gravity * deltaTime * (1.0f - walkableNormal.y);
+			standingOnBody = nullptr;
+			standingOnEntity = nullptr;
 		}
-		else
+
+		const Body* currentBase = standingOnBody;
+
+		// -------------------------------
+		// 3) Platform attach/detach detection
+		// -------------------------------
+		bool wasAttached = (lastStandingOnBody != nullptr);
+		bool isAttached = (currentBase != nullptr);
+
+		if (wasAttached && !isAttached)
 		{
-			velocity.y -= gravity * deltaTime;
+			// Detached: apply last platform velocity to character
+			// (use fresh computation for accuracy on rotation)
+			vec3 basePos = FromPhysics(lastStandingOnBody->GetPosition());
+			glm::quat baseRot = FromPhysics(lastStandingOnBody->GetRotation());
+			vec3 linearVel = FromPhysics(lastStandingOnBody->GetLinearVelocity());
+			vec3 angularVel = FromPhysics(lastStandingOnBody->GetAngularVelocity());
+			vec3 worldOffset = baseRot * baseLocalAttachPoint;
+			vec3 platformVelAtAttach = linearVel + glm::cross(angularVel, worldOffset);
+
+			vec3 currentVel = GetVelocity();
+			currentVel += platformVelAtAttach;
+			SetVelocity(currentVel);
+			lastPlatformVelocity = vec3(0.0f);
 		}
-	}
-
-	if (onGround && velocity.y <= 0)
-	{
-		vec3 currentPosition = FromPhysics(body->GetPosition());
-		float newVerticalPosition = verticalPosition + stepHeight / 2.0f + height / 2.0f;
-
-		float snapDelta = newVerticalPosition - currentPosition.y;
-		if (std::abs(snapDelta) > 0.005f)
+		else if (wasAttached && isAttached && (currentBase != lastStandingOnBody))
 		{
-			Physics::SweepBody(body, vec3(currentPosition.x, newVerticalPosition, currentPosition.z), { owner });
+			// Switched platforms: detach from old, attach to new
+			// Detach from old
+			vec3 oldBasePos = FromPhysics(lastStandingOnBody->GetPosition());
+			glm::quat oldBaseRot = FromPhysics(lastStandingOnBody->GetRotation());
+			vec3 oldLinearVel = FromPhysics(lastStandingOnBody->GetLinearVelocity());
+			vec3 oldAngularVel = FromPhysics(lastStandingOnBody->GetAngularVelocity());
+			vec3 oldWorldOffset = oldBaseRot * baseLocalAttachPoint;
+			vec3 oldPlatformVel = oldLinearVel + glm::cross(oldAngularVel, oldWorldOffset);
 
-			float moved = currentPosition.y - FromPhysics(body->GetPosition()).y;
-			if (std::abs(moved) > 0.001f)
+			vec3 currentVel = GetVelocity();
+			currentVel += oldPlatformVel;
+			SetVelocity(currentVel);
+			lastPlatformVelocity = vec3(0.0f);  // Temporary reset
+
+			// Attach to new (fall through to attach logic below)
+			wasAttached = false;  // Force attach block to run
+		}
+
+		if (!wasAttached && isAttached)
+		{
+			// Attaching to a new platform: store local attach point
+			vec3 basePos = FromPhysics(currentBase->GetPosition());
+			glm::quat baseRot = FromPhysics(currentBase->GetRotation());
+			vec3 charPos = FromPhysics(body->GetPosition());
+
+			baseLocalAttachPoint = glm::inverse(baseRot) * (charPos - basePos);
+			prevAttachWorldPos = charPos;
+			prevBaseRotation = baseRot;
+			prevBasePosition = basePos;
+
+			// Adjust character's velocity to be relative to the platform
+			vec3 linearVel = FromPhysics(currentBase->GetLinearVelocity());
+			vec3 angularVel = FromPhysics(currentBase->GetAngularVelocity());
+			vec3 worldOffset = baseRot * baseLocalAttachPoint;
+			vec3 platformVelAtAttach = linearVel + glm::cross(angularVel, worldOffset);
+
+			vec3 currentVel = GetVelocity();
+			currentVel -= platformVelAtAttach;
+			SetVelocity(currentVel);
+
+			lastPlatformVelocity = platformVelAtAttach;
+		}
+
+		lastStandingOnBody = currentBase;
+
+		// -------------------------------
+		// 4) Original character movement / gravity / slope logic
+		// -------------------------------
+		vec3 velocity = GetVelocity();
+
+		if (velocity.y > 0.1f)
+		{
+			onGround = false;
+		}
+
+		// Manual gravity — skipped when the ladder (or any future system) takes
+		// sole ownership of vertical velocity via suppressGravity.
+		if (!suppressGravity)
+		{
+			if (onGround && velocity.y < 0)
 			{
-				heightSmoothOffset += moved;
+				velocity.y -= gravity * deltaTime * (1.0f - walkableNormal.y);
+			}
+			else
+			{
+				velocity.y -= gravity * deltaTime;
 			}
 		}
-	}
 
-	if (onGround)
-	{
-		velocity.y = 0;
-	}
-
-	vec3 applyVelocity = velocity;
-
-	if (onGround == false && standsOnGround && (velocity.y <= 0))
-	{
-		vec3 slopeNormal = normalize(notWalkableNormal);
-
-		// 1. Calculate how much of our velocity is pointing INTO the slope
-		float velocityIntoSlope = dot(velocity, slopeNormal);
-
-		// 2. Only alter velocity if we are actually moving into the unwalkable surface
-		if (velocityIntoSlope < 0)
+		if (onGround && velocity.y <= 0)
 		{
-			// Clip the velocity. This removes the inward force and leaves 
-			// ONLY the velocity running parallel down the slope.
-			applyVelocity = velocity - slopeNormal * velocityIntoSlope;
+			vec3 currentPosition = FromPhysics(body->GetPosition());
+			float newVerticalPosition = verticalPosition + stepHeight / 2.0f + height / 2.0f;
 
-			// Optional: Apply a slight over-bounce to prevent floating point penetration
-			// applyVelocity = velocity - slopeNormal * (velocityIntoSlope * 1.001f);
-		}
-		else
-		{
-			// If moving away from the slope (e.g. jumping off), keep the trajectory
-			applyVelocity = velocity;
+			float snapDelta = newVerticalPosition - currentPosition.y;
+			if (std::abs(snapDelta) > 0.005f)
+			{
+				Physics::SweepBody(body, vec3(currentPosition.x, newVerticalPosition, currentPosition.z), { owner });
+
+				float moved = currentPosition.y - FromPhysics(body->GetPosition()).y;
+				if (std::abs(moved) > 0.001f)
+				{
+					heightSmoothOffset += moved;
+				}
+			}
 		}
 
-		UpdateSmoothPosition(deltaTime * 2);
-	}
-	else if (onGround == false && standsOnGround)
-	{
-		vec3 slopeNormal = normalize(notWalkableNormal);
-		float velocityTowardSlope = dot(velocity, slopeNormal);
-		if (velocityTowardSlope < 0)
+		if (onGround)
 		{
-			vec3 slopeTangent = velocity - slopeNormal * velocityTowardSlope;
-			float originalSpeed = length(velocity);
+			velocity.y = 0;
+		}
 
-			applyVelocity = slopeTangent;
-			applyVelocity.y = velocity.y;
+		vec3 applyVelocity = velocity;
 
-			float newSpeed = length(applyVelocity);
-			if (newSpeed > originalSpeed)
-				applyVelocity = applyVelocity * (originalSpeed / newSpeed);
+		if (onGround == false && standsOnGround && (velocity.y <= 0))
+		{
+			vec3 slopeNormal = normalize(notWalkableNormal);
+
+			// 1. Calculate how much of our velocity is pointing INTO the slope
+			float velocityIntoSlope = dot(velocity, slopeNormal);
+
+			// 2. Only alter velocity if we are actually moving into the unwalkable surface
+			if (velocityIntoSlope < 0)
+			{
+				// Clip the velocity. This removes the inward force and leaves 
+				// ONLY the velocity running parallel down the slope.
+				applyVelocity = velocity - slopeNormal * velocityIntoSlope;
+
+				// Optional: Apply a slight over-bounce to prevent floating point penetration
+				// applyVelocity = velocity - slopeNormal * (velocityIntoSlope * 1.001f);
+			}
+			else
+			{
+				// If moving away from the slope (e.g. jumping off), keep the trajectory
+				applyVelocity = velocity;
+			}
 
 			UpdateSmoothPosition(deltaTime * 2);
 		}
-	}
+		else if (onGround == false && standsOnGround)
+		{
+			vec3 slopeNormal = normalize(notWalkableNormal);
+			float velocityTowardSlope = dot(velocity, slopeNormal);
+			if (velocityTowardSlope < 0)
+			{
+				vec3 slopeTangent = velocity - slopeNormal * velocityTowardSlope;
+				float originalSpeed = length(velocity);
 
-	if (glm::isnan(applyVelocity).x || glm::isnan(applyVelocity).y || glm::isnan(applyVelocity).z)
-	{
-		assert(false);
-		applyVelocity = vec3(0.01f);
-	}
+				applyVelocity = slopeTangent;
+				applyVelocity.y = velocity.y;
 
-	// -------------------------------
-	// 5) Set final velocity
-	// -------------------------------
-	SetVelocity(applyVelocity);
+				float newSpeed = length(applyVelocity);
+				if (newSpeed > originalSpeed)
+					applyVelocity = applyVelocity * (originalSpeed / newSpeed);
 
-	// -------------------------------
-	// 6) If still attached, update local attach point and platform velocity
-	// -------------------------------
-	if (lastStandingOnBody)
-	{
-		vec3 basePos = FromPhysics(lastStandingOnBody->GetPosition());
-		glm::quat baseRot = FromPhysics(lastStandingOnBody->GetRotation());
-		vec3 charPos = FromPhysics(body->GetPosition());
+				UpdateSmoothPosition(deltaTime * 2);
+			}
+		}
 
-		baseLocalAttachPoint = glm::inverse(baseRot) * (charPos - basePos);
-		prevAttachWorldPos = charPos;
-		prevBaseRotation = baseRot;
-		prevBasePosition = basePos;
+		if (glm::isnan(applyVelocity).x || glm::isnan(applyVelocity).y || glm::isnan(applyVelocity).z)
+		{
+			assert(false);
+			applyVelocity = vec3(0.01f);
+		}
 
-		vec3 linearVel = FromPhysics(lastStandingOnBody->GetLinearVelocity());
-		vec3 angularVel = FromPhysics(lastStandingOnBody->GetAngularVelocity());
-		vec3 worldOffset = baseRot * baseLocalAttachPoint;
-		lastPlatformVelocity = linearVel + glm::cross(angularVel, worldOffset);
+		// -------------------------------
+		// 5) Set final velocity
+		// -------------------------------
+		SetVelocity(applyVelocity);
+
+		// -------------------------------
+		// 6) If still attached, update local attach point and platform velocity
+		// -------------------------------
+		if (lastStandingOnBody)
+		{
+			vec3 basePos = FromPhysics(lastStandingOnBody->GetPosition());
+			glm::quat baseRot = FromPhysics(lastStandingOnBody->GetRotation());
+			vec3 charPos = FromPhysics(body->GetPosition());
+
+			baseLocalAttachPoint = glm::inverse(baseRot) * (charPos - basePos);
+			prevAttachWorldPos = charPos;
+			prevBaseRotation = baseRot;
+			prevBasePosition = basePos;
+
+			vec3 linearVel = FromPhysics(lastStandingOnBody->GetLinearVelocity());
+			vec3 angularVel = FromPhysics(lastStandingOnBody->GetAngularVelocity());
+			vec3 worldOffset = baseRot * baseLocalAttachPoint;
+			lastPlatformVelocity = linearVel + glm::cross(angularVel, worldOffset);
+		}
 	}
 
 	// -------------------------------
@@ -642,6 +653,7 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 	avgNormal = vec3(0, 1, 0);
 	canStand = false;
 	standingOnBody = nullptr;
+	standingOnEntity = nullptr;
 	notWalkableNormal = vec3(0, 1, 0);
 
 	vec3 heightOffset = vec3(0, stepHeight, 0);
@@ -649,6 +661,7 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 	bool outCanStand = false;
 	vec3 outNormal = vec3();
 	const Body* hitBody = nullptr;
+	Entity* hitEntity = nullptr;
 
 	// -------------------------------------------------------
 	// NPC fast path: single center cast, skip ring samples
@@ -661,7 +674,7 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 		bool centerHit = CheckGroundAt(
 			FromPhysics(body->GetPosition()) - heightOffset,
 			radius - 0.01f,
-			outheight, outCanStand, outNormal, &hitBody);
+			outheight, outCanStand, outNormal, &hitBody, &hitEntity);
 
 		if (centerHit && (outNormal.y >= flatThreshold || GetVelocity().x != 0 || GetVelocity().z != 0))
 		{
@@ -673,7 +686,10 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 			calculatedGroundHeight = outheight;
 
 			if (outCanStand)
+			{
 				standingOnBody = hitBody;
+				standingOnEntity = hitEntity;
+			}
 
 			return;
 		}
@@ -689,7 +705,7 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 		bool centerHit = CheckGroundAt(
 			FromPhysics(body->GetPosition()) - heightOffset,
 			0,
-			outheight, outCanStand, outNormal, &hitBody);
+			outheight, outCanStand, outNormal, &hitBody, &hitEntity);
 
 		if (centerHit && outNormal.y >= flatThreshold)
 		{
@@ -701,7 +717,10 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 			calculatedGroundHeight = outheight;
 
 			if (outCanStand)
+			{
 				standingOnBody = hitBody;
+				standingOnEntity = hitEntity;
+			}
 
 			return;
 		}
@@ -774,7 +793,7 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 
 	// Helper: route one CheckGroundAt result into the right bucket.
 	// Weight is 1 for ring samples, 3 for the weighted center cast.
-	auto AccumulateHit = [&](bool hit, float weight, const Body* hb)
+	auto AccumulateHit = [&](bool hit, float weight, const Body* hb, Entity* he)
 		{
 			if (!hit) return;
 
@@ -791,6 +810,7 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 				walkNormalCount += 1;
 				canStand = true;
 				if (hb) standingOnBody = hb;
+				if (he) standingOnEntity = he;
 			}
 			else
 			{
@@ -819,9 +839,9 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 
 			bool hit = CheckGroundAt(
 				FromPhysics(body->GetPosition()) + offset - heightOffset,
-				rayRadius, outheight, outCanStand, outNormal, &hitBody);
+				rayRadius, outheight, outCanStand, outNormal, &hitBody, &hitEntity);
 
-			AccumulateHit(hit, 1.0f, hitBody);
+			AccumulateHit(hit, 1.0f, hitBody, hitEntity);
 		}
 	}
 
@@ -829,9 +849,9 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 	{
 		bool hit = CheckGroundAt(
 			FromPhysics(body->GetPosition()) - heightOffset,
-			radius - 0.01f, outheight, outCanStand, outNormal, &hitBody);
+			radius - 0.01f, outheight, outCanStand, outNormal, &hitBody, &hitEntity);
 
-		AccumulateHit(hit, 3.0f, hitBody);
+		AccumulateHit(hit, 3.0f, hitBody, hitEntity);
 	}
 
 	// -------------------------------------------------------
@@ -868,7 +888,7 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 	canStand = hitsGround && (GroundAngleDeg(avgNormal) <= groundMaxAngle) && canStand && walkHits > 3;
 }
 
-bool CharacterController::CheckGroundAt(vec3 location, float checkRadius, float& outheight, bool& canStand, vec3& normal, const Body** hitBody)
+bool CharacterController::CheckGroundAt(vec3 location, float checkRadius, float& outheight, bool& canStand, vec3& normal, const Body** hitBody, Entity** hitEntity)
 {
 	Physics::HitResult result;
 
@@ -886,6 +906,7 @@ bool CharacterController::CheckGroundAt(vec3 location, float checkRadius, float&
 	}
 
 	*hitBody = result.hitbody;
+	if (hitEntity) *hitEntity = result.entity;
 
 	if (result.normal.y < 0.1)
 		return false;
@@ -982,9 +1003,6 @@ void CharacterController::UpdateCharacterStacking(float deltaTime)
 
 		if (!stillDetected)
 		{
-
-
-
 			Physics::RemoveIgnorePair(myID, *it);
 			it = activeIgnorePairs.erase(it);
 		}

@@ -1,0 +1,10 @@
+{
+    "entries": [
+        { "key": "SETTINGS_BACK",        "value": "戻る",       "description": "Back button, shown at the bottom of every settings screen" },
+        { "key": "SETTINGS_TOGGLE_ON",   "value": "オン",       "description": "State label for an enabled toggle (VSync, FXAA, Dynamic Shadows, Invert Y, ...)" },
+        { "key": "SETTINGS_TOGGLE_OFF",  "value": "オフ",       "description": "State label for a disabled toggle (VSync, FXAA, Dynamic Shadows, Invert Y, ...)" },
+        { "key": "SETTINGS_CONFIRM_YES", "value": "はい",       "description": "Default affirmative button on the generic Yes/No confirm dialog" },
+        { "key": "SETTINGS_CONFIRM_NO",  "value": "いいえ",     "description": "Default negative button on the generic Yes/No confirm dialog" },
+        { "key": "SETTINGS_CANCEL",      "value": "キャンセル", "description": "Cancel button on the rebind-capture popup" }
+    ]
+}

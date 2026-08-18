@@ -1,0 +1,8 @@
+{
+    "entries": [
+        { "key": "PLAYER_HUD_HEALTH",     "value": "ЗДОРОВ'Я",     "description": "Display for player's health" },
+        { "key": "PLAYER_HUD_ARMOR",      "value": "БРОНЯ",      "description": "Display for player's armor" },
+        { "key": "PLAYER_HUD_STAMINA",    "value": "ВИТРИВАЛІСТЬ",    "description": "Display for player's stamina" },
+        { "key": "PLAYER_HUD_AMMO",       "value": "ПАТРОНИ",       "description": "Display for player's ammo" }
+    ]
+}

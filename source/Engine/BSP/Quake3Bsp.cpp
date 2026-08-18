@@ -2461,7 +2461,8 @@ void CQuake3BSP::LoadToLevel()
     for (auto& entityData : parsedEntities)
     {
         Entity* ent = LevelObjectFactory::instance().create(entityData.Classname);
-        if (!ent) ent = new Entity();
+        if (!ent) 
+            ent = new Entity();
 
         ent->FromData(entityData);
 

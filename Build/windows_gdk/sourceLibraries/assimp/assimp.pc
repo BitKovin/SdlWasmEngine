@@ -1,5 +1,5 @@
-libdir=C:/Program Files (x86)/MyProject/lib
-includedir=C:/Program Files (x86)/MyProject/include
+libdir=C:/Program Files/MyProject/lib
+includedir=C:/Program Files/MyProject/include
 
 Name: MyProject
 Description: Import various well-known 3D model formats in an uniform manner.

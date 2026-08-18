@@ -1,0 +1,26 @@
+{
+    "entries": [
+        { "key": "SETTINGS_INPUT_TITLE",                    "value": "Налаштування керування",       "description": "Title at the top of the input settings screen" },
+        { "key": "SETTINGS_INPUT_SENSITIVITY_HEADER",       "value": "Чутливість",                    "description": "Header for the Sensitivity card" },
+        { "key": "SETTINGS_INPUT_MOUSE_SENSITIVITY",        "value": "Чутливість миші",               "description": "Row label for the mouse sensitivity slider" },
+        { "key": "SETTINGS_INPUT_GAMEPAD_SENSITIVITY",      "value": "Чутливість геймпада",           "description": "Row label for the gamepad look sensitivity slider" },
+        { "key": "SETTINGS_INPUT_INVERT_LOOK_Y",            "value": "Інвертувати вісь Y",            "description": "Row label for the invert-Y-axis toggle" },
+        { "key": "SETTINGS_INPUT_KEY_BINDINGS_HEADER",      "value": "Прив'язки клавіш",              "description": "Header for the Key Bindings card" },
+        { "key": "SETTINGS_INPUT_CAPTION_KEYBOARD_MOUSE",   "value": "КЛАВІАТУРА / МИША",             "description": "Column caption above the keyboard/mouse bind slots" },
+        { "key": "SETTINGS_INPUT_CAPTION_GAMEPAD",          "value": "ГЕЙМПАД",                       "description": "Column caption above the gamepad bind slots" },
+        { "key": "SETTINGS_INPUT_ROW_RESET",                "value": "Скинути",                       "description": "Small per-row button that resets a single action's binding to default" },
+        { "key": "SETTINGS_INPUT_RESET_ALL",                "value": "Скинути до типових",            "description": "Button that resets every input setting to default (asks for confirmation first)" },
+        { "key": "SETTINGS_INPUT_CONFIRM_RESET_ALL",        "value": "Скинути всі налаштування керування до типових значень?", "description": "Confirmation dialog message shown before resetting every input setting" },
+        { "key": "SETTINGS_INPUT_UNBOUND",                  "value": "Не призначено",                 "description": "Fallback caption on a bind slot that has no binding assigned" },
+
+        { "key": "SETTINGS_INPUT_REBIND_TITLE_PREFIX",      "value": "Перепризначення:",  "description": "First fragment of the rebind popup title, e.g. 'Rebind Jump \u2014 Slot 1'. Word-order caveat: this is concatenated with the action name and slot number in fixed English order, not a single translatable sentence - see note below." },
+        { "key": "SETTINGS_INPUT_REBIND_SLOT_LABEL",        "value": "\u2014 слот", "description": "Second fragment of the rebind popup title, immediately before the slot number, e.g. 'Rebind Jump \u2014 Slot 1'" },
+        { "key": "SETTINGS_INPUT_REBIND_HINT_KEYBOARD",     "value": "Натисніть клавішу або кнопку миші...", "description": "Instruction shown while listening for a keyboard/mouse rebind" },
+        { "key": "SETTINGS_INPUT_REBIND_HINT_GAMEPAD",      "value": "Натисніть кнопку геймпада або тригер...", "description": "Instruction shown while listening for a gamepad rebind" },
+        { "key": "SETTINGS_INPUT_REBIND_ALREADY_BOUND_PROMPT", "value": "Вже прив'язано до цього слота. Відв'язати чи скасувати?", "description": "Shown when the captured input matches the slot's current binding" },
+        { "key": "SETTINGS_INPUT_REBIND_UNBIND_BUTTON",     "value": "Відв'язати", "description": "Button in the rebind popup that clears the current binding for this slot" },
+
+        { "key": "SETTINGS_INPUT_REBIND_CONFLICT_MIDDLE",   "value": "вже призначено на", "description": "Middle fragment of the rebind-conflict message, sits between the quoted new binding and the conflicting action's name, e.g. 'X' is already bound to Jump. Reassign it here? - see word-order note below." },
+        { "key": "SETTINGS_INPUT_REBIND_CONFLICT_SUFFIX",   "value": ". Перепризначити сюди?", "description": "Final fragment of the rebind-conflict message, appended right after the conflicting action's name" }
+    ]
+}

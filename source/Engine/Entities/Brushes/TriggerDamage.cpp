@@ -2,6 +2,10 @@
 
 void TriggerDamage::OnBodyEntered(Body* body, Entity* entity)
 {
+	if (entity->Static == true || entity->ClassName == "Entity") return;
+
+	if (std::find(inEntities.begin(), inEntities.end(), entity) != inEntities.end()) return;
+
 	inEntities.push_back(entity);
 
 	entity->OnDamage(enterDamage, nullptr, nullptr);
@@ -14,18 +18,15 @@ void TriggerDamage::OnBodyExited(Body * body, Entity * entity)
 
 void TriggerDamage::Update()
 {
-
 	TriggerBase::Update();
 
-	for (auto ent : inEntities)
-	{
-		if(Level::Current->DeletedLevelObjectAdresses.count(ent))
-		{
-			inEntities.erase(std::remove(inEntities.begin(), inEntities.end(), ent), inEntities.end());
-		}
-	}
-
-	
+	inEntities.erase(
+		std::remove_if(inEntities.begin(), inEntities.end(),
+			[](Entity* ent)
+			{
+				return Level::Current->DeletedLevelObjectAdresses.count(ent) != 0;
+			}),
+		inEntities.end());
 
 	if (tickDelay.Wait()) return;
 
@@ -36,5 +37,4 @@ void TriggerDamage::Update()
 	}
 
 	tickDelay.AddDelay(0.35f);
-
 }

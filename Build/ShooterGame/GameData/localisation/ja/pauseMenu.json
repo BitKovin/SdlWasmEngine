@@ -1,0 +1,9 @@
+{
+    "entries": [
+        { "key": "PAUSE_MENU_RESUME",     "value": "再開",         "description": "Button that resumes gameplay" },
+        { "key": "PAUSE_MENU_SAVE",       "value": "セーブ",       "description": "Button that opens the save game flow" },
+        { "key": "PAUSE_MENU_LOAD",       "value": "ロード",       "description": "Button that opens the load game flow" },
+        { "key": "PAUSE_MENU_SETTINGS",   "value": "設定",         "description": "Button that opens the settings menu" },
+        { "key": "PAUSE_MENU_MAIN_MENU",  "value": "メインメニュー", "description": "Button that quits to the main menu" }
+    ]
+}

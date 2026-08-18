@@ -147,6 +147,48 @@ else()
 endif()
 
 # ——————————————————————————————————————————————————————————
+# Link-Time Optimization (LTO / IPO)
+#
+# Applied only to our own targets (engine + game exe), not to
+# vendored third-party libraries — those are large, numerous, and
+# some (SIMD-heavy physics/audio code, Emscripten sysroot builds)
+# are more likely to hit LTO-related toolchain issues, so they're
+# left out of scope here. NOTE: JoltPhysics gets its own, separate
+# IPO toggle further down (its own build's INTERPROCEDURAL_OPTIMIZATION
+# cache var, off on Linux) — unrelated to this one.
+#
+# Only takes effect for optimized configs (Release / RelWithDebInfo /
+# MinSizeRel); Debug stays LTO-free for fast iteration and full
+# per-TU debuggability.
+# ——————————————————————————————————————————————————————————
+option(ENGINE_ENABLE_LTO
+    "Enable link-time optimization (IPO/LTO) for the engine and game targets in optimized configs" ON)
+
+set(ENGINE_LTO_SUPPORTED FALSE)
+if(ENGINE_ENABLE_LTO)
+    include(CheckIPOSupported)
+    check_ipo_supported(RESULT ENGINE_LTO_SUPPORTED OUTPUT ENGINE_LTO_ERROR LANGUAGES C CXX)
+    if(ENGINE_LTO_SUPPORTED)
+        message(STATUS "LTO/IPO supported by this toolchain — will enable for engine + game (Release/RelWithDebInfo/MinSizeRel)")
+    else()
+        message(STATUS "LTO/IPO requested (ENGINE_ENABLE_LTO=ON) but NOT supported by this toolchain: ${ENGINE_LTO_ERROR}")
+    endif()
+endif()
+
+# Call right after creating a target to turn LTO on for it in
+# optimized configs, when the toolchain supports it.
+function(engine_enable_lto target)
+    if(ENGINE_LTO_SUPPORTED)
+        set_target_properties(${target} PROPERTIES
+            INTERPROCEDURAL_OPTIMIZATION_RELEASE        TRUE
+            INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE
+            INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL     TRUE
+        )
+        message(STATUS "LTO enabled for target '${target}'")
+    endif()
+endfunction()
+
+# ——————————————————————————————————————————————————————————
 # Dynamic CRT override — /MD instead of /MT.
 # Must be set by the consumer BEFORE add_subdirectory() on
 # the engine.  The Qt editor sets this ON because Qt is
@@ -187,6 +229,7 @@ file(GLOB_RECURSE ENGINE_SOURCES
 )
 
 add_library(engine STATIC ${ENGINE_SOURCES})
+engine_enable_lto(engine)
 
 # Standard C++ exception handling — applied to our targets only, not globally,
 # to avoid D9025 warnings from vendored libs that disable exceptions themselves.
@@ -433,6 +476,7 @@ if(NOT ENGINE_AS_LIBRARY)
     else()
         add_executable(${GAME_TARGET_NAME} ${GAME_SOURCES})
     endif()
+    engine_enable_lto(${GAME_TARGET_NAME})
 
     if(MSVC)
         target_compile_options(${GAME_TARGET_NAME} PRIVATE /EHsc)

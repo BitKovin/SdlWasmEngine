@@ -4,16 +4,14 @@ textures/skies/skybox1_cube
     surfaceparm nolightmap
     surfaceparm sky
     q3map_lightimage env/skybox1_cube_up.jpg
-    q3map_sun        0.82 0.92 1 0 -45 80
+    q3map_sun        0.88 0.92 1 0 -15 40
     //q3map_surfacelight 20
-    q3map_skylight 15 4
+    q3map_skylight 100 4
 
     skyparms env/skybox1_cube - -
     {
         map env/skybox1_cube_up.jpg
         blendfunc GL_ONE GL_ONE
-        tcMod scroll 0.05 0.06
-        tcMod scale 3 2
     }
 }
 
@@ -37,8 +35,6 @@ textures/skies/skybox2_overcast_cube
     {
         map env/skybox2_overcast_cube_up.jpg
         blendfunc GL_ONE GL_ONE
-        tcMod scroll 0.05 0.06
-        tcMod scale 3 2
     }
 }
 
@@ -62,8 +58,6 @@ textures/skies/skybox2_overcast_night_cube
     {
         map env/skybox2_overcast_night_cube.jpg
         blendfunc GL_ONE GL_ONE
-        tcMod scroll 0.05 0.06
-        tcMod scale 3 2
     }
 }
 
@@ -87,8 +81,6 @@ textures/skies/skybox_red_cube
     {
         map env/skybox_red_cube.jpg
         blendfunc GL_ONE GL_ONE
-        tcMod scroll 0.05 0.06
-        tcMod scale 3 2
     }
 }
 
@@ -112,8 +104,6 @@ textures/skies/skybox_overcast_cube
     {
         map env/skybox_overcast_cube.jpg
         blendfunc GL_ONE GL_ONE
-        tcMod scroll 0.05 0.06
-        tcMod scale 3 2
     }
 }
 
@@ -137,7 +127,5 @@ textures/skies/skybox_cloudy_cube
     {
         map env/skybox_cloudy_cube.jpg
         blendfunc GL_ONE GL_ONE
-        tcMod scroll 0.05 0.06
-        tcMod scale 3 2
     }
 }

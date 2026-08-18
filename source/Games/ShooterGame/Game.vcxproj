@@ -574,6 +574,7 @@
     <ClInclude Include="Settings\InputSettingsData.h" />
     <ClInclude Include="Settings\VideoSettings.h" />
     <ClInclude Include="Settings\VideoSettingsData.h" />
+    <ClInclude Include="Systems\PowerUpSystem\PowerUpManager.hpp" />
     <ClInclude Include="Systems\ScoreSystem\ScoreSystem.h" />
     <ClInclude Include="UI\Enemy\UiNpcDebuffs.h" />
     <ClInclude Include="UI\General\UiLocationTileDrop.h" />

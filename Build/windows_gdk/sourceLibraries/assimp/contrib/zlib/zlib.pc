@@ -1,5 +1,5 @@
-prefix=C:/Program Files (x86)/MyProject
-exec_prefix=C:/Program Files (x86)/MyProject
+prefix=C:/Program Files/MyProject
+exec_prefix=C:/Program Files/MyProject
 libdir=
 sharedlibdir=
 includedir=

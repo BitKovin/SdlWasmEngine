@@ -1,0 +1,17 @@
+{
+    "entries": [
+        { "key": "KEYS_REQUIRED_MESSAGE",     "value": "You need the following keys: ",     "description": "Will be displayed when keys are required. Example: You need the following keys: Red Green Blue" },
+        { "key": "KEYS_NAME_RED",      "value": "Red",      "description": "Display for the red key" },
+        { "key": "KEYS_NAME_GREEN",    "value": "Green",    "description": "Display for the green key" },
+        { "key": "KEYS_NAME_SECRET",    "value": "Secret",    "description": "Display for the secret key. Key for secret doors and areas." },
+        { "key": "KEYS_NAME_SPECIAL",    "value": "Special",    "description": "Display for the special key. It's a unique key for unique purposes." },
+        { "key": "KEYS_NAME_BLUE",     "value": "Blue",     "description": "Display for the blue key" },
+        
+        { "key": "KEYS_REQUIRED_RED",      "value": "Red key required",      "description": "Variation for when only single key is required. Display for the red key" },
+        { "key": "KEYS_REQUIRED_GREEN",    "value": "Green key required",    "description": "Variation for when only single key is required. Display for the green key" },
+        { "key": "KEYS_REQUIRED_SECRET",    "value": "Secret key required",    "description": "Variation for when only single key is required. Display for the secret key. Key for secret doors and areas." },
+        { "key": "KEYS_REQUIRED_SPECIAL",    "value": "Special key required",    "description": "Variation for when only single key is required. Display for the special key. It's a unique key for unique purposes." },
+        { "key": "KEYS_REQUIRED_BLUE",     "value": "Blue key required",     "description": "Variation for when only single key is required. Display for the blue key" }
+
+    ]
+}

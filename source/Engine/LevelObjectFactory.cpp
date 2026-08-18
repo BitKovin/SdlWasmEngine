@@ -50,6 +50,9 @@ Entity* LevelObjectFactory::create(const std::string& technicalName) const
 #include <Entities/Brushes/Sound/FmodReverbZone.h>
 #include <Entities/Brushes/TriggerDamage.hpp>
 #include <Entities/Brushes/FuncCharacterBlock.hpp>
+#include <Entities/Brushes/FuncGroup.hpp>
+#include <Entities/Brushes/FuncDetail.hpp>
+#include <Entities/QLight.hpp>
 
 void LevelObjectFactory::registerDefaults()
 {
@@ -68,4 +71,7 @@ void LevelObjectFactory::registerDefaults()
 	REGISTER_ENTITY_INLINE("snd_reverb_zone", FmodReverbZone);
 	REGISTER_ENTITY_INLINE("trigger_damage", TriggerDamage);
 	REGISTER_ENTITY_INLINE("func_character_block", FuncCharacterBlock);
+    REGISTER_ENTITY_INLINE("func_group", FuncGroup);
+    REGISTER_ENTITY_INLINE("func_detail", FuncDetail);
+    REGISTER_ENTITY_INLINE("light", QLight);
 }

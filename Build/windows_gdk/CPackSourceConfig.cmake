@@ -29,7 +29,7 @@ set(CPACK_IGNORE_FILES "/CVS/;/\\.svn/;/\\.bzr/;/\\.hg/;/\\.git/;\\.swp\$;\\.#;/
 set(CPACK_INNOSETUP_ARCHITECTURE "x64")
 set(CPACK_INSTALLED_DIRECTORIES "F:/Git/SdlWasmEngine;/")
 set(CPACK_INSTALL_CMAKE_PROJECTS "")
-set(CPACK_INSTALL_PREFIX "C:/Program Files (x86)/MyProject")
+set(CPACK_INSTALL_PREFIX "C:/Program Files/MyProject")
 set(CPACK_MODULE_PATH "F:/Git/SdlWasmEngine/sourceLibraries/RmlUi-6.1/Dependencies/freetype/builds/cmake")
 set(CPACK_NSIS_DISPLAY_NAME "MyProject 2.14.1")
 set(CPACK_NSIS_INSTALLER_ICON_CODE "")

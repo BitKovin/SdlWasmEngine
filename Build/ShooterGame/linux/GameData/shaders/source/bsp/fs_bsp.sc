@@ -27,7 +27,7 @@ uniform vec4 lmStyleColor3;
 uniform vec4 isRBSP;
 
 #ifndef MAX_POINT_LIGHTS
-    #define MAX_POINT_LIGHTS 16
+    #define MAX_POINT_LIGHTS 5
 #endif
 uniform mat4 PointLights[MAX_POINT_LIGHTS];
 
@@ -104,7 +104,7 @@ void main()
 
     vec3  normal = normalize(v_normal);
     float dirDot = clamp(dot(normal, normalize(direct_light_dir.xyz)), 0.0, 1.0);
-    o_lightmap  += mix(light_color.rgb, direct_light_color.rgb, dirDot);
+    o_lightmap  += mix(light_color.rgb, direct_light_color.rgb + light_color.rgb, dirDot) * 1.1;
 
     int numLights = min(MAX_POINT_LIGHTS, int(PointLightsNumber.x));
     for (int i = 0; i < numLights; i++)

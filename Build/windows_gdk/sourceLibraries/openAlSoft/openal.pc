@@ -1,7 +1,7 @@
-prefix=C:/Program Files (x86)/MyProject
+prefix=C:/Program Files/MyProject
 exec_prefix=${prefix}
-libdir=C:/Program Files (x86)/MyProject/lib
-includedir=C:/Program Files (x86)/MyProject/include
+libdir=C:/Program Files/MyProject/lib
+includedir=C:/Program Files/MyProject/include
 
 Name: OpenAL
 Description: OpenAL is a cross-platform 3D audio API

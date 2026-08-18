@@ -1,0 +1,9 @@
+{
+    "entries": [
+        { "key": "SETTINGS_SOUND_TITLE",         "value": "サウンド設定",   "description": "Title at the top of the sound settings screen" },
+        { "key": "SETTINGS_SOUND_VOLUME_HEADER", "value": "音量",           "description": "Header for the Volume card" },
+        { "key": "SETTINGS_SOUND_MASTER_VOLUME", "value": "マスター音量",   "description": "Row label for the master volume slider" },
+        { "key": "SETTINGS_SOUND_SFX_VOLUME",    "value": "効果音",         "description": "Row label for the sound effects volume slider" },
+        { "key": "SETTINGS_SOUND_MUSIC_VOLUME",  "value": "BGM音量",        "description": "Row label for the music volume slider" }
+    ]
+}

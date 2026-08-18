@@ -662,10 +662,12 @@ void Player::TryWallJump()
 	if (jumpDelay.Wait()) return;
 
 
-	auto hit = Physics::SphereTrace(Position, Position + velocity*0.01f, 0.6f, BodyType::GroupCollisionTest & ~BodyType::CharacterCapsule, {}, { this }, true);
+	auto hit = Physics::SphereTrace(Position, Position + velocity*0.01f, 0.6f, BodyType::GroupCharacter & ~BodyType::CharacterCapsule, {}, { this }, true);
 
 	if (hit.hasHit)
 	{
+
+		if (abs(hit.normal.y) > 0.35) return;
 
 		if (freeWalljumps > 0)
 		{
@@ -680,7 +682,7 @@ void Player::TryWallJump()
 
 		vec3 vectorToHit = normalize(hit.position - Position);
 
-		auto newHit = Physics::LineTrace(Position, vectorToHit + Position, BodyType::GroupCollisionTest & ~BodyType::CharacterCapsule, {}, { this });
+		auto newHit = Physics::LineTrace(Position, vectorToHit + Position, BodyType::GroupCharacter & ~BodyType::CharacterCapsule, {}, { this });
 
 		if (newHit.hasHit)
 			hit = newHit;

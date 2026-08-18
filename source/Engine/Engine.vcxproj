@@ -373,6 +373,7 @@
     <ClCompile Include="Console\ConsoleDefaultCommands.cpp" />
     <ClCompile Include="Entities\Brushes\AreaBase.hpp" />
     <ClCompile Include="Entities\Brushes\DynamicPhysicsBrush.hpp" />
+    <ClCompile Include="Entities\Brushes\FuncGroup.hpp" />
     <ClCompile Include="Entities\Brushes\MovebleBrush.cpp" />
     <ClCompile Include="Entities\Brushes\Sound\FmodReverbZone.cpp" />
     <ClCompile Include="Entities\Brushes\Sound\FmodReverbZone.h" />
@@ -544,6 +545,7 @@
     <ClInclude Include="Console\ConsoleRegister.h" />
     <ClInclude Include="Entities\Brushes\DestructibleBrush.hpp" />
     <ClInclude Include="Entities\Brushes\FuncCharacterBlock.hpp" />
+    <ClInclude Include="Entities\Brushes\FuncDetail.hpp" />
     <ClInclude Include="Entities\Brushes\MovebleBrush.hpp" />
     <ClInclude Include="Entities\Brushes\TriggerBase.hpp" />
     <ClInclude Include="Entities\Brushes\TriggerDamage.hpp" />
@@ -552,6 +554,7 @@
     <ClInclude Include="Entities\Editor\Counter.h" />
     <ClInclude Include="Entities\Editor\LogicOnce.h" />
     <ClInclude Include="Entities\PointLight.h" />
+    <ClInclude Include="Entities\QLight.hpp" />
     <ClInclude Include="Entities\Spawner.h" />
     <ClInclude Include="Entities\StaticMeshEntity.h" />
     <ClInclude Include="Entities\transformPoint.h" />

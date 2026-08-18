@@ -1,6 +1,8 @@
 #pragma once
 
+#include <string>
 #include <unordered_map>
+#include <utility>
 #include <json.hpp>
 
 class PowerUpManager
@@ -42,49 +44,67 @@ public:
         }
     }
 
-    friend void to_json(nlohmann::json& j, const PowerUpManager& manager);
-    friend void from_json(const nlohmann::json& j, PowerUpManager& manager);
+    // Exposed only so nlohmann::adl_serializer<PowerUpManager> can (de)serialize us.
+    // We deliberately avoid free-standing to_json/from_json + NLOHMANN_JSON_SERIALIZE_ENUM
+    // here: on MSVC those are found via ADL and can become ambiguous with nlohmann's own
+    // internal to_json/from_json customization objects once another type in the same
+    // translation unit also serializes (e.g. Player.hpp). Explicit adl_serializer
+    // specialization sidesteps that lookup entirely.
+    const std::unordered_map<PowerUpType, float>& GetActiveTimers() const { return m_TimeRemaining; }
+    void SetActiveTimers(std::unordered_map<PowerUpType, float> timers) { m_TimeRemaining = std::move(timers); }
+
+    static const char* ToString(PowerUpType type)
+    {
+        switch (type)
+        {
+        case PowerUpType::Invincibility: return "Invincibility";
+        case PowerUpType::TripleDamage:  return "TripleDamage";
+        case PowerUpType::Akimbo:        return "Akimbo";
+        }
+        return "Unknown";
+    }
+
+    static PowerUpType FromString(const std::string& str)
+    {
+        if (str == "Invincibility") return PowerUpType::Invincibility;
+        if (str == "TripleDamage")  return PowerUpType::TripleDamage;
+        if (str == "Akimbo")        return PowerUpType::Akimbo;
+        return PowerUpType::Invincibility; // fallback for unknown/corrupt data
+    }
 
 private:
     // type -> time remaining. Presence in the map with value > 0 means active.
     std::unordered_map<PowerUpType, float> m_TimeRemaining;
 };
 
-// String mapping used by nlohmann for enum <-> json conversion (also used manually below).
-NLOHMANN_JSON_SERIALIZE_ENUM(PowerUpManager::PowerUpType,
-    {
-        { PowerUpManager::PowerUpType::Invincibility, "Invincibility" },
-        { PowerUpManager::PowerUpType::TripleDamage,  "TripleDamage" },
-        { PowerUpManager::PowerUpType::Akimbo,        "Akimbo" },
-    })
-
-    inline const std::unordered_map<PowerUpManager::PowerUpType, float> PowerUpManager::Durations =
+inline const std::unordered_map<PowerUpManager::PowerUpType, float> PowerUpManager::Durations =
 {
     { PowerUpManager::PowerUpType::Invincibility, 5.0f },
     { PowerUpManager::PowerUpType::TripleDamage,  8.0f },
     { PowerUpManager::PowerUpType::Akimbo,        10.0f },
 };
 
-inline void to_json(nlohmann::json& j, const PowerUpManager& manager)
+namespace nlohmann
 {
-    j = nlohmann::json::object();
-    for (const auto& [type, timeRemaining] : manager.m_TimeRemaining)
+    template <>
+    struct adl_serializer<PowerUpManager>
     {
-        if (timeRemaining > 0.0f)
+        static void to_json(json& j, const PowerUpManager& manager)
         {
-            const std::string key = nlohmann::json(type).get<std::string>();
-            j[key] = timeRemaining;
+            j = json::object();
+            for (const auto& [type, timeRemaining] : manager.GetActiveTimers())
+            {
+                if (timeRemaining > 0.0f)
+                    j[PowerUpManager::ToString(type)] = timeRemaining;
+            }
         }
-    }
-}
 
-inline void from_json(const nlohmann::json& j, PowerUpManager& manager)
-{
-    manager.m_TimeRemaining.clear();
-    for (auto it = j.begin(); it != j.end(); ++it)
-    {
-        const PowerUpManager::PowerUpType type =
-            nlohmann::json(it.key()).get<PowerUpManager::PowerUpType>();
-        manager.m_TimeRemaining[type] = it.value().get<float>();
-    }
+        static void from_json(const json& j, PowerUpManager& manager)
+        {
+            std::unordered_map<PowerUpManager::PowerUpType, float> timers;
+            for (auto it = j.begin(); it != j.end(); ++it)
+                timers[PowerUpManager::FromString(it.key())] = it.value().get<float>();
+            manager.SetActiveTimers(std::move(timers));
+        }
+    };
 }

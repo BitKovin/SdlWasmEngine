@@ -41,6 +41,7 @@ public:
 	Body* sensorBody = nullptr;
 
 	const Body* standingOnBody = nullptr;
+	Entity* standingOnEntity = nullptr;
 
 	float gravity = 25;
 
@@ -117,7 +118,7 @@ protected:
 
 	void UpdateGroundCheck(bool& hitsGround, float& calculatedCharacterHeight, bool& canStand, vec3& walkableNormal, vec3& notWalkableNormal);
 
-	bool CheckGroundAt(vec3 location, float radius, float& height, bool& canStand, vec3& normal, const Body** hitBody);
+	bool CheckGroundAt(vec3 location, float radius, float& height, bool& canStand, vec3& normal, const Body** hitBody, Entity** hitEntity = nullptr);
 
 	// Detects characters we are standing on, manages AddIgnorePair/RemoveIgnorePair,
 	// and applies horizontal separation impulses to both bodies.

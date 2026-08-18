@@ -1,0 +1,32 @@
+{
+    "entries": [
+        { "key": "INPUT_CATEGORY_MOVEMENT",  "value": "移動", "description": "Category for movement related input actions" },
+        { "key": "INPUT_CATEGORY_COMBAT",    "value": "戦闘", "description": "Category for combat related input actions" },
+        { "key": "INPUT_CATEGORY_GENERAL",   "value": "一般", "description": "Category for general input actions" },
+        { "key": "INPUT_CATEGORY_INVENTORY", "value": "インベントリ", "description": "Category for inventory related input actions" },
+
+        { "key": "INPUT_ACTION_FORWARD",  "value": "前進", "description": "Input action to move the player forward" },
+        { "key": "INPUT_ACTION_BACKWARD", "value": "後退", "description": "Input action to move the player backward" },
+        { "key": "INPUT_ACTION_LEFT",     "value": "左移動", "description": "Input action to move the player left" },
+        { "key": "INPUT_ACTION_RIGHT",    "value": "右移動", "description": "Input action to move the player right" },
+        { "key": "INPUT_ACTION_CROUCH",   "value": "しゃがむ", "description": "Input action to make the player crouch" },
+        { "key": "INPUT_ACTION_JUMP",     "value": "ジャンプ", "description": "Input action to make the player jump" },
+        { "key": "INPUT_ACTION_DASH",     "value": "ダッシュ", "description": "Input action to make the player dash" },
+
+        { "key": "INPUT_ACTION_ATTACK",  "value": "攻撃","description": "Input action to perform an main attack (to shoot right handed weapon)" },
+        { "key": "INPUT_ACTION_ATTACK2", "value": "サブ攻撃", "description": "Input action to perform attach from offhand weapon. Like doing a parry using cane that is helt in the left hand" },
+        { "key": "INPUT_ACTION_ATTACK3", "value": "サブ特殊攻撃", "description": "Input action to perform a secondary attack from the offhand weapon" },
+
+        { "key": "INPUT_ACTION_INTERACT",   "value": "調べる", "description": "Input action to interact with objects or characters" },
+        { "key": "INPUT_ACTION_QUICK_SAVE", "value": "クイックセーブ", "description": "Input action to quickly save the game" },
+        { "key": "INPUT_ACTION_QUICK_LOAD", "value": "クイックロード", "description": "Input action to quickly load the game" },
+
+        { "key": "INPUT_ACTION_SLOT1",     "value": "スロット1を選択", "description": "Input action to select the first slot" },
+        { "key": "INPUT_ACTION_SLOT2",     "value": "スロット2を選択", "description": "Input action to select the second slot" },
+        { "key": "INPUT_ACTION_SLOT3",     "value": "スロット3を選択", "description": "Input action to select the third slot" },
+        { "key": "INPUT_ACTION_SLOT4",     "value": "スロット4を選択", "description": "Input action to select the fourth slot" },
+        { "key": "INPUT_ACTION_SLOT5",     "value": "スロット5を選択", "description": "Input action to select the fifth slot" },
+        { "key": "INPUT_ACTION_SLOT6",     "value": "スロット6を選択", "description": "Input action to select the sixth slot" },
+        { "key": "INPUT_ACTION_LAST_SLOT", "value": "直前のスロットを選択", "description": "Input action to select the last selected slot. For example, if you used pistol and switched to shotgun it will switch back to pistol" }
+    ]
+}

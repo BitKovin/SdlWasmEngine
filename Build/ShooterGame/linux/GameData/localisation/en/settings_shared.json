@@ -1,0 +1,10 @@
+{
+    "entries": [
+        { "key": "SETTINGS_BACK",        "value": "Back",   "description": "Back button, shown at the bottom of every settings screen" },
+        { "key": "SETTINGS_TOGGLE_ON",   "value": "On",     "description": "State label for an enabled toggle (VSync, FXAA, Dynamic Shadows, Invert Y, ...)" },
+        { "key": "SETTINGS_TOGGLE_OFF",  "value": "Off",    "description": "State label for a disabled toggle (VSync, FXAA, Dynamic Shadows, Invert Y, ...)" },
+        { "key": "SETTINGS_CONFIRM_YES", "value": "Yes",    "description": "Default affirmative button on the generic Yes/No confirm dialog" },
+        { "key": "SETTINGS_CONFIRM_NO",  "value": "No",     "description": "Default negative button on the generic Yes/No confirm dialog" },
+        { "key": "SETTINGS_CANCEL",      "value": "Cancel", "description": "Cancel button on the rebind-capture popup" }
+    ]
+}
