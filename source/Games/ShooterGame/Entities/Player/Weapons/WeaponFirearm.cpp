@@ -360,6 +360,12 @@ void WeaponFirearm::FireSingleBullet(const vec3& startLoc, const vec4& gridOffse
 	bullet->Start();
 	bullet->LoadAssetsIfNeeded();
 	bullet->Damage = params.bulletDamage;
+
+	if (Player::Instance->powerUpManager.IsPowerUpActive(PowerUpManager::PowerUpType::TripleDamage))
+	{
+		bullet->Damage *= 3;
+	}
+
 }
 
 void WeaponFirearm::NotifyNpcs() 

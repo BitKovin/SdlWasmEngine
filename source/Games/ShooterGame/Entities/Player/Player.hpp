@@ -49,6 +49,8 @@
 #include <Analytics/AnalyticsSystem.h>
 #include <Helpers/StringHelper.h>
 
+#include <Systems/PowerUpSystem/PowerUpManager.hpp>
+
 // Forward declaration for custom item logic
 class Player;
 
@@ -335,6 +337,8 @@ private:
 
 	}
 
+	void UpdatePowerUps();
+
 	bool CanSwitchSlot(int slot);
 	void SwitchWeapon(const WeaponSlotData& data);
 
@@ -410,6 +414,7 @@ private:
 
 public:
 
+	PowerUpManager powerUpManager;
 
 	PlayerHud Hud;
 

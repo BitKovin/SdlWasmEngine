@@ -710,6 +710,22 @@ void Player::TryWallJump()
 	}
 }
 
+void Player::UpdatePowerUps()
+{
+
+	if (currentWeapon)
+	{
+		WeaponFirearm* firearm = dynamic_cast<WeaponFirearm*>(currentWeapon);
+
+		if (firearm)
+		{
+			firearm->akimbo = powerUpManager.IsPowerUpActive(PowerUpManager::PowerUpType::Akimbo);
+		}
+
+	}
+
+}
+
 bool Player::CanSwitchSlot(int slot)
 {
 	if (!currentWeapon) return true;
@@ -2165,6 +2181,8 @@ void Player::Update()
 
 	maxSpeed = controller.isCrouched ? CrouchSpeed : std::lerp(WalkSpeed, RunSpeed, RunProgress);
 
+	//if(powerUpManager.IsPowerUpActive(PowerUpManager::IsPowerUpActive(PowerUpManager::PowerUpType::)))
+
 	if(dead)
 		maxSpeed = 0;
 
@@ -2679,6 +2697,12 @@ void Player::OnDamage(float Damage, Entity* DamageCauser, Entity* Weapon)
 
 void Player::OnPointDamage(float Damage, vec3 Point, vec3 Direction, string bone, Entity* DamageCauser, Entity* Weapon)
 {
+
+	if (powerUpManager.IsPowerUpActive(PowerUpManager::PowerUpType::Invincibility))
+	{
+		return;
+	}
+
 	Entity::OnPointDamage(Damage, Point, Direction, bone, DamageCauser, Weapon);
 
 	vec3 right = Camera::Right();
@@ -2791,6 +2815,9 @@ void Player::Serialize(json& target)
 	}
 	SERIALIZE_FIELD(target, offhandWeaponData);
 
+
+	SERIALIZE_FIELD(target, powerUpManager);
+
 }
 
 void Player::Deserialize(json& source)
@@ -2898,6 +2925,8 @@ void Player::Deserialize(json& source)
 	{
 		TrySuppressWeapons(true);
 	}
+
+	DESERIALIZE_FIELD(source, powerUpManager);
 
 }
 

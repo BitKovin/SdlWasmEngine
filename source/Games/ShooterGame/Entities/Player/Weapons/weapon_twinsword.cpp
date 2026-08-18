@@ -377,6 +377,11 @@ public:
 			if (IsUltimateMode())
 				damangeToDeal *= ultimateFinalDamageMultiplier;
 
+			if (Player::Instance->powerUpManager.IsPowerUpActive(PowerUpManager::PowerUpType::TripleDamage))
+			{
+				damangeToDeal *= 3;
+			}
+
 			bool isEnemy = dynamic_cast<IEnemy*>(hit.entity) && hit.entity->Health > 0;
 
 			if (isEnemy)
