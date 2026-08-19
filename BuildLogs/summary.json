@@ -2,28 +2,28 @@
   {
     "Name": "windows",
     "Success": true,
-    "DurationSeconds": 43.4458598,
+    "DurationSeconds": 88.6965256,
     "LogFilePath": "F:\\Git\\SdlWasmEngine\\BuildLogs\\windows.log",
     "ErrorMessage": null
   },
   {
     "Name": "linux",
     "Success": true,
-    "DurationSeconds": 478.6630136,
+    "DurationSeconds": 481.299928,
     "LogFilePath": "F:\\Git\\SdlWasmEngine\\BuildLogs\\linux.log",
     "ErrorMessage": null
   },
   {
     "Name": "emscripten",
     "Success": true,
-    "DurationSeconds": 55.4555153,
+    "DurationSeconds": 94.9249639,
     "LogFilePath": "F:\\Git\\SdlWasmEngine\\BuildLogs\\emscripten.log",
     "ErrorMessage": null
   },
   {
     "Name": "windows-gdk",
     "Success": true,
-    "DurationSeconds": 37.3150527,
+    "DurationSeconds": 66.6797741,
     "LogFilePath": "F:\\Git\\SdlWasmEngine\\BuildLogs\\windows-gdk.log",
     "ErrorMessage": null
   }

@@ -11,8 +11,7 @@ fi
 export PATH=/cache/cmake/bin:$PATH
 cmake --version
 export CMAKE_BUILD_PARALLEL_LEVEL=18
-echo '=== Configuring [linux] (docker container) ==='
-cmake -S "/repo" -B "/repo/build/linux" -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="/repo/cmake/toolchains/clang.cmake" -DGAME_NAME="ShooterGame" -DSKIP_GAMEDATA_FINALIZE=1
+echo '=== [linux] Build directory already configured, matching args — skipping reconfigure ==='
 
 echo '=== Building [linux] ==='
 cmake --build "/repo/build/linux" --config Release
