@@ -90,7 +90,7 @@ void CharacterController::Update(float deltaTime)
 
 	vec3 currentVelocity = GetVelocity();
 	bool isIdle = glm::length(MathHelper::XZ(currentVelocity)) < 0.001f && currentVelocity.y <= 0;
-	bool skipTracesAndMovement = (isIdle && onGround && standingOnEntity != nullptr && standingOnEntity->Static == true);
+	bool skipTracesAndMovement = (isIdle && onGround && standingOnEntity != nullptr && standingOnEntity->Static == true) && allowSleep;
 
 	if (skipTracesAndMovement)
 	{
