@@ -5,6 +5,9 @@ class BulletTrailEmitter : public RibbonEmitter
 {
 public:
 
+	float trailScale = 1.0f;
+	float lifeTimeMultiplier = 1.0f;
+	
 	BulletTrailEmitter() : RibbonEmitter()
 	{
 		texture = "GameData/textures/particles/trail.png";
@@ -20,7 +23,7 @@ public:
 	{
 		
 		particle.Transparency = mix(1.0,1.0, (particle.deathTime - particle.lifeTime) / particle.deathTime);
-		particle.Size = mix(0.015f, 0.055f, (particle.deathTime - particle.lifeTime) / particle.deathTime);
+		particle.Size = mix(0.015f, 0.055f, (particle.deathTime - particle.lifeTime) / particle.deathTime) * trailScale;
 		return particle;
 	}
 
@@ -31,7 +34,7 @@ public:
 		particle.Size = 0.03f;
 		particle.Color = vec4(0.16, 0.03, 0.03, 0.65);
 		particle.Transparency = 0.8;
-		particle.deathTime = 0.1f;
+		particle.deathTime = 0.1f * lifeTimeMultiplier;
 
 		return particle;
 	}
@@ -43,11 +46,24 @@ private:
 class BulletTrail : public ParticleSystem
 {
 public:
+
 	BulletTrail()
 	{
+
 		emitters.push_back(new BulletTrailEmitter());
 	}
 
+
+	void Update() override
+	{
+		ParticleSystem::Update();
+
+		auto emitter = (BulletTrailEmitter*)emitters[0];
+
+		emitter->trailScale = Scale.x;
+		emitter->lifeTimeMultiplier = Scale.y;
+
+	}
 
 private:
 

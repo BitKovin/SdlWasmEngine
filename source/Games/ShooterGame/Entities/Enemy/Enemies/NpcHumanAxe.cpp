@@ -6,10 +6,10 @@ REGISTER_ENTITY(NpcHumanAxe, "npc_human_axe")
 NpcHumanAxe::NpcHumanAxe()
 {
 	ClassName = "npc_human_axe";
-	maxSpeed = 5.0f;
+	maxSpeed = 7.0f;
 	pathFollow.allowPartialPath = true;
-	Health = 110;
-	MaxHealth = 110;
+	Health = 160;
+	MaxHealth = 160;
 }
 
 // ---------------------------------------------------------------------------

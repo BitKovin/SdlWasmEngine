@@ -7,7 +7,7 @@ REGISTER_ENTITY(TestNpc, "npc_dog")
 TestNpc::TestNpc()
 {
  	ClassName = "testnpc";
-	maxSpeed  = 6.5f;
+	maxSpeed  = 8.0f;
 	Health    = 80;
 	MaxHealth = 80;
 

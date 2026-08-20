@@ -59,7 +59,7 @@ void NpcHumanBase::Start()
 
     controller.Init(this, Position, 0.5f, 2.0f, 5);
     controller.movementQuality = CharacterControllerMovementQuality::NpcGeneric;
-	controller.stepHeight = 0.3f;
+	controller.stepHeight = 0.4f;
 	controller.stepSmoothingSpeed = 10.0f;
 
     desiredDirection = MathHelper::XZ(MathHelper::GetForwardVector(Rotation));

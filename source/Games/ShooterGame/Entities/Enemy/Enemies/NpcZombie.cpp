@@ -32,7 +32,7 @@ public:
 NpcZombie::NpcZombie()
 {
 	ClassName = "npc_zombie";
-	maxSpeed = 1.5f;
+	maxSpeed = 2.5f;
 	canBeStunRagdolled = true;
 	Health = 210;
 	MaxHealth = 210;

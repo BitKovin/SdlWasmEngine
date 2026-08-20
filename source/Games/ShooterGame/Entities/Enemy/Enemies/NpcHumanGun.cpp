@@ -9,10 +9,10 @@ REGISTER_ENTITY(NpcHumanGun, "npc_human_gun")
 NpcHumanGun::NpcHumanGun()
 {
     ClassName = "npc_human_gun";
-    maxSpeed = 4.2f;
+    maxSpeed = 5.7f;
     mesh->Scale = vec3(1.15f);
-    Health = 90;
-    MaxHealth = 90;
+    Health = 110;
+    MaxHealth = 110;
 
     // No partial paths, for chasing or repositioning alike. A partial path
     // can route the NPC toward a ledge or gap it can't actually finish
@@ -83,7 +83,7 @@ void NpcHumanGun::Attack()
             return;
         }
 
-        const float bulletSpeed = 50.0f;
+        const float bulletSpeed = 40.0f;
 
         Player* playerRef = dynamic_cast<Player*>(resolvedTarget);
         if (playerRef)
@@ -115,6 +115,7 @@ void NpcHumanGun::Attack()
         bullet->Damage = 5;
         bullet->owner = this;
         bullet->Start();
+        bullet->trail->Scale = vec3(1.5f);
 
         inAttackDelay.AddDelay(ModifyAnimationSpeed(0.5f));
 
