@@ -47,18 +47,18 @@ class BulletTrail : public ParticleSystem
 {
 public:
 
+	BulletTrailEmitter* emitter = nullptr;
+
 	BulletTrail()
 	{
-
-		emitters.push_back(new BulletTrailEmitter());
+		emitter = new BulletTrailEmitter();
+		emitters.push_back(emitter);
 	}
 
 
 	void Update() override
 	{
 		ParticleSystem::Update();
-
-		auto emitter = (BulletTrailEmitter*)emitters[0];
 
 		emitter->trailScale = Scale.x;
 		emitter->lifeTimeMultiplier = Scale.y;

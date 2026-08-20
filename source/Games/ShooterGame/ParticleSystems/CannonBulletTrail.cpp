@@ -40,10 +40,10 @@ private:
 
 };
 
-class BulletTrail : public ParticleSystem
+class CannonBulletTrail : public ParticleSystem
 {
 public:
-	BulletTrail()
+	CannonBulletTrail()
 	{
 		emitters.push_back(new CannonBulletTrailEmitter());
 	}
@@ -53,4 +53,4 @@ private:
 
 };
 
-REGISTER_ENTITY(BulletTrail, "cannon_bullet_trail")
+REGISTER_ENTITY(CannonBulletTrail, "cannon_bullet_trail")
