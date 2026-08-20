@@ -3,6 +3,7 @@
 #include "../Entity.h"
 #include <vector>
 #include <algorithm>
+#include <EntityHandle.h>
 
 enum class CharacterControllerMovementQuality
 {
@@ -40,8 +41,8 @@ public:
 	Body* body = nullptr;
 	Body* sensorBody = nullptr;
 
-	const Body* standingOnBody = nullptr;
-	Entity* standingOnEntity = nullptr;
+	BodyID standingOnBody;
+	EntityHandle standingOnEntity;
 
 	float gravity = 25;
 
@@ -134,7 +135,7 @@ protected:
 	// Saved before SetLadderMode(true) zeroes stepHeight; restored on exit.
 	float savedStepHeight = 0.4f;
 
-	const Body* lastStandingOnBody = nullptr;
+	BodyID lastStandingOnBody = BodyID();
 	glm::vec3 baseLocalAttachPoint = glm::vec3(0.0f);
 	glm::vec3 prevAttachWorldPos = glm::vec3(0.0f);
 	glm::quat prevBaseRotation = glm::quat(1, 0, 0, 0);

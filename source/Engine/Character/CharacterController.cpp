@@ -88,9 +88,13 @@ void CharacterController::Update(float deltaTime)
 
 	UpdateSmoothPosition(deltaTime);
 
+	Entity* standingOnEntityPtr = standingOnEntity.Resolve(false);
+
+	Body* lastStandingOnBodyPtr = Physics::GetBodyFromId(lastStandingOnBody);
+
 	vec3 currentVelocity = GetVelocity();
 	bool isIdle = glm::length(MathHelper::XZ(currentVelocity)) < 0.001f && currentVelocity.y <= 0;
-	bool skipTracesAndMovement = (isIdle && onGround && standingOnEntity != nullptr && standingOnEntity->Static == true) && allowSleep;
+	bool skipTracesAndMovement = (isIdle && onGround && standingOnEntityPtr != nullptr && standingOnEntityPtr->Static == true) && allowSleep;
 
 	if (skipTracesAndMovement)
 	{
@@ -101,10 +105,10 @@ void CharacterController::Update(float deltaTime)
 		// -------------------------------
 		// 1) If previously attached, preemptively apply platform delta
 		// -------------------------------
-		if (lastStandingOnBody)
+		if (lastStandingOnBodyPtr)
 		{
-			vec3 basePos = FromPhysics(lastStandingOnBody->GetPosition());
-			glm::quat baseRot = FromPhysics(lastStandingOnBody->GetRotation());
+			vec3 basePos = FromPhysics(lastStandingOnBodyPtr->GetPosition());
+			glm::quat baseRot = FromPhysics(lastStandingOnBodyPtr->GetRotation());
 
 			vec3 attachWorldPos = baseRot * baseLocalAttachPoint + basePos;
 			vec3 platformDelta = attachWorldPos - prevAttachWorldPos;
@@ -148,26 +152,26 @@ void CharacterController::Update(float deltaTime)
 
 		if (onGround == false)
 		{
-			standingOnBody = nullptr;
-			standingOnEntity = nullptr;
+			standingOnBody = BodyID();
+			standingOnEntity = EntityHandle();
 		}
 
-		const Body* currentBase = standingOnBody;
+		Body* currentBase = Physics::GetBodyFromId(standingOnBody);
 
 		// -------------------------------
 		// 3) Platform attach/detach detection
 		// -------------------------------
-		bool wasAttached = (lastStandingOnBody != nullptr);
+		bool wasAttached = (lastStandingOnBodyPtr != nullptr);
 		bool isAttached = (currentBase != nullptr);
 
 		if (wasAttached && !isAttached)
 		{
 			// Detached: apply last platform velocity to character
 			// (use fresh computation for accuracy on rotation)
-			vec3 basePos = FromPhysics(lastStandingOnBody->GetPosition());
-			glm::quat baseRot = FromPhysics(lastStandingOnBody->GetRotation());
-			vec3 linearVel = FromPhysics(lastStandingOnBody->GetLinearVelocity());
-			vec3 angularVel = FromPhysics(lastStandingOnBody->GetAngularVelocity());
+			vec3 basePos = FromPhysics(lastStandingOnBodyPtr->GetPosition());
+			glm::quat baseRot = FromPhysics(lastStandingOnBodyPtr->GetRotation());
+			vec3 linearVel = FromPhysics(lastStandingOnBodyPtr->GetLinearVelocity());
+			vec3 angularVel = FromPhysics(lastStandingOnBodyPtr->GetAngularVelocity());
 			vec3 worldOffset = baseRot * baseLocalAttachPoint;
 			vec3 platformVelAtAttach = linearVel + glm::cross(angularVel, worldOffset);
 
@@ -176,14 +180,14 @@ void CharacterController::Update(float deltaTime)
 			SetVelocity(currentVel);
 			lastPlatformVelocity = vec3(0.0f);
 		}
-		else if (wasAttached && isAttached && (currentBase != lastStandingOnBody))
+		else if (wasAttached && isAttached && (currentBase != lastStandingOnBodyPtr))
 		{
 			// Switched platforms: detach from old, attach to new
 			// Detach from old
-			vec3 oldBasePos = FromPhysics(lastStandingOnBody->GetPosition());
-			glm::quat oldBaseRot = FromPhysics(lastStandingOnBody->GetRotation());
-			vec3 oldLinearVel = FromPhysics(lastStandingOnBody->GetLinearVelocity());
-			vec3 oldAngularVel = FromPhysics(lastStandingOnBody->GetAngularVelocity());
+			vec3 oldBasePos = FromPhysics(lastStandingOnBodyPtr->GetPosition());
+			glm::quat oldBaseRot = FromPhysics(lastStandingOnBodyPtr->GetRotation());
+			vec3 oldLinearVel = FromPhysics(lastStandingOnBodyPtr->GetLinearVelocity());
+			vec3 oldAngularVel = FromPhysics(lastStandingOnBodyPtr->GetAngularVelocity());
 			vec3 oldWorldOffset = oldBaseRot * baseLocalAttachPoint;
 			vec3 oldPlatformVel = oldLinearVel + glm::cross(oldAngularVel, oldWorldOffset);
 
@@ -221,7 +225,14 @@ void CharacterController::Update(float deltaTime)
 			lastPlatformVelocity = platformVelAtAttach;
 		}
 
-		lastStandingOnBody = currentBase;
+		if (currentBase)
+		{
+			lastStandingOnBody = currentBase->GetID();
+		}
+		{
+			lastStandingOnBody = BodyID();
+		}
+
 
 		// -------------------------------
 		// 4) Original character movement / gravity / slope logic
@@ -331,10 +342,10 @@ void CharacterController::Update(float deltaTime)
 		// -------------------------------
 		// 6) If still attached, update local attach point and platform velocity
 		// -------------------------------
-		if (lastStandingOnBody)
+		if (lastStandingOnBodyPtr)
 		{
-			vec3 basePos = FromPhysics(lastStandingOnBody->GetPosition());
-			glm::quat baseRot = FromPhysics(lastStandingOnBody->GetRotation());
+			vec3 basePos = FromPhysics(lastStandingOnBodyPtr->GetPosition());
+			glm::quat baseRot = FromPhysics(lastStandingOnBodyPtr->GetRotation());
 			vec3 charPos = FromPhysics(body->GetPosition());
 
 			baseLocalAttachPoint = glm::inverse(baseRot) * (charPos - basePos);
@@ -342,8 +353,8 @@ void CharacterController::Update(float deltaTime)
 			prevBaseRotation = baseRot;
 			prevBasePosition = basePos;
 
-			vec3 linearVel = FromPhysics(lastStandingOnBody->GetLinearVelocity());
-			vec3 angularVel = FromPhysics(lastStandingOnBody->GetAngularVelocity());
+			vec3 linearVel = FromPhysics(lastStandingOnBodyPtr->GetLinearVelocity());
+			vec3 angularVel = FromPhysics(lastStandingOnBodyPtr->GetAngularVelocity());
 			vec3 worldOffset = baseRot * baseLocalAttachPoint;
 			lastPlatformVelocity = linearVel + glm::cross(angularVel, worldOffset);
 		}
@@ -652,8 +663,8 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 	calculatedGroundHeight = 0;
 	avgNormal = vec3(0, 1, 0);
 	canStand = false;
-	standingOnBody = nullptr;
-	standingOnEntity = nullptr;
+	standingOnBody = BodyID();
+	standingOnEntity = EntityHandle();
 	notWalkableNormal = vec3(0, 1, 0);
 
 	vec3 heightOffset = vec3(0, stepHeight, 0);
@@ -687,8 +698,8 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 
 			if (outCanStand)
 			{
-				standingOnBody = hitBody;
-				standingOnEntity = hitEntity;
+				standingOnBody = hitBody->GetID();
+				standingOnEntity = EntityHandle::FromEntity(hitEntity);
 			}
 
 			return;
@@ -718,8 +729,8 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 
 			if (outCanStand)
 			{
-				standingOnBody = hitBody;
-				standingOnEntity = hitEntity;
+				standingOnBody = hitBody->GetID();
+				standingOnEntity = EntityHandle::FromEntity(hitEntity);
 			}
 
 			return;
@@ -809,8 +820,8 @@ void CharacterController::UpdateGroundCheck(bool& hitsGround, float& calculatedG
 				walkHits += static_cast<int>(weight);
 				walkNormalCount += 1;
 				canStand = true;
-				if (hb) standingOnBody = hb;
-				if (he) standingOnEntity = he;
+				if (hb) standingOnBody = hb->GetID();
+				if (he) standingOnEntity = EntityHandle::FromEntity(he);
 			}
 			else
 			{
