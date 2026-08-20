@@ -787,6 +787,7 @@ void NpcHumanBase::LateUpdate()
         Death();
     }
 
+    controller.allowSleep = state == NpcState::Idle;
 
     numUpdates++;
 }

@@ -74227,3 +74227,1088 @@ default
 	lightmapAxis ( 0.000000 0.000000 1.000000 )
 }
 
+10386 // ESurfaceType::Meta V: 12 I: 30 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+10387 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+10388 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+10389 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+10390 // ESurfaceType::Meta V: 12 I: 30 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+10391 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+10392 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+10393 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+10394 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+10395 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+10396 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+10397 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+10398 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+10399 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+10400 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+10401 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+10402 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+10403 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+10404 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+10405 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+10406 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+10407 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+10408 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+10409 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+10410 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+10411 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+10412 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+10413 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+10414 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+10415 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+10416 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+10417 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+10418 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+10419 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+10420 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+10421 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+10422 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+10423 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+10424 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+10425 // ESurfaceType::Meta V: 12 I: 30 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+10426 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+10427 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+10428 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+10429 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+10430 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+10431 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+10432 // ESurfaceType::Meta V: 12 I: 30 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+10433 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+10434 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+10435 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+10436 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+10437 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+10438 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+10439 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+10440 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+10441 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+10442 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+10443 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+10444 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+10445 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+10446 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+10447 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+10448 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+10449 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+10450 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+10451 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+10452 // ESurfaceType::Meta V: 12 I: 30 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+10453 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+10454 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+10455 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+10456 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+10457 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+10458 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+10459 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+10460 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+10461 // ESurfaceType::Meta V: 12 I: 30 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+10462 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+10463 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+10464 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+10465 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+10466 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+10467 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+10468 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+10469 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+10470 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+10471 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+10472 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+10473 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+10474 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+10475 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+10476 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+10477 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+10478 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+10479 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+10480 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+10481 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+10482 // ESurfaceType::Meta V: 12 I: 30 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+10483 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+10484 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+10485 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+10486 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+10487 // ESurfaceType::Meta V: 12 I: 30 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+10488 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+10489 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+10490 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+10491 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+10492 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+10493 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+10494 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+10495 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+10496 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+10497 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+10498 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 141
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+10499 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/common/caulk
+	entity 141
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+10500 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_flesh/bone1_1
+	entity 141
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+10501 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_flesh/bone1_1
+	entity 141
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+10502 // ESurfaceType::Meta V: 8 I: 18 planar
+{
+	shader textures/lq_flesh/bone1_1
+	entity 141
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+10503 // ESurfaceType::Meta V: 8 I: 18 planar
+{
+	shader textures/lq_flesh/bone1_1
+	entity 141
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+10504 // ESurfaceType::Meta V: 12 I: 36 planar
+{
+	shader textures/lq_flesh/bone1_1
+	entity 141
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+10505 // ESurfaceType::Meta V: 10 I: 30 planar
+{
+	shader textures/lq_flesh/bone1_1
+	entity 141
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+10506 // ESurfaceType::Meta V: 12 I: 30 planar
+{
+	shader textures/lq_flesh/bone1_1
+	entity 141
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+10507 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_flesh/bone1_1
+	entity 141
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+10508 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_flesh/bone1_1
+	entity 141
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+10509 // ESurfaceType::Meta V: 11 I: 33 planar
+{
+	shader textures/lq_flesh/bone1_1
+	entity 141
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+10510 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_flesh/bone1_1
+	entity 141
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+10511 // ESurfaceType::Meta V: 6 I: 12 planar
+{
+	shader textures/lq_flesh/bone1_1
+	entity 141
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+10512 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_flesh/bone1_1
+	entity 141
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+10513 // ESurfaceType::Meta V: 8 I: 18 planar
+{
+	shader textures/lq_flesh/bone1_1
+	entity 141
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+10514 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_flesh/bone1_1
+	entity 141
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+10515 // ESurfaceType::Meta V: 11 I: 33 planar
+{
+	shader textures/lq_flesh/bone1_1
+	entity 141
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+10516 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_flesh/bone1_1
+	entity 141
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+10517 // ESurfaceType::Meta V: 12 I: 30 planar
+{
+	shader textures/lq_flesh/bone1_1
+	entity 141
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+10518 // ESurfaceType::Meta V: 10 I: 24 planar
+{
+	shader textures/lq_flesh/bone1_1
+	entity 141
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+10519 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_flesh/bone1_1
+	entity 141
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+10520 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_flesh/bone1_1
+	entity 141
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+10521 // ESurfaceType::Meta V: 8 I: 18 planar
+{
+	shader textures/lq_flesh/bone1_1
+	entity 141
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+10522 // ESurfaceType::Meta V: 10 I: 30 planar
+{
+	shader textures/lq_flesh/bone1_1
+	entity 141
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+10523 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 142
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+10524 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 142
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+10525 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 142
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+10526 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 142
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+10527 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 142
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+10528 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 142
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+10529 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 143
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+10530 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 143
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+10531 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 143
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+10532 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 143
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+10533 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 143
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+10534 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 143
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+10535 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 144
+	lightmapAxis ( -0.000000 -0.000000 -1.000000 )
+}
+
+10536 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 144
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+10537 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 144
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+10538 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 144
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+10539 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 144
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+
+10540 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/lq_wood/plank4
+	entity 144
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+

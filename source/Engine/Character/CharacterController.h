@@ -47,6 +47,8 @@ public:
 
 	float stepHeight = 0.4;
 
+	bool allowSleep = false;
+
 	float height = 1.8;
 	float radius = 0.4;
 
