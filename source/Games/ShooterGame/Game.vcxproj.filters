@@ -402,6 +402,9 @@
     <ClCompile Include="ParticleSystems\FogLight.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Entities\Player\EcsPlayerTestSystems.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Entities\Player\Player.hpp">
@@ -687,6 +690,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Systems\PowerUpSystem\PowerUpManager.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Entities\Player\EcsPlayerTestSystems.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

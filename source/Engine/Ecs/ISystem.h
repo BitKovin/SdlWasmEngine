@@ -141,16 +141,14 @@ inline void ClassName::Execute(SystemContext& ctx)
 // closes out whichever of TICK_COMPONENT/TICK_ENTITY opened it - one closer
 // macro for both, since the closing code is identical either way.
 #define TICK_COMPONENT(ClassName, Grp, ComponentType, VarName) \
-DECLARE_SYSTEM(ClassName, Grp) \
-{ \
-    ctx.ForEach<ComponentType>([&](entt::entity, ComponentType& VarName)
+    DECLARE_SYSTEM(ClassName, Grp) { \
+        ctx.ForEach<ComponentType>([&](entt::entity, ComponentType& VarName)
 
 #define TICK_ENTITY(ClassName, Grp, ComponentType, EntityVarName, ComponentVarName) \
-DECLARE_SYSTEM(ClassName, Grp) \
-{ \
-    ctx.ForEachEntity<ComponentType>([&](Entity* EntityVarName, ComponentType& ComponentVarName)
+    DECLARE_SYSTEM(ClassName, Grp) { \
+        ctx.ForEachEntity<ComponentType>([&](Entity* EntityVarName, ComponentType& ComponentVarName)
 
 #define REGISTER_TICK(ClassName, ...) \
-    ); \
-} \
-REGISTER_SYSTEM(ClassName, __VA_ARGS__)
+        ); \
+    } \
+    REGISTER_SYSTEM(ClassName, __VA_ARGS__)

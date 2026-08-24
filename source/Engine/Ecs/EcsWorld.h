@@ -52,13 +52,7 @@ public:
     // Immediate, not deferred - see the note at the top of this file.
     // Inside a system, prefer ctx.Destroy(), which defers this to the tick
     // group's flush point and is safe from any thread.
-    static void Destroy(entt::entity e)
-    {
-        if (Entity* owner = GetEntity(e))
-            owner->Destroy();
-        else if (Storage().valid(e))
-            Storage().destroy(e);
-    }
+    static void Destroy(entt::entity e);
 
     // Recovers the owning engine Entity from a raw entt::entity id - the
     // preferred way to turn an id from iteration (ctx.ForEach, an event's

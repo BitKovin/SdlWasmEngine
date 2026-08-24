@@ -437,6 +437,7 @@
     <ClCompile Include="Entities\Pickup\Weapons\WeaponPickupShotgun.cpp" />
     <ClCompile Include="Entities\Pickup\Weapons\WeaponPickupSMG.cpp" />
     <ClCompile Include="Entities\Pickup\Weapons\WeaponPickupTwinswords.cpp" />
+    <ClCompile Include="Entities\Player\EcsPlayerTestSystems.cpp" />
     <ClCompile Include="Entities\Player\InventoryMenu.cpp" />
     <ClCompile Include="Entities\Player\LevelEndLogic.cpp" />
     <ClCompile Include="Entities\Player\Player.cpp" />
@@ -542,6 +543,7 @@
     <ClInclude Include="Entities\Pickup\Keys\PickupKeyBase.h" />
     <ClInclude Include="Entities\Pickup\PickupBase.h" />
     <ClInclude Include="Entities\Pickup\Weapons\WeaponPickupBase.hpp" />
+    <ClInclude Include="Entities\Player\EcsPlayerTestSystems.h" />
     <ClInclude Include="Entities\Player\InventoryMenu.h" />
     <ClInclude Include="Entities\Player\Player.hpp" />
     <ClInclude Include="Entities\Player\PlayerBodyAnimator.h" />

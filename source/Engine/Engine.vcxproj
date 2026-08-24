@@ -372,6 +372,7 @@
     <ClCompile Include="Console\Console.cpp" />
     <ClCompile Include="Console\ConsoleDefaultCommands.cpp" />
     <ClCompile Include="Ecs\EcsScheduler.cpp" />
+    <ClCompile Include="Ecs\EcsWorld.cpp" />
     <ClCompile Include="Entities\Brushes\AreaBase.hpp" />
     <ClCompile Include="Entities\Brushes\DynamicPhysicsBrush.hpp" />
     <ClCompile Include="Entities\Brushes\FuncGroup.hpp" />

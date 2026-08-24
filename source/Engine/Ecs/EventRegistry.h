@@ -105,13 +105,19 @@ private:
     }
 };
 
+#define REGISTRY_CONCAT_IMPL(x, y) x##y
+#define REGISTRY_CONCAT(x, y) REGISTRY_CONCAT_IMPL(x, y)
+
 #define REGISTER_EVENT(Type) \
     namespace { \
-        struct Type##_EventRegistrar \
+        struct REGISTRY_CONCAT(EventRegistrar_, __LINE__) \
         { \
-            Type##_EventRegistrar() { EventRegistry::Register<Type>(#Type); } \
+            REGISTRY_CONCAT(EventRegistrar_, __LINE__)() \
+            { \
+                EventRegistry::Register<Type>(#Type); \
+            } \
         }; \
-        static Type##_EventRegistrar Type##_eventRegistrar_instance; \
+        static REGISTRY_CONCAT(EventRegistrar_, __LINE__) REGISTRY_CONCAT(eventRegistrarInstance_, __LINE__); \
     }
 
 // Declares HandlerName(EventType& e) and subscribes it in one shot - no

@@ -51,6 +51,8 @@
 
 #include <Systems/PowerUpSystem/PowerUpManager.hpp>
 
+#include "EcsPlayerTestSystems.h"
+
 // Forward declaration for custom item logic
 class Player;
 
@@ -321,6 +323,7 @@ private:
 
 		jumpDelay.AddDelay(0.3);
 
+
 	}
 
 	bool CheckGroundAt(vec3 location)
@@ -492,8 +495,11 @@ public:
 
 		weaponSlots.resize(10);
 
+		AddComponent<PlayerTestComponent>();
 
 	}
+
+
 	~Player() { Logger::Log("player destructor"); }
 
 	float Speed = 5;

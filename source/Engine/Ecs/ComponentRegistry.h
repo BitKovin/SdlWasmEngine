@@ -94,11 +94,17 @@ private:
     static Data& Storage() { static Data data; return data; }
 };
 
+#define REGISTRY_CONCAT_IMPL(x, y) x##y
+#define REGISTRY_CONCAT(x, y) REGISTRY_CONCAT_IMPL(x, y)
+
 #define REGISTER_COMPONENT(Type) \
     namespace { \
-        struct Type##_ComponentRegistrar \
+        struct REGISTRY_CONCAT(ComponentRegistrar_, __LINE__) \
         { \
-            Type##_ComponentRegistrar() { ComponentRegistry::Register<Type>(#Type); } \
+            REGISTRY_CONCAT(ComponentRegistrar_, __LINE__)() \
+            { \
+                ComponentRegistry::Register<Type>(#Type); \
+            } \
         }; \
-        static Type##_ComponentRegistrar Type##_componentRegistrar_instance; \
+        static REGISTRY_CONCAT(ComponentRegistrar_, __LINE__) REGISTRY_CONCAT(registrarInstance_, __LINE__); \
     }
