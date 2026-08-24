@@ -725,8 +725,18 @@ void EngineMain::GameUpdate()
     }
 
     {
+        ZoneScopedN("ECS PreUpdate");
+        EcsScheduler::RunTickGroup(TickGroup::PreUpdate, EcsWorld::Registry(), Time::DeltaTimeF, Paused);
+    }
+
+    {
         ZoneScopedN("Level Update");
         Level::Current->Update(Paused);
+    }
+
+    {
+        ZoneScopedN("ECS PostUpdate");
+        EcsScheduler::RunTickGroup(TickGroup::PostUpdate, EcsWorld::Registry(), Time::DeltaTimeF, Paused);
     }
 
     {
@@ -735,13 +745,23 @@ void EngineMain::GameUpdate()
     }
 
     {
+        ZoneScopedN("ECS PostAsyncUpdate");
+        EcsScheduler::RunTickGroup(TickGroup::PostAsyncUpdate, EcsWorld::Registry(), Time::DeltaTimeF, Paused);
+    }
+
+    {
         ZoneScopedN("Late Update");
         Level::Current->LateUpdate(Paused);
     }
 
     {
+        ZoneScopedN("ECS PostLateUpdate");
+        EcsScheduler::RunTickGroup(TickGroup::PostLateUpdate, EcsWorld::Registry(), Time::DeltaTimeF, Paused);
+    }
+
+    {
         ZoneScopedN("AnalyticsSystem Update");
-		AnalyticsSystem::Get().Tick(Time::GameTime);
+        AnalyticsSystem::Get().Tick(Time::GameTime);
     }
 
     {
@@ -762,201 +782,6 @@ void EngineMain::GameUpdate()
     {
         ZoneScopedN("Audio");
         SoundManager::Update();
-    }
-}
-
-void EngineMain::Render()
-{
-
-    ZoneScopedN("Render");
-
-
-    ivec2 uiResolution = ivec2(
-        UiManager::GetScaledUiHeight() * Camera::AspectRatio,
-        UiManager::GetScaledUiHeight()
-    );
-
-    /* ============================================================
-       CREATE / RESIZE UI RENDER TARGET
-       ============================================================ */
-
-    if (UiFrameBuffer == nullptr)
-    {
-        UiFrameBuffer = new Framebuffer();
-        UiRenderTexture = new RenderTexture(
-            uiResolution.x,
-            uiResolution.y,
-            TextureFormat::RGBA8);
-        UiRenderTextureStencil = new RenderTexture(uiResolution.x,
-            uiResolution.y, TextureFormat::Depth24Stencil8);
-
-        UiFrameBuffer->attachColor(UiRenderTexture);
-        UiFrameBuffer->attachDepth(UiRenderTextureStencil);
-    }
-
-    if (UiRenderTexture->width() != (uint32_t)uiResolution.x ||
-        UiRenderTexture->height() != (uint32_t)uiResolution.y)
-    {
-        UiRenderTexture->resize(uiResolution.x, uiResolution.y);
-        UiRenderTextureStencil->resize(uiResolution.x, uiResolution.y);
-
-        // Textures got new handles — rebuild the framebuffer against them
-        UiFrameBuffer->attachColor(UiRenderTexture);        // ← FIX 1
-        UiFrameBuffer->attachDepth(UiRenderTextureStencil);
-    }
-
-	if (FinalFrameRenderTexture == nullptr || FinalFrameRenderTexture->height() != (uint32_t)ScreenSize.y || FinalFrameRenderTexture->width() != (uint32_t)ScreenSize.x)
-	{
-		if (FinalFrameRenderTexture)
-			delete FinalFrameRenderTexture;
-		FinalFrameRenderTexture = new RenderTexture(
-			ScreenSize.x,
-			ScreenSize.y,
-			TextureFormat::RGBA8);
-	}
-
-    /* ============================================================
-       UI PASS → render to transparent RT
-       ============================================================ */
-    {
-
-        ZoneScopedN("UI Pass");
-
-        UiFrameBuffer->bind();
-        bgfx::setViewMode(ViewIdManager::GetCurrentId(), bgfx::ViewMode::Sequential);
-        bgfx::setViewClear(ViewIdManager::GetCurrentId(),
-            BGFX_CLEAR_COLOR | BGFX_CLEAR_STENCIL,
-            0x00000000, // transparent black
-            1.0f, 0);   // stencil cleared to 0
-
-        BgfxStateManager::Reset();
-        BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Always);
-        BgfxStateManager::SetWriteDepth(false);
-        BgfxStateManager::SetBlend(BgfxStateManager::Blend::Premultiplied);
-
-        bgfx::touch(ViewIdManager::GetCurrentId());
-        {
-            ZoneScopedN("Viewport Draw");
-            Viewport.Draw();
-            UiElement::DrawingLate = true;
-        }
-        {
-            ZoneScopedN("Late UI");
-            for (auto elem : UiElement::pendingLateDrawElements)
-            {
-                elem->Draw();
-            }
-        }
-
-        UiElement::DrawingLate = false;
-        UiElement::pendingLateDrawElements.clear();
-
-        UiRenderer::EndFrame();
-
-        UiFrameBuffer->unbind();
-    }
-
-    /* ============================================================
-       WORLD PASS — RenderLevel manages its own view IDs internally
-       ============================================================ */
-
-    {
-        ZoneScopedN("World Render");
-        MainRenderer->RenderLevel(Level::Current, FinalFrameRenderTexture->frameBufferHandle());
-
-        bgfx::setViewRect(ViewIdManager::GetCurrentId(), 0, 0,
-            (uint16_t)ScreenSize.x,
-            (uint16_t)ScreenSize.y);
-        //bgfx::setViewFrameBuffer(ViewIdManager::GetCurrentId(), FinalFrameRenderTexture->frameBufferHandle());
-
-        ViewIdManager::GiveNextId();
-
-		bgfx::setViewFrameBuffer(ViewIdManager::GetCurrentId(), BGFX_INVALID_HANDLE);
-		bgfx::setViewRect(ViewIdManager::GetCurrentId(), 0, 0,
-			(uint16_t)ScreenSize.x,
-			(uint16_t)ScreenSize.y);
-
-        auto copyShader = MainRenderer->copyShader;
-
-		copyShader->SetTexture("screenTexture", FinalFrameRenderTexture->textureHandle());
-        BgfxStateManager::Reset();
-        BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Always);
-        BgfxStateManager::Apply();
-		MainRenderer->RenderFullscreenQuad(copyShader);
-    }
-
-    /* ============================================================
-       COMPOSITE UI OVER SCENE → swapchain (view 0)
-       ============================================================ */
-    {
-
-        ZoneScopedN("Composite UI Pass");
-
-
-
-        auto compositeShader = ShaderManager::GetShaderProgram(
-            "vs_fullscreen",
-            "fs_fxaa_simple"
-        );
-
-        compositeShader->SetTexture("screenTexture", UiRenderTexture->textureHandle());
-        compositeShader->SetUniform("screenSize",
-            vec2((float)ScreenSize.x, (float)ScreenSize.y));
-
-        // Premultiplied-alpha blend: RGB = src*1 + dst*(1-srcA)
-        BgfxStateManager::Reset();
-        BgfxStateManager::SetDepthTest(BgfxStateManager::DepthTest::Always);
-        BgfxStateManager::SetBlend(BgfxStateManager::Blend::Premultiplied);
-        BgfxStateManager::Apply();
-
-        MainRenderer->RenderFullscreenQuad(compositeShader);
-
-    }
-
-    {
-
-        ZoneScopedN("RML UI Pass");
-
-        RmlContext->Render();
-    }
-
-
-    {
-
-		ZoneScopedN("Debug UI");
-
-        if (DebugUiEnabled)
-        {
-            Level::Current->DevUiUpdate();
-
-            bool open = true;
-
-            if (Paused)
-            {
-                Console::Get().Draw("Console", &open);
-                ResourceStatistics::Instance().renderImGui();
-            }
-
-            NetworkManager::DrawDebugUi();
-
-            RenderImGui();
-        }
-    }
-
-    if (LoadingFrames > 0)
-    {
-        LoadingFrames--;
-
-        LoadingScreenSystem::Draw();
-        return;
-    }
-
-    {
-
-		ZoneScopedN("Present");
-
-        bgfx::frame();
-        ViewIdManager::Reset();
     }
 }
 
