@@ -40,6 +40,8 @@
 
 #include <Localization/Localisation.h>
 
+#include <Ecs/Ecs.h>
+
 
 EngineMain* EngineMain::MainInstance = nullptr;
 
@@ -197,6 +199,8 @@ void EngineMain::Init(std::vector<std::string> args)
 	Localisation::Initialize("GameData/localisation", "en");
 
     UpdateScreenSize();
+
+    EcsScheduler::Finalize();
 
     Logger::Info("init");
 

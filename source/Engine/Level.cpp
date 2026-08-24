@@ -1,5 +1,7 @@
 #include "Level.hpp"
 
+#include <Ecs/EcsWorld.h>
+
 #include "MapData.h"
 #include "MapParser.h"
 
@@ -76,6 +78,14 @@ void Level::CloseLevel()
 
 	Current->RemovePendingEntities();
 	Current->MemoryCleanPendingEntities();
+
+	// Every Entity has already cleaned up its own ECS row back when
+	// Destroy() ran (via the Dispose() loop above), so this is a defensive
+	// full wipe - it only actually matters for non-Entity registry rows
+	// that never had a LevelObject wrapping them (there shouldn't be any if
+	// entities are always spawned through Entity::Spawn(), but this keeps a
+	// level-unload from ever leaking one).
+	EcsWorld::Reset();
 
 	NavigationSystem::DestroyAllObstacles();
 
