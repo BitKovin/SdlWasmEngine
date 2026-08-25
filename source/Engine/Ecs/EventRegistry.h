@@ -105,20 +105,22 @@ private:
     }
 };
 
-#define REGISTRY_CONCAT_IMPL(x, y) x##y
-#define REGISTRY_CONCAT(x, y) REGISTRY_CONCAT_IMPL(x, y)
-
+// Safe to put directly in a header, even one included by many .cpp files:
+// the registrar is a C++17 inline variable, not a plain static one, so the
+// linker collapses every translation unit's copy into a single instance.
+// EcsDetail holds only generated plumbing - never reference it directly.
 #define REGISTER_EVENT(Type) \
-    namespace { \
-        struct REGISTRY_CONCAT(EventRegistrar_, __LINE__) \
+    namespace EcsDetail { \
+        struct Type##_EventRegistrar \
         { \
-            REGISTRY_CONCAT(EventRegistrar_, __LINE__)() \
-            { \
-                EventRegistry::Register<Type>(#Type); \
-            } \
+            Type##_EventRegistrar() { EventRegistry::Register<Type>(#Type); } \
         }; \
-        static REGISTRY_CONCAT(EventRegistrar_, __LINE__) REGISTRY_CONCAT(eventRegistrarInstance_, __LINE__); \
+        inline Type##_EventRegistrar Type##_eventRegistrar_instance; \
     }
+
+// Manual alternative to REGISTER_EVENT - use when this code may live in a
+// shared library (DLL/.so). See the "SHARED LIBRARIES" note in Ecs.h.
+#define REGISTER_EVENT_MANUAL(Type) EventRegistry::Register<Type>(#Type)
 
 // Declares HandlerName(EventType& e) and subscribes it in one shot - no
 // separate registration step. Multiple handlers may be declared for the
@@ -130,9 +132,14 @@ private:
 // handler running before another for the same event - if that matters,
 // split the work into two distinct event types with an explicit ordering
 // between the systems that emit them instead.
+//
+// Safe to put directly in a header, even one included by many .cpp files:
+// both the handler function and its registrar are C++17 inline - a plain
+// (non-inline) free function definition here would instead be a duplicate-
+// symbol link error the moment two .cpp files included it.
 #define EVENT_HANDLER(HandlerName, EventType) \
-    void HandlerName(EventType& e); \
-    namespace { \
+    inline void HandlerName(EventType& e); \
+    namespace EcsDetail { \
         struct HandlerName##_HandlerRegistrar \
         { \
             HandlerName##_HandlerRegistrar() \
@@ -141,6 +148,22 @@ private:
                 EventRegistry::NotifyHandlerConnected<EventType>(#HandlerName); \
             } \
         }; \
-        static HandlerName##_HandlerRegistrar HandlerName##_handlerRegistrar_instance; \
+        inline HandlerName##_HandlerRegistrar HandlerName##_handlerRegistrar_instance; \
     } \
-    void HandlerName(EventType& e)
+    inline void HandlerName(EventType& e)
+
+// Manual alternative to EVENT_HANDLER - use when this code may live in a
+// shared library (DLL/.so). See the "SHARED LIBRARIES" note in Ecs.h.
+// Declares the handler the same way, but generates an inline
+// HandlerName##_RegisterManual() function instead of a static registrar -
+// call that yourself, before EcsScheduler::Finalize():
+//   EVENT_HANDLER_MANUAL(ApplyDamage, DamageEvent) { ... }
+//   // elsewhere, in code you control: ApplyDamage_RegisterManual();
+#define EVENT_HANDLER_MANUAL(HandlerName, EventType) \
+    inline void HandlerName(EventType& e); \
+    inline void HandlerName##_RegisterManual() \
+    { \
+        EcsScheduler::OnEvent<EventType>().connect<&HandlerName>(); \
+        EventRegistry::NotifyHandlerConnected<EventType>(#HandlerName); \
+    } \
+    inline void HandlerName(EventType& e)

@@ -91,8 +91,14 @@ inline void ClassName::Execute(SystemContext& ctx)
 
 // Trailing ... may be empty (e.g. REGISTER_SYSTEM(CombatSystem)); requires
 // empty __VA_ARGS__ support, same as ECS_COMPONENT in Entity.h.
+//
+// Safe to put directly in a header, even one included by many .cpp files:
+// the registrar is a C++17 inline variable, not a plain static one, so the
+// linker collapses every translation unit's copy into a single instance
+// instead of adding one duplicate system per include. EcsDetail holds only
+// generated plumbing - never reference it directly.
 #define REGISTER_SYSTEM(ClassName, ...) \
-    namespace { \
+    namespace EcsDetail { \
         struct ClassName##_Registrar \
         { \
             ClassName##_Registrar() \
@@ -102,8 +108,21 @@ inline void ClassName::Execute(SystemContext& ctx)
                 EcsScheduler::AddSystem(std::move(sys)); \
             } \
         }; \
-        static ClassName##_Registrar ClassName##_registrar_instance; \
+        inline ClassName##_Registrar ClassName##_registrar_instance; \
     }
+
+// Manual alternative to REGISTER_SYSTEM - use when this code may live in a
+// shared library (DLL/.so). See the "SHARED LIBRARIES" note in Ecs.h for why
+// static-initializer registration can silently fail to run there. Same
+// call, no static object at all - call it yourself, from a function you
+// control, before EcsScheduler::Finalize():
+//   REGISTER_SYSTEM_MANUAL(CombatSystem, .After({ "AI" }));
+#define REGISTER_SYSTEM_MANUAL(ClassName, ...) \
+    do { \
+        auto sys = std::make_unique<ClassName>(); \
+        sys->Self() __VA_ARGS__; \
+        EcsScheduler::AddSystem(std::move(sys)); \
+    } while (0)
 
 // TICK_COMPONENT / TICK_ENTITY / REGISTER_TICK
 //
@@ -141,14 +160,36 @@ inline void ClassName::Execute(SystemContext& ctx)
 // closes out whichever of TICK_COMPONENT/TICK_ENTITY opened it - one closer
 // macro for both, since the closing code is identical either way.
 #define TICK_COMPONENT(ClassName, Grp, ComponentType, VarName) \
-    DECLARE_SYSTEM(ClassName, Grp) { \
-        ctx.ForEach<ComponentType>([&](entt::entity, ComponentType& VarName)
+DECLARE_SYSTEM(ClassName, Grp) \
+{ \
+    ctx.ForEach<ComponentType>([&](entt::entity, ComponentType& VarName)
 
 #define TICK_ENTITY(ClassName, Grp, ComponentType, EntityVarName, ComponentVarName) \
-    DECLARE_SYSTEM(ClassName, Grp) { \
-        ctx.ForEachEntity<ComponentType>([&](Entity* EntityVarName, ComponentType& ComponentVarName)
+DECLARE_SYSTEM(ClassName, Grp) \
+{ \
+    ctx.ForEachEntity<ComponentType>([&](Entity* EntityVarName, ComponentType& ComponentVarName)
 
 #define REGISTER_TICK(ClassName, ...) \
-        ); \
-    } \
-    REGISTER_SYSTEM(ClassName, __VA_ARGS__)
+    ); \
+} \
+REGISTER_SYSTEM(ClassName, __VA_ARGS__)
+
+// Manual alternative to REGISTER_TICK - see the "SHARED LIBRARIES" note in
+// Ecs.h. TICK_COMPONENT/TICK_ENTITY open code at namespace scope, so unlike
+// REGISTER_SYSTEM_MANUAL this can't be an inline call - it generates an
+// inline ClassName##_RegisterManual() function instead (safe in a shared
+// header for the same reason REGISTER_SYSTEM's inline variable is - it's a
+// C++17 inline function, deduplicated across translation units). Call it
+// yourself, before EcsScheduler::Finalize():
+//   TICK_COMPONENT(StaminaRegenSystem, PostUpdate, Stamina, sta) { ... }
+//   REGISTER_TICK_MANUAL(StaminaRegenSystem)
+//   // elsewhere, in code you control: StaminaRegenSystem_RegisterManual();
+#define REGISTER_TICK_MANUAL(ClassName, ...) \
+    ); \
+} \
+inline void ClassName##_RegisterManual() \
+{ \
+    auto sys = std::make_unique<ClassName>(); \
+    sys->Self() __VA_ARGS__; \
+    EcsScheduler::AddSystem(std::move(sys)); \
+}

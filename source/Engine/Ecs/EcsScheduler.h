@@ -58,6 +58,20 @@ public:
     template<typename Event>
     static auto OnEvent() { return Storage().Dispatcher.sink<Event>(); }
 
+    // Same as ctx.Emit<Event>() from inside a system, but callable from
+    // anywhere - game code that isn't a system, an Entity method, outside
+    // any tick group entirely. Safe to call from any thread; buffered the
+    // same way ctx.Emit is.
+    //
+    // The event bus is shared across all four tick groups, not per-group -
+    // an event emitted here is only flushed to its handlers at the end of
+    // whichever tick group's RunTickGroup() runs NEXT, chronologically,
+    // regardless of which group that happens to be. If you're calling this
+    // from inside a system, prefer ctx.Emit() instead - same effect, but it
+    // makes the buffering explicit at the call site.
+    template<typename Event>
+    static void Emit(Event e) { Storage().Events.Push(std::move(e)); }
+
     // Call once at engine init, after every REGISTER_SYSTEM static registrar
     // has run. Builds and validates the execution order for every tick
     // group; throws std::runtime_error naming the exact offending

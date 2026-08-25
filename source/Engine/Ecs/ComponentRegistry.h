@@ -8,6 +8,11 @@
 // introspectable, and cloneable everywhere else in the engine without any
 // further wiring.
 //
+// REGISTER_COMPONENT is safe to put directly in a header, even one included
+// by many .cpp files: the generated registrar is a C++17 inline variable,
+// not a plain static one, so the linker collapses every translation unit's
+// copy into a single instance instead of registering once per include.
+//
 // NOTE: REGISTER_COMPONENT (and ECS_COMPONENT in Entity.h) must be invoked
 // at namespace/class scope, never inside a function body.
 
@@ -49,7 +54,15 @@ public:
         info.Remove         = [](entt::registry& r, entt::entity e) { r.remove<T>(e); };
         info.CopyTo         = [](entt::registry& r, entt::entity src, entt::entity dst)
         {
-            if (r.all_of<T>(src))
+            if (!r.all_of<T>(src)) return;
+            // entt optimizes empty/tag components (no data members) into
+            // storage that only tracks presence, not a value - get<T>() on
+            // one of those isn't usable the way it is for a normal
+            // component, so there's nothing to copy: presence is the only
+            // state a tag component has, and emplace alone reproduces it.
+            if constexpr (std::is_empty_v<T>)
+                r.emplace_or_replace<T>(dst);
+            else
                 r.emplace_or_replace<T>(dst, r.get<T>(src));
         };
 
@@ -94,17 +107,21 @@ private:
     static Data& Storage() { static Data data; return data; }
 };
 
-#define REGISTRY_CONCAT_IMPL(x, y) x##y
-#define REGISTRY_CONCAT(x, y) REGISTRY_CONCAT_IMPL(x, y)
-
+// EcsDetail holds only generated registrar plumbing - never reference it
+// directly, it's not part of the public API and its contents can change.
 #define REGISTER_COMPONENT(Type) \
-    namespace { \
-        struct REGISTRY_CONCAT(ComponentRegistrar_, __LINE__) \
+    namespace EcsDetail { \
+        struct Type##_ComponentRegistrar \
         { \
-            REGISTRY_CONCAT(ComponentRegistrar_, __LINE__)() \
-            { \
-                ComponentRegistry::Register<Type>(#Type); \
-            } \
+            Type##_ComponentRegistrar() { ComponentRegistry::Register<Type>(#Type); } \
         }; \
-        static REGISTRY_CONCAT(ComponentRegistrar_, __LINE__) REGISTRY_CONCAT(registrarInstance_, __LINE__); \
+        inline Type##_ComponentRegistrar Type##_componentRegistrar_instance; \
     }
+
+// Manual alternative to REGISTER_COMPONENT - use when this code may live in
+// a shared library (DLL/.so). See the "SHARED LIBRARIES" note in Ecs.h for
+// why static-initializer registration can silently fail to run there.
+// Same call, no static object at all - call it yourself, from a function
+// you control, before EcsScheduler::Finalize():
+//   REGISTER_COMPONENT_MANUAL(Health);
+#define REGISTER_COMPONENT_MANUAL(Type) ComponentRegistry::Register<Type>(#Type)

@@ -304,16 +304,16 @@ private:
 
 		if (dead)return;
 
-		ANALYTICS_SEND_EVENT(
-			"player_jump",
-			std::unordered_map<std::string, std::string>{
-				{"position", to_string(Position)},
-				{ "velocity", to_string(controller.GetVelocity()) },
-				{ "on_ground", to_string(controller.onGround) },
-				{ "coyote_time_available", to_string(coyoteTime.Wait()) },
-				{ "free_walljumps", to_string(freeWalljumps) }
-		}
-		);
+		//ANALYTICS_SEND_EVENT(
+		//	"player_jump",
+		//	std::unordered_map<std::string, std::string>{
+		//		{"position", to_string(Position)},
+		//		{ "velocity", to_string(controller.GetVelocity()) },
+		//		{ "on_ground", to_string(controller.onGround) },
+		//		{ "coyote_time_available", to_string(coyoteTime.Wait()) },
+		//		{ "free_walljumps", to_string(freeWalljumps) }
+		//}
+		//);
 
 		controller.UnCrouch();
 
@@ -323,6 +323,7 @@ private:
 
 		jumpDelay.AddDelay(0.3);
 
+		EcsScheduler::Emit(PlayerJumpEvent());
 
 	}
 

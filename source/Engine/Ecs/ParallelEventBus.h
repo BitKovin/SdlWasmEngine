@@ -13,6 +13,7 @@
 #include <entt/entt.hpp>
 #include <any>
 #include <functional>
+#include <memory>
 #include <mutex>
 #include <thread>
 #include <typeindex>
@@ -64,20 +65,30 @@ private:
         auto it = m_Storage.find(key);
         if (it == m_Storage.end())
         {
-            it = m_Storage.emplace(key, std::vector<Shard<Event>>(ShardCount)).first;
+            // std::any requires whatever type it holds to be copy-
+            // constructible, even though it's never actually copied here -
+            // that's just what the standard demands of any's converting
+            // constructor. Shard<T> owns a std::mutex, so
+            // std::vector<Shard<T>> isn't copy-constructible and can't be
+            // stored in the any directly. Store a shared_ptr to the pool
+            // instead: shared_ptr is trivially copyable (copying just bumps
+            // a refcount), so any is satisfied, and the actual vector of
+            // shards - mutexes included - is never copied.
+            auto pool = std::make_shared<std::vector<Shard<Event>>>(ShardCount);
+            it = m_Storage.emplace(key, pool).first;
             m_Flushers.push_back([this, key](entt::dispatcher& dispatcher)
-            {
-                auto& shards = std::any_cast<std::vector<Shard<Event>>&>(m_Storage[key]);
-                for (auto& shard : shards)
                 {
-                    std::lock_guard lock(shard.Mutex);
-                    for (auto& e : shard.Items) dispatcher.enqueue(std::move(e));
-                    shard.Items.clear();
-                }
-                dispatcher.update<Event>();
-            });
+                    auto& shards = *std::any_cast<std::shared_ptr<std::vector<Shard<Event>>>&>(m_Storage[key]);
+                    for (auto& shard : shards)
+                    {
+                        std::lock_guard lock(shard.Mutex);
+                        for (auto& e : shard.Items) dispatcher.enqueue(std::move(e));
+                        shard.Items.clear();
+                    }
+                    dispatcher.update<Event>();
+                });
         }
-        return std::any_cast<std::vector<Shard<Event>>&>(it->second);
+        return *std::any_cast<std::shared_ptr<std::vector<Shard<Event>>>&>(it->second);
     }
 
     std::unordered_map<std::type_index, std::any> m_Storage;
