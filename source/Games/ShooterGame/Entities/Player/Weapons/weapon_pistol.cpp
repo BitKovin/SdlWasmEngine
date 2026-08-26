@@ -90,6 +90,7 @@ public:
         data.className = "weapon_pistol";
         data.AmmoType = WeaponAmmoType::PistolBullets;
         data.slot = 1;
+        data.startAmmo = 16;
         return data;
     }
 

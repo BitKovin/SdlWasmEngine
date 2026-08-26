@@ -52,12 +52,12 @@ private:
     // whole band over time (closer, then farther) rather than settling on
     // one exact distance.
     static constexpr float minEngageDistance      = 3.0f;
-    static constexpr float maxEngageDistance       = 15.0f;
-    static constexpr float idealEngageDistance     = 10.0f;
+    static constexpr float maxEngageDistance       = 10.0f;
+    static constexpr float idealEngageDistance     = 7.0f;
 
     // How far from its current position the NPC will search for a new
     // attack spot — bounds travel distance/time for a single reposition.
-    static constexpr float repositionSearchRadius = 8.0f;
+    static constexpr float repositionSearchRadius = 11.0f;
 
     // How close counts as "arrived" at a chosen position.
     static constexpr float arrivalRadius          = 1.0f;

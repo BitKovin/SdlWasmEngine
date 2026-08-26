@@ -180,6 +180,7 @@ public:
         data.className = "weapon_mpsd";
         data.slot = 3;
         data.AmmoType = WeaponAmmoType::PistolBullets;
+        data.startAmmo = 34;
         return data;
     }
 };

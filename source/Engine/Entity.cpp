@@ -101,13 +101,9 @@ void Entity::Destroy()
 
 	DestroyPhysics();
 
-	// ECS-side cleanup happens immediately, same as physics above - the
-	// C++ object itself lingers until MemoryCleanPendingEntities() actually
-	// deletes it, but from this point on the entity no longer shows up in
-	// any system's view/ForEachEntity, and EcsWorld::GetEntity() on its old
-	// id returns nullptr.
-	if (m_Handle.valid())
-		m_Handle.destroy();
+
+	//if (m_Handle.valid())
+		//m_Handle.destroy();
 
 	Level::Current->RemoveEntity(this);
 }

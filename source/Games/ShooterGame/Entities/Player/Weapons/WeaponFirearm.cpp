@@ -139,11 +139,11 @@ void WeaponFirearm::StopTrail(ParticleSystem* trail)
 
 	for (auto em : trail->emitters)
 	{
-		em->emitterTime = 1.2f;
+		em->emitterTime = 1.2f * WEAPONSMOKE_DURATION_FACTOR;
 	}
 
 	trail->StopAll();
-	trail->DestroyWithDelay(3);
+	trail->DestroyWithDelay(3.0f * WEAPONSMOKE_DURATION_FACTOR);
 }
 
 void WeaponFirearm::Update()
@@ -298,28 +298,30 @@ void WeaponFirearm::PerformAttack()
 	if (fireLeft)
 	{
 
-		if (smokeTrailL == nullptr || smokeTrailL->emitters.empty() || smokeTrailL->emitters[0]->emitterTime > 1)
+		if (smokeTrailL == nullptr || smokeTrailL->emitters.empty() || smokeTrailL->emitters[0]->emitterTime > 1.0f * WEAPONSMOKE_DURATION_FACTOR)
 		{
 			smokeTrailL = static_cast<ParticleSystem*>(Spawn("weapon_smoke"));
+			SnapTrailPositions();
 			smokeTrailL->Start();
 
 		}
 
-		stopEmittingSmokeDelayL.AddDelay(1);
+		stopEmittingSmokeDelayL.AddDelay(1.0f * WEAPONSMOKE_DURATION_FACTOR);
 		smokeTrailL->emitters[0]->emitterTime = 0;
 
 	}
 	else
 	{
 
-		if (smokeTrail == nullptr || smokeTrail->emitters.empty() || smokeTrail->emitters[0]->emitterTime > 1)
+		if (smokeTrail == nullptr || smokeTrail->emitters.empty() || smokeTrail->emitters[0]->emitterTime > 1.0f * WEAPONSMOKE_DURATION_FACTOR)
 		{
 			smokeTrail = static_cast<ParticleSystem*>(Spawn("weapon_smoke"));
+			SnapTrailPositions();
 			smokeTrail->Start();
 
 		}
 
-		stopEmittingSmokeDelay.AddDelay(1);
+		stopEmittingSmokeDelay.AddDelay(1.0f * WEAPONSMOKE_DURATION_FACTOR);
 		smokeTrail->emitters[0]->emitterTime = 0;
 
 	}
@@ -385,7 +387,7 @@ void WeaponFirearm::NotifyNpcs()
 
 void WeaponFirearm::AsyncUpdate()
 {
-
+	 
 	float hide = HideWeapon || lastFrameHide;
 
 	lastFrameHide = HideWeapon;
@@ -416,6 +418,8 @@ void WeaponFirearm::AsyncUpdate()
 
 
 }
+
+
 
 void WeaponFirearm::LateUpdate()
 {
@@ -533,4 +537,30 @@ void WeaponFirearm::Deserialize(json& source)
 bool WeaponFirearm::IsInUltimateAkimbo()
 {
 	return false;
+}
+
+void WeaponFirearm::SnapTrailPositions()
+{
+
+	if (smokeTrail)
+	{
+		mat4 boneMat = (viewmodel)->GetBoneMatrixWorld("weapon_fire_point");
+		vec3 startLoc = MathHelper::DecomposeMatrix(boneMat).Position;
+
+		smokeTrail->Position = startLoc;
+		smokeTrail->emitters[0]->SnapLastParticleToEmitterPosition();
+
+	}
+
+	if (smokeTrailL)
+	{
+		mat4 boneMat = (viewmodelLeft)->GetBoneMatrixWorld("weapon_fire_point");
+		vec3 startLoc = MathHelper::DecomposeMatrix(boneMat).Position;
+
+		smokeTrailL->Position = startLoc;
+		smokeTrailL->emitters[0]->SnapLastParticleToEmitterPosition();
+
+	}
+
+
 }

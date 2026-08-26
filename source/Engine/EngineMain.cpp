@@ -950,6 +950,11 @@ void EngineMain::Render()
         {
             Level::Current->DevUiUpdate();
 
+            if (GameUpdateSingleThreadPool)
+            {
+                GameUpdateSingleThreadPool->WaitForFinish();
+            }
+
             bool open = true;
 
             if (Paused)

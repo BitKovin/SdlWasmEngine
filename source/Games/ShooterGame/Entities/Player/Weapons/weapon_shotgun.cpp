@@ -72,6 +72,7 @@ public:
         data.className = "weapon_shotgun";
         data.slot = 2;
         data.AmmoType = WeaponAmmoType::ShotgunShells;
+        data.startAmmo = 12;
         return data;
     }
 };

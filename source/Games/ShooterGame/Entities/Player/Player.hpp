@@ -104,8 +104,8 @@ class Player : public Entity
 private:
 
 	std::map<WeaponAmmoType, int> ammoCounts = { {WeaponAmmoType::None,0},
-												{WeaponAmmoType::PistolBullets,16},
-												{WeaponAmmoType::ShotgunShells,4},
+												{WeaponAmmoType::PistolBullets,0},
+												{WeaponAmmoType::ShotgunShells,0},
 												{WeaponAmmoType::CannonBullets,0} };
 	std::map<WeaponAmmoType, int> ammoLimits = { {WeaponAmmoType::None,0},
 												{WeaponAmmoType::PistolBullets,96},

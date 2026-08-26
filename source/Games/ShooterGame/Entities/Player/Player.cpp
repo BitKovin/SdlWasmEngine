@@ -863,7 +863,7 @@ void Player::AddWeapon(const WeaponSlotData& weaponData)
 			weaponSlots[slot] = weaponData;
 
 			
-			SwitchToSlot(slot, true);
+			currentSlot = slot;
 			
 		}
 	}
@@ -876,7 +876,8 @@ void Player::AddWeaponByName(const string& className)
 
 	Weapon* weap = (Weapon*)LevelObjectFactory::instance().create(className);
 
-	if (weap == nullptr) return;
+	if (weap == nullptr) 
+		return;
 
 	AddWeapon(weap->GetDefaultData());
 
@@ -3231,6 +3232,23 @@ void Player::StoppedTouchLadder()
 		ExitLadder();
 }
 
+CONSOLE_FUNC("kit.weapons", "kit.weapons gives all weapons")
+{
+
+	Player::Instance->AddWeaponByName("weapon_cane");
+
+	Player::Instance->AddWeaponByName("weapon_pistol");
+	Player::Instance->AddWeaponByName("weapon_pistol");
+	Player::Instance->AddWeaponByName("weapon_pistol");
+
+	Player::Instance->AddWeaponByName("weapon_shotgun");
+	Player::Instance->AddWeaponByName("weapon_shotgun");
+	Player::Instance->AddWeaponByName("weapon_shotgun");
+
+	Player::Instance->AddWeaponByName("weapon_mpsd");
+	Player::Instance->AddWeaponByName("weapon_mpsd");
+	Player::Instance->AddWeaponByName("weapon_mpsd");
+}
 
 CONSOLE_FUNC("weapon.give", "weapon.give <weapon_name>")
 {

@@ -103,7 +103,7 @@ void NpcHumanAxe::UpdateAttackDamage()
 
 	auto hit = Physics::SphereTrace(
 		Position,
-		MathHelper::GetForwardVector(mesh->Rotation) * 1.2f + Position,
+		MathHelper::GetForwardVector(mesh->Rotation) * 1.6f + Position,
 		0.45f,
 		BodyType::World | BodyType::CharacterCapsule,
 		{}, { this });
@@ -266,7 +266,7 @@ void NpcHumanAxe::AsyncUpdate()
 			desiredDirection = direct / len;
 	}
 
-	speed += Time::DeltaTimeF * 6.5f;
+	speed += Time::DeltaTimeF * 13.5f;
 	speed = glm::clamp(speed, 0.0f, ModifyMovementSpeed(maxSpeed));
 
 	movingDirection = glm::mix(movingDirection, desiredDirection,

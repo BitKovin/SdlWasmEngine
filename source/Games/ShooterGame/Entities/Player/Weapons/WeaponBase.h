@@ -19,7 +19,7 @@ struct WeaponSlotData
 	int slot = 0;
 	int priority = 0;
 
-	int startAmmo = 4;
+	int startAmmo = 8;
 	WeaponAmmoType AmmoType = WeaponAmmoType::None;
 
 	bool offhand = false;

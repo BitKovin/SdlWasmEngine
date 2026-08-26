@@ -17,11 +17,14 @@ struct ConsoleCommandRegistrar
 #define REGISTER_CONSOLE_CMD(NAME, HELP, FUNC) \
     Console::Get().RegisterCommand({ NAME, HELP, FUNC })
 
+#define CONCAT_IMPL(x, y) x##y
+#define CONCAT(x, y) CONCAT_IMPL(x, y)
+
 #define CONSOLE_FUNC(CMD_NAME, HELP)       \
-    static void _cmd_##__LINE__(const std::vector<std::string>&);   \
-    static ConsoleCommandRegistrar _reg_##__LINE__({                \
+    static void CONCAT(_cmd_, __LINE__)(const std::vector<std::string>&);   \
+    static ConsoleCommandRegistrar CONCAT(_reg_, __LINE__)({                \
         CMD_NAME,                                                   \
         HELP,                                                       \
-        _cmd_##__LINE__                                             \
+        CONCAT(_cmd_, __LINE__)                                     \
     });                                                             \
-    static void _cmd_##__LINE__(const std::vector<std::string>& args)
+    static void CONCAT(_cmd_, __LINE__)(const std::vector<std::string>& args)

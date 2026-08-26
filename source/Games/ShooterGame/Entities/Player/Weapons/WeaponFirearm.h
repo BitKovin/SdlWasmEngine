@@ -10,6 +10,16 @@
 
 #include <Particle/ParticleSystem.hpp>
 
+// Multiplier applied to every time-based value that drives the weapon smoke
+// trail's lifetime (emitter recycle threshold, stop-emitting delay, forced
+// fade-out point on StopTrail, and destroy delay). 1.0f = default duration;
+// >1.0f makes the smoke last longer, <1.0f makes it fade/clean up sooner.
+// NOTE: keep this in sync with WEAPONSMOKE_DURATION_FACTOR in WeaponSmoke.cpp -
+// that copy drives the particle/emitter's own internal timeline, and the two
+// need to agree or the firearm's recycle/stop logic will drift out of step
+// with the actual smoke fade curve.
+constexpr float WEAPONSMOKE_DURATION_FACTOR = 0.4f;
+
 struct FirearmParams 
 {
 	WeaponAmmoType ammoType = WeaponAmmoType::None;
@@ -128,6 +138,8 @@ public:
 	virtual bool IsInUltimateAkimbo();
 
 protected:
+
+	void SnapTrailPositions();
 
 	bool lastFrameHide = false;
 
