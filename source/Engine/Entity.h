@@ -263,6 +263,8 @@ public:
 	entt::entity Handle() const { return m_Handle.entity(); }
 	const ComponentList& Components() const { return m_Components; }
 
+	void OnLevelRemoved();
+
 protected:
 
 	entt::handle  m_Handle;

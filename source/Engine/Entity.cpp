@@ -74,6 +74,14 @@ void Entity::DestroyPhysics()
 
 }
 
+void Entity::OnLevelRemoved()
+{
+
+	if (m_Handle.valid())
+		m_Handle.destroy();
+
+}
+
 void Entity::FinalLevelRemove()
 {
 	DestroyDrawables();

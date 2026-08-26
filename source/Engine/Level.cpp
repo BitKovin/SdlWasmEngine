@@ -560,6 +560,7 @@ void Level::RemovePendingEntities()
 		if (it != LevelObjects.end())
 		{
 			LevelObjects.erase(it);
+			entity->OnLevelRemoved();
 		}
 
 		PendingMemoryCleanObjects.push_back(entity);

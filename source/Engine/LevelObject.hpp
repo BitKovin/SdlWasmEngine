@@ -6,8 +6,6 @@
 
 #include <vector>
 
-using namespace std;
-
 class LevelObject : public EObject
 {
 public:
@@ -48,6 +46,8 @@ public:
 	{
 
 	}
+
+	virtual void OnLevelRemoved() {}
 
 	virtual std::string GetId()
 	{
