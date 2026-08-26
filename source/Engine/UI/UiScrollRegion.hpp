@@ -75,7 +75,7 @@ public:
     void OnFocused() override
     {
         if (!m_content->children.empty())
-            UiNavigation::SetFocus(m_content->children.front().get());
+            UiNavigation::FocusFirst(this);
     }
 
     void OnNavCancel() override

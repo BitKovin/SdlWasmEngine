@@ -129,6 +129,8 @@ public:
 
         UpdateChildrenOffsetRecursive();
         UpdateChildrenOffsetRecursive();
+
+        BuildNavigation();
     }
 
     void OnNavCancel() override { backButton->onClick(); }
@@ -288,6 +290,53 @@ private:
 
         emptyStateText->visible = (visibleCount == 0);
         scrollRegion->visible = (visibleCount != 0);
+
+
+        BuildNavigation();
+
+    }
+
+    void BuildNavigation()
+    {
+        auto rows = scrollRegion->m_content->children;
+
+        // Handle empty list edge case
+        if (rows.empty())
+        {
+            if (backButton)
+            {
+                backButton->NavUp = backButton;
+                backButton->NavDown = backButton;
+            }
+            return;
+        }
+
+        // 1. Link row-to-row internally
+        for (size_t i = 0; i < rows.size(); i++)
+        {
+            rows[i]->NavUp = (i > 0) ? rows[i - 1] : nullptr;
+            rows[i]->NavDown = (i + 1 < rows.size()) ? rows[i + 1] : nullptr;
+        }
+
+        // 2. Link ends of the list to the backButton (or wrap around if backButton is null)
+        if (backButton)
+        {
+            // Top row goes UP to backButton
+            rows.front()->NavUp = backButton;
+
+            // Bottom row goes DOWN to backButton
+            rows.back()->NavDown = backButton;
+
+            // Back button navigation
+            backButton->NavUp = rows.back();    // Pressing UP from backButton goes to bottom row
+            backButton->NavDown = rows.front(); // Pressing DOWN from backButton wraps to top row
+        }
+        else
+        {
+            // Fallback: Wrap list around if no back button exists
+            rows.front()->NavUp = rows.back();
+            rows.back()->NavDown = rows.front();
+        }
     }
 
     // ── Save flow ────────────────────────────────────────────────────────
