@@ -7,6 +7,7 @@
 #include "../Physics.h"
 
 #include "../IDrawMesh.h"
+#include "ParticleDrawCommand.h"
 
 #include "../glm.h"
 
@@ -46,9 +47,6 @@ struct Particle {
 	vec4 Color = vec4(1);
 };
 
-// -----------------------------
-// ParticleEmitter class
-// -----------------------------
 class ParticleEmitter : public IDrawMesh
 {
 public:
@@ -57,7 +55,7 @@ public:
 		InitialSpawnCount(10), Duration(10.0f), SpawnRate(1.0f),
 		Position(0.0f), Rotation(0.0f)
 	{
-		Transparent = true;
+		Transparent = true; // no-op now, kept for compatibility - see IDrawMesh::Transparent
 		PixelShader = "fs_unlit";
 	}
 
@@ -122,11 +120,16 @@ public:
 		}
 	}
 
-	void DrawForward(mat4x4 view, mat4x4 projection);
-
+	// Parallel: commits Particles into finalizedParticles and builds preFinalizedInstances.
 	void PreFinalize() override;
 
+	// Main thread: resolves the texture and commits everything onto drawCommand.
 	void FinalizeFrameData();
+
+	void CollectDrawCommands(std::vector<IDrawCommand*>& outCommands) override
+	{
+		outCommands.push_back(&drawCommand);
+	}
 
 	int MaxParticles = 0;
 
@@ -164,6 +167,10 @@ public:
 	static void InitBilboardVaoIfNeeded();
 	static void DestroyBillboardVao();
 
+	// Stable handles into geometry shared by every emitter - safe for ParticleDrawCommand to bind without an owner pointer.
+	static bgfx::VertexBufferHandle GetBillboardVbh() { return s_billboardVbh; }
+	static bgfx::IndexBufferHandle GetBillboardIbh() { return s_billboardIbh; }
+
 	void PreloadAssets()
 	{
 		std::lock_guard<std::recursive_mutex> lock(particlesMutex);
@@ -177,9 +184,18 @@ protected:
 
 	vec3 GetLightForParticle(const Particle& particle);
 
+	// Ribbon/TrailEmitter own their own command types, but still need to sync these three flags - kept available to them.
+	void SyncCommandFlags(IDrawCommand& cmd) const
+	{
+		cmd.IsViewmodel = IsViewmodel;
+		cmd.OnlyShadows = OnlyShadows;
+		cmd.ReceiveDetailShadows = ReceiveDetailShadows;
+	}
+
 private:
 
-	std::vector<InstanceData> instances;
+	ParticleDrawCommand drawCommand;
+
 	std::vector<InstanceData> preFinalizedInstances;
 
 	// Shared billboard geometry — created once, reused by all emitters

@@ -58,10 +58,15 @@ public:
 		LoadFromFile("GameData/models/engine/widgetPlane.glb");
 
 		DepthPrePath = false;
+		DepthWrite = false;
 
 		PixelShader = "fs_unlit_rect";
 
-		Transparent = true;
+		Transparent = true; // inert - GetMaterial(0).SurfaceTypeOverride below is what actually matters now
+
+		// ColorTextureId is a raw bgfx handle (the shared atlas), not a Texture* -
+		// EffectiveSurfaceType() can't inspect it for alpha, so it must be forced explicitly.
+		GetMaterial(0).SurfaceTypeOverride = SurfaceType::Transparent;
 
 		ContentBox = std::make_shared<UiContentBox>();
 		ContentBox->pivot = vec2(0.5f, 0.5f);
@@ -73,13 +78,11 @@ public:
 	}
 	~UiBilboard();
 
-	void DrawForward(mat4x4 view, mat4x4 projection) override;
-
 	void FinalizeFrameData() override;
 
 	void Update();
 
-	void PreDraw();
+	void PreDraw() override;
 
 	std::shared_ptr<UiContentBox> ContentBox;
 	UiCanvas Canvas;

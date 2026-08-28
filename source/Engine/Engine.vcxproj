@@ -367,10 +367,13 @@
     <ClCompile Include="BehaviourTree\NodeFactory.cpp" />
     <ClCompile Include="BehaviourTree\TaskNodes.cpp" />
     <ClCompile Include="BehaviourTree\TreeNode.cpp" />
+    <ClCompile Include="BSP\BSPModelDrawCommand.cpp" />
     <ClCompile Include="BSP\Quake3BSP_Portals.cpp" />
     <ClCompile Include="Compression\zip\zip.cpp" />
     <ClCompile Include="Console\Console.cpp" />
     <ClCompile Include="Console\ConsoleDefaultCommands.cpp" />
+    <ClCompile Include="DrawCommands\DetailShadowUtils.cpp" />
+    <ClCompile Include="DrawCommands\StaticMeshDrawCommand.cpp" />
     <ClCompile Include="Ecs\EcsScheduler.cpp" />
     <ClCompile Include="Ecs\EcsWorld.cpp" />
     <ClCompile Include="Entities\Brushes\AreaBase.hpp" />
@@ -472,6 +475,7 @@
     <ClCompile Include="Network\RelayTransport_Native.cpp" />
     <ClCompile Include="OnlineSubsystems\GDKAuth.cpp" />
     <ClCompile Include="Particle\GlobalParticleSystem.cpp" />
+    <ClCompile Include="Particle\ParticleDrawCommand.cpp" />
     <ClCompile Include="Particle\ParticleEmitter.cpp" />
     <ClCompile Include="Particle\RibbonEmitter.cpp" />
     <ClCompile Include="Particle\TrailEmitter.cpp" />
@@ -537,6 +541,7 @@
     <ClInclude Include="BehaviourTree\TreeNode.h" />
     <ClInclude Include="BgfxResetManager.h" />
     <ClInclude Include="BgfxStateManager.h" />
+    <ClInclude Include="BSP\BSPModelDrawCommand.h" />
     <ClInclude Include="Compression\miniz.h" />
     <ClInclude Include="Compression\zip\miniz.h" />
     <ClInclude Include="Compression\zip\miniz_once.h" />
@@ -545,6 +550,12 @@
     <ClInclude Include="Console\ConsoleCommand.h" />
     <ClInclude Include="Console\ConsoleDefaultCommands.h" />
     <ClInclude Include="Console\ConsoleRegister.h" />
+    <ClInclude Include="DrawCommands\DetailShadowUtils.h" />
+    <ClInclude Include="DrawCommands\FrameDrawCommandLists.h" />
+    <ClInclude Include="DrawCommands\IDrawCommand.h" />
+    <ClInclude Include="DrawCommands\StaticMeshColorEmissiveMaterial.h" />
+    <ClInclude Include="DrawCommands\StaticMeshDrawCommand.h" />
+    <ClInclude Include="DrawCommands\SurfaceType.h" />
     <ClInclude Include="Ecs\CommandBuffer.h" />
     <ClInclude Include="Ecs\ComponentList.h" />
     <ClInclude Include="Ecs\ComponentRef.h" />
@@ -685,6 +696,7 @@
     <ClInclude Include="Network\RelayTransport.h" />
     <ClInclude Include="OnlineSubsystems\GDKAuth.h" />
     <ClInclude Include="Particle\GlobalParticleSystem.hpp" />
+    <ClInclude Include="Particle\ParticleDrawCommand.h" />
     <ClInclude Include="Particle\ParticleEmitter.h" />
     <ClInclude Include="Particle\ParticleSystem.hpp" />
     <ClInclude Include="Particle\RibbonEmitter.h" />

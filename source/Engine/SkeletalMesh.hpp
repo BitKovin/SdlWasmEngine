@@ -206,11 +206,7 @@ private:
 
 protected:
 
-	void ApplyAdditionalShaderParams(Shader* shader_program)
-	{
-		StaticMesh::ApplyAdditionalShaderParams(shader_program);
-		shader_program->SetUniform("finalBonesMatrices", finalizedBoneTransforms);
-	}
+	// Bones are now applied by SkeletalMeshDrawCommand::ApplyAdditionalShaderParams - not here anymore. Override StaticMesh::ApplyAdditionalShaderParams for custom (non-bone) params.
 
 	static inline unordered_map<string, SkeletalMeshMetaData> loaded_metas;
 	static inline set<string> invalid_meta_files;
@@ -218,6 +214,12 @@ protected:
 	bool dirtyPose = true;
 
 	AnimationPose lastPose;
+
+	// Makes RebuildDrawCommands() produce SkeletalMeshDrawCommand instead of StaticMeshDrawCommand.
+	std::shared_ptr<StaticMeshDrawCommand> CreateDrawCommand() override
+	{
+		return std::make_unique<SkeletalMeshDrawCommand>();
+	}
 
 public:
 
@@ -401,6 +403,12 @@ public:
 		}
 
 		animator = roj::Animator(model);
+
+		// Every command is a SkeletalMeshDrawCommand (see CreateDrawCommand override) - point each at this instance's bone matrices once, contents update per frame in FinalizeFrameData.
+		for (size_t i = 0; i < GetSubMeshCount(); i++)
+		{
+			static_cast<SkeletalMeshDrawCommand&>(GetDrawCommandAt(i)).BoneMatrices = &finalizedBoneTransforms;
+		}
 
 		LoadMetaFromFile();
 	}

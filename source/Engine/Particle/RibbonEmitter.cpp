@@ -6,9 +6,7 @@
 #include <BgfxStateManager.h>
 #include <Renderer/Abstractions/ViewIdManager.h>
 
-// ---------------------------------------------------------------------------
 // Constructor / Destructor
-// ---------------------------------------------------------------------------
 RibbonEmitter::RibbonEmitter()
 {
     DepthSorting = false;
@@ -20,9 +18,7 @@ RibbonEmitter::~RibbonEmitter()
 {
 }
 
-// ---------------------------------------------------------------------------
 // GenerateIndices
-// ---------------------------------------------------------------------------
 void RibbonEmitter::GenerateIndices(std::vector<uint32_t>& dst, int n)
 {
     dst.resize((n - 1) * 6);
@@ -39,12 +35,12 @@ void RibbonEmitter::GenerateIndices(std::vector<uint32_t>& dst, int n)
     }
 }
 
-// ---------------------------------------------------------------------------
-// RenderRibbon
-// ---------------------------------------------------------------------------
-bool RibbonEmitter::RenderRibbon(const std::vector<Particle>& inParticles)
+// BuildRibbonGeometry (formerly RenderRibbon - see RibbonDrawCommand::DrawForward for the transient-buffer half that used to live here)
+bool RibbonEmitter::BuildRibbonGeometry(const std::vector<Particle>& inParticles)
 {
     primitiveCount = 0;
+    verts.clear();
+    idxs.clear();
 
     if (inParticles.size() < 2 || destroyed)
         return false;
@@ -56,11 +52,6 @@ bool RibbonEmitter::RenderRibbon(const std::vector<Particle>& inParticles)
     const int      n = static_cast<int>(particles.size());
     const uint32_t vCount = static_cast<uint32_t>(n * 2);
     const uint32_t idxCount = static_cast<uint32_t>((n - 1) * 6);
-
-    const bgfx::VertexLayout layout = VertexData::Declaration();
-
-    if (bgfx::getAvailTransientVertexBuffer(vCount, layout) < vCount)   return false;
-    if (bgfx::getAvailTransientIndexBuffer(idxCount, true) < idxCount) return false;
 
     verts.resize(vCount);
     GenerateIndices(idxs, n);
@@ -111,76 +102,34 @@ bool RibbonEmitter::RenderRibbon(const std::vector<Particle>& inParticles)
 
     primitiveCount = static_cast<int>(idxCount) / 3;
 
-    bgfx::TransientVertexBuffer tvb;
-    bgfx::TransientIndexBuffer  tib;
-
-    bgfx::allocTransientVertexBuffer(&tvb, vCount, layout);
-    bgfx::allocTransientIndexBuffer(&tib, idxCount, true);
-
-    memcpy(tvb.data, verts.data(), vCount * sizeof(VertexData));
-    memcpy(tib.data, idxs.data(), idxCount * sizeof(uint32_t));
-
-    bgfx::setVertexBuffer(0, &tvb);
-    bgfx::setIndexBuffer(&tib);
-
     return true;
 }
 
-// ---------------------------------------------------------------------------
-// FinalizeFrameData
-// ---------------------------------------------------------------------------
-void RibbonEmitter::FinalizeFrameData()
+// PreFinalize - parallel; finalizedParticles commit moved here to match ParticleEmitter's own pattern.
+void RibbonEmitter::PreFinalize()
 {
-    std::lock_guard<std::recursive_mutex> lock(particlesMutex);
-    finalizedParticles = Particles;
+    {
+        std::lock_guard<std::recursive_mutex> lock(particlesMutex);
+        finalizedParticles = Particles;
+    }
+
+    BuildRibbonGeometry(finalizedParticles);
 }
 
-// ---------------------------------------------------------------------------
-// DrawForward
-// ---------------------------------------------------------------------------
-void RibbonEmitter::DrawForward(mat4x4 view, mat4x4 projection)
+// FinalizeFrameData - main thread: resolve texture, commit verts/idxs onto ribbonCommand.
+void RibbonEmitter::FinalizeFrameData()
 {
-    if (finalizedParticles.size() < 2) return;
-
     if (savedTextureName != texture)
     {
-        savedTexture     = AssetRegistry::GetTextureFromFile(texture);
+        savedTexture = AssetRegistry::GetTextureFromFile(texture);
         savedTextureName = texture;
     }
 
-    auto startState = BgfxStateManager::GetState();
+    ribbonCommand.Vertices = verts;
+    ribbonCommand.Indices = idxs;
+    ribbonCommand.ResolvedTexture = savedTexture;
+    ribbonCommand.PixelShader = PixelShader;
+    ribbonCommand.BlendMode = BlendMode;
 
-    BgfxStateManager::SetWriteDepth(false);
-    BgfxStateManager::SetCull(BgfxStateManager::Cull::None);
-    BgfxStateManager::SetBlend(BlendMode);
-
-    Shader* shader = ShaderManager::GetShaderProgram("vs_default", PixelShader);
-    if (shader == nullptr) return;
-
-    shader->UseProgram();
-
-    shader->SetUniform("view",        view);
-    shader->SetUniform("projection",  projection);
-    shader->SetUniform("world",       glm::identity<mat4>());
-    shader->SetUniform("isViewmodel", false);
-    shader->SetUniform("is_particle", true);
-    shader->SetUniform("is_decal",    false);
-
-    shader->SetUniform("viewmodelScaleFactor", 1);
-    shader->SetUniform("isViewmodel", IsViewmodel);
-
-    Renderer::SetSurfaceShaderUniforms(shader);
-
-    shader->SetTexture("u_texture", savedTexture);
-
-    if (!RenderRibbon(finalizedParticles))
-    {
-        BgfxStateManager::SetState(startState);
-        return;
-    }
-
-    BgfxStateManager::Apply();
-    shader->Submit(ViewIdManager::GetCurrentId());
-
-    BgfxStateManager::SetState(startState);
+    SyncCommandFlags(ribbonCommand);
 }

@@ -9,6 +9,8 @@
 #include "../ShaderManager.h"
 #include "../Shader.hpp"
 
+#include "../DrawCommands/FrameDrawCommandLists.h"
+
 #include <bgfx/bgfx.h>
 
 class Renderer
@@ -21,9 +23,11 @@ public:
 
 	void RenderLevel(Level* level, bgfx::FrameBufferHandle targetFrameBuffer);
 
-	void DrawDetailShadows(const std::vector<IDrawMesh*>& VissibleRenderList);
+	// Takes every camera-visible command, unfiltered - no more StaticMesh dependency (see StaticMeshDrawCommand::DrawShadowVolumeStencil/GetShadowColorMult).
+	void DrawDetailShadows(const std::vector<IDrawCommand*>& allVisibleCommands);
 
-	void RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList);
+	// Was `vector<IDrawMesh*>&` - now the full FrameDrawCommandLists built by Level::FinalizeFrame().
+	void RenderCameraForward(FrameDrawCommandLists& commands);
 
 	void RenderDirectionalLightShadows(vector<IDrawMesh*>& ShadowRenderList, Framebuffer& fbo, int numCascades);
 

@@ -2649,52 +2649,17 @@ std::vector<uint32_t> BSPModelRef::GetIndices(bool collisionOnly, bool opaqueOnl
 void BSPModelRef::FinalizeFrameData()
 {
     finalWorldMatrix = GetWorldMatrix();
-}
 
-void BSPModelRef::DrawForward(mat4x4 view, mat4x4 projection)
-{
+    drawCommand.WorldMatrix = finalWorldMatrix;
+    drawCommand.WorldBounds = GetTransformedBounds();
 
-    auto state = BgfxStateManager::GetState();
+    drawCommand.bsp = bsp;
+    drawCommand.id = id;
+    drawCommand.model = &model;
+    drawCommand.useBspVisibility = useBspVisibility;
+    drawCommand.IsStatic = Static;
 
-    if (Transparent)
-    {
-        BgfxStateManager::SetWriteDepth(false);
-    }
-
-    bsp->RenderBSP(Camera::finalizedPosition, model, finalWorldMatrix,
-        useBspVisibility, Static);
-
-    if (Transparent)
-    {
-        bsp->RenderTransparentFaces();
-    }
-
-
-
-    BgfxStateManager::SetState(state);
-
-}
-
-void BSPModelRef::DrawDepth(mat4x4 view, mat4x4 projection)
-{
-    const auto& vbo = bsp->opaqueVBOs[id];
-    if (vbo.IndexCount == 0)
-        return;
-
-    if (Transparent) return;
-
-    if (!bgfx::isValid(vbo.vbo) || !bgfx::isValid(vbo.ibo)) return;
-
-    Shader* shader = ShaderManager::GetShaderProgram("bsp/vs_bsp", "bsp/fs_bsp_empty");
-    shader->UseProgram();
-    shader->SetUniform("view", view);
-    shader->SetUniform("projection", projection);
-    shader->SetUniform("model", finalWorldMatrix);
-
-    bgfx::setVertexBuffer(0, vbo.vbo);
-    bgfx::setIndexBuffer(vbo.ibo);
-
-    BgfxStateManager::Apply();
-
-    shader->Submit(ViewIdManager::GetCurrentId());
+    drawCommand.IsViewmodel = IsViewmodel;
+    drawCommand.OnlyShadows = OnlyShadows;
+    drawCommand.ReceiveDetailShadows = ReceiveDetailShadows;
 }

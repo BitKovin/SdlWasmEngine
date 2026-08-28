@@ -19,6 +19,8 @@
 
 #include <cstddef>
 
+#include "BSPModelDrawCommand.h"
+
 
 #define FACE_POLYGON 1
 #define MAX_TEXTURES 1000
@@ -681,8 +683,13 @@ public:
 
     void FinalizeFrameData();
 
-    void DrawForward(mat4x4 view, mat4x4 projection);
-    void DrawDepth(mat4x4 view, mat4x4 projection);
+    void CollectDrawCommands(std::vector<IDrawCommand*>& outCommands) override
+    {
+        outCommands.push_back(&drawCommand);
+    }
+
+private:
+    BSPModelDrawCommand drawCommand;
 };
 
 #endif

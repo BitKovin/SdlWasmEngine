@@ -14,7 +14,8 @@
 
 #include <World/WorldOrientationManager.h>
 
-#include <StaticMesh.h>
+// No more <StaticMesh.h> - Renderer only talks to IDrawCommand now (see DetailShadowUtils.h for where the dynamic_cast<StaticMesh*> logic moved).
+#include "../DrawCommands/DetailShadowUtils.h"
 
 #if __ANDROID__
 
@@ -119,7 +120,7 @@ void Renderer::RenderLevel(Level* level, bgfx::FrameBufferHandle targetFrameBuff
     for (auto drawable : level->VissibleRenderList)
         drawable->PreDraw();
 
-    RenderCameraForward(level->VissibleRenderList);
+    RenderCameraForward(level->VisibleDrawCommands);
 
 
     ViewIdManager::GiveNextId();
@@ -217,8 +218,7 @@ void Renderer::RenderLevel(Level* level, bgfx::FrameBufferHandle targetFrameBuff
     frameNumber++;
 }
 
-// Two shadow colors are treated as "the same" for batching purposes if every
-// channel is within this distance of each other.
+// Two shadow colors count as "the same" for batching if every channel is within this distance.
 constexpr float kShadowGroupMaxColorDist = 0.02f;
 
 static bool ShadowColorsSimilar(const vec3& a, const vec3& b)
@@ -228,30 +228,28 @@ static bool ShadowColorsSimilar(const vec3& a, const vec3& b)
         std::abs(a.b - b.b) <= kShadowGroupMaxColorDist;
 }
 
-void Renderer::DrawDetailShadows(const std::vector<IDrawMesh*>& VissibleRenderList)
+// No more dynamic_cast<StaticMesh*> - anything that doesn't cast a detail shadow reports GetShadowColorMult()==vec3(1) and gets filtered below.
+void Renderer::DrawDetailShadows(const std::vector<IDrawCommand*>& allVisibleCommands)
 {
     struct ShadowCandidate
     {
-        StaticMesh* mesh;
-        vec3        shadowColor;
-        BoundingBox bounds; // swap for your bounds type / accessor
+        IDrawCommand* command;
+        vec3          shadowColor;
+        BoundingBox   bounds;
     };
 
     std::vector<ShadowCandidate> candidates;
-    candidates.reserve(VissibleRenderList.size());
+    candidates.reserve(allVisibleCommands.size());
 
-    for (auto* m : VissibleRenderList)
+    for (auto* cmd : allVisibleCommands)
     {
-        if (!m->IsDetailShadow()) continue;
-        if (m->IsViewmodel) continue;
+        if (cmd->IsViewmodel) continue;
 
-		StaticMesh* mesh = dynamic_cast<StaticMesh*>(m);
-
-        vec3 shadowColor = mesh->GetShadowColorMult(); // computed at most once per frame per mesh
+        vec3 shadowColor = cmd->GetShadowColorMult(); // computed once per mesh per frame in FinalizeFrameData
         if (shadowColor.r >= 0.999f && shadowColor.g >= 0.999f && shadowColor.b >= 0.999f)
             continue; // effectively no shadow, skip
 
-        candidates.push_back({ mesh, shadowColor, mesh->finalizedBoundingBox });
+        candidates.push_back({ cmd, shadowColor, cmd->WorldBounds });
     }
 
     std::vector<bool> used(candidates.size(), false);
@@ -291,10 +289,10 @@ void Renderer::DrawDetailShadows(const std::vector<IDrawMesh*>& VissibleRenderLi
         auto savedState = BgfxStateManager::GetState();
 
         for (size_t gi : group)
-            candidates[gi].mesh->DrawShadowVolumeStencil(Camera::finalizedView, Camera::finalizedProjection);
+            candidates[gi].command->DrawShadowVolumeStencil(Camera::finalizedView, Camera::finalizedProjection);
 
-        StaticMesh::ApplyShadowDarkening(candidates[group[0]].shadowColor);
-        StaticMesh::ClearShadowStencil();
+        DetailShadowUtils::ApplyShadowDarkening(candidates[group[0]].shadowColor);
+        DetailShadowUtils::ClearShadowStencil();
 
         BgfxStateManager::SetState(savedState);
         bgfx::setStencil(BGFX_STENCIL_DEFAULT);
@@ -304,7 +302,7 @@ void Renderer::DrawDetailShadows(const std::vector<IDrawMesh*>& VissibleRenderLi
 // -----------------------------------------------------------------------
 // RenderCameraForward
 // -----------------------------------------------------------------------
-void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
+void Renderer::RenderCameraForward(FrameDrawCommandLists& commands)
 {
     ivec2 res = GetScreenResolution();
 
@@ -383,15 +381,15 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
         BgfxStateManager::SetCull(BgfxStateManager::Cull::CW);
         BgfxStateManager::SetMSAA(false);
 
-        for (auto* mesh : VissibleRenderList)
+        for (auto* cmd : commands.Depth)
         {
 
-            if (mesh->OnlyShadows) continue;
+            if (cmd->OnlyShadows) continue;
 
-            const mat4& P = mesh->IsViewmodel
+            const mat4& P = cmd->IsViewmodel
                 ? Camera::finalizedProjectionViewmodel
                 : Camera::finalizedProjection;
-            mesh->DrawDepth(Camera::finalizedView, P);
+            cmd->DrawDepth(Camera::finalizedView, P);
         }
     }
 
@@ -424,15 +422,15 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
         BgfxStateManager::SetCull(BgfxStateManager::Cull::CW);
         BgfxStateManager::SetMSAA(MultiSampleCount > 0);
 
-        for (auto* mesh : VissibleRenderList)
+        for (auto* cmd : commands.Depth)
         {
 
-            if (mesh->OnlyShadows) continue;
+            if (cmd->OnlyShadows) continue;
 
-            const mat4& P = mesh->IsViewmodel
+            const mat4& P = cmd->IsViewmodel
                 ? Camera::finalizedProjectionViewmodel
                 : Camera::finalizedProjection;
-            mesh->DrawDepth(Camera::finalizedView, P);
+            cmd->DrawDepth(Camera::finalizedView, P);
         }
     }
 
@@ -467,36 +465,35 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
 		bgfx::setViewName(vid, "ForwardOpaquePass");
 
 
-        for (auto* mesh : VissibleRenderList)
+        // commands.Depth only contains Opaque/Masked, decided per-submesh at collection time - the actual fix for "one transparent submesh forces the whole model".
+        for (auto* cmd : commands.Depth)
         {
             
-            if (mesh->OnlyShadows) continue;
+            if (cmd->OnlyShadows) continue;
 
-            if (mesh->Transparent) continue;
-            if (mesh->ReceiveDetailShadows == false) continue;
-            const mat4& P = mesh->IsViewmodel
+            if (cmd->ReceiveDetailShadows == false) continue;
+            const mat4& P = cmd->IsViewmodel
                 ? Camera::finalizedProjectionViewmodel
                 : Camera::finalizedProjection;
-            mesh->DrawForward(Camera::finalizedView, P);
+            cmd->DrawForward(Camera::finalizedView, P);
         }
 
         if (DynamicShadows)
         {
-            DrawDetailShadows(VissibleRenderList);
+            DrawDetailShadows(commands.All);
         }
 
 
-        for (auto* mesh : VissibleRenderList)
+        for (auto* cmd : commands.Depth)
         {
 
-            if (mesh->OnlyShadows) continue;
+            if (cmd->OnlyShadows) continue;
 
-            if (mesh->Transparent) continue;
-            if (mesh->ReceiveDetailShadows) continue;
-            const mat4& P = mesh->IsViewmodel
+            if (cmd->ReceiveDetailShadows) continue;
+            const mat4& P = cmd->IsViewmodel
                 ? Camera::finalizedProjectionViewmodel
                 : Camera::finalizedProjection;
-            mesh->DrawForward(Camera::finalizedView, P);
+            cmd->DrawForward(Camera::finalizedView, P);
         }
 
         forwardFBO->bind(0, 0,
@@ -523,16 +520,16 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
 
         BgfxStateManager::SetWriteDepth(true);
 
-        for (auto* mesh : VissibleRenderList)
+        // commands.Transparent only ever contains Transparent commands - no per-mesh check needed here.
+        for (auto* cmd : commands.Transparent)
         {
 
-            if (mesh->OnlyShadows) continue;
+            if (cmd->OnlyShadows) continue;
 
-            if (!mesh->Transparent) continue;
-            const mat4& P = mesh->IsViewmodel
+            const mat4& P = cmd->IsViewmodel
                 ? Camera::finalizedProjectionViewmodel
                 : Camera::finalizedProjection;
-            mesh->DrawForward(Camera::finalizedView, P);
+            cmd->DrawForward(Camera::finalizedView, P);
         }
 
         DebugDraw::Draw();
@@ -565,12 +562,13 @@ void Renderer::RenderCameraForward(vector<IDrawMesh*>& VissibleRenderList)
 
         BgfxStateManager::SetWriteDepth(false);
 
-        for (auto* mesh : VissibleRenderList)
+        // Unfiltered - DrawCustomId() itself early-returns when CustomId == 0.
+        for (auto* cmd : commands.All)
         {
-            const mat4& P = mesh->IsViewmodel
+            const mat4& P = cmd->IsViewmodel
                 ? Camera::finalizedProjectionViewmodel
                 : Camera::finalizedProjection;
-            mesh->DrawCustomId(Camera::finalizedView, P);
+            cmd->DrawCustomId(Camera::finalizedView, P);
         }
     }
 }

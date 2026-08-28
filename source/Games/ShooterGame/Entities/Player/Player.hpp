@@ -496,7 +496,7 @@ public:
 
 		weaponSlots.resize(10);
 
-		AddComponent<PlayerTestComponent>();
+		//AddComponent<PlayerTestComponent>();
 
 	}
 

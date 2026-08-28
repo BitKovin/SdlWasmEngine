@@ -1,10 +1,13 @@
 #pragma once
 
 #include <vector>
+#include <memory>
 
 #include "ShaderManager.h"
 
 #include "IDrawMesh.h"
+#include "DrawCommands/IDrawCommand.h"
+#include "DrawCommands/StaticMeshDrawCommand.h"
 
 #include "VertexData.h"
 
@@ -26,25 +29,38 @@ class StaticMesh : public IDrawMesh
 {
 private:
 
-	friend class Renderer;
+	// Renderer never dynamic_cast<StaticMesh*>s anymore - "friend class Renderer;" is gone.
 
-	LightVolPointData lastLightVolData = LightVolPointData();
+	// One persistent IDrawCommand per entry in model->meshes, owned here.
+	std::vector<std::shared_ptr<StaticMeshDrawCommand>> drawCommands;
+	std::vector<std::shared_ptr<StaticMeshDrawCommand>> finalDrawCommands;
 
-	vec3 lastLightDir = vec3(0.0f, -1.0f, 0.0f); //so we don't recaclulate it twice per frame
+	void RebuildDrawCommands();
 
 protected:
 
-	virtual void ApplyAdditionalShaderParams(Shader* shader_program)
+	// Called from PreFinalize() to produce this frame's custom shader params as plain data - override instead of touching a Shader* directly.
+	virtual void CollectCustomShaderParams(std::map<std::string, vec4>& out)
 	{
-		for (auto& param : finalizedMeshCustomShaderParams)
+		for (auto& param : MeshCustomShaderParams)
 		{
-			shader_program->SetUniform(param.first, param.second);
+			out[param.first] = param.second;
 		}
 	}
 
-	string PixelShader = "fs_default";
+	// Overridden by SkeletalMesh so RebuildDrawCommands() produces SkeletalMeshDrawCommand instead.
+	virtual std::shared_ptr<StaticMeshDrawCommand> CreateDrawCommand()
+	{
+		return std::make_unique<StaticMeshDrawCommand>();
+	}
 
-	Shader* forward_shader_program = nullptr;
+	// For subclasses reaching into a specific submesh's command beyond Material (see SkeletalMesh::LoadFromFile).
+	StaticMeshDrawCommand& GetDrawCommandAt(size_t submeshIndex)
+	{
+		return *drawCommands.at(submeshIndex);
+	}
+
+	string PixelShader = "fs_default";
 
 	int numInstances = -1;
 
@@ -70,6 +86,12 @@ protected:
 	bool finalizedCameraVisible = true;
 
 	BoundingBox finalizedBoundingBox;
+
+	// Computed in PreFinalize(), consumed in FinalizeFrameData() - see PreFinalize() in the .cpp.
+	vec3 finalizedLightAmbient = vec3(0);
+	vec3 finalizedLightDirect = vec3(0);
+	vec3 finalizedLightDirection = vec3(0, -1, 0);
+	vec3 finalizedShadowColorMult = vec3(1.0f);
 
 public:
 
@@ -129,9 +151,6 @@ public:
 	void SetPixelShader(string name)
 	{
 		PixelShader = name;
-
-		forward_shader_program = nullptr;
-
 	}
 
 	mat4 GetWorldMatrix();
@@ -175,6 +194,16 @@ public:
 
 	void PreFinalize() override;
 
+	void CollectDrawCommands(std::vector<IDrawCommand*>& outCommands) override;
+
+	// mesh->GetMaterial(0).Masked = true; - index must be < model->meshes.size(), only valid after LoadFromFile.
+	StaticMeshColorEmissiveMaterial& GetMaterial(size_t submeshIndex = 0)
+	{
+		return drawCommands.at(submeshIndex)->Material;
+	}
+
+	size_t GetSubMeshCount() const { return drawCommands.size(); }
+
 	//obj or gml files are strongly recommended
 	virtual void LoadFromFile(const string& path)
 	{
@@ -188,7 +217,7 @@ public:
 			model = AssetRegistry::GetSkinnedModelFromFile(path);
 		}
 
-		
+		RebuildDrawCommands();
 
 	}
 
@@ -220,26 +249,9 @@ public:
 
 	bool IsDetailShadow() { return CastDetailShadows; }
 
-	void DrawForward(mat4x4 view, mat4x4 projection);
-
-	void DrawDepth(mat4x4 view, mat4x4 projection);
-	void DrawCustomId(mat4x4 view, mat4x4 projection);
-
-	void DrawShadow(mat4x4 view, mat4x4 projection);
-
-
-	vec3 GetShadowColorMult();                                   // cached per-frame
-	void DrawShadowVolumeStencil(mat4x4 view, mat4x4 projection); // Pass A only
-	static void ApplyShadowDarkening(const vec3& shadowColor);    // Pass B only
-	static void ClearShadowStencil();                             // Pass C only
-
-	void DrawMeshShadow(mat4x4 view, mat4x4 projection);          // kept, single-mesh convenience wrapper
-
+	// Draws this mesh's own detail shadow immediately, outside the batched Renderer::DrawDetailShadows grouping.
+	void DrawMeshShadow(mat4x4 view, mat4x4 projection);
 
 	void PreloadAssets();
-
-	private:
-		uint64_t shadowColorMultFrame = ~0ull;
-		vec3     cachedShadowColorMult = vec3(1.0f);
 
 };

@@ -138,42 +138,11 @@ void UiBillboardAtlasManager::Free(BillboardAllocation& alloc)
 }
 
 // ---------------------------------------------------------------------------
-// UiBilboard implementation (now atlas-based)
+// UiBilboard implementation (atlas-based)
 // ---------------------------------------------------------------------------
 UiBilboard::~UiBilboard()
 {
     UiBillboardAtlasManager::Get().Free(allocation);
-}
-
-void UiBilboard::DrawForward(mat4x4 view, mat4x4 projection)
-{
-    if (!allocation.IsValid())
-        return;
-
-    auto startState = BgfxStateManager::GetState();
-
-    BgfxStateManager::SetWriteDepth(false);
-
-    // Point StaticMesh to the shared atlas texture
-    ColorTextureId = (int)allocation.atlas->GetTexture()->textureHandle().idx;
-
-    // -------------------------------------------------------------------
-    // Set the atlas rectangle uniform (one-time creation)
-    // -------------------------------------------------------------------
-    static bgfx::UniformHandle uAtlasRect = BGFX_INVALID_HANDLE;
-    if (uAtlasRect.idx == bgfx::kInvalidHandle)
-    {
-        uAtlasRect = bgfx::createUniform("u_atlasRect", bgfx::UniformType::Vec4);
-    }
-
-    // Send the pre-computed minU/minV/maxU/maxV for this billboard
-    bgfx::setUniform(uAtlasRect, &allocation.uvRect);
-
-    // Let the normal StaticMesh pipeline do the rest (it already knows how to
-    // bind the texture we just set and will use the new fs_unlit_rect shader)
-    StaticMesh::DrawForward(view, projection);
-
-    BgfxStateManager::SetState(startState);
 }
 
 void UiBilboard::FinalizeFrameData()
@@ -196,11 +165,29 @@ void UiBilboard::Update()
     Canvas.UpdateChildrenOffsetRecursive();
 }
 
+// PreDraw runs after FinalizeFrameData() (see Renderer::RenderLevel), which is
+// exactly why the atlas texture/rect are pushed onto the command here rather
+// than in FinalizeFrameData(): DrawUi() below is what actually (re)renders
+// this frame's UI content into the atlas and may (re)allocate the slot, so
+// this is the earliest point the command can correctly reflect it - setting
+// ColorTextureId/MeshCustomShaderParams alone would only take effect next
+// frame, one frame late.
 void UiBilboard::PreDraw()
 {
     StaticMesh::PreDraw();
 
     DrawUi();
+
+    if (!allocation.IsValid()) return;
+
+    ColorTexture = nullptr;
+    ColorTextureId = allocation.atlas->GetTexture()->textureHandle().idx;
+    MeshCustomShaderParams["u_atlasRect"] = allocation.uvRect;
+
+    StaticMeshDrawCommand& cmd = GetDrawCommandAt(0);
+    cmd.Material.ColorTexture = nullptr;
+    cmd.Material.ColorTextureId = ColorTextureId;
+    cmd.CustomShaderParams["u_atlasRect"] = allocation.uvRect;
 }
 
 void UiBilboard::DrawUi()

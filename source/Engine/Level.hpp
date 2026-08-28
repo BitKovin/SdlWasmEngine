@@ -5,6 +5,7 @@
 #include "EObject.hpp"
 
 #include "IDrawMesh.h"
+#include "DrawCommands/FrameDrawCommandLists.h"
 
 #include "mutex"
 #include <shared_mutex>
@@ -63,9 +64,13 @@ public:
 	std::vector<std::string> deletedNames;
 	std::vector<std::string> deletedIDs;
 
+	// Camera-visible meshes, unsorted; Renderer no longer reads this - see VisibleDrawCommands.
 	vector<IDrawMesh*> VissibleRenderList = vector<IDrawMesh*>();
 	vector<IDrawMesh*> ShadowRenderList = vector<IDrawMesh*>();
 	vector<IDrawMesh*> DetailShadowRenderList = vector<IDrawMesh*>();
+
+	// What Renderer actually draws from - see FrameDrawCommandLists.h.
+	FrameDrawCommandLists VisibleDrawCommands;
 
 
 	string filePath;

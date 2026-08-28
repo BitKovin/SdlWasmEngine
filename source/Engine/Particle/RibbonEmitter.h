@@ -15,21 +15,28 @@ public:
 
     bool SimpleRibbon = false;
 
-    // Builds ribbon geometry and uploads it into transient bgfx buffers.
-    // Returns false if there is nothing to draw.
-    bool RenderRibbon(const std::vector<Particle>& particles);
-
     int GetPrimitiveCount() const { return primitiveCount; }
 
-    void FinalizeFrameData();
-    void DrawForward(mat4x4 view, mat4x4 projection);
+    // Parallel: builds vertex/index data from finalizedParticles.
+    void PreFinalize() override;
 
-	void PreFinalize() override{}
+    // Main thread: resolves the texture, commits verts/idxs onto ribbonCommand.
+    void FinalizeFrameData();
+
+    void CollectDrawCommands(std::vector<IDrawCommand*>& outCommands) override
+    {
+        outCommands.push_back(&ribbonCommand);
+    }
 
     bool IsCameraVisible() { return true; }
 
 private:
     void GenerateIndices(std::vector<uint32_t>& dst, int n);
+
+    // Pure CPU geometry build - formerly RenderRibbon, split out of DrawForward.
+    bool BuildRibbonGeometry(const std::vector<Particle>& particles);
+
+    RibbonDrawCommand ribbonCommand;
 
     std::vector<VertexData>  verts;
     std::vector<uint32_t>    idxs;

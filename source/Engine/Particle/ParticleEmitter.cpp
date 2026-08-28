@@ -11,24 +11,18 @@
 #include <Renderer/Abstractions/ViewIdManager.h>
 #include <Profiling/ResourceStatistics.hpp>
 
-// ---------------------------------------------------------------------------
 // Static member definitions
-// ---------------------------------------------------------------------------
 bgfx::VertexBufferHandle ParticleEmitter::s_billboardVbh   = BGFX_INVALID_HANDLE;
 bgfx::IndexBufferHandle  ParticleEmitter::s_billboardIbh   = BGFX_INVALID_HANDLE;
 bgfx::VertexLayout       ParticleEmitter::s_billboardLayout = {};
 
-// ---------------------------------------------------------------------------
 // Helpers
-// ---------------------------------------------------------------------------
 mat4 GetWorldMatrix(const Particle& particle)
 {
     return translate(particle.position) * MathHelper::GetRotationMatrix(particle.globalRotation) * scale(vec3(particle.Size));
 }
 
-// ---------------------------------------------------------------------------
 // Spawn / Update
-// ---------------------------------------------------------------------------
 void ParticleEmitter::SpawnParticles(int num)
 {
     std::lock_guard<std::recursive_mutex> lock(particlesMutex);
@@ -84,9 +78,7 @@ void ParticleEmitter::Update(float deltaTime)
         destroyed = true;
 }
 
-// ---------------------------------------------------------------------------
 // InitBilboardVaoIfNeeded
-// ---------------------------------------------------------------------------
 void ParticleEmitter::InitBilboardVaoIfNeeded()
 {
     if (bgfx::isValid(s_billboardVbh)) return;
@@ -145,83 +137,7 @@ void ParticleEmitter::DestroyBillboardVao()
 
 }
 
-// ---------------------------------------------------------------------------
-// DrawForward
-// ---------------------------------------------------------------------------
-void ParticleEmitter::DrawForward(mat4x4 view, mat4x4 projection)
-{
-    if (instances.empty()) return;
-
-    InitBilboardVaoIfNeeded();
-
-    if (!bgfx::isValid(s_billboardVbh) || !bgfx::isValid(s_billboardIbh)) return;
-
-    // Resolve texture
-    if (savedTextureName != texture)
-    {
-        savedTexture = AssetRegistry::GetTextureFromFile(texture);
-        savedTextureName = texture;
-    }
-
-    auto startState = BgfxStateManager::GetState();
-
-    BgfxStateManager::SetWriteDepth(false);
-    BgfxStateManager::SetCull(BgfxStateManager::Cull::None);
-    BgfxStateManager::SetBlend(BlendMode);
-
-    Shader* shader = ShaderManager::GetShaderProgram("vs_instanced_billboard", PixelShader);
-    if (shader == nullptr) return;
-
-    // -----------------------------------------------------------------------
-    // Instance buffer handling – exactly as in the bgfx instancing example
-    // -----------------------------------------------------------------------
-    const uint32_t totalInstances = static_cast<uint32_t>(instances.size());
-    const uint16_t instanceStride = static_cast<uint16_t>(sizeof(InstanceData));
-
-    // Query how many instances we can fit in the transient instance buffer
-    uint32_t drawInstances = bgfx::getAvailInstanceDataBuffer(totalInstances, instanceStride);
-    if (drawInstances == 0)
-        return; // nothing to draw this frame
-
-    // Allocate the transient instance buffer
-    bgfx::InstanceDataBuffer idb;
-    bgfx::allocInstanceDataBuffer(&idb, drawInstances, instanceStride);
-
-    // Copy instance data (only the first drawInstances entries)
-    memcpy(idb.data, instances.data(), drawInstances * instanceStride);
-
-    // Optional: report if we couldn't draw all instances (for debugging)
-    // uint32_t missing = totalInstances - drawInstances;
-    // if (missing > 0) DBG("ParticleEmitter: dropped %u instances", missing);
-    // -----------------------------------------------------------------------
-
-    shader->UseProgram();
-
-    shader->SetUniform("view", view);
-    shader->SetUniform("projection", projection);
-    shader->SetUniform("is_decal", isDecal);          // only is_decal needed
-
-    shader->SetUniform("viewmodelScaleFactor", 1);
-    shader->SetUniform("isViewmodel", IsViewmodel);
-
-
-
-    Renderer::SetSurfaceShaderUniforms(shader);
-
-    shader->SetTexture("u_texture", savedTexture);
-    shader->SetUniform("viewProjectionInv", glm::inverse(projection * view));
-
-    bgfx::setVertexBuffer(0, s_billboardVbh);
-    bgfx::setIndexBuffer(s_billboardIbh);
-    bgfx::setInstanceDataBuffer(&idb);
-
-    BgfxStateManager::Apply();
-
-    shader->Submit(ViewIdManager::GetCurrentId());
-
-    BgfxStateManager::SetState(startState);
-}
-
+// PreFinalize - parallel, pure CPU math + BSP lightvol reads, no OwnerEntity involved.
 void ParticleEmitter::PreFinalize()
 {
 
@@ -325,17 +241,25 @@ void ParticleEmitter::PreFinalize()
 
 }
 
-// ---------------------------------------------------------------------------
-// FinalizeFrameData
-// ---------------------------------------------------------------------------
+// FinalizeFrameData - main thread: resolve the texture and commit onto drawCommand.
 void ParticleEmitter::FinalizeFrameData()
 {
-    instances = std::vector(preFinalizedInstances);
+    if (savedTextureName != texture)
+    {
+        savedTexture = AssetRegistry::GetTextureFromFile(texture);
+        savedTextureName = texture;
+    }
+
+    drawCommand.Instances = std::move(preFinalizedInstances);
+    drawCommand.ResolvedTexture = savedTexture;
+    drawCommand.IsDecal = isDecal;
+    drawCommand.PixelShader = PixelShader;
+    drawCommand.BlendMode = BlendMode;
+
+    SyncCommandFlags(drawCommand);
 }
 
-// ---------------------------------------------------------------------------
 // GetLightForParticle
-// ---------------------------------------------------------------------------
 vec3 ParticleEmitter::GetLightForParticle(const Particle& particle)
 {
     if (particle.UseWorldRotation == false)

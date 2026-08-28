@@ -560,7 +560,6 @@ void Level::RemovePendingEntities()
 		if (it != LevelObjects.end())
 		{
 			LevelObjects.erase(it);
-			entity->OnLevelRemoved();
 		}
 
 		PendingMemoryCleanObjects.push_back(entity);
@@ -740,12 +739,12 @@ void Level::FinalizeFrame()
 	AddPendingLevelObjects();
 
 	VissibleRenderList.clear();
-
-	vector<IDrawMesh*> opaque;
-	vector<IDrawMesh*> transparent;
+	VisibleDrawCommands.Clear();
 
 	vector<IDrawMesh*> ShadowCasters;
 	vector<IDrawMesh*> DetailShadowCasters;
+
+	std::vector<IDrawCommand*> meshCommands; // reused scratch buffer
 
 	{
 
@@ -764,14 +763,7 @@ void Level::FinalizeFrame()
 				if ((mesh->IsCameraVisible() && var->Visible) || renderAll)
 				{			
 
-					if (mesh->Transparent)
-					{
-						transparent.push_back(mesh);
-					}
-					else
-					{
-						opaque.push_back(mesh);
-					}
+					VissibleRenderList.push_back(mesh); // Transparent no longer matters here - nothing outside rendering reads it
 
 					if (mesh->WasRended == false)
 					{
@@ -784,6 +776,22 @@ void Level::FinalizeFrame()
 					mesh->WasRended = true;
 
 					mesh->FinalizeFrameData();
+
+					meshCommands.clear();
+					mesh->CollectDrawCommands(meshCommands);
+
+					const float distance = mesh->GetDistanceToCamera();
+
+					for (IDrawCommand* cmd : meshCommands)
+					{
+						cmd->SortDistance = distance;
+
+						VisibleDrawCommands.All.push_back(cmd);
+
+						(cmd->GetSurfaceType() == SurfaceType::Transparent
+							? VisibleDrawCommands.Transparent
+							: VisibleDrawCommands.Depth).push_back(cmd);
+					}
 
 				}
 				else
@@ -812,31 +820,16 @@ void Level::FinalizeFrame()
 		}
 	}
 
-
-
-	// Sort opaque objects from closest to farthest (ascending order by distance).
-	std::sort(opaque.begin(), opaque.end(),
-		[](IDrawMesh* a, IDrawMesh* b) {
-			return a->GetDistanceToCamera() < b->GetDistanceToCamera();
+	// Opaque/Masked: batch by shader identity, then front-to-back within a batch.
+	std::sort(VisibleDrawCommands.Depth.begin(), VisibleDrawCommands.Depth.end(),
+		[](IDrawCommand* a, IDrawCommand* b) {
+			if (a->GetSortKey() != b->GetSortKey()) return a->GetSortKey() < b->GetSortKey();
+			return a->SortDistance < b->SortDistance;
 		});
 
-	// Sort transparent objects from farthest to closest (descending order by distance).
-	std::sort(transparent.begin(), transparent.end(),
-		[](IDrawMesh* a, IDrawMesh* b) {
-			return a->GetDistanceToCamera() > b->GetDistanceToCamera();
-		});
-
-	// Append sorted opaque objects first.
-	for (auto mesh : opaque)
-	{
-		VissibleRenderList.push_back(mesh);
-	}
-
-	// Append sorted transparent objects second.
-	for (auto mesh : transparent)
-	{
-		VissibleRenderList.push_back(mesh);
-	}
+	// Transparent: strictly back-to-front, no batching.
+	std::sort(VisibleDrawCommands.Transparent.begin(), VisibleDrawCommands.Transparent.end(),
+		[](IDrawCommand* a, IDrawCommand* b) { return a->SortDistance > b->SortDistance; });
 
 	ShadowRenderList = ShadowCasters;
 	DetailShadowRenderList = DetailShadowCasters;

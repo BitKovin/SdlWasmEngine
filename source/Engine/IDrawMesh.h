@@ -12,6 +12,8 @@
 
 #include "MeshUtils.hpp"
 
+#include "DrawCommands/IDrawCommand.h"
+
 using namespace std;
 
 class IDrawMesh : public EObject
@@ -23,6 +25,7 @@ public:
 
 	bool ReceiveDetailShadows = false;
 
+	// No longer read by Renderer - see SurfaceType.h. Left in place, doing nothing, so existing reads/writes of mesh->Transparent still compile.
 	bool Transparent = false;
 
 	bool OnlyShadows = false;
@@ -41,15 +44,8 @@ public:
 
 	virtual vector<MeshUtils::PositionVerticesIndices> GetNavObstacleMeshes() { return vector<MeshUtils::PositionVerticesIndices>(); }
 
-
-	virtual void DrawForward(mat4x4 view, mat4x4 projection) {}
-
-	virtual void DrawDepth(mat4x4 view, mat4x4 projection) {}
-	virtual void DrawCustomId(mat4x4 view, mat4x4 projection) {}
-
-	virtual void DrawShadow(mat4x4 view, mat4x4 projection) {}
-
-	virtual void DrawMeshShadow(mat4x4 view, mat4x4 projection) {}
+	// Replaces DrawForward/DrawDepth/DrawCustomId/DrawShadow. Called once per visible mesh per frame to gather this mesh's persistent IDrawCommand(s) - never allocate a new command here.
+	virtual void CollectDrawCommands(vector<IDrawCommand*>& outCommands) {}
 
 	virtual void FinalizeFrameData(){}
 

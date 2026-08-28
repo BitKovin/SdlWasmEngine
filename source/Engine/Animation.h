@@ -19,12 +19,7 @@ public:
 
 	bool IsShadowVisible(){return false;}
 
-	void DrawForward(mat4x4 view, mat4x4 projection)override {}
-
-	void DrawDepth(mat4x4 view, mat4x4 projection)override {}
-
-	void DrawShadow(mat4x4 view, mat4x4 projection)override {}
-	void DrawMeshShadow(mat4x4 view, mat4x4 projection) override {}
+	void CollectDrawCommands(vector<IDrawCommand*>& outCommands) override {}
 
 private:
 
