@@ -329,8 +329,8 @@ void NpcHumanAxe::LoadAssets()
 {
 	NpcHumanBase::LoadAssets();
 	SoundManager::LoadBankFromPath("GameData/sounds/banks/Desktop/SFX.bank");
-	mesh->TexturesLocation = "GameData/models/enemies/humanAxe/humanAxe.glb/";
-	mesh->LoadFromFile("GameData/models/enemies/humanAxe/humanAxe.glb");
+	mesh->TexturesLocation = "GameData/models/enemies/knight/humanAxe.glb/";
+	mesh->LoadFromFile("GameData/models/enemies/knight/humanAxe.glb");
 	mesh->PreloadAssets();
 	mesh->CreateHitboxes(this);
 	mesh->PlayAnimation("run", true);
