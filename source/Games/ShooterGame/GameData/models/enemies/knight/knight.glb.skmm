@@ -38,37 +38,6 @@
             }
         },
         {
-            "boneName": "mixamorig:Spine1",
-            "constraintRotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 90.0
-            },
-            "damageMultiplier": 1.0,
-            "mass": 5.0,
-            "parentBone": "mixamorig:Hips",
-            "position": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0
-            },
-            "rotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0
-            },
-            "size": {
-                "x": 0.5400000214576721,
-                "y": 0.3310000002384186,
-                "z": 0.3190000057220459
-            },
-            "twistParameters": {
-                "x": -38.0,
-                "y": 19.5,
-                "z": 30.0
-            }
-        },
-        {
             "boneName": "mixamorig:RightUpLeg",
             "constraintRotation": {
                 "x": 0.0,
@@ -201,7 +170,7 @@
             },
             "damageMultiplier": 1.5,
             "mass": 5.0,
-            "parentBone": "mixamorig:Spine1",
+            "parentBone": "mixamorig:Spine2",
             "position": {
                 "x": 0.0,
                 "y": 0.024000000208616257,
@@ -232,7 +201,7 @@
             },
             "damageMultiplier": 1.0,
             "mass": 5.0,
-            "parentBone": "mixamorig:Spine1",
+            "parentBone": "mixamorig:Spine2",
             "position": {
                 "x": 0.0,
                 "y": 0.09300000220537186,
@@ -263,7 +232,7 @@
             },
             "damageMultiplier": 1.0,
             "mass": 5.0,
-            "parentBone": "mixamorig:Spine1",
+            "parentBone": "mixamorig:Spine2",
             "position": {
                 "x": 0.0,
                 "y": 0.09300000220537186,
@@ -325,7 +294,7 @@
             },
             "damageMultiplier": 1.0,
             "mass": 5.0,
-            "parentBone": "mixamorig:RightArm",
+            "parentBone": "mixamorig:LeftArm",
             "position": {
                 "x": 0.0,
                 "y": 0.22599999606609344,
@@ -345,6 +314,37 @@
                 "x": -90.0,
                 "y": 15.0,
                 "z": 10.0
+            }
+        },
+        {
+            "boneName": "mixamorig:Spine2",
+            "constraintRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "damageMultiplier": 1.0,
+            "mass": 5.0,
+            "parentBone": "mixamorig:Hips",
+            "position": {
+                "x": 0.0,
+                "y": -0.11800000071525574,
+                "z": 0.0
+            },
+            "rotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "size": {
+                "x": 0.5239999890327454,
+                "y": 0.4790000021457672,
+                "z": 0.3230000138282776
+            },
+            "twistParameters": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
             }
         }
     ]

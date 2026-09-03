@@ -524,7 +524,7 @@ void SkeletalMesh::StartRagdoll()
 		Physics::SetMotionType(hitbox, JPH::EMotionType::Dynamic);
 		hitbox->SetMotionType(JPH::EMotionType::Dynamic);
 
-		Physics::SetCollisionMask(hitbox, BodyType::GroupCollisionTest & ~BodyType::CharacterCapsule | BodyType::HitBox);
+		Physics::SetCollisionMask(hitbox, BodyType::GroupCollisionTest | BodyType::HitBox & ~BodyType::CharacterCapsule);
 
 		const string boneName = Physics::GetBodyData(hitbox)->hitboxName;
 
@@ -557,8 +557,8 @@ void SkeletalMesh::StartRagdoll()
 			if (JPH::isfinite(ToPhysics(linearVel).LengthSq()) && JPH::isfinite(ToPhysics(angularVel).LengthSq()))
 			{
 				Physics::Activate(hitbox);
-				Physics::SetLinearVelocity(hitbox, linearVel / 1.5f);
-				Physics::SetAngularVelocity(hitbox, angularVel / 1.5f);
+				Physics::SetLinearVelocity(hitbox, linearVel);
+				Physics::SetAngularVelocity(hitbox, angularVel);
 			}
 
 		}
@@ -655,7 +655,21 @@ void SkeletalMesh::CreateHitboxes(Entity* owner)
 
 		constraint->SetEnabled(false);
 
+
 		hitboxConstraints[hitbox.boneName] = constraint;
+
+		for (auto h : metaData.hitboxes)
+		{
+			if (h.parentBone == hitbox.parentBone)
+			{
+				
+				auto SiblingBody = FindHitboxByName(h.boneName);
+
+				Physics::AddIgnorePair(currentBody->GetID(), SiblingBody->GetID());
+
+			}
+		}
+
 
 	}
 

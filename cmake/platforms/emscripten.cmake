@@ -144,7 +144,7 @@ function(platform_configure_game_target game_target)
         list(APPEND _link_opts
             "SHELL:-pthread"
             "SHELL:-s USE_PTHREADS=1"
-            "SHELL:-s PTHREAD_POOL_SIZE=16"
+            "SHELL:-s PTHREAD_POOL_SIZE=17"
             # Fixed memory required when using threads; remove ALLOW_MEMORY_GROWTH
             "SHELL:-s TOTAL_MEMORY=999948288"
         )
