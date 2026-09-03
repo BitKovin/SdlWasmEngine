@@ -17,6 +17,7 @@
 #include <Profiling/ResourceStatistics.hpp>
 
 #include <Helpers/Mesh/shadow_volume.hpp>
+#include "AssetLoadState.h"
 
 #define MAX_BONE_INFLUENCE  4
 #define MAX_SKINNED_BONES   128
@@ -90,6 +91,11 @@ namespace roj
         }
 
     };
+
+// Main-thread only. Creates vbh/ibh (and the shadow volume precomp) from a
+// mesh's already-populated vertices/indices. Used by the synchronous load
+// path and by AssetRegistry when it applies a deferred Visual-tier upload.
+void UploadSkinnedMeshGPUBuffers(SkinnedMesh& mesh);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Legacy structures — kept for SkeletalMesh.cpp compatibility only.
@@ -329,6 +335,77 @@ struct SkinnedModel
     // Indexed by skinIdx (= BoneInfo::id).  Size == MAX_SKINNED_BONES.
     std::vector<BoneBound> boneBounds;
 
+    // Readiness for AssetRegistry's async loading - see AssetLoadState.h.
+    // Logic tier = skeleton/animations/clips (CPU only). Visual tier = meshes
+    // (needs a bgfx upload). Deliberately excluded from the move ops below -
+    // a SkinnedModel's load-state identity belongs to the object at this
+    // address for its whole lifetime, not to whichever temporary last got
+    // moved into it.
+    AssetLoadState loadState;
+
+    // Called on the Loader thread once bone/animation parsing finishes.
+    // Only touches Logic-tier fields - never meshes - so it can't stomp on
+    // Visual-tier data that's already loaded (or mid-upload).
+    void AdoptLogicTierData(SkinnedModel&& parsed)
+    {
+        m_isOBJ         = parsed.m_isOBJ;
+        skeleton        = std::move(parsed.skeleton);
+        clips           = std::move(parsed.clips);
+        boneCount       = parsed.boneCount;
+        sceneCamera     = parsed.sceneCamera;
+        globalInversed  = parsed.globalInversed;
+        boneInfoMap     = std::move(parsed.boneInfoMap);
+        animations      = std::move(parsed.animations);
+        defaultRoot     = std::move(parsed.defaultRoot);
+        boneNodesMap    = std::move(parsed.boneNodesMap);
+        parentMap       = std::move(parsed.parentMap);
+    }
+
+    // Called (from the main-thread upload step) once a full geometry parse
+    // finishes. Bone/animation fields aren't touched here - the Visual-tier
+    // job re-parses them too (SkipVisual=false), but we only want its take
+    // on the geometry-derived fields, so an in-progress animation set up by
+    // AdoptLogicTierData() isn't disturbed.
+    void AdoptVisualTierGeometry(SkinnedModel&& parsed)
+    {
+        meshes         = std::move(parsed.meshes);
+        boundingSphere = parsed.boundingSphere;
+        boundingBox    = parsed.boundingBox;
+        boneBounds     = std::move(parsed.boneBounds);
+    }
+
+    // Drops GPU-backed geometry (vbh/ibh, shadow volumes) and the CPU mesh
+    // list, but leaves bones/animations/clips alone - dropping only the
+    // visible half of a model (e.g. a distant NPC) while keeping it animating.
+    void UnloadVisualTier()
+    {
+        for (auto& mesh : meshes) mesh.DestroyBuffers();
+        meshes.clear();
+    }
+
+    // Drops everything - geometry and bones/animations/clips - but keeps
+    // this object alive at its address and its cache entry intact; a later
+    // load just refills it. Doesn't erase from AssetRegistry's cache map -
+    // that only happens at a real level change (BeginLevelLoad/ClearUnusedMemory).
+    void UnloadAll()
+    {
+        UnloadVisualTier();
+        boneInfoMap.clear();
+        for (auto& [_, clip] : clips) delete clip;
+        clips.clear();
+        skeleton       = FlatSkeleton();
+        animations.clear();
+        boneNodesMap.clear();
+        parentMap.clear();
+        defaultRoot    = BoneNode();
+        boneBounds.clear();
+        boundingSphere = BoundingSphere();
+        boundingBox    = BoundingBox();
+        boneCount      = 0;
+        globalInversed = glm::mat4(1.f);
+        sceneCamera    = nullptr;
+    }
+
     // Call once after load, while mesh.vertices are still alive.
     // weightThreshold: influences below this value are ignored to avoid
     // near-zero weights pulling the bound to distant auxiliary bones.
@@ -351,8 +428,30 @@ struct SkinnedModel
     void clear();
 
     SkinnedModel() = default;
-    SkinnedModel(SkinnedModel&&) = default;
-    SkinnedModel& operator=(SkinnedModel&&) = default;
+
+    // Move everything except loadState - see the comment on that field.
+    SkinnedModel(SkinnedModel&& o) noexcept
+        : meshes(std::move(o.meshes)), m_isOBJ(o.m_isOBJ), skeleton(std::move(o.skeleton)),
+          clips(std::move(o.clips)), boneCount(o.boneCount), sceneCamera(o.sceneCamera),
+          globalInversed(o.globalInversed), boneInfoMap(std::move(o.boneInfoMap)),
+          animations(std::move(o.animations)), defaultRoot(std::move(o.defaultRoot)),
+          boneNodesMap(std::move(o.boneNodesMap)), parentMap(std::move(o.parentMap)),
+          boundingSphere(o.boundingSphere), boundingBox(o.boundingBox), boneBounds(std::move(o.boneBounds))
+    {}
+
+    SkinnedModel& operator=(SkinnedModel&& o) noexcept
+    {
+        if (this != &o)
+        {
+            meshes = std::move(o.meshes); m_isOBJ = o.m_isOBJ; skeleton = std::move(o.skeleton);
+            clips = std::move(o.clips); boneCount = o.boneCount; sceneCamera = o.sceneCamera;
+            globalInversed = o.globalInversed; boneInfoMap = std::move(o.boneInfoMap);
+            animations = std::move(o.animations); defaultRoot = std::move(o.defaultRoot);
+            boneNodesMap = std::move(o.boneNodesMap); parentMap = std::move(o.parentMap);
+            boundingSphere = o.boundingSphere; boundingBox = o.boundingBox; boneBounds = std::move(o.boneBounds);
+        }
+        return *this;
+    }
 
     ~SkinnedModel();
 };

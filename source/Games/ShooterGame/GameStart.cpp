@@ -273,7 +273,7 @@ public:
 
 			if (StringHelper::StartsWith(className, "weapon_"))
             {
-                PreloadEntityType(className);
+                //PreloadEntityType(className);
             }
 
         }

@@ -100,6 +100,13 @@ void StaticMesh::PreFinalize()
 {
 	// Runs in parallel, one call per mesh - the only place safe to read OwnerEntity (see the top-level README).
 
+	// A model loaded lazily (see StaticMesh::LoadFromFile / AssetRegistry.h)
+	// may still be streaming in. Fixed, once-per-frame point where a newly-
+	// arrived (or newly-dropped) tier gets wired into draw commands - never
+	// mid-Update(), so gameplay code never sees a half-applied change.
+	if (model != nullptr && model->loadState.generation.load(std::memory_order_acquire) != lastWiredGeneration)
+		RewireForCurrentModel();
+
 	finalizedBoundingBox = GetBoundingBox();
 
 	finalizedCameraVisible = PrecalculateCameraVisible();
@@ -211,6 +218,13 @@ void StaticMesh::RebuildDrawCommands()
 
 }
 
+void StaticMesh::RewireForCurrentModel()
+{
+	RebuildDrawCommands();
+	OnAssetsReloaded();
+	lastWiredGeneration = model ? model->loadState.generation.load(std::memory_order_acquire) : 0;
+}
+
 void StaticMesh::CollectDrawCommands(std::vector<IDrawCommand*>& outCommands)
 {
 	for (auto& cmd : finalDrawCommands)
@@ -295,6 +309,13 @@ void StaticMesh::FinalizeFrameData()
 			}
 
 			// Resource creation - main thread only, hence here and not PreFinalize.
+			// PreloadAssets() already fills cachedBaseColor synchronously
+			// during the loading screen, so this only ever fires for
+			// something that was never preloaded - i.e. exactly the
+			// runtime-load case GetTextureFromFile is lazy-by-default for
+			// (see AssetRegistry.h). Shader::SetTexture already falls back
+			// to a neutral texture while ColorTexture is still loading, so
+			// there's nothing else to gate on here.
 			if (mesh.cachedBaseColor == nullptr)
 			{
 				const string textureRoot = TexturesLocation;
@@ -356,7 +377,7 @@ void StaticMesh::DrawMeshShadow(mat4x4 view, mat4x4 projection)
 	if (model == nullptr) return;
 
 	vec3 shadowColor = vec3(1.0f);
-	for (auto& cmd : drawCommands)
+	for (auto& cmd : finalDrawCommands)
 	{
 		if (cmd->Hidden) continue;
 		shadowColor = cmd->GetShadowColorMult();
@@ -368,7 +389,7 @@ void StaticMesh::DrawMeshShadow(mat4x4 view, mat4x4 projection)
 
 	auto savedState = BgfxStateManager::GetState();
 
-	for (auto& cmd : drawCommands)
+	for (auto& cmd : finalDrawCommands)
 	{
 		if (cmd->Hidden) continue;
 		cmd->DrawShadowVolumeStencil(view, projection);
@@ -433,4 +454,41 @@ void StaticMesh::PreloadAssets()
 		}
 
 	}
+}
+
+
+AssetLoadTier StaticMesh::GetLoadState() const
+{
+	if (model == nullptr)
+		return AssetLoadTier::None;
+
+	const AssetLoadTier modelTier = model->loadState.currentTier.load(std::memory_order_acquire);
+
+	// Geometry (and bones) not even at Visual yet – report that directly.
+	if (modelTier != AssetLoadTier::Visual)
+		return modelTier;
+
+	// Model claims Visual; verify every texture that has actually been
+	// requested for its submeshes has also finished uploading.  Un-touched
+	// cached* pointers are ignored (they will be filled lazily on first use).
+	for (const auto& mesh : model->meshes)
+	{
+		if (mesh.cachedBaseColor &&
+			mesh.cachedBaseColor->loadState.currentTier.load(std::memory_order_acquire) != AssetLoadTier::Visual)
+			return AssetLoadTier::Logic;   // geometry ready, textures still streaming
+
+		if (mesh.cachedEmissiveColor &&
+			mesh.cachedEmissiveColor->loadState.currentTier.load(std::memory_order_acquire) != AssetLoadTier::Visual)
+			return AssetLoadTier::Logic;
+	}
+
+	return AssetLoadTier::Visual;
+}
+
+AssetLoadTier StaticMesh::GetDesiredLoadState() const
+{
+	if (model == nullptr)
+		return AssetLoadTier::None;
+
+	return model->loadState.queuedUpTo.load(std::memory_order_acquire);
 }

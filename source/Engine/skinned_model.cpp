@@ -617,6 +617,14 @@ SkinnedMesh ModelLoader<SkinnedMesh>::processMesh(aiMesh* mesh, const aiScene* s
 
     skinMesh.layout = VertexData::Declaration();
 
+    if (!DeferGPUUpload)
+        UploadSkinnedMeshGPUBuffers(skinMesh);
+
+    return skinMesh;
+}
+
+void UploadSkinnedMeshGPUBuffers(SkinnedMesh& skinMesh)
+{
     const bgfx::Memory* vbMem = bgfx::copy(skinMesh.vertices.data(), sizeof(VertexData) * skinMesh.vertices.size());
     skinMesh.vbh = bgfx::createVertexBuffer(vbMem, skinMesh.layout);
 
@@ -642,8 +650,6 @@ SkinnedMesh ModelLoader<SkinnedMesh>::processMesh(aiMesh* mesh, const aiScene* s
     }
 
     skinMesh.shadowVolumePrecomp = BuildShadowVolumePrecomp(skinMesh);
-
-    return skinMesh;
 }
 
 template<>
@@ -767,8 +773,13 @@ bool ModelLoader<SkinnedMesh>::load(const std::string& path)
     std::sort(m_model.meshes.begin(), m_model.meshes.end(),
         [](const SkinnedMesh& a, const SkinnedMesh& b) {
             return !a.transparentTexture && b.transparentTexture; });
-    for (size_t i = 0; i < m_scene->mNumTextures; ++i)
-        LoadTextureFromScene(m_scene->mTextures[i]);
+    
+    if (SkipVisual == false)
+    {
+        for (size_t i = 0; i < m_scene->mNumTextures; ++i)
+            LoadTextureFromScene(m_scene->mTextures[i]);
+    }
+
 
     PrewarmSkeletonTopology(&m_model.defaultRoot);
 

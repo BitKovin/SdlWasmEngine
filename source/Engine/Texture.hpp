@@ -11,6 +11,7 @@
 #include "malloc_override.h"
 #include "Logger.hpp"
 #include <Profiling/ResourceStatistics.hpp>
+#include "AssetLoadState.h"
 class Texture {
 public:
     Texture(const std::string& filename, bool generateMipmaps = true) {
@@ -29,6 +30,101 @@ public:
         ResourceStatistics::Instance().unregisterResource(ResourceType::Texture, m_handle.idx);
         if (bgfx::isValid(m_handle))
             bgfx::destroy(m_handle);
+    }
+
+    // Readiness for AssetRegistry's async loading - see AssetLoadState.h.
+    // A Texture only ever moves None <-> Visual, there's no CPU-only "Logic"
+    // stage the way there is for a skinned model's bones.
+    AssetLoadState loadState;
+
+    // Plain decoded pixels, produced off the main thread (Loader thread, or
+    // wherever else needs one - e.g. an embedded GLB texture found while
+    // parsing a model). Holds no bgfx handle, so it's safe to build anywhere;
+    // only UploadDecoded() below is main-thread-only.
+    struct Decoded
+    {
+        std::vector<uint8_t> pixels; // tightly packed RGBA8
+        int  width           = 0;
+        int  height          = 0;
+        bool generateMipmaps = true;
+        bool valid           = false;
+    };
+
+    static Decoded DecodeFromFile(const std::string& filename, bool generateMipmaps)
+    {
+        std::vector<uint8_t> fileData = FileSystemEngine::ReadFileBinary(filename);
+        if (fileData.empty())
+        {
+            Logger::Error("Texture: file empty or not found: %s", filename.c_str());
+            return {};
+        }
+        return DecodeFromMemoryCompressed(fileData.data(), fileData.size(), generateMipmaps);
+    }
+
+    static Decoded DecodeFromMemoryCompressed(const unsigned char* data, size_t size, bool generateMipmaps)
+    {
+        Decoded out;
+        if (!data || size == 0)
+        {
+            Logger::Error("Texture: null or empty compressed data");
+            return out;
+        }
+        int w, h, channels;
+        unsigned char* pixels = stbi_load_from_memory(data, (int)size, &w, &h, &channels, 4);
+        if (!pixels)
+        {
+            Logger::Error("Texture: stbi_load_from_memory failed: %s", stbi_failure_reason());
+            return out;
+        }
+        out.pixels.assign(pixels, pixels + (size_t)w * h * 4);
+        out.width = w;
+        out.height = h;
+        out.generateMipmaps = generateMipmaps;
+        out.valid = true;
+        stbi_image_free(pixels);
+        return out;
+    }
+
+    // Same data an embedded (uncompressed) GLB texture already carries -
+    // just wrapped up so it can travel through the same Decoded/upload path
+    // instead of calling bgfx directly wherever it was found.
+    static Decoded WrapRawPixels(const unsigned char* data, int w, int h, bool generateMipmaps)
+    {
+        Decoded out;
+        if (!data || w <= 0 || h <= 0) return out;
+        out.pixels.assign(data, data + (size_t)w * h * 4);
+        out.width = w;
+        out.height = h;
+        out.generateMipmaps = generateMipmaps;
+        out.valid = true;
+        return out;
+    }
+
+    // Main-thread only (does the actual bgfx::createTexture2D/updateTexture2D
+    // calls) - hands already-decoded pixels off to setupTexture_VeryFastMips.
+    void UploadDecoded(Decoded&& decoded, const std::string& debugName = "")
+    {
+        if (!decoded.valid) return;
+        setupTexture_VeryFastMips(decoded.width, decoded.height, bgfx::TextureFormat::RGBA8,
+            decoded.pixels.data(), decoded.generateMipmaps);
+        if (!debugName.empty())
+            setName(debugName);
+    }
+
+    // Drops the GPU resource (and CPU mip cache) but keeps this object alive
+    // at its current address - UploadDecoded() later just refills it. Main
+    // thread only, same as UploadDecoded.
+    void UnloadGPU()
+    {
+        if (bgfx::isValid(m_handle))
+        {
+            ResourceStatistics::Instance().unregisterResource(ResourceType::Texture, m_handle.idx);
+            bgfx::destroy(m_handle);
+            m_handle = BGFX_INVALID_HANDLE;
+        }
+        m_pixels.clear();
+        m_pixels.shrink_to_fit();
+        valid = false;
     }
     void bind(uint8_t stage, bgfx::UniformHandle sampler) const {
         bgfx::setTexture(stage, sampler, m_handle);
@@ -263,6 +359,12 @@ private:
                 "Texture*" + std::to_string(w) + "x" + std::to_string(h) + formatSuffix(format));
         }
         valid = true;
+
+        // Single place this runs regardless of entry path (sync ctor, raw
+        // data, or UploadDecoded) - the one function that actually touches
+        // bgfx, so the one place allowed to flip currentTier to Visual.
+        loadState.generation.fetch_add(1, std::memory_order_release);
+        loadState.currentTier.store(AssetLoadTier::Visual, std::memory_order_release);
     }
 
 
@@ -376,31 +478,10 @@ private:
     // Load paths
     // -----------------------------------------------------------------------
     void loadFromFile(const std::string& filename, bool generateMipmaps) {
-        std::vector<uint8_t> fileData = FileSystemEngine::ReadFileBinary(filename);
-        if (fileData.empty()) {
-            Logger::Error("Texture: file empty or not found: %s", filename.c_str());
-            return;
-        }
-        loadFromMemoryCompressed(fileData.data(), fileData.size(), generateMipmaps);
-        if (bgfx::isValid(m_handle)) {
-            bgfx::setName(m_handle, filename.c_str(), (int32_t)filename.size());
-            ResourceStatistics::Instance().setResourceName(
-                ResourceType::Texture, m_handle.idx, filename);
-        }
+        UploadDecoded(DecodeFromFile(filename, generateMipmaps), filename);
     }
     void loadFromMemoryCompressed(const unsigned char* data, size_t size, bool generateMipmaps) {
-        if (!data || size == 0) {
-            Logger::Error("Texture: null or empty compressed data");
-            return;
-        }
-        int w, h, channels;
-        unsigned char* pixels = stbi_load_from_memory(data, (int)size, &w, &h, &channels, 4);
-        if (!pixels) {
-            Logger::Error("Texture: stbi_load_from_memory failed: %s", stbi_failure_reason());
-            return;
-        }
-        setupTexture(w, h, bgfx::TextureFormat::RGBA8, pixels, generateMipmaps);
-        stbi_image_free(pixels);
+        UploadDecoded(DecodeFromMemoryCompressed(data, size, generateMipmaps));
     }
     void loadFromRawData(const unsigned char* data, int w, int h,
         bgfx::TextureFormat::Enum format, bool generateMipmaps)

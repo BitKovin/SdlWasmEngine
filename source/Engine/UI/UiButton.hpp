@@ -82,12 +82,11 @@ public:
         else
         {
             if (tex == nullptr)
-            {
                 tex = AssetRegistry::GetTextureFromFile(ImagePath);
-                if (!tex->valid)
-                    tex = AssetRegistry::GetTextureFromFile("GameData/textures/generic/white.png");
-            }
         }
+
+        // See UiImage::Draw() for why this doesn't overwrite tex itself.
+        Texture* drawTex = tex->valid ? tex : AssetRegistry::GetTextureFromFile("GameData/textures/generic/white.png");
 
         bool hovered = false;
         
@@ -102,7 +101,7 @@ public:
 
         const vec4 tint = hovered ? HoverColor : Color;
 
-        DrawSelfTextured(tex->getHandle(), tint * GetFinalColor(), static_cast<float>(tex->width), static_cast<float>(tex->height));
+        DrawSelfTextured(drawTex->getHandle(), tint * GetFinalColor(), static_cast<float>(drawTex->width), static_cast<float>(drawTex->height));
 
         UiElement::Draw();
     }

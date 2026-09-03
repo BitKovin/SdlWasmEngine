@@ -133,14 +133,29 @@ namespace roj
 
 			std::string texturePath = m_lastLoadedPath + "/" + fileName;
 
-
-			Texture* newTexture = new Texture(texData, texSize);
-
-			ResourceStatistics::Instance().setResourceName(ResourceType::Texture, newTexture->getID(), texturePath);
-
-			::AssetRegistry::RegisterTexture(newTexture, texturePath);
-
-
+			if (!DeferGPUUpload)
+			{
+				Texture* newTexture = new Texture(texData, texSize);
+				ResourceStatistics::Instance().setResourceName(ResourceType::Texture, newTexture->getID(), texturePath);
+				::AssetRegistry::RegisterTexture(newTexture, texturePath);
+			}
+			else
+			{
+				// Decoding is pure CPU (safe here, on the Loader thread) - the
+				// actual bgfx upload, and the cache-map registration, both
+				// have to happen on the main thread, so both are pushed
+				// through AssetRegistry's upload queue instead of running now.
+				Texture::Decoded decoded = Texture::DecodeFromMemoryCompressed(texData, (size_t)texSize, true);
+				size_t approxBytes = decoded.pixels.size();
+				::AssetRegistry::EnqueuePendingUpload(
+					[texturePath, decoded = std::move(decoded)]() mutable
+					{
+						Texture* newTexture = new Texture();
+						::AssetRegistry::RegisterTexture(newTexture, texturePath);
+						newTexture->UploadDecoded(std::move(decoded), texturePath);
+					},
+					approxBytes);
+			}
 		}
 		else
 		{
@@ -149,11 +164,26 @@ namespace roj
 			int width = texture->mWidth;
 			int height = texture->mHeight;
 
-			Texture* newTexture = new Texture(texData, width, height);
-
-			ResourceStatistics::Instance().setResourceName(ResourceType::Texture, newTexture->getID(), m_lastLoadedPath);
-
-			::AssetRegistry::RegisterTexture(newTexture, m_lastLoadedPath);
+			if (!DeferGPUUpload)
+			{
+				Texture* newTexture = new Texture(texData, width, height);
+				ResourceStatistics::Instance().setResourceName(ResourceType::Texture, newTexture->getID(), m_lastLoadedPath);
+				::AssetRegistry::RegisterTexture(newTexture, m_lastLoadedPath);
+			}
+			else
+			{
+				Texture::Decoded decoded = Texture::WrapRawPixels(texData, width, height, true);
+				size_t approxBytes = decoded.pixels.size();
+				std::string path = m_lastLoadedPath;
+				::AssetRegistry::EnqueuePendingUpload(
+					[path, decoded = std::move(decoded)]() mutable
+					{
+						Texture* newTexture = new Texture();
+						::AssetRegistry::RegisterTexture(newTexture, path);
+						newTexture->UploadDecoded(std::move(decoded), path);
+					},
+					approxBytes);
+			}
 		}
 	}
 

@@ -37,7 +37,25 @@ private:
 
 	void RebuildDrawCommands();
 
+	// Last model->loadState.generation we've actually wired drawCommands (and,
+	// for SkeletalMesh, bones) against - see PreFinalize() in the .cpp. Starts
+	// at 0, same as a freshly-loaded model's generation before anything's landed.
+	uint64_t lastWiredGeneration = 0;
+
+	// RebuildDrawCommands() + OnAssetsReloaded() + stamps lastWiredGeneration.
+	// Called both eagerly from LoadFromFile() (sync case - model's already
+	// fully there) and from PreFinalize() when generation changes underneath
+	// us (async case). Keeping both call sites doing exactly this, and only
+	// this, is what makes the "wire once, at a fixed point" guarantee hold.
+	void RewireForCurrentModel();
+
 protected:
+
+	// Called once, from RewireForCurrentModel(), whenever the model's asset
+	// tier has actually changed since we last looked. Override to react to
+	// newly-arrived (or newly-dropped) data - see SkeletalMesh::OnAssetsReloaded().
+	virtual void OnAssetsReloaded() {}
+
 
 	// Called from PreFinalize() to produce this frame's custom shader params as plain data - override instead of touching a Shader* directly.
 	virtual void CollectCustomShaderParams(std::map<std::string, vec4>& out)
@@ -205,20 +223,60 @@ public:
 	size_t GetSubMeshCount() const { return drawCommands.size(); }
 
 	//obj or gml files are strongly recommended
-	virtual void LoadFromFile(const string& path)
+	//
+	// Lazy by default outside a level load: returns immediately, and unless
+	// requestedTier == AssetLoadTier::Visual, geometry/textures stream in
+	// over the next frames instead of blocking here (see AssetRegistry.h) -
+	// PreFinalize() notices once something's actually landed and wires it in
+	// then, same as it does right away for a fully-synchronous load. Inside
+	// BeginLevelLoad()/EndLevelLoad() this is always fully synchronous,
+	// exactly as before, regardless of requestedTier.
+	virtual void LoadFromFile(const string& path, AssetLoadTier requestedTier = AssetLoadTier::Logic)
 	{
 
 		if (skipMeshLoad)
 		{
-			model = AssetRegistry::GetSkinnedAnimationFromFile(path);
+			model = AssetRegistry::GetSkinnedAnimationFromFile(path, requestedTier);
 		}
 		else
 		{
-			model = AssetRegistry::GetSkinnedModelFromFile(path);
+			model = AssetRegistry::GetSkinnedModelFromFile(path, requestedTier);
 		}
 
-		RebuildDrawCommands();
+		// Wires whatever's already there right now (everything, for a sync
+		// load; possibly nothing yet, for a lazy one) - PreFinalize() picks
+		// up anything that arrives later on its own.
+		RewireForCurrentModel();
 
+	}
+
+	// Highest tier that is fully ready for this mesh instance, including every
+	// texture that has been requested so far. Returns Visual only when
+	// AllAssetsLoaded() would be true; otherwise the model's own currentTier
+	// (Logic / None). Textures that have never been touched yet are ignored.
+	AssetLoadTier GetLoadState() const;
+
+	// Highest tier that has been requested for this model (queuedUpTo). Does not
+	// wait for completion – useful for deciding whether a further RequestVisualLoad
+	// is still needed.
+	AssetLoadTier GetDesiredLoadState() const;
+
+	// True once this model's geometry is uploaded and every submesh texture
+	// that's actually been requested so far has finished uploading too.
+	bool AllAssetsLoaded() const
+	{
+		if (model == nullptr) return false;
+		if (model->loadState.currentTier.load(std::memory_order_acquire) != AssetLoadTier::Visual) return false;
+
+		for (const auto& mesh : model->meshes)
+		{
+			if (mesh.cachedBaseColor && mesh.cachedBaseColor->loadState.currentTier.load(std::memory_order_acquire) != AssetLoadTier::Visual)
+				return false;
+			if (mesh.cachedEmissiveColor && mesh.cachedEmissiveColor->loadState.currentTier.load(std::memory_order_acquire) != AssetLoadTier::Visual)
+				return false;
+		}
+
+		return true;
 	}
 
 	bool IsInFrustrum(Frustum frustrum);

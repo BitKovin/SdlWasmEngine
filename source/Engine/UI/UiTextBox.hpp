@@ -253,16 +253,17 @@ public:
         else if (tex == nullptr)
         {
             tex = AssetRegistry::GetTextureFromFile(ImagePath);
-            if (!tex->valid)
-                tex = AssetRegistry::GetTextureFromFile("GameData/textures/generic/white.png");
         }
+
+        // See UiImage::Draw() for why this doesn't overwrite tex itself.
+        Texture* drawTex = tex->valid ? tex : AssetRegistry::GetTextureFromFile("GameData/textures/generic/white.png");
 
         vec4 tint = Color;
         if (m_editing)                               tint = EditingColor;
         else if (IsFocused)                          tint = FocusColor;
         else if (IsHovered || !TouchEvents.empty())  tint = HoverColor;
 
-        DrawSelfTextured(tex->getHandle(), tint * GetFinalColor(), static_cast<float>(tex->width), static_cast<float>(tex->height));
+        DrawSelfTextured(drawTex->getHandle(), tint * GetFinalColor(), static_cast<float>(drawTex->width), static_cast<float>(drawTex->height));
 
         UiRenderer::PushMask(finalizedMatrix, finalizedSize);
 

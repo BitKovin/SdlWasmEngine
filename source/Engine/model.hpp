@@ -98,6 +98,12 @@ namespace roj
 
 		bool SkipVisual = false;
 
+		// Parses geometry/textures fully (unlike SkipVisual) but never calls
+		// bgfx - vbh/ibh/shadow volumes and embedded textures are left for
+		// the caller to upload later. Set this when load() is running on a
+		// thread that doesn't own bgfx (see AssetRegistry's Loader thread).
+		bool DeferGPUUpload = false;
+
 		ModelLoader() = default;
 		bool load(const std::string& path);
 		model_t& get();

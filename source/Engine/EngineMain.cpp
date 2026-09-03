@@ -15,6 +15,7 @@
 #include <Console/ConsoleDefaultCommands.h>
 #include <UI/RmlUi/RmlUiContext.h>
 #include <LevelTraversalSystem.h>
+#include <AssetRegistry.h>
 
 #include <BgfxStateManager.h>
 #include <Renderer/Abstractions/ViewIdManager.h>
@@ -65,6 +66,7 @@ EM_JS(int, canvas_get_height, (), {
 EngineMain::~EngineMain()
 {
     GameUpdateSingleThreadPool->Stop();
+    AssetRegistry::StopLoaderThread();
 
     NetworkManager::Shutdown();
     FileSystemEngine::Shutdown();
@@ -210,6 +212,8 @@ void EngineMain::Init(std::vector<std::string> args)
 
 	GameUpdateSingleThreadPool = new ThreadPool("Game Thread Pool");
 	GameUpdateSingleThreadPool->Start(1);
+
+	AssetRegistry::StartLoaderThread();
 
     SoundManager::Initialize();
 
@@ -366,6 +370,7 @@ std::map<std::string, std::vector<std::string>> EngineMain::ParseCommands(const 
 
 void EngineMain::FinishFrame()
 {
+    AssetRegistry::AdvanceFrame(); // drives AssetLoadState::lastUsedFrame
 
     Level::Current->RemovePendingEntities();
     Level::Current->MemoryCleanPendingEntities();
@@ -791,6 +796,10 @@ void EngineMain::Render()
 
     ZoneScopedN("Render");
 
+    // Budgeted, time-limited - see AssetRegistry.h. Has to run before
+    // anything below touches bgfx, since this is the only place lazily
+    // loaded textures/meshes actually get uploaded.
+    AssetRegistry::ProcessPendingUploads(AssetRegistry::UploadBudgetMs);
 
     ivec2 uiResolution = ivec2(
         UiManager::GetScaledUiHeight() * Camera::AspectRatio,

@@ -27,8 +27,8 @@ public:
 
 		mesh = new SkeletalMesh(this);
 
-		mesh->LoadFromFile("GameData/dog.glb");
-		mesh->ColorTexture = AssetRegistry::GetTextureFromFile("GameData/cat.png");
+		mesh->LoadFromFile("GameData/models/enemies/dog/dog.glb");
+		mesh->ColorTexture = AssetRegistry::GetTextureFromFile("GameData/models/enemies/dog/cat.png");
 		Drawables.push_back(mesh);
 		mesh->PlayAnimation("run", true);
 

@@ -204,6 +204,8 @@ private:
 
 	std::recursive_mutex animationsMutex;
 
+	size_t m_lastSkeletonBoneCount = 0;
+
 protected:
 
 	// Bones are now applied by SkeletalMeshDrawCommand::ApplyAdditionalShaderParams - not here anymore. Override StaticMesh::ApplyAdditionalShaderParams for custom (non-bone) params.
@@ -220,6 +222,11 @@ protected:
 	{
 		return std::make_unique<SkeletalMeshDrawCommand>();
 	}
+
+	// (Re)builds boneTransforms/animator once bones are available, and
+	// re-points every draw command's BoneMatrices - see StaticMesh::PreFinalize()
+	// / RewireForCurrentModel() and the .cpp for why this needs to be idempotent.
+	void OnAssetsReloaded() override;
 
 public:
 
@@ -384,7 +391,14 @@ public:
 
 	void StartedRendering();
 
-	void LoadFromFile(string path)
+	// Lazy by default outside a level load - see StaticMesh::LoadFromFile().
+	// Bones/animations ARE available when this returns for any requestedTier
+	// != AssetLoadTier::None - AssetRegistry loads that part synchronously,
+	// on this thread (see EnsureTierLazy/LoadLogicTierNow). Only geometry
+	// (meshes/GPU buffers) is still missing unless requestedTier ==
+	// AssetLoadTier::Visual/VisualImmediately (or we're inside a level
+	// load); OnAssetsReloaded() runs from PreFinalize() once geometry lands.
+	void LoadFromFile(string path, AssetLoadTier requestedTier = AssetLoadTier::Logic)
 	{
 		
 		if (TexturesLocation == "")
@@ -392,23 +406,9 @@ public:
 			TexturesLocation = path + "/";
 		}
 
-		StaticMesh::LoadFromFile(path);
+		// Also runs OnAssetsReloaded() below (via RewireForCurrentModel).
+		StaticMesh::LoadFromFile(path, requestedTier);
 		filePath = path;
-
-		boneTransforms.resize(model->boneInfoMap.size());
-
-		for (int i = 0; i < boneTransforms.size(); i++)
-		{
-			boneTransforms[i] = glm::identity<mat4>();
-		}
-
-		animator = roj::Animator(model);
-
-		// Every command is a SkeletalMeshDrawCommand (see CreateDrawCommand override) - point each at this instance's bone matrices once, contents update per frame in FinalizeFrameData.
-		for (size_t i = 0; i < GetSubMeshCount(); i++)
-		{
-			static_cast<SkeletalMeshDrawCommand&>(GetDrawCommandAt(i)).BoneMatrices = &finalizedBoneTransforms;
-		}
 
 		LoadMetaFromFile();
 	}

@@ -73,19 +73,19 @@ void Player::Start()
 	hitbox->SetMotionType(JPH::EMotionType::Kinematic);
 	//Physics::ExcludedDrawBodies.insert(hitbox);
 
-	PreloadEntityType("weapon_sword");
-	PreloadEntityType("weapon_twinsword");
-	PreloadEntityType("weapon_pistol");
-	PreloadEntityType("weapon_revolver");
-	PreloadEntityType("weapon_pistol_silent");
-	PreloadEntityType("weapon_shotgun");
-	PreloadEntityType("weapon_tommy");
-	PreloadEntityType("weapon_sniper");
-	PreloadEntityType("weapon_cannon");
-	PreloadEntityType("weapon_swords");
-	PreloadEntityType("weapon_mpsd");
-	PreloadEntityType("weapon_lefthand_empty");
-	PreloadEntityType("weapon_cane");
+	//PreloadEntityType("weapon_sword");
+	//PreloadEntityType("weapon_twinsword");
+	//PreloadEntityType("weapon_pistol");
+	//PreloadEntityType("weapon_revolver");
+	//PreloadEntityType("weapon_pistol_silent");
+	//PreloadEntityType("weapon_shotgun");
+	//PreloadEntityType("weapon_tommy");
+	//PreloadEntityType("weapon_sniper");
+	//PreloadEntityType("weapon_cannon");
+	//PreloadEntityType("weapon_swords");
+	//PreloadEntityType("weapon_mpsd");
+	//PreloadEntityType("weapon_lefthand_empty");
+	//PreloadEntityType("weapon_cane");
 
 	// Add weapons based on current weapon system mode
 	if (weaponSystemMode == WeaponSystemMode::Inventory)
@@ -745,10 +745,9 @@ void Player::SwitchWeapon(const WeaponSlotData& data)
 	{
 		currentWeapon = (Weapon*)Spawn(data.className);
 		currentWeapon->owner = this;
-		if (Level::Current->IsEntityTypeLoaded(data.className))
-		{
-			currentWeapon->LoadAssetsIfNeeded();
-		}
+		
+		currentWeapon->LoadAssetsIfNeeded();
+		
 		currentWeapon->Start();
 		currentWeapon->SetData(data);
 		//UpdateBody();

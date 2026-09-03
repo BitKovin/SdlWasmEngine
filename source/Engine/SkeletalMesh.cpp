@@ -4,6 +4,43 @@
 #include "Level.hpp"
 #include "EngineMain.h"
 
+// Called once, from RewireForCurrentModel(), whenever model->loadState.generation
+// has changed since we last looked - see StaticMesh::PreFinalize(). Fires
+// once for the Logic tier landing (bones/animations - meshes still empty)
+// and again for the Visual tier (meshes now populated), same generation
+// counter driving both, so it only guards against redoing work, not against
+// running at all.
+void SkeletalMesh::OnAssetsReloaded()
+{
+	// Bones/animations become available once model reaches (at least) the
+	// Logic tier. Only (re)build the animator against them when the
+	// skeleton actually changed - otherwise this fires again when the
+	// Visual tier lands afterwards and would reset any animation already
+	// playing, for no reason (geometry arriving doesn't change the bones).
+	//
+	// Key off the model's own bone count, NOT boneTransforms.size().
+	// After the first Update/PlayAnimation boneTransforms is overwritten
+	// with the full MAX_SKINNED_BONES palette, so a size comparison would
+	// spuriously fire on the Visual-tier generation bump and destroy the
+	// running animation.
+	const size_t skeletonBones = model->boneInfoMap.size();
+	if (m_lastSkeletonBoneCount != skeletonBones)
+	{
+		m_lastSkeletonBoneCount = skeletonBones;
+		boneTransforms.assign(skeletonBones, glm::identity<mat4>());
+		animator = roj::Animator(model);
+	}
+
+	// RebuildDrawCommands() (called just before this, from RewireForCurrentModel())
+	// recreates drawCommands from scratch every time, wiping any BoneMatrices
+	// pointer that was set before - re-point them here. Naturally a no-op
+	// while the Visual tier hasn't landed yet (GetSubMeshCount() == 0).
+	for (size_t i = 0; i < GetSubMeshCount(); i++)
+	{
+		static_cast<SkeletalMeshDrawCommand&>(GetDrawCommandAt(i)).BoneMatrices = &finalizedBoneTransforms;
+	}
+}
+
 
 
 // Zero-copy read access. Rebuilds lastPose only when dirty (one unavoidable

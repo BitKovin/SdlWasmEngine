@@ -472,6 +472,8 @@ void WeaponFirearm::LateUpdate()
 
 	}
 
+	Visible == viewmodel->AllAssetsLoaded() && viewmodelLeft->AllAssetsLoaded() && arms->AllAssetsLoaded() && armsLeft->AllAssetsLoaded();
+
 }
 
 WeaponSlotData WeaponFirearm::GetDefaultData() {
