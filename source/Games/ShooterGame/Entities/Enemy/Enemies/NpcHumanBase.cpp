@@ -382,6 +382,7 @@ void NpcHumanBase::Death()
 
     mesh->StartRagdoll();
     mesh->SetAnimationPaused(true);
+    mesh->RagdollPoseFollowStrength = 0;
     controller.SetVelocity(vec3(0));
 
     PlaySoundEffect(deathSoundPath);

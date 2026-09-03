@@ -390,6 +390,7 @@
     <ClCompile Include="Entities\Enemy\Debuffs\QuicksilverDebuff.cpp" />
     <ClCompile Include="Entities\Enemy\Enemies\NpcHumanBase.cpp" />
     <ClCompile Include="Entities\Enemy\Enemies\NpcHumanGun.cpp" />
+    <ClCompile Include="Entities\Enemy\Enemies\NpcKnight.cpp" />
     <ClCompile Include="Entities\Enemy\Enemies\NpcZombie.cpp" />
     <ClCompile Include="Entities\Enemy\IEnemy.cpp" />
     <ClCompile Include="Entities\Enviroment\Door.cpp" />

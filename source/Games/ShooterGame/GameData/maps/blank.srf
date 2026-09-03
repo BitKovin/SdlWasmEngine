@@ -78,3 +78,33 @@ default
 	lightmapAxis ( 1.000000 0.000000 0.000000 )
 }
 
+12 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/colored/plank4
+	lightmapAxis ( -1.000000 -0.000000 -0.000000 )
+}
+
+13 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/colored/plank4
+	lightmapAxis ( -0.000000 -1.000000 -0.000000 )
+}
+
+14 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/colored/plank4
+	lightmapAxis ( 0.000000 1.000000 0.000000 )
+}
+
+15 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/colored/plank4
+	lightmapAxis ( 0.000000 0.000000 1.000000 )
+}
+
+16 // ESurfaceType::Meta V: 4 I: 6 planar
+{
+	shader textures/colored/plank4
+	lightmapAxis ( 1.000000 0.000000 0.000000 )
+}
+

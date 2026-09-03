@@ -1,0 +1,351 @@
+{
+    "animations": [
+        {
+            "animationEvents": [],
+            "animationName": "run"
+        }
+    ],
+    "hitboxes": [
+        {
+            "boneName": "mixamorig:Hips",
+            "constraintRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "damageMultiplier": 1.0,
+            "mass": 5.0,
+            "parentBone": "",
+            "position": {
+                "x": 0.0,
+                "y": -0.11900000274181366,
+                "z": 0.0
+            },
+            "rotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "size": {
+                "x": 0.5249999761581421,
+                "y": 0.42100000381469727,
+                "z": 0.3529999852180481
+            },
+            "twistParameters": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            }
+        },
+        {
+            "boneName": "mixamorig:Spine1",
+            "constraintRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 90.0
+            },
+            "damageMultiplier": 1.0,
+            "mass": 5.0,
+            "parentBone": "mixamorig:Hips",
+            "position": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "rotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "size": {
+                "x": 0.5400000214576721,
+                "y": 0.3310000002384186,
+                "z": 0.3190000057220459
+            },
+            "twistParameters": {
+                "x": -38.0,
+                "y": 19.5,
+                "z": 30.0
+            }
+        },
+        {
+            "boneName": "mixamorig:RightUpLeg",
+            "constraintRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": -90.0
+            },
+            "damageMultiplier": 1.0,
+            "mass": 5.0,
+            "parentBone": "mixamorig:Hips",
+            "position": {
+                "x": 0.0,
+                "y": 0.3449999988079071,
+                "z": -0.01899999938905239
+            },
+            "rotation": {
+                "x": 1.7000000476837158,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "size": {
+                "x": 0.2630000114440918,
+                "y": 0.5339999794960022,
+                "z": 0.3089999854564667
+            },
+            "twistParameters": {
+                "x": 0.0,
+                "y": 120.0,
+                "z": 0.0
+            }
+        },
+        {
+            "boneName": "mixamorig:LeftUpLeg",
+            "constraintRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": -90.0
+            },
+            "damageMultiplier": 1.0,
+            "mass": 5.0,
+            "parentBone": "mixamorig:Hips",
+            "position": {
+                "x": 0.0,
+                "y": 0.3449999988079071,
+                "z": -0.01899999938905239
+            },
+            "rotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "size": {
+                "x": 0.2630000114440918,
+                "y": 0.5339999794960022,
+                "z": 0.3089999854564667
+            },
+            "twistParameters": {
+                "x": 0.0,
+                "y": 120.0,
+                "z": 0.0
+            }
+        },
+        {
+            "boneName": "mixamorig:RightLeg",
+            "constraintRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": -90.0
+            },
+            "damageMultiplier": 1.0,
+            "mass": 5.0,
+            "parentBone": "mixamorig:RightUpLeg",
+            "position": {
+                "x": 0.0,
+                "y": 0.35199999809265137,
+                "z": 0.05299999937415123
+            },
+            "rotation": {
+                "x": 9.5,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "size": {
+                "x": 0.21799999475479126,
+                "y": 0.5180000066757202,
+                "z": 0.32199999690055847
+            },
+            "twistParameters": {
+                "x": -110.0,
+                "y": 0.0,
+                "z": 30.0
+            }
+        },
+        {
+            "boneName": "mixamorig:LeftLeg",
+            "constraintRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "damageMultiplier": 1.0,
+            "mass": 5.0,
+            "parentBone": "mixamorig:LeftUpLeg",
+            "position": {
+                "x": 0.0,
+                "y": 0.35199999809265137,
+                "z": 0.05299999937415123
+            },
+            "rotation": {
+                "x": 9.5,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "size": {
+                "x": 0.21799999475479126,
+                "y": 0.5180000066757202,
+                "z": 0.32199999690055847
+            },
+            "twistParameters": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 30.0
+            }
+        },
+        {
+            "boneName": "mixamorig:Head",
+            "constraintRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "damageMultiplier": 1.5,
+            "mass": 5.0,
+            "parentBone": "mixamorig:Spine1",
+            "position": {
+                "x": 0.0,
+                "y": 0.024000000208616257,
+                "z": 0.013000000268220901
+            },
+            "rotation": {
+                "x": 8.199999809265137,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "size": {
+                "x": 0.3319999873638153,
+                "y": 0.32499998807907104,
+                "z": 0.2619999945163727
+            },
+            "twistParameters": {
+                "x": -50.0,
+                "y": 50.0,
+                "z": 30.0
+            }
+        },
+        {
+            "boneName": "mixamorig:RightArm",
+            "constraintRotation": {
+                "x": -98.0,
+                "y": 90.0,
+                "z": 0.0
+            },
+            "damageMultiplier": 1.0,
+            "mass": 5.0,
+            "parentBone": "mixamorig:Spine1",
+            "position": {
+                "x": 0.0,
+                "y": 0.09300000220537186,
+                "z": -0.04699999839067459
+            },
+            "rotation": {
+                "x": 7.0,
+                "y": 0.0,
+                "z": -5.099999904632568
+            },
+            "size": {
+                "x": 0.25099998712539673,
+                "y": 0.43299999833106995,
+                "z": 0.25
+            },
+            "twistParameters": {
+                "x": -16.5,
+                "y": 80.0,
+                "z": 30.0
+            }
+        },
+        {
+            "boneName": "mixamorig:LeftArm",
+            "constraintRotation": {
+                "x": -92.0,
+                "y": -90.0,
+                "z": 0.0
+            },
+            "damageMultiplier": 1.0,
+            "mass": 5.0,
+            "parentBone": "mixamorig:Spine1",
+            "position": {
+                "x": 0.0,
+                "y": 0.09300000220537186,
+                "z": -0.04699999839067459
+            },
+            "rotation": {
+                "x": 7.0,
+                "y": 0.0,
+                "z": -5.0
+            },
+            "size": {
+                "x": 0.25099998712539673,
+                "y": 0.43299999833106995,
+                "z": 0.25
+            },
+            "twistParameters": {
+                "x": -92.0,
+                "y": 12.5,
+                "z": 30.0
+            }
+        },
+        {
+            "boneName": "mixamorig:RightForeArm",
+            "constraintRotation": {
+                "x": -90.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "damageMultiplier": 1.0,
+            "mass": 5.0,
+            "parentBone": "mixamorig:RightArm",
+            "position": {
+                "x": 0.0,
+                "y": 0.22599999606609344,
+                "z": 0.014999999664723873
+            },
+            "rotation": {
+                "x": 11.600000381469727,
+                "y": -6.400000095367432,
+                "z": 0.0
+            },
+            "size": {
+                "x": 0.20000000298023224,
+                "y": 0.4480000138282776,
+                "z": 0.20000000298023224
+            },
+            "twistParameters": {
+                "x": -15.0,
+                "y": 90.0,
+                "z": 10.0
+            }
+        },
+        {
+            "boneName": "mixamorig:LeftForeArm",
+            "constraintRotation": {
+                "x": -90.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "damageMultiplier": 1.0,
+            "mass": 5.0,
+            "parentBone": "mixamorig:RightArm",
+            "position": {
+                "x": 0.0,
+                "y": 0.22599999606609344,
+                "z": 0.014999999664723873
+            },
+            "rotation": {
+                "x": 11.600000381469727,
+                "y": -6.400000095367432,
+                "z": 0.0
+            },
+            "size": {
+                "x": 0.20000000298023224,
+                "y": 0.4480000138282776,
+                "z": 0.20000000298023224
+            },
+            "twistParameters": {
+                "x": -90.0,
+                "y": 15.0,
+                "z": 10.0
+            }
+        }
+    ]
+}

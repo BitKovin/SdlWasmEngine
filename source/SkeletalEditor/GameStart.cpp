@@ -17,12 +17,11 @@ public:
 		Input::AddAction("left")->AddKeyboardKey(SDL_KeyCode::SDLK_a);
 		Input::AddAction("right")->AddKeyboardKey(SDL_KeyCode::SDLK_d);
 
-		Input::AddAction("rmb")->RMB = true;
+		Input::AddAction("rmb")->AddMouseButton(1);
 
-		Level::OpenLevel("GameData/maps/blank.bsp");
+		Level::LoadLevelFromFile("GameData/maps/blank.bsp");
 
-		Spawn("freecamera");
-		Spawn("skeletal_editor");
+
 
 		EngineMain::MainInstance->DebugUiEnabled = true;
 
@@ -37,6 +36,8 @@ private:
 GameStart::GameStart()
 {
 
+	Spawn("freecamera");
+	Spawn("skeletal_editor");
 
 }
 
