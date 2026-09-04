@@ -157,6 +157,9 @@ public:
 
 	virtual void Destroy();
 
+	//destroys entity here and now if dones't exists in level list.
+	virtual void DestroyOnPlace();
+
 	void Serialize(json& target);
 
 	void Deserialize(json& source);
@@ -228,6 +231,7 @@ public:
 	}
 
 	static void PreloadEntityType(std::string technicalName);
+	static void PreloadEntityTypeAsync(std::string technicalName);
 
 	std::string GetId() override
 	{

@@ -43,10 +43,25 @@ public:
     // only UploadDecoded() below is main-thread-only.
     struct Decoded
     {
-        std::vector<uint8_t> pixels; // tightly packed RGBA8
+        std::vector<uint8_t> pixels; // tightly packed RGBA8, mip level 0
+
+        // Every mip below level 0, already downsampled - box-filtered on
+        // whichever thread produced this Decoded (the Loader thread, for
+        // the normal async path - see AssetRegistry::QueueTextureUploadJob).
+        // UploadDecoded()/UploadDecodedMips() below just hand these straight
+        // to bgfx, so no per-pixel filtering work is left for the main
+        // thread to do. Empty when generateMipmaps was false or the image
+        // is 1x1. Filled in by BuildMipsAndTransparency().
+        std::vector<std::vector<uint8_t>> mipLevels;
+
         int  width           = 0;
         int  height          = 0;
         bool generateMipmaps = true;
+
+        // Also computed off-thread by BuildMipsAndTransparency(), so
+        // UploadDecodedMips() can just copy it onto the live Texture instead
+        // of re-scanning pixels on the main thread.
+        bool transparent     = false;
         bool valid           = false;
     };
 
@@ -82,6 +97,11 @@ public:
         out.generateMipmaps = generateMipmaps;
         out.valid = true;
         stbi_image_free(pixels);
+
+        // All CPU work for this image (box-filtering every mip level, the
+        // transparency scan) happens right here, before this Decoded ever
+        // crosses back to the main thread - see Decoded::mipLevels.
+        BuildMipsAndTransparency(out);
         return out;
     }
 
@@ -97,16 +117,20 @@ public:
         out.height = h;
         out.generateMipmaps = generateMipmaps;
         out.valid = true;
+        BuildMipsAndTransparency(out); // see DecodeFromMemoryCompressed
         return out;
     }
 
     // Main-thread only (does the actual bgfx::createTexture2D/updateTexture2D
-    // calls) - hands already-decoded pixels off to setupTexture_VeryFastMips.
+    // calls) - hands already-decoded, already-mipped pixels off to
+    // UploadDecodedMips().
     void UploadDecoded(Decoded&& decoded, const std::string& debugName = "")
     {
         if (!decoded.valid) return;
-        setupTexture_VeryFastMips(decoded.width, decoded.height, bgfx::TextureFormat::RGBA8,
-            decoded.pixels.data(), decoded.generateMipmaps);
+        // Every mip level was already computed off the main thread (see
+        // Decoded::mipLevels) - this just submits the finished pixels to
+        // bgfx instead of filtering them here.
+        UploadDecodedMips(std::move(decoded));
         if (!debugName.empty())
             setName(debugName);
     }
@@ -261,6 +285,119 @@ private:
             }
         }
     }
+    // Builds the full mip pyramid (box-filtered, each level cascading from
+    // the previous one - the same filter setupTexture_VeryFastMips used to
+    // run inline) plus the transparency flag, entirely on whichever thread
+    // calls it. Called from DecodeFromMemoryCompressed()/WrapRawPixels() -
+    // i.e. the Loader thread for the normal async path (see
+    // AssetRegistry::QueueTextureUploadJob) - so none of this per-pixel work
+    // is left for UploadDecodedMips() to do on the main thread.
+    static void BuildMipsAndTransparency(Decoded& out)
+    {
+        constexpr int bpp = 4; // Decoded is always tightly packed RGBA8
+        out.mipLevels.clear();
+        out.transparent = false;
+
+        const bool hasMips = out.generateMipmaps && (out.width > 1 || out.height > 1);
+        if (!hasMips)
+        {
+            // No mip chain - scan mip 0 directly. Still negligible in the
+            // common case.
+            const size_t pixelCount = (size_t)out.width * out.height;
+            for (size_t i = 0; i < pixelCount; ++i) {
+                if (out.pixels[i * bpp + 3] < 255) { out.transparent = true; break; }
+            }
+            return;
+        }
+
+        const uint8_t numMips = (uint8_t)(1 + (int)std::floor(std::log2((double)std::max(out.width, out.height))));
+        out.mipLevels.reserve(numMips - 1);
+
+        const uint8_t* srcData = out.pixels.data();
+        int currentW = out.width, currentH = out.height;
+        for (uint8_t mip = 1; mip < numMips; ++mip) {
+            const int dstW = std::max(1, currentW / 2);
+            const int dstH = std::max(1, currentH / 2);
+            std::vector<uint8_t> dstMip((size_t)dstW * dstH * bpp);
+            downsample2x2Box(srcData, currentW, currentH, dstMip.data(), dstW, dstH, bpp);
+
+            out.mipLevels.push_back(std::move(dstMip));
+            srcData = out.mipLevels.back().data(); // next level cascades from this one
+            currentW = dstW;
+            currentH = dstH;
+        }
+
+        // Detect transparency from the last (smallest) mip - a handful of
+        // pixels, essentially free next to the filtering work above.
+        const auto& lastMip = out.mipLevels.back();
+        const size_t pixelCount = lastMip.size() / bpp;
+        for (size_t i = 0; i < pixelCount; ++i) {
+            if (lastMip[i * bpp + 3] < 255) { out.transparent = true; break; }
+        }
+    }
+
+    // Main-thread only (the actual bgfx::createTexture2D/updateTexture2D
+    // calls) - counterpart to setupTexture_VeryFastMips for the Decoded
+    // pipeline. Unlike that function, every mip level here was already
+    // computed by BuildMipsAndTransparency() before this Texture ever saw
+    // it, so this is just a handful of cheap bgfx::copy + updateTexture2D
+    // calls instead of a box filter over every pixel - that split is the
+    // whole point: it's what keeps mip generation off the main thread.
+    void UploadDecodedMips(Decoded&& decoded)
+    {
+        constexpr int bpp = 4; // Decoded is always tightly packed RGBA8
+        const bool hasMips = !decoded.mipLevels.empty();
+        const uint8_t numMips = (uint8_t)(1 + decoded.mipLevels.size());
+
+        m_handle = bgfx::createTexture2D(
+            (uint16_t)decoded.width, (uint16_t)decoded.height,
+            hasMips, 1, bgfx::TextureFormat::RGBA8, buildFlags());
+        if (!bgfx::isValid(m_handle)) {
+            Logger::Error("bgfx::createTexture2D failed (%dx%d)", decoded.width, decoded.height);
+            return;
+        }
+
+        // Upload mip 0.
+        bgfx::updateTexture2D(m_handle, 0, 0,
+            0, 0, (uint16_t)decoded.width, (uint16_t)decoded.height,
+            bgfx::copy(decoded.pixels.data(), (uint32_t)decoded.pixels.size()));
+
+        // Upload the rest - already downsampled, just hand them to bgfx.
+        int currentW = decoded.width, currentH = decoded.height;
+        for (uint8_t mip = 1; mip < numMips; ++mip) {
+            const int dstW = std::max(1, currentW / 2);
+            const int dstH = std::max(1, currentH / 2);
+            const auto& mipData = decoded.mipLevels[mip - 1];
+            bgfx::updateTexture2D(m_handle, 0, mip,
+                0, 0, (uint16_t)dstW, (uint16_t)dstH,
+                bgfx::copy(mipData.data(), (uint32_t)mipData.size()));
+            currentW = dstW;
+            currentH = dstH;
+        }
+
+        transparent = decoded.transparent;
+        width = decoded.width;
+        height = decoded.height;
+        m_bpp = bpp;
+        m_pixels = std::move(decoded.pixels); // CPU copy for SampleRGB()
+
+        {
+            size_t baseSize = (size_t)width * height * bpp;
+            size_t trackedSize = hasMips ? (baseSize + baseSize / 3) : baseSize;
+            ResourceStatistics::Instance().registerResource(
+                ResourceType::Texture, m_handle.idx,
+                trackedSize,
+                "Texture*" + std::to_string(width) + "x" + std::to_string(height) + formatSuffix(bgfx::TextureFormat::RGBA8));
+        }
+        valid = true;
+
+        // Single place this runs for the Decoded pipeline - the one
+        // function that actually touches bgfx here, so the one place
+        // allowed to flip currentTier to Visual.
+        loadState.generation.fetch_add(1, std::memory_order_release);
+        loadState.currentTier.store(AssetLoadTier::Visual, std::memory_order_release);
+    }
+
     void setupTexture_VeryFastMips(int w, int h,
         bgfx::TextureFormat::Enum format,
         const void* pixels,

@@ -633,7 +633,12 @@ void AssetRegistry::QueueTextureUploadJob(Texture* texture, std::string path)
 			Texture::Decoded decoded = Texture::DecodeFromFile(path, true);
 			if (!decoded.valid) return; // stays at None - matches today's error-logging-only behavior on a bad file
 
+			// Mip levels are generated right here on the Loader thread now (see
+			// Texture::BuildMipsAndTransparency), so count them too - otherwise
+			// the streaming budget would undercount every mipped texture by ~1/3.
 			size_t approxBytes = decoded.pixels.size();
+			for (auto& mip : decoded.mipLevels)
+				approxBytes += mip.size();
 
 			EnqueuePendingUpload(
 				[texture, decoded = std::move(decoded), path]() mutable

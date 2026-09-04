@@ -94,7 +94,7 @@ public:
 	// How many milliseconds ProcessPendingUploads() may spend per frame.
 	// Time-based rather than byte-based - GPU upload cost varies too much by
 	// hardware for a fixed byte budget to be portable.
-	static inline float UploadBudgetMs = 1.5f;
+	static inline float UploadBudgetMs = 0.5f;
 
     static void ClearMemory();
     static void ClearUnusedMemory();

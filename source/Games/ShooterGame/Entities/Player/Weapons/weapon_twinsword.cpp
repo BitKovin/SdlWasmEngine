@@ -114,7 +114,7 @@ public:
 			vm->LoadFromFile("GameData/models/player/weapons/twinsword/twinsword.glb");
 			vm->TexturesLocation = "GameData/models/player/weapons/twinsword/twinsword.glb/";
 			vm->PlayAnimation("draw", false, 0.0f);
-			vm->PreloadAssets();
+			//vm->PreloadAssets();
 			vm->IsViewmodel = true;
 			Drawables.push_back(vm);
 		}

@@ -53,7 +53,7 @@ void WeaponFirearm::LoadAssets()
 	if (!params.texturesLocation.empty())
 		viewmodel->TexturesLocation = params.texturesLocation;
 	viewmodel->PlayAnimation(params.drawAnimation);
-	viewmodel->PreloadAssets();
+	//viewmodel->PreloadAssets();
 	viewmodel->Transparent = true;
 	viewmodel->IsViewmodel = true;
 	Drawables.push_back(viewmodel);

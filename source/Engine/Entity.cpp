@@ -1,6 +1,9 @@
 #include "Entity.h"
 #include "LevelObjectFactory.h"
 
+#include <EngineMain.h>
+#include <tracy/tracy/Tracy.hpp>
+
 void Entity::FromData(EntityData data)
 {
 
@@ -54,11 +57,51 @@ void Entity::PreloadEntityType(std::string technicalName)
 		//entity->Start();
 		entity->LoadAssets();
 		entity->SaveGame = false;
-		entity->DestroyPhysics();
-		entity->DestroyDrawables();
+		entity->DestroyOnPlace();
 		delete(entity);
 	}
 	Level::Current->AddLoadedEntityType(technicalName);
+}
+
+void Entity::PreloadEntityTypeAsync(std::string technicalName)
+{
+
+	if (Level::Current->IsEntityTypeLoaded(technicalName)) return; //already preloaded
+
+	//we don't want to finish preloading when LoadingConstantAssets changes to false
+	if (AssetRegistry::LoadingConstantAssets)
+	{
+		PreloadEntityType(technicalName);
+		return;
+	}
+
+	EngineMain::MainInstance->MainThreadPool->QueueJob([technicalName]()
+		{
+			ZoneScoped;
+			std::string zoneName = "PreloadEntityTypeAsync Job for" + technicalName;
+
+			ZoneName(zoneName.c_str(), zoneName.size());
+
+			auto entity = LevelObjectFactory::instance().create(technicalName);
+
+			if (entity)
+			{
+				//entity->Start();
+				{
+					ZoneScopedN("LoadAssets");
+					entity->LoadAssets();
+				}
+
+				entity->SaveGame = false;
+				entity->DestroyOnPlace();
+				delete(entity);
+			}
+			Level::Current->AddLoadedEntityType(technicalName);
+
+		});
+
+
+
 }
 
 void Entity::DestroyPhysics()
@@ -114,6 +157,23 @@ void Entity::Destroy()
 		//m_Handle.destroy();
 
 	Level::Current->RemoveEntity(this);
+}
+
+void Entity::DestroyOnPlace()
+{
+
+	if (Level::Current->FindEntityWithId(Id) != nullptr)
+	{
+		Destroy();
+		return;
+	}
+
+	DestroyDrawables();
+	DestroyPhysics();
+
+	if (m_Handle.valid())
+		m_Handle.destroy();
+
 }
 
 void Entity::Serialize(json& target)

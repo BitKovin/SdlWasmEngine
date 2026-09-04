@@ -20,6 +20,10 @@ public:
 
         //PixelShader = "fog_particle";
 
+		FogManager::Opacity = 0.5f;
+        FogManager::EndDistance = 1300;
+        FogManager::Color = vec3(0.8f, 0.8f, 0.85f);
+
     }
 
     Particle UpdateParticle(Particle particle, float deltaTime) override

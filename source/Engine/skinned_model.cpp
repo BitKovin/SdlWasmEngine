@@ -706,6 +706,25 @@ bool ModelLoader<SkinnedMesh>::load(const std::string& path)
     }
     else
     {
+
+        if (SkipVisual)
+        {
+            // 1. Define which components to completely discard during import
+            unsigned int removeFlags = aiComponent_MATERIALS |
+                aiComponent_TEXTURES |
+                aiComponent_LIGHTS |
+                aiComponent_CAMERAS |
+                aiComponent_COLORS |
+                aiComponent_TEXCOORDS |
+                aiComponent_NORMALS |
+                aiComponent_TANGENTS_AND_BITANGENTS;
+
+            // 2. Pass the configuration to the importer
+            m_import.SetPropertyInteger(AI_CONFIG_PP_RVC_FLAGS, removeFlags);
+        }
+
+
+
         std::vector<uint8_t> fileData = FileSystemEngine::ReadFileBinary(path);
         if (fileData.empty()) { m_infoLog += "Failed to read: " + path + "\n"; return false; }
         m_scene = m_import.ReadFileFromMemory(fileData.data(), fileData.size(),

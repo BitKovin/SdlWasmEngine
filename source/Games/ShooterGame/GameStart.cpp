@@ -264,6 +264,7 @@ public:
         PreloadEntityType("npc_human_axe");
         PreloadEntityType("npc_human_gun");
         PreloadEntityType("bullet");
+        PreloadEntityType("explosion");
 
         auto entityTypes = LevelObjectFactory::instance().GetRegistry();
 

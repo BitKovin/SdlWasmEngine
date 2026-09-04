@@ -37,6 +37,8 @@
 #include <Network/NetworkedEntity.h>
 #include <IDrawMesh.h>
 
+#include <FogManager.h>
+
 Level* Level::Current = nullptr;
 
 string Level::pendingLoadLevelPath = "";
@@ -120,6 +122,8 @@ Level* Level::OpenLevel(string filePath)
 {
 
 	EngineMain::MainInstance->Paused = false;
+
+	FogManager::Reset();
 
 	ChangingLevel = true;
 

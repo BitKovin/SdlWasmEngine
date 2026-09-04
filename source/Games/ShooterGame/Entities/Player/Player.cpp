@@ -862,7 +862,7 @@ void Player::AddWeapon(const WeaponSlotData& weaponData)
 			weaponSlots[slot] = weaponData;
 
 			
-			currentSlot = slot;
+			//currentSlot = slot;
 			
 		}
 	}
@@ -872,6 +872,8 @@ void Player::AddWeapon(const WeaponSlotData& weaponData)
 
 void Player::AddWeaponByName(const string& className)
 {
+
+	PreloadEntityTypeAsync(className);
 
 	Weapon* weap = (Weapon*)LevelObjectFactory::instance().create(className);
 
@@ -3236,6 +3238,9 @@ CONSOLE_FUNC("kit.weapons", "kit.weapons gives all weapons")
 
 	Player::Instance->AddWeaponByName("weapon_cane");
 
+	Player::Instance->AddWeaponByName("weapon_twinsword");
+
+
 	Player::Instance->AddWeaponByName("weapon_pistol");
 	Player::Instance->AddWeaponByName("weapon_pistol");
 	Player::Instance->AddWeaponByName("weapon_pistol");
@@ -3247,6 +3252,11 @@ CONSOLE_FUNC("kit.weapons", "kit.weapons gives all weapons")
 	Player::Instance->AddWeaponByName("weapon_mpsd");
 	Player::Instance->AddWeaponByName("weapon_mpsd");
 	Player::Instance->AddWeaponByName("weapon_mpsd");
+
+	Player::Instance->AddWeaponByName("weapon_cannon");
+	Player::Instance->AddWeaponByName("weapon_cannon");
+	Player::Instance->AddWeaponByName("weapon_cannon");
+	Player::Instance->AddWeaponByName("weapon_cannon");
 }
 
 CONSOLE_FUNC("weapon.give", "weapon.give <weapon_name>")
