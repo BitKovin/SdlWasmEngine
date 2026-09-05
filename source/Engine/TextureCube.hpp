@@ -11,12 +11,17 @@
 #include <Profiling/ResourceStatistics.hpp>
 #include <cstring> // for memcpy
 #include <cmath> // for atan2, asin, sqrt
+#include "AssetLoadState.h"
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
 class CubemapTexture
 {
 public:
+	// Empty placeholder - AssetRegistry's lazy path constructs one of these
+	// and fills it in later via UploadDecoded(), same pattern as Texture().
+	CubemapTexture() {}
+
 	// faces should be provided in this order:
 	// right(+X), left(-X), top(+Y), bottom(-Y), front(+Z), back(-Z)
 	CubemapTexture(const std::vector<std::string>& faces, bool generateMipmaps = false) {
@@ -24,7 +29,7 @@ public:
 			Logger::Error("Cubemap texture requires exactly 6 faces.");
 			return;
 		}
-		loadFromFiles(faces, generateMipmaps);
+		UploadDecoded(DecodeFromFiles(faces, generateMipmaps));
 	}
 	// -----------------------------------------------------------------------
 	// Smart single-path constructor.
@@ -37,152 +42,144 @@ public:
 	// panorama and converts it on the fly.
 	// -----------------------------------------------------------------------
 	CubemapTexture(const std::string& base, bool generateMipmaps = false) {
-		std::vector<std::string> faces = {
-			StringHelper::Replace(base, ".", "_lf."),
-			StringHelper::Replace(base, ".", "_rt."),
-			StringHelper::Replace(base, ".", "_up."),
-			StringHelper::Replace(base, ".", "_dn."),
-			StringHelper::Replace(base, ".", "_ft."),
-			StringHelper::Replace(base, ".", "_bk."),
-		};
-		bool allExist = true;
-		for (const auto& f : faces) {
-			if (FileSystemEngine::ReadFileBinary(f).empty()) {
-				allExist = false;
-				break;
-			}
-		}
-		if (allExist)
-			loadFromFiles(faces, generateMipmaps);
-		else
-			loadFromPanorama(base, generateMipmaps);
+		UploadDecoded(DecodeSmart(base, generateMipmaps));
 	}
 	~CubemapTexture() {
 		ResourceStatistics::Instance().unregisterResource(ResourceType::TextureCube, m_handle.idx);
 		if (bgfx::isValid(m_handle))
 			bgfx::destroy(m_handle);
 	}
-	void bind(uint8_t stage, bgfx::UniformHandle sampler) const {
-		bgfx::setTexture(stage, sampler, m_handle);
-	}
-	bool valid = false;
-	bgfx::TextureHandle getHandle() const {
-		return m_handle;
-	}
-	// Backward-compat: return numeric ID for ResourceStatistics etc.
-	uint16_t getID() const {
-		return m_handle.idx;
-	}
-	bgfx::TextureHandle getTextureHandle() const {
-		return m_handle;
-	}
-	void setName(const std::string& name) {
-		ResourceStatistics::Instance().setResourceName(ResourceType::TextureCube, m_handle.idx, name);
-		if (bgfx::isValid(m_handle))
-			bgfx::setName(m_handle, name.c_str(), (int32_t)name.size());
-	}
-private:
-	bgfx::TextureHandle m_handle = BGFX_INVALID_HANDLE;
-	// -----------------------------------------------------------------------
-	// Helper: rotate an RGBA buffer 90° CW or CCW.
-	// Allocates and returns a new buffer. Caller must free with free().
-	// (also used by the file-based path for the up/dn faces)
-	// -----------------------------------------------------------------------
-	static stbi_uc* rotate90_rgba(const stbi_uc* src, int w, int h, bool cw)
+
+	// Readiness for AssetRegistry's async loading - see AssetLoadState.h.
+	// Same as Texture: a cubemap only ever moves None <-> Visual, there's no
+	// CPU-only "Logic" stage.
+	AssetLoadState loadState;
+
+	// Plain decoded pixels for all 6 faces, produced off the main thread
+	// (Loader thread, via AssetRegistry::QueueTextureCubeUploadJob). Holds no
+	// bgfx handle, so it's safe to build anywhere; only UploadDecoded() below
+	// is main-thread-only. Mirrors Texture::Decoded.
+	struct Decoded
 	{
-		stbi_uc* dst = static_cast<stbi_uc*>(malloc(w * h * 4));
-		if (!dst) return nullptr;
-		for (int y = 0; y < h; ++y)
+		std::vector<uint8_t> pixels; // 6 faces, tightly packed RGBA8, back-to-back in bgfx order
+		uint16_t faceSize = 0;
+		bool generateMipmaps = false;
+		bool valid = false;
+
+		// Common-prefix name across the 6 face paths (or the panorama path),
+		// computed once here so UploadDecoded() doesn't need the original
+		// path list kept alive just to name the resource.
+		std::string resourceName;
+	};
+
+	// -----------------------------------------------------------------------
+	// Decode entry points - safe on any thread (Loader thread included).
+	// No bgfx calls happen anywhere below this point; everything is file I/O,
+	// stb_image decode/encode, and plain CPU pixel work.
+	// -----------------------------------------------------------------------
+
+	// Loads and assembles the 6 face files into one contiguous RGBA8 buffer.
+	// This is the CPU half of what loadFromFiles used to do in one shot.
+	static Decoded DecodeFromFiles(const std::vector<std::string>& faces, bool generateMipmaps)
+	{
+		Decoded out;
+		out.generateMipmaps = generateMipmaps;
+
+		if (faces.size() != 6) {
+			Logger::Error("[Cubemap] Need 6 faces, got %d", (int)faces.size());
+			return out;
+		}
+		uint16_t faceSize = 0;
+		int commonWidth = 0;
+		int commonHeight = 0;
+		std::vector<stbi_uc*> loadedPixels(6, nullptr);
+		bool loadSuccess = true;
+		for (unsigned i = 0; i < 6; ++i)
 		{
-			for (int x = 0; x < w; ++x)
-			{
-				const stbi_uc* s = src + (y * w + x) * 4;
-				stbi_uc* d;
-				if (cw)
-					d = dst + (x * h + (h - 1 - y)) * 4;
-				else
-					d = dst + ((w - 1 - x) * h + y) * 4;
-				d[0] = s[0]; d[1] = s[1]; d[2] = s[2]; d[3] = s[3];
+			std::vector<uint8_t> fileData = FileSystemEngine::ReadFileBinary(faces[i]);
+			if (fileData.empty()) {
+				Logger::Error("[Cubemap] File empty or not found: %s", faces[i].c_str());
+				loadSuccess = false;
+				continue;
+			}
+			int width = 0, height = 0, channels = 0;
+			stbi_uc* pixels = stbi_load_from_memory(
+				fileData.data(),
+				static_cast<int>(fileData.size()),
+				&width, &height, &channels,
+				STBI_rgb_alpha
+			);
+			if (!pixels) {
+				Logger::Error("[Cubemap] stbi_load_from_memory failed for %s: %s", faces[i].c_str(), stbi_failure_reason());
+				loadSuccess = false;
+				continue;
+			}
+			// rotate +Y (index 2) 90° CW, –Y (index 3) 90° CCW (exact same as original)
+			if (i == 2 || i == 3) {
+				bool cw = (i == 2);
+				stbi_uc* rotated = rotate90_rgba(pixels, width, height, cw);
+				stbi_image_free(pixels);
+				if (!rotated) {
+					Logger::Error("[Cubemap] Rotation failed for %s", faces[i].c_str());
+					loadSuccess = false;
+					continue;
+				}
+				pixels = rotated;
+				std::swap(width, height);
+			}
+			loadedPixels[i] = pixels;
+			// dimensions from first face + consistency check
+			if (i == 0) {
+				commonWidth = width;
+				commonHeight = height;
+				faceSize = (uint16_t)width;
+			}
+			else if (width != commonWidth || height != commonHeight) {
+				Logger::Error("[Cubemap] Face %d size mismatch after processing: %dx%d vs %dx%d", i, width, height, commonWidth, commonHeight);
+				loadSuccess = false;
 			}
 		}
-		return dst;
-	}
-	// -----------------------------------------------------------------------
-	// Flags
-	// -----------------------------------------------------------------------
-	static uint64_t buildFlags(bool generateMipmaps) {
-		uint64_t flags = BGFX_TEXTURE_NONE;
-		// Anisotropic filtering requires a mip chain. Requesting it without
-		// mipmaps makes bgfx internally force hasMips=true, which causes a
-		// fatal storage-size mismatch when only base-level data is supplied.
-		if (generateMipmaps)
-			flags |= BGFX_SAMPLER_MIN_ANISOTROPIC | BGFX_SAMPLER_MAG_ANISOTROPIC;
-		return flags;
-	}
-	// -----------------------------------------------------------------------
-	// Panorama helpers
-	// -----------------------------------------------------------------------
-	// Bilinear sample from an equirectangular RGBA8 image.
-	// lon in [-π, π], lat in [-π/2, π/2].
-	static void sampleEquirect(const stbi_uc* img, int srcW, int srcH,
-		double lon, double lat, stbi_uc* out)
-	{
-		double u = (lon / (2.0 * M_PI) + 0.5) * srcW - 0.5;
-		double v = (0.5 - lat / M_PI) * srcH - 0.5;
-		int x0 = (int)floor(u), y0 = (int)floor(v);
-		int x1 = x0 + 1, y1 = y0 + 1;
-		double fx = u - x0, fy = v - y0;
-		auto wrapX = [&](int x) { return ((x % srcW) + srcW) % srcW; };
-		auto clampY = [&](int y) { return y < 0 ? 0 : (y >= srcH ? srcH - 1 : y); };
-		int ix0 = wrapX(x0), ix1 = wrapX(x1);
-		int iy0 = clampY(y0), iy1 = clampY(y1);
-		for (int c = 0; c < 4; ++c)
-		{
-			double p00 = img[(iy0 * srcW + ix0) * 4 + c];
-			double p10 = img[(iy0 * srcW + ix1) * 4 + c];
-			double p01 = img[(iy1 * srcW + ix0) * 4 + c];
-			double p11 = img[(iy1 * srcW + ix1) * 4 + c];
-			double val = p00 * (1.0 - fx) * (1.0 - fy)
-				+ p10 * fx * (1.0 - fy)
-				+ p01 * (1.0 - fx) * fy
-				+ p11 * fx * fy;
-			out[c] = (stbi_uc)(val + 0.5);
+		if (!loadSuccess || faceSize == 0) {
+			for (auto p : loadedPixels) if (p) stbi_image_free(p);
+			return out;
 		}
-	}
-	// Map a pixel (u, v in [-1,1]) on a given bgfx face slot to a 3-D direction
-	// that corresponds to the Quake 3 skybox layout used by this class:
-	//
-	// slot 0 (+X / lf): camera looks in -X → left of the panorama
-	// slot 1 (-X / rt): camera looks in +X → right
-	// slot 2 (+Y / up): camera looks in +Y → up (image rotated -90° after)
-	// slot 3 (-Y / dn): camera looks in -Y → down (image rotated -90° after)
-	// slot 4 (+Z / ft): camera looks in +Z → front (lon = 0)
-	// slot 5 (-Z / bk): camera looks in -Z → back
-	//
-	// u increases to the right, v increases downward (image space).
-	static void bgfxFaceDir(int slot, double u, double v,
-		double& dx, double& dy, double& dz)
-	{
-		switch (slot)
-		{
-		case 0: dx = -1.0; dy = -v; dz = u; break; // lf: look -X
-		case 1: dx = 1.0; dy = -v; dz = -u; break; // rt: look +X
-		case 2: dx = u; dy = 1.0; dz = v; break; // up: look +Y
-		case 3: dx = u; dy = -1.0; dz = -v; break; // dn: look -Y
-		case 4: dx = u; dy = -v; dz = 1.0; break; // ft: look +Z
-		default: dx = -u; dy = -v; dz = -1.0; break; // bk: look -Z
+		// Build single contiguous RGBA8 buffer (6 faces in bgfx order)
+		const size_t faceBytes = static_cast<size_t>(commonWidth) * commonHeight * 4;
+		const size_t totalBaseSize = faceBytes * 6;
+		out.pixels.resize(totalBaseSize);
+		size_t offset = 0;
+		for (unsigned i = 0; i < 6; ++i) {
+			if (loadedPixels[i]) {
+				memcpy(&out.pixels[offset], loadedPixels[i], faceBytes);
+				stbi_image_free(loadedPixels[i]);
+			}
+			else {
+				memset(&out.pixels[offset], 0, faceBytes);
+			}
+			offset += faceBytes;
 		}
+
+		out.faceSize = faceSize;
+		out.resourceName = BuildResourceName(faces);
+		out.valid = true;
+		return out;
 	}
-	// -----------------------------------------------------------------------
-	// Panorama → cubemap loader
-	// -----------------------------------------------------------------------
-	void loadFromPanorama(const std::string& panoramaPath, bool generateMipmaps)
+
+	// Converts an equirectangular panorama into 6 faces (writing them to disk
+	// as a cache, same as before), then decodes them the normal way. This is
+	// the CPU half of what loadFromPanorama used to do in one shot - the file
+	// writes here are just cached CPU-side artifacts, not GPU work, so they're
+	// as safe to run on the Loader thread as everything else in this function.
+	static Decoded DecodeFromPanorama(const std::string& panoramaPath, bool generateMipmaps)
 	{
+		Decoded out;
+		out.generateMipmaps = generateMipmaps;
+
 		// --- Load equirectangular source image ---
 		std::vector<uint8_t> fileData = FileSystemEngine::ReadFileBinary(panoramaPath);
 		if (fileData.empty()) {
 			Logger::Error("[Cubemap] Panorama file empty or not found: %s", panoramaPath.c_str());
-			return;
+			return out;
 		}
 		int panoW = 0, panoH = 0, channels = 0;
 		stbi_uc* panorama = stbi_load_from_memory(
@@ -192,7 +189,7 @@ private:
 		if (!panorama) {
 			std::cerr << "[Cubemap] stbi_load_from_memory failed for "
 				<< panoramaPath << ": " << stbi_failure_reason() << "\n";
-			return;
+			return out;
 		}
 		// Face size: half the panorama height (keeps good texel density).
 		const int faceSize = panoH / 2;
@@ -290,109 +287,160 @@ private:
 			StringHelper::Replace(panoramaPath, ".", "_ft."),
 			StringHelper::Replace(panoramaPath, ".", "_bk."),
 		};
-		loadFromFiles(faces, generateMipmaps);
+		return DecodeFromFiles(faces, generateMipmaps);
 	}
-	// -----------------------------------------------------------------------
-	// Load (all faces → single contiguous memory block for bgfx::createTextureCube)
-	// -----------------------------------------------------------------------
-	void loadFromFiles(const std::vector<std::string>& faces, bool generateMipmaps)
+
+	// Mirrors the smart single-path constructor's file-exists check, so
+	// AssetRegistry can hand this a single path (face or panorama) from the
+	// Loader thread without caring which kind it turns out to be.
+	static Decoded DecodeSmart(const std::string& base, bool generateMipmaps)
 	{
-		if (faces.size() != 6) {
-			Logger::Error("[Cubemap] Need 6 faces, got %d", (int)faces.size());
-			return;
-		}
-		uint16_t faceSize = 0;
-		int commonWidth = 0;
-		int commonHeight = 0;
-		size_t totalBaseSize = 0;
-		std::vector<stbi_uc*> loadedPixels(6, nullptr);
-		bool loadSuccess = true;
-		for (unsigned i = 0; i < 6; ++i)
-		{
-			std::vector<uint8_t> fileData = FileSystemEngine::ReadFileBinary(faces[i]);
-			if (fileData.empty()) {
-				Logger::Error("[Cubemap] File empty or not found: %s", faces[i].c_str());
-				loadSuccess = false;
-				continue;
-			}
-			int width = 0, height = 0, channels = 0;
-			stbi_uc* pixels = stbi_load_from_memory(
-				fileData.data(),
-				static_cast<int>(fileData.size()),
-				&width, &height, &channels,
-				STBI_rgb_alpha
-			);
-			if (!pixels) {
-				Logger::Error("[Cubemap] stbi_load_from_memory failed for %s: %s", faces[i].c_str(), stbi_failure_reason());
-				loadSuccess = false;
-				continue;
-			}
-			// rotate +Y (index 2) 90° CW, –Y (index 3) 90° CCW (exact same as original)
-			if (i == 2 || i == 3) {
-				bool cw = (i == 2);
-				stbi_uc* rotated = rotate90_rgba(pixels, width, height, cw);
-				stbi_image_free(pixels);
-				if (!rotated) {
-					Logger::Error("[Cubemap] Rotation failed for %s", faces[i].c_str());
-					loadSuccess = false;
-					continue;
-				}
-				pixels = rotated;
-				std::swap(width, height);
-			}
-			loadedPixels[i] = pixels;
-			// dimensions from first face + consistency check
-			if (i == 0) {
-				commonWidth = width;
-				commonHeight = height;
-				faceSize = (uint16_t)width;
-			}
-			else if (width != commonWidth || height != commonHeight) {
-				Logger::Error("[Cubemap] Face %d size mismatch after processing: %dx%d vs %dx%d", i, width, height, commonWidth, commonHeight);
-				loadSuccess = false;
-			}
-			const size_t faceBytes = static_cast<size_t>(width) * height * 4;
-			totalBaseSize += faceBytes;
-		}
-		if (!loadSuccess || faceSize == 0) {
-			for (auto p : loadedPixels) if (p) stbi_image_free(p);
-			return;
-		}
-		// Build single contiguous RGBA8 buffer (6 faces in bgfx order)
-		const size_t faceBytes = static_cast<size_t>(commonWidth) * commonHeight * 4;
-		totalBaseSize = faceBytes * 6;
-		std::vector<unsigned char> allData(totalBaseSize);
-		size_t offset = 0;
-		for (unsigned i = 0; i < 6; ++i) {
-			if (loadedPixels[i]) {
-				memcpy(&allData[offset], loadedPixels[i], faceBytes);
-				stbi_image_free(loadedPixels[i]);
-				offset += faceBytes;
-			}
-			else {
-				memset(&allData[offset], 0, faceBytes);
-				offset += faceBytes;
+		std::vector<std::string> faces = {
+			StringHelper::Replace(base, ".", "_lf."),
+			StringHelper::Replace(base, ".", "_rt."),
+			StringHelper::Replace(base, ".", "_up."),
+			StringHelper::Replace(base, ".", "_dn."),
+			StringHelper::Replace(base, ".", "_ft."),
+			StringHelper::Replace(base, ".", "_bk."),
+		};
+		bool allExist = true;
+		for (const auto& f : faces) {
+			if (FileSystemEngine::ReadFileBinary(f).empty()) {
+				allExist = false;
+				break;
 			}
 		}
-		const bgfx::Memory* mem = bgfx::copy(allData.data(), (uint32_t)totalBaseSize);
-		uint64_t flags = buildFlags(generateMipmaps);
+		if (allExist)
+			return DecodeFromFiles(faces, generateMipmaps);
+		return DecodeFromPanorama(base, generateMipmaps);
+	}
+
+	// Main-thread only (does the actual bgfx::createTextureCube call) - the
+	// one function in this class allowed to touch bgfx. All CPU work (file
+	// I/O, stb decode/encode, face rotation, panorama resampling) already
+	// happened in DecodeFromFiles/DecodeFromPanorama/DecodeSmart above, on
+	// whichever thread produced this Decoded - see
+	// AssetRegistry::QueueTextureCubeUploadJob. Mirrors Texture::UploadDecoded.
+	void UploadDecoded(Decoded&& decoded, const std::string& debugNameOverride = "")
+	{
+		if (!decoded.valid) return;
+
+		const bgfx::Memory* mem = bgfx::copy(decoded.pixels.data(), (uint32_t)decoded.pixels.size());
+		uint64_t flags = buildFlags(decoded.generateMipmaps);
 		m_handle = bgfx::createTextureCube(
-			faceSize, // side length (square faces)
-			generateMipmaps, // hasMips – bgfx auto-generates mipmaps if true
+			decoded.faceSize, // side length (square faces)
+			decoded.generateMipmaps, // hasMips – bgfx auto-generates mipmaps if true
 			1, // numLayers (regular cubemap)
 			bgfx::TextureFormat::RGBA8,
 			flags,
 			mem
 		);
 		if (!bgfx::isValid(m_handle)) {
-			Logger::Error("bgfx::createTextureCube failed (%d)", faceSize);
+			Logger::Error("bgfx::createTextureCube failed (%d)", decoded.faceSize);
 			return;
 		}
-		// Resource statistics (identical logic to Texture.hpp)
-		size_t textureSize = totalBaseSize;
+		// Resource statistics (identical logic to before the split)
+		size_t textureSize = decoded.pixels.size();
+		if (decoded.generateMipmaps)
+			textureSize += decoded.pixels.size() / 3;
+
+		const std::string& resourceName = debugNameOverride.empty() ? decoded.resourceName : debugNameOverride;
+		ResourceStatistics::Instance().registerResource(
+			ResourceType::TextureCube,
+			m_handle.idx,
+			textureSize,
+			resourceName
+		);
+		bgfx::setName(m_handle, resourceName.c_str(), (int32_t)resourceName.size());
+		valid = true;
+
+		// Single place this runs regardless of entry path (sync ctor or
+		// async AssetRegistry load) - the one place allowed to flip
+		// currentTier to Visual. Matches Texture::UploadDecodedMips.
+		loadState.generation.fetch_add(1, std::memory_order_release);
+		loadState.currentTier.store(AssetLoadTier::Visual, std::memory_order_release);
+	}
+
+	// Drops the GPU resource but keeps this object alive at its current
+	// address - UploadDecoded() later just refills it. Main thread only,
+	// same as UploadDecoded. Matches Texture::UnloadGPU.
+	void UnloadGPU()
+	{
+		if (bgfx::isValid(m_handle))
+		{
+			ResourceStatistics::Instance().unregisterResource(ResourceType::TextureCube, m_handle.idx);
+			bgfx::destroy(m_handle);
+			m_handle = BGFX_INVALID_HANDLE;
+		}
+		valid = false;
+	}
+
+	void bind(uint8_t stage, bgfx::UniformHandle sampler) const {
+		bgfx::setTexture(stage, sampler, m_handle);
+	}
+	bool valid = false;
+	bgfx::TextureHandle getHandle() const {
+		return m_handle;
+	}
+	// Backward-compat: return numeric ID for ResourceStatistics etc.
+	uint16_t getID() const {
+		return m_handle.idx;
+	}
+	bgfx::TextureHandle getTextureHandle() const {
+		return m_handle;
+	}
+	void setName(const std::string& name) {
+		ResourceStatistics::Instance().setResourceName(ResourceType::TextureCube, m_handle.idx, name);
+		if (bgfx::isValid(m_handle))
+			bgfx::setName(m_handle, name.c_str(), (int32_t)name.size());
+	}
+private:
+	bgfx::TextureHandle m_handle = BGFX_INVALID_HANDLE;
+	// -----------------------------------------------------------------------
+	// Helper: rotate an RGBA buffer 90° CW or CCW.
+	// Allocates and returns a new buffer. Caller must free with free().
+	// (also used by the file-based path for the up/dn faces)
+	// -----------------------------------------------------------------------
+	static stbi_uc* rotate90_rgba(const stbi_uc* src, int w, int h, bool cw)
+	{
+		stbi_uc* dst = static_cast<stbi_uc*>(malloc(w * h * 4));
+		if (!dst) return nullptr;
+		for (int y = 0; y < h; ++y)
+		{
+			for (int x = 0; x < w; ++x)
+			{
+				const stbi_uc* s = src + (y * w + x) * 4;
+				stbi_uc* d;
+				if (cw)
+					d = dst + (x * h + (h - 1 - y)) * 4;
+				else
+					d = dst + ((w - 1 - x) * h + y) * 4;
+				d[0] = s[0]; d[1] = s[1]; d[2] = s[2]; d[3] = s[3];
+			}
+		}
+		return dst;
+	}
+	// -----------------------------------------------------------------------
+	// Flags
+	// -----------------------------------------------------------------------
+	static uint64_t buildFlags(bool generateMipmaps) {
+		uint64_t flags = BGFX_TEXTURE_NONE;
+		// Anisotropic filtering requires a mip chain. Requesting it without
+		// mipmaps makes bgfx internally force hasMips=true, which causes a
+		// fatal storage-size mismatch when only base-level data is supplied.
 		if (generateMipmaps)
-			textureSize += totalBaseSize / 3;
-		// Common prefix for resource name (exact same as original)
+			flags |= BGFX_SAMPLER_MIN_ANISOTROPIC | BGFX_SAMPLER_MAG_ANISOTROPIC;
+		return flags;
+	}
+	// -----------------------------------------------------------------------
+	// Naming
+	// -----------------------------------------------------------------------
+	// Longest common prefix across the face paths (or the single-path ctor's
+	// derived face paths) - same logic loadFromFiles used to compute inline,
+	// just pulled out so DecodeFromFiles() can stash it in Decoded for
+	// UploadDecoded() to use later, on whatever thread it runs on.
+	static std::string BuildResourceName(const std::vector<std::string>& faces)
+	{
 		std::string resourceName = "Cubemap";
 		if (!faces.empty()) {
 			resourceName = faces[0];
@@ -406,13 +454,60 @@ private:
 			if (resourceName.empty() || resourceName.length() < 3)
 				resourceName = "Cubemap";
 		}
-		ResourceStatistics::Instance().registerResource(
-			ResourceType::TextureCube,
-			m_handle.idx,
-			textureSize,
-			resourceName
-		);
-		bgfx::setName(m_handle, resourceName.c_str(), (int32_t)resourceName.size());
-		valid = true;
+		return resourceName;
+	}
+	// -----------------------------------------------------------------------
+	// Panorama helpers
+	// -----------------------------------------------------------------------
+	// Bilinear sample from an equirectangular RGBA8 image.
+	// lon in [-π, π], lat in [-π/2, π/2].
+	static void sampleEquirect(const stbi_uc* img, int srcW, int srcH,
+		double lon, double lat, stbi_uc* out)
+	{
+		double u = (lon / (2.0 * M_PI) + 0.5) * srcW - 0.5;
+		double v = (0.5 - lat / M_PI) * srcH - 0.5;
+		int x0 = (int)floor(u), y0 = (int)floor(v);
+		int x1 = x0 + 1, y1 = y0 + 1;
+		double fx = u - x0, fy = v - y0;
+		auto wrapX = [&](int x) { return ((x % srcW) + srcW) % srcW; };
+		auto clampY = [&](int y) { return y < 0 ? 0 : (y >= srcH ? srcH - 1 : y); };
+		int ix0 = wrapX(x0), ix1 = wrapX(x1);
+		int iy0 = clampY(y0), iy1 = clampY(y1);
+		for (int c = 0; c < 4; ++c)
+		{
+			double p00 = img[(iy0 * srcW + ix0) * 4 + c];
+			double p10 = img[(iy0 * srcW + ix1) * 4 + c];
+			double p01 = img[(iy1 * srcW + ix0) * 4 + c];
+			double p11 = img[(iy1 * srcW + ix1) * 4 + c];
+			double val = p00 * (1.0 - fx) * (1.0 - fy)
+				+ p10 * fx * (1.0 - fy)
+				+ p01 * (1.0 - fx) * fy
+				+ p11 * fx * fy;
+			out[c] = (stbi_uc)(val + 0.5);
+		}
+	}
+	// Map a pixel (u, v in [-1,1]) on a given bgfx face slot to a 3-D direction
+	// that corresponds to the Quake 3 skybox layout used by this class:
+	//
+	// slot 0 (+X / lf): camera looks in -X → left of the panorama
+	// slot 1 (-X / rt): camera looks in +X → right
+	// slot 2 (+Y / up): camera looks in +Y → up (image rotated -90° after)
+	// slot 3 (-Y / dn): camera looks in -Y → down (image rotated -90° after)
+	// slot 4 (+Z / ft): camera looks in +Z → front (lon = 0)
+	// slot 5 (-Z / bk): camera looks in -Z → back
+	//
+	// u increases to the right, v increases downward (image space).
+	static void bgfxFaceDir(int slot, double u, double v,
+		double& dx, double& dy, double& dz)
+	{
+		switch (slot)
+		{
+		case 0: dx = -1.0; dy = -v; dz = u; break; // lf: look -X
+		case 1: dx = 1.0; dy = -v; dz = -u; break; // rt: look +X
+		case 2: dx = u; dy = 1.0; dz = v; break; // up: look +Y
+		case 3: dx = u; dy = -1.0; dz = -v; break; // dn: look -Y
+		case 4: dx = u; dy = -v; dz = 1.0; break; // ft: look +Z
+		default: dx = -u; dy = -v; dz = -1.0; break; // bk: look -Z
+		}
 	}
 };

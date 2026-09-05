@@ -67,6 +67,7 @@ private:
     static void LoadLogicTierNow(roj::SkinnedModel* model, const std::string& path);
     static void QueueVisualTierJob(roj::SkinnedModel* model, std::string path);
     static void QueueTextureUploadJob(Texture* texture, std::string path);
+    static void QueueTextureCubeUploadJob(CubemapTexture* texCube, std::string path);
 
     // Brings a model up to requestedTier without ever blocking the calling
     // thread on the expensive part:
@@ -79,6 +80,7 @@ private:
     // Caller holds cacheMutex.
     static void EnsureTierLazy(roj::SkinnedModel* model, const std::string& path, AssetLoadTier requestedTier);
     static void EnsureTextureTierLazy(Texture* texture, const std::string& path, AssetLoadTier requestedTier);
+    static void EnsureTextureCubeTierLazy(CubemapTexture* texCube, const std::string& path, AssetLoadTier requestedTier);
 
     // Brings an already-registered object straight to Visual, synchronously,
     // right now, with a direct bgfx call - used for the loading-screen path
@@ -86,15 +88,16 @@ private:
     // Caller holds cacheMutex.
     static void SynchronouslyFinishLoad(roj::SkinnedModel* model, const std::string& path);
     static void SynchronouslyFinishTextureLoad(Texture* texture, const std::string& path);
+    static void SynchronouslyFinishTextureCubeLoad(CubemapTexture* texCube, const std::string& path);
 
 public:
 
-	static inline bool LoadingConstantAssets = false;
+    static inline bool LoadingConstantAssets = false;
 
-	// How many milliseconds ProcessPendingUploads() may spend per frame.
-	// Time-based rather than byte-based - GPU upload cost varies too much by
-	// hardware for a fixed byte budget to be portable.
-	static inline float UploadBudgetMs = 0.5f;
+    // How many milliseconds ProcessPendingUploads() may spend per frame.
+    // Time-based rather than byte-based - GPU upload cost varies too much by
+    // hardware for a fixed byte budget to be portable.
+    static inline float UploadBudgetMs = 0.5f;
 
     static void ClearMemory();
     static void ClearUnusedMemory();
@@ -136,7 +139,11 @@ public:
     // it's running on a thread that may call bgfx (unchanged by this).
     static Texture* GetTextureFromFile(string filename, AssetLoadTier requestedTier = AssetLoadTier::Logic);
 
-    static CubemapTexture* GetTextureCubeFromFile(string filename);
+    // See GetTextureFromFile's comment for what requestedTier does. Default
+    // is Visual (not Logic) here, unlike Texture/SkinnedModel - preserves
+    // this call's previous always-synchronous behavior for any existing
+    // call sites that don't pass a tier.
+    static CubemapTexture* GetTextureCubeFromFile(string filename, AssetLoadTier requestedTier = AssetLoadTier::Visual);
 
     static void RegisterTexture(Texture* texture, string path);
 
@@ -168,6 +175,7 @@ public:
     // call with requestedTier == None). No-op if already there or in flight.
     static void RequestVisualLoad(roj::SkinnedModel* model, string path);
     static void RequestVisualLoad(Texture* texture, string path);
+    static void RequestVisualLoad(CubemapTexture* texCube, string path);
 
     // Drops everything above the requested tier. Never erases the cache
     // entry or deletes the object - same pointer, same cache entry, just
@@ -177,6 +185,7 @@ public:
     // on the main thread via ProcessPendingUploads, same as an upload.
     static void UnloadToTier(roj::SkinnedModel* model, AssetLoadTier tier);
     static void UnloadToTier(Texture* texture, AssetLoadTier tier); // tier is really just Visual vs None
+    static void UnloadToTier(CubemapTexture* texCube, AssetLoadTier tier); // tier is really just Visual vs None
 
     // Call once per frame, from the very start of Render(), before
     // RenderLevel() - the only place allowed to touch bgfx for loading.

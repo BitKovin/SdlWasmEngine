@@ -11,6 +11,8 @@
 #include "../Physics.h"
 #include "../Camera.h"
 
+#include <Ecs/EcsScheduler.h>
+
 #include <ShaderManager.h>
 
 void CMD_Help(const std::vector<std::string>& args)
@@ -109,6 +111,11 @@ void CMD_CallAction(std::vector<std::string> args)
 	}
 }
 
+void CMD_EcsSchedulerDump(const std::vector<std::string>& args)
+{
+	Logger::Log(EcsScheduler::DumpAll());
+}
+
 void ConsoleDefaultCommands::RegisterAll()
 {
 
@@ -122,5 +129,7 @@ void ConsoleDefaultCommands::RegisterAll()
 	REGISTER_CONSOLE_CMD("maxfps", "Sets target frame rate", CMD_MaxFPS);
 
 	REGISTER_CONSOLE_CMD("callaction", "callaction <target_name> <action> - Calls an action on all entities with a specific name", CMD_CallAction);
+
+	REGISTER_CONSOLE_CMD("ecs.dump", "Dumps ECS scheduler state", CMD_EcsSchedulerDump);
 
 }

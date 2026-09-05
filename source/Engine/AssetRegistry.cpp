@@ -213,7 +213,7 @@ Texture* AssetRegistry::GetTextureFromFile(string filename, AssetLoadTier reques
 	return texture;
 }
 
-CubemapTexture* AssetRegistry::GetTextureCubeFromFile(string filename)
+CubemapTexture* AssetRegistry::GetTextureCubeFromFile(string filename, AssetLoadTier requestedTier)
 {
 	std::lock_guard<std::recursive_mutex> lock(cacheMutex);
 
@@ -221,15 +221,39 @@ CubemapTexture* AssetRegistry::GetTextureCubeFromFile(string filename)
 
 	string key = filename;
 
+	// Same forceSync rule as GetTextureFromFile - see the comment there.
+	const bool forceSync = loadingLevel || LoadingConstantAssets
+		|| requestedTier == AssetLoadTier::Visual
+		|| requestedTier == AssetLoadTier::VisualImmediately;
+
 	auto it = textureCubeCache.find(key);
 	if (it != textureCubeCache.end())
 	{
+		TouchUsage(it->second->loadState);
+
+		if (forceSync)
+			SynchronouslyFinishTextureCubeLoad(it->second, key);
+		else
+			EnsureTextureCubeTierLazy(it->second, key, requestedTier);
+
 		return it->second;
 	}
 
-	textureCubeCache[key] = new CubemapTexture(filename, false);
+	if (forceSync)
+	{
+		CubemapTexture* texCube = new CubemapTexture(filename, false); // unchanged - fully synchronous, as before
+		textureCubeCache[key] = texCube;
+		TouchUsage(texCube->loadState);
+		return texCube;
+	}
 
-	return textureCubeCache[key];
+	CubemapTexture* texCube = new CubemapTexture();
+	textureCubeCache[key] = texCube;
+	TouchUsage(texCube->loadState);
+
+	EnsureTextureCubeTierLazy(texCube, key, requestedTier);
+
+	return texCube;
 }
 
 void AssetRegistry::RegisterTexture(Texture* texture, string path)
@@ -649,6 +673,28 @@ void AssetRegistry::QueueTextureUploadJob(Texture* texture, std::string path)
 		});
 }
 
+void AssetRegistry::QueueTextureCubeUploadJob(CubemapTexture* texCube, std::string path)
+{
+	loaderThreadPool->QueueJob([texCube, path]()
+		{
+			// DecodeSmart picks file-based vs panorama-conversion the same way
+			// the smart single-path constructor does - see TextureCube.hpp.
+			// generateMipmaps=false here matches the existing forceSync path's
+			// "new CubemapTexture(filename, false)" behavior, unchanged.
+			CubemapTexture::Decoded decoded = CubemapTexture::DecodeSmart(path, false);
+			if (!decoded.valid) return; // stays at None - matches today's error-logging-only behavior on a bad file
+
+			size_t approxBytes = decoded.pixels.size();
+
+			EnqueuePendingUpload(
+				[texCube, decoded = std::move(decoded)]() mutable
+				{
+					texCube->UploadDecoded(std::move(decoded));
+				},
+				approxBytes);
+		});
+}
+
 void AssetRegistry::EnsureTierLazy(roj::SkinnedModel* model, const std::string& path, AssetLoadTier requestedTier)
 {
 	if (requestedTier == AssetLoadTier::None) return; // fully caller-driven from here - see RequestVisualLoad
@@ -688,6 +734,15 @@ void AssetRegistry::EnsureTextureTierLazy(Texture* texture, const std::string& p
 	QueueTextureUploadJob(texture, path);
 }
 
+void AssetRegistry::EnsureTextureCubeTierLazy(CubemapTexture* texCube, const std::string& path, AssetLoadTier requestedTier)
+{
+	if (requestedTier == AssetLoadTier::None) return;
+	if (texCube->loadState.queuedUpTo.load(std::memory_order_acquire) == AssetLoadTier::Visual) return; // already done or in flight
+
+	texCube->loadState.queuedUpTo.store(AssetLoadTier::Visual, std::memory_order_release);
+	QueueTextureCubeUploadJob(texCube, path);
+}
+
 void AssetRegistry::SynchronouslyFinishLoad(roj::SkinnedModel* model, const std::string& path)
 {
 	if (model->loadState.currentTier.load(std::memory_order_acquire) == AssetLoadTier::Visual) return;
@@ -717,6 +772,16 @@ void AssetRegistry::SynchronouslyFinishTextureLoad(Texture* texture, const std::
 	texture->loadState.queuedUpTo.store(AssetLoadTier::Visual, std::memory_order_release);
 }
 
+void AssetRegistry::SynchronouslyFinishTextureCubeLoad(CubemapTexture* texCube, const std::string& path)
+{
+	if (texCube->loadState.currentTier.load(std::memory_order_acquire) == AssetLoadTier::Visual) return;
+
+	CubemapTexture::Decoded decoded = CubemapTexture::DecodeSmart(path, false);
+	texCube->UploadDecoded(std::move(decoded)); // stamps loadState itself - see TextureCube.hpp
+
+	texCube->loadState.queuedUpTo.store(AssetLoadTier::Visual, std::memory_order_release);
+}
+
 void AssetRegistry::RequestVisualLoad(roj::SkinnedModel* model, string path)
 {
 	if (model == nullptr) return;
@@ -735,6 +800,16 @@ void AssetRegistry::RequestVisualLoad(Texture* texture, string path)
 
 	texture->loadState.queuedUpTo.store(AssetLoadTier::Visual, std::memory_order_release);
 	QueueTextureUploadJob(texture, path);
+}
+
+void AssetRegistry::RequestVisualLoad(CubemapTexture* texCube, string path)
+{
+	if (texCube == nullptr) return;
+	if (texCube->loadState.currentTier.load(std::memory_order_acquire) == AssetLoadTier::Visual) return;
+	if (texCube->loadState.queuedUpTo.load(std::memory_order_acquire) == AssetLoadTier::Visual) return;
+
+	texCube->loadState.queuedUpTo.store(AssetLoadTier::Visual, std::memory_order_release);
+	QueueTextureCubeUploadJob(texCube, path);
 }
 
 void AssetRegistry::UnloadToTier(roj::SkinnedModel* model, AssetLoadTier tier)
@@ -770,5 +845,21 @@ void AssetRegistry::UnloadToTier(Texture* texture, AssetLoadTier tier)
 			texture->loadState.generation.fetch_add(1, std::memory_order_release);
 			texture->loadState.currentTier.store(AssetLoadTier::None, std::memory_order_release);
 			texture->loadState.queuedUpTo.store(AssetLoadTier::None, std::memory_order_release);
+		});
+}
+
+void AssetRegistry::UnloadToTier(CubemapTexture* texCube, AssetLoadTier tier)
+{
+	if (texCube == nullptr) return;
+
+	EnqueuePendingUpload([texCube]()
+		{
+			if (texCube->loadState.currentTier.load(std::memory_order_acquire) == AssetLoadTier::None)
+				return;
+
+			texCube->UnloadGPU();
+			texCube->loadState.generation.fetch_add(1, std::memory_order_release);
+			texCube->loadState.currentTier.store(AssetLoadTier::None, std::memory_order_release);
+			texCube->loadState.queuedUpTo.store(AssetLoadTier::None, std::memory_order_release);
 		});
 }

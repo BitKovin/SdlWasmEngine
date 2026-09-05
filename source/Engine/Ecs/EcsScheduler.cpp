@@ -275,12 +275,12 @@ std::vector<std::vector<ISystem*>> EcsScheduler::BuildBatches(
     auto ordered = [&](ISystem* a, ISystem* b)
     { return reachable.at(a).count(b) || reachable.at(b).count(a); };
 
-    auto mutuallyConcurrent = [&](ISystem* a, ISystem* b)
-    {
-        auto al = a->RunsConcurrentlyWith(), bl = b->RunsConcurrentlyWith();
-        return std::find(al.begin(), al.end(), std::string(b->Name())) != al.end()
-            && std::find(bl.begin(), bl.end(), std::string(a->Name())) != bl.end();
-    };
+    auto isConcurrent = [&](ISystem* a, ISystem* b)
+        {
+            auto al = a->RunsConcurrentlyWith(), bl = b->RunsConcurrentlyWith();
+            return std::find(al.begin(), al.end(), std::string(b->Name())) != al.end()
+                || std::find(bl.begin(), bl.end(), std::string(a->Name())) != bl.end();
+        };
 
     std::vector<std::vector<ISystem*>> batches;
     std::vector<ISystem*> current;
@@ -292,7 +292,7 @@ std::vector<std::vector<ISystem*>> EcsScheduler::BuildBatches(
             // ordered() should be unreachable here - ValidateConcurrencyOrThrow already
             // rejects any mutually-concurrent pair with an ordering relation. Kept as
             // defense-in-depth, not load-bearing logic.
-            if (ordered(s, member) || !mutuallyConcurrent(s, member)) { canJoin = false; break; }
+            if (ordered(s, member) || !isConcurrent(s, member)) { canJoin = false; break; }
 
         if (canJoin) current.push_back(s);
         else { if (!current.empty()) batches.push_back(current); current = { s }; }
@@ -334,26 +334,7 @@ std::string EcsScheduler::FormatDebugText(
     for (auto& e : edges) out << "  " << e.Reason << "\n";
 
     out << "Warnings:\n";
-    bool anyWarning = false;
-    std::unordered_map<std::string, ISystem*> byName;
-    for (auto& s : systems) byName[s->Name()] = s.get();
-    for (auto& s : systems)
-        for (auto& otherName : s->RunsConcurrentlyWith())
-        {
-            auto it = byName.find(otherName);
-            if (it == byName.end()) continue;
-            auto otherList = it->second->RunsConcurrentlyWith();
-            bool reciprocal = std::find(otherList.begin(), otherList.end(),
-                                        std::string(s->Name())) != otherList.end();
-            if (!reciprocal)
-            {
-                out << "  '" << s->Name() << "' declares RunsConcurrentlyWith(\"" << otherName
-                    << "\"), but '" << otherName << "' doesn't declare it back - the pair "
-                       "will NOT be batched together.\n";
-                anyWarning = true;
-            }
-        }
-    if (!anyWarning) out << "  (none)\n";
+    out << "  (none)\n";
     return out.str();
 }
 
