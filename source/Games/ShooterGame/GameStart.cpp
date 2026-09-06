@@ -75,9 +75,11 @@ public:
 
     void testHttp();
 
+	bool pendingGameStart = false;
 
 	void Start()
 	{
+        pendingGameStart = true;
 
         auto analyticsProvider = new RGameStatsAnalyticsProvider();
         analyticsProvider->HtmlClient = new EngineHttpClient();
@@ -129,22 +131,6 @@ public:
 
         NetworkManager::Init(transport.get(), isServer);
 
-        auto mapArg = EngineMain::MainInstance->Arguments.find("map");
-
-		if (mapArg != EngineMain::MainInstance->Arguments.end() && mapArg->second.size() > 0)
-        {
-
-            Logger::Log("opening map from args: " + mapArg->second[0]);
-
-            Level::LoadLevelFromFile(std::string("GameData/maps/") + mapArg->second[0]);
-        }
-        else
-        {
-            if(NetworkManager::IsServer())
-            Level::LoadLevelFromFile("GameData/maps/lvl2.bsp");
-        }
-		
-        AssetRegistry::GetSkinnedModelFromFile("GameData/models/arms.glb");
 
         for (size_t i = 0; i < 000; i++)
         {
@@ -161,6 +147,123 @@ public:
 
             Level::Current->AddEntity(ent);
         }
+
+
+        auto debuffs = DebuffFactory::Instance().GetRegisteredDebuffNames();
+
+        for (auto& name : debuffs)
+        {
+            auto debuff = DebuffFactory::Instance().CreateDebuff(name);
+
+            AssetRegistry::GetTextureFromFile(debuff->iconPath);
+
+        }
+
+        if (startedGame) return;
+
+        UiRenderer::AddFallbackFont("GameData/fonts/NotoSans.ttf");
+        UiRenderer::AddFallbackFont("GameData/fonts/NotoSerifJP.ttf");
+        UiRenderer::AddFallbackFont("GameData/fonts/NotoSansSC.ttf");
+
+        GameSettings::Instance().LoadFromFile();
+        GameSettings::Instance().ApplyAll();
+
+        startedGame = true;
+
+        Input::AddAction("forward")->AddKeyboardKey(SDL_KeyCode::SDLK_w);
+        Input::AddAction("backward")->AddKeyboardKey(SDL_KeyCode::SDLK_s);
+        Input::AddAction("left")->AddKeyboardKey(SDL_KeyCode::SDLK_a);
+        Input::AddAction("right")->AddKeyboardKey(SDL_KeyCode::SDLK_d);
+
+        Input::AddAction("crouch")->AddKeyboardKey(SDL_KeyCode::SDLK_c);
+
+        Input::AddAction("jump")->AddKeyboardKey(SDL_KeyCode::SDLK_SPACE)->AddButton(GamepadButton::A);
+
+        Input::AddAction("dash")->AddKeyboardKey(SDL_KeyCode::SDLK_LSHIFT)->AddButton(GamepadButton::LeftShoulder);
+
+
+
+        Input::AddAction("attack")->AddButton(GamepadButton::RightTrigger)->AddMouseButton(0);
+        Input::AddAction("attack2")->AddButton(GamepadButton::LeftTrigger)->AddMouseButton(1);
+
+        Input::AddAction("attack3")->AddButton(GamepadButton::Y)->AddKeyboardKey(SDL_KeyCode::SDLK_r);
+
+
+        Input::AddAction("qSave")->AddKeyboardKey(SDL_KeyCode::SDLK_F6);
+        Input::AddAction("qLoad")->AddKeyboardKey(SDL_KeyCode::SDLK_F7);
+
+        Input::AddAction("interact")->AddKeyboardKey(SDL_KeyCode::SDLK_f);
+
+
+
+        Input::AddAction("cameraView")->AddKeyboardKey(SDL_KeyCode::SDLK_v);
+
+
+
+#if __EMSCRIPTEN__
+
+        Input::AddAction("pause")->AddKeyboardKey(SDL_KeyCode::SDLK_BACKQUOTE)->AddButton(GamepadButton::Back);
+
+#else
+        Input::AddAction("pause")->AddKeyboardKey(SDL_KeyCode::SDLK_ESCAPE)->AddButton(GamepadButton::Back)->AddKeyboardKey(SDL_GetScancodeFromKey(SDLK_AC_BACK));
+#endif
+
+        Input::AddAction("slot1")->AddKeyboardKey(SDL_KeyCode::SDLK_1);
+        Input::AddAction("slot2")->AddKeyboardKey(SDL_KeyCode::SDLK_2);
+        Input::AddAction("slot3")->AddKeyboardKey(SDL_KeyCode::SDLK_3);
+        Input::AddAction("slot4")->AddKeyboardKey(SDL_KeyCode::SDLK_4);
+        Input::AddAction("slot5")->AddKeyboardKey(SDL_KeyCode::SDLK_5);
+        Input::AddAction("slot6")->AddKeyboardKey(SDL_KeyCode::SDLK_6);
+        Input::AddAction("lastSlot")->AddKeyboardKey(SDL_KeyCode::SDLK_q);
+
+        Input::AddAction("inventory")->AddKeyboardKey(SDL_KeyCode::SDLK_TAB)->AddButton(GamepadButton::DPadUp);
+
+        Input::AddAction("slotTest")->AddKeyboardKey(SDL_KeyCode::SDLK_t);
+
+        Input::AddAction("reload_shaders")->AddKeyboardKey(SDL_KeyCode::SDLK_F3);
+
+        Input::AddAction("block")->AddKeyboardKey(SDL_KeyCode::SDLK_LCTRL);
+
+        Input::AddAction("slotMelee");// ->AddKeyboardKey(SDL_KeyCode::SDLK_f);
+
+
+        Input::AddAction("debug_ui_toggle")->AddKeyboardKey(SDL_KeyCode::SDLK_F2);
+
+        Input::AddAction("ui_confirm")->AddKeyboardKey(SDL_KeyCode::SDLK_RETURN)->AddButton(GamepadButton::A);
+        Input::AddAction("ui_cancel")->AddKeyboardKey(SDL_KeyCode::SDLK_ESCAPE)->AddButton(GamepadButton::B)->AddKeyboardKey(SDL_GetScancodeFromKey(SDLK_AC_BACK));
+        Input::AddAction("ui_down")->AddKeyboardKey(SDL_KeyCode::SDLK_DOWN)->AddButton(GamepadButton::DPadDown);
+        Input::AddAction("ui_up")->AddKeyboardKey(SDL_KeyCode::SDLK_UP)->AddButton(GamepadButton::DPadUp);
+        Input::AddAction("ui_left")->AddKeyboardKey(SDL_KeyCode::SDLK_LEFT)->AddButton(GamepadButton::DPadLeft);
+        Input::AddAction("ui_right")->AddKeyboardKey(SDL_KeyCode::SDLK_RIGHT)->AddButton(GamepadButton::DPadRight);
+
+        InputActionRegistry::Register("forward", "${INPUT_ACTION_FORWARD}", "${INPUT_CATEGORY_MOVEMENT}");
+        InputActionRegistry::Register("backward", "${INPUT_ACTION_BACKWARD}", "${INPUT_CATEGORY_MOVEMENT}");
+        InputActionRegistry::Register("left", "${INPUT_ACTION_LEFT}", "${INPUT_CATEGORY_MOVEMENT}");
+        InputActionRegistry::Register("right", "${INPUT_ACTION_RIGHT}", "${INPUT_CATEGORY_MOVEMENT}");
+        InputActionRegistry::Register("crouch", "${INPUT_ACTION_CROUCH}", "${INPUT_CATEGORY_MOVEMENT}");
+        InputActionRegistry::Register("jump", "${INPUT_ACTION_JUMP}", "${INPUT_CATEGORY_MOVEMENT}");
+        InputActionRegistry::Register("dash", "${INPUT_ACTION_DASH}", "${INPUT_CATEGORY_MOVEMENT}");
+
+        InputActionRegistry::Register("attack", "${INPUT_ACTION_ATTACK}", "${INPUT_CATEGORY_COMBAT}");
+        InputActionRegistry::Register("attack2", "${INPUT_ACTION_ATTACK2}", "${INPUT_CATEGORY_COMBAT}");
+        InputActionRegistry::Register("attack3", "${INPUT_ACTION_ATTACK3}", "${INPUT_CATEGORY_COMBAT}");
+
+        InputActionRegistry::Register("interact", "${INPUT_ACTION_INTERACT}", "${INPUT_CATEGORY_GENERAL}");
+        InputActionRegistry::Register("qSave", "${INPUT_ACTION_QUICK_SAVE}", "${INPUT_CATEGORY_GENERAL}");
+        InputActionRegistry::Register("qLoad", "${INPUT_ACTION_QUICK_LOAD}", "${INPUT_CATEGORY_GENERAL}");
+
+        InputActionRegistry::Register("slot1", "${INPUT_ACTION_SLOT1}", "${INPUT_CATEGORY_INVENTORY}");
+        InputActionRegistry::Register("slot2", "${INPUT_ACTION_SLOT2}", "${INPUT_CATEGORY_INVENTORY}");
+        InputActionRegistry::Register("slot3", "${INPUT_ACTION_SLOT3}", "${INPUT_CATEGORY_INVENTORY}");
+        InputActionRegistry::Register("slot4", "${INPUT_ACTION_SLOT4}", "${INPUT_CATEGORY_INVENTORY}");
+        InputActionRegistry::Register("slot5", "${INPUT_ACTION_SLOT5}", "${INPUT_CATEGORY_INVENTORY}");
+        InputActionRegistry::Register("slot6", "${INPUT_ACTION_SLOT6}", "${INPUT_CATEGORY_INVENTORY}");
+        InputActionRegistry::Register("lastSlot", "${INPUT_ACTION_LAST_SLOT}", "${INPUT_CATEGORY_INVENTORY}");
+
+
+        //Input::AddAction("dbg_simulate")->AddKeyboardKey(SDL_KeyCode::SDLK_j);
+
+        ItemsDataBase::LoadItemsDataBase();
 
         //Level::Current->AddEntity(new TestBsp());
 
@@ -197,6 +300,32 @@ public:
         if (Input::MouseDelta != vec2())
         {
             UiManager::UiScale = 1;
+        }
+
+        if (pendingGameStart && AssetRegistry::HasPendingWork() == false)
+        {
+
+			pendingGameStart = false;
+
+            auto mapArg = EngineMain::MainInstance->Arguments.find("map");
+
+            if (mapArg != EngineMain::MainInstance->Arguments.end() && mapArg->second.size() > 0)
+            {
+
+                Logger::Log("opening map from args: " + mapArg->second[0]);
+
+                Level::LoadLevelFromFile(std::string("GameData/maps/") + mapArg->second[0]);
+            }
+            else
+            {
+                if (NetworkManager::IsServer())
+                    Level::LoadLevelFromFile("GameData/maps/lvl2.bsp");
+            }
+
+        }
+        else
+        {
+            //Logger::Log("waiting");
         }
 
     }
@@ -256,7 +385,9 @@ public:
 
     void LoadConstantAssets()
     {
-		AssetRegistry::LoadingConstantAssets = true;
+        return;
+        
+		AssetRegistry::LoadingConstantAssets = false;
 
 		PreloadEntityType("info_player_start");
         PreloadEntityType("player");
@@ -300,127 +431,10 @@ GameStart::GameStart()
 
     NpcBase::globalPhraceDelay = Delay();
 
-    LoadConstantAssets();
 
 	UpdateWhenPaused = true;
 
     //Spawn("npcSimulationManager");
-
-	auto debuffs = DebuffFactory::Instance().GetRegisteredDebuffNames();
-
-    for (auto& name : debuffs)
-    {
-		auto debuff = DebuffFactory::Instance().CreateDebuff(name);
-
-		AssetRegistry::GetTextureFromFile(debuff->iconPath);
-
-    }
-
-    if (startedGame) return;
-
-    UiRenderer::AddFallbackFont("GameData/fonts/NotoSans.ttf");
-    UiRenderer::AddFallbackFont("GameData/fonts/NotoSerifJP.ttf");
-    UiRenderer::AddFallbackFont("GameData/fonts/NotoSansSC.ttf");
-
-    GameSettings::Instance().LoadFromFile();
-    GameSettings::Instance().ApplyAll();
-
-    startedGame = true;
-
-    Input::AddAction("forward")->AddKeyboardKey(SDL_KeyCode::SDLK_w);
-    Input::AddAction("backward")->AddKeyboardKey(SDL_KeyCode::SDLK_s);
-    Input::AddAction("left")->AddKeyboardKey(SDL_KeyCode::SDLK_a);
-    Input::AddAction("right")->AddKeyboardKey(SDL_KeyCode::SDLK_d);
-
-    Input::AddAction("crouch")->AddKeyboardKey(SDL_KeyCode::SDLK_c);
-
-    Input::AddAction("jump")->AddKeyboardKey(SDL_KeyCode::SDLK_SPACE)->AddButton(GamepadButton::A);
-
-    Input::AddAction("dash")->AddKeyboardKey(SDL_KeyCode::SDLK_LSHIFT)->AddButton(GamepadButton::LeftShoulder);
-
-
-
-    Input::AddAction("attack")->AddButton(GamepadButton::RightTrigger)->AddMouseButton(0);
-    Input::AddAction("attack2")->AddButton(GamepadButton::LeftTrigger)->AddMouseButton(1);
-
-    Input::AddAction("attack3")->AddButton(GamepadButton::Y)->AddKeyboardKey(SDL_KeyCode::SDLK_r);
-
-
-    Input::AddAction("qSave")->AddKeyboardKey(SDL_KeyCode::SDLK_F6);
-    Input::AddAction("qLoad")->AddKeyboardKey(SDL_KeyCode::SDLK_F7);
-
-    Input::AddAction("interact")->AddKeyboardKey(SDL_KeyCode::SDLK_f);
-
-
-
-    Input::AddAction("cameraView")->AddKeyboardKey(SDL_KeyCode::SDLK_v);
-
-
-
-#if __EMSCRIPTEN__
-
-    Input::AddAction("pause")->AddKeyboardKey(SDL_KeyCode::SDLK_BACKQUOTE)->AddButton(GamepadButton::Back);
-
-#else
-    Input::AddAction("pause")->AddKeyboardKey(SDL_KeyCode::SDLK_ESCAPE)->AddButton(GamepadButton::Back)->AddKeyboardKey(SDL_GetScancodeFromKey(SDLK_AC_BACK));
-#endif
-
-    Input::AddAction("slot1")->AddKeyboardKey(SDL_KeyCode::SDLK_1);
-    Input::AddAction("slot2")->AddKeyboardKey(SDL_KeyCode::SDLK_2);
-    Input::AddAction("slot3")->AddKeyboardKey(SDL_KeyCode::SDLK_3);
-    Input::AddAction("slot4")->AddKeyboardKey(SDL_KeyCode::SDLK_4);
-    Input::AddAction("slot5")->AddKeyboardKey(SDL_KeyCode::SDLK_5);
-    Input::AddAction("slot6")->AddKeyboardKey(SDL_KeyCode::SDLK_6);
-    Input::AddAction("lastSlot")->AddKeyboardKey(SDL_KeyCode::SDLK_q);
-
-    Input::AddAction("inventory")->AddKeyboardKey(SDL_KeyCode::SDLK_TAB)->AddButton(GamepadButton::DPadUp);
-
-    Input::AddAction("slotTest")->AddKeyboardKey(SDL_KeyCode::SDLK_t);
-
-    Input::AddAction("reload_shaders")->AddKeyboardKey(SDL_KeyCode::SDLK_F3);
-
-    Input::AddAction("block")->AddKeyboardKey(SDL_KeyCode::SDLK_LCTRL);
-
-    Input::AddAction("slotMelee");// ->AddKeyboardKey(SDL_KeyCode::SDLK_f);
-
-
-    Input::AddAction("debug_ui_toggle")->AddKeyboardKey(SDL_KeyCode::SDLK_F2);
-
-	Input::AddAction("ui_confirm")->AddKeyboardKey(SDL_KeyCode::SDLK_RETURN)->AddButton(GamepadButton::A);
-    Input::AddAction("ui_cancel")->AddKeyboardKey(SDL_KeyCode::SDLK_ESCAPE)->AddButton(GamepadButton::B)->AddKeyboardKey(SDL_GetScancodeFromKey(SDLK_AC_BACK));
-    Input::AddAction("ui_down")->AddKeyboardKey(SDL_KeyCode::SDLK_DOWN)->AddButton(GamepadButton::DPadDown);
-	Input::AddAction("ui_up")->AddKeyboardKey(SDL_KeyCode::SDLK_UP)->AddButton(GamepadButton::DPadUp);
-    Input::AddAction("ui_left")->AddKeyboardKey(SDL_KeyCode::SDLK_LEFT)->AddButton(GamepadButton::DPadLeft);
-	Input::AddAction("ui_right")->AddKeyboardKey(SDL_KeyCode::SDLK_RIGHT)->AddButton(GamepadButton::DPadRight);
-
-    InputActionRegistry::Register("forward", "${INPUT_ACTION_FORWARD}", "${INPUT_CATEGORY_MOVEMENT}");
-    InputActionRegistry::Register("backward", "${INPUT_ACTION_BACKWARD}", "${INPUT_CATEGORY_MOVEMENT}");
-    InputActionRegistry::Register("left", "${INPUT_ACTION_LEFT}", "${INPUT_CATEGORY_MOVEMENT}");
-    InputActionRegistry::Register("right", "${INPUT_ACTION_RIGHT}", "${INPUT_CATEGORY_MOVEMENT}");
-    InputActionRegistry::Register("crouch", "${INPUT_ACTION_CROUCH}", "${INPUT_CATEGORY_MOVEMENT}");
-    InputActionRegistry::Register("jump", "${INPUT_ACTION_JUMP}", "${INPUT_CATEGORY_MOVEMENT}");
-    InputActionRegistry::Register("dash", "${INPUT_ACTION_DASH}", "${INPUT_CATEGORY_MOVEMENT}");
-
-    InputActionRegistry::Register("attack", "${INPUT_ACTION_ATTACK}", "${INPUT_CATEGORY_COMBAT}");
-    InputActionRegistry::Register("attack2", "${INPUT_ACTION_ATTACK2}", "${INPUT_CATEGORY_COMBAT}");
-    InputActionRegistry::Register("attack3", "${INPUT_ACTION_ATTACK3}", "${INPUT_CATEGORY_COMBAT}");
-
-    InputActionRegistry::Register("interact", "${INPUT_ACTION_INTERACT}", "${INPUT_CATEGORY_GENERAL}");
-    InputActionRegistry::Register("qSave", "${INPUT_ACTION_QUICK_SAVE}", "${INPUT_CATEGORY_GENERAL}");
-    InputActionRegistry::Register("qLoad", "${INPUT_ACTION_QUICK_LOAD}", "${INPUT_CATEGORY_GENERAL}");
-
-    InputActionRegistry::Register("slot1", "${INPUT_ACTION_SLOT1}", "${INPUT_CATEGORY_INVENTORY}");
-    InputActionRegistry::Register("slot2", "${INPUT_ACTION_SLOT2}", "${INPUT_CATEGORY_INVENTORY}");
-    InputActionRegistry::Register("slot3", "${INPUT_ACTION_SLOT3}", "${INPUT_CATEGORY_INVENTORY}");
-    InputActionRegistry::Register("slot4", "${INPUT_ACTION_SLOT4}", "${INPUT_CATEGORY_INVENTORY}");
-    InputActionRegistry::Register("slot5", "${INPUT_ACTION_SLOT5}", "${INPUT_CATEGORY_INVENTORY}");
-    InputActionRegistry::Register("slot6", "${INPUT_ACTION_SLOT6}", "${INPUT_CATEGORY_INVENTORY}");
-    InputActionRegistry::Register("lastSlot", "${INPUT_ACTION_LAST_SLOT}", "${INPUT_CATEGORY_INVENTORY}");
-
-
-    //Input::AddAction("dbg_simulate")->AddKeyboardKey(SDL_KeyCode::SDLK_j);
-
-    ItemsDataBase::LoadItemsDataBase();
 
 }
 

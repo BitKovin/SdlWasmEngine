@@ -190,9 +190,22 @@ Texture* AssetRegistry::GetTextureFromFile(string filename, AssetLoadTier reques
 	// declaration comment in AssetRegistry.h. Inside one, always synchronous.
 	// VisualImmediately behaves exactly like Visual here - see the comment
 	// on AssetLoadTier in AssetRegistry.h for why it's a separate value.
-	const bool forceSync = loadingLevel || LoadingConstantAssets
+	// LoadingConstantAssets deliberately isn't part of forceSync - see the
+	// lazyTier comment below for why.
+	const bool forceSync = loadingLevel
 		|| requestedTier == AssetLoadTier::Visual
 		|| requestedTier == AssetLoadTier::VisualImmediately;
+
+	// Constant-asset preloading still wants everything to reach Visual tier
+	// eventually - that's the point of preloading - just never synchronously
+	// on the thread doing the preloading. Upgrading the tier passed to the
+	// lazy path below gets there regardless of what the caller itself asked
+	// for (PreloadEntityType's calls all use the Logic default), while this
+	// call still returns immediately either way. An explicit
+	// Visual/VisualImmediately request already took the forceSync branch
+	// above and never reaches this line, so that contract is unaffected by
+	// a preload happening to be running.
+	const AssetLoadTier lazyTier = LoadingConstantAssets ? AssetLoadTier::Visual : requestedTier;
 
 	auto it = textureCache.find(key);
 	if (it != textureCache.end())
@@ -202,7 +215,7 @@ Texture* AssetRegistry::GetTextureFromFile(string filename, AssetLoadTier reques
 		if (forceSync)
 			SynchronouslyFinishTextureLoad(it->second, key);
 		else
-			EnsureTextureTierLazy(it->second, key, requestedTier);
+			EnsureTextureTierLazy(it->second, key, lazyTier);
 
 		return it->second;
 	}
@@ -219,7 +232,7 @@ Texture* AssetRegistry::GetTextureFromFile(string filename, AssetLoadTier reques
 	textureCache[key] = texture;
 	TouchUsage(texture->loadState);
 
-	EnsureTextureTierLazy(texture, key, requestedTier);
+	EnsureTextureTierLazy(texture, key, lazyTier);
 
 	return texture;
 }
@@ -232,10 +245,12 @@ CubemapTexture* AssetRegistry::GetTextureCubeFromFile(string filename, AssetLoad
 
 	string key = filename;
 
-	// Same forceSync rule as GetTextureFromFile - see the comment there.
-	const bool forceSync = loadingLevel || LoadingConstantAssets
+	// Same forceSync/lazyTier rule as GetTextureFromFile - see the comment there.
+	const bool forceSync = loadingLevel
 		|| requestedTier == AssetLoadTier::Visual
 		|| requestedTier == AssetLoadTier::VisualImmediately;
+
+	const AssetLoadTier lazyTier = LoadingConstantAssets ? AssetLoadTier::Visual : requestedTier;
 
 	auto it = textureCubeCache.find(key);
 	if (it != textureCubeCache.end())
@@ -245,7 +260,7 @@ CubemapTexture* AssetRegistry::GetTextureCubeFromFile(string filename, AssetLoad
 		if (forceSync)
 			SynchronouslyFinishTextureCubeLoad(it->second, key);
 		else
-			EnsureTextureCubeTierLazy(it->second, key, requestedTier);
+			EnsureTextureCubeTierLazy(it->second, key, lazyTier);
 
 		return it->second;
 	}
@@ -262,7 +277,7 @@ CubemapTexture* AssetRegistry::GetTextureCubeFromFile(string filename, AssetLoad
 	textureCubeCache[key] = texCube;
 	TouchUsage(texCube->loadState);
 
-	EnsureTextureCubeTierLazy(texCube, key, requestedTier);
+	EnsureTextureCubeTierLazy(texCube, key, lazyTier);
 
 	return texCube;
 }
@@ -349,9 +364,12 @@ roj::SkinnedModel* AssetRegistry::GetSkinnedModelFromFile(const string& path, As
 
 	MarkAsUsed(path);
 
-	const bool forceSync = loadingLevel || LoadingConstantAssets
+	// Same forceSync/lazyTier rule as GetTextureFromFile - see the comment there.
+	const bool forceSync = loadingLevel
 		|| requestedTier == AssetLoadTier::Visual
 		|| requestedTier == AssetLoadTier::VisualImmediately;
+
+	const AssetLoadTier lazyTier = LoadingConstantAssets ? AssetLoadTier::Visual : requestedTier;
 
 	auto it = skinnedModelCache.find(path);
 	if (it != skinnedModelCache.end())
@@ -367,7 +385,7 @@ roj::SkinnedModel* AssetRegistry::GetSkinnedModelFromFile(const string& path, As
 		}
 		else
 		{
-			EnsureTierLazy(model, path, requestedTier);
+			EnsureTierLazy(model, path, lazyTier);
 		}
 
 		return model;
@@ -409,7 +427,7 @@ roj::SkinnedModel* AssetRegistry::GetSkinnedModelFromFile(const string& path, As
 	skinnedModelCache[path] = model;
 	TouchUsage(model->loadState);
 
-	EnsureTierLazy(model, path, requestedTier);
+	EnsureTierLazy(model, path, lazyTier);
 
 	return model;
 }
@@ -423,9 +441,26 @@ roj::SkinnedModel* AssetRegistry::GetSkinnedAnimationFromFile(const string& path
 	// This cache never holds anything above Logic (it's animations-only -
 	// no meshes), so forceSync and VisualImmediately don't mean anything
 	// extra here beyond "make sure Logic is loaded" - same as the default.
-	const bool forceSync = loadingLevel || LoadingConstantAssets
+	// LoadingConstantAssets deliberately isn't part of forceSync - see
+	// loadInBackground below for why.
+	const bool forceSync = loadingLevel
 		|| requestedTier == AssetLoadTier::Visual
 		|| requestedTier == AssetLoadTier::VisualImmediately;
+
+	// Whether Logic tier should be loaded at all for this call - same
+	// "None means fully caller-driven" rule as everywhere else, except
+	// LoadingConstantAssets always wants it, same as it always wants Visual
+	// for the other caches (see GetTextureFromFile's lazyTier comment).
+	const bool wantsLogic = forceSync || requestedTier != AssetLoadTier::None || LoadingConstantAssets;
+
+	// Constant-asset preloading still wants Logic tier loaded for
+	// everything it touches - that's the point of preloading - just never
+	// synchronously on the thread doing the preloading. Queue it onto the
+	// Loader thread instead of calling LoadLogicTierNow inline. Outside a
+	// preload this keeps the old behavior: Logic tier is cheap and
+	// bgfx-free, so there's no reason to make an ordinary caller wait a
+	// frame for bones/animations it asked for right now.
+	const bool loadInBackground = LoadingConstantAssets && !forceSync;
 
 	auto it = skinnedModelAnimationCache.find(path);
 	if (it != skinnedModelAnimationCache.end())
@@ -437,11 +472,13 @@ roj::SkinnedModel* AssetRegistry::GetSkinnedAnimationFromFile(const string& path
 		// cacheMutex, no other thread can be inside this function
 		// concurrently, but a PREVIOUS call for this same path may already
 		// have loaded (or be responsible for loading) Logic - don't redo it.
-		if ((forceSync || requestedTier != AssetLoadTier::None) &&
-			model->loadState.queuedUpTo.load(std::memory_order_acquire) < AssetLoadTier::Logic)
+		if (wantsLogic && model->loadState.queuedUpTo.load(std::memory_order_acquire) < AssetLoadTier::Logic)
 		{
 			model->loadState.queuedUpTo.store(AssetLoadTier::Logic, std::memory_order_release);
-			LoadLogicTierNow(model, path);
+			if (loadInBackground)
+				QueueLogicTierJob(model, path);
+			else
+				LoadLogicTierNow(model, path);
 		}
 
 		return model;
@@ -473,16 +510,21 @@ roj::SkinnedModel* AssetRegistry::GetSkinnedAnimationFromFile(const string& path
 
 	// Lazy miss (the default): insert the placeholder under cacheMutex first
 	// (same duplicate-prevention reasoning as GetSkinnedModelFromFile), then
-	// load its Logic tier synchronously, right here - it's CPU-only
-	// (SkipVisual=true), so this never touches bgfx and is safe on any thread.
+	// either load its Logic tier synchronously, right here - it's CPU-only
+	// (SkipVisual=true), so this never touches bgfx and is safe on any
+	// thread - or, during constant-asset preloading, queue that same work
+	// onto the Loader thread instead, so this call returns immediately.
 	roj::SkinnedModel* model = new roj::SkinnedModel();
 	skinnedModelAnimationCache[path] = model;
 	TouchUsage(model->loadState);
 
-	if (requestedTier != AssetLoadTier::None)
+	if (wantsLogic)
 	{
 		model->loadState.queuedUpTo.store(AssetLoadTier::Logic, std::memory_order_release);
-		LoadLogicTierNow(model, path);
+		if (loadInBackground)
+			QueueLogicTierJob(model, path);
+		else
+			LoadLogicTierNow(model, path);
 	}
 
 	return model;
@@ -556,7 +598,6 @@ void AssetRegistry::EnqueuePendingUpload(std::function<void()> apply, size_t app
 
 void AssetRegistry::ProcessPendingUploads(float msBudget)
 {
-
 	auto start = std::chrono::steady_clock::now();
 
 	for (;;)
@@ -623,6 +664,58 @@ void AssetRegistry::LoadLogicTierNow(roj::SkinnedModel* model, const std::string
 
 	model->loadState.generation.fetch_add(1, std::memory_order_release);
 	model->loadState.currentTier.store(AssetLoadTier::Logic, std::memory_order_release);
+}
+
+// Background counterpart to LoadLogicTierNow() above - identical work
+// (SkipVisual=true, DeferGPUUpload=true, no bgfx calls anywhere in it),
+// just queued onto the Loader thread instead of run inline on the calling
+// thread. Used during constant-asset preloading (see
+// GetSkinnedAnimationFromFile's loadInBackground) so that phase never
+// blocks even on Logic-tier parsing.
+//
+// Still routes its actual commit through EnqueuePendingUpload, same as
+// QueueVisualTierJob - not because AdoptLogicTierData() touches bgfx (it
+// doesn't), but because that's what gets it a cacheMutex-serialized
+// commit point. LoadLogicTierNow can commit directly only because its
+// caller already holds cacheMutex for the whole call; this job runs after
+// that lock was released, so writing straight into `model` here would be
+// unsynchronized against anything else touching it under cacheMutex in the
+// meantime (a concurrent ClearMemory(), a synchronous force-finish, ...).
+void AssetRegistry::QueueLogicTierJob(roj::SkinnedModel* model, std::string path)
+{
+	loaderThreadPool->QueueJob([model, path]()
+		{
+			roj::ModelLoader<roj::SkinnedMesh> loader;
+			loader.SkipVisual = true;
+			loader.DeferGPUUpload = true;
+
+			loader.load(path);
+
+			if (!loader.getInfoLog().empty())
+				Logger::Log(loader.getInfoLog());
+
+			// SkinnedModel is move-only (loadState can't be copied), but
+			// std::function needs its target to be copy-constructible -
+			// same shared_ptr wrapping QueueVisualTierJob uses below, for
+			// the same reason.
+			auto parsed = std::make_shared<roj::SkinnedModel>(std::move(loader.get()));
+
+			EnqueuePendingUpload(
+				[model, parsed]()
+				{
+					// Same race guard as LoadLogicTierNow - a synchronous
+					// force-finish for this same path may have already
+					// replaced this model outright while this job was
+					// queued/running.
+					if (model->loadState.currentTier.load(std::memory_order_acquire) == AssetLoadTier::Visual)
+						return;
+
+					model->AdoptLogicTierData(std::move(*parsed));
+
+					model->loadState.generation.fetch_add(1, std::memory_order_release);
+					model->loadState.currentTier.store(AssetLoadTier::Logic, std::memory_order_release);
+				});
+		});
 }
 
 void AssetRegistry::QueueVisualTierJob(roj::SkinnedModel* model, std::string path)

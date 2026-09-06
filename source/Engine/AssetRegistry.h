@@ -65,6 +65,13 @@ private:
     // calls it. Safe from any thread precisely because it never touches
     // bgfx. Caller holds cacheMutex.
     static void LoadLogicTierNow(roj::SkinnedModel* model, const std::string& path);
+
+    // Background counterpart to LoadLogicTierNow() - same CPU-only,
+    // bgfx-free work (SkipVisual=true), just queued onto the Loader thread
+    // instead of run inline on the calling thread. Used during
+    // constant-asset preloading (see GetSkinnedAnimationFromFile) so that
+    // phase never blocks on even Logic-tier parsing.
+    static void QueueLogicTierJob(roj::SkinnedModel* model, std::string path);
     static void QueueVisualTierJob(roj::SkinnedModel* model, std::string path);
     static void QueueTextureUploadJob(Texture* texture, std::string path);
     static void QueueTextureCubeUploadJob(CubemapTexture* texCube, std::string path);

@@ -55,7 +55,7 @@ class UiBilboard : public StaticMesh
 public:
 	UiBilboard(Entity* owner) : StaticMesh(owner)
 	{
-		LoadFromFile("GameData/models/engine/widgetPlane.glb");
+		LoadFromFile("GameData/models/engine/widgetPlane.glb", AssetLoadTier::Visual);
 
 		DepthPrePath = false;
 		DepthWrite = false;
@@ -66,7 +66,7 @@ public:
 
 		// ColorTextureId is a raw bgfx handle (the shared atlas), not a Texture* -
 		// EffectiveSurfaceType() can't inspect it for alpha, so it must be forced explicitly.
-		GetMaterial(0).SurfaceTypeOverride = SurfaceType::Transparent;
+		//GetMaterial(0).SurfaceTypeOverride = SurfaceType::Transparent;
 
 		ContentBox = std::make_shared<UiContentBox>();
 		ContentBox->pivot = vec2(0.5f, 0.5f);
