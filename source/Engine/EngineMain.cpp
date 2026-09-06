@@ -980,7 +980,15 @@ void EngineMain::Render()
 
     if (LoadingFrames > 0)
     {
-        LoadingFrames--;
+        if (AssetRegistry::HasPendingWork() == false)
+        {
+            LoadingFrames--;
+        }
+        else
+        {
+            Logger::Log("");
+        }
+
 
         LoadingScreenSystem::Draw();
         return;

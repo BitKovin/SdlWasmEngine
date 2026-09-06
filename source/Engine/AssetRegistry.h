@@ -196,6 +196,12 @@ public:
     // to the same queue instead of calling bgfx directly from the Loader thread.
     static void EnqueuePendingUpload(std::function<void()> apply, size_t approxBytes = 0);
 
+    // True if there's any asset-loading work outstanding, on either side of
+    // the pipeline: still running/queued on the Loader thread, or finished
+    // there and waiting for ProcessPendingUploads() to apply it on the main
+    // thread. Useful for e.g. a loading screen deciding it's safe to advance.
+    static bool HasPendingWork();
+
 private:
 
     static void MarkModelTexturesAsUsed(roj::SkinnedModel* model, std::string path);

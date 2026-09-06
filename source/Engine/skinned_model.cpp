@@ -12,6 +12,16 @@
 #include <unordered_set>
 #include <cassert>
 #include <span>         // C++20
+#include <execution>    // std::execution::par - BakeAllClipsParallel
+#include <numeric>      // std::iota - BakeAllClipsParallel
+#include <glm/gtc/type_ptr.hpp> // glm::make_mat4 - reading cgltf's column-major float[16]
+
+// Fast, bones-and-animations-only glTF/GLB reader for the Logic tier - see
+// LoadLogicTierFromGLTF below for why this exists instead of just running
+// assimp with SkipVisual again. Single-header library, vendored the same
+// way stb_image is for Texture.hpp.
+#define CGLTF_IMPLEMENTATION
+#include <cgltf.h>
 
 #define BAKED_FRAME_RATE 30.0f
 
@@ -319,15 +329,428 @@ static roj::EvaluatableClip* buildEvaluatableClip(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// bakeClipFrames — runs at load time only, not on the hot path
+// Fast Logic-tier glTF/GLB path — bones, skeleton, animation clips only.
+//
+// Why this exists: with SkipVisual=true, the assimp path above still calls
+// m_import.ReadFileFromMemory() with the exact same postprocess flags as a
+// full load (Triangulate, CalcTangentSpace, JoinIdenticalVertices, ...) —
+// assimp decodes every vertex, normal, tangent, UV, material, and embedded
+// image up front, and only *afterwards* do we throw most of it away in
+// processNode()'s SkipVisual branch. That decode-then-discard pass is where
+// ~90% of Logic-tier load time was going. (AI_CONFIG_PP_RVC_FLAGS further
+// down was meant to trim this via aiProcess_RemoveComponent, but that flag
+// was never actually added to the process-flags list passed to
+// ReadFileFromMemory, so it silently did nothing — fixed below, but even
+// correctly wired it only trims the already-fully-decoded aiScene, not the
+// decode cost itself.)
+//
+// cgltf reads the glTF/GLB layout directly: we ask it for exactly the
+// accessors a skin or animation channel points at (inverse-bind matrices,
+// keyframe times/values) and touch nothing else — no triangulation, no
+// tangent-space generation, no vertex dedup, no image decode. For the 99%
+// case (a single-skin glb export), this is the entire cost difference.
+//
+// Every function below is read-only over the glTF data and writes only
+// into the (private, not-yet-live) SkinnedModel being built — same
+// threading contract as the assimp path.
 // ─────────────────────────────────────────────────────────────────────────────
 
-static void bakeClipFrames(roj::EvaluatableClip& clip, roj::SkinnedModel& model)
+// cgltf gives local transforms as a column-major float[16]; glm::make_mat4
+// expects exactly that layout, so this is a straight reinterpretation, not
+// a conversion.
+static glm::mat4 GLTFNodeLocalTransform(const cgltf_node* node)
 {
-    const float frameInterval = 1.f / BAKED_FRAME_RATE;
-    clip.bakedFrameInterval   = frameInterval;
+    float m[16];
+    cgltf_node_transform_local(node, m);
+    return glm::make_mat4(m);
+}
 
-    roj::Animator animator(&model);
+// World transform via the parent chain — only used for the rare "bone has
+// an animation channel but isn't part of any skin" case, mirroring what
+// extractAnimations() does for the assimp path via aiNode::mParent.
+static glm::mat4 GLTFWorldTransform(const cgltf_node* node)
+{
+    glm::mat4 g(1.f);
+    for (const cgltf_node* cur = node; cur; cur = cur->parent)
+        g = GLTFNodeLocalTransform(cur) * g;
+    return g;
+}
+
+// glTF can have multiple root nodes (no single mRootNode the way assimp
+// always synthesizes one); this just collects whichever set the file
+// actually uses.
+static std::vector<cgltf_node*> GLTFSceneRoots(const cgltf_data* data)
+{
+    std::vector<cgltf_node*> roots;
+    const cgltf_scene* scene = data->scene ? data->scene
+        : (data->scenes_count > 0 ? &data->scenes[0] : nullptr);
+    if (scene)
+    {
+        roots.assign(scene->nodes, scene->nodes + scene->nodes_count);
+    }
+    else
+    {
+        // No scene defined at all (unusual but valid glTF) - fall back to
+        // every node with no parent.
+        for (cgltf_size i = 0; i < data->nodes_count; ++i)
+            if (!data->nodes[i].parent)
+                roots.push_back(&data->nodes[i]);
+    }
+    return roots;
+}
+
+// Populates model.boneInfoMap from one skin's joints[] + inverse bind
+// matrices.
+//
+// Bone IDs follow skin->joints[] order directly. This matters:
+// AdoptVisualTierGeometry()'s debug safety check exists precisely because
+// this ID assignment must line up with whatever order the Visual tier's
+// (separate, assimp-based) mesh reparse assigns the same bones — and in
+// practice, for a single-skin character export (the standard case this
+// whole fast path targets), assimp's own glTF importer builds aiMesh::mBones
+// straight from the same skin.joints[] array, so the two orders already
+// match without this path needing to know anything about assimp's
+// internals. Multi-skin files are the one case that could disagree; that's
+// exactly what the debug check is there to catch.
+static void extractBoneInfoFromGLTFSkin(const cgltf_skin* skin, roj::SkinnedModel& model)
+{
+    if (!skin || skin->joints_count == 0) return;
+
+    std::vector<float> invBindFloats;
+    const cgltf_accessor* ibmAccessor = skin->inverse_bind_matrices;
+    if (ibmAccessor)
+    {
+        invBindFloats.resize((size_t)skin->joints_count * 16);
+        cgltf_accessor_unpack_floats(ibmAccessor, invBindFloats.data(), invBindFloats.size());
+    }
+
+    for (cgltf_size i = 0; i < skin->joints_count; ++i)
+    {
+        const cgltf_node* joint = skin->joints[i];
+        hashed_string boneName = joint->name ? joint->name : "";
+        if (model.boneInfoMap.find(boneName) != model.boneInfoMap.end())
+            continue;
+
+        glm::mat4 offset = ibmAccessor ? glm::make_mat4(&invBindFloats[(size_t)i * 16]) : glm::mat4(1.f);
+        model.boneInfoMap[boneName] = roj::BoneInfo{ model.boneCount, offset };
+        model.boneCount++;
+    }
+}
+
+// Extracts every animation's per-bone keyframe tracks into the same
+// legacy roj::Animation/FrameBoneTransform structures the assimp path
+// fills in, so buildEvaluatableClip() below works completely unmodified
+// regardless of which parser produced the data.
+static void extractAnimationsFromGLTF(const cgltf_data* data, roj::SkinnedModel& model)
+{
+    for (cgltf_size a = 0; a < data->animations_count; ++a)
+    {
+        const cgltf_animation& srcAnim = data->animations[a];
+        std::string animName = srcAnim.name ? srcAnim.name : ("Animation" + std::to_string(a));
+        roj::Animation& anim = model.animations[animName];
+
+        // glTF sampler input times are already in seconds - representing
+        // that as "ticksPerSec = 1" keeps duration/ticksPerSec == seconds,
+        // the same convention the assimp path uses, so nothing downstream
+        // (Animator, bakeClipFrames) needs to know which parser was used.
+        anim.ticksPerSec = 1.f;
+
+        float maxTime = 0.f;
+        int totalKeys = 0;
+
+        for (cgltf_size c = 0; c < srcAnim.channels_count; ++c)
+        {
+            const cgltf_animation_channel& channel = srcAnim.channels[c];
+            if (!channel.target_node || !channel.sampler) continue;
+            if (channel.target_path == cgltf_animation_path_type_weights)
+                continue; // morph target weights - not a bone property, irrelevant to the Logic tier
+
+            hashed_string boneName = channel.target_node->name ? channel.target_node->name : "";
+            roj::FrameBoneTransform& track = anim.animationFrames[boneName];
+
+            const cgltf_animation_sampler& sampler = *channel.sampler;
+            const cgltf_accessor* inputAcc  = sampler.input;
+            const cgltf_accessor* outputAcc = sampler.output;
+            if (!inputAcc || !outputAcc) continue;
+
+            const cgltf_size keyCount = inputAcc->count;
+            std::vector<float> times(keyCount);
+            cgltf_accessor_unpack_floats(inputAcc, times.data(), keyCount);
+            if (keyCount > 0) maxTime = std::max(maxTime, times.back());
+            totalKeys += (int)keyCount;
+
+            // Cubic-spline samplers store (in-tangent, value, out-tangent)
+            // per keyframe; this reads only the value and treats every
+            // interpolation mode as linear/step, same simplification the
+            // consumer (roj::Animator) already makes for the assimp path
+            // (assimp only ever exposes linear-interpolated keys too).
+            // Good enough for the vast majority of glTF exports.
+            const cgltf_size stride      = (sampler.interpolation == cgltf_interpolation_type_cubic_spline) ? 3 : 1;
+            const cgltf_size valueOffset = (stride == 3) ? 1 : 0;
+
+            switch (channel.target_path)
+            {
+            case cgltf_animation_path_type_translation:
+            {
+                std::vector<float> values((size_t)keyCount * stride * 3);
+                cgltf_accessor_unpack_floats(outputAcc, values.data(), values.size());
+                track.positionTimestamps = times;
+                track.positions.resize(keyCount);
+                for (cgltf_size k = 0; k < keyCount; ++k) {
+                    const float* v = &values[(size_t)(k * stride + valueOffset) * 3];
+                    track.positions[k] = glm::vec3(v[0], v[1], v[2]);
+                }
+                break;
+            }
+            case cgltf_animation_path_type_rotation:
+            {
+                std::vector<float> values((size_t)keyCount * stride * 4);
+                cgltf_accessor_unpack_floats(outputAcc, values.data(), values.size());
+                track.rotationTimestamps = times;
+                track.rotations.resize(keyCount);
+                for (cgltf_size k = 0; k < keyCount; ++k) {
+                    const float* v = &values[(size_t)(k * stride + valueOffset) * 4];
+                    // glTF quaternions are (x, y, z, w); glm::quat's
+                    // constructor takes (w, x, y, z).
+                    track.rotations[k] = glm::quat(v[3], v[0], v[1], v[2]);
+                }
+                break;
+            }
+            case cgltf_animation_path_type_scale:
+            {
+                std::vector<float> values((size_t)keyCount * stride * 3);
+                cgltf_accessor_unpack_floats(outputAcc, values.data(), values.size());
+                track.scaleTimestamps = times;
+                track.scales.resize(keyCount);
+                for (cgltf_size k = 0; k < keyCount; ++k) {
+                    const float* v = &values[(size_t)(k * stride + valueOffset) * 3];
+                    track.scales[k] = glm::vec3(v[0], v[1], v[2]);
+                }
+                break;
+            }
+            default: break;
+            }
+
+            if (model.boneInfoMap.find(boneName) == model.boneInfoMap.end())
+            {
+                // Bone driven by an animation channel but not part of any
+                // skin (e.g. a prop bone) - give it a slot too, same as
+                // extractAnimations()'s "additionalBones" pass does for
+                // the assimp path.
+                model.boneInfoMap[boneName] = roj::BoneInfo{
+                    model.boneCount, glm::inverse(GLTFWorldTransform(channel.target_node)) };
+                model.boneCount++;
+            }
+        }
+
+        anim.duration = maxTime; // seconds, and ticksPerSec == 1 above, so this doubles as "ticks"
+        // Legacy/informational field only (SkeletalMesh.cpp) - approximates
+        // the assimp path's "channel 0 key count / duration" with an
+        // all-channels average; nothing in the hot path depends on it.
+        anim.frameTime = maxTime > 0.f ? (float)totalKeys / maxTime : 0.f;
+    }
+}
+
+// glTF equivalent of extractBoneNodeAndBuildMap() - single-root recursive
+// case, identical shape to the assimp version, just walking cgltf_node
+// instead of aiNode.
+static void extractBoneNodeAndBuildMapGLTF(roj::SkinnedModel& model,
+                                            roj::BoneNode& bone, const cgltf_node* src)
+{
+    bone.name      = src->name ? src->name : "";
+    bone.transform = GLTFNodeLocalTransform(src);
+    for (cgltf_size i = 0; i < src->children_count; ++i)
+    {
+        roj::BoneNode node;
+        extractBoneNodeAndBuildMapGLTF(model, node, src->children[i]);
+        bone.children.push_back(node);
+        model.parentMap[node.name] = bone.name;
+    }
+    model.boneNodesMap[bone.name] = bone;
+}
+
+// Builds model.defaultRoot, wrapping every glTF scene root node under one
+// synthetic identity-transform root - mirrors the single root node assimp
+// always synthesizes for a glTF import, so defaultRoot means the same thing
+// (and bone index 0 lines up the same way) regardless of which parser ran.
+static void buildDefaultRootFromGLTF(roj::SkinnedModel& model, const std::vector<cgltf_node*>& sceneRoots)
+{
+    roj::BoneNode& root = model.defaultRoot;
+    root.name      = "RootNode";
+    root.transform = glm::mat4(1.f);
+    for (cgltf_node* r : sceneRoots)
+    {
+        roj::BoneNode child;
+        extractBoneNodeAndBuildMapGLTF(model, child, r);
+        root.children.push_back(child);
+        model.parentMap[child.name] = root.name;
+    }
+    model.boneNodesMap[root.name] = root;
+}
+
+// glTF equivalent of buildFlatSkeleton() - same iterative DFS pre-order
+// (parentIdx[i] < i for all i > 0), just seeded from every glTF scene root
+// node under one synthetic index-0 root instead of a single aiNode.
+static void buildFlatSkeletonFromGLTF(roj::FlatSkeleton& skel,
+    const std::vector<cgltf_node*>& sceneRoots,
+    const std::unordered_map<hashed_string, roj::BoneInfo>& boneInfoMap)
+{
+    struct Entry { cgltf_node* node; uint16_t parentIdx; glm::mat4 localBind; hashed_string name; };
+    std::vector<Entry> entries;
+    entries.reserve(256);
+
+    // Synthetic identity root at index 0 - see buildDefaultRootFromGLTF.
+    entries.push_back({ nullptr, INVALID_BONE_IDX, glm::mat4(1.f), hashed_string("RootNode") });
+
+    struct StackEntry { cgltf_node* node; uint16_t parentIdx; };
+    std::vector<StackEntry> stack;
+    stack.reserve(64);
+    for (auto it = sceneRoots.rbegin(); it != sceneRoots.rend(); ++it)
+        stack.push_back({ *it, 0 });
+
+    while (!stack.empty())
+    {
+        auto [node, parentIdx] = stack.back();
+        stack.pop_back();
+        const uint16_t myIdx = (uint16_t)entries.size();
+        entries.push_back({ node, parentIdx, GLTFNodeLocalTransform(node),
+                             hashed_string(node->name ? node->name : "") });
+        for (int i = (int)node->children_count - 1; i >= 0; --i)
+            stack.push_back({ node->children[i], myIdx });
+    }
+
+    skel.boneCount = (uint16_t)entries.size();
+    skel.bones     = new roj::SkeletonBone[skel.boneCount];
+
+    for (uint16_t i = 0; i < skel.boneCount; ++i)
+    {
+        auto& e    = entries[i];
+        auto& bone = skel.bones[i];
+        bone.name      = e.name;
+        bone.parentIdx = e.parentIdx;
+        bone.localBind = e.localBind;
+        auto it = boneInfoMap.find(bone.name);
+        if (it != boneInfoMap.end()) {
+            bone.skinIdx = (int16_t)it->second.id;
+            bone.invBind = it->second.offset;
+        } else {
+            bone.skinIdx = -1;
+            bone.invBind = glm::mat4(1.f);
+        }
+        skel.nameToIdx[bone.name] = i;
+        if (bone.name == hashed_string("root")) skel.rootMotionBoneIdx = i;
+    }
+
+#ifdef _DEBUG
+    for (uint16_t i = 1; i < skel.boneCount; ++i)
+        assert(skel.bones[i].parentIdx < i && "Skeleton not in topological order");
+#endif
+}
+
+// Parses `data`/`fileData` and points every cgltf_buffer's `data` at its
+// actual bytes - the embedded chunk for a GLB, or an external .bin/base64
+// data URI for a plain .gltf. `fileData` must outlive `outData` - for a
+// GLB, cgltf references its bytes directly rather than copying them.
+static bool ParseGLTFFast(const std::string& path, const std::vector<uint8_t>& fileData, cgltf_data*& outData)
+{
+    outData = nullptr;
+    cgltf_options options{};
+    if (cgltf_parse(&options, fileData.data(), fileData.size(), &outData) != cgltf_result_success)
+        return false;
+
+    // Required for GLB too, not just plain .gltf: cgltf_parse only reads
+    // the JSON structure (node names/hierarchy, skin and animation
+    // *counts*) - it records the GLB's embedded binary chunk in
+    // data->bin/data->bin_size but does NOT wire that pointer into
+    // data->buffers[]->data itself. Every accessor read below (inverse-bind
+    // matrices, animation keyframe values) dereferences that buffer
+    // pointer, so skipping this call doesn't fail loudly - it reads
+    // through a null/stale buffer and produces garbage bone poses, which
+    // is worse than an outright failure. cgltf_load_buffers is what
+    // actually assigns buffer->data = data->bin for a GLB's buffer (a
+    // pointer fixup, no file I/O); it only touches disk for a plain
+    // .gltf's external relative-path buffers, which is the only case
+    // `path` matters for here.
+    if (cgltf_load_buffers(&options, outData, path.c_str()) != cgltf_result_success)
+    {
+        cgltf_free(outData);
+        outData = nullptr;
+        return false;
+    }
+    return true;
+}
+
+// Top-level fast Logic-tier loader: bones, skeleton hierarchy, and
+// animation clips only. No meshes, no materials, no images - see the
+// banner comment at the top of this section for why. Returns false (and
+// leaves `model` however far it got) for anything this path doesn't
+// handle; the caller falls back to the normal assimp path in that case, so
+// this never has to be exhaustive to be safe.
+static bool LoadLogicTierFromGLTF(const std::string& path, roj::SkinnedModel& model, std::string& infoLog)
+{
+    std::vector<uint8_t> fileData = FileSystemEngine::ReadFileBinary(path);
+    if (fileData.empty()) { infoLog += "Failed to read: " + path + "\n"; return false; }
+
+    cgltf_data* data = nullptr;
+    if (!ParseGLTFFast(path, fileData, data))
+        return false;
+
+    model.m_isOBJ        = false;
+    model.globalInversed = glm::mat4(1.f); // synthetic root is always identity - see buildDefaultRootFromGLTF
+    model.sceneCamera    = nullptr;        // cameras aren't part of the Logic tier
+
+    std::vector<cgltf_node*> sceneRoots = GLTFSceneRoots(data);
+    if (sceneRoots.empty())
+    {
+        infoLog += "glTF fast path: no scene root nodes in " + path + "\n";
+        cgltf_free(data);
+        return false;
+    }
+
+    for (cgltf_size i = 0; i < data->skins_count; ++i)
+        extractBoneInfoFromGLTFSkin(&data->skins[i], model);
+
+    extractAnimationsFromGLTF(data, model);
+
+    if (model.boneCount > 0)
+        buildDefaultRootFromGLTF(model, sceneRoots);
+
+    buildFlatSkeletonFromGLTF(model.skeleton, sceneRoots, model.boneInfoMap);
+
+    // boundingSphere/boundingBox/boneBounds intentionally left at their
+    // defaults here, same as the assimp SkipVisual path (which computes
+    // them from an empty vertex list when meshes aren't parsed) - the
+    // Visual tier overwrites all three with real values via
+    // AdoptVisualTierGeometry().
+    for (auto& [animName, anim] : model.animations)
+        model.clips[animName] = buildEvaluatableClip(model.skeleton, anim, animName.str());
+
+    cgltf_free(data);
+    return true;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BakeClipFramesInto — runs off the hot path, in parallel across clips.
+//
+// Same simulation as before, just writing into a caller-owned `out` vector
+// instead of `clip.bakedFrames` directly. That's what lets
+// roj::BakeAllClipsParallel() (below, in the roj namespace with the rest of
+// SkinnedModel's public surface) call this once per clip, concurrently,
+// without any two calls ever touching the same memory: each call only reads
+// `model` (shared, but read-only for the whole parallel batch) and writes
+// its own distinct `out`. Nothing here ends up on the live model until
+// roj::ApplyBakedAnimationFrames() runs later, on the main thread.
+// ─────────────────────────────────────────────────────────────────────────────
+
+static void BakeClipFramesInto(const roj::EvaluatableClip& clip, const roj::SkinnedModel& model,
+                                float frameInterval, std::vector<roj::EvaluatableClip::BakedFrame>& out)
+{
+    // Animator's constructor takes a non-const SkinnedModel* - this call
+    // only ever reads model.skeleton/model.clips (every clip gets its own
+    // local Animator instance, reset and discarded at the end of this
+    // function), so treating `model` as read-only for the duration of a
+    // parallel bake batch is safe.
+    roj::Animator animator(const_cast<roj::SkinnedModel*>(&model));
     animator.set(hashed_string(clip.name.c_str()));
     animator.play();
     animator.update(0.f);
@@ -354,10 +777,10 @@ static void bakeClipFrames(roj::EvaluatableClip& clip, roj::SkinnedModel& model)
         return bf;
     };
 
-    clip.bakedFrames.push_back(captureFrame());
+    out.push_back(captureFrame());
     while (animator.m_playing) {
         animator.update(frameInterval);
-        clip.bakedFrames.push_back(captureFrame());
+        out.push_back(captureFrame());
     }
     animator.reset();
 }
@@ -374,6 +797,60 @@ template class ModelLoader<SkinnedMesh>;
 SkinnedModel::~SkinnedModel()
 {
     for (auto& [_, clip] : clips) delete clip;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BakeAllClipsParallel / ApplyBakedAnimationFrames
+// See the banner comment on BakedClipsResult in skinned_model.hpp for the
+// rationale behind the two-step split.
+// ─────────────────────────────────────────────────────────────────────────────
+
+BakedClipsResult BakeAllClipsParallel(const SkinnedModel& model, float frameRate)
+{
+    BakedClipsResult result;
+    result.frameInterval = 1.f / frameRate;
+    if (model.clips.empty()) return result;
+
+    struct Job { hashed_string name; const EvaluatableClip* clip; };
+    std::vector<Job> jobs;
+    jobs.reserve(model.clips.size());
+    for (auto& [name, clip] : model.clips)
+        jobs.push_back({ name, clip });
+
+    // One output slot per job, indexed by position - each parallel task
+    // writes only to its own slot, so no two tasks ever touch the same
+    // memory (not even map-bucket-adjacent, unlike writing into a shared
+    // unordered_map from multiple threads would be).
+    std::vector<std::vector<EvaluatableClip::BakedFrame>> baked(jobs.size());
+
+    std::vector<size_t> indices(jobs.size());
+    std::iota(indices.begin(), indices.end(), 0);
+
+    std::for_each(std::execution::par, indices.begin(), indices.end(),
+        [&](size_t i)
+        {
+            BakeClipFramesInto(*jobs[i].clip, model, result.frameInterval, baked[i]);
+        });
+
+    // Single-threaded merge into the map the caller gets back - happens
+    // after for_each has fully joined, so this isn't concurrent with
+    // anything above.
+    result.frames.reserve(jobs.size());
+    for (size_t i = 0; i < jobs.size(); ++i)
+        result.frames.emplace(jobs[i].name, std::move(baked[i]));
+
+    return result;
+}
+
+void ApplyBakedAnimationFrames(SkinnedModel& model, BakedClipsResult&& baked)
+{
+    for (auto& [name, frames] : baked.frames)
+    {
+        auto it = model.clips.find(name);
+        if (it == model.clips.end()) continue; // clip no longer exists (e.g. UnloadAll() ran) - just drop it
+        it->second->bakedFrames        = std::move(frames);
+        it->second->bakedFrameInterval = baked.frameInterval;
+    }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -699,6 +1176,21 @@ bool ModelLoader<SkinnedMesh>::load(const std::string& path)
     resetLoader();
     if (path.empty()) { m_infoLog += "Empty path.\n"; return false; }
 
+    if (SkipVisual)
+    {
+        // Fast path: skip assimp entirely for a glTF/GLB Logic-tier load -
+        // see the banner comment above LoadLogicTierFromGLTF for why. Only
+        // short-circuits on success; anything this fast path doesn't
+        // handle (wrong extension, a parse it can't make sense of) falls
+        // straight through to the normal assimp path below, unchanged.
+        const bool looksLikeGLTF = StringHelper::EndsWith(path, ".glb") || StringHelper::EndsWith(path, ".gltf");
+        if (looksLikeGLTF && LoadLogicTierFromGLTF(path, m_model, m_infoLog))
+        {
+            PrewarmSkeletonTopology(&m_model.defaultRoot);
+            return true;
+        }
+    }
+
     const aiScene* m_scene = nullptr;
     if (path == m_lastLoadedPath && m_cachedScene)
     {
@@ -727,10 +1219,20 @@ bool ModelLoader<SkinnedMesh>::load(const std::string& path)
 
         std::vector<uint8_t> fileData = FileSystemEngine::ReadFileBinary(path);
         if (fileData.empty()) { m_infoLog += "Failed to read: " + path + "\n"; return false; }
-        m_scene = m_import.ReadFileFromMemory(fileData.data(), fileData.size(),
-            aiProcess_Triangulate | aiProcess_FlipUVs |
+        // aiProcess_RemoveComponent actually has to be in this flag list for
+        // AI_CONFIG_PP_RVC_FLAGS above to do anything - without it, that
+        // config was silently ignored and every SkipVisual load paid full
+        // price for materials/textures/normals/tangents/etc it was trying
+        // to skip. Now reached only by non-glTF formats, or a glTF the fast
+        // path above couldn't parse, since GLB/glTF short-circuits before
+        // this point - see LoadLogicTierFromGLTF.
+        unsigned int postProcess = aiProcess_Triangulate | aiProcess_FlipUVs |
             aiProcess_CalcTangentSpace | aiProcess_LimitBoneWeights |
-            aiProcess_JoinIdenticalVertices | aiProcess_GlobalScale, path.c_str());
+            aiProcess_JoinIdenticalVertices | aiProcess_GlobalScale;
+        if (SkipVisual)
+            postProcess |= aiProcess_RemoveComponent;
+        m_scene = m_import.ReadFileFromMemory(fileData.data(), fileData.size(),
+            postProcess, path.c_str());
         m_cachedScene    = m_scene;
         m_lastLoadedPath = path;
     }
@@ -782,11 +1284,20 @@ bool ModelLoader<SkinnedMesh>::load(const std::string& path)
     for (auto& [animName, anim] : m_model.animations)
         m_model.clips[animName] = buildEvaluatableClip(m_model.skeleton, anim, animName.str());
 
-    // Step 6: bake frames for UsePrecomputedFrames mode
-    for (auto& [_, clip] : m_model.clips)
-        bakeClipFrames(*clip, m_model);
+    // Baking for UsePrecomputedFrames mode used to happen right here,
+    // unconditionally, for every load - including this SkipVisual path,
+    // synchronously on whichever thread called it (the game thread, for a
+    // default-tier load - see AssetRegistry::LoadLogicTierNow), and again,
+    // redundantly, on every Visual-tier reparse whose clips just get
+    // discarded by AdoptVisualTierGeometry(). Baking only needs skeleton +
+    // clip track data - it doesn't need mesh data and doesn't need to run
+    // on this thread at all - so it's now the caller's job: see
+    // roj::BakeAllClipsParallel()/roj::ApplyBakedAnimationFrames() in
+    // skinned_model.hpp, meant to be driven from AssetRegistry once per
+    // load, off the game thread, regardless of which tier's parse produced
+    // these clips.
 
-    // Step 7: texture processing + opaque-before-transparent sort
+    // Step 6: texture processing + opaque-before-transparent sort
     for (auto& mesh : m_model.meshes)
         mesh.ProcessDefaultTextures();
     std::sort(m_model.meshes.begin(), m_model.meshes.end(),

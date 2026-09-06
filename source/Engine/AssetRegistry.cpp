@@ -22,6 +22,17 @@ void AssetRegistry::ClearMemory()
 {
 	std::lock_guard<std::recursive_mutex> lock(cacheMutex);
 
+
+	StopLoaderThread();
+	StartLoaderThread();
+
+	// Anything the Loader thread already finished but hadn't been applied
+	// yet is now stale too - same reason.
+	{
+		std::lock_guard<std::mutex> uploadLock(uploadQueueMutex);
+		uploadQueue.clear();
+	}
+
 	for (auto texCube : textureCubeCache)
 	{
 		if (texCube.second == nullptr) continue;
@@ -477,6 +488,15 @@ roj::SkinnedModel* AssetRegistry::GetSkinnedAnimationFromFile(const string& path
 	return model;
 }
 
+bool AssetRegistry::HasPendingWork()
+{
+	if (loaderThreadPool && loaderThreadPool->IsBusy())
+		return true;
+
+	std::lock_guard<std::mutex> lock(uploadQueueMutex);
+	return !uploadQueue.empty();
+}
+
 void AssetRegistry::MarkModelTexturesAsUsed(roj::SkinnedModel* model, std::string path)
 {
 	std::lock_guard<std::recursive_mutex> lock(cacheMutex);
@@ -536,6 +556,7 @@ void AssetRegistry::EnqueuePendingUpload(std::function<void()> apply, size_t app
 
 void AssetRegistry::ProcessPendingUploads(float msBudget)
 {
+
 	auto start = std::chrono::steady_clock::now();
 
 	for (;;)
